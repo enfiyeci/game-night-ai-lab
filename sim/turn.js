@@ -82,6 +82,7 @@ export function endTurn(prev, actions = {}, rng) {
     const r = applyMove(state, move, rng);
     if (r.ok) {
       events.push({ type: move.type, ...r });
+      updateServing(state);
       state.burnPlanned = projectBurn(state);
     } else errors.push(r.error);
     if (state.ending) break;

@@ -97,6 +97,33 @@ test('a same-turn compute deal refreshes burn before a later emergency move', ()
   assert.deepEqual(out.events.slice(0, 2).map((e) => e.type), ['deal', 'emergency']);
 });
 
+test('a same-turn training run refreshes serving overflow before a later emergency move', () => {
+  const s = createInitialState();
+  s.models.push({
+    active: true,
+    activated: true,
+    activeFromTurn: 0,
+    channel: 'consumer',
+    priceStance: 'market',
+    users: 9e6,
+    userCap: 1e8,
+    servingCost: 0,
+    spec: { size: 'medium', arch: 'moe', context: 'short', precision: 'bf16', guard: false, channel: 'consumer', reasoning: 'off' },
+  });
+  const smallRecipe = { ...recipe, sliders: { ...recipe.sliders, size: 'small' } };
+  // The run costs $35M up front and pushes serving load past 80%, so burn rises from about
+  // $49.6M to $54.8M a month: $313M left is over six months of runway on the stale burn, under six on the fresh one.
+  s.cash = 313 + 35;
+  const out = endTurn(s, {
+    moves: [
+      { type: 'startRun', recipe: smallRecipe },
+      { type: 'emergency', option: 'bridgeRound' },
+    ],
+  }, createRng(17));
+  assert.equal(out.errors.length, 0);
+  assert.deepEqual(out.events.slice(0, 2).map((e) => e.type), ['startRun', 'emergency']);
+});
+
 test('using a rescue extends insolvency grace for the current turn only', () => {
   const s = createInitialState();
   s.cash = -100;
