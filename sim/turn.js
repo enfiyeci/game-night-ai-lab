@@ -64,7 +64,12 @@ export function endTurn(prev, actions = {}, rng) {
   const state = structuredClone(prev);
   const events = [];
   const errors = [];
+  delete state.flags.emergencyUsedThisTurn;
   if (state.ending) return { state, events, errors: ['the run is over'] };
+
+  activateReleases(state);
+  updateServing(state);
+  state.burnPlanned = projectBurn(state);
 
   if (actions.budget) {
     const r = setBudget(state, actions.budget);
@@ -75,8 +80,10 @@ export function endTurn(prev, actions = {}, rng) {
   if (moves.length > MAX_MOVES) errors.push(`only ${MAX_MOVES} moves per turn`);
   for (const move of moves.slice(0, MAX_MOVES)) {
     const r = applyMove(state, move, rng);
-    if (r.ok) events.push({ type: move.type, ...r });
-    else errors.push(r.error);
+    if (r.ok) {
+      events.push({ type: move.type, ...r });
+      state.burnPlanned = projectBurn(state);
+    } else errors.push(r.error);
     if (state.ending) break;
   }
 
@@ -88,7 +95,6 @@ export function endTurn(prev, actions = {}, rng) {
     const { arrived, failed } = computeTurn(state, rng);
     for (const a of arrived) events.push({ type: 'computeArrived', supplier: a.supplier, units: a.units });
     for (const f of failed) events.push({ type: 'computeFailed', supplier: f.supplier, units: f.units });
-    activateReleases(state);
     growUsers(state);
     updateServing(state);
     applyEconomy(state);
@@ -115,7 +121,10 @@ export function endTurn(prev, actions = {}, rng) {
   if (!state.ending && state.turnInEra >= era.turns) {
     eraGate(state);
     if (!state.ending) {
-      if (state.era === 5) finalEnding(state);
+      if (state.era === 5) {
+        if (state.flags.insolvent && state.cash <= 0) state.ending = 'acquihire';
+        else finalEnding(state);
+      }
       else {
         state.era += 1;
         state.turnInEra = 0;

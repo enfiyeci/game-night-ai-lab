@@ -84,6 +84,32 @@ test('a new budget updates emergency eligibility before moves', () => {
   assert.equal(out.events.some((e) => e.type === 'emergency'), true);
 });
 
+test('a same-turn compute deal refreshes burn before a later emergency move', () => {
+  const s = createInitialState();
+  s.cash = 310;
+  const out = endTurn(s, {
+    moves: [
+      { type: 'deal', supplierId: 'coreflame' },
+      { type: 'emergency', option: 'bridgeRound' },
+    ],
+  }, createRng(14));
+  assert.equal(out.errors.length, 0);
+  assert.deepEqual(out.events.slice(0, 2).map((e) => e.type), ['deal', 'emergency']);
+});
+
+test('using a rescue extends insolvency grace for the current turn only', () => {
+  const s = createInitialState();
+  s.cash = -100;
+  s.burnPlanned = 50;
+  s.flags.insolvent = true;
+  let out = endTurn(s, { moves: [{ type: 'emergency', option: 'bridgeRound' }] }, createRng(15));
+  assert.equal(out.state.ending, null);
+  assert.equal(out.state.flags.insolvent, true);
+  assert.equal(out.events.some((e) => e.type === 'emergency'), true);
+  out = endTurn(out.state, {}, createRng(16));
+  assert.equal(out.state.ending, 'acquihire');
+});
+
 test('conversion deadlines trigger once after the economy step', () => {
   const base = createInitialState();
   base.board = [50, 50, 50, 50, 50];
@@ -114,6 +140,25 @@ test('endTurn activates due releases before growing users', () => {
   assert.equal(state.models[1].users, 2.256e6);
 });
 
+test('a due release consumes serving compute before move validation', () => {
+  const s = createInitialState();
+  s.models.push({
+    active: true,
+    activated: false,
+    activeFromTurn: 0,
+    channel: 'consumer',
+    priceStance: 'market',
+    users: 4e6,
+    userCap: 16e6,
+    servingCost: 0,
+    spec: { size: 'medium', arch: 'dense', context: 'short', precision: 'bf16', guard: false, channel: 'consumer', reasoning: 'off' },
+  });
+  const out = endTurn(s, { moves: [{ type: 'startRun', recipe }] }, createRng(17));
+  assert.equal(out.state.activeRun, null);
+  assert.ok(out.errors.includes('not enough free compute'));
+  assert.ok(out.state.compute.servingUnits > 5);
+});
+
 test('eras advance every four turns and time accelerates', () => {
   let state = createInitialState();
   const rng = createRng(2);
@@ -133,6 +178,18 @@ test('later eras use their accelerated turn lengths', () => {
   eraFive.era = 5;
   const afterFive = endTurn(eraFive, {}, createRng(13)).state;
   assert.equal(afterFive.monthsElapsed, 0.25);
+});
+
+test('an insolvent lab cannot win at the era 5 finale', () => {
+  const s = createInitialState();
+  s.era = 5;
+  s.turnInEra = 3;
+  s.capability = 100;
+  s.cash = 1;
+  const { state } = endTurn(s, {}, createRng(18));
+  assert.equal(state.cash <= 0, true);
+  assert.equal(state.flags.insolvent, true);
+  assert.equal(state.ending, 'acquihire');
 });
 
 test('a full run is deterministic for a seed and always ends', () => {

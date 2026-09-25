@@ -45,7 +45,10 @@ export function computeRent(state) {
 export function projectBurn(state) {
   const spot = state.compute.overflow * BALANCE.unitMonthlyCost * BALANCE.spotPremium;
   const ops = BALANCE.baseOpsMonthly * (1 + 0.25 * (state.era - 1));
-  return ops + computeRent(state) + spot + state.budget.spend;
+  const arrivingRent = state.compute.pipeline
+    .filter((deal) => deal.arrivesTurn <= state.turn)
+    .reduce((sum, deal) => sum + deal.units * deal.costMult, 0) * BALANCE.unitMonthlyCost;
+  return ops + computeRent(state) + arrivingRent + spot + state.budget.spend;
 }
 
 export function valuationOf(state) {
@@ -127,6 +130,7 @@ export function useEmergency(state, option) {
   const used = (state.flags.emergencyUsed ??= []);
   if (used.includes(option)) return { ok: false, error: 'already used' };
   used.push(option);
+  if (option !== 'acquihire') state.flags.emergencyUsedThisTurn = true;
   if (option === 'equityForCompute') {
     state.cash += 300;
     state.compute.pipeline.push({ supplier: 'equity-partner', units: 10, costMult: 0.5, failChance: 0, arrivesTurn: state.turn + 1 });

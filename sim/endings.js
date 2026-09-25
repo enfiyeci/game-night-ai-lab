@@ -24,11 +24,10 @@ export function checkTurnEndings(state, rng) {
   if (state.cash <= 0) {
     const used = new Set(state.flags.emergencyUsed ?? []);
     const rescueRemains = Object.keys(EMERGENCY_OPTIONS).some((option) => option !== 'acquihire' && !used.has(option));
-    if (rescueRemains && !state.flags.insolvent) {
-      state.flags.insolvent = true;
-      return null;
-    }
-    return (state.ending = 'acquihire');
+    const rescueUsedThisTurn = state.flags.emergencyUsedThisTurn === true;
+    if (!rescueRemains || (state.flags.insolvent && !rescueUsedThisTurn)) return (state.ending = 'acquihire');
+    state.flags.insolvent = true;
+    return null;
   }
   if (state.capability > BALANCE.dangerLine && effectiveMisuse(state) > BALANCE.misuseDisasterLine && rng.chance(BALANCE.misuseRollChance)) {
     return (state.ending = 'misuse');
