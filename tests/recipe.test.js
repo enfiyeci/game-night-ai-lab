@@ -27,6 +27,22 @@ test('slot limits, one card per group, and locks', () => {
   assert.equal(validateRecipe(s, xl).ok, false);
 });
 
+test('recipe enum values must be own table entries', () => {
+  const s = createInitialState();
+  const badLength = { ...eraOneRecipe, sliders: { ...eraOneRecipe.sliders, length: 'constructor' } };
+  const badSize = { ...eraOneRecipe, sliders: { ...eraOneRecipe.sliders, size: 'constructor' } };
+  assert.equal(validateRecipe(s, badLength).ok, false);
+  assert.equal(validateRecipe(s, badSize).ok, false);
+});
+
+test('hazard-filter reuse requires a previously released model', () => {
+  const s = createInitialState();
+  const filterRecipe = { ...eraOneRecipe, picks: { ...eraOneRecipe.picks, pre: ['hazard-filter-reuse'] } };
+  assert.equal(validateRecipe(s, filterRecipe).ok, false);
+  s.models.push({});
+  assert.equal(validateRecipe(s, filterRecipe).ok, true);
+});
+
 test('midtraining opens in era 2 and compute multipliers stack', () => {
   const s = createInitialState();
   assert.equal(slotsFor(s, 'mid'), 0);
@@ -41,6 +57,12 @@ test('talent spend adds a slot', () => {
   const s = createInitialState();
   s.budget.split = { training: 0.25, safety: 0.2, security: 0.1, product: 0.15, talent: 0.3 };
   assert.equal(slotsFor(s, 'pre'), 3);
+});
+
+test('a talent share adds no slot when actual talent spend is zero', () => {
+  const s = createInitialState();
+  s.budget = { spend: 0, split: { training: 0, safety: 0, security: 0, product: 0, talent: 1 } };
+  assert.equal(slotsFor(s, 'pre'), 2);
 });
 
 test('unpicked groups fall back to their default card', () => {

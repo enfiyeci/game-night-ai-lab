@@ -9,12 +9,24 @@ export const USERS_BASE = { consumer: 4e6, enterprise: 5e5, agent: 5e4, open: 0 
 
 export const modelName = ({ family, generation, size }) => `${family} ${generation} ${TIER_WORDS[size]}`;
 
+const releaseOrder = (state, model) => model.releaseSequence ?? state.models.indexOf(model);
+
 export function activateReleases(state) {
   for (const model of state.models) {
     if (!model.active || model.activeFromTurn > state.turn || model.activated) continue;
+    const order = releaseOrder(state, model);
+    const superseding = state.models.some((other) =>
+      other !== model && other.active && other.activated && other.channel === model.channel && releaseOrder(state, other) > order,
+    );
+    if (superseding) {
+      model.active = false;
+      model.users = 0;
+      model.superseded = true;
+      continue;
+    }
     let carried = 0;
     for (const old of state.models) {
-      if (old !== model && old.active && old.activated && old.channel === model.channel) {
+      if (old !== model && old.active && old.activated && old.channel === model.channel && releaseOrder(state, old) < order) {
         carried = Math.max(carried, old.users);
         old.active = false;
         old.users = 0;
@@ -30,9 +42,9 @@ export function releaseModel(state, release, rng) {
   const m = state.pendingModel;
   if (!m) return { ok: false, error: 'no trained model to release' };
   const errors = validatePicks(state, 'release', release.picks ?? []);
-  if (!PRICE_STANCE[release.price]) errors.push(`unknown price stance ${release.price}`);
+  if (!Object.hasOwn(PRICE_STANCE, release.price)) errors.push(`unknown price stance ${release.price}`);
   const reasoning = m.spec.reasoningCapable ? release.reasoning ?? 'off' : 'off';
-  if (!(reasoning in REASONING_BONUS)) errors.push(`unknown reasoning effort ${reasoning}`);
+  if (!Object.hasOwn(REASONING_BONUS, reasoning)) errors.push(`unknown reasoning effort ${reasoning}`);
   if (!release.family) errors.push('the model needs a family name');
   if (errors.length) return { ok: false, error: errors.join('; ') };
 
@@ -73,6 +85,7 @@ export function releaseModel(state, release, rng) {
     users: fresh,
     userCap: fresh * 4,
     activeFromTurn: state.turn + delay,
+    releaseSequence: state.models.reduce((max, existing, index) => Math.max(max, existing.releaseSequence ?? index), -1) + 1,
     active: true,
     activated: false,
     flags,
@@ -92,7 +105,10 @@ export function releaseModel(state, release, rng) {
   state.alignmentDebt += sum('ad');
   state.sentiment = clamp(state.sentiment + (launchScore - bar) / 50, 0.5, 1.5);
   state.misuseExposure += Math.max(0, m.capability - BALANCE.dangerLine) * 0.3;
-  if (spec.channel === 'open') state.misuseLocked = Math.max(state.misuseLocked, m.openWeightsMx);
+  if (spec.channel === 'open') {
+    state.misuseExposure += m.openWeightsMx;
+    state.misuseLocked = Math.max(state.misuseLocked, state.misuseExposure);
+  }
 
   if (flags.includes('agentic')) {
     const p = sigmoid((state.alignmentDebt * m.capability / 100 - 40) / 8);

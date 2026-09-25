@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import { createRng } from '../sim/rng.js';
 import { endTurn, setBudget } from '../sim/turn.js';
+import { startRun } from '../sim/training.js';
 
 const recipe = {
   sliders: { size: 'medium', length: 'optimal', alignShare: 0.15 },
@@ -30,6 +31,14 @@ test('train then release across two turns', () => {
   ({ state } = endTurn(state, { moves: [{ type: 'release', release }] }, rng));
   assert.equal(state.models.length, 1);
   assert.equal(state.turn, 2);
+});
+
+test('a release capability gain is measured from the start-of-turn board baseline', () => {
+  const rng = createRng(19);
+  let { state } = endTurn(createInitialState(), { moves: [{ type: 'startRun', recipe }] }, rng);
+  const before = state.board[1];
+  ({ state } = endTurn(state, { moves: [{ type: 'release', release }] }, rng));
+  assert.equal(state.board[1], before + 3);
 });
 
 test('only two moves per turn, and bad moves are reported', () => {
@@ -184,6 +193,40 @@ test('a due release consumes serving compute before move validation', () => {
   assert.equal(out.state.activeRun, null);
   assert.ok(out.errors.includes('not enough free compute'));
   assert.ok(out.state.compute.servingUnits > 5);
+});
+
+test('endTurn emits a pause event when a run has lost reserved compute', () => {
+  const s = createInitialState();
+  startRun(s, recipe);
+  const turnsLeft = s.activeRun.turnsLeft;
+  s.compute.contracts = [];
+  s.compute.online = 0;
+  const out = endTurn(s, {}, createRng(20));
+  assert.equal(out.state.activeRun.turnsLeft, turnsLeft);
+  assert.equal(out.events.some((event) => event.type === 'runPaused'), true);
+});
+
+test('terminal moves normalize bounded state before advisor history is recorded', () => {
+  const s = createInitialState();
+  s.cash = 0;
+  s.alignmentDebt = 150;
+  s.misuseExposure = 140;
+  s.misuseLocked = 130;
+  s.security = -10;
+  s.raceHeat = 125;
+  s.publicTrust = 140;
+  s.staffTrust = -20;
+  s.perceivedAdOffset = 130;
+  s.govFavor = { us: -10, intl: 120 };
+  const out = endTurn(s, { moves: [{ type: 'emergency', option: 'acquihire' }] }, createRng(21));
+  assert.equal(out.state.ending, 'acquihire');
+  for (const value of [
+    out.state.alignmentDebt, out.state.misuseExposure, out.state.misuseLocked,
+    out.state.security, out.state.raceHeat, out.state.publicTrust, out.state.staffTrust,
+    out.state.perceivedAdOffset, out.state.govFavor.us, out.state.govFavor.intl,
+  ]) assert.ok(value >= 0 && value <= 100);
+  const safety = out.state.advisorHistory.at(-1).readings.find((reading) => reading.id === 'safety');
+  assert.equal(safety.truth, 100);
 });
 
 test('eras advance every four turns and time accelerates', () => {

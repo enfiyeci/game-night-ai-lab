@@ -18,7 +18,7 @@ export const CARDS = [
   { id: 'moe', stage: 'pre', group: 'arch', name: 'Mixture-of-experts', hint: 'Cheaper to train and serve; trickier to keep stable.', era: 1, requiresTech: 'moe', cost: { computeMult: 0.8 }, effects: { spec: { arch: 'moe' }, spike: 0.1 } },
   { id: 'sparse-moe', stage: 'pre', group: 'arch', name: 'Extreme sparse MoE + latent attention', hint: 'Best cost per capability, if your engineers are as good as they say.', era: 2, requiresTech: 'moe', cost: { computeMult: 0.6 }, effects: { spec: { arch: 'sparse' }, spike: 0.2 } },
   { id: 'stability', stage: 'pre', group: 'stability', name: 'Stability engineering', hint: 'Fewer loss spikes, fewer restarts at three in the morning.', era: 1, cost: { cash: 8 }, effects: { spike: -0.1 } },
-  { id: 'hazard-filter-reuse', stage: 'pre', group: 'hazard', name: 'Reuse last hazard-knowledge filter', hint: 'Cheap protection that goes stale.', era: 1, cost: { cash: 2 }, effects: { mx: -2, openWeightsMx: 14 } },
+  { id: 'hazard-filter-reuse', stage: 'pre', group: 'hazard', name: 'Reuse last hazard-knowledge filter', hint: 'Cheap protection that goes stale.', era: 1, requiresModel: true, cost: { cash: 2 }, effects: { mx: -2, openWeightsMx: 14 } },
   { id: 'hazard-filter-built', stage: 'pre', group: 'hazard', name: 'Purpose-built hazard-knowledge filter', hint: 'Real protection; useless against pasted material.', era: 3, cost: { cash: 5 }, effects: { mx: -4, openWeightsMx: 10 } },
 
   // Midtraining (opens in era 2)

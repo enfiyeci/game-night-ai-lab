@@ -41,6 +41,28 @@ test('a finished run produces a trained model with hidden effects applied', () =
   assert.equal(trained.openWeightsMx, 20);
 });
 
+test('zero talent spend provides no talent multiplier bonus', () => {
+  const s = createInitialState();
+  s.budget.spend = 0;
+  startRun(s, recipe);
+  const trained = advanceRun(s, noLuck);
+  assert.ok(Math.abs(trained.gain - 12.58) < 1e-9);
+});
+
+test('a run pauses without reserved compute and resumes when capacity returns', () => {
+  const s = createInitialState();
+  startRun(s, recipe);
+  s.compute.online = 4;
+  const turnsLeft = s.activeRun.turnsLeft;
+  let draws = 0;
+  const countedRng = { ...noLuck, chance: () => { draws += 1; return false; } };
+  assert.deepEqual(advanceRun(s, countedRng), { type: 'runPaused' });
+  assert.equal(s.activeRun.turnsLeft, turnsLeft);
+  assert.equal(draws, 0);
+  s.compute.online = 10;
+  assert.ok(advanceRun(s, countedRng).capability > 0);
+});
+
 test('low alignment share adds alignment debt; lawsuits are seeded by chance', () => {
   const s = createInitialState();
   const r2 = { ...recipe, sliders: { ...recipe.sliders, alignShare: 0 } };

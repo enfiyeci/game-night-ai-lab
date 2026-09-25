@@ -55,6 +55,15 @@ test('runway and valuation floors', () => {
   assert.equal(valuationOf(s), 80 * 60);
 });
 
+test('non-positive cash is in the danger zone even with infinite runway', () => {
+  const s = createInitialState();
+  s.cash = 0;
+  s.arr = 1200;
+  s.burnPlanned = 10;
+  assert.equal(runway(s, 'planned'), Infinity);
+  assert.equal(economyApi.inDangerZone(s), true);
+});
+
 test('users grow up to their cap', () => {
   const s = createInitialState();
   s.models.push(consumerModel(1e6));
@@ -87,6 +96,14 @@ test('funding rounds are rejected in era 1', () => {
   assert.equal(s.cash, 1000);
 });
 
+test('investor archetypes must be own table entries', () => {
+  const s = createInitialState();
+  s.era = 2;
+  const before = structuredClone(s);
+  assert.equal(raiseRound(s, 'constructor').ok, false);
+  assert.deepEqual(s, before);
+});
+
 test('emergency options only in the danger zone, once each', () => {
   const s = createInitialState();
   s.burnPlanned = 50;
@@ -98,4 +115,13 @@ test('emergency options only in the danger zone, once each', () => {
   assert.equal(useEmergency(s, 'bridgeRound').ok, false);
   assert.equal(useEmergency(s, 'acquihire').ok, true);
   assert.equal(s.ending, 'acquihire');
+});
+
+test('emergency options must be own table entries', () => {
+  const s = createInitialState();
+  s.cash = 100;
+  s.burnPlanned = 50;
+  const before = structuredClone(s);
+  assert.equal(useEmergency(s, 'constructor').ok, false);
+  assert.deepEqual(s, before);
 });

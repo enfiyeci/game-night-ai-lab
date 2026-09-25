@@ -66,6 +66,7 @@ export function endTurn(prev, actions = {}, rng) {
   const errors = [];
   delete state.flags.emergencyUsedThisTurn;
   if (state.ending) return { state, events, errors: ['the run is over'] };
+  const before = { arr: state.arr, capability: state.capability, cash: state.cash };
 
   activateReleases(state);
   updateServing(state);
@@ -89,10 +90,10 @@ export function endTurn(prev, actions = {}, rng) {
   }
 
   if (!state.ending) {
-    const before = { arr: state.arr, capability: state.capability, cash: state.cash };
     budgetEffects(state);
     const trained = advanceRun(state, rng);
-    if (trained) events.push({ type: 'runComplete', gain: trained.gain });
+    if (trained?.type === 'runPaused') events.push(trained);
+    else if (trained) events.push({ type: 'runComplete', gain: trained.gain });
     const { arrived, failed } = computeTurn(state, rng);
     for (const a of arrived) events.push({ type: 'computeArrived', supplier: a.supplier, units: a.units });
     for (const f of failed) events.push({ type: 'computeFailed', supplier: f.supplier, units: f.units });
@@ -114,6 +115,7 @@ export function endTurn(prev, actions = {}, rng) {
     checkTurnEndings(state, rng);
   }
 
+  normalize(state);
   recordAdvisors(state, rng);
   const era = eraById(state.era);
   state.turn += 1;

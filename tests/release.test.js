@@ -46,8 +46,25 @@ test('release needs a trained model and a family name', () => {
 
 test('open weights lock in misuse exposure', () => {
   const s = trainedState();
+  const before = s.misuseExposure;
+  const openWeightsMx = s.pendingModel.openWeightsMx;
   releaseModel(s, { ...release, picks: ['channel-open'] }, rng);
-  assert.equal(s.misuseLocked, 20);
+  assert.equal(s.misuseExposure, before + openWeightsMx);
+  assert.equal(s.misuseLocked, s.misuseExposure);
+});
+
+test('release enum values must be own table entries', () => {
+  for (const invalid of [
+    { price: 'constructor' },
+    { reasoning: 'constructor', reasoningCapable: true },
+  ]) {
+    const s = trainedState();
+    if (invalid.reasoningCapable) s.pendingModel.spec.reasoningCapable = true;
+    const before = structuredClone(s);
+    const result = releaseModel(s, { ...release, ...invalid }, rng);
+    assert.equal(result.ok, false);
+    assert.deepEqual(s, before);
+  }
 });
 
 test('a new model on the same channel retires the old one', () => {
@@ -77,6 +94,21 @@ test('a delayed model retires its predecessor only when it activates', () => {
   assert.equal(second.activated, true);
   assert.ok(second.users >= carried);
   assert.ok(second.userCap >= second.users * 4);
+});
+
+test('an older delayed release is superseded by a newer active release', () => {
+  const s = trainedState();
+  const older = releaseModel(s, { ...release, picks: ['eval-full', 'channel-staged'] }, rng).model;
+  startRun(s, recipe);
+  advanceRun(s, rng);
+  const newer = releaseModel(s, { ...release, generation: 2 }, rng).model;
+  assert.equal(newer.activated, true);
+  s.turn = older.activeFromTurn;
+  releaseApi.activateReleases(s);
+  assert.equal(older.active, false);
+  assert.equal(older.superseded, true);
+  assert.equal(newer.active, true);
+  assert.equal(newer.activated, true);
 });
 
 test('agentic releases can end the game in misalignment', () => {

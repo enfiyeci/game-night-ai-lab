@@ -6,12 +6,17 @@ export const SIZE_UNITS = { small: 2, medium: 5, large: 10, xl: 20 };
 export const SIZE_CAP = { small: -5, medium: 0, large: 5, xl: 8 };
 export const LENGTHS = { optimal: { turns: 0, cap: 0 }, over: { turns: 1, cap: 3 }, heavy: { turns: 2, cap: 5 } };
 export const TRAIN_STAGES = ['pre', 'mid', 'post'];
+const TALENT_SLOT_SPEND = 5;
 
 export const cardById = (id) => CARDS.find((c) => c.id === id);
 
+export const talentSpend = (state) => state.budget.spend * state.budget.split.talent;
+
 export function slotsFor(state, stage) {
   if (stage === 'mid' && state.era < 2) return 0;
-  return STAGE_SLOTS[stage] + (state.budget.split.talent >= 0.25 ? 1 : 0);
+  if (!Object.hasOwn(STAGE_SLOTS, stage)) return 0;
+  // The old 25% share at the typical $20M budget becomes a $5M/month threshold.
+  return STAGE_SLOTS[stage] + (talentSpend(state) >= TALENT_SLOT_SPEND ? 1 : 0);
 }
 
 export function cardUnlocked(state, card) {
@@ -55,9 +60,9 @@ export function resolveCards(state, stage, ids) {
 export function validateRecipe(state, recipe) {
   const errors = [];
   const { size, length, alignShare } = recipe.sliders;
-  if (!SIZES.includes(size)) errors.push(`unknown size ${size}`);
+  if (!Object.hasOwn(SIZE_UNITS, size)) errors.push(`unknown size ${size}`);
   if (size === 'xl' && state.era < 2) errors.push('the xl size unlocks in era 2');
-  if (!LENGTHS[length]) errors.push(`unknown training length ${length}`);
+  if (!Object.hasOwn(LENGTHS, length)) errors.push(`unknown training length ${length}`);
   if (length === 'heavy' && size !== 'small' && size !== 'medium') errors.push('heavy overtraining needs a small or medium model');
   if (!(alignShare >= 0 && alignShare <= 0.5)) errors.push('alignShare must be between 0 and 0.5');
   for (const stage of TRAIN_STAGES) errors.push(...validatePicks(state, stage, recipe.picks[stage] ?? []));

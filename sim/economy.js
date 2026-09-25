@@ -94,8 +94,8 @@ export const INVESTORS = {
 
 export function raiseRound(state, archetype) {
   if (state.era < 2) return { ok: false, error: 'funding rounds open in era 2' };
+  if (!Object.hasOwn(INVESTORS, archetype)) return { ok: false, error: `unknown investor ${archetype}` };
   const inv = INVESTORS[archetype];
-  if (!inv) return { ok: false, error: `unknown investor ${archetype}` };
   if (state.flags.lastRoundEra === state.era) return { ok: false, error: 'already raised a round this era' };
   const amount = Math.round(state.valuation * inv.share);
   state.cash += amount;
@@ -114,7 +114,7 @@ export function raiseRound(state, archetype) {
   return { ok: true, amount };
 }
 
-export const inDangerZone = (state) => runway(state, 'planned') < BALANCE.dangerZoneRunwayMonths;
+export const inDangerZone = (state) => state.cash <= 0 || runway(state, 'planned') < BALANCE.dangerZoneRunwayMonths;
 
 // Real-world models: docs/research/runway-history/runway_history.md
 export const EMERGENCY_OPTIONS = {
@@ -125,7 +125,7 @@ export const EMERGENCY_OPTIONS = {
 };
 
 export function useEmergency(state, option) {
-  if (!(option in EMERGENCY_OPTIONS)) return { ok: false, error: `unknown option ${option}` };
+  if (!Object.hasOwn(EMERGENCY_OPTIONS, option)) return { ok: false, error: `unknown option ${option}` };
   if (!inDangerZone(state)) return { ok: false, error: 'emergency options open only when runway is short' };
   const used = (state.flags.emergencyUsed ??= []);
   if (used.includes(option)) return { ok: false, error: 'already used' };

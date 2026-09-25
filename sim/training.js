@@ -1,6 +1,6 @@
 import { BALANCE } from './balance.js';
 import { eraById } from './data/eras.js';
-import { SIZE_CAP, LENGTHS, validateRecipe, recipeCost, recipeCards } from './recipe.js';
+import { SIZE_CAP, LENGTHS, validateRecipe, recipeCost, recipeCards, talentSpend } from './recipe.js';
 import { standardTechniques } from './techniques.js';
 
 export function availableUnits(state) {
@@ -25,6 +25,7 @@ export function startRun(state, recipe) {
 export function advanceRun(state, rng) {
   const run = state.activeRun;
   if (!run) return null;
+  if (state.compute.online < run.units) return { type: 'runPaused' };
   if (rng.chance(run.spikeChance)) run.spikes += 1;
   run.turnsLeft -= 1;
   if (run.turnsLeft > 0) return null;
@@ -46,7 +47,8 @@ export function resolveRun(state, run, rng) {
     base += (e.cap ?? 0) * (e.halfForLarge && large ? 0.5 : 1);
     base += (e.capReady ?? 0) * readiness;
   }
-  const talent = 0.8 + state.budget.split.talent;
+  // Each $20M/month of talent spend adds 1.0; the typical $4M spend preserves the old +0.2.
+  const talent = 0.8 + talentSpend(state) / 20;
   const uncappedGain = Math.max(0, base) * talent * (1 - 0.5 * alignShare) * Math.max(0.2, 1 - 0.2 * run.spikes);
   const capability = Math.min(BALANCE.maxCapability, state.capability + uncappedGain);
   const gain = Math.max(0, capability - state.capability);
