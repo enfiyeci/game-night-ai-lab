@@ -130,9 +130,13 @@ Winning endings from era 5: aligned success, negotiated pacing deal, pyrrhic win
 - **Compute market.** Four or five fictional actors: a chip titan, a cloud landlord, a neocloud
   that can fail, a sovereign financier with political strings, and power-site deals in era 4.
   Multi-year deals buy priority; spot capacity can vanish; equity deals attach strings.
-- **Constitution.** A short charter of visible clauses. Rival releases, investors and the
-  President push amendments; amended clauses stay visible, struck through. Some clauses have
-  mechanical effects (for example, a safety-compute promise).
+- **Constitution (clarified by owner 2026-09-25).** The *model's* constitution: the values
+  document your AI is trained on, like Claude's constitution or OpenAI's Model Spec. It is
+  not a company charter. It shapes model behavior, is amended under pressure (the President,
+  investors, users), and in the bad endings the AI that takes over carries its values. What
+  the player actually writes (value ranking and dials, a clause list, or rules versus
+  judgment) is **to be brainstormed later** (owner deferred 2026-09-25). Company promises
+  such as a safety-compute pledge live in `state.promises`, not here.
 - **Feed.** A read-only Twitter-like feed of generated posts reacting to events and state.
 - **President meetings** (era 2 or 3, and era 5). A fictional president, recognizable in style
   but not named after the real person (owner may override). Each answer has a flattery level
