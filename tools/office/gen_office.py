@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """Generator for the game's office art (from the K2 mockup generator, docs/design/mockups/source/gen_K2.py).
 
-Writes ui/assets/office.svg (the room only: no HUD, bubbles or markers) and ui/assets/anchors.json
-(head, rack and floor-menu points in the 1440 x 900 frame).
+With no arguments it writes ui/assets/office.svg (the K2 room only: no HUD, bubbles or markers) and
+ui/assets/anchors.json (head, rack and floor-menu points in the 1440 x 900 frame). --era N writes
+office-eraN.svg and anchors-eraN.json; --all writes the K2 files, all five eras and tools/eras.html.
 """
+import argparse
 import json
 import os
 
 ROOT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
-OUT_SVG = os.path.join(ROOT, "ui", "assets", "office.svg")
-OUT_ANCHORS = os.path.join(ROOT, "ui", "assets", "anchors.json")
 
 U = 62.0
 C = 0.8660254 * U
@@ -104,6 +104,35 @@ POT = M("coral", 62, "wood")
 MONITOR = M("ink", 82, "paper")
 SCREEN = M("ink", 80, "sky")
 KEYS = M("paper", 84, "ink")
+LEG = M("ink", 55, "paper")
+TABLE = M("paper", 78, "cream")
+FOLD_CHAIR = M("paper", 55, "ink")
+BRASS = M("wood", 72, "paper")
+ROBOT = M("paper", 84, "ink")
+
+
+# ---------------------------------------------------------------- eras
+ERA_NAMES = {1: "Chat assistants", 2: "The scale-up", 3: "Reasoning and agents", 4: "The gigawatt race",
+             5: "Self-improvement and pacing"}
+
+
+def features(era):
+    """What the room holds in an era. Mostly cumulative, but era 1's folding tables and pizza go in era 2, the funding
+    poster gives way to the power map in era 4, and the chains board replaces the K2 board. None is the approved K2 still."""
+    e = 2 if era is None else era
+    return dict(
+        gid="" if era is None else f"era{era}-",  # gradient-id prefix, so several era SVGs can share one page
+        folding=e == 1, pizza=e == 1, lounge=e >= 2, plants=e >= 2, constitution=e >= 2,
+        racks=([(8.7, 9.7, 1.45)] if e == 1 else [(8.7, 9.7, 2.35), (9.8, 10.8, 2.35)] if e == 2
+               else [(8.1, 8.96, 2.35), (9.02, 9.88, 2.35), (9.94, 10.8, 2.35)]),  # three slimmer racks clear the whiteboard
+        whiteboard="curve" if e == 1 else ("k2" if e == 2 else "chains"),
+        funding=era in (2, 3), power_map=e >= 4, wall_screen=e >= 3, bell=e >= 3,
+        campus=e >= 4, hard_hats=e >= 4, robot=e >= 4,
+        hot=e == 5, invite=e == 5, empty_researchers=e == 5,
+    )
+
+
+F = features(None)
 
 
 # ---------------------------------------------------------------- people
@@ -277,6 +306,13 @@ def chair_behind(big=False, col=CHAIR):
 
 def chair_front(col=CHAIR):
     """Chair seen from behind, in front of a back-facing sitter (drawn after the body)."""
+    if F["folding"]:
+        leg = f"stroke:{LEG};stroke-width:2.6;stroke-linecap:round"
+        return (f'<g transform="translate(-5,5)">'
+                f'<path d="M-12,-20 L-14,2 M12,-20 L14,2 M-9,-22 L-10,-2 M9,-22 L10,-2" style="{leg}"/>'
+                f'<ellipse cx="0" cy="-20" rx="16" ry="6" style="fill:{M(FOLD_CHAIR, 88, "ink")};stroke:{EDGE};stroke-width:.8"/>'
+                f'<rect x="-14" y="-46" width="28" height="18" rx="5" style="fill:{FOLD_CHAIR};stroke:{EDGE};stroke-width:.8"/>'
+                f'<path d="M-11,-28 L-12,-20 M11,-28 L12,-20" style="{leg}"/></g>')
     return (f'<g transform="translate(-5,5)">'
             f'<path d="M0,-18 L0,-6" style="stroke:{M(col, 70, "ink")};stroke-width:4"/>'
             + "".join(f'<path d="M0,-4 L{dx},{dy}" style="stroke:{M(col, 70, "ink")};stroke-width:3;stroke-linecap:round"/>'
@@ -286,6 +322,15 @@ def chair_front(col=CHAIR):
             f'<rect x="-15" y="-50" width="30" height="30" rx="8" style="fill:{col};stroke:{EDGE};stroke-width:.8"/>'
             f'<rect x="-11" y="-46" width="22" height="19" rx="5" style="fill:{M(col, 88, "paper")}"/>'
             f'</g>')
+
+
+def folding_table(x0, x1, y0, y1):
+    """Era 1: a light plastic folding table on thin metal legs, top at the usual desk height."""
+    i, t = 0.05, 0.04
+    legs = sorted([(x0 + i, y0 + i), (x1 - i - t, y0 + i), (x0 + i, y1 - i - t), (x1 - i - t, y1 - i - t)], key=lambda q: q[0] + q[1])
+    o = [box(x, y, 0, t, t, 0.7, LEG) for x, y in legs]
+    o.append(box(x0, y0, 0.7, x1 - x0, y1 - y0, 0.04, TABLE, top=M(TABLE, 80, "paper")))
+    return "".join(o)
 
 
 # ---------------------------------------------------------------- props
@@ -339,8 +384,9 @@ def hull(ps):
 def glow(x, y, z, w, d, h):
     """Faint screen-light rim around a monitor seen from the back: reads as switched on."""
     cs = [P(x + i * w, y + j * d, z + k * h) for i in (0, 1) for j in (0, 1) for k in (0, 1)]
+    sw, op = (12, "1") if F["hot"] else (7, ".75")
     return (f'<polygon points="{pts(hull(cs))}" style="fill:{M("sky", 40, "paper")};stroke:{M("sky", 40, "paper")};'
-            f'stroke-width:7;stroke-linejoin:round;opacity:.75;filter:blur(3.5px)"/>')
+            f'stroke-width:{sw};stroke-linejoin:round;opacity:{op};filter:blur(3.5px)"/>')
 
 
 def contact(X0, Y0, r=0.42):
@@ -358,6 +404,7 @@ def ws_front(seat, facing, person, big=False, tag="", extras=""):
     def WP(s, f, z=0.0):
         return (X0 + s, Y0 + f, z) if facing == "+y" else (X0 + f, Y0 + s, z)
 
+    big = big and not F["folding"]
     hw = 1.3 if big else 0.8
     f0, f1 = 0.3, (1.3 if big else 1.05)
     ax, ay = P(X0, Y0)
@@ -372,11 +419,16 @@ def ws_front(seat, facing, person, big=False, tag="", extras=""):
     else:
         o.append(shadow(X0 - 0.35, Y0 - hw, f1 + 0.35, 2 * hw))
     o.append(contact(X0, Y0))
-    o.append(f'<g transform="{tr}">{chair_behind(big, person.get("chair", CHAIR))}{body}</g>')
-    o.append(B(-hw, f0, 0, 0.07, f1 - f0, 0.68, wood))
-    o.append(B(hw - 0.07, f0, 0, 0.07, f1 - f0, 0.68, wood))
-    o.append(B(-hw + 0.07, f1 - 0.06, 0.2, 2 * hw - 0.14, 0.05, 0.48, M(wood, 92, "paper")))
-    o.append(B(-hw, f0, 0.68, 2 * hw, f1 - f0, 0.06, wood, top=M(wood, 88, "paper")))
+    chair = FOLD_CHAIR if F["folding"] else person.get("chair", CHAIR)
+    o.append(f'<g transform="{tr}">{chair_behind(big, chair)}{body}</g>')
+    if F["folding"]:
+        (x0, y0, _), (x1, y1, _) = WP(-hw, f0), WP(hw, f1)
+        o.append(folding_table(x0, x1, y0, y1))
+    else:
+        o.append(B(-hw, f0, 0, 0.07, f1 - f0, 0.68, wood))
+        o.append(B(hw - 0.07, f0, 0, 0.07, f1 - f0, 0.68, wood))
+        o.append(B(-hw + 0.07, f1 - 0.06, 0.2, 2 * hw - 0.14, 0.05, 0.48, M(wood, 92, "paper")))
+        o.append(B(-hw, f0, 0.68, 2 * hw, f1 - f0, 0.06, wood, top=M(wood, 88, "paper")))
     # keyboard + mouse
     o.append(B(-0.58, 0.37, 0.74, 0.7, 0.2, 0.025, KEYS, top=M("paper", 92, "ink")))
     o.append(B(0.24, 0.4, 0.74, 0.09, 0.13, 0.03, KEYS))
@@ -396,10 +448,11 @@ def ws_front(seat, facing, person, big=False, tag="", extras=""):
         tw = 7.6 * len(tag) + 16
         inner = (f'<rect x="{-tw / 2:.1f}" y="-11" width="{tw:.1f}" height="19" rx="4" style="fill:var(--paper);stroke:{A("ink", 40)};stroke-width:.8"/>'
                  f'<text x="0" y="3.2" text-anchor="middle" style="font-size:12px;font-weight:800;fill:var(--ink);letter-spacing:.01em">{tag}</text>')
+        pz = 0.54 if F["folding"] else 0.46
         if facing == "+y":
-            o.append(planeY(Y0 + f1, f'<g transform="translate({X0 * U:.1f},{-0.46 * U:.1f})">{inner}</g>'))
+            o.append(planeY(Y0 + f1, f'<g transform="translate({X0 * U:.1f},{-pz * U:.1f})">{inner}</g>'))
         else:
-            o.append(planeX(X0 + f1, Y0, f'<g transform="translate(0,{-0.46 * U:.1f})">{inner}</g>'))
+            o.append(planeX(X0 + f1, Y0, f'<g transform="translate(0,{-pz * U:.1f})">{inner}</g>'))
     head = P(X0, Y0)
     hsx = head[0] + (hx * K if facing == "+y" else -hx * K)
     return "".join(o), (hsx, head[1] + hy * K)
@@ -436,6 +489,24 @@ def screen_code(a0, a1, b0, b1, variant):
         o.append(f'<path d="M{a0 + 3:.1f},{b0 + 4:.1f} C{a0 + w * 0.25:.1f},{b0 + h * 0.75:.1f} {a0 + w * 0.5:.1f},{b0 + h * 0.8:.1f} {a1 - 3:.1f},{b1 - 5:.1f}" '
                  f'style="fill:none;stroke:{M("teal", 70, "paper")};stroke-width:1.6"/>')
         o.append(f'<path d="M{a0 + 3:.1f},{b1 - 3:.1f} L{a1 - 3:.1f},{b1 - 3:.1f}" style="stroke:{A("paper", 35)};stroke-width:.8"/>')
+    elif variant == "agents":
+        y, i = b0 + 4, 0
+        while y < b1 - 4:
+            dot = M("coral", 70, "paper") if i % 4 == 2 else M("teal", 70, "paper")
+            o.append(f'<circle cx="{a0 + 5:.1f}" cy="{y + 1.2:.1f}" r="1.5" style="fill:{dot}"/>'
+                     f'<rect x="{a0 + 9:.1f}" y="{y:.1f}" width="{(a1 - a0 - 13) * (0.35 + 0.1 * (i % 3)):.1f}" height="2.2" rx="1" style="fill:{A("paper", 55)}"/>'
+                     f'<rect x="{a1 - 14:.1f}" y="{y + .3:.1f}" width="{10 * (0.3 + 0.23 * ((i * 2) % 4)):.1f}" height="1.6" rx=".8" style="fill:{M("sky", 60, "paper")}"/>')
+            y += 4.6
+            i += 1
+    elif variant == "trace":
+        y, i = b0 + 5, 0
+        while y < b1 - 4:
+            ind = 5 + (i % 3) * 5
+            o.append(f'<circle cx="{a0 + ind:.1f}" cy="{y + 1:.1f}" r="1.6" style="fill:none;stroke:{M("teal", 70, "paper")};stroke-width:.9"/>'
+                     f'<rect x="{a0 + ind + 4:.1f}" y="{y:.1f}" width="{(a1 - a0 - ind - 10) * [0.8, 0.55, 0.7, 0.4][i % 4]:.1f}" height="2" rx="1" '
+                     f'style="fill:{M("coral", 70, "paper") if i == 3 else A("paper", 60)}"/>')
+            y += 5.2
+            i += 1
     else:
         cols = [M("sky", 60, "paper"), M("teal", 70, "paper"), M("coral", 70, "paper"), A("paper", 60)]
         y = b0 + 4
@@ -453,11 +524,16 @@ def ws_back(seat, person, variant):
     X0, Y0 = seat
     y0, y1 = Y0 - 1.1, Y0 - 0.35
     o = [shadow(X0 - 0.8, y0, 1.6, 1.4)]
-    o.append(box(X0 - 0.8, y0, 0, 0.07, y1 - y0, 0.68, "wood"))
-    o.append(box(X0 + 0.73, y0, 0, 0.07, y1 - y0, 0.68, "wood"))
-    o.append(box(X0 - 0.8, y0, 0.68, 1.6, y1 - y0, 0.06, "wood", top=M("wood", 88, "paper")))
+    if F["folding"]:
+        o.append(folding_table(X0 - 0.8, X0 + 0.8, y0, y1))
+    else:
+        o.append(box(X0 - 0.8, y0, 0, 0.07, y1 - y0, 0.68, "wood"))
+        o.append(box(X0 + 0.73, y0, 0, 0.07, y1 - y0, 0.68, "wood"))
+        o.append(box(X0 - 0.8, y0, 0.68, 1.6, y1 - y0, 0.06, "wood", top=M("wood", 88, "paper")))
     # monitor: screen faces the viewer (+y face)
     mx0, mx1 = X0 - 0.08, X0 + 0.68
+    if F["hot"]:
+        o.append(glow(mx0, y0 + 0.05, 0.8, mx1 - mx0, 0.05, 0.48))
     o.append(box(X0 + 0.24, y0 + 0.08, 0.74, 0.1, 0.07, 0.08, MONITOR))
     o.append(box(mx0, y0 + 0.05, 0.8, mx1 - mx0, 0.05, 0.48, MONITOR))
     o.append(planeY(y0 + 0.1, screen_code(mx0 * U + 3, mx1 * U - 3, -1.25 * U, -0.83 * U, variant)))
@@ -465,7 +541,8 @@ def ws_back(seat, person, variant):
     o.append(mug(X0 - 0.58, Y0 - 0.85, 0.74, "var(--sky)" if variant == "loss" else "var(--coral)"))
     ax, ay = P(X0, Y0)
     o.append(contact(X0 - 0.05, Y0 + 0.1))
-    o.append(f'<g transform="translate({ax:.1f},{ay:.1f}) scale({K})">{back_person(person)}{chair_front()}</g>')
+    sitter = "" if person is None else back_person(person)
+    o.append(f'<g transform="translate({ax:.1f},{ay:.1f}) scale({K})">{sitter}{chair_front()}</g>')
     return "".join(o), (ax + 2 * K, ay - 76 * K)
 
 
@@ -486,9 +563,9 @@ def room():
         g.append(f'<path d="M0,{j * U} L{W * U},{j * U}"/>')
     o.append(planeZ(0, f'<g style="stroke:{M("teal", 70, "ink")};stroke-width:1;opacity:.28">{"".join(g)}</g>'))
     # window light pool on the carpet
-    o.append(planeZ(0, f'<defs><linearGradient id="pool" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="{2.8 * U:.0f}" y2="0">'
+    o.append(planeZ(0, f'<defs><linearGradient id="{F["gid"]}pool" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="{2.8 * U:.0f}" y2="0">'
                        f'<stop offset="0" style="stop-color:var(--paper);stop-opacity:.55"/><stop offset="1" style="stop-color:var(--paper);stop-opacity:0"/></linearGradient></defs>'
-                       f'<polygon points="0,{1.4 * U:.0f} 0,{3.9 * U:.0f} {2.8 * U:.0f},{4.7 * U:.0f} {2.8 * U:.0f},{2.2 * U:.0f}" style="fill:url(#pool);filter:blur(4px)"/>'))
+                       f'<polygon points="0,{1.4 * U:.0f} 0,{3.9 * U:.0f} {2.8 * U:.0f},{4.7 * U:.0f} {2.8 * U:.0f},{2.2 * U:.0f}" style="fill:url(#{F["gid"]}pool);filter:blur(4px)"/>'))
     # rug under the CEO corner
     o.append(planeZ(0, f'<rect x="{5.35 * U}" y="{5.7 * U}" width="{3.85 * U}" height="{3.0 * U}" rx="14" '
                        f'style="fill:{M("cream", 78, "coral")};stroke:{M("coral", 55, "cream")};stroke-width:5"/>'
@@ -501,12 +578,13 @@ def room():
     o.append(poly([P(0, 0, wz), P(0, D, wz), P(0, D, H), P(0, 0, H)], wl_up))
     o.append(poly([P(0, 0, 0), P(0, D, 0), P(0, D, wz), P(0, 0, wz)], wl_lo))
     o.append(poly([P(0, 0, wz), P(W, 0, wz), P(W, 0, H), P(0, 0, H)], wr_up))
-    o.append('<defs><linearGradient id="wgl" x1="0" y1="0" x2="1" y2="0"><stop offset="0" style="stop-color:var(--paper);stop-opacity:.0"/>'
+    g = F["gid"]
+    o.append(f'<defs><linearGradient id="{g}wgl" x1="0" y1="0" x2="1" y2="0"><stop offset="0" style="stop-color:var(--paper);stop-opacity:.0"/>'
              '<stop offset=".55" style="stop-color:var(--paper);stop-opacity:.45"/><stop offset="1" style="stop-color:var(--paper);stop-opacity:.1"/></linearGradient>'
-             '<linearGradient id="wgr" x1="0" y1="0" x2="1" y2="0"><stop offset="0" style="stop-color:var(--ink);stop-opacity:.07"/>'
+             f'<linearGradient id="{g}wgr" x1="0" y1="0" x2="1" y2="0"><stop offset="0" style="stop-color:var(--ink);stop-opacity:.07"/>'
              '<stop offset="1" style="stop-color:var(--ink);stop-opacity:0"/></linearGradient></defs>')
-    o.append(poly([P(0, 0, 0), P(0, D, 0), P(0, D, H), P(0, 0, H)], "url(#wgl)", stroke=None))
-    o.append(poly([P(0, 0, 0), P(W, 0, 0), P(W, 0, H), P(0, 0, H)], "url(#wgr)", stroke=None))
+    o.append(poly([P(0, 0, 0), P(0, D, 0), P(0, D, H), P(0, 0, H)], f"url(#{g}wgl)", stroke=None))
+    o.append(poly([P(0, 0, 0), P(W, 0, 0), P(W, 0, H), P(0, 0, H)], f"url(#{g}wgr)", stroke=None))
     o.append(poly([P(0, 0, 0), P(W, 0, 0), P(W, 0, wz), P(0, 0, wz)], wr_lo))
     rail = M("wood", 72, "paper")
     o.append(poly([P(0, 0, wz), P(0, D, wz), P(0, D, wz + 0.06), P(0, 0, wz + 0.06)], rail))
@@ -526,26 +604,33 @@ def room():
 def right_wall_decor():
     o = []
     # framed constitution
-    a0, a1, b0, b1 = 2.1 * U, 3.3 * U, -2.3 * U, -1.3 * U
-    lines = "".join(f'<rect x="{a0 + 14:.1f}" y="{b0 + 30 + i * 5.2:.1f}" width="{(a1 - a0 - 28) * (0.95 if i % 3 else 0.7):.1f}" height="1.6" style="fill:{A("ink", 35)}"/>'
-                    for i in range(6))
-    o.append(f'<rect x="{a0:.1f}" y="{b0:.1f}" width="{a1 - a0:.1f}" height="{b1 - b0:.1f}" rx="2" style="fill:{M("wood", 70, "ink")};stroke:{EDGE}"/>'
-             f'<rect x="{a0 + 5:.1f}" y="{b0 + 5:.1f}" width="{a1 - a0 - 10:.1f}" height="{b1 - b0 - 10:.1f}" style="fill:var(--paper)"/>'
-             f'<text x="{(a0 + a1) / 2:.1f}" y="{b0 + 22:.1f}" text-anchor="middle" style="font-family:\'Libre Baskerville\',Georgia,serif;font-style:italic;font-size:10.5px;fill:var(--ink)">Constitution</text>'
-             f'<path d="M{a0 + 20:.1f},{b0 + 26:.1f} L{a1 - 20:.1f},{b0 + 26:.1f}" style="stroke:var(--coral);stroke-width:1"/>'
-             + lines +
-             f'<circle cx="{a1 - 16:.1f}" cy="{b1 - 14:.1f}" r="5" style="fill:var(--coral);opacity:.85"/>')
-    # whiteboard with a loss curve
-    a0, a1, b0, b1 = 4.65 * U, 7.35 * U, -2.32 * U, -1.15 * U
+    if F["constitution"]:
+        a0, a1, b0, b1 = 2.1 * U, 3.3 * U, -2.3 * U, -1.3 * U
+        lines = "".join(f'<rect x="{a0 + 14:.1f}" y="{b0 + 30 + i * 5.2:.1f}" width="{(a1 - a0 - 28) * (0.95 if i % 3 else 0.7):.1f}" height="1.6" style="fill:{A("ink", 35)}"/>'
+                        for i in range(6))
+        o.append(f'<rect x="{a0:.1f}" y="{b0:.1f}" width="{a1 - a0:.1f}" height="{b1 - b0:.1f}" rx="2" style="fill:{M("wood", 70, "ink")};stroke:{EDGE}"/>'
+                 f'<rect x="{a0 + 5:.1f}" y="{b0 + 5:.1f}" width="{a1 - a0 - 10:.1f}" height="{b1 - b0 - 10:.1f}" style="fill:var(--paper)"/>'
+                 f'<text x="{(a0 + a1) / 2:.1f}" y="{b0 + 22:.1f}" text-anchor="middle" style="font-family:\'Libre Baskerville\',Georgia,serif;font-style:italic;font-size:10.5px;fill:var(--ink)">Constitution</text>'
+                 f'<path d="M{a0 + 20:.1f},{b0 + 26:.1f} L{a1 - 20:.1f},{b0 + 26:.1f}" style="stroke:var(--coral);stroke-width:1"/>'
+                 + lines +
+                 f'<circle cx="{a1 - 16:.1f}" cy="{b1 - 14:.1f}" r="5" style="fill:var(--coral);opacity:.85"/>')
+    # whiteboard: one loss curve (era 1), the K2 board, then chains of thought (era 3 on)
+    a0, a1, b0, b1 = 4.65 * U, (6.75 if F["whiteboard"] == "chains" else 7.35) * U, -2.32 * U, -1.15 * U
     w, h = a1 - a0, b1 - b0
-    o.append(f'<rect x="{a0:.1f}" y="{b0:.1f}" width="{w:.1f}" height="{h:.1f}" rx="3" style="fill:{M("paper", 80, "ink")};stroke:{EDGE}"/>'
-             f'<rect x="{a0 + 4:.1f}" y="{b0 + 4:.1f}" width="{w - 8:.1f}" height="{h - 8:.1f}" rx="2" style="fill:var(--paper)"/>'
-             f'<path d="M{a0 + 18:.1f},{b0 + 12:.1f} L{a0 + 18:.1f},{b1 - 14:.1f} L{a0 + w * 0.55:.1f},{b1 - 14:.1f}" style="fill:none;stroke:var(--ink);stroke-width:1.6;stroke-linecap:round"/>'
-             f'<path d="M{a0 + 22:.1f},{b0 + 16:.1f} C{a0 + 40:.1f},{b0 + 48:.1f} {a0 + 60:.1f},{b1 - 26:.1f} {a0 + w * 0.53:.1f},{b1 - 22:.1f}" style="fill:none;stroke:var(--sky);stroke-width:2.4;stroke-linecap:round"/>'
-             f'<path d="M{a0 + w * 0.53 - 6:.1f},{b1 - 30:.1f} l6,8 l7,-10" style="fill:none;stroke:var(--coral);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"/>'
-             + "".join(f'<rect x="{a0 + w * 0.62:.1f}" y="{b0 + 16 + i * 9:.1f}" width="{w * (0.3 if i % 2 else 0.22):.1f}" height="2.2" rx="1" style="fill:{A("ink", 45) if i != 1 else "var(--coral)"}"/>'
-                       for i in range(5))
-             + f'<rect x="{a0 + w * 0.3:.1f}" y="{b1 - 2:.1f}" width="{w * 0.4:.1f}" height="5" rx="1.5" style="fill:{M("paper", 70, "ink")}"/>')
+    board = (f'<rect x="{a0:.1f}" y="{b0:.1f}" width="{w:.1f}" height="{h:.1f}" rx="3" style="fill:{M("paper", 80, "ink")};stroke:{EDGE}"/>'
+             f'<rect x="{a0 + 4:.1f}" y="{b0 + 4:.1f}" width="{w - 8:.1f}" height="{h - 8:.1f}" rx="2" style="fill:var(--paper)"/>')
+    if F["whiteboard"] == "chains":
+        board += board_chains(a0, b0)
+    else:
+        board += (f'<path d="M{a0 + 18:.1f},{b0 + 12:.1f} L{a0 + 18:.1f},{b1 - 14:.1f} L{a0 + w * 0.55:.1f},{b1 - 14:.1f}" style="fill:none;stroke:var(--ink);stroke-width:1.6;stroke-linecap:round"/>'
+                  f'<path d="M{a0 + 22:.1f},{b0 + 16:.1f} C{a0 + 40:.1f},{b0 + 48:.1f} {a0 + 60:.1f},{b1 - 26:.1f} {a0 + w * 0.53:.1f},{b1 - 22:.1f}" style="fill:none;stroke:var(--sky);stroke-width:2.4;stroke-linecap:round"/>')
+    if F["whiteboard"] == "k2":
+        board += (f'<path d="M{a0 + w * 0.53 - 6:.1f},{b1 - 30:.1f} l6,8 l7,-10" style="fill:none;stroke:var(--coral);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"/>'
+                  + "".join(f'<rect x="{a0 + w * 0.62:.1f}" y="{b0 + 16 + i * 9:.1f}" width="{w * (0.3 if i % 2 else 0.22):.1f}" height="2.2" rx="1" style="fill:{A("ink", 45) if i != 1 else "var(--coral)"}"/>'
+                            for i in range(5)))
+    o.append(board + f'<rect x="{a0 + w * 0.3:.1f}" y="{b1 - 2:.1f}" width="{w * 0.4:.1f}" height="5" rx="1.5" style="fill:{M("paper", 70, "ink")}"/>')
+    if F["invite"]:
+        o.append(summit_invite(a1 - 8, b0 - 6))
     # poster: a kestrel silhouette
     a0, a1, b0, b1 = 3.52 * U, 4.36 * U, -2.25 * U, -1.35 * U
     cx, cy = (a0 + a1) / 2, (b0 + b1) / 2
@@ -554,7 +639,42 @@ def right_wall_decor():
              f'<path d="M{cx - 18:.1f},{cy - 2:.1f} Q{cx - 6:.1f},{cy - 10:.1f} {cx:.1f},{cy + 2:.1f} Q{cx + 6:.1f},{cy - 10:.1f} {cx + 18:.1f},{cy - 2:.1f} '
              f'Q{cx + 6:.1f},{cy - 2:.1f} {cx + 1:.1f},{cy + 8:.1f} L{cx - 1:.1f},{cy + 8:.1f} Q{cx - 6:.1f},{cy - 2:.1f} {cx - 18:.1f},{cy - 2:.1f} Z" style="fill:var(--ink)"/>'
              f'<rect x="{a0 + 8:.1f}" y="{b1 - 12:.1f}" width="{a1 - a0 - 16:.1f}" height="3" rx="1.5" style="fill:{A("paper", 75)}"/>')
+    # wall screen above the bookshelf: a reasoning trace (era 3 on)
+    if F["wall_screen"]:
+        a0, a1, b0, b1 = 0.32 * U, 1.88 * U, -2.6 * U, -2.0 * U
+        o.append(f'<rect x="{a0:.1f}" y="{b0:.1f}" width="{a1 - a0:.1f}" height="{b1 - b0:.1f}" rx="3" style="fill:{MONITOR};stroke:{EDGE}"/>'
+                 + screen_code(a0 + 3, a1 - 3, b0 + 3, b1 - 3, "trace"))
     return planeY(0, "".join(o))
+
+
+def board_chains(a0, b0):
+    """Era 3 whiteboard: rows of reasoning steps joined by arrows, one row ending in a check."""
+    o = []
+    bw, bh, gap = 24, 9, 12
+    for r, n in enumerate([3, 3, 3]):
+        y = b0 + 12 + r * 17
+        x = a0 + 12 + (r % 2) * 5
+        for i in range(n):
+            o.append(f'<rect x="{x:.1f}" y="{y:.1f}" width="{bw}" height="{bh}" rx="3" style="fill:none;stroke:{A("ink", 60)};stroke-width:1.3"/>'
+                     f'<rect x="{x + 4:.1f}" y="{y + 3.8:.1f}" width="{bw * (0.55 if (r + i) % 2 else 0.4):.1f}" height="1.6" rx=".8" style="fill:{A("ink", 45)}"/>')
+            if i < n - 1:
+                ay = y + bh / 2
+                o.append(f'<path d="M{x + bw + 2:.1f},{ay:.1f} L{x + bw + gap - 3:.1f},{ay:.1f} M{x + bw + gap - 6:.1f},{ay - 2.5:.1f} L{x + bw + gap - 3:.1f},{ay:.1f} L{x + bw + gap - 6:.1f},{ay + 2.5:.1f}" '
+                         f'style="fill:none;stroke:var(--sky);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round"/>')
+            x += bw + gap
+        if r == 2:  # the last chain ends in a check, just after its final step
+            o.append(f'<path d="M{x - gap + 3:.1f},{y + bh / 2 - 1:.1f} l3,4 l6,-8" style="fill:none;stroke:var(--coral);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"/>')
+    return "".join(o)
+
+
+def summit_invite(a, b):
+    """Era 5: a summit invitation card pinned to the whiteboard."""
+    return (f'<g transform="translate({a:.1f},{b:.1f}) rotate(6)">'
+            f'<rect x="-15" y="0" width="32" height="24" rx="1.5" style="fill:var(--paper);stroke:{A("ink", 40)};stroke-width:.8"/>'
+            f'<rect x="-15" y="0" width="32" height="6" style="fill:var(--sky)"/>'
+            + "".join(f'<rect x="-11" y="{9 + i * 3.6:.1f}" width="{[20, 14, 17][i]}" height="1.4" rx=".7" style="fill:{A("ink", 40)}"/>' for i in range(3))
+            + f'<circle cx="11" cy="18" r="3" style="fill:none;stroke:var(--coral);stroke-width:1.1"/>'
+            f'<circle cx="1" cy="1" r="2.4" style="fill:var(--coral);stroke:{M("coral", 70, "ink")};stroke-width:.6"/></g>')
 
 
 def left_wall_decor():
@@ -565,18 +685,32 @@ def left_wall_decor():
     w, h = a1 - a0, b1 - b0
     o.append(f'<rect x="{a0 - 4:.1f}" y="{b0 - 4:.1f}" width="{w + 8:.1f}" height="{h + 8:.1f}" rx="3" style="fill:var(--paper);stroke:{EDGE}"/>'
              f'<rect x="{a0:.1f}" y="{b0:.1f}" width="{w:.1f}" height="{h:.1f}" style="fill:{M("sky", 38, "paper")}"/>')
-    # skyline + tree
-    bx = a0
-    for bw, bh in [(22, 26), (16, 40), (26, 30), (14, 48), (30, 22), (18, 36), (24, 28)]:
-        if bx + bw > a1:
-            bw = a1 - bx
-        o.append(f'<rect x="{bx:.1f}" y="{b1 - bh:.1f}" width="{bw:.1f}" height="{bh:.1f}" style="fill:{M("sky", 55, "paper")}"/>')
-        bx += bw + 2
-        if bx >= a1:
-            break
+    # the view: a city skyline, then a data-center campus with cooling towers (era 4 on)
+    if F["campus"]:
+        o.append(campus(a0, a1, b0, b1))
+    else:
+        bx = a0
+        for bw, bh in [(22, 26), (16, 40), (26, 30), (14, 48), (30, 22), (18, 36), (24, 28)]:
+            if bx + bw > a1:
+                bw = a1 - bx
+            o.append(f'<rect x="{bx:.1f}" y="{b1 - bh:.1f}" width="{bw:.1f}" height="{bh:.1f}" style="fill:{M("sky", 55, "paper")}"/>')
+            bx += bw + 2
+            if bx >= a1:
+                break
     o.append(f'<path d="M{a0 + w * 0.6:.1f},{b0 + 10:.1f} L{a0 + w * 0.75:.1f},{b0:.1f} L{a0 + w * 0.9:.1f},{b0:.1f} L{a0 + w * 0.7:.1f},{b0 + 18:.1f} Z" style="fill:{A("paper", 45)}"/>')
     o.append(f'<path d="M{(a0 + a1) / 2:.1f},{b0:.1f} L{(a0 + a1) / 2:.1f},{b1:.1f} M{a0:.1f},{(b0 + b1) / 2:.1f} L{a1:.1f},{(b0 + b1) / 2:.1f}" style="stroke:var(--paper);stroke-width:4"/>')
     o.append(f'<rect x="{a0 - 8:.1f}" y="{b1 + 3:.1f}" width="{w + 16:.1f}" height="6" rx="1.5" style="fill:{M("paper", 88, "ink")};stroke:{EDGE}"/>')
+    if F["hard_hats"]:
+        o.append(hard_hat(a0 + w * 0.22, b1 + 3, "var(--coral)") + hard_hat(a0 + w * 0.4, b1 + 3, BRASS))
+    # funding-round poster (eras 2-3), replaced by the power-deal map (era 4 on)
+    pa0, pa1, pb0, pb1 = (D - 4.9) * U, (D - 4.12) * U, -2.42 * U, -1.64 * U
+    if F["funding"]:
+        o.append(funding_poster(pa0, pa1, pb0, pb1))
+    elif F["power_map"]:
+        o.append(power_map(pa0, pa1, pb0, pb1))
+    # the shipping bell in the back corner (era 3 on)
+    if F["bell"]:
+        o.append(ship_bell((D - 0.8) * U, -2.15 * U))
     # clock
     ca, cb = (D - 5.25) * U, -2.15 * U
     o.append(f'<circle cx="{ca:.1f}" cy="{cb:.1f}" r="12" style="fill:var(--paper);stroke:var(--ink);stroke-width:2"/>'
@@ -592,6 +726,72 @@ def left_wall_decor():
              f'<rect x="{a0 + 9:.1f}" y="{b0 * 0.5 + 6:.1f}" width="{w - 18:.1f}" height="{-b0 * 0.36:.1f}" rx="2" style="fill:none;stroke:{M(dcol, 75, "ink")};stroke-width:1.5"/>'
              f'<circle cx="{a1 - 10:.1f}" cy="{b0 * 0.48:.1f}" r="3" style="fill:{M("cream", 60, "ink")}"/>')
     return planeX(0, D, "".join(o))
+
+
+def campus(a0, a1, b0, b1):
+    """Era 4 window view: long low data halls and two cooling towers with steam."""
+    w = a1 - a0
+    o = [f'<rect x="{a0 + w * 0.28:.1f}" y="{b1 - 26:.1f}" width="{w * 0.34:.1f}" height="26" style="fill:{M("sky", 56, "paper")}"/>',
+         f'<rect x="{a0:.1f}" y="{b1 - 17:.1f}" width="{w * 0.5:.1f}" height="17" style="fill:{M("sky", 68, "paper")}"/>']
+    o += [f'<rect x="{a0 + 6 + i * 16:.1f}" y="{b1 - 21:.1f}" width="8" height="4" style="fill:{M("sky", 78, "ink")}"/>' for i in range(4)]
+    o.append(f'<rect x="{a0:.1f}" y="{b1 - 9:.1f}" width="{w * 0.5:.1f}" height="2" style="fill:{A("sky", 45)}"/>')
+    for cx, th, bw in [(a0 + w * 0.7, 40, 13), (a0 + w * 0.87, 33, 11)]:
+        bb, tw = b1, bw * 0.62
+        o.append(f'<path d="M{cx - bw:.1f},{bb:.1f} Q{cx - tw * 0.55:.1f},{bb - th * 0.6:.1f} {cx - tw:.1f},{bb - th:.1f} L{cx + tw:.1f},{bb - th:.1f} '
+                 f'Q{cx + tw * 0.55:.1f},{bb - th * 0.6:.1f} {cx + bw:.1f},{bb:.1f} Z" style="fill:{M("paper", 76, "sky")};stroke:{A("ink", 22)};stroke-width:.8"/>')
+        o.append("".join(f'<circle cx="{cx + dx:.1f}" cy="{bb - th - dy:.1f}" r="{r}" style="fill:{A("paper", 80)}"/>'
+                         for dx, dy, r in [(-3, 5, 5.5), (4, 9, 6.5), (-1, 15, 5)]))
+    return "".join(o)
+
+
+def hard_hat(a, b, col):
+    """A hard hat resting on the window sill (era 4 on)."""
+    return (f'<path d="M{a - 10:.1f},{b:.1f} Q{a - 10:.1f},{b - 12:.1f} {a:.1f},{b - 12:.1f} Q{a + 10:.1f},{b - 12:.1f} {a + 10:.1f},{b:.1f} Z" '
+            f'style="fill:{col};stroke:{EDGE};stroke-width:.8"/>'
+            f'<path d="M{a:.1f},{b - 12:.1f} L{a:.1f},{b - 2:.1f}" style="stroke:{M(col, 75, "ink")};stroke-width:1.6"/>'
+            f'<rect x="{a - 13:.1f}" y="{b - 2.5:.1f}" width="26" height="3" rx="1.5" style="fill:{M(col, 80, "ink")}"/>')
+
+
+def funding_poster(a0, a1, b0, b1):
+    """Eras 2-3: a funding-round poster, rising bars and an arrow."""
+    w, h = a1 - a0, b1 - b0
+    o = [f'<rect x="{a0:.1f}" y="{b0:.1f}" width="{w:.1f}" height="{h:.1f}" style="fill:var(--paper);stroke:{EDGE}"/>',
+         f'<text x="{a0 + w / 2:.1f}" y="{b0 + 10:.1f}" text-anchor="middle" style="font-size:6.5px;font-weight:900;fill:var(--ink);letter-spacing:.05em">SERIES A</text>']
+    o += [f'<rect x="{a0 + 8 + i * 9:.1f}" y="{b1 - 6 - hh:.1f}" width="6" height="{hh}" style="fill:var(--teal)"/>' for i, hh in enumerate([7, 12, 18, 25])]
+    o.append(f'<path d="M{a0 + 7:.1f},{b1 - 16:.1f} L{a1 - 9:.1f},{b0 + 17:.1f} M{a1 - 15:.1f},{b0 + 16:.1f} L{a1 - 9:.1f},{b0 + 17:.1f} L{a1 - 10:.1f},{b0 + 23:.1f}" '
+             f'style="fill:none;stroke:var(--coral);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"/>')
+    return "".join(o)
+
+
+def power_map(a0, a1, b0, b1):
+    """Era 4 on: a map of the power deals, lines from plants to the lab's campus."""
+    w, h = a1 - a0, b1 - b0
+    lab = (a0 + w * 0.55, b0 + h * 0.62)
+    sites = [(a0 + 9, b0 + 20), (a0 + w - 9, b0 + 17), (a0 + 11, b1 - 8), (a0 + w - 10, b1 - 7)]
+    o = [f'<rect x="{a0:.1f}" y="{b0:.1f}" width="{w:.1f}" height="{h:.1f}" style="fill:{M("cream", 45, "paper")};stroke:{EDGE}"/>',
+         f'<path d="M{a0 + 6:.1f},{b0 + 14:.1f} Q{a0 + w * 0.5:.1f},{b0 + 6:.1f} {a1 - 5:.1f},{b0 + 13:.1f} Q{a1 - 2:.1f},{b1 - 14:.1f} {a1 - 7:.1f},{b1 - 4:.1f} '
+         f'Q{a0 + w * 0.4:.1f},{b1 + 1:.1f} {a0 + 5:.1f},{b1 - 5:.1f} Q{a0 + 1:.1f},{b0 + h * 0.5:.1f} {a0 + 6:.1f},{b0 + 14:.1f} Z" '
+         f'style="fill:{A("teal", 18)};stroke:{A("teal", 70)};stroke-width:.9;stroke-dasharray:3 2"/>',
+         f'<text x="{a0 + w / 2:.1f}" y="{b0 + 9:.1f}" text-anchor="middle" style="font-size:6px;font-weight:900;fill:var(--ink);letter-spacing:.05em">POWER</text>']
+    o += [f'<path d="M{x:.1f},{y:.1f} L{lab[0]:.1f},{lab[1]:.1f}" style="stroke:var(--sky);stroke-width:1.2"/>' for x, y in sites]
+    o += [f'<rect x="{x - 2.5:.1f}" y="{y - 2.5:.1f}" width="5" height="5" style="fill:var(--wood);stroke:{A("ink", 40)};stroke-width:.6"/>' for x, y in sites]
+    o.append(f'<circle cx="{lab[0]:.1f}" cy="{lab[1]:.1f}" r="3.6" style="fill:var(--coral);stroke:var(--paper);stroke-width:1"/>')
+    return "".join(o)
+
+
+def ship_bell(a, b):
+    """Era 3 on: the brass bell rung when a model ships, on a wall bracket with a pull rope."""
+    rope = M("wood", 50, "paper")
+    return (f'<rect x="{a + 9:.1f}" y="{b - 10:.1f}" width="5" height="16" rx="1.5" style="fill:{M("ink", 70, "wood")}"/>'
+            f'<path d="M{a + 10:.1f},{b - 5:.1f} L{a:.1f},{b - 5:.1f} L{a:.1f},{b - 2:.1f}" style="fill:none;stroke:{M("ink", 70, "wood")};stroke-width:2.2"/>'
+            f'<path d="M{a:.1f},{b + 20:.1f} q3,8 0,16 q-3,7 0,13" style="fill:none;stroke:{rope};stroke-width:1.6"/>'
+            f'<circle cx="{a:.1f}" cy="{b + 50:.1f}" r="3" style="fill:var(--coral)"/>'
+            f'<path d="M{a - 3:.1f},{b - 2:.1f} Q{a - 6:.1f},{b + 1:.1f} {a - 6:.1f},{b + 9:.1f} Q{a - 7:.1f},{b + 14:.1f} {a - 10:.1f},{b + 16:.1f} '
+            f'L{a + 10:.1f},{b + 16:.1f} Q{a + 7:.1f},{b + 14:.1f} {a + 6:.1f},{b + 9:.1f} Q{a + 6:.1f},{b + 1:.1f} {a + 3:.1f},{b - 2:.1f} Z" '
+            f'style="fill:{BRASS};stroke:{M("wood", 55, "ink")};stroke-width:.9"/>'
+            f'<rect x="{a - 11:.1f}" y="{b + 15:.1f}" width="22" height="3" rx="1.5" style="fill:{M(BRASS, 80, "ink")}"/>'
+            f'<ellipse cx="{a - 2.5:.1f}" cy="{b + 6:.1f}" rx="1.4" ry="4" style="fill:{A("paper", 60)}"/>'
+            f'<circle cx="{a:.1f}" cy="{b + 19.5:.1f}" r="2" style="fill:{M("wood", 55, "ink")}"/>')
 
 
 def bookshelf():
@@ -618,35 +818,52 @@ def bookshelf():
 
 
 def rack():
-    o = [shadow(8.65, 0.1, 2.2, 1.2, 0.08)]
+    """The server racks along the back wall: one short rack in era 1, two (K2), three from era 3; amber and warm in era 5."""
+    racks = F["racks"]
+    x0, x1 = racks[0][0], racks[-1][1]
+    o = [shadow(x0 - 0.05, 0.1, x1 - x0 + 0.1, 1.2, 0.08)]
     body = M("ink", 86, "sky")
-    leds = []
-    for rx0, rx1, rid in [(8.7, 9.7, 0), (9.8, 10.8, 1)]:
-        o.append(box(rx0, 0.12, 0, rx1 - rx0, 1.13, 2.35, body, top=M(body, 80, "paper")))
+    if F["hot"]:
+        cx, cy = P((x0 + x1) / 2, 0.7, 1.4)
+        o.append(f'<ellipse cx="{cx:.1f}" cy="{cy:.1f}" rx="{(x1 - x0) * U * 0.62:.1f}" ry="{1.9 * U:.1f}" style="fill:{A("coral", 26)};filter:blur(14px)"/>')
+        palette = ["var(--wood)", M("wood", 55, "coral"), "var(--coral)", M("wood", 70, "paper"), M("coral", 65, "wood")]
+    else:
+        palette = ["var(--teal)", M("teal", 60, "paper"), "var(--coral)", "var(--sky)", M("teal", 60, "paper")]
+    for rid, (rx0, rx1, h) in enumerate(racks):
+        o.append(box(rx0, 0.12, 0, rx1 - rx0, 1.13, h, body, top=M(body, 80, "paper")))
         inner = []
         a0, a1 = rx0 * U + 6, rx1 * U - 6
-        for j in range(12):
-            bt = -2.35 * U + 8 + j * 10.2
+        for j in range(int((h * U - 16) / 10.2)):
+            bt = -h * U + 8 + j * 10.2
             inner.append(f'<rect x="{a0:.1f}" y="{bt:.1f}" width="{a1 - a0:.1f}" height="8" rx="1" style="fill:{M("ink", 70, "paper")}"/>')
-            for q in range(5):
-                col = ["var(--teal)", M("teal", 60, "paper"), "var(--coral)", "var(--sky)", M("teal", 60, "paper")][(q + j + rid) % 5]
+            for q in range(5 if rx1 - rx0 > 0.9 else 4):
+                col = palette[(q + j + rid) % 5]
                 dl = ((j * 7 + q * 3 + rid * 5) % 11) * 0.13
                 inner.append(f'<rect class="led" x="{a1 - 8 - q * 6:.1f}" y="{bt + 2.5:.1f}" width="3.2" height="3" rx=".8" style="fill:{col};animation-delay:-{dl:.2f}s"/>')
             inner.append(f'<rect x="{a0 + 3:.1f}" y="{bt + 3:.1f}" width="{(a1 - a0) * 0.35:.1f}" height="1.6" style="fill:{A("paper", 25)}"/>')
-        leds.append(planeY(1.25, "".join(inner)))
-        # side vents on +x face of rack 2
-        if rid == 1:
-            v = "".join(f'<rect x="{(1.25 - 0.18) * U - 40:.1f}" y="{-2.35 * U + 14 + j * 12:.1f}" width="34" height="2.4" rx="1.2" style="fill:{M(body, 70, "ink")}"/>' for j in range(9))
-            leds.append(planeX(rx1, 1.25, v))
-        o.append(leds[-1] if rid == 0 else "".join(leds[1:]))
+        o.append(planeY(1.25, "".join(inner)))
+        # side vents on the +x face of the last rack
+        if rid == len(racks) - 1:
+            v = "".join(f'<rect x="{(1.25 - 0.18) * U - 40:.1f}" y="{-h * U + 14 + j * 12:.1f}" width="34" height="2.4" rx="1.2" style="fill:{M(body, 70, "ink")}"/>'
+                        for j in range(int((h * U - 28) / 12)))
+            o.append(planeX(rx1, 1.25, v))
     return "".join(o)
+
+
+def rack_anchor():
+    racks = F["racks"]
+    return P((racks[0][0] + racks[-1][1]) / 2, 0.7, max(r[2] for r in racks))
 
 
 def cables():
     s = f"fill:none;stroke:{M('ink', 78, 'sky')};stroke-width:3.2;stroke-linecap:round"
     s2 = f"fill:none;stroke:{M('coral', 60, 'ink')};stroke-width:2.6;stroke-linecap:round"
+    extra = ""
+    if len(F["racks"]) == 3:  # the third rack is patched into the first
+        extra = f'<path d="M{8.5 * U},{1.3 * U} C{8.6 * U},{1.8 * U} {9.3 * U},{1.8 * U} {9.45 * U},{1.3 * U}" style="fill:none;stroke:{M("sky", 70, "ink")};stroke-width:2.8;stroke-linecap:round"/>'
     return planeZ(0, f'<path d="M{8.9 * U},{1.3 * U} C{8.4 * U},{2.2 * U} {7.9 * U},{2.1 * U} {7.35 * U},{1.75 * U}" style="{s}"/>'
-                     f'<path d="M{9.0 * U},{1.3 * U} C{8.5 * U},{2.55 * U} {6.4 * U},{2.4 * U} {5.6 * U},{2.15 * U} C{5.3 * U},{2.05 * U} {5.1 * U},{1.9 * U} {4.95 * U},{1.75 * U}" style="{s2}"/>')
+                     f'<path d="M{9.0 * U},{1.3 * U} C{8.5 * U},{2.55 * U} {6.4 * U},{2.4 * U} {5.6 * U},{2.15 * U} C{5.3 * U},{2.05 * U} {5.1 * U},{1.9 * U} {4.95 * U},{1.75 * U}" style="{s2}"/>'
+                     + extra)
 
 
 def water_cooler():
@@ -682,6 +899,47 @@ def lounge():
     return "".join(o)
 
 
+def pizza_boxes(x, y):
+    """Era 1: a stack of pizza boxes where the lounge will go."""
+    card = M("cream", 62, "wood")
+    o = [shadow(x - 0.36, y - 0.36, 0.72, 0.72, 0.02)]
+    for i, (dx, dy) in enumerate([(0, 0), (0.05, -0.04), (-0.03, 0.03)]):
+        o.append(box(x - 0.31 + dx, y - 0.31 + dy, i * 0.065, 0.62, 0.62, 0.06, card, top=M("cream", 72, "paper")))
+    cx, cy = (x - 0.03) * U, (y + 0.03) * U
+    # the lid's logo: a pizza with one slice gone
+    o.append(planeZ(0.19, f'<path d="M{cx:.1f},{cy:.1f} L{cx + 10:.1f},{cy:.1f} A10,10 0 1,1 {cx + 5:.1f},{cy - 8.66:.1f} Z" '
+                          f'style="fill:{M("wood", 60, "paper")};stroke:{M("wood", 70, "ink")};stroke-width:.8"/>'
+                          f'<path d="M{cx:.1f},{cy:.1f} L{cx + 7.5:.1f},{cy:.1f} A7.5,7.5 0 1,1 {cx + 3.75:.1f},{cy - 6.5:.1f} Z" style="fill:var(--coral)"/>'
+                          + "".join(f'<circle cx="{cx + dx:.1f}" cy="{cy + dy:.1f}" r="1.4" style="fill:{M("coral", 60, "ink")}"/>'
+                                    for dx, dy in [(-3, -3), (2, 3), (-4, 3)])))
+    return "".join(o)
+
+
+def robot(x, y):
+    """Era 4 on: a small humanoid-robot prototype on a display plinth."""
+    o = [shadow(x - 0.36, y - 0.36, 0.72, 0.72, 0.02)]
+    sx, sy = P(x, y, 0)
+    side = M(ROBOT, 82, "ink")
+    joint = M("ink", 80, "sky")
+    o.append(f'<g transform="translate({sx:.1f},{sy:.1f})">'
+             f'<ellipse cx="0" cy="-4" rx="30" ry="15" style="fill:{M("ink", 72, "paper")};stroke:{EDGE}"/>'
+             f'<ellipse cx="0" cy="-10" rx="30" ry="15" style="fill:{M("paper", 86, "ink")};stroke:{EDGE}"/>'
+             f'<rect x="-10" y="-52" width="8" height="42" rx="3" style="fill:{ROBOT};stroke:{EDGE};stroke-width:.8"/>'
+             f'<rect x="2" y="-52" width="8" height="42" rx="3" style="fill:{side};stroke:{EDGE};stroke-width:.8"/>'
+             f'<circle cx="-6" cy="-32" r="2.6" style="fill:{joint}"/><circle cx="6" cy="-32" r="2.6" style="fill:{joint}"/>'
+             f'<rect x="-20" y="-86" width="7" height="34" rx="3.5" style="fill:{ROBOT};stroke:{EDGE};stroke-width:.8"/>'
+             f'<rect x="13" y="-86" width="7" height="34" rx="3.5" style="fill:{side};stroke:{EDGE};stroke-width:.8"/>'
+             f'<rect x="-14" y="-90" width="28" height="40" rx="8" style="fill:{ROBOT};stroke:{EDGE};stroke-width:.8"/>'
+             f'<path d="M4,-89 L6,-89 Q13,-89 13,-82 L13,-58 Q13,-51 6,-51 L4,-51 Z" style="fill:{side}"/>'
+             f'<circle cx="0" cy="-74" r="3.4" style="fill:var(--sky);stroke:{M("sky", 70, "ink")};stroke-width:.8"/>'
+             f'<rect x="-3" y="-96" width="6" height="7" style="fill:{joint}"/>'
+             f'<rect x="-12" y="-118" width="24" height="23" rx="8" style="fill:{ROBOT};stroke:{EDGE};stroke-width:.8"/>'
+             f'<rect x="-9" y="-111" width="18" height="8" rx="4" style="fill:{SCREEN}"/>'
+             f'<circle cx="-4" cy="-107" r="1.6" style="fill:{M("sky", 60, "paper")}"/><circle cx="4" cy="-107" r="1.6" style="fill:{M("sky", 60, "paper")}"/>'
+             f'</g>')
+    return "".join(o)
+
+
 # ---------------------------------------------------------------- people roster
 PEOPLE = {
     "ceo": dict(skin=SK_MED, hair=H_BLACK, style="short", shirt=M("ink", 78, "sky"), mood="happy", suit=True, chair=M("coral", 55, "ink")),
@@ -697,7 +955,7 @@ HAIR_TOP = 24  # sprite units from the head centre to just above the tallest hai
 
 
 def scene():
-    """Returns (svg body, head anchors). A head anchor is the top-centre of the head, hair included."""
+    """Returns (svg body, head anchors) for the era in F. A head anchor is the top-centre of the head, hair included."""
     heads = {}
     o = [room(), right_wall_decor(), left_wall_decor(), cables()]
     o.append(bookshelf())
@@ -709,34 +967,92 @@ def scene():
         heads[role] = [round(hx, 1), round(hy - HAIR_TOP * K, 1)]
         o.append(f'<g id="person-{role}">{svg}</g>')
 
-    person("researcher1", ws_back((4.2, 2.35), PEOPLE["researcher1"], "code"))
-    person("researcher2", ws_back((6.6, 2.35), PEOPLE["researcher2"], "loss"))
+    # era 5: the two researchers' chairs are empty and their monitors show agents at work
+    away = F["empty_researchers"]
+    person("researcher1", ws_back((4.2, 2.35), None if away else PEOPLE["researcher1"], "agents" if away else "code"))
+    person("researcher2", ws_back((6.6, 2.35), None if away else PEOPLE["researcher2"], "agents" if away else "loss"))
     person("research", ws_front((1.5, 4.35), "+x", PEOPLE["research"], tag="Research", extras=[("papers", 0.5, 0.8), ("mug2", 0.55, 0.45)]))
     o.append(water_cooler())
-    person("safety", ws_front((4.9, 4.15), "+y", PEOPLE["safety"], tag="Safety", extras=[("papers", 0.45, 0.75), ("plant", 0.62, 0.45)]))
+    desk_plant = [("plant", 0.62, 0.45)] if F["plants"] else []
+    person("safety", ws_front((4.9, 4.15), "+y", PEOPLE["safety"], tag="Safety", extras=[("papers", 0.45, 0.75)] + desk_plant))
     person("cfo", ws_front((8.55, 4.35), "+y", PEOPLE["cfo"], tag="CFO", extras=[("calc", 0.5, 0.75), ("papers", 0.5, 0.45)]))
     person("policy", ws_front((1.9, 6.95), "+x", PEOPLE["policy"], tag="Policy", extras=[("phone", 0.5, 0.5), ("mug", 0.55, 0.85)]))
+    ceo_plant = [("plant", 1.1, 0.45)] if F["plants"] else []
     person("ceo", ws_front((7.25, 6.4), "+y", PEOPLE["ceo"], big=True, tag="You · CEO",
-                           extras=[("papers", 0.75, 0.55), ("mug", 1.05, 0.9), ("plant", 1.1, 0.45)]))
-    o.append(lounge())
-    o.append(plant(0.6, 8.4))
-    o.append(plant(10.5, 8.45))
+                           extras=([("papers", 0.45, 0.75), ("mug", 0.65, 0.5)] if F["folding"]  # fits the era-1 folding table
+                                   else [("papers", 0.75, 0.55), ("mug", 1.05, 0.9)]) + ceo_plant))
+    if F["lounge"]:
+        o.append(lounge())
+    if F["pizza"]:
+        o.append(pizza_boxes(9.75, 7.35))
+    if F["plants"]:
+        o.append(plant(0.6, 8.4))
+    if F["robot"]:
+        o.append(robot(10.5, 8.45))
+    elif F["plants"]:
+        o.append(plant(10.5, 8.45))
     return "".join(o), heads
 
 
-def main():
+ERAS_PAGE = """<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Office by era</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;800;900&family=Libre+Baskerville:ital@1&display=swap" rel="stylesheet">
+<style>
+:root{--cream:#F1E4C8;--paper:#FFFBF1;--ink:#2E2A2B;--teal:#3F9C8F;--wood:#C8864C;--coral:#E0613B;--sky:#3F84C6}
+body{margin:0;padding:24px;background:var(--cream);font-family:"Nunito",sans-serif;color:var(--ink);
+  display:grid;grid-template-columns:1fr 1fr;gap:20px 24px}
+figure{margin:0}
+figcaption{font-size:15px;font-weight:800;margin:0 0 4px 8px}
+figcaption span{font-weight:400;color:color-mix(in oklab, var(--ink) 60%, var(--paper))}
+svg{display:block;width:100%;height:auto}
+.led{animation:blink 1.4s steps(2,end) infinite}
+@keyframes blink{50%{opacity:.25}}
+@media (prefers-reduced-motion: reduce){.led{animation:none}}
+</style></head>
+<body>
+{figures}
+</body></html>
+"""
+
+
+def build(era):
+    """Draws one office (era None = the K2 still) and returns (svg text, anchors)."""
+    global F
+    F = features(era)
     body, heads = scene()
     svg = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" width="1440" height="900" class="room" '
            f'aria-label="Lab office">{body}</svg>\n')
-    rx, ry = P(9.75, 0.7, 2.35)
-    anchors = {"heads": heads, "rack": [round(rx, 1), round(ry, 1)], "floorMenu": [1039, 636]}
-    os.makedirs(os.path.dirname(OUT_SVG), exist_ok=True)
-    with open(OUT_SVG, "w", encoding="utf-8") as f:
-        f.write(svg)
-    with open(OUT_ANCHORS, "w", encoding="utf-8") as f:
-        f.write(json.dumps(anchors, indent=2) + "\n")
-    print(OUT_SVG, os.path.getsize(OUT_SVG))
-    print(OUT_ANCHORS, os.path.getsize(OUT_ANCHORS))
+    rx, ry = rack_anchor()
+    return svg, {"heads": heads, "rack": [round(rx, 1), round(ry, 1)], "floorMenu": [1039, 636]}
+
+
+def write(path, text):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(text)
+    print(path, os.path.getsize(path))
+
+
+def write_office(era):
+    svg, anchors = build(era)
+    suffix = "" if era is None else f"-era{era}"
+    write(os.path.join(ROOT, "ui", "assets", f"office{suffix}.svg"), svg)
+    write(os.path.join(ROOT, "ui", "assets", f"anchors{suffix}.json"), json.dumps(anchors, indent=2) + "\n")
+    return svg
+
+
+def main():
+    ap = argparse.ArgumentParser(description="Generate the office SVGs and anchors.")
+    which = ap.add_mutually_exclusive_group()
+    which.add_argument("--era", type=int, choices=sorted(ERA_NAMES), help="write office-eraN.svg and anchors-eraN.json")
+    which.add_argument("--all", action="store_true", help="write the K2 office, all five eras and tools/eras.html")
+    args = ap.parse_args()
+    if args.all:
+        write_office(None)
+        figs = [f'<figure><figcaption>Era {e} <span>· {ERA_NAMES[e]}</span></figcaption>{write_office(e)}</figure>' for e in sorted(ERA_NAMES)]
+        write(os.path.join(ROOT, "tools", "eras.html"), ERAS_PAGE.replace("{figures}", "\n".join(figs)))
+    else:
+        write_office(args.era)
 
 
 if __name__ == "__main__":
