@@ -1,0 +1,187 @@
+# Game Night AI Lab — design spec
+
+**Date:** 2026-09-25 · **Owner:** Arda · **Status:** sections 1–6 approved in chat; section 7
+(turn flow) is **proposed, awaiting owner review**.
+**Event:** Mangrove "Game Night" hackathon, digital track. Submissions open 2026-09-25
+12:00 PM PT and close 2026-09-27 12:00 AM PT. Judging: fun 40%, relevance to AI risks 40%,
+worth playing again 20%. Deliverable: a playable build plus a 3–5 minute video; AI-tool use
+must be disclosed.
+**Build rule:** built fresh in this repository; no code is carried over from
+`~/Desktop/AI Company Tycoon` or `~/Desktop/gdt-proto`. Design ideas from both are reused.
+Game code starts at kickoff (12:00 PM PT).
+
+Research basis: `docs/research/` (start with `docs/research/README.md`).
+
+## 1. The game in one paragraph
+
+You run a frontier AI lab through five eras in about 20 minutes. Each turn your four advisors
+brief you, you split your budget, make a couple of big moves, and sometimes run an animated
+training run and launch a model. You must stay fast enough not to fall behind, rich enough not
+to run out of money, and safe enough that neither your model nor anyone else's causes a
+catastrophe. **There is no AI-risk meter.** Risk lives in hidden variables that you only glimpse
+through advisors who each see part of the picture, with noise and bias. The end-of-run reveal
+shows the true values next to what each advisor told you.
+
+## 2. Time structure (approved: hybrid)
+
+- Decisions happen in **turns**. Each era has 4 turns; 20 turns total, about 1 minute each.
+- Training runs play as a short **animated real-time stretch** (about 30–40 seconds) with
+  capability and alignment bubbles and pausing mini-events.
+- **The pace accelerates:** a turn is a quarter in eras 1–2, a month in eras 3–4, and a week in
+  era 5. Training runs also get shorter each era.
+
+## 3. Eras (approved: research-based five, humanoids in era 4, fast finale)
+
+| Era | Turn length | New pressure | Bottleneck card | Gate to next era |
+|---|---|---|---|---|
+| 1 Chat assistants | quarter | Scraped-data lawsuits start as legal debt | Chips | Capability rank ≤ 2nd or within 15 of leader |
+| 2 The scale-up | quarter | Funding rounds (three investor archetypes); first President meeting | Advanced packaging | Same, plus board vote |
+| 3 Reasoning and agents | month | Agentic releases trigger misalignment checks; reasoning training raises hallucination; evals weaken as models notice tests | Wafers and memory (HBM) | Same, plus board vote |
+| 4 Gigawatt race | month | Power sites with lagged capacity and local opposition; **humanoid deployment line** with big revenue and physical-world incidents | Power | Same, plus board vote |
+| 5 Self-improvement and pacing | week | Pacing summit; US–China deal or race; second President meeting | Everything at once | — |
+
+After era 5 comes a **60–90 second finale**: a rapid run of cards from the owner's original
+design (the technofeudal turn, then the race to the bottom), chosen by the ending the player is
+heading toward, too fast to fully manage.
+
+## 4. Game state (approved)
+
+Starting values and thresholds are first-pass numbers, tuned by the balance bot (section 9).
+
+```js
+state = {
+  turn: 0, era: 1, monthsPerTurn: 3,
+
+  // Always visible
+  cash: 1000,              // $M
+  burnPlanned: 0,          // $M/month, from this turn's budget
+  burnTrailing: 0,         // $M/month, average of last 3 turns
+  arr: 0,                  // annual recurring revenue, $M
+  users: 0,
+  compute: { online: 10, pipeline: [] }, // 1 unit ≈ 1,000 top GPUs
+  capability: 20,          // 0–100
+  valuation: 5000,         // $M, derived
+
+  // Seen only through people
+  board: [70, 60, 65, 55, 80],   // support per member, 0–100
+  govFavor: { us: 50, intl: 50 },
+  staffTrust: 70,
+  publicTrust: 60,
+
+  // Hidden
+  alignmentDebt: 5,
+  misuseExposure: 5,
+  security: 40,            // higher is better
+  legalCases: [],          // {cost, dueTurn, source}
+  raceHeat: 20,            // shared by the whole world
+
+  constitution: [], promises: [], flags: {}, rivals: [],
+}
+```
+
+Update rules:
+
+- **Capability gain** per run rises with compute used × talent spend, with diminishing returns;
+  a failed run gains little.
+- **Alignment debt** rises by capability gain × (target safety share − actual safety share),
+  plus fixed amounts for engagement tuning, skipped evals, and training against the
+  transparency score. The target safety share rises by era (first pass: 15% in era 1 to 35% in
+  era 5). Evals and interpretability work lower it slowly.
+- **Misuse exposure** rises once capability passes the era's danger line; safeguard spend lowers
+  it; open weights or stolen weights push it up and lock it.
+- **Race heat** rises with every release by any lab, scaled by that lab's speed; pacing deals,
+  outside evaluators and summits lower it.
+- **Valuation** = ARR × a multiple that shrinks as ARR grows × sentiment (0.5–1.5).
+
+## 5. Endings (approved)
+
+Failure endings:
+
+| Ending | Check |
+|---|---|
+| Out of money | Danger zone when runway < 6 months on planned burn. Four emergency options, each with a real cost: equity for compute (lose independence), structure change with a deadline, bridge round with forgiven debt, acquihire (soft ending). Game over at cash ≤ 0 with no option left. |
+| Removed by the board | At a scheduled vote (era gates 2–4, or after a major crisis), fewer than 3 of 5 members have support ≥ 50. |
+| Misalignment catastrophe | On each agentic release from era 3: `P = sigmoid((alignmentDebt × capability / 100 − 40) / 8)`. |
+| Misuse catastrophe | Capability above the danger line and misuseExposure > 70: rolled each turn. |
+| Left behind | At an era gate, rank below 2nd and more than 15 behind the leader. |
+| Someone else's disaster | raceHeat > 85: rolled each turn against the least careful rival. |
+
+Winning endings from era 5: aligned success, negotiated pacing deal, pyrrhic win.
+
+## 6. Characters and systems (approved)
+
+- **Advisors (four).** Each gets a noisy, biased estimate of what they can see and speaks a line
+  from bands (calm / uneasy / alarmed); none ever shows a number.
+  - Head of Research: sees capability exactly, reports it about 10 points optimistic; notices
+    alignment trouble only as "weird results" once debt > 60.
+  - Head of Safety: sees alignment debt and misuse exposure; noise shrinks with eval spend and
+    grows with capability; reads about 10 points cautious; can quit publicly if a
+    safety-compute promise is broken.
+  - CFO: sees money exactly; underweights pending legal cases; argues from trailing burn.
+  - Policy and Comms Director: sees government favor, public trust and race heat with noise;
+    noise shrinks with intelligence spend.
+- **Rivals.** Three or four fictional labs, including one Eastern lab scored partly on
+  open-weight ecosystem share. Each has capability, speed and caution. The capability gap is
+  shown as a disputed range.
+- **Compute market.** Four or five fictional actors: a chip titan, a cloud landlord, a neocloud
+  that can fail, a sovereign financier with political strings, and power-site deals in era 4.
+  Multi-year deals buy priority; spot capacity can vanish; equity deals attach strings.
+- **Constitution.** A short charter of visible clauses. Rival releases, investors and the
+  President push amendments; amended clauses stay visible, struck through. Some clauses have
+  mechanical effects (for example, a safety-compute promise).
+- **Feed.** A read-only Twitter-like feed of generated posts reacting to events and state.
+- **President meetings** (era 2 or 3, and era 5). A fictional president, recognizable in style
+  but not named after the real person (owner may override). Each answer has a flattery level
+  and a jargon level. Flattery raises government favor but lowers staff and public trust and
+  can bring amendment demands; refusing risks a "supply chain risk" designation. Every
+  technical term drains his patience; at zero he walks out. Plain answers keep him engaged but
+  can over-promise, which comes due later. Stakes: export licenses, federal contracts, a
+  preemption of state safety laws, national-champion status.
+
+## 7. One turn, screen by screen (PROPOSED — awaiting owner review)
+
+1. **Briefing.** Four advisor cards, each with a face showing mood and one line. The feed runs
+   in a side column. Always-visible numbers sit in a top bar.
+2. **Budget.** One five-way split (training, safety and evals, security, product and growth,
+   talent) plus a total spend level. The CFO shows the two runway figures.
+3. **Moves.** Two action slots per turn, chosen from: start a training run, sign a compute deal,
+   release a model, amend or defend the constitution, take a meeting, and (era 5) attend the
+   pacing summit.
+4. **Events.** Zero to two event cards with choices, drawn from risk pools fed by hidden
+   variables and from the era's deck.
+5. **Training run** (when one is active). Set the capability/alignment share for the phase,
+   watch the animated run, answer pausing mini-events.
+6. **Launch** (when releasing). Choose the channel (API, consumer app, open weights), then the
+   reveal: four outlets score it against a visible "beat your last flagship" bar, and the feed
+   reacts.
+7. **End of turn.** Rivals move, compute arrives, lawsuits tick, catastrophe checks run, and a
+   scheduled board vote or era gate resolves.
+
+## 8. Technology
+
+- Plain HTML, CSS and JavaScript ES modules; no build step. Playable from a static host
+  (itch.io HTML upload or GitHub Pages).
+- `sim/` holds pure game logic with no DOM access and a seeded random number generator, so runs
+  are reproducible and testable. `ui/` renders state and sends player choices to the sim.
+- Content (events, advisor lines, feed templates, clauses) lives in data files separate from
+  logic.
+- Before any UI work, load the owner's `design` skill; every screen is rendered and looked at
+  before it counts as done.
+
+## 9. Testing and balance
+
+- `node --test` unit tests for the sim: update rules, thresholds, ending checks, seeded runs.
+- A balance bot plays scripted strategies (all-speed, all-safety, balanced, random) many times
+  and reports where each dies. Targets: most runs of each extreme strategy die by era 3–4; no
+  single scripted strategy reaches a winning ending in more than about a third of runs.
+
+## 10. Out of scope for the hackathon
+
+IPO sequence, politics pages, AI-worker replacement, insider trading, detailed pricing tiers,
+individually named hires, save/load, mobile layout, and music.
+
+## 11. Open questions
+
+- Working title.
+- Names of the rival labs and compute actors (the owner's earlier parody names are candidates).
+- Whether the President is named or fictional (default: fictional).
