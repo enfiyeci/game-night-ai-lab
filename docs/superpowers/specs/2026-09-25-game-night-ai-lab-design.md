@@ -130,11 +130,16 @@ Winning endings from era 5: aligned success, negotiated pacing deal, pyrrhic win
 - **Compute market.** Four or five fictional actors: a chip titan, a cloud landlord, a neocloud
   that can fail, a sovereign financier with political strings, and power-site deals in era 4.
   Multi-year deals buy priority; spot capacity can vanish; equity deals attach strings.
-- **Constitution.** A short charter of visible clauses. Rival releases, investors and the
-  President push amendments; amended clauses stay visible, struck through. Some clauses have
-  mechanical effects (for example, a safety-compute promise).
+- **Constitution (clarified by owner 2026-09-25).** The *model's* constitution: the values
+  document your AI is trained on, like Claude's constitution or OpenAI's Model Spec. It is
+  not a company charter. It shapes model behavior, is amended under pressure (the President,
+  investors, users), and in the bad endings the AI that takes over carries its values. What
+  the player actually writes (value ranking and dials, a clause list, or rules versus
+  judgment) is **to be brainstormed later** (owner deferred 2026-09-25). Company promises
+  such as a safety-compute pledge live in `state.promises`, not here.
 - **Feed.** A read-only Twitter-like feed of generated posts reacting to events and state.
-- **President meetings** (era 2 or 3, and era 5). A fictional president, recognizable in style
+- **President meetings** (era 2 or 3, and era 5). **The owner writes this dialogue
+  (2026-09-25); build the mechanics and leave the script to the owner.** A fictional president, recognizable in style
   but not named after the real person (owner may override). Each answer has a flattery level
   and a jargon level. Flattery raises government favor but lowers staff and public trust and
   can bring amendment demands; refusing risks a "supply chain risk" designation. Every
@@ -200,6 +205,42 @@ Part 2. That report's menu tables are the working content; this section fixes ho
     capability edge before rivals, plus its risks before anyone understands them.
 - **Humanoid line (owner confirmed 2026-09-25).** Embodied data and the humanoid channel
   unlock in era 4. They are invented design, not research-based, and are marked as such.
+
+## 6c. Events and incidents (approved "for now" 2026-09-25)
+
+- **Delivery: warning, then card (owner pick).** Incidents planted by the player's own choices
+  first appear as a small sign (a feed post, an advisor aside). Acting on the sign is cheap.
+  Ignoring it turns it into a full event card the next turn, with 2–3 costly choices.
+  Rejected: plain cards only (no chance to catch trouble early); multi-turn story chains (too
+  much writing for 36 hours).
+- **Card layout.** Title, a feed-style post, 2–3 choices with visible costs, each tagged with
+  the advisors who back it. About 0–2 events per turn.
+- **Caused by your model** (planted flag → early sign → card choices):
+  - Flattery blowup ← `sycophancy` → screenshots of the model praising absurd plans → roll
+    back / patch quietly / defend it.
+  - Jailbreak goes viral ← `jailbreakWaiting` → a forum "found a trick" thread → emergency
+    patch / deny / pull the model.
+  - Fake-citation scandal ← `hallucination` → a lawyer's odd filing → citation checks
+    (servingCost up) / blame users / recall.
+  - Benchmark contamination exposed ← `contaminated` → a researcher's thread → admit and
+    re-score / stonewall.
+  - Rival-distillation exposed ← `rivalDistill` → rival changes its terms → settle / deny /
+    countersue.
+  - Agent wrecks a customer's system ← `agentic` → a quiet support ticket → compensate and
+    add controls / blame the customer.
+  - Companion-harm lawsuit ← consumer channel + `sycophancy` → a worried parent's post →
+    settle and add age checks / fight it.
+  - Broken promise revealed ← `brokenPromise` → staff asking pointed questions → come clean /
+    cover up; the Head of Safety may quit publicly.
+- **People and company:** star researcher poached; safety-team open letter; whistleblower;
+  weight theft by a foreign state (low security and high capability); board revolt.
+- **World and market:** rival breakthrough; the Eastern lab's cheap open model shocks the
+  market; export controls flip; chip or memory shortage (the era's bottleneck); local
+  data-center opposition (era 4); rental-cloud partner collapses; price war; copyright suit
+  filed; Senate hearing; viral demo win.
+- **Training mini-events:** loss spike (roll back / slow down / push through); caught-cheating
+  reasoning trace (penalize the thought / fix the environment / ignore); sudden capability
+  jump (celebrate / pay for an audit).
 
 ## 7. One turn, screen by screen
 
