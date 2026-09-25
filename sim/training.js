@@ -2,7 +2,7 @@ import { BALANCE } from './balance.js';
 import { eraById } from './data/eras.js';
 import { SIZE_CAP, LENGTHS, validateRecipe, recipeCost, recipeCards, talentSpend } from './recipe.js';
 import { standardTechniques } from './techniques.js';
-import { rollTrainingHazard, applyAlignmentFaking } from './hazards.js';
+import { rollTrainingHazard, applyAlignmentFaking, evalGamingDebt } from './hazards.js';
 import { controlUnits } from './internal.js';
 
 export function availableUnits(state) {
@@ -59,6 +59,7 @@ export function resolveRun(state, run, rng) {
   const era = eraById(state.era);
   const debtDelta = gain * (era.targetSafetyShare - alignShare) * BALANCE.alignDebtFactor + sum('ad');
   state.alignmentDebt += applyAlignmentFaking(state, debtDelta, capability);
+  state.concealedDebt += evalGamingDebt(state, capability);
   state.misuseExposure += sum('mx');
   state.perceivedAdOffset += sum('perceivedAdOffset');
   for (const e of effects) {

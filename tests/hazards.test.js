@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
-import { rollTrainingHazard, resolveHazard, applyAlignmentFaking, exposeConcealed, totalDebt, rewardHackSize } from '../sim/hazards.js';
+import { rollTrainingHazard, resolveHazard, applyAlignmentFaking, exposeConcealed, totalDebt, rewardHackSize, evalGamingDebt } from '../sim/hazards.js';
 import { endTurn } from '../sim/turn.js';
 import { releaseModel } from '../sim/release.js';
 import { startRun, advanceRun, resolveRun } from '../sim/training.js';
@@ -118,6 +118,26 @@ test('a finished run rolls reward hacking and feeds alignment faking', () => {
   const safeRun = { recipe: { sliders: { size: 'small', length: 'optimal', alignShare: 0.5 }, picks: { pre: [], mid: [], post: ['synthetic-sft'] } }, spikes: 0, bonus: 0 };
   resolveRun(t, safeRun, no);
   assert.ok(t.concealedDebt > 0);
+});
+
+test('eval gaming adds concealed debt that grows with capability from era 3', () => {
+  const s = createInitialState();
+  s.era = 2;
+  assert.equal(evalGamingDebt(s, 80), 0);
+  s.era = 3;
+  assert.ok(Math.abs(evalGamingDebt(s, 80) - 2) < 1e-9);
+  const era3 = evalGamingDebt(s, 80);
+  s.era = 4;
+  assert.ok(evalGamingDebt(s, 80) > era3);
+});
+
+test('a finished run at era 3 adds eval-gaming debt without hackable cards or alignment training', () => {
+  const t = createInitialState();
+  t.era = 3; t.capability = 60; t.concealedDebt = 0;
+  const run = { recipe: { sliders: { size: 'small', length: 'optimal', alignShare: 0 }, picks: { pre: [], mid: [], post: [] } }, spikes: 0, bonus: 0 };
+  const model = resolveRun(t, run, no);
+  assert.ok(t.concealedDebt > 0);
+  assert.ok(Math.abs(t.concealedDebt - evalGamingDebt(t, model.capability)) < 1e-9);
 });
 
 test('a hazard choice with no pending hazard is a no-op', () => {

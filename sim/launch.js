@@ -1,11 +1,10 @@
 import { clamp } from './util.js';
 import { leaderCapability, rank } from './rivals.js';
 import { safetySpend } from './economy.js';
-import { INTERPRETABILITY_SPEND } from './hazards.js';
+import { INTERPRETABILITY_SPEND, GAMING_THRESHOLD } from './hazards.js';
 import { BENCHMARKS, CONTAMINATED_BENCHMARKS, CONTAMINATION_BONUS, BUG_FLAGS, BUG_PENALTY, CRITICS, REACTIONS } from './data/launch.js';
 
 const GAMING_RATE = { 3: 0.35, 4: 0.55, 5: 0.75 };
-const GAMING_THRESHOLD = 40;
 
 // Spec 6f: no gaming in eras 1-2; from era 3 it grows with capability above a threshold,
 // is capped by the concealed debt, and an outside or government eval gate or interpretability spend cuts it.

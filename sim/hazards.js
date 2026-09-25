@@ -4,6 +4,8 @@ export const INTERPRETABILITY_SPEND = 5;
 const HACKABLE = new Set(['rlvr-light', 'reasoning-rl', 'agentic-rl']);
 const FAKING_SHARE = 0.25;
 const FAKING_MIN_CAP = 50;
+export const GAMING_THRESHOLD = 40;
+export const EVAL_GAMING_DEBT = { 3: 0.05, 4: 0.08, 5: 0.12 };
 
 export const totalDebt = (state) => state.alignmentDebt + state.concealedDebt;
 
@@ -29,6 +31,11 @@ export function applyAlignmentFaking(state, debtDelta, capability) {
   const hidden = -debtDelta * FAKING_SHARE;
   state.concealedDebt += hidden;
   return debtDelta + hidden;
+}
+
+// Gaming evals is hidden by definition, so all of it goes to the concealed portion.
+export function evalGamingDebt(state, capability) {
+  return state.era < 3 ? 0 : Math.max(0, capability - GAMING_THRESHOLD) * EVAL_GAMING_DEBT[state.era];
 }
 
 export function exposeConcealed(state, share) {

@@ -5,8 +5,10 @@ import { availableUnits } from './training.js';
 const CONTROL_UNITS = 2;
 const TAKEOVER_CAPABILITY = 70;
 
-// The deployed model is the newest trained one, released or not.
-const internalCapability = (state) => state.pendingModel?.capability ?? state.capability;
+// A deploy puts the newest trained model to work, released or not.
+const newestCapability = (state) => state.pendingModel?.capability ?? state.capability;
+// Risk follows the deployed model; with nothing deployed, the one a deploy would pick.
+const internalCapability = (state) => state.internal?.capability ?? newestCapability(state);
 
 export function deployInternal(state, control) {
   if (state.era < 3) return { ok: false, error: 'internal deployment opens in era 3' };
@@ -18,7 +20,7 @@ export function deployInternal(state, control) {
   }
   const prev = state.internal;
   // Stopping keeps the last stage, so a stop-and-redeploy cannot reset escalation.
-  state.internal = { control, stage: prev?.stage ?? state.flags.internalStage ?? 0, turns: 0 };
+  state.internal = { control, stage: prev?.stage ?? state.flags.internalStage ?? 0, turns: 0, capability: newestCapability(state) };
   if (prev?.stageTurn != null) state.internal.stageTurn = prev.stageTurn;
   return { ok: true, control };
 }

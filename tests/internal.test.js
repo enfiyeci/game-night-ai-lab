@@ -20,7 +20,7 @@ test('internal deployment opens in era 3 and needs a model', () => {
   assert.equal(deployInternal(s, 0.5).ok, false);
   const t = withModel();
   assert.equal(deployInternal(t, 0.5).ok, true);
-  assert.deepEqual(t.internal, { control: 0.5, stage: 0, turns: 0 });
+  assert.deepEqual(t.internal, { control: 0.5, stage: 0, turns: 0, capability: t.capability });
   assert.equal(deployInternal(t, 2).ok, false);
   assert.equal(deployInternal(t, '0.5').ok, false);
 });
@@ -101,13 +101,26 @@ test('control must fit in free compute', () => {
   assert.equal(t.internal.control, 1);
 });
 
-test('risk is judged at the deployed pending model’s capability', () => {
+test('risk follows the deployed model until a redeploy picks the newest one', () => {
   const s = withModel();
-  s.capability = 40; s.alignmentDebt = 80;
+  s.capability = 60; s.alignmentDebt = 80;
   deployInternal(s, 0);
-  const released = internalRisk(s);
+  const deployed = internalRisk(s);
   s.pendingModel = { capability: 80 };
-  assert.ok(internalRisk(s) > released);
+  assert.equal(internalRisk(s), deployed);
+  deployInternal(s, 0);
+  assert.equal(s.internal.capability, 80);
+  assert.ok(internalRisk(s) > deployed);
+});
+
+test('the takeover threshold reads the deployed model, not a later pending one', () => {
+  const s = withModel();
+  s.capability = 60; s.alignmentDebt = 80;
+  deployInternal(s, 0);
+  for (let i = 0; i < 3; i++) internalTick(s, hit);
+  s.pendingModel = { capability: 80 };
+  internalTick(s, hit);
+  assert.equal(s.ending, null);
 });
 
 test('internal use speeds an active run, more in era 5', () => {

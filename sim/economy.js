@@ -2,6 +2,7 @@ import { BALANCE } from './balance.js';
 import { eraById } from './data/eras.js';
 import { clamp } from './util.js';
 import { servingCost, PRICE_STANCE, REVENUE_PER_USER } from './serving.js';
+import { controlUnits } from './internal.js';
 
 export function activeModels(state) {
   return state.models.filter((m) => m.active && m.channel !== 'open' && state.turn >= m.activeFromTurn);
@@ -13,7 +14,7 @@ export const revenuePerUser = (model) => REVENUE_PER_USER[model.channel] * PRICE
 
 export function updateServing(state) {
   const runUnits = state.activeRun ? state.activeRun.units : 0;
-  const capacity = Math.max(0.001, state.compute.online - runUnits);
+  const capacity = Math.max(0.001, state.compute.online - runUnits - controlUnits(state));
   const models = activeModels(state);
   const unitsAt = (load) =>
     models.reduce((s, m) => {
