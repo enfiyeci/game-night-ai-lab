@@ -320,6 +320,42 @@ Research basis: `docs/research/ai-lab-mechanics/notes/pacing_and_us_china.md`.
   with or without a deal. Pyrrhic win: on top with high debt or a broken deal. The summit
   outcome also chooses the finale cards.
 
+## 6f. Model release: benchmarks, press and reaction (owner decision 2026-09-25)
+
+Modelled on Game Dev Tycoon's review formula (`docs/research/ai-lab-mechanics/notes/game_dev_tycoon.md`,
+community reverse-engineering): a hidden score built from the player's choices, judged against the
+player's own last best, shown through several noisy judges.
+
+- **Benchmarks (the "reviewers").** Five parody benchmarks: Patchwork (coding), Doctorate Quiz
+  (science), Task Horizon (agents), Humanity's Final Final Exam, and Jailbreak Gauntlet (safety).
+  - True score per capability benchmark = model capability × a fit factor (0.6–1.0) from the
+    recipe: reasoning RL lifts the quiz, the exam and coding; agentic RL lifts Task Horizon;
+    rushed data, skipped filtering and waived evals act like Game Dev Tycoon's bugs.
+  - Shown score = true score + noise (about ±3) + a contamination bonus on one or two benchmarks
+    when the `contaminated` flag is set (the scandal event comes later).
+  - The reveal shows each benchmark as three bars: the new model, the player's last flagship
+    (the "beat your last flagship" bar), and the best rival.
+- **The safety benchmark can lie, gated by era (owner decision 2026-09-25).**
+  - True safety score falls with total alignment debt (visible plus concealed).
+  - Eras 1–2: the shown safety score equals the true score plus noise. Models do not yet game tests.
+  - From era 3: shown = true + eval gaming, where eval gaming grows with capability above a
+    threshold and is capped by the concealed debt (a model can only hide what is hidden). It grows
+    again in eras 4–5.
+  - A third-party or government eval gate, or interpretability spend, cuts the gaming term.
+  - The end-of-run reveal shows every shown score next to the true one.
+  - Tests must cover: no gaming in eras 1–2; gaming present from era 3 and growing with
+    capability; the eval gate reduces it.
+- **Press panel (owner: "both").** Four parody critics score 1–10 with a one-line quip, each
+  weighting differently: PitchCrunch (hype and agents), Strategery (race position against
+  rivals), AI Snake Eyes (sceptic; punishes contamination and hype), Æon Review (safety and
+  character). Each score = the launch result against the flagship bar, weighted by the critic's
+  bias, ±1 noise.
+- **Reaction feed.** Four or five generated posts chosen from the model's flags and results: hype
+  or disappointment, sycophancy ("so nice to talk to"), jailbreak threads, hallucination jokes,
+  price complaints, rival snark, and political questions about agents.
+- **Effects.** The press average and the flagship result set user growth and hype (sentiment),
+  as reviews drive sales in Game Dev Tycoon.
+
 ## 7. One turn, screen by screen
 
 1. **Briefing.** Four advisor cards, each with a face showing mood and one line. The feed runs
@@ -339,6 +375,23 @@ Research basis: `docs/research/ai-lab-mechanics/notes/pacing_and_us_china.md`.
    model card shows its running cost and margin, and the feed reacts.
 7. **End of turn.** Rivals move, compute arrives, lawsuits tick, catastrophe checks run, and a
    scheduled board vote or era gate resolves.
+
+## 7b. Visual direction (owner decision 2026-09-25)
+
+- **Look: K2**, a faithful Game Dev Tycoon structure, polished: a floating isometric cut-away
+  office fills the screen with the advisors and researchers seated at desks; the HUD is tiny
+  (two round badges for capability and alignment around a project pill; a small era, cash and
+  runway box at top right); the first menu is a plain list opened by clicking the floor.
+- **Decision screens copy Game Dev Tycoon's dialog grammar:** a cream centred panel with amber
+  trim, a big light title, vertical sliders with coloured fills, a time-allocation bar and one
+  orange OK button, flanked by a Team panel and a Selected techniques panel.
+- **Release reveal:** a three-column panel (benchmarks, press, reactions) with one Continue
+  button (section 6f).
+- Reference mockup: `docs/design/mockups/K2-gdt-polished.html` (states `#menu`, `#dialog`,
+  `#release`). Palette tokens: cream #F1E4C8, paper #FFFBF1, ink #2E2A2B, teal #3F9C8F,
+  wood #C8864C, coral #E0613B (capability), sky #3F84C6 (alignment). Font: Nunito.
+- Rejected, for the record: ten dashboard directions (A–J) and five other GDT-structure art
+  styles (L, M, N, O, and P, a Blender render of Kenney CC0 models).
 
 ## 8. Technology
 

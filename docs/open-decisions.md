@@ -6,7 +6,7 @@ recommendation, and why it matters. Decided items move into the spec
 
 ## A. Blocks the next build step (plan 2: screens and events)
 
-1. **Visual design direction.** You choose the look. Proposal: bring 2–3 rendered directions
+1. **Visual design direction.** DECIDED 2026-09-25: look K2 (spec 7b); the rest of this item is kept for history. You choose the look. Proposal: bring 2–3 rendered directions
    through your `design` skill (taste profile, screenshot critique) and you pick one. Blocks
    every screen. Questions inside it: overall mood (a cozy Game Dev Tycoon office, a dark
    "war room" dashboard, a founder's-desktop OS like your NimbusOS slice); whether there is an
@@ -30,7 +30,7 @@ difficulty target (spec 9).
 8. **A narrator character.** Your original design had Lumen, a player-named AI assistant whose
    flattery grows into a moral spine and who narrates the endings. Not in the current spec.
    Include (it gives the end-of-run reveal a voice), or keep the four advisors only.
-9. **Launch reviewers.** The launch reveal shows four outlet scores. Use your five parody
+9. **Launch reviewers.** DECIDED 2026-09-25: benchmarks plus a press panel of four parody critics (spec 6f).  The launch reveal shows four outlet scores. Use your five parody
    critics from the original design (PitchCrunch, Strategery, AI Snake Eyes, The Toe Rojen
    Experience, Æon Review — pick four), or new ones.
 10. **Names.** Working title; rival labs (provisional: OpenBrain, Lodestar, DeepThink, Qilin);
