@@ -11,7 +11,12 @@ only through search-result snippets, and those claims carry ⚠️ inline.
    advisor-based hidden risk, and a transfer map to game mechanics.
 2. `ai-lab-mechanics/notes/` — the eight raw research notes the report was built from, each
    with its own coverage statement.
-3. `runway-history/runway_history.md` — OpenAI and Anthropic cash-runway history and real
+3. `training-options/report.md` — pretraining, midtraining, post-training and
+   evaluation/release decisions with realistic options, serving cost and pricing, model
+   naming; Part 2 is the game's recipe menu, servingCost formula and era locks. Its four notes
+   in `training-options/notes/` read most primary technical reports directly, so this is
+   better sourced than `ai-lab-mechanics/notes/training_decisions.md`, which it supersedes.
+4. `runway-history/runway_history.md` — OpenAI and Anthropic cash-runway history and real
    "ran out of money" endings (Inflection, Adept, Character.AI, Stability AI), used to
    calibrate the out-of-money ending.
 

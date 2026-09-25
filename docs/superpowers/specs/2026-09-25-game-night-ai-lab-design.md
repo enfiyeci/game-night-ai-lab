@@ -76,6 +76,10 @@ state = {
   raceHeat: 20,            // shared by the whole world
 
   constitution: [], promises: [], flags: {}, rivals: [],
+
+  // Released models, each with its own recipe, name and running cost
+  models: [],   // {name, family, generation, tier, recipe, capability, channel,
+                //  priceStance, reasoningEffort, users, servingCost, revenuePerUser}
 }
 ```
 
@@ -138,6 +142,42 @@ Winning endings from era 5: aligned success, negotiated pacing deal, pyrrhic win
   can over-promise, which comes due later. Stakes: export licenses, federal contracts, a
   preemption of state safety laws, national-champion status.
 
+## 6b. Models: training recipe, naming and running cost (requested by owner 2026-09-25)
+
+Source for every option and number in this section: `docs/research/training-options/report.md`,
+Part 2. That report's menu tables are the working content; this section fixes how they plug in.
+
+- **Training recipe.** "Start a training run" opens a recipe screen with four stages, each a
+  row of realistic decisions with 3–5 options:
+  - Pretraining: size, training length (tokens per parameter), architecture (dense / MoE /
+    extreme sparse MoE), data source (scrape / filtered / licensed / synthetic), hazardous-
+    knowledge filter.
+  - Midtraining (from era 2): annealing mix, context length, reasoning readiness, midtraining
+    safety (decontamination, alignment data).
+  - Post-training: instruction data (human / synthetic / self-distil / rival distil), feedback
+    signal (RLHF / DPO / Constitutional AI / user thumbs-up / rubrics), RL push (none /
+    verifiable-reward / full reasoning / agentic), character and values, safeguards.
+  - Evaluation and release: eval gate (quick / full / third party / government / waive a
+    threshold), channel (API / app / open weights / staged), price stance with a reasoning-
+    effort dial, serving precision, distilled sibling.
+  Options unlock by era. Every decision is preselected to the player's last recipe, so a
+  hurried player confirms a stage in one click. Each option's effects are written in this
+  spec's state variables; several are "looks fine now, bites later" (report Part 2 §5).
+  The existing capability/alignment slider applies on top of the recipe.
+- **Naming.** At each launch the player names the model: family + generation + tier word
+  (tier word comes from size; theme sets offered, free typing allowed). Generation jumps raise
+  the launch bar; rebrands without a real gain draw feed mockery; names matching a real lab's
+  product are swapped for a parody.
+- **Running cost.** Each model card shows `servingCost` ($ per active user per month) and its
+  margin, recomputed every turn:
+  `servingCost = USAGE[era] × CHANNEL × REASONING[effort] × HW[era] × SIZE × ARCH(load) ×
+  CONTEXT × PRECISION × GUARD`. Serving draws on the same compute as training, so a popular
+  model can starve the next run; the player then caps usage, routes users to a cheaper
+  sibling, or rents spot capacity. First-pass tables and worked examples are in the report.
+- **Open design tension.** The full menu is about 10 live choices per model in era 1 and up
+  to 19 in era 4. With several models per run, the recipe screen must stay fast; defaults and
+  one-click stage confirmation are how.
+
 ## 7. One turn, screen by screen (PROPOSED — awaiting owner review)
 
 1. **Briefing.** Four advisor cards, each with a face showing mood and one line. The feed runs
@@ -149,11 +189,12 @@ Winning endings from era 5: aligned success, negotiated pacing deal, pyrrhic win
    pacing summit.
 4. **Events.** Zero to two event cards with choices, drawn from risk pools fed by hidden
    variables and from the era's deck.
-5. **Training run** (when one is active). Set the capability/alignment share for the phase,
-   watch the animated run, answer pausing mini-events.
-6. **Launch** (when releasing). Choose the channel (API, consumer app, open weights), then the
-   reveal: four outlets score it against a visible "beat your last flagship" bar, and the feed
-   reacts.
+5. **Training run** (when one is active). Starting a run opens the recipe screen (section 6b).
+   Then set the capability/alignment share for the phase, watch the animated run, and answer
+   pausing mini-events (loss spikes, a caught-cheating reasoning trace).
+6. **Launch** (when releasing). The evaluation-and-release choices (section 6b), then naming,
+   then the reveal: four outlets score it against a visible "beat your last flagship" bar, the
+   model card shows its running cost and margin, and the feed reacts.
 7. **End of turn.** Rivals move, compute arrives, lawsuits tick, catastrophe checks run, and a
    scheduled board vote or era gate resolves.
 
