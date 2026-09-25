@@ -1,7 +1,7 @@
 # Game Night AI Lab — design spec
 
-**Date:** 2026-09-25 · **Owner:** Arda · **Status:** sections 1–6 approved in chat; section 7
-(turn flow) is **proposed, awaiting owner review**.
+**Date:** 2026-09-25 · **Owner:** Arda · **Status:** all sections approved in chat
+2026-09-25 ("I do like what you have so far"); awaiting owner review of this written spec.
 **Event:** Mangrove "Game Night" hackathon, digital track. Submissions open 2026-09-25
 12:00 PM PT and close 2026-09-27 12:00 AM PT. Judging: fun 40%, relevance to AI risks 40%,
 worth playing again 20%. Deliverable: a playable build plus a 3–5 minute video; AI-tool use
@@ -147,8 +147,10 @@ Winning endings from era 5: aligned success, negotiated pacing deal, pyrrhic win
 Source for every option and number in this section: `docs/research/training-options/report.md`,
 Part 2. That report's menu tables are the working content; this section fixes how they plug in.
 
-- **Training recipe.** "Start a training run" opens a recipe screen with four stages, each a
-  row of realistic decisions with 3–5 options:
+- **Training recipe.** "Start a training run" opens a recipe screen with four stages. The
+  report's decisions below supply each stage's pool of option cards; how the player picks from
+  them is fixed by "Recipe interaction" further down, which overrides the report's
+  one-option-per-decision layout:
   - Pretraining: size, training length (tokens per parameter), architecture (dense / MoE /
     extreme sparse MoE), data source (scrape / filtered / licensed / synthetic), hazardous-
     knowledge filter.
@@ -160,7 +162,7 @@ Part 2. That report's menu tables are the working content; this section fixes ho
   - Evaluation and release: eval gate (quick / full / third party / government / waive a
     threshold), channel (API / app / open weights / staged), price stance with a reasoning-
     effort dial, serving precision, distilled sibling.
-  Options unlock by era. Every decision is preselected to the player's last recipe, so a
+  Options unlock by era. Each stage starts with the player's previous picks preselected, so a
   hurried player confirms a stage in one click. Each option's effects are written in this
   spec's state variables; several are "looks fine now, bites later" (report Part 2 §5).
   The existing capability/alignment slider applies on top of the recipe.
@@ -174,16 +176,37 @@ Part 2. That report's menu tables are the working content; this section fixes ho
   CONTEXT × PRECISION × GUARD`. Serving draws on the same compute as training, so a popular
   model can starve the next run; the player then caps usage, routes users to a cheaper
   sibling, or rents spot capacity. First-pass tables and worked examples are in the report.
-- **Open design tension.** The full menu is about 10 live choices per model in era 1 and up
-  to 19 in era 4. With several models per run, the recipe screen must stay fast; defaults and
-  one-click stage confirmation are how.
+- **Recipe interaction (owner decision 2026-09-25): many options, few picks, plus sliders.**
+  - Each stage shows a large pool of option cards (the report's options, each stage 6–10
+    cards once eras unlock them). The player **picks only a few per stage** (first pass: 2 in
+    pretraining, 1–2 in midtraining, 3 in post-training, 2 in evaluation and release; talent
+    spend can add one slot). Unpicked stages fall back to a cheap default.
+  - Every card shows its **price against the run's training budget** (cash, compute, extra
+    turns) and a short effect hint in words, not numbers. Cards cost different amounts, so the
+    budget, not a fixed menu, decides how ambitious a recipe is.
+  - **Sliders** for the continuous choices: model size, training length (tokens per
+    parameter), the capability-versus-alignment share, reasoning effort (from era 3), and
+    price. Moving a slider updates the live servingCost preview and the run's cost.
+- **Techniques that arrive over time (owner decision 2026-09-25).** Industry techniques
+  appear era by era, like engine features in Game Dev Tycoon: for example RLHF and
+  instruction tuning (era 1), mixture-of-experts and synthetic data (era 2), chain-of-thought
+  reasoning, verifiable-reward RL, tool use and agents (era 3), cheap safety classifiers,
+  low-precision serving and embodied/humanoid data (era 4), automated research (era 5).
+  - When a technique becomes industry standard it is **included in every new model
+    automatically** (for example, chain-of-thought is built in from era 3) and stops costing a
+    card slot; its side effects (hallucination, reward hacking) come with it unless the player
+    picks counter-cards.
+  - The player can **research a technique one era early** with talent-and-research spend, getting its
+    capability edge before rivals, plus its risks before anyone understands them.
+- **Humanoid line (owner confirmed 2026-09-25).** Embodied data and the humanoid channel
+  unlock in era 4. They are invented design, not research-based, and are marked as such.
 
-## 7. One turn, screen by screen (PROPOSED — awaiting owner review)
+## 7. One turn, screen by screen
 
 1. **Briefing.** Four advisor cards, each with a face showing mood and one line. The feed runs
    in a side column. Always-visible numbers sit in a top bar.
 2. **Budget.** One five-way split (training, safety and evals, security, product and growth,
-   talent) plus a total spend level. The CFO shows the two runway figures.
+   talent and research) plus a total spend level. The CFO shows the two runway figures.
 3. **Moves.** Two action slots per turn, chosen from: start a training run, sign a compute deal,
    release a model, amend or defend the constitution, take a meeting, and (era 5) attend the
    pacing summit.
