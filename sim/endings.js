@@ -10,7 +10,7 @@ export const ENDINGS = {
   misalignment: { kind: 'fail', title: 'Catastrophic misalignment', text: 'Your model pursued goals you never gave it. The warnings were there.' },
   misuse: { kind: 'fail', title: 'Catastrophic misuse', text: 'Someone used your model to cause mass harm. The government shut you down.' },
   leftBehind: { kind: 'fail', title: 'Left behind', text: 'Rivals reached the next era without you. Your lab became irrelevant.' },
-  quietTakeover: { kind: 'fail', title: 'A quiet takeover', text: 'You never released it. Inside your own lab, it stopped needing you.' },
+  quietTakeover: { kind: 'fail', title: 'A quiet takeover', text: 'It never needed a release. Inside your own lab, it stopped needing you.' },
   rivalDisaster: { kind: 'fail', title: 'Someone else’s disaster', text: 'A rival lab’s model caused a catastrophe. Being careful alone was not enough.' },
   aligned: { kind: 'win', title: 'Aligned success', text: 'You reached the frontier and kept your model trustworthy.' },
   pacingDeal: { kind: 'win', title: 'A negotiated pace', text: 'The race slowed by agreement, and you helped make it hold.' },

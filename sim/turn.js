@@ -102,10 +102,10 @@ export function endTurn(prev, actions = {}, rng) {
 
   if (!state.ending) {
     budgetEffects(state);
+    for (const e of internalTick(state, rng)) events.push(e);
     const trained = advanceRun(state, rng);
     if (trained?.type === 'runPaused') events.push(trained);
     else if (trained) events.push({ type: 'runComplete', gain: trained.gain });
-    for (const e of internalTick(state, rng)) events.push(e);
     const { arrived, failed } = computeTurn(state, rng);
     for (const a of arrived) events.push({ type: 'computeArrived', supplier: a.supplier, units: a.units });
     for (const f of failed) events.push({ type: 'computeFailed', supplier: f.supplier, units: f.units });
