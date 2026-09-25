@@ -44,6 +44,7 @@ export function createInitialState({ seed = 1 } = {}) {
     researched: [],
     activeRun: null,
     pendingModel: null,
+    internal: null,
     models: [],
     lastFlagshipScore: 0,
     lastFlagship: null,

@@ -11,6 +11,7 @@ import { updateBoard } from './board.js';
 import { checkTurnEndings, eraGate, finalEnding } from './endings.js';
 import { recordAdvisors } from './advisors.js';
 import { resolveHazard, exposeConcealed, INTERPRETABILITY_SPEND } from './hazards.js';
+import { deployInternal, stopInternal, internalTick } from './internal.js';
 
 export const MAX_MOVES = 2;
 const BUDGET_KEYS = ['training', 'safety', 'security', 'product', 'talent'];
@@ -36,6 +37,8 @@ function applyMove(state, move, rng) {
     case 'raise': return raiseRound(state, move.archetype);
     case 'research': return researchTechnique(state, move.techId);
     case 'emergency': return useEmergency(state, move.option);
+    case 'deployInternal': return deployInternal(state, move.control);
+    case 'stopInternal': return stopInternal(state);
     default: return { ok: false, error: `unknown move ${move.type}` };
   }
 }
@@ -102,6 +105,7 @@ export function endTurn(prev, actions = {}, rng) {
     const trained = advanceRun(state, rng);
     if (trained?.type === 'runPaused') events.push(trained);
     else if (trained) events.push({ type: 'runComplete', gain: trained.gain });
+    for (const e of internalTick(state, rng)) events.push(e);
     const { arrived, failed } = computeTurn(state, rng);
     for (const a of arrived) events.push({ type: 'computeArrived', supplier: a.supplier, units: a.units });
     for (const f of failed) events.push({ type: 'computeFailed', supplier: f.supplier, units: f.units });

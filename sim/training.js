@@ -3,10 +3,11 @@ import { eraById } from './data/eras.js';
 import { SIZE_CAP, LENGTHS, validateRecipe, recipeCost, recipeCards, talentSpend } from './recipe.js';
 import { standardTechniques } from './techniques.js';
 import { rollTrainingHazard, applyAlignmentFaking } from './hazards.js';
+import { controlUnits } from './internal.js';
 
 export function availableUnits(state) {
   const run = state.activeRun ? state.activeRun.units : 0;
-  return Math.max(0, state.compute.online - state.compute.servingUnits - run);
+  return Math.max(0, state.compute.online - state.compute.servingUnits - run - controlUnits(state));
 }
 
 export function startRun(state, recipe) {
