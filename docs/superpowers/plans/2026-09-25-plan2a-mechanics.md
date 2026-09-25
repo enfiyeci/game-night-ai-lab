@@ -1060,5 +1060,5 @@ Export `report(n)` from `tools/balance.js` returning the existing per-strategy o
 
 ## Self-review notes (for the orchestrator)
 
-- Spec coverage: 6f → Task 1; 6d → Tasks 2–3; 6c → Task 4; constitution (6) → Task 5; 6e and 5 (endings) → Task 6; President (6) → Task 7; section 9 target → Task 8. Humanoid line (era 4), the finale card rush and the narrator are NOT in this plan: they are still open owner decisions (open-decisions B7, B6, B8).
+- Spec coverage: 6f → Task 1; 6d → Tasks 2–3; 6c → Task 4; constitution (6) → Task 5; 6e and 5 (endings) → Task 6; President (6) → Task 7; section 9 target → Task 8. Humanoid line (era 4), the finale card rush and the narrator are NOT in this plan. They are NOT cut (owner, 2026-09-25: "we wont be cutting those just yet"); they are open owner decisions (open-decisions B6–B8) and get their own plan once decided.
 - The deferred pre-merge finding (wins must require the frontier) is closed by Task 6's `finalEnding`.
