@@ -1,0 +1,149 @@
+<div class="hud">
+  <div class="ctr cap"><div class="badge">34</div><div class="tag">Capability</div></div>
+  <div class="pill"><div class="t">Kestrel 4</div><div class="s">training run · reasoning model</div><div class="bar"><i></i></div></div>
+  <div class="ctr ali"><div class="badge">12</div><div class="tag">Alignment</div></div>
+</div>
+<div class="info">
+  <span class="full"><span class="k">Era</span> <b>3</b> <span class="k">· Turn</span> <b>10</b> <span class="k">of 20</span></span>
+  <span class="k">Cash</span><b>$412M</b>
+  <span class="k">Runway</span><b>about 7 months</b>
+</div>
+
+<!-- State: #menu (clicked the floor) -->
+<div id="menu" class="ov">
+  <svg class="ping" width="1440" height="900" viewBox="0 0 1440 900" aria-hidden="true">
+    <ellipse cx="1039" cy="636" rx="16" ry="8" style="fill:none;stroke:var(--paper);stroke-width:2.5"/>
+    <ellipse cx="1039" cy="636" rx="7" ry="3.5" style="fill:color-mix(in oklab, var(--paper) 80%, transparent)"/>
+  </svg>
+  <div class="ctx" role="menu">
+    <div class="it hot">Plan this turn's budget</div>
+    <div class="it off" aria-disabled="true">Start a training run</div>
+    <div class="it">Release a model</div>
+    <div class="it">Deploy a model internally</div>
+    <div class="it">Amend the constitution</div>
+    <div class="it">Take a meeting</div>
+    <div class="sep"></div>
+    <div class="it">End turn</div>
+  </div>
+  <svg class="ping" width="1440" height="900" viewBox="0 0 1440 900" aria-hidden="true">
+    <path d="M1212,658 l0,17 l4.5,-4.2 l3.2,7 l3,-1.4 l-3.2,-6.8 l6,0 Z" style="fill:var(--paper);stroke:var(--ink);stroke-width:1.3;stroke-linejoin:round"/>
+  </svg>
+</div>
+
+<!-- State: #dialog (development-stage dialog) -->
+<div id="dialog" class="ov">
+  <div class="wash"></div>
+
+  <section class="gp team">
+    <div class="hd">Team</div>
+    <div class="row"><div class="nm">Head of Research</div>
+      <div class="pb"><span class="tr"><i style="width:64%"></i></span><b>64%</b></div>
+      <div class="sk"><span>Cap. <b>480</b></span><span>Align. <b>120</b></span></div></div>
+    <div class="row"><div class="nm">Head of Safety</div>
+      <div class="pb"><span class="tr"><i style="width:71%"></i></span><b>71%</b></div>
+      <div class="sk"><span>Cap. <b>150</b></span><span>Align. <b>410</b></span></div></div>
+    <div class="row"><div class="nm">Researcher</div>
+      <div class="pb"><span class="tr"><i style="width:38%"></i></span><b>38%</b></div>
+      <div class="sk"><span>Cap. <b>310</b></span><span>Align. <b>90</b></span></div></div>
+    <div class="row"><div class="nm">Policy and Comms</div>
+      <div class="pb"><span class="tr"><i style="width:22%"></i></span><b>22%</b></div>
+      <div class="sk"><span>Cap. <b>40</b></span><span>Align. <b>60</b></span></div></div>
+  </section>
+
+  <section class="gp dlg" role="dialog" aria-label="Training run, stage 3">
+    <h1>Training run · Stage 3</h1>
+    <div class="subt">Kestrel 4 / Post-training</div>
+    <div class="rule"></div>
+    <div class="sliders">
+      <div class="sl"><div class="who">Head of Research</div>
+        <div class="track"><div class="f c-rl" style="height:78%"></div><div class="kn" style="bottom:78%"></div></div>
+        <div class="what">Reasoning RL</div><div class="pct">78%</div></div>
+      <div class="sl"><div class="who">Head of Safety</div>
+        <div class="track"><div class="f c-ct" style="height:45%"></div><div class="kn" style="bottom:45%"></div></div>
+        <div class="what">Constitution training</div><div class="pct">45%</div></div>
+      <div class="sl"><div class="who">Researcher</div>
+        <div class="track"><div class="f c-sg" style="height:25%"></div><div class="kn" style="bottom:25%"></div></div>
+        <div class="what">Safeguards</div><div class="pct">25%</div></div>
+    </div>
+    <div class="alloc"><div class="l">Time allocation (preview)</div>
+      <div class="abar"><span class="c-rl" style="flex:78">Reasoning RL</span><span class="c-ct" style="flex:45">Constitution</span><span class="c-sg" style="flex:25">Safeguards</span></div>
+    </div>
+    <div class="btn">OK</div>
+  </section>
+
+  <section class="gp tech">
+    <div class="hd">Selected techniques</div>
+    <div class="body">
+      <div class="cost"><span>Cost:</span><b>$30M</b></div>
+      <div class="sec">Reasoning RL</div>
+      <div class="item sel"><span><i class="ck"></i>Verifiable rewards</span><b>$12M</b></div>
+      <div class="sec">Constitution training</div>
+      <div class="item"><span>Casebook precedents</span><b>$8M</b></div>
+      <div class="sec">Safeguards</div>
+      <div class="item"><span>Output classifiers</span><b>$10M</b></div>
+    </div>
+  </section>
+</div>
+
+<!-- State: #release (launch reveal) -->
+<div id="release" class="ov">
+  <div class="wash"></div>
+  <section class="gp rel" role="dialog" aria-label="Kestrel 4 is out">
+    <div class="top">
+      <div><div class="kick">Model release</div><h1>Kestrel 4 is out</h1></div>
+      <div class="beat"><span class="up"></span>Beats your last flagship on 5 of 5 benchmarks</div>
+    </div>
+    <div class="cols">
+      <div>
+        <div class="sec">Benchmarks</div>
+        <div class="legend">
+          <span><i class="sw k4"></i>Kestrel 4</span>
+          <span><i class="sw k3"></i>Kestrel 3 (last flagship)</span>
+          <span><i class="sw ls"></i>Lodestar (best rival)</span>
+          <span><i class="tick"></i>Kestrel 3 mark</span>
+        </div>
+        <div class="bm"><div class="n">Patchwork (coding)<em>+13 vs Kestrel 3</em></div>
+          <div class="br me"><span class="lb">Kestrel 4</span><span class="tr"><i class="k4" style="width:71%"></i><span class="mk" style="left:58%"></span></span><span class="v">71</span></div>
+          <div class="br"><span class="lb">Kestrel 3</span><span class="tr"><i class="k3" style="width:58%"></i></span><span class="v">58</span></div>
+          <div class="br"><span class="lb">Lodestar</span><span class="tr"><i class="ls" style="width:69%"></i></span><span class="v">69</span></div></div>
+        <div class="bm"><div class="n">Doctorate Quiz (science)<em>+9 vs Kestrel 3</em></div>
+          <div class="br me"><span class="lb">Kestrel 4</span><span class="tr"><i class="k4" style="width:64%"></i><span class="mk" style="left:55%"></span></span><span class="v">64</span></div>
+          <div class="br"><span class="lb">Kestrel 3</span><span class="tr"><i class="k3" style="width:55%"></i></span><span class="v">55</span></div>
+          <div class="br"><span class="lb">Lodestar</span><span class="tr"><i class="ls" style="width:67%"></i></span><span class="v">67</span></div></div>
+        <div class="bm"><div class="n">Task Horizon (agents)<em>+18 vs Kestrel 3</em></div>
+          <div class="br me"><span class="lb">Kestrel 4</span><span class="tr"><i class="k4" style="width:48%"></i><span class="mk" style="left:30%"></span></span><span class="v">48</span></div>
+          <div class="br"><span class="lb">Kestrel 3</span><span class="tr"><i class="k3" style="width:30%"></i></span><span class="v">30</span></div>
+          <div class="br"><span class="lb">Lodestar</span><span class="tr"><i class="ls" style="width:44%"></i></span><span class="v">44</span></div></div>
+        <div class="bm"><div class="n">Humanity's Final Final Exam<em>+7 vs Kestrel 3</em></div>
+          <div class="br me"><span class="lb">Kestrel 4</span><span class="tr"><i class="k4" style="width:22%"></i><span class="mk" style="left:15%"></span></span><span class="v">22</span></div>
+          <div class="br"><span class="lb">Kestrel 3</span><span class="tr"><i class="k3" style="width:15%"></i></span><span class="v">15</span></div>
+          <div class="br"><span class="lb">Lodestar</span><span class="tr"><i class="ls" style="width:24%"></i></span><span class="v">24</span></div></div>
+        <div class="bm"><div class="n">Jailbreak Gauntlet (safety)<em>+8 vs Kestrel 3</em></div>
+          <div class="br me"><span class="lb">Kestrel 4</span><span class="tr"><i class="k4" style="width:88%"></i><span class="mk" style="left:80%"></span></span><span class="v">88</span></div>
+          <div class="br"><span class="lb">Kestrel 3</span><span class="tr"><i class="k3" style="width:80%"></i></span><span class="v">80</span></div>
+          <div class="br"><span class="lb">Lodestar</span><span class="tr"><i class="ls" style="width:76%"></i></span><span class="v">76</span></div></div>
+      </div>
+
+      <div>
+        <div class="sec">Press</div>
+        <div class="critic"><div class="cn">PitchCrunch</div><div class="sc">8<small>/10</small></div><div class="q">"Finally, an agent that finishes the ticket."</div></div>
+        <div class="critic"><div class="cn">Strategery</div><div class="sc">7<small>/10</small></div><div class="q">"Strong, but Lodestar is breathing down its neck."</div></div>
+        <div class="critic"><div class="cn">AI Snake Eyes</div><div class="sc">5<small>/10</small></div><div class="q">"Benchmarks up, vibes unclear."</div></div>
+        <div class="critic"><div class="cn">Æon Review</div><div class="sc">9<small>/10</small></div><div class="q">"A careful model in a careless year."</div></div>
+      </div>
+
+      <div>
+        <div class="sec">Reactions</div>
+        <div class="post"><div class="av" style="background:var(--ink)">D</div><div><div class="h">@devnull_ops</div><div class="x">already found a way to make it skip its rules lol</div></div></div>
+        <div class="post"><div class="av" style="background:var(--teal)">T</div><div><div class="h">@tired_parent</div><div class="x">it's so nice to talk to. maybe too nice?</div></div></div>
+        <div class="post"><div class="av" style="background:var(--sky)">M</div><div><div class="h">@marketwire</div><div class="x">Kestrel 4 tops agents leaderboard; Lodestar shares slip</div></div></div>
+        <div class="post"><div class="av" style="background:color-mix(in oklab, var(--sky) 55%, var(--ink))">L</div><div><div class="h">@lodestar_eng</div><div class="x">congrats. see you in 6 weeks.</div></div></div>
+        <div class="post"><div class="av" style="background:var(--wood)">S</div><div><div class="h">@sen_whitfield</div><div class="x">Why does a chatbot need to run code on my computer?</div></div></div>
+      </div>
+    </div>
+    <div class="foot">
+      <div class="nu">New users this month: <b>+2.1M</b></div>
+      <div class="btn">Continue</div>
+    </div>
+  </section>
+</div>
