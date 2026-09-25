@@ -1,35 +1,19 @@
 # Open decisions for the owner
 
-As of 2026-09-25 ~1 PM PT. Grouped by what each one blocks. Each item gives the options, the
+As of 2026-09-25 ~1:30 PM PT. Grouped by what each one blocks. Each item gives the options, the
 recommendation, and why it matters. Decided items move into the spec
 (`docs/superpowers/specs/2026-09-25-game-night-ai-lab-design.md`) and get deleted here.
 
 ## A. Blocks the next build step (plan 2: screens and events)
 
-1. **Visual design direction.** You choose the look. Proposal: bring 2–3 rendered directions
+1. **Visual design direction.** DECIDED 2026-09-25: look K2 (spec 7b); the rest of this item is kept for history. You choose the look. Proposal: bring 2–3 rendered directions
    through your `design` skill (taste profile, screenshot critique) and you pick one. Blocks
    every screen. Questions inside it: overall mood (a cozy Game Dev Tycoon office, a dark
    "war room" dashboard, a founder's-desktop OS like your NimbusOS slice); whether there is an
    animated office scene or only panels; how advisors look (portraits, icons, text only).
-2. **Pacing design in era 5.**
-   - Option 1, summit then hold-or-ship (recommended): pick commitments at a summit
-     (outside evaluators, compute cap, release delay, shared safety research, US–China
-     verification channel), then each remaining turn is hold or ship, with rivals reacting.
-     Only option where your choices decide whether the deal *holds*. About half a day.
-   - Option 2, pure hold-or-ship: the prisoner's dilemma with no levers. 1–2 hours; can feel
-     like luck.
-   - Option 3, one big vote: dramatic, but the deal is never tested. 3–4 hours.
-3. **Model constitution format.** What the player writes:
-   - ranking of values plus 3–4 tension dials (obedient↔candid, cautious↔helpful,
-     neutral↔opinionated, user-first↔society-first) — recommended, one screen;
-   - a clause list (about 6 of 15), reads like a real document, harder to balance;
-   - rules versus judgment, plus a few clauses (closest to the real research debate).
-   Also decide: who pushes amendments (President, investors, users, staff) and how the
-   constitution shows up in the endings.
-4. **Difficulty target.** Today the careful strategies win 84–97% of simulated runs, and the
-   spec's target is no scripted strategy above about one third. Decide: what share of first
-   runs should die, and by which era (your earlier answer: most die in era 3–4); whether
-   slowness should be punished mainly by rivals pulling ahead, by the board, or by money.
+Decided 2026-09-25 and moved into the spec: era 5 pacing (spec 6e), misalignment during
+development (spec 6d), the constitution format and amendment sources (spec 6), and the
+difficulty target (spec 9).
 
 ## B. Needed before content writing
 
@@ -46,7 +30,7 @@ recommendation, and why it matters. Decided items move into the spec
 8. **A narrator character.** Your original design had Lumen, a player-named AI assistant whose
    flattery grows into a moral spine and who narrates the endings. Not in the current spec.
    Include (it gives the end-of-run reveal a voice), or keep the four advisors only.
-9. **Launch reviewers.** The launch reveal shows four outlet scores. Use your five parody
+9. **Launch reviewers.** DECIDED 2026-09-25: benchmarks plus a press panel of four parody critics (spec 6f).  The launch reveal shows four outlet scores. Use your five parody
    critics from the original design (PitchCrunch, Strategery, AI Snake Eyes, The Toe Rojen
    Experience, Æon Review — pick four), or new ones.
 10. **Names.** Working title; rival labs (provisional: OpenBrain, Lodestar, DeepThink, Qilin);
