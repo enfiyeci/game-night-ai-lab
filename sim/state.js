@@ -46,6 +46,11 @@ export function createInitialState({ seed = 1 } = {}) {
     pendingModel: null,
     internal: null,
     models: [],
+    warnings: {},
+    pendingEvents: [],
+    feed: [],
+    seenEvents: [],
+    lastRivalReleases: [],
     lastFlagshipScore: 0,
     lastFlagship: null,
 

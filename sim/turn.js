@@ -12,6 +12,7 @@ import { checkTurnEndings, eraGate, finalEnding } from './endings.js';
 import { recordAdvisors } from './advisors.js';
 import { resolveHazard, exposeConcealed, INTERPRETABILITY_SPEND } from './hazards.js';
 import { deployInternal, stopInternal, internalTick } from './internal.js';
+import { addressWarning, resolveEvent, eventsTick, fallbackChoice } from './events.js';
 
 export const MAX_MOVES = 2;
 const BUDGET_KEYS = ['training', 'safety', 'security', 'product', 'talent'];
@@ -76,6 +77,20 @@ export function endTurn(prev, actions = {}, rng) {
     if (!r.ok) errors.push(r.error);
     else events.push({ type: 'hazardResolved', choice: actions.hazardChoice });
   }
+  for (const id of actions.addressWarnings ?? []) {
+    const result = addressWarning(state, id);
+    if (!result.ok) errors.push(result.error);
+  }
+  for (const [id, choiceId] of Object.entries(actions.eventChoices ?? {})) {
+    const result = resolveEvent(state, id, choiceId);
+    if (!result.ok) errors.push(result.error);
+  }
+  for (const { id } of [...state.pendingEvents]) {
+    const choiceId = fallbackChoice(id);
+    const result = resolveEvent(state, id, choiceId);
+    if (!result.ok) errors.push(result.error);
+    else events.push({ type: 'eventResolved', id, choiceId, auto: true });
+  }
   const before = { arr: state.arr, capability: state.capability, cash: state.cash };
 
   activateReleases(state);
@@ -120,8 +135,10 @@ export function endTurn(prev, actions = {}, rng) {
       events.push({ type: 'conversionFight' });
     }
     for (const c of legalTick(state)) events.push({ type: 'lawsuitPaid', cost: c.cost, source: c.source });
-    for (const r of rivalsTurn(state, rng)) events.push({ type: 'rivalRelease', ...r });
+    state.lastRivalReleases = rivalsTurn(state, rng);
+    for (const r of state.lastRivalReleases) events.push({ type: 'rivalRelease', ...r });
     state.raceHeat -= BALANCE.raceHeatDecay;
+    for (const e of eventsTick(state, rng)) events.push(e);
     normalize(state);
     updateBoard(state, before);
     checkTurnEndings(state, rng);
