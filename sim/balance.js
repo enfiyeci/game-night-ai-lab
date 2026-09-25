@@ -1,0 +1,25 @@
+// First-pass tuning constants. tools/balance.js is how these get tuned.
+export const BALANCE = {
+  startCash: 1000,
+  startCompute: 10,
+  startCapability: 20,
+  startValuation: 5000,
+  unitMonthlyCost: 1.46, // $M per compute unit per month ($2/GPU-hour × 730 h × 1,000 GPUs)
+  unitMonthlyDollars: 1.46e6,
+  spotPremium: 1.5,
+  baseOpsMonthly: 15,
+  baseRunGain: 10,
+  alignDebtFactor: 2,
+  dangerLine: 55,
+  misuseDisasterLine: 70,
+  misuseRollChance: 0.25,
+  raceHeatDisaster: 85,
+  rivalDisasterChance: 0.2,
+  raceHeatDecay: 1,
+  ownReleaseHeat: 3,
+  dangerZoneRunwayMonths: 6,
+  gateMaxRank: 2,
+  gateMaxGap: 15,
+  boardPassMembers: 3,
+  boardSupportLine: 50,
+};
