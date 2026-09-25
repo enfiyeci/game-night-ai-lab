@@ -32,7 +32,8 @@ export function applyAlignmentFaking(state, debtDelta, capability) {
 }
 
 export function exposeConcealed(state, share) {
-  const moved = state.concealedDebt * share;
+  // Move only what fits under the visible cap, so the clamp never erases debt.
+  const moved = Math.min(state.concealedDebt * share, Math.max(0, 100 - state.alignmentDebt));
   state.concealedDebt -= moved;
   state.alignmentDebt += moved;
   return moved;

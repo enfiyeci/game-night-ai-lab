@@ -55,7 +55,8 @@ export function releaseModel(state, release, rng) {
   if (cash > state.cash) return { ok: false, error: 'not enough cash' };
   state.cash -= cash;
   // An unanswered training hazard ships as-is.
-  if (m.hazard) resolveHazard(state, 'ignore');
+  const hazardIgnored = Boolean(m.hazard);
+  if (hazardIgnored) resolveHazard(state, 'ignore');
 
   const effects = cards.map((c) => c.effects);
   const sum = (key) => effects.reduce((s, e) => s + (e[key] ?? 0), 0);
@@ -123,5 +124,5 @@ export function releaseModel(state, release, rng) {
     const p = sigmoid(((state.alignmentDebt + state.concealedDebt) * m.capability / 100 - 40) / 8);
     if (rng.chance(p)) state.ending = 'misalignment';
   }
-  return { ok: true, model };
+  return { ok: true, model, hazardIgnored };
 }
