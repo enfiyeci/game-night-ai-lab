@@ -138,7 +138,8 @@ Winning endings from era 5: aligned success, negotiated pacing deal, pyrrhic win
   judgment) is **to be brainstormed later** (owner deferred 2026-09-25). Company promises
   such as a safety-compute pledge live in `state.promises`, not here.
 - **Feed.** A read-only Twitter-like feed of generated posts reacting to events and state.
-- **President meetings** (era 2 or 3, and era 5). A fictional president, recognizable in style
+- **President meetings** (era 2 or 3, and era 5). **The owner writes this dialogue
+  (2026-09-25); build the mechanics and leave the script to the owner.** A fictional president, recognizable in style
   but not named after the real person (owner may override). Each answer has a flattery level
   and a jargon level. Flattery raises government favor but lowers staff and public trust and
   can bring amendment demands; refusing risks a "supply chain risk" designation. Every
