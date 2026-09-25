@@ -164,6 +164,7 @@ CSS = """
 .dfoot .note b{color:var(--ink);font-weight:900}
 .dlg2 .btn{margin:0}
 .dlg2 .sec{margin:14px 0 8px}
+.bud .sec{margin:12px 0 8px}
 
 .team2{left:40px;top:150px;width:250px}
 .op{padding:9px 14px 11px;border-top:1px solid color-mix(in oklab, var(--wood) 30%, transparent)}
@@ -417,8 +418,253 @@ POWER = f"""
 </div>
 """
 
+
+CSS += """
+/* era 3 queue */
+.qhead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.qhead .l{font-size:13px;font-weight:800}
+.qhead .l b{font-size:22px;font-weight:900;margin-right:4px}
+.qhead .r{font-size:12px;font-weight:700;color:color-mix(in oklab, var(--ink) 60%, var(--paper))}
+.supply{display:flex;height:30px;border-radius:8px;overflow:hidden;margin-bottom:4px}
+.supply span{display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:900;color:var(--paper);white-space:nowrap}
+.supply span+span{border-left:2px solid var(--paper)}
+.g-pre{background:color-mix(in oklab, var(--ink) 72%, var(--paper))}
+.g-you{background:var(--coral)}
+.g-riv{background:color-mix(in oklab, var(--sky) 70%, var(--ink))}
+.g-riv2{background:var(--sky)}
+.slab{display:flex;justify-content:space-between;font-size:10.5px;font-weight:800;color:color-mix(in oklab, var(--ink) 58%, var(--paper));margin-bottom:10px}
+.qrow{display:grid;grid-template-columns:118px 86px 1fr 76px;align-items:center;gap:10px;padding:8px 0;border-top:1px solid color-mix(in oklab, var(--wood) 22%, transparent)}
+.qrow .lab{font-size:13px;font-weight:900}
+.qrow .lab small{display:block;font-size:10.5px;font-weight:700;color:color-mix(in oklab, var(--ink) 55%, var(--paper))}
+.tier{justify-self:start;font-size:10.5px;font-weight:900;padding:2px 7px;border-radius:6px;text-transform:uppercase;letter-spacing:.04em}
+.tier.pre{background:color-mix(in oklab, var(--ink) 80%, var(--paper));color:var(--paper)}
+.tier.std{background:color-mix(in oklab, var(--ink) 9%, var(--paper));color:color-mix(in oklab, var(--ink) 70%, var(--paper))}
+.tier.no{background:transparent;color:color-mix(in oklab, var(--ink) 50%, var(--paper));padding-left:0}
+.ob{position:relative;height:14px;border-radius:4px;box-shadow:inset 0 0 0 1.5px color-mix(in oklab, var(--ink) 28%, transparent);background:var(--paper)}
+.ob i{position:absolute;left:0;top:0;bottom:0;border-radius:4px}
+.qrow .got{font-size:12px;font-weight:700;text-align:right;color:color-mix(in oklab, var(--ink) 60%, var(--paper))}
+.qrow .got b{font-size:14px;font-weight:900;color:var(--ink)}
+.qrow.me{background:color-mix(in oklab, var(--coral) 7%, var(--paper));border-radius:8px;border-top-color:transparent;padding:8px 8px;margin:0 -8px}
+.qrow.off .lab,.qrow.off .ob{opacity:.45}
+.soon{display:flex;gap:7px;align-items:center;margin-top:10px;font-size:12px;font-weight:700;color:color-mix(in oklab, var(--wood) 50%, var(--ink))}
+.soon .bang{flex:none;width:17px;height:17px;border-radius:50%;background:var(--wood);color:var(--paper);display:grid;place-items:center;font-size:11px;font-weight:900}
+.qgrid{display:grid;grid-template-columns:1fr 250px;gap:18px;align-items:start}
+.order{background:var(--paper);border:1.5px solid color-mix(in oklab, var(--ink) 12%, transparent);border-radius:11px;padding:12px 14px}
+.order .t{font-size:13px;font-weight:900}
+.hs{position:relative;height:10px;border-radius:5px;background:color-mix(in oklab, var(--ink) 9%, var(--paper));margin:16px 4px 6px;box-shadow:inset 0 1px 2px color-mix(in oklab, var(--ink) 14%, transparent)}
+.hs i{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:var(--coral)}
+.hs .kn{position:absolute;top:50%;width:20px;height:26px;margin:-13px 0 0 -10px;border-radius:6px;background:var(--paper);border:2px solid color-mix(in oklab, var(--ink) 30%, transparent);box-shadow:0 2px 3px color-mix(in oklab, var(--ink) 20%, transparent)}
+.hsl{display:flex;justify-content:space-between;font-size:10.5px;font-weight:700;color:color-mix(in oklab, var(--ink) 55%, var(--paper))}
+.ordv{font-size:26px;font-weight:900;margin-top:6px}
+.ordv small{font-size:13px;font-weight:800;margin-left:3px}
+.seg{display:grid;grid-template-columns:1fr 1fr;margin-top:10px;border-radius:9px;overflow:hidden;box-shadow:inset 0 0 0 1.5px color-mix(in oklab, var(--ink) 20%, transparent)}
+.seg span{text-align:center;font-size:12.5px;font-weight:900;padding:7px 0;color:color-mix(in oklab, var(--ink) 65%, var(--paper))}
+.seg span.on{background:var(--wood);color:var(--paper)}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.cmp div{border-radius:8px;padding:8px 9px;font-size:11.5px;font-weight:700;line-height:1.35;color:color-mix(in oklab, var(--ink) 72%, var(--paper));background:color-mix(in oklab, var(--ink) 5%, var(--paper))}
+.cmp div.on{background:color-mix(in oklab, var(--wood) 14%, var(--paper));box-shadow:inset 0 0 0 1.5px var(--wood)}
+.cmp b{display:block;font-size:13px;font-weight:900;color:var(--ink);margin-bottom:2px}
+
+/* budget dialog with compute split */
+.bud h1{margin:0}
+.bgrid{display:grid;grid-template-columns:330px 1fr;gap:22px;align-items:start}
+.money .sliders{justify-content:space-between}
+.money .sl{width:74px}
+.money .track{height:112px;width:24px}
+.money .track .kn{width:38px;margin-left:-19px}
+.money .sl .who{display:none}
+.money .sl .what{font-size:13px;margin-top:10px}
+.lvl{display:grid;grid-template-columns:repeat(3,1fr);margin-top:14px;border-radius:9px;overflow:hidden;box-shadow:inset 0 0 0 1.5px color-mix(in oklab, var(--ink) 20%, transparent)}
+.lvl span{text-align:center;font-size:12.5px;font-weight:900;padding:6px 0;color:color-mix(in oklab, var(--ink) 65%, var(--paper))}
+.lvl span.on{background:var(--wood);color:var(--paper)}
+.c-sec{background:color-mix(in oklab, var(--ink) 75%, var(--paper))} .c-pro{background:var(--wood)} .c-tal{background:var(--teal)}
+.cbox{background:var(--paper);border:1.5px solid color-mix(in oklab, var(--ink) 12%, transparent);border-radius:11px;padding:12px 14px 14px}
+.cbox .top{display:flex;justify-content:space-between;align-items:baseline}
+.cbox .top .l{font-size:13px;font-weight:800}
+.cbox .top .l b{font-size:22px;font-weight:900;margin-right:4px}
+.cbox .top .r{font-size:12px;font-weight:700;color:color-mix(in oklab, var(--ink) 60%, var(--paper))}
+.cbar{position:relative;display:flex;height:40px;margin:26px 0 30px;border-radius:9px}
+.cbar span{display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--paper);font-size:11.5px;font-weight:900;line-height:1.1;white-space:nowrap;overflow:hidden}
+.cbar span small{font-size:10.5px;font-weight:700;opacity:.9}
+.cbar span:first-child{border-radius:9px 0 0 9px} .cbar span:last-of-type{border-radius:0 9px 9px 0}
+.cbar span+span{border-left:2px solid var(--paper)}
+.k-serve{background:color-mix(in oklab, var(--wood) 80%, var(--ink))}
+.k-ctrl{background:color-mix(in oklab, var(--ink) 70%, var(--paper))}
+.k-safe{background:var(--sky)}
+.k-train{background:var(--coral)}
+.k-idle{background:repeating-linear-gradient(135deg, var(--coral) 0 4px, color-mix(in oklab, var(--coral) 40%, var(--paper)) 4px 8px)}
+.cbar .dv{position:absolute;top:-6px;bottom:-6px;width:14px;margin-left:-7px;border-radius:5px;background:var(--paper);border:2px solid color-mix(in oklab, var(--ink) 35%, transparent);box-shadow:0 2px 3px color-mix(in oklab, var(--ink) 20%, transparent)}
+.cbar .mk{position:absolute;border-left:2px dashed var(--ink)}
+.cbar .mk.up{top:-16px;height:14px}
+.cbar .mk.dn{bottom:-16px;height:14px}
+.cbar .mk em{position:absolute;font-style:normal;font-size:10.5px;font-weight:900;white-space:nowrap}
+.cbar .mk.up em{top:-3px;left:5px}
+.cbar .mk.dn em{bottom:-3px;left:5px}
+.tgl{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-top:1px solid color-mix(in oklab, var(--wood) 22%, transparent);font-size:12.5px;font-weight:800}
+.tgl small{display:block;font-size:11px;font-weight:700;color:color-mix(in oklab, var(--ink) 58%, var(--paper))}
+.sw3{flex:none;width:38px;height:22px;border-radius:11px;position:relative;background:color-mix(in oklab, var(--ink) 16%, var(--paper))}
+.sw3::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:var(--paper);box-shadow:0 1px 2px color-mix(in oklab, var(--ink) 30%, transparent)}
+.sw3.on{background:var(--teal)} .sw3.on::after{left:19px}
+.mrow{display:grid;grid-template-columns:420px 1fr;gap:26px;align-items:center}
+.money .sliders{justify-content:space-between}
+.mside .t{font-size:13px;font-weight:900}
+.mside .lvl{margin-top:8px}
+.mside p{margin:12px 0 0;font-size:12.5px;font-weight:600;line-height:1.35;color:color-mix(in oklab, var(--ink) 72%, var(--paper))}
+.cfoot{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.idl{background:var(--paper);color:color-mix(in oklab, var(--coral) 72%, var(--ink));padding:1px 6px;border-radius:4px;opacity:1 !important}
+.ok{color:color-mix(in oklab, var(--teal) 60%, var(--ink))}
+"""
+
+
+def qrow(lab, sub, tier, tcls, ordered, got, color, scale=70, me=False, off=False):
+    w_o = ordered / scale * 100
+    w_g = got / scale * 100
+    fill = f'<i style="width:{w_g:.1f}%;background:{color}"></i>' if got else ""
+    cls = "qrow" + (" me" if me else "") + (" off" if off else "")
+    right = f"<b>{got}</b> of {ordered}" if not off else "—"
+    return f"""<div class="{cls}"><div class="lab">{lab}<small>{sub}</small></div><span class="tier {tcls}">{tier}</span>
+        <div class="ob" style="width:{max(w_o, 4):.1f}%">{fill}</div><div class="got">{right}</div></div>"""
+
+
+QUEUE = f"""
+<!-- State: #queue (era 3, Verde allocation queue) -->
+<div id="queue" class="ov">
+  <div class="wash"></div>
+{hud(44, 22, "Kestrel 4", "training run · reasoning model", 60, 3, 9, "$3.1B", "about 8 months", "200 units")}
+  <section class="gp team2">
+    <div class="hd">Team</div>
+    {op("Head of Research", "eager", "We're in the standard tier. OpenBrain gets served before us.")}
+    {op("CFO", "uneasy", "Prepaying ties up $315M we may need before the next round.")}
+    {op("Policy and Comms", "uneasy", "Prepaying looks like racing. Washington notices.")}
+    {op("Head of Safety", "calm", "Whatever arrives, 12% of it goes to safety.")}
+  </section>
+
+  <section class="gp dlg2" role="dialog" aria-label="Verde allocation queue">
+    <div class="hh"><h1>Verde allocation</h1>
+      <div class="subt">Era 3 · Reasoning and agents · memory chips are sold out, so Verde rations</div></div>
+    <div class="rule"></div>
+    <div class="qgrid">
+      <div>
+        <div class="qhead"><div class="l"><b>150 units</b> released this turn</div><div class="r">prepaid orders are served first</div></div>
+        <div class="supply" aria-label="Who gets this turn's supply">
+          <span class="g-pre" style="flex:52">OpenBrain 52</span><span class="g-you" style="flex:40">You 40</span><span class="g-riv2" style="flex:30">DeepThink 30</span><span class="g-riv" style="flex:28">Lodestar 28</span>
+        </div>
+        <div class="slab"><span>prepaid tier</span><span>standard tier, shared by order size</span></div>
+        {qrow("OpenBrain", "speed first", "Prepaid", "pre", 52, 52, "color-mix(in oklab, var(--ink) 72%, var(--paper))")}
+        {qrow("You", "Kestrel lab", "Standard", "std", 60, 40, "var(--coral)", me=True)}
+        {qrow("DeepThink", "", "Standard", "std", 46, 30, "var(--sky)")}
+        {qrow("Lodestar", "careful", "Standard", "std", 42, 28, "color-mix(in oklab, var(--sky) 70%, var(--ink))")}
+        {qrow("Qilin", "export controls", "Can't buy", "no", 0, 0, "", off=True)}
+        <div class="soon"><span class="bang">!</span><span>DeepThink will prepay next turn. Standard shares will shrink.</span></div>
+      </div>
+      <div class="order">
+        <div class="t">Your order</div>
+        <div class="ordv">60<small>units</small></div>
+        <div class="hs"><i style="width:40%"></i><span class="kn" style="left:40%"></span></div>
+        <div class="hsl"><span>0</span><span>150</span></div>
+        <div class="seg"><span class="on">Standard</span><span>Prepaid</span></div>
+        <div class="cmp">
+          <div class="on"><b>Standard</b>40 now, 20 wait for next turn. No upfront.</div>
+          <div><b>Prepaid</b>All 60 now. $315M upfront. Race heat rises.</div>
+        </div>
+        <div class="dfoot" style="margin-top:14px"><div class="note" style="font-size:12px">Uses <b>1 of 2</b> moves</div><div class="btn" style="width:110px">Order</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="gp side">
+    <div class="hd">Why order</div>
+    <div class="body">
+      <div class="ct" style="border-top:0"><div class="r1"><span>Next run (large model)</span><span>250 u</span></div>
+        <div class="r2"><span>needs this much training compute</span></div></div>
+      <div class="ct"><div class="r1"><span>Free for training</span><span>176 u</span></div>
+        <div class="r2"><span>after serving, control and safety</span></div></div>
+      <div class="rw"><span>Short by</span><b class="bad">74 units</b></div>
+      <div class="rw" style="border-top:0;margin-top:2px;padding-top:0"><span>This order, standard</span><b>+40 now</b></div>
+      <div class="rw" style="border-top:0;margin-top:2px;padding-top:0"><span>This order, prepaid</span><b>+60 now</b></div>
+    </div>
+  </section>
+</div>
+"""
+
+
+def msl(who, what, pct, cls):
+    return f"""<div class="sl"><div class="who">{who}</div>
+          <div class="track"><div class="f {cls}" style="height:{pct}%"></div><div class="kn" style="bottom:{pct}%"></div></div>
+          <div class="what">{what}</div><div class="pct">{pct}%</div></div>"""
+
+
+SPLIT = f"""
+<!-- State: #budget (era 3, budget dialog with the compute split) -->
+<div id="budget" class="ov">
+  <div class="wash"></div>
+{hud(44, 22, "Kestrel 4", "training run · reasoning model", 60, 3, 10, "$3.0B", "about 8 months", "200 units")}
+  <section class="gp team2">
+    <div class="hd">Team</div>
+    {op("Head of Safety", "calm", "12% keeps our 10% pledge, with a little room.")}
+    {op("Head of Research", "eager", "26 units sit idle. Start a bigger run, or sell the time.")}
+    {op("CFO", "uneasy", "Idle units still cost us $38M a month.")}
+    {op("Policy and Comms", "calm", "Serving is covered. No outages this turn.")}
+  </section>
+
+  <section class="gp dlg2 bud" role="dialog" aria-label="Plan this turn's budget">
+    <div class="hh"><h1>Plan this turn's budget</h1>
+      <div class="subt">Era 3 · money for people and programs, compute for everything that runs</div></div>
+    <div class="rule"></div>
+    <div class="sec" style="margin-top:0">Money · $40M a month</div>
+    <div class="mrow">
+      <div class="money"><div class="sliders">
+          {msl("Research", "Training", 35, "c-rl")}
+          {msl("CISO", "Security", 15, "c-sec")}
+          {msl("Product", "Product", 25, "c-pro")}
+          {msl("People", "Talent", 25, "c-tal")}
+      </div></div>
+      <div class="mside"><div class="t">Spend level</div>
+        <div class="lvl"><span>Lean</span><span class="on">Steady</span><span>Aggressive</span></div>
+        <p>Money pays for people and programs. Safety work now runs on compute, below.</p></div>
+    </div>
+    <div class="sec">Compute · drag the handles</div>
+    <div class="cbox">
+      <div class="top"><div class="l"><b>200 units</b> online</div><div class="r">bill $292M a month, used or not</div></div>
+      <div class="cbar" aria-label="Compute split">
+        <span class="k-serve" style="flex:90">Serving<small>90 u</small></span>
+        <span class="k-ctrl" style="flex:10"><small>10</small></span>
+        <span class="k-safe" style="flex:24">Safety<small>24 u · 12%</small></span>
+        <span class="k-train" style="flex:50">Training run<small>50 u</small></span>
+        <span class="k-idle" style="flex:26"><small class="idl">idle 26 u</small></span>
+        <i class="dv" style="left:45%"></i><i class="dv" style="left:62%"></i>
+        <i class="mk up" style="left:45%"><em>users need 90</em></i>
+        <i class="mk dn" style="left:60%"><em>pledge 10% · kept</em></i>
+      </div>
+      <div class="cfoot">
+        <div class="mleg" style="margin-top:0;flex-wrap:wrap;gap:6px 14px;align-content:start">
+          <span><i class="sw2 k-serve"></i>Serving users</span><span><i class="sw2 k-ctrl"></i>Control (internal model)</span>
+          <span><i class="sw2 k-safe"></i>Safety and evals</span><span><i class="sw2 k-train"></i>Training</span><span><i class="sw2 k-idle"></i>Idle, still billed</span>
+        </div>
+        <div>
+          <div class="tgl" style="border-top:0;padding-top:0"><span>Cover shortfalls with spot<small>if users need more than serving gets, rent it at 2.5× base</small></span><i class="sw3 on"></i></div>
+          <div class="tgl"><span>Resell idle compute<small>recovers 60% of the cost of idle units</small></span><i class="sw3"></i></div>
+        </div>
+      </div>
+    </div>
+    <div class="dfoot"><div class="note">Budget changes are free · they apply from this turn</div><div class="btn">OK</div></div>
+  </section>
+
+  <section class="gp side">
+    <div class="hd">This turn</div>
+    <div class="body">
+      <div class="bill"><span>Money spend</span><b>$40M/mo</b></div>
+      <div class="bill" style="padding-top:0"><span>Compute bill</span><b>$292M/mo</b></div>
+      <div class="bill" style="padding-top:0"><span>of which idle</span><b class="after">$38M/mo</b></div>
+      <div class="rw"><span>Runway (CFO)</span><b>about 8 months</b></div>
+      <div class="rw" style="border-top:0;margin-top:2px;padding-top:0"><span>Pledge 10%</span><b class="ok">kept at 12%</b></div>
+    </div>
+  </section>
+</div>
+"""
+
 SCRIPTS = src[323:326]  # hash script, fit-to-window, </body></html>
-out = "\n".join(head) + CSS + "</style></head>\n<body>\n" + room + "\n" + DEALS + POWER + "\n".join(SCRIPTS) + "\n"
+out = "\n".join(head) + CSS + "</style></head>\n<body>\n" + room + "\n" + DEALS + POWER + QUEUE + SPLIT + "\n".join(SCRIPTS) + "\n"
 out = out.replace("<title>Lab Office</title>", "<title>Compute Screens</title>")
 # default to #deals when no hash is given
 out = out.replace("var t=document.getElementById(location.hash.slice(1));",
