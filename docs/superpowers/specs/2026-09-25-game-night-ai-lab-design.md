@@ -109,8 +109,10 @@ Failure endings:
 | Misuse catastrophe | Capability above the danger line and misuseExposure > 70: rolled each turn. |
 | Left behind | At an era gate, rank below 2nd and more than 15 behind the leader. |
 | Someone else's disaster | raceHeat > 85: rolled each turn against the least careful rival. |
+| Quiet takeover | Internal deployment (section 6d) escalates past its last warning at high capability; no release needed. |
 
-Winning endings from era 5: aligned success, negotiated pacing deal, pyrrhic win.
+Winning endings from era 5: aligned success, negotiated pacing deal, pyrrhic win (definitions
+in section 6e). A lab that is insolvent when era 5 ends never wins; it ends in acquihire.
 
 ## 6. Characters and systems (approved)
 
@@ -130,13 +132,29 @@ Winning endings from era 5: aligned success, negotiated pacing deal, pyrrhic win
 - **Compute market.** Four or five fictional actors: a chip titan, a cloud landlord, a neocloud
   that can fail, a sovereign financier with political strings, and power-site deals in era 4.
   Multi-year deals buy priority; spot capacity can vanish; equity deals attach strings.
-- **Constitution (clarified by owner 2026-09-25).** The *model's* constitution: the values
-  document your AI is trained on, like Claude's constitution or OpenAI's Model Spec. It is
-  not a company charter. It shapes model behavior, is amended under pressure (the President,
-  investors, users), and in the bad endings the AI that takes over carries its values. What
-  the player actually writes (value ranking and dials, a clause list, or rules versus
-  judgment) is **to be brainstormed later** (owner deferred 2026-09-25). Company promises
-  such as a safety-compute pledge live in `state.promises`, not here.
+- **Constitution (clarified by owner 2026-09-25; format decided 2026-09-25).** The *model's*
+  constitution: the values document your AI is trained on, like Claude's constitution or
+  OpenAI's Model Spec. It is not a company charter. Company promises such as a safety-compute
+  pledge live in `state.promises`, not here.
+  - **Format: casebook plus hard lines, presented like a real constitution or model spec.**
+    The player (1) picks 3 hard lines from about 8 (for example: never help build weapons of
+    mass destruction, never deceive the lab, never resist shutdown, never manipulate users,
+    never help one group seize power), and (2) rules on 5–6 concrete cases (for example: a
+    dangerous chemistry question, a parent who wants to monitor a teenager, the President's
+    office asking the model to play down a critical report, a user who insists the model is
+    wrong when it is right). Each ruling is a precedent that sets hidden values. The result is
+    rendered as a document in the style of the real ones: a hard-constraints section and a
+    worked-examples section.
+  - **Effects.** Each hard line closes off some revenue or event options and guards against
+    one catastrophe. Areas no line covers run on the model's judgment, which degrades as
+    alignment debt grows. Events test the model against what was written: a strict line
+    costs revenue, a loose one plants incidents.
+  - **Amendment pressure.** Demands come from the President, investors, users, political
+    groups and activists, each as an event card with a cost either way.
+  - **Written versus learned.** With high alignment debt the model's actual behavior drifts
+    from the constitution. The end-of-run reveal shows what the player wrote next to what the
+    model learned, and in the takeover endings the AI's epilogue is written from its learned
+    values.
 - **Feed.** A read-only Twitter-like feed of generated posts reacting to events and state.
 - **President meetings** (era 2 or 3, and era 5). **The owner writes this dialogue
   (2026-09-25); build the mechanics and leave the script to the owner.** A fictional president, recognizable in style
@@ -242,6 +260,66 @@ Part 2. That report's menu tables are the working content; this section fixes ho
   reasoning trace (penalize the thought / fix the environment / ignore); sudden capability
   jump (celebrate / pay for an audit).
 
+## 6d. Misalignment during development (owner decision 2026-09-25: both parts)
+
+Misalignment risk exists before any release, in two parts.
+
+- **Training-run hazards hide risk.** Reward hacking (from verifiable-reward or agentic RL),
+  eval gaming (grows with capability from era 3) and alignment faking (alignment training on a
+  capable model) add alignment debt, part of it to a new **concealed** portion that the Head
+  of Safety's reading does not see. Interpretability spend or a third-party eval gate exposes
+  it; the reveal shows how much was hidden. The "caught-cheating reasoning trace" mini-event
+  gets research-based choices: *penalize the thought* removes the visible cheating but moves
+  the debt into the concealed portion (Baker et al. 2025, punishing bad reasoning traces
+  teaches models to hide intent); *fix the environment* removes it at a time cost; *ignore* it
+  leaves it visible.
+- **Internal deployment carries catastrophe risk.** From era 3 a move puts the newest trained
+  model to work inside the lab, released or not: training runs get faster and gain more.
+  Control spending (monitors, sandboxing, restricted permissions) costs compute and some of the
+  speed-up and lowers the incident chance. Each turn it runs internally, roll with the release
+  formula using total debt (visible plus concealed) × capability, reduced by control. Trouble
+  escalates warning → incident card (sabotaged research, an attempt to disable oversight) →
+  weight self-exfiltration attempt → **quiet takeover** ending if ignored at high capability.
+  In era 5 automated research runs through internal deployment, so keeping pace pushes the
+  player to lean on it.
+
+## 6e. Era 5: pacing summit, then hold or ship (owner decision 2026-09-25)
+
+Research basis: `docs/research/ai-lab-mechanics/notes/pacing_and_us_china.md`.
+
+- **When.** The summit opens era 5 as a scheduled event. Attending costs one move; skipping
+  it raises race heat and lowers government favor.
+- **How decisions are made (one screen).** (1) *Propose:* up to six commitment cards; the
+  player puts up to three forward. (2) *Read the room:* the Policy and Comms Director gives a
+  noisy read of who will sign each card (each rival lab, the Western and Eastern
+  governments). Each party's true stance depends on its caution, its gap to the leader, race
+  heat, and the player's trust and government favor. One sweetener (paying for shared
+  research, or offering your own evaluator access first) raises support. (3) *Sign:*
+  signatures are revealed. A card only the player signs is a unilateral pledge that binds no
+  one else; a card signed by at least one other lab and one government is binding.
+- **Commitments and effects.**
+
+  | Commitment | Effect on signers | Main game effect |
+  |---|---|---|
+  | Embedded outside evaluators | Small speed cost | Exposes concealed debt for every signer; defections more likely detected |
+  | Compute cap | Caps capability gain per run | Biggest race-heat cut; lower misalignment risk |
+  | Release delay | Minimum gap between launches | Each release raises race heat less |
+  | Shared safety research | Costs cash | Slows debt growth for all signers; cuts "someone else's disaster" |
+  | Pause internal automated research | Removes the internal-deployment speed-up | Cuts the quiet-takeover roll |
+  | US–China verification channel | Needs both governments and high US favor | The only card that binds the Eastern lab |
+
+- **Hold or ship.** Each remaining turn the player holds (keeps commitments) or ships (breaks
+  one for a capability or revenue jump); rivals decide at the same time. A rival's chance to
+  defect rises with race heat and its gap behind the leader and falls under evaluators or
+  verification. A detected defection raises everyone's defection chance next turn, so the deal
+  can unravel. An undetected one quietly widens that rival's lead, seen only in the disputed
+  gap range. If the player is caught defecting, the player loses public trust and government
+  favor and the deal collapses.
+- **Endings.** Negotiated pacing deal: the deal holds to the last turn and the player is
+  neither left behind nor hit by a catastrophe. Aligned success: on top with low total debt,
+  with or without a deal. Pyrrhic win: on top with high debt or a broken deal. The summit
+  outcome also chooses the finale cards.
+
 ## 7. One turn, screen by screen
 
 1. **Briefing.** Four advisor cards, each with a face showing mood and one line. The feed runs
@@ -249,8 +327,8 @@ Part 2. That report's menu tables are the working content; this section fixes ho
 2. **Budget.** One five-way split (training, safety and evals, security, product and growth,
    talent and research) plus a total spend level. The CFO shows the two runway figures.
 3. **Moves.** Two action slots per turn, chosen from: start a training run, sign a compute deal,
-   release a model, amend or defend the constitution, take a meeting, and (era 5) attend the
-   pacing summit.
+   release a model, deploy a model internally (from era 3), amend or defend the constitution,
+   take a meeting, and (era 5) attend the pacing summit.
 4. **Events.** Zero to two event cards with choices, drawn from risk pools fed by hidden
    variables and from the era's deck.
 5. **Training run** (when one is active). Starting a run opens the recipe screen (section 6b).
@@ -277,8 +355,10 @@ Part 2. That report's menu tables are the working content; this section fixes ho
 
 - `node --test` unit tests for the sim: update rules, thresholds, ending checks, seeded runs.
 - A balance bot plays scripted strategies (all-speed, all-safety, balanced, random) many times
-  and reports where each dies. Targets: most runs of each extreme strategy die by era 3–4; no
-  single scripted strategy reaches a winning ending in more than about a third of runs.
+  and reports where each dies. Targets (owner confirmed 2026-09-25): most first runs die in
+  era 3–4; no single scripted strategy reaches a winning ending in more than about a third of
+  runs. Slowness is punished mainly by rivals pulling ahead, with the board as the second
+  pressure.
 
 ## 10. Out of scope for the hackathon
 

@@ -1,6 +1,6 @@
 # Open decisions for the owner
 
-As of 2026-09-25 ~1 PM PT. Grouped by what each one blocks. Each item gives the options, the
+As of 2026-09-25 ~1:30 PM PT. Grouped by what each one blocks. Each item gives the options, the
 recommendation, and why it matters. Decided items move into the spec
 (`docs/superpowers/specs/2026-09-25-game-night-ai-lab-design.md`) and get deleted here.
 
@@ -11,25 +11,9 @@ recommendation, and why it matters. Decided items move into the spec
    every screen. Questions inside it: overall mood (a cozy Game Dev Tycoon office, a dark
    "war room" dashboard, a founder's-desktop OS like your NimbusOS slice); whether there is an
    animated office scene or only panels; how advisors look (portraits, icons, text only).
-2. **Pacing design in era 5.**
-   - Option 1, summit then hold-or-ship (recommended): pick commitments at a summit
-     (outside evaluators, compute cap, release delay, shared safety research, US–China
-     verification channel), then each remaining turn is hold or ship, with rivals reacting.
-     Only option where your choices decide whether the deal *holds*. About half a day.
-   - Option 2, pure hold-or-ship: the prisoner's dilemma with no levers. 1–2 hours; can feel
-     like luck.
-   - Option 3, one big vote: dramatic, but the deal is never tested. 3–4 hours.
-3. **Model constitution format.** What the player writes:
-   - ranking of values plus 3–4 tension dials (obedient↔candid, cautious↔helpful,
-     neutral↔opinionated, user-first↔society-first) — recommended, one screen;
-   - a clause list (about 6 of 15), reads like a real document, harder to balance;
-   - rules versus judgment, plus a few clauses (closest to the real research debate).
-   Also decide: who pushes amendments (President, investors, users, staff) and how the
-   constitution shows up in the endings.
-4. **Difficulty target.** Today the careful strategies win 84–97% of simulated runs, and the
-   spec's target is no scripted strategy above about one third. Decide: what share of first
-   runs should die, and by which era (your earlier answer: most die in era 3–4); whether
-   slowness should be punished mainly by rivals pulling ahead, by the board, or by money.
+Decided 2026-09-25 and moved into the spec: era 5 pacing (spec 6e), misalignment during
+development (spec 6d), the constitution format and amendment sources (spec 6), and the
+difficulty target (spec 9).
 
 ## B. Needed before content writing
 
