@@ -43,3 +43,13 @@ test('a rival that finishes its cycle releases and heats the race', () => {
   assert.ok(s.rivals[0].capability > 26);
   assert.ok(s.raceHeat > heat);
 });
+
+test('rival capability and reported gain are capped at the maximum', () => {
+  const s = createInitialState({ seed: 1 });
+  const fake = { next: () => 0, int: () => 0 };
+  s.rivals[0].capability = 99;
+  s.rivals[0].progress = 0.99;
+  const [release] = rivalsTurn(s, fake);
+  assert.equal(s.rivals[0].capability, 100);
+  assert.equal(release.gain, 1);
+});

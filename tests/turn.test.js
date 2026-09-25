@@ -45,14 +45,94 @@ test('budget split must add up to one', () => {
   assert.equal(setBudget(s, { spend: 20, split: { training: 0.5, safety: 0.5, security: 0.5, product: 0, talent: 0 } }).ok, false);
 });
 
+test('budget values must be finite and non-negative', () => {
+  const valid = { training: 0.3, safety: 0.2, security: 0.1, product: 0.2, talent: 0.2 };
+  for (const spend of [NaN, Infinity, -1]) {
+    assert.equal(setBudget(createInitialState(), { spend, split: valid }).ok, false);
+  }
+  for (const value of [NaN, Infinity, -0.1]) {
+    const split = { ...valid, training: value, talent: 0.5 - value };
+    assert.equal(setBudget(createInitialState(), { spend: 20, split }).ok, false);
+  }
+});
+
+test('serving load reflects user growth from the same turn', () => {
+  const s = createInitialState();
+  s.compute.online = 100;
+  s.models.push({
+    active: true,
+    activated: true,
+    activeFromTurn: 0,
+    channel: 'consumer',
+    priceStance: 'market',
+    users: 1e6,
+    userCap: 4e6,
+    servingCost: 0,
+    spec: { size: 'medium', arch: 'dense', context: 'short', precision: 'bf16', guard: false, channel: 'consumer', reasoning: 'off' },
+  });
+  const { state } = endTurn(s, {}, createRng(3));
+  assert.equal(state.models[0].users, 1.128e6);
+  assert.ok(Math.abs(state.compute.servingUnits - 1.128e6 * 2.4 / 1.46e6) < 1e-9);
+});
+
+test('a new budget updates emergency eligibility before moves', () => {
+  const s = createInitialState();
+  s.cash = 100;
+  const budget = { spend: 200, split: { training: 0.3, safety: 0.2, security: 0.1, product: 0.2, talent: 0.2 } };
+  const out = endTurn(s, { budget, moves: [{ type: 'emergency', option: 'bridgeRound' }] }, createRng(4));
+  assert.equal(out.errors.length, 0);
+  assert.equal(out.events.some((e) => e.type === 'emergency'), true);
+});
+
+test('conversion deadlines trigger once after the economy step', () => {
+  const base = createInitialState();
+  base.board = [50, 50, 50, 50, 50];
+  const due = structuredClone(base);
+  due.flags.conversionDeadline = 0;
+  const control = endTurn(base, {}, createRng(9)).state;
+  const out = endTurn(due, {}, createRng(9));
+  assert.equal(out.state.flags.converted, true);
+  assert.equal(out.events.some((e) => e.type === 'conversionFight'), true);
+  assert.equal(out.state.publicTrust, control.publicTrust - 4);
+  assert.equal(out.state.staffTrust, control.staffTrust - 6);
+  assert.ok(out.state.board.every((support, i) => support <= control.board[i] - 6));
+  const next = endTurn(out.state, {}, createRng(10));
+  assert.equal(next.events.some((e) => e.type === 'conversionFight'), false);
+});
+
+test('endTurn activates due releases before growing users', () => {
+  const s = createInitialState();
+  const spec = { size: 'medium', arch: 'dense', context: 'short', precision: 'bf16', guard: false, channel: 'consumer', reasoning: 'off' };
+  s.models.push(
+    { active: true, activated: true, activeFromTurn: 0, channel: 'consumer', priceStance: 'market', users: 2e6, userCap: 8e6, servingCost: 0, spec },
+    { active: true, activated: false, activeFromTurn: 0, channel: 'consumer', priceStance: 'market', users: 1e6, userCap: 4e6, servingCost: 0, spec },
+  );
+  const { state } = endTurn(s, {}, createRng(11));
+  assert.equal(state.models[0].active, false);
+  assert.equal(state.models[0].users, 0);
+  assert.equal(state.models[1].activated, true);
+  assert.equal(state.models[1].users, 2.256e6);
+});
+
 test('eras advance every four turns and time accelerates', () => {
   let state = createInitialState();
   const rng = createRng(2);
-  for (let i = 0; i < 4; i++) ({ state } = endTurn(state, script(state), rng));
-  if (!state.ending) {
-    assert.equal(state.era, 2);
-    assert.equal(state.monthsElapsed, 12);
-  }
+  for (let i = 0; i < 4; i++) ({ state } = endTurn(state, {}, rng));
+  assert.equal(state.ending, null);
+  assert.equal(state.era, 2);
+  assert.equal(state.monthsElapsed, 12);
+});
+
+test('later eras use their accelerated turn lengths', () => {
+  const eraThree = createInitialState();
+  eraThree.era = 3;
+  const afterThree = endTurn(eraThree, {}, createRng(12)).state;
+  assert.equal(afterThree.monthsElapsed, 1);
+
+  const eraFive = createInitialState();
+  eraFive.era = 5;
+  const afterFive = endTurn(eraFive, {}, createRng(13)).state;
+  assert.equal(afterFive.monthsElapsed, 0.25);
 });
 
 test('a full run is deterministic for a seed and always ends', () => {

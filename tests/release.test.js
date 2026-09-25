@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import { startRun, advanceRun } from '../sim/training.js';
 import { releaseModel, modelName } from '../sim/release.js';
+import * as releaseApi from '../sim/release.js';
 
 const rng = { next: () => 0.5, int: () => 0, chance: (p) => p > 0.5, normal: (m) => m };
 const recipe = {
@@ -57,6 +58,25 @@ test('a new model on the same channel retires the old one', () => {
   const second = releaseModel(s, { ...release, generation: 2 }, rng).model;
   assert.equal(first.active, false);
   assert.ok(second.users >= first.userCap / 4);
+});
+
+test('a delayed model retires its predecessor only when it activates', () => {
+  const s = trainedState();
+  const first = releaseModel(s, release, rng).model;
+  const carried = first.users;
+  startRun(s, recipe);
+  advanceRun(s, rng);
+  const second = releaseModel(s, { ...release, picks: ['eval-full', 'channel-staged'], generation: 2 }, rng).model;
+  assert.equal(typeof releaseApi.activateReleases, 'function');
+  assert.equal(first.active, true);
+  assert.equal(second.activated, false);
+  s.turn = second.activeFromTurn;
+  releaseApi.activateReleases(s);
+  assert.equal(first.active, false);
+  assert.equal(first.users, 0);
+  assert.equal(second.activated, true);
+  assert.ok(second.users >= carried);
+  assert.ok(second.userCap >= second.users * 4);
 });
 
 test('agentic releases can end the game in misalignment', () => {

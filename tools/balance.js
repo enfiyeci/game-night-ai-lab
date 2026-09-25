@@ -94,10 +94,15 @@ function random(state, rng) {
 
 export const STRATEGIES = { speed, safety, balanced, random };
 
-export function playRun(name, seed) {
+export function simulate(name, seed) {
   const rng = createRng(seed);
   let state = createInitialState({ seed });
   for (let i = 0; i < 30 && !state.ending; i++) ({ state } = endTurn(state, STRATEGIES[name](state, rng), rng));
+  return state;
+}
+
+export function playRun(name, seed) {
+  const state = simulate(name, seed);
   return { ending: state.ending, era: state.era, turn: state.turn };
 }
 

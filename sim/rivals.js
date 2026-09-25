@@ -1,3 +1,5 @@
+import { BALANCE } from './balance.js';
+
 // Provisional fictional names (spec §11 open question); rename freely.
 export const RIVAL_TEMPLATES = [
   { id: 'openbrain', name: 'OpenBrain', capability: 26, speed: 0.8, caution: 0.25, eastern: false },
@@ -33,8 +35,10 @@ export function rivalsTurn(state, rng) {
     if (r.progress >= 1) {
       r.progress = 0;
       r.releases += 1;
-      const gain = (5 + rng.int(0, 4)) * (1 + 0.1 * state.era);
-      r.capability += gain;
+      const uncappedGain = (5 + rng.int(0, 4)) * (1 + 0.1 * state.era);
+      const capability = Math.min(BALANCE.maxCapability, r.capability + uncappedGain);
+      const gain = capability - r.capability;
+      r.capability = capability;
       state.raceHeat += 4 * r.speed * (1 - r.caution);
       releases.push({ id: r.id, gain });
     }

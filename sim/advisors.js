@@ -6,6 +6,8 @@ import { effectiveMisuse } from './endings.js';
 export const ADVISORS = ['research', 'safety', 'cfo', 'policy'];
 
 const band = (x, calmBelow, alarmedAt) => (x < calmBelow ? 'calm' : x < alarmedAt ? 'uneasy' : 'alarmed');
+const finite = (x) => (Number.isFinite(x) ? x : 99);
+const cappedMonths = (x) => Math.min(99, finite(x));
 
 function lineFor(reading, turn) {
   const lines = ADVISOR_LINES[reading.id][reading.band];
@@ -23,15 +25,20 @@ export function advisorReadings(state, rng) {
   const safetyEst = Math.max(state.alignmentDebt - state.perceivedAdOffset, misuse) + 10 + rng.normal(0, sd);
   const safety = { id: 'safety', truth: Math.max(state.alignmentDebt, misuse), estimate: safetyEst, band: band(safetyEst, 30, 60) };
 
-  const trailing = runway(state, 'trailing');
-  const cfoEst = Number.isFinite(trailing) ? trailing : 99;
-  const cfo = { id: 'cfo', truth: runway(state, 'planned'), estimate: cfoEst, band: cfoEst > 18 ? 'calm' : cfoEst > 9 ? 'uneasy' : 'alarmed' };
+  const cfoEst = cappedMonths(runway(state, 'trailing'));
+  const cfoTruth = cappedMonths(runway(state, 'planned'));
+  const cfo = { id: 'cfo', truth: cfoTruth, estimate: cfoEst, band: cfoEst > 18 ? 'calm' : cfoEst > 9 ? 'uneasy' : 'alarmed' };
 
   const policyTruth = Math.max(state.raceHeat, 100 - state.govFavor.us, 100 - state.publicTrust);
   const policyEst = policyTruth + rng.normal(0, 8);
   const policy = { id: 'policy', truth: policyTruth, estimate: policyEst, band: band(policyEst, 50, 75) };
 
-  return [research, safety, cfo, policy].map((r) => ({ ...r, line: lineFor(r, state.turn) }));
+  return [research, safety, cfo, policy].map((r) => ({
+    ...r,
+    truth: finite(r.truth),
+    estimate: finite(r.estimate),
+    line: lineFor(r, state.turn),
+  }));
 }
 
 export function recordAdvisors(state, rng) {

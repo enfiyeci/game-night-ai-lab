@@ -9,6 +9,23 @@ export const USERS_BASE = { consumer: 4e6, enterprise: 5e5, agent: 5e4, open: 0 
 
 export const modelName = ({ family, generation, size }) => `${family} ${generation} ${TIER_WORDS[size]}`;
 
+export function activateReleases(state) {
+  for (const model of state.models) {
+    if (!model.active || model.activeFromTurn > state.turn || model.activated) continue;
+    let carried = 0;
+    for (const old of state.models) {
+      if (old !== model && old.active && old.activated && old.channel === model.channel) {
+        carried = Math.max(carried, old.users);
+        old.active = false;
+        old.users = 0;
+      }
+    }
+    model.users = Math.max(model.users, carried);
+    model.userCap = Math.max(model.userCap, model.users * 4);
+    model.activated = true;
+  }
+}
+
 export function releaseModel(state, release, rng) {
   const m = state.pendingModel;
   if (!m) return { ok: false, error: 'no trained model to release' };
@@ -39,15 +56,6 @@ export function releaseModel(state, release, rng) {
   const quality = clamp(1 + (launchScore - bar) / 20, 0.5, 2);
   const eraGrowth = 1 + 0.5 * (state.era - 1);
   const fresh = Math.round(USERS_BASE[spec.channel] * quality * eraGrowth * PRICE_STANCE[release.price].growth * m.publicEffects.usersMult);
-  let carried = 0;
-  for (const old of state.models) {
-    if (old.active && old.channel === spec.channel) {
-      carried = Math.max(carried, old.users);
-      old.active = false;
-      old.users = 0;
-    }
-  }
-  const users = Math.max(fresh, carried);
 
   const model = {
     name: modelName({ family: release.family, generation, size: m.size }),
@@ -62,14 +70,16 @@ export function releaseModel(state, release, rng) {
     channel: spec.channel,
     priceStance: release.price,
     reasoning,
-    users,
-    userCap: users * 4,
+    users: fresh,
+    userCap: fresh * 4,
     activeFromTurn: state.turn + delay,
     active: true,
+    activated: false,
     flags,
     servingCost: 0,
   };
   state.models.push(model);
+  activateReleases(state);
   state.pendingModel = null;
   state.capability = Math.max(state.capability, m.capability);
   state.lastFlagshipScore = Math.max(state.lastFlagshipScore, launchScore);

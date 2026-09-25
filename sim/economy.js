@@ -42,6 +42,12 @@ export function computeRent(state) {
   return state.compute.contracts.reduce((s, c) => s + c.units * c.costMult, 0) * BALANCE.unitMonthlyCost;
 }
 
+export function projectBurn(state) {
+  const spot = state.compute.overflow * BALANCE.unitMonthlyCost * BALANCE.spotPremium;
+  const ops = BALANCE.baseOpsMonthly * (1 + 0.25 * (state.era - 1));
+  return ops + computeRent(state) + spot + state.budget.spend;
+}
+
 export function valuationOf(state) {
   const base = Math.max(state.arr, 80);
   const multiple = base < 500 ? 60 : Math.max(15, 60 - 10 * Math.log2(base / 500));
@@ -50,9 +56,7 @@ export function valuationOf(state) {
 
 export function applyEconomy(state) {
   const era = eraById(state.era);
-  const spot = state.compute.overflow * BALANCE.unitMonthlyCost * BALANCE.spotPremium;
-  const ops = BALANCE.baseOpsMonthly * (1 + 0.25 * (state.era - 1));
-  const burn = ops + computeRent(state) + spot + state.budget.spend;
+  const burn = projectBurn(state);
   state.burnPlanned = burn;
   state.burnHistory.push(burn);
   const recent = state.burnHistory.slice(-3);
@@ -86,6 +90,7 @@ export const INVESTORS = {
 };
 
 export function raiseRound(state, archetype) {
+  if (state.era < 2) return { ok: false, error: 'funding rounds open in era 2' };
   const inv = INVESTORS[archetype];
   if (!inv) return { ok: false, error: `unknown investor ${archetype}` };
   if (state.flags.lastRoundEra === state.era) return { ok: false, error: 'already raised a round this era' };

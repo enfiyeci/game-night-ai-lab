@@ -5,7 +5,7 @@ export const TECHNIQUES = [
   { id: 'synthetic', name: 'Synthetic data', era: 2, standard: 6, researchCost: 25 },
   { id: 'rlvr', name: 'Verifiable-reward RL', era: 2, standard: 6, researchCost: 35 },
   { id: 'cot', name: 'Chain-of-thought reasoning', era: 3, standard: 3, researchCost: 40, auto: { cap: 4, ad: 2, flags: ['hallucination'], spec: { reasoningCapable: true } } },
-  { id: 'agents', name: 'Tool use and agents', era: 3, standard: 4, researchCost: 50, auto: { cap: 3, ad: 3 } },
+  { id: 'agents', name: 'Tool use and agents', era: 3, standard: 4, researchCost: 50, auto: { cap: 3, ad: 3, flags: ['agentic'] } },
   { id: 'fp4', name: 'Low-precision serving', era: 4, standard: 6, researchCost: 30 },
 ];
 

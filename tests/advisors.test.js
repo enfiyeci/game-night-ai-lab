@@ -29,6 +29,17 @@ test('CFO argues from trailing burn', () => {
   assert.equal(cfo.truth, 5);
 });
 
+test('advisor readings and history never contain non-finite values', () => {
+  const s = createInitialState();
+  const readings = advisorReadings(s, quiet);
+  const cfo = byId(readings).cfo;
+  assert.equal(cfo.estimate, 99);
+  assert.equal(cfo.truth, 99);
+  assert.ok(readings.every((r) => Number.isFinite(r.estimate) && Number.isFinite(r.truth)));
+  recordAdvisors(s, quiet);
+  assert.ok(s.advisorHistory[0].readings.every((r) => Number.isFinite(r.estimate) && Number.isFinite(r.truth)));
+});
+
 test('Head of Research is optimistic and notices weird results only late', () => {
   const s = createInitialState();
   s.capability = 20; // leader 26, gap 6, reads −4

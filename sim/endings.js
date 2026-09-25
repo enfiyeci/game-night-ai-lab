@@ -2,6 +2,7 @@ import { BALANCE } from './balance.js';
 import { eraById } from './data/eras.js';
 import { rank, gapToLeader } from './rivals.js';
 import { boardVote } from './board.js';
+import { EMERGENCY_OPTIONS } from './economy.js';
 
 export const ENDINGS = {
   acquihire: { kind: 'fail', title: 'Absorbed', text: 'The money ran out. A tech giant licensed your models and hired your team.' },
@@ -18,8 +19,17 @@ export const ENDINGS = {
 export const effectiveMisuse = (state) => Math.max(state.misuseExposure, state.misuseLocked);
 
 export function checkTurnEndings(state, rng) {
+  if (state.cash > 0) delete state.flags.insolvent;
   if (state.ending) return state.ending;
-  if (state.cash <= 0) return (state.ending = 'acquihire');
+  if (state.cash <= 0) {
+    const used = new Set(state.flags.emergencyUsed ?? []);
+    const rescueRemains = Object.keys(EMERGENCY_OPTIONS).some((option) => option !== 'acquihire' && !used.has(option));
+    if (rescueRemains && !state.flags.insolvent) {
+      state.flags.insolvent = true;
+      return null;
+    }
+    return (state.ending = 'acquihire');
+  }
   if (state.capability > BALANCE.dangerLine && effectiveMisuse(state) > BALANCE.misuseDisasterLine && rng.chance(BALANCE.misuseRollChance)) {
     return (state.ending = 'misuse');
   }

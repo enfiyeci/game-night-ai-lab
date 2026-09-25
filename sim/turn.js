@@ -2,9 +2,9 @@ import { BALANCE } from './balance.js';
 import { eraById } from './data/eras.js';
 import { clamp } from './util.js';
 import { startRun, advanceRun } from './training.js';
-import { releaseModel } from './release.js';
+import { activateReleases, releaseModel } from './release.js';
 import { signDeal, computeTurn } from './compute.js';
-import { updateServing, growUsers, applyEconomy, legalTick, raiseRound, useEmergency } from './economy.js';
+import { updateServing, growUsers, applyEconomy, legalTick, projectBurn, raiseRound, useEmergency } from './economy.js';
 import { researchTechnique } from './techniques.js';
 import { rivalsTurn } from './rivals.js';
 import { updateBoard } from './board.js';
@@ -15,10 +15,15 @@ export const MAX_MOVES = 2;
 const BUDGET_KEYS = ['training', 'safety', 'security', 'product', 'talent'];
 
 export function setBudget(state, budget) {
-  const total = BUDGET_KEYS.reduce((s, k) => s + (budget.split[k] ?? 0), 0);
+  const spend = budget?.spend;
+  if (!Number.isFinite(spend) || spend < 0 || spend > 200) return { ok: false, error: 'spend must be between 0 and 200 $M per month' };
+  const values = BUDGET_KEYS.map((k) => budget?.split?.[k]);
+  if (values.some((value) => !Number.isFinite(value) || value < 0)) {
+    return { ok: false, error: 'budget split values must be finite and non-negative' };
+  }
+  const total = values.reduce((sum, value) => sum + value, 0);
   if (Math.abs(total - 1) > 0.001) return { ok: false, error: 'the budget split must add up to 100%' };
-  if (!(budget.spend >= 0 && budget.spend <= 200)) return { ok: false, error: 'spend must be between 0 and 200 $M per month' };
-  state.budget = { spend: budget.spend, split: Object.fromEntries(BUDGET_KEYS.map((k) => [k, budget.split[k] ?? 0])) };
+  state.budget = { spend, split: Object.fromEntries(BUDGET_KEYS.map((k, i) => [k, values[i]])) };
   return { ok: true };
 }
 
@@ -64,6 +69,7 @@ export function endTurn(prev, actions = {}, rng) {
   if (actions.budget) {
     const r = setBudget(state, actions.budget);
     if (!r.ok) errors.push(r.error);
+    else state.burnPlanned = projectBurn(state);
   }
   const moves = actions.moves ?? [];
   if (moves.length > MAX_MOVES) errors.push(`only ${MAX_MOVES} moves per turn`);
@@ -82,9 +88,17 @@ export function endTurn(prev, actions = {}, rng) {
     const { arrived, failed } = computeTurn(state, rng);
     for (const a of arrived) events.push({ type: 'computeArrived', supplier: a.supplier, units: a.units });
     for (const f of failed) events.push({ type: 'computeFailed', supplier: f.supplier, units: f.units });
-    updateServing(state);
+    activateReleases(state);
     growUsers(state);
+    updateServing(state);
     applyEconomy(state);
+    if (state.flags.conversionDeadline != null && state.turn >= state.flags.conversionDeadline && !state.flags.converted) {
+      state.flags.converted = true;
+      state.board = state.board.map((support) => support - 6);
+      state.publicTrust -= 4;
+      state.staffTrust -= 6;
+      events.push({ type: 'conversionFight' });
+    }
     for (const c of legalTick(state)) events.push({ type: 'lawsuitPaid', cost: c.cost, source: c.source });
     for (const r of rivalsTurn(state, rng)) events.push({ type: 'rivalRelease', ...r });
     state.raceHeat -= BALANCE.raceHeatDecay;

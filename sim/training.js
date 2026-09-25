@@ -47,7 +47,9 @@ export function resolveRun(state, run, rng) {
     base += (e.capReady ?? 0) * readiness;
   }
   const talent = 0.8 + state.budget.split.talent;
-  const gain = Math.max(0, base) * talent * (1 - 0.5 * alignShare) * Math.max(0.2, 1 - 0.2 * run.spikes);
+  const uncappedGain = Math.max(0, base) * talent * (1 - 0.5 * alignShare) * Math.max(0.2, 1 - 0.2 * run.spikes);
+  const capability = Math.min(BALANCE.maxCapability, state.capability + uncappedGain);
+  const gain = Math.max(0, capability - state.capability);
 
   const sum = (key) => effects.reduce((s, e) => s + (e[key] ?? 0), 0);
   const era = eraById(state.era);
@@ -68,7 +70,7 @@ export function resolveRun(state, run, rng) {
     cards.reduce((v, c) => c.effects.openWeightsMx ?? v, 20) * cards.reduce((m, c) => m * (c.effects.openWeightsMult ?? 1), 1);
 
   return {
-    capability: state.capability + gain,
+    capability,
     gain,
     size,
     spec,

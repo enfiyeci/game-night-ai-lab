@@ -7,10 +7,24 @@ import { checkTurnEndings, eraGate, finalEnding, ENDINGS } from '../sim/endings.
 const yes = { chance: () => true };
 const no = { chance: () => false };
 
-test('running out of cash ends in an acquihire', () => {
+test('running out of cash grants one turn of emergency grace', () => {
   const s = createInitialState();
   s.cash = -1;
+  assert.equal(checkTurnEndings(s, no), null);
+  assert.equal(s.flags.insolvent, true);
   assert.equal(checkTurnEndings(s, no), 'acquihire');
+});
+
+test('insolvency ends immediately without unused rescue options and clears after recovery', () => {
+  const s = createInitialState();
+  s.cash = -1;
+  s.flags.emergencyUsed = ['equityForCompute', 'structureChange', 'bridgeRound'];
+  assert.equal(checkTurnEndings(s, no), 'acquihire');
+
+  const recovered = createInitialState();
+  recovered.flags.insolvent = true;
+  assert.equal(checkTurnEndings(recovered, no), null);
+  assert.equal(recovered.flags.insolvent, undefined);
 });
 
 test('misuse needs capability past the danger line and high exposure', () => {

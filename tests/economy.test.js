@@ -5,6 +5,7 @@ import {
   updateServing, growUsers, applyEconomy, runway, valuationOf, legalTick,
   raiseRound, useEmergency, monthlyRevenue,
 } from '../sim/economy.js';
+import * as economyApi from '../sim/economy.js';
 
 const consumerModel = (users) => ({
   name: 'Kestrel 1 Core', active: true, activeFromTurn: 0, channel: 'consumer', priceStance: 'market',
@@ -36,6 +37,16 @@ test('revenue, burn, cash and valuation', () => {
   assert.equal(s.valuation, 240 * 60);
 });
 
+test('projected burn matches the burn applied by the economy', () => {
+  const s = createInitialState();
+  s.models.push(consumerModel(4e6));
+  updateServing(s);
+  assert.equal(typeof economyApi.projectBurn, 'function');
+  const projected = economyApi.projectBurn(s);
+  applyEconomy(s);
+  assert.equal(projected, s.burnPlanned);
+});
+
 test('runway and valuation floors', () => {
   const s = createInitialState();
   s.burnPlanned = 50;
@@ -63,10 +74,17 @@ test('lawsuits come due', () => {
 
 test('one funding round per era, with strings attached', () => {
   const s = createInitialState();
+  s.era = 2;
   assert.equal(raiseRound(s, 'sovereign').ok, true);
   assert.equal(s.cash, 1000 + 750);
   assert.equal(s.govFavor.us, 45);
   assert.equal(raiseRound(s, 'vc').ok, false);
+});
+
+test('funding rounds are rejected in era 1', () => {
+  const s = createInitialState();
+  assert.deepEqual(raiseRound(s, 'vc'), { ok: false, error: 'funding rounds open in era 2' });
+  assert.equal(s.cash, 1000);
 });
 
 test('emergency options only in the danger zone, once each', () => {

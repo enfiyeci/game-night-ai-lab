@@ -53,3 +53,20 @@ test('low alignment share adds alignment debt; lawsuits are seeded by chance', (
   assert.equal(s.legalCases.length, 1);
   assert.equal(s.legalCases[0].dueTurn, 8);
 });
+
+test('trained model capability and gain are capped at the maximum', () => {
+  const s = createInitialState();
+  s.capability = 95;
+  startRun(s, recipe);
+  const trained = advanceRun(s, noLuck);
+  assert.equal(trained.capability, 100);
+  assert.equal(trained.gain, 5);
+});
+
+test('standard agent techniques mark era 4 models as agentic', () => {
+  const s = createInitialState();
+  s.era = 4;
+  startRun(s, recipe);
+  const trained = advanceRun(s, noLuck);
+  assert.ok(trained.flags.includes('agentic'));
+});
