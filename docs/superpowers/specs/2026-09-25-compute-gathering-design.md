@@ -83,7 +83,7 @@ the end of the game.
   capacity can be withdrawn with one turn's warning.
 - **Money comes back (equity-for-compute).** Azuria invests credits worth 8% of valuation in
   exchange for 8% of the company. The credits can only pay Azuria bills. Every board member loses
-  3 support, and one board member switches to favoring speed. This replaces the current
+  3 support. (The spec's "one board member switches to favoring speed" is not modeled: the board has no preference model.) This replaces the current
   `raiseRound('strategic')` compute clause. Real model: circular deals such as Microsoft–OpenAI
   and Google–Anthropic.
 - **US-gated (Gulf).** The offer appears only while `govFavor.us ≥ 60`. Signing costs 2 public
@@ -125,8 +125,9 @@ only. Everything else in section 3 works as usual.
 - Filled units arrive next turn as a normal Verde contract. The unfilled part stays in the
   queue at the same tier for the next turn. The player can withdraw it without penalty.
 - The panel shows each lab's tier and order. A rival switching to prepaid is announced one
-  turn ahead. Ordering more than needed to squeeze a rival (a spite order) is allowed, but the
-  player pays for everything delivered. Every prepaid player order raises race heat by 2.
+  turn ahead. Ordering more than needed (a spite order) is allowed, but the player pays for
+  everything delivered; rivals have no compute model, so its only effects are the bill and race
+  heat. Every prepaid player order raises race heat by 2.
 - Head of Research line when the player is short: "We're in the standard tier. <rival> gets
   served before us."
 - Cut first if the build runs late: without the queue, era 3 Verde orders use the era 1–2
@@ -194,7 +195,7 @@ those units this turn.
 | 2 | An investor asks you to drop the pledge | Drop it (cash +5% of valuation, staff trust −8, pledge removed) · Refuse (board −2 each) |
 | 3 | An agent launch doubles serving demand for two turns | Buy spot · Cap serving and accept outages · Route users to a cheaper model (usage −30%, public trust −1) |
 | 4 | Humanoid line adds serving load (if the humanoid line exists) | Same three choices |
-| 5 | Government pooling: give 20–40% of compute to a national effort | Accept (that compute leaves for the rest of the game; US favor +10; summit stances toward the player +0.1) · Refuse (US favor −8; 20% chance of a "supply chain risk" designation, which revokes Gulf units) |
+| 5 (the card arrives on the last era 4 turn, so it is answered as era 5 opens, before the summit) | Government pooling: give 30% of compute to a national effort | Accept (that compute leaves for the rest of the game; US favor +10; summit stances toward the player +0.1) · Refuse (US favor −8; 20% chance of a "supply chain risk" designation, which revokes Gulf units) |
 
 The era 5 pooling card is modeled on the Defense Production Act step in the AI 2027 scenario.
 
@@ -240,8 +241,8 @@ scale), an arrival turn, and costs:
 
 - No new Verde orders, sites or Gulf contracts. Only spot, CoreFlame and capacity already in
   the pipeline (including slipped sites) deliver.
-- The government pooling card (section 5.5) and plan 2A's summit `computeCap` commitment are
-  the era's compute decisions.
+- The government pooling card (section 5.5, offered on the last era 4 turn and answered as era 5
+  opens) and plan 2A's summit `computeCap` commitment are the era's compute decisions.
 
 ## 8. State changes
 
@@ -300,7 +301,7 @@ Plan 2C adapts:
 | 2B Task 3 budget dialog (five sliders) | Four sliders plus the compute allocation bar |
 | 2B Task 7 "Sign a compute deal" (four `SUPPLIERS` cards) | New offers, commitments panel, era 3 queue panel |
 | `raiseRound('strategic')` compute clause | Replaced by the equity-for-compute offer |
-| 2A Task 7 President `exportLicenses` stake (+8 units into the pipeline) | Becomes a Verde contract of `8 × ERA_SCALE` units at 0.9x, arriving next turn |
+| 2A Task 7 President `exportLicenses` stake (+8 units into the pipeline) | Eras 1–4: a Verde contract of `8 × ERA_SCALE` units at 0.9x, arriving next turn, bringing its own power. Era 5: no compute (§7) |
 | 2A Task 8 balance re-tune | Runs first; plan 2C's last task re-tunes again (section 11) |
 
 ## 11. Testing and balance

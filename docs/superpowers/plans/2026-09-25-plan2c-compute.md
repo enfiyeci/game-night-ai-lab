@@ -4,7 +4,7 @@
 
 **Goal:** Replace the flat four-supplier compute menu with the owner-approved compute system: binding take-or-pay contracts with era-scaled offers and strings, a light era 3 allocation queue, a per-turn compute split (serving, control, safety, training) that takes over the money budget's safety slice, era 4 power sites with a power cap, the new compute events, the four compute screens, and a balance pass that holds the whole game to its targets.
 
-**Architecture:** Three new pure sim modules (`sim/power.js`, `sim/contracts.js`, `sim/queue.js`) plus `sim/split.js` and a data table (`sim/data/compute.js`), wired into `sim/turn.js` through new `actions` fields. New compute randomness uses a seed-derived side stream (`sideRng`) so the main random stream, and every existing seeded test, is unchanged. The UI changes go through the three seams plan 2B builds: the budget slider data array, the `dealCards(state)` adapter and the HUD compute formatter.
+**Architecture:** Three new pure sim modules (`sim/power.js`, `sim/contracts.js`, `sim/queue.js`) plus `sim/split.js` and a data table (`sim/data/compute.js`), wired into `sim/turn.js` through new `actions` fields. New compute randomness uses a seed-derived side stream (`sideRng`) so the main random stream, and every existing seeded test, is unchanged. The UI changes go through three seams the UI lane agreed to build (Task 7 adds any that are missing): the budget slider data array, the `dealCards(state)` adapter and the HUD compute formatter.
 
 **Tech Stack:** Node 22, plain JavaScript ES modules, `node --test` (`npm test` = `node --test tests/*.test.js`), `npm run balance`; UI in HTML, CSS and ES modules with headless-Chrome screenshots (`tools/shot.sh` from plan 2B).
 
@@ -19,6 +19,7 @@
 - Stage files by explicit path; one commit per task; commit trailer `Co-Authored-By: Codex (gpt-5.6-sol) <noreply@openai.com>` (or the implementer's own trailer if not Codex).
 - After every task: `npm test` passes and `npm run balance` completes.
 - Display rule (spec §2): units in eras 1–3; megawatts and gigawatts from era 4 with 1 unit = 1.7 MW; the sim always counts units.
+- Tests check behaviour, not tuned constants (compute spec §11b): expected values come from exports (`BALANCE.unitMonthlyCost`, `eraScale`, `SUPPLIERS`, `SITE_TYPES`, …) and tests that depend on rival speed pin it. Plan 2A Task 8 and this plan's Task 8 both re-tune numbers.
 
 ## Sequencing with plans 2A and 2B
 
@@ -29,7 +30,7 @@
 | 7 | After plan 2B Tasks 2, 3 and 7 have merged. |
 | 8 | After plan 2A Task 8 (its balance pass) has merged. |
 
-Plan 2A's author promised these seams; use them by name: `safetySpend(state)` in `sim/economy.js` (the only reader of the safety money share), `controlUnits(state)` in `sim/internal.js`, `pushFeed` in `sim/events.js`, the budget dialog's slider data array, `dealCards(state)`, and the HUD compute formatter. If one of them is missing on `main`, stop and report it; do not reimplement plan 2A or 2B work here.
+Plan 2A provides these sim seams; use them by name: `safetySpend(state)` in `sim/economy.js` (the only reader of the safety money share), `controlUnits(state)` in `sim/internal.js`, `pushFeed` in `sim/events.js`. If one of them is missing on `main`, stop and report it; do not reimplement plan 2A work here. The UI lane agreed (in its handoff, not in plan 2B's text) to build three UI seams: the budget dialog's slider data array, a `dealCards(state)` adapter and one HUD compute formatter. Task 7 produces `dealCards` and `format.compute` itself; if the slider data array or the formatter hook is missing, Task 7 adds it.
 
 ## File map
 
@@ -115,22 +116,27 @@ export const SUPPLIERS = {
 - [ ] **Step 2: Write the failing tests**
 
 ```js
-// tests/power.test.js
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
-import { reserveGrid, buildSite, powerTurn, sitePower, leaseBills, leaseMonthly, poweredUnits, eraStartTurn } from '../sim/power.js';
+import { ERAS } from '../sim/data/eras.js';
+import {
+  SITE_TYPES, FACILITY_PER_UNIT, LEASE_RATE, reserveGrid, buildSite, powerTurn, sitePower, leaseBills, leaseMonthly,
+  poweredUnits, eraStartTurn,
+} from '../sim/power.js';
 import { ERA_SCALE, eraScale } from '../sim/data/compute.js';
 
+// Tests check behaviour against the modules' own exports, not tuned constants (compute spec §11b).
 const lo = { next: () => 0, int: (a) => a, chance: () => false, pick: (x) => x[0], normal: (m) => m };
 const hi = { ...lo, int: (a, b) => b, chance: () => true };
 const fresh = (era = 1) => { const s = createInitialState(); s.era = era; s.power ??= { sites: [], nextId: 1 }; return s; };
 
-test('the era scale grows the unit need by era', () => {
-  assert.deepEqual(ERA_SCALE, [1, 3, 10, 50, 150]);
-  assert.equal(eraScale(4), 50);
-  assert.equal(eraStartTurn(4), 12);
-  assert.equal(eraStartTurn(5), 16);
+test('the era scale grows by era and era start turns follow the era table', () => {
+  assert.equal(ERA_SCALE.length, 5);
+  assert.equal(ERA_SCALE[0], 1);
+  for (let e = 2; e <= 5; e++) assert.ok(eraScale(e) > eraScale(e - 1));
+  assert.equal(eraStartTurn(1), 0);
+  assert.equal(eraStartTurn(4), ERAS[0].turns + ERAS[1].turns + ERAS[2].turns);
 });
 
 test('a grid reservation in era 2 comes online at the start of era 4, once per game', () => {
@@ -138,39 +144,41 @@ test('a grid reservation in era 2 comes online at the start of era 4, once per g
   const cash = s.cash;
   const r = reserveGrid(s, lo);
   assert.equal(r.ok, true);
-  assert.equal(s.cash, cash - 50);
-  assert.equal(r.arrivesTurn, 12);
-  assert.equal(s.power.sites[0].units, 300);
+  assert.equal(s.cash, cash - SITE_TYPES.grid.upfront);
+  assert.equal(r.arrivesTurn, eraStartTurn(4));
+  assert.equal(s.power.sites[0].units, SITE_TYPES.grid.size[0]);
   assert.equal(reserveGrid(s, lo).ok, false);
   assert.equal(reserveGrid(fresh(4), lo).ok, false);
 });
 
 test('a late grid reservation arrives late in era 4 and can slip into era 5', () => {
-  assert.equal(reserveGrid(fresh(3), lo).arrivesTurn, 14);
+  const late = reserveGrid(fresh(3), lo).arrivesTurn;
+  assert.ok(late > eraStartTurn(4) && late < eraStartTurn(5));
   assert.ok(reserveGrid(fresh(3), hi).arrivesTurn >= eraStartTurn(5));
 });
 
 test('gas costs public trust; nuclear gains it and may slip', () => {
-  const s = fresh(4); s.turn = 12;
+  const s = fresh(4); s.turn = eraStartTurn(4);
   const pt = s.publicTrust;
-  assert.equal(buildSite(s, 'gas', lo).arrivesTurn, 16);
-  assert.equal(s.publicTrust, pt - 3);
-  assert.equal(buildSite(s, 'nuclear', hi).arrivesTurn, 18);
-  assert.equal(s.publicTrust, pt - 1);
+  assert.equal(buildSite(s, 'gas', lo).arrivesTurn, s.turn + SITE_TYPES.gas.turns);
+  assert.equal(s.publicTrust, pt + SITE_TYPES.gas.trust);
+  assert.equal(buildSite(s, 'nuclear', hi).arrivesTurn, s.turn + SITE_TYPES.nuclear.turns + 2);
+  assert.equal(s.publicTrust, pt + SITE_TYPES.gas.trust + SITE_TYPES.nuclear.trust);
   assert.equal(buildSite(s, 'coal', lo).ok, false);
   assert.equal(buildSite(fresh(3), 'gas', lo).ok, false);
 });
 
 test('sites come online on time; only online sites give power and bill a lease', () => {
-  const s = fresh(4); s.turn = 12;
-  buildSite(s, 'gas', lo);
+  const s = fresh(4); s.turn = eraStartTurn(4);
+  const { arrivesTurn } = buildSite(s, 'gas', lo);
+  const units = SITE_TYPES.gas.size[0];
   assert.equal(sitePower(s), 0);
   assert.equal(leaseBills(s), 0);
-  s.turn = 16;
+  s.turn = arrivesTurn;
   assert.equal(powerTurn(s)[0].type, 'siteOnline');
-  assert.equal(sitePower(s), 300);
-  assert.ok(Math.abs(leaseMonthly(300) - 95) < 1e-9);
-  assert.ok(Math.abs(leaseBills(s) - 95) < 1e-9);
+  assert.equal(sitePower(s), units);
+  assert.ok(Math.abs(leaseMonthly(units) - (units * FACILITY_PER_UNIT * LEASE_RATE) / 12) < 1e-9);
+  assert.ok(Math.abs(leaseBills(s) - leaseMonthly(units)) < 1e-9);
   assert.equal(powerTurn(s).length, 0);
 });
 
@@ -278,29 +286,34 @@ export function poweredUnits(state) {
   - `contractsTurn(state, rng)` → `{ arrived, bumped, warnedBump }`; `expireContracts(state)` → expired contracts; `refreshOnline(state)`.
   - `contractBill(c)`, `monthlyBills(state)`, `arrivingBills(state)`, `creditOffset(state)`, `spendCredits(state)` → $M used; `perTurn(monthly, months)`; `exclusiveActive(state)`.
   - `contractAction(state, { id, action })` → `{ ok }` with actions `scaleDown`, `break`, `buyout`.
-  - Contract shape: `{ id, supplier, units, price, monthsLeft, needsPower, string, arrivedTurn, scaledDown, troubled, dark, bumpNext, exclusiveBought, headline }`.
+  - Contract shape: `{ id, supplier, units, price, monthsLeft, needsPower, string, arrivedTurn, scaledDown, troubled, dark, bumpNext, exclusiveBought, headline }`. Spot has `monthsLeft: null`: it renews every turn until the player breaks it (free) or it is pulled. A pipeline item may carry `needsPower` to override the default (Verde chips arriving in era 4 or later need site power).
+  - Exclusivity: while any Azuria contract (cloud or investment) runs or waits in the pipeline, CoreFlame and Gulf offers are refused until that contract is bought out. The Gulf offer is hidden and refused while `state.flags.supplyChainRisk` is set.
   - New `state.compute` fields used (Task 4 creates them): `offers`, `delays` (`{ [supplier]: extra turns }`), `nextId`, `credits`, `unpowered`.
 
 - [ ] **Step 1: Write the failing tests**
 
 ```js
-// tests/contracts.test.js
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
+import { BALANCE } from '../sim/balance.js';
+import { SUPPLIERS, SPOT_PRICE, EQUITY_SHARE, GULF_OPEN, SCALE_DOWN, SCALE_DOWN_PENALTY_MONTHS, BREAK_SHARE, BUYOUT_MONTHS, eraScale } from '../sim/data/compute.js';
 import {
   generateOffers, signOffer, contractsTurn, expireContracts, contractAction, monthlyBills,
   creditOffset, spendCredits, perTurn, exclusiveActive, sideRng,
 } from '../sim/contracts.js';
 
+// Tests check behaviour against the modules' own exports, not tuned constants (compute spec §11b).
 const lo = { next: () => 0, int: (a) => a, chance: () => false, pick: (x) => x[0], normal: (m) => m };
 const fire = { ...lo, chance: () => true };
-const U = 1.46;
+const U = BALANCE.unitMonthlyCost;
+const small = (key, era) => SUPPLIERS[key].size[0] * eraScale(era); // the lo rng rolls the low end
 
 function fresh(era = 1, favor = 50) {
   const s = createInitialState();
   s.era = era;
   s.govFavor.us = favor;
+  s.cash = 1e6;
   s.power ??= { sites: [], nextId: 1 };
   Object.assign(s.compute, { offers: [], delays: {}, nextId: 1, credits: 0, unpowered: 0 });
   s.compute.contracts = [{ id: 'starter', supplier: 'starter', units: 10, price: 1, monthsLeft: 24, needsPower: false, dark: false, string: null }];
@@ -311,23 +324,27 @@ const offer = (s, supplier) => s.compute.offers.find((o) => o.supplier === suppl
 
 test('offers follow the era menu and scale with the era', () => {
   assert.deepEqual(fresh(1).compute.offers.map((o) => o.supplier), ['verde', 'azuria', 'coreflame', 'spot']);
-  assert.equal(offer(fresh(1), 'verde').units, 10);
-  const e4 = fresh(4, 70);
-  assert.equal(offer(e4, 'verde').units, 500);
+  assert.equal(offer(fresh(1), 'verde').units, small('verde', 1));
+  const e4 = fresh(4, GULF_OPEN + 10);
+  assert.equal(offer(e4, 'verde').units, small('verde', 4));
   assert.ok(offer(e4, 'gulf') && offer(e4, 'loi') && offer(e4, 'azuriaEquity'));
-  assert.deepEqual(fresh(5, 70).compute.offers.map((o) => o.supplier), ['coreflame', 'spot']);
+  assert.deepEqual(fresh(5, GULF_OPEN + 10).compute.offers.map((o) => o.supplier), ['coreflame', 'spot']);
   const e3 = fresh(3);
   assert.equal(e3.compute.offers[0].viaQueue, true);
   assert.equal(offer(e3, 'verde'), undefined);
-  assert.equal(offer(e3, 'gulf'), undefined, 'the Gulf offer needs US favor of 60');
+  assert.equal(offer(e3, 'gulf'), undefined, 'the Gulf offer needs US favor');
+  const risk = fresh(4, GULF_OPEN + 10);
+  risk.flags.supplyChainRisk = true;
+  assert.equal(generateOffers(risk, lo).some((o) => o.supplier === 'gulf'), false);
 });
 
-test('speed carries the premium: spot costs double, long reservations are cheap', () => {
+test('speed carries the premium: spot costs the most, long reservations the least', () => {
   const s = fresh(1);
-  assert.equal(offer(s, 'spot').price, 2);
-  assert.equal(offer(s, 'azuria').price, 1.1);
-  assert.equal(offer(s, 'verde').upfront, Math.round(0.12 * 10 * U * 24));
-  assert.equal(offer(fresh(5), 'spot').price, 3.5);
+  assert.equal(offer(s, 'spot').price, SPOT_PRICE[1]);
+  assert.ok(offer(s, 'spot').price > offer(s, 'azuria').price);
+  assert.ok(offer(s, 'azuria').price > offer(s, 'verde').price);
+  assert.equal(offer(s, 'verde').upfront, Math.round(SUPPLIERS.verde.upfrontShare * small('verde', 1) * U * SUPPLIERS.verde.termMonths));
+  assert.equal(offer(fresh(5), 'spot').price, SPOT_PRICE[5]);
   assert.ok(Math.abs(perTurn(0.02, 3) - (1 - 0.98 ** 3)) < 1e-12);
 });
 
@@ -338,61 +355,77 @@ test('a signed contract bills every month until its term ends, used or not', () 
   assert.equal(signOffer(s, v.id, lo).ok, true);
   assert.equal(s.cash, cash - v.upfront);
   assert.equal(s.compute.offers.some((o) => o.id === v.id), false, 'offers are single use');
-  s.turn = 3;
+  s.turn = v.arrivesIn;
   contractsTurn(s, lo);
-  assert.equal(s.compute.online, 20);
-  assert.ok(Math.abs(monthlyBills(s) - 20 * U) < 1e-9);
+  assert.equal(s.compute.online, 10 + v.units);
+  assert.ok(Math.abs(monthlyBills(s) - (10 + v.units) * U) < 1e-9);
   const c = s.compute.contracts.find((x) => x.supplier === 'verde');
-  for (let i = 0; i < 8; i++) expireContracts(s);
+  for (let m = 0; m < SUPPLIERS.verde.termMonths; m += 3) expireContracts(s);
   assert.equal(s.compute.contracts.includes(c), false);
   assert.equal(signOffer(s, 'nope', lo).ok, false);
 });
 
-test('spot arrives at once and lasts one turn', () => {
+test('spot arrives at once, renews every turn at the era price, and can be dropped for free', () => {
   const s = fresh(1);
-  assert.equal(signOffer(s, offer(s, 'spot').id, lo).ok, true);
-  assert.equal(s.compute.online, 12);
+  const sp = offer(s, 'spot');
+  assert.equal(signOffer(s, sp.id, lo).ok, true);
+  assert.equal(s.compute.online, 10 + sp.units);
   expireContracts(s);
-  assert.equal(s.compute.contracts.some((c) => c.supplier === 'spot'), false);
+  expireContracts(s);
+  const c = s.compute.contracts.find((x) => x.supplier === 'spot');
+  assert.ok(c, 'spot rolls over');
+  s.era = 3;
+  contractsTurn(s, lo);
+  assert.equal(c.price, SPOT_PRICE[3], 'a renewal pays the current era price');
+  const cash = s.cash;
+  assert.equal(contractAction(s, { id: c.id, action: 'break' }).ok, true);
+  assert.equal(s.cash, cash);
+  assert.equal(s.compute.online, 10);
 });
 
-test('Azuria exclusivity blocks other clouds until bought out', () => {
+test('an Azuria contract, cloud or investment, blocks other clouds until bought out', () => {
   const s = fresh(1);
-  signOffer(s, offer(s, 'azuria').id, lo);
+  const az = offer(s, 'azuria');
+  signOffer(s, az.id, lo);
   assert.equal(exclusiveActive(s), true);
   assert.equal(signOffer(s, offer(s, 'coreflame').id, lo).ok, false);
   s.turn = 1;
   contractsTurn(s, lo);
-  const az = s.compute.contracts.find((c) => c.supplier === 'azuria');
+  const c = s.compute.contracts.find((x) => x.supplier === 'azuria');
   const cash = s.cash;
-  assert.equal(contractAction(s, { id: az.id, action: 'buyout' }).ok, true);
-  assert.ok(Math.abs(s.cash - (cash - 3 * 8 * 1.1 * U)) < 1e-9);
+  assert.equal(contractAction(s, { id: c.id, action: 'buyout' }).ok, true);
+  assert.ok(Math.abs(s.cash - (cash - BUYOUT_MONTHS * az.units * az.price * U)) < 1e-9);
   assert.equal(exclusiveActive(s), false);
   assert.equal(signOffer(s, offer(s, 'coreflame').id, lo).ok, true);
+  const e = fresh(2);
+  signOffer(e, offer(e, 'azuriaEquity').id, lo);
+  assert.equal(exclusiveActive(e), true);
 });
 
-test('scale down once with a penalty and a slower next offer; break costs a quarter of what is left', () => {
+test('scale down once with a penalty and a slower next offer; break costs a share of what is left', () => {
   const s = fresh(1);
-  signOffer(s, offer(s, 'coreflame').id, lo);
+  const cf = offer(s, 'coreflame');
+  signOffer(s, cf.id, lo);
   s.turn = 1;
   contractsTurn(s, lo);
   const c = s.compute.contracts.find((x) => x.supplier === 'coreflame');
+  const removed = Math.round(cf.units * SCALE_DOWN);
   let cash = s.cash;
   assert.equal(contractAction(s, { id: c.id, action: 'scaleDown' }).ok, true);
-  assert.equal(c.units, 3);
-  assert.ok(Math.abs(s.cash - (cash - 2 * U * 2)) < 1e-9);
+  assert.equal(c.units, cf.units - removed);
+  assert.ok(Math.abs(s.cash - (cash - removed * U * SCALE_DOWN_PENALTY_MONTHS)) < 1e-9);
   assert.equal(contractAction(s, { id: c.id, action: 'scaleDown' }).ok, false);
   s.compute.offers = generateOffers(s, lo);
-  assert.equal(offer(s, 'coreflame').arrivesIn, 2);
+  assert.equal(offer(s, 'coreflame').arrivesIn, SUPPLIERS.coreflame.arrival + 1);
   cash = s.cash;
   assert.equal(contractAction(s, { id: c.id, action: 'break' }).ok, true);
-  assert.ok(Math.abs(s.cash - (cash - 0.25 * 3 * U * 12)) < 1e-9);
+  assert.ok(Math.abs(s.cash - (cash - BREAK_SHARE * c.units * U * c.monthsLeft)) < 1e-9);
   assert.equal(contractAction(s, { id: 'nope', action: 'break' }).ok, false);
   assert.equal(contractAction(s, { id: 'starter', action: 'melt' }).ok, false);
 });
 
 test('neocloud trouble, and the Gulf license follows US favor', () => {
-  const s = fresh(3, 65);
+  const s = fresh(3, GULF_OPEN + 5);
   const pt = s.publicTrust;
   signOffer(s, offer(s, 'coreflame').id, lo);
   assert.equal(signOffer(s, offer(s, 'gulf').id, lo).ok, true);
@@ -406,8 +439,8 @@ test('neocloud trouble, and the Gulf license follows US favor', () => {
   assert.equal(g.dark, true);
   assert.ok(monthlyBills(s) < withGulf, 'a revoked license pauses billing');
   s.govFavor.us = 55; contractsTurn(s, lo);
-  assert.equal(g.dark, true, 'restored only at 60');
-  s.govFavor.us = 60; contractsTurn(s, lo);
+  assert.equal(g.dark, true, 'restored only at the opening threshold');
+  s.govFavor.us = GULF_OPEN; contractsTurn(s, lo);
   assert.equal(g.dark, false);
   s.flags.supplyChainRisk = true; contractsTurn(s, lo);
   assert.equal(g.dark, true, 'a supply-chain-risk designation also revokes it');
@@ -415,14 +448,13 @@ test('neocloud trouble, and the Gulf license follows US favor', () => {
 
 test('a letter of intent delivers 30 to 100 percent of its headline and needs power in era 4', () => {
   const s = fresh(4);
-  s.cash = 1e5;
   const l = offer(s, 'loi');
-  assert.equal(l.units, 1000);
+  assert.equal(l.units, small('loi', 4));
   assert.equal(signOffer(s, l.id, lo).ok, true);
-  s.turn = 2;
+  s.turn = l.arrivesIn;
   contractsTurn(s, lo);
-  const c = s.compute.contracts.find((x) => x.headline === 1000);
-  assert.equal(c.units, 300);
+  const c = s.compute.contracts.find((x) => x.headline === l.units);
+  assert.equal(c.units, Math.round(l.units * 0.3));
   assert.equal(c.needsPower, true);
 });
 
@@ -431,16 +463,16 @@ test('equity-for-compute credits pay Azuria bills and cost board support', () =>
   s.valuation = 12000;
   s.compute.offers = generateOffers(s, lo);
   const e = offer(s, 'azuriaEquity');
-  assert.equal(e.credits, 960);
-  assert.equal(e.units, 27);
+  assert.equal(e.credits, Math.round(12000 * EQUITY_SHARE));
+  assert.equal(e.units, Math.floor(e.credits / (U * SUPPLIERS.azuriaEquity.termMonths)));
   const board = [...s.board];
   signOffer(s, e.id, lo);
   assert.deepEqual(s.board, board.map((b) => b - 3));
   s.turn = 1;
   contractsTurn(s, lo);
-  assert.ok(Math.abs(creditOffset(s) - 27 * U) < 1e-9);
+  assert.ok(Math.abs(creditOffset(s) - e.units * U) < 1e-9);
   const used = spendCredits(s);
-  assert.ok(Math.abs(s.compute.credits - (960 - used)) < 1e-9);
+  assert.ok(Math.abs(s.compute.credits - (e.credits - used)) < 1e-9);
 });
 
 test('the grid card reserves a power site and then disappears', () => {
@@ -455,6 +487,7 @@ test('spot can be pulled with a turn of warning in the tight eras', () => {
   const s = fresh(3);
   signOffer(s, offer(s, 'spot').id, lo);
   assert.equal(contractsTurn(s, fire).warnedBump, true);
+  expireContracts(s); // the economy's end-of-turn step does not end spot
   s.turn += 1;
   assert.equal(contractsTurn(s, lo).bumped.length, 1);
   assert.equal(s.compute.contracts.some((c) => c.supplier === 'spot'), false);
@@ -494,8 +527,9 @@ export const monthlyBills = (state) => state.compute.contracts.reduce((sum, c) =
 export const arrivingBills = (state) =>
   state.compute.pipeline.filter((p) => p.arrivesTurn <= state.turn).reduce((sum, p) => sum + (p.headline ?? p.units) * p.price * UNIT, 0);
 
+// Spec §3.2: while any Azuria contract runs (cloud or investment), other clouds are blocked until bought out.
 export const exclusiveActive = (state) =>
-  [...state.compute.contracts, ...state.compute.pipeline].some((c) => c.string === 'exclusive' && !c.exclusiveBought);
+  [...state.compute.contracts, ...state.compute.pipeline].some((c) => c.supplier === 'azuria' && !c.exclusiveBought);
 
 const arrivalOf = (s, era) => (typeof s.arrival === 'object' ? s.arrival[era] : s.arrival);
 
@@ -505,7 +539,7 @@ export function generateOffers(state, rng) {
   if (era === 3) offers.push({ id: `verde-queue-${state.turn}`, supplier: 'verde', viaQueue: true });
   for (const [key, s] of Object.entries(SUPPLIERS)) {
     if (!s.eras.includes(era)) continue;
-    if (key === 'gulf' && state.govFavor.us < GULF_OPEN) continue;
+    if (key === 'gulf' && (state.govFavor.us < GULF_OPEN || state.flags.supplyChainRisk)) continue;
     const id = `${key}-${state.turn}`;
     if (key === 'grid') {
       if (!state.power.sites.some((x) => x.source === 'grid')) offers.push({ id, supplier: key, upfront: 50, string: s.string });
@@ -520,9 +554,9 @@ export function generateOffers(state, rng) {
     }
     const units = rng.int(s.size[0], s.size[1]) * eraScale(era);
     const price = key === 'spot' ? SPOT_PRICE[era] : s.price;
-    const termMonths = key === 'spot' ? eraById(era).monthsPerTurn : s.termMonths;
+    const termMonths = s.termMonths; // null for spot: it renews every turn until dropped or pulled
     const monthly = units * price * UNIT;
-    offers.push({ id, supplier: key, units, arrivesIn: arrivalOf(s, era) + delay, upfront: Math.round(s.upfrontShare * monthly * termMonths), monthly, termMonths, price, string: s.string });
+    offers.push({ id, supplier: key, units, arrivesIn: arrivalOf(s, era) + delay, upfront: Math.round(s.upfrontShare * monthly * (termMonths ?? 0)), monthly, termMonths, price, string: s.string });
   }
   return offers;
 }
@@ -537,7 +571,7 @@ function arrive(state, p, rng) {
   const units = p.headline ? Math.round(p.headline * (0.3 + 0.7 * rng.next())) : p.units;
   const c = {
     id: p.id, supplier: p.supplier, units, price: p.price, monthsLeft: p.termMonths,
-    needsPower: p.supplier === 'verde' && state.era >= 4, string: p.string, arrivedTurn: state.turn,
+    needsPower: p.needsPower ?? (p.supplier === 'verde' && state.era >= 4), string: p.string, arrivedTurn: state.turn,
     scaledDown: false, troubled: false, dark: false, bumpNext: false, exclusiveBought: false, headline: p.headline ?? null,
   };
   state.compute.contracts.push(c);
@@ -563,7 +597,7 @@ export function signOffer(state, offerId, rng) {
   if ((offer.supplier === 'coreflame' || offer.supplier === 'gulf') && exclusiveActive(state)) {
     return { ok: false, error: "Azuria's exclusive contract blocks other clouds until you buy it out" };
   }
-  if (offer.supplier === 'gulf' && state.govFavor.us < GULF_OPEN) return { ok: false, error: 'the Gulf deal needs US approval' };
+  if (offer.supplier === 'gulf' && (state.govFavor.us < GULF_OPEN || state.flags.supplyChainRisk)) return { ok: false, error: 'the Gulf deal needs US approval' };
   if (offer.upfront > state.cash) return { ok: false, error: 'not enough cash for the upfront payment' };
   state.cash -= offer.upfront;
   const f = family(offer.supplier);
@@ -602,6 +636,7 @@ export function contractsTurn(state, rng) {
   const warnedBump = spots.length > 0 && rng.chance(BUMP_CHANCE[state.era] ?? 0);
   if (warnedBump) for (const c of spots) c.bumpNext = true;
   for (const c of state.compute.contracts) {
+    if (c.supplier === 'spot') c.price = SPOT_PRICE[state.era]; // renewals pay today's spot price
     if (c.supplier === 'coreflame' && !c.troubled && rng.chance(perTurn(FRAGILE_MONTHLY, months))) c.troubled = true;
     if (c.supplier === 'gulf') {
       if (state.govFavor.us < GULF_REVOKE || state.flags.supplyChainRisk) c.dark = true;
@@ -617,6 +652,7 @@ export function expireContracts(state) {
   const months = eraById(state.era).monthsPerTurn;
   const expired = [];
   state.compute.contracts = state.compute.contracts.filter((c) => {
+    if (c.monthsLeft == null) return true; // spot rolls over
     c.monthsLeft -= months;
     if (c.monthsLeft > 1e-9) return true;
     expired.push(c);
@@ -650,10 +686,10 @@ export function contractAction(state, { id, action } = {}) {
     c.scaledDown = true;
     state.compute.delays[c.supplier] = 1;
   } else if (action === 'break') {
-    state.cash -= BREAK_SHARE * bill * c.monthsLeft;
+    state.cash -= BREAK_SHARE * bill * (c.monthsLeft ?? 0); // dropping spot costs nothing
     state.compute.contracts = state.compute.contracts.filter((x) => x !== c);
   } else if (action === 'buyout') {
-    if (c.string !== 'exclusive' || c.exclusiveBought) return { ok: false, error: 'nothing to buy out' };
+    if (c.supplier !== 'azuria' || c.exclusiveBought) return { ok: false, error: 'nothing to buy out' };
     state.cash -= BUYOUT_MONTHS * bill;
     c.exclusiveBought = true;
   } else return { ok: false, error: `unknown contract action ${action}` };
@@ -678,27 +714,33 @@ export function contractAction(state, { id, action } = {}) {
   - `QUEUE_RELEASE = 15`, `PREPAY_SHARE = 0.15`, `QUEUE_TERM_MONTHS = 24`, `ANNOUNCE_CHANCE = 0.25`, `released(state)` → 150.
   - `rivalOrders(state)` → `[{ lab, units, tier }]` for Western rivals.
   - `allocate(supply, orders)` → `{ [lab]: units }` (pure; used by the UI preview too).
-  - `placeOrder(state, { units, tier })` → `{ ok, units, tier, upfront }`; `withdrawOrder(state)` → `{ ok }`.
+  - `placeOrder(state, { units, tier })` → `{ ok, units, tier, upfront }` (refused while an earlier order still waits); `withdrawOrder(state)` → `{ ok }`.
   - `queueTurn(state, rng)` → events `{ type: 'queueFilled', units, waiting }` and `{ type: 'rivalPrepays', lab }`; sets `state.compute.queue.last = { released, rows: [{ lab, units, tier, got }] }` for the UI.
   - `state.compute.queue` = `{ order, carry, last }` (created on first use).
 
 - [ ] **Step 1: Write the failing tests**
 
 ```js
-// tests/queue.test.js
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
-import { allocate, rivalOrders, placeOrder, queueTurn, released, withdrawOrder } from '../sim/queue.js';
+import { BALANCE } from '../sim/balance.js';
+import { eraScale } from '../sim/data/compute.js';
+import { allocate, rivalOrders, placeOrder, queueTurn, released, withdrawOrder, QUEUE_RELEASE, PREPAY_SHARE, QUEUE_TERM_MONTHS } from '../sim/queue.js';
 
+// Rival speeds are pinned here so a balance re-tune of rival speed does not change these tests.
 const lo = { next: () => 0, int: (a) => a, chance: () => false, pick: (x) => x[0], normal: (m) => m };
 const fire = { ...lo, chance: () => true };
+const SPEED = { openbrain: 0.8, lodestar: 0.55, deepthink: 0.65, qilin: 0.7 };
 const fresh3 = () => {
   const s = createInitialState();
   s.era = 3;
+  s.cash = 1e6;
+  for (const r of s.rivals) r.speed = SPEED[r.id];
   Object.assign(s.compute, { nextId: s.compute.nextId ?? 1 });
   return s;
 };
+const orderOf = (speed) => Math.round((2 + 4 * speed) * eraScale(3));
 
 test('prepaid orders are served first; standard orders share the rest by size', () => {
   assert.deepEqual(allocate(150, [
@@ -718,9 +760,9 @@ test('rival orders come from speed, and the Eastern lab cannot buy', () => {
   const s = fresh3();
   const o = rivalOrders(s);
   assert.equal(o.some((x) => x.lab === 'qilin'), false);
-  assert.deepEqual(o.find((x) => x.lab === 'openbrain'), { lab: 'openbrain', units: 52, tier: 'prepaid' });
-  assert.deepEqual(o.find((x) => x.lab === 'lodestar'), { lab: 'lodestar', units: 42, tier: 'standard' });
-  assert.equal(released(s), 150);
+  assert.deepEqual(o.find((x) => x.lab === 'openbrain'), { lab: 'openbrain', units: orderOf(0.8), tier: 'prepaid' });
+  assert.deepEqual(o.find((x) => x.lab === 'lodestar'), { lab: 'lodestar', units: orderOf(0.55), tier: 'standard' });
+  assert.equal(released(s), QUEUE_RELEASE * eraScale(3));
 });
 
 test('orders: era 3 only, one per turn; prepaying costs cash and race heat', () => {
@@ -730,22 +772,26 @@ test('orders: era 3 only, one per turn; prepaying costs cash and race heat', () 
   const cash = s.cash;
   const heat = s.raceHeat;
   assert.equal(placeOrder(s, { units: 60, tier: 'prepaid' }).ok, true);
-  assert.equal(s.cash, cash - Math.round(0.15 * 60 * 1.46 * 24));
+  assert.equal(s.cash, cash - Math.round(PREPAY_SHARE * 60 * BALANCE.unitMonthlyCost * QUEUE_TERM_MONTHS));
   assert.equal(s.raceHeat, heat + 2);
   assert.equal(placeOrder(s, { units: 10, tier: 'standard' }).ok, false);
   assert.equal(placeOrder(fresh3(), { units: 0, tier: 'standard' }).ok, false);
   assert.equal(placeOrder(fresh3(), { units: 10, tier: 'vip' }).ok, false);
 });
 
-test('a standard order is part-filled now; the rest waits, and can be withdrawn', () => {
+test('a standard order is part-filled now; the rest waits, blocks a new order, and can be withdrawn', () => {
   const s = fresh3();
-  placeOrder(s, { units: 60, tier: 'standard' });
+  const want = released(s);
+  placeOrder(s, { units: want, tier: 'standard' });
+  const expected = allocate(released(s), [...rivalOrders(s), { lab: 'you', units: want, tier: 'standard' }]).you;
   const ev = queueTurn(s, lo);
-  assert.equal(ev.find((e) => e.type === 'queueFilled').units, 40);
-  assert.deepEqual(s.compute.queue.carry, { units: 20, tier: 'standard' });
-  assert.equal(s.compute.pipeline.at(-1).units, 40);
+  assert.ok(expected > 0 && expected < want);
+  assert.equal(ev.find((e) => e.type === 'queueFilled').units, expected);
+  assert.deepEqual(s.compute.queue.carry, { units: want - expected, tier: 'standard' });
+  assert.equal(s.compute.pipeline.at(-1).units, expected);
   assert.equal(s.compute.pipeline.at(-1).arrivesTurn, s.turn + 1);
-  assert.equal(s.compute.queue.last.rows.find((r) => r.lab === 'you').got, 40);
+  assert.equal(s.compute.queue.last.rows.find((r) => r.lab === 'you').got, expected);
+  assert.equal(placeOrder(s, { units: 10, tier: 'standard' }).ok, false, 'a waiting order must be withdrawn first');
   assert.equal(withdrawOrder(s).ok, true);
   assert.equal(s.compute.queue.carry, null);
   assert.equal(withdrawOrder(s).ok, false);
@@ -760,7 +806,7 @@ test('a rival switching to prepaid is announced a turn ahead', () => {
 
 test('outside era 3 the queue clears', () => {
   const s = fresh3();
-  placeOrder(s, { units: 60, tier: 'standard' });
+  placeOrder(s, { units: released(s), tier: 'standard' });
   queueTurn(s, lo);
   s.era = 4;
   assert.deepEqual(queueTurn(s, lo), []);
@@ -822,6 +868,7 @@ export function placeOrder(state, { units, tier } = {}) {
   if (!TIERS.includes(tier)) return { ok: false, error: `unknown tier ${tier}` };
   const q = queueOf(state);
   if (q.order) return { ok: false, error: 'one queue order per turn' };
+  if (q.carry) return { ok: false, error: 'an earlier order is still waiting: withdraw it first' };
   let upfront = 0;
   if (tier === 'prepaid') {
     upfront = Math.round(PREPAY_SHARE * units * BALANCE.unitMonthlyCost * QUEUE_TERM_MONTHS);
@@ -883,7 +930,7 @@ export function queueTurn(state, rng) {
 Precondition: plan 2A merged, plan 2B Tasks 3 and 7 merged, `main` merged into this branch. Read each function named below on the current branch before editing it; plan 2A changed several.
 
 **Files:**
-- Modify: `sim/state.js`, `sim/turn.js`, `sim/economy.js`, `sim/recipe.js`, `sim/internal.js`, `sim/president.js`, `tools/balance.js`, `ui/screens/company.js` (only if it imports from `sim/compute.js`), `tests/turn.test.js`, `tests/internal.test.js`, `tests/balance.test.js` (only the `todo` marker described in Step 7)
+- Modify: `sim/state.js`, `sim/turn.js`, `sim/economy.js`, `sim/recipe.js`, `sim/internal.js`, `sim/president.js`, `tools/balance.js`, `ui/screens/company.js` (only if it imports from `sim/compute.js`), `tests/turn.test.js`, `tests/internal.test.js`, `tests/recipe.test.js`, `tests/training.test.js`, `tests/balance.test.js` (only the `todo` marker described in Step 7)
 - Delete: `sim/compute.js`, `tests/compute.test.js`
 - Create: `tests/compute-turn.test.js`
 
@@ -906,6 +953,8 @@ import { createRng } from '../sim/rng.js';
 import { endTurn } from '../sim/turn.js';
 import { recipeCost } from '../sim/recipe.js';
 import { computeRent } from '../sim/economy.js';
+import { eraScale, SCALE_DOWN } from '../sim/data/compute.js';
+import { allocate, rivalOrders, released } from '../sim/queue.js';
 
 const offerOf = (s, supplier) => s.compute.offers.find((o) => o.supplier === supplier && !o.viaQueue);
 
@@ -934,7 +983,7 @@ test('contract actions run before moves', () => {
   const s = createInitialState();
   const out = endTurn(s, { contractActions: [{ id: 'starter', action: 'scaleDown' }] }, createRng(4));
   assert.deepEqual(out.errors, []);
-  assert.equal(out.state.compute.contracts.find((c) => c.id === 'starter').units, 7);
+  assert.equal(out.state.compute.contracts.find((c) => c.id === 'starter').units, 10 - Math.round(10 * SCALE_DOWN));
 });
 
 test('training runs cost more compute each era', () => {
@@ -942,17 +991,19 @@ test('training runs cost more compute each era', () => {
   const recipe = { sliders: { size: 'medium', length: 'optimal', alignShare: 0.15 }, picks: { pre: [], mid: [], post: [] } };
   const e1 = recipeCost(s, recipe).units;
   s.era = 4;
-  assert.equal(recipeCost(s, recipe).units, e1 * 50);
+  assert.equal(recipeCost(s, recipe).units, e1 * eraScale(4));
 });
 
 test('an era 3 queue order becomes a Verde contract the next turn', () => {
   const s = createInitialState();
   s.era = 3; s.turn = 8; s.turnInEra = 0;
-  const out = endTurn(s, { moves: [{ type: 'queueOrder', units: 60, tier: 'standard' }] }, createRng(5));
+  const want = released(s);
+  const expected = allocate(want, [...rivalOrders(s), { lab: 'you', units: want, tier: 'standard' }]).you;
+  const out = endTurn(s, { moves: [{ type: 'queueOrder', units: want, tier: 'standard' }] }, createRng(5));
   assert.deepEqual(out.errors, []);
-  assert.ok(out.events.some((e) => e.type === 'queueFilled' && e.units === 40));
+  assert.ok(out.events.some((e) => e.type === 'queueFilled' && e.units === expected));
   const next = endTurn(out.state, {}, createRng(6));
-  assert.ok(next.state.compute.contracts.some((c) => c.supplier === 'verde' && c.units === 40));
+  assert.ok(next.state.compute.contracts.some((c) => c.supplier === 'verde' && c.units === expected));
 });
 
 test('in era 4 new chips need site power, and the lease starts when the site is online', () => {
@@ -964,14 +1015,14 @@ test('in era 4 new chips need site power, and the lease starts when the site is 
   assert.equal(built.state.compute.online, 10);
   assert.equal(built.state.compute.unpowered, 100);
   assert.equal(built.state.power.sites[0].source, 'gas');
-  let st = built.state;
-  for (let i = 0; i < 6 && !st.power.sites[0].online && !st.ending; i++) st = endTurn(st, {}, createRng(20 + i)).state;
-  assert.equal(st.power.sites[0].online, true);
-  assert.equal(st.compute.online, 110);
+  // Bring the site forward instead of playing four turns, so the test never crosses the era 4 gate.
+  const st = structuredClone(built.state);
+  st.power.sites[0].arrivesTurn = st.turn;
+  const next = endTurn(st, {}, createRng(8)).state;
+  assert.equal(next.power.sites[0].online, true);
+  assert.equal(next.compute.online, 10 + Math.min(100, next.power.sites[0].units));
 });
 ```
-
-(The gas site arrives four turns after it is built; the loop bound and the ending check keep the test from hanging if an unrelated ending fires.)
 
 - [ ] **Step 2: Run** `node --test tests/compute-turn.test.js` → FAIL.
 
@@ -1044,15 +1095,17 @@ Build the state object into a `const state = { ... }`, then `state.compute.offer
 
   - At the very end of `endTurn`, just before the `if (state.ending) events.push(...)` line: `if (!state.ending) state.compute.offers = generateOffers(state, sideRng(state, 5));` (the turn and era have already advanced, so these are next turn's offers).
 - [ ] **Step 5: Economy, runs, control and old callers**
-  - `sim/economy.js`: import `monthlyBills, arrivingBills, creditOffset, addPipeline` from `./contracts.js`, `leaseBills` from `./power.js`, `eraScale` from `./data/compute.js`. Replace `computeRent` with `export const computeRent = (state) => monthlyBills(state) + leaseBills(state) - creditOffset(state);`. In `projectBurn` replace the `arrivingRent` expression with `arrivingBills(state)`. In `raiseRound`, delete the `strategic` block's `state.compute.pipeline.push(...)` line (the equity-for-compute offer replaces it; keep `state.flags.strategicStrings = true`). In `useEmergency` `equityForCompute`, replace the pipeline push with `addPipeline(state, { supplier: 'azuria', units: 10 * eraScale(state.era), price: 0.5, termMonths: 24, arrivesTurn: state.turn + 1, string: 'moneyBack' });`.
+  - `sim/economy.js`: import `monthlyBills, arrivingBills, creditOffset, addPipeline` from `./contracts.js`, `leaseBills` from `./power.js`, `eraScale` from `./data/compute.js`. Replace `computeRent` with `export const computeRent = (state) => monthlyBills(state) + leaseBills(state) - creditOffset(state);`. In `projectBurn` replace the `arrivingRent` expression with `arrivingBills(state)`. In `raiseRound`, delete the `strategic` block's `state.compute.pipeline.push(...)` line (the equity-for-compute offer replaces it; keep `state.flags.strategicStrings = true`). Also delete `units` and `costMult` from `INVESTORS.strategic`. In `useEmergency` `equityForCompute`, replace the pipeline push with `addPipeline(state, { supplier: 'rescue', units: 10, price: 0.5, termMonths: 24, arrivesTurn: state.turn + 1, string: 'moneyBack', needsPower: false });` (its own supplier id, so a failing lab is not also locked out of other clouds by Azuria exclusivity) (not era-scaled: the rescue's compute is a small sweetener, and scaling it would bill a failing lab hundreds of millions a month).
   - `sim/recipe.js` `recipeCost`: `units: Math.round(SIZE_UNITS[size] * mult * eraScale(state.era) * 10) / 10` (import `eraScale`).
   - `sim/internal.js` `controlUnits`: multiply by `eraScale(state.era)`; in `tests/internal.test.js` the `controlUnits(s)` expectation in era 3 becomes `20`.
-  - `sim/president.js`, the `exportLicenses` stake: replace the pipeline push with `addPipeline(state, { supplier: 'verde', units: 8 * eraScale(state.era), price: 0.9, termMonths: 24, arrivesTurn: state.turn + 1, string: null });`.
-  - Delete `sim/compute.js` and `tests/compute.test.js`. `grep -rn "sim/compute.js\|from './compute.js'\|supplierId\|failChance\|costMult" sim ui tools tests` must return nothing afterwards.
+  - `sim/president.js`, the `exportLicenses` stake: in eras 1–4 replace the pipeline push with `addPipeline(state, { supplier: 'verde', units: 8 * eraScale(state.era), price: 0.9, termMonths: 24, arrivesTurn: state.turn + 1, string: null, needsPower: false });` (licensed chips come installed at a partner site). In era 5 the stake adds no compute (spec §7: no new Verde orders in era 5); record it as `state.flags.exportLicenses = true` only.
+  - Delete `sim/compute.js` and `tests/compute.test.js`. Afterwards `grep -rn "sim/compute.js\|from './compute.js'\|failChance\|costMult" sim ui tools` and `grep -rn "supplierId" sim ui tools` must return nothing (tests may still use `supplierId` in negative cases, and plan 2B's `tests/ui-game.test.js` only counts queued moves).
   - `tools/balance.js`: replace the CoreFlame line with `else if (availableUnits(state) < 5 * eraScale(state.era)) { const o = state.compute.offers.find((x) => x.supplier === 'coreflame'); if (o) moves.push({ type: 'deal', offerId: o.id }); }` (import `eraScale`).
   - `ui/screens/company.js` (if it imports `SUPPLIERS` or builds `{ type: 'deal', supplierId }`): list `state.compute.offers` (skip `viaQueue` and `grid`) with their existing card markup and send `{ type: 'deal', offerId: o.id }`. Task 7 restyles it.
-  - `tests/turn.test.js` `a same-turn compute deal refreshes burn before a later emergency move`: build the deal move from `s.compute.offers` (`offerId` of the CoreFlame offer) instead of `supplierId`; keep its assertions.
-- [ ] **Step 6: Run** `npm test`. Fix only mechanical fallout (renamed fields, the deal move shape). Do not change what an existing test checks.
+  - `tests/turn.test.js` `a same-turn compute deal refreshes burn before a later emergency move`: build the deal move from the **spot** offer (`offerId` of `s.compute.offers.find((o) => o.supplier === 'spot')`): spot arrives during the move, so its bill enters the same-turn burn that the emergency move checks (CoreFlame now arrives next turn and would not). Keep the assertions.
+  - `tests/turn.test.js` `only two moves per turn, and bad moves are reported`: use the CoreFlame and Azuria offers' ids for the first two moves and a third deal move of any id; assert the same things (the third move is reported).
+  - `tests/recipe.test.js` (era 2 `midtraining opens in era 2 and compute multipliers stack`) and `tests/training.test.js` (`standard agent techniques mark era 4 models as agentic`): era scaling changes their unit numbers. Express the expected units as `Math.round(era1Value * eraScale(era) * 10) / 10` (the same rounding `recipeCost` uses; a bare product such as `10.4 * 3` is `31.200000000000003`), and give the era 4 run enough compute (`s.compute.online = recipeCost(s, recipe).units + 10`, safety share 0 once Task 5 lands). Do not change what they check.
+- [ ] **Step 6: Run** `npm test`. Fix only mechanical fallout (renamed fields, the deal move shape, era-scaled unit numbers as listed above). Do not change what an existing test checks.
 - [ ] **Step 7: Balance tests.** Run `npm test` again. If plan 2A's difficulty tests in `tests/balance.test.js` now fail only because the compute rework shifted balance, add `{ todo: 'plan 2C Task 8 re-tunes balance after the compute rework' }` as the options argument of exactly those tests (they still run and report). Task 8 removes the marker. Any other failure is a bug to fix here.
 - [ ] **Step 8: Run** `npm test` → pass (todo tests reported, not failed); `npm run balance` completes. **Commit** — `feat(sim): wire contracts, queue, power sites and the era scale into the turn`
 
@@ -1162,9 +1215,18 @@ test('the pledge is offered once in eras 1 and 2, and a lower share breaks it', 
   assert.equal(s.flags.brokenPromise, true);
 });
 
+test('the safety readers use the compute share', async () => {
+  const { safetySpend } = await import('../sim/economy.js');
+  const s = at(10, 0, 0.5);
+  assert.ok(Math.abs(safetySpend(s) - safetyValue(s)) < 1e-9);
+  assert.ok(safetySpend(s) >= 5, 'half of the starting fleet clears the interpretability threshold');
+  s.compute.split.safety = 0;
+  assert.equal(safetySpend(s), 0);
+});
+
 test('the money budget has no safety slice any more', () => {
   const s = createInitialState();
-  assert.equal(setBudget(s, { spend: 20, split: { training: 0.35, security: 0.15, product: 0.25, talent: 0.25 } }).ok, true);
+  assert.equal(setBudget(s, { spend: 20, split: { training: 0.5, security: 0.1, product: 0.2, talent: 0.2 } }).ok, true);
   const r = setBudget(s, { spend: 20, split: { training: 0.3, safety: 0.2, security: 0.1, product: 0.2, talent: 0.2 } });
   assert.equal(r.ok, false);
   assert.match(r.error, /safety/);
@@ -1258,16 +1320,17 @@ export function makePledge(state, share) {
 ```
 
 - [ ] **Step 4: Wire it**
-  - `sim/state.js`: `state.compute.split = { safety: 0.1, servingCap: null, coverWithSpot: true, resellIdle: false }`; the default money budget becomes `{ spend: 20, split: { training: 0.35, security: 0.15, product: 0.25, talent: 0.25 } }`; remove `overflow` from `state.compute`.
+  - `sim/state.js`: `state.compute.split = { safety: 0.1, servingCap: null, coverWithSpot: true, resellIdle: false }`; the default money budget becomes `{ spend: 20, split: { training: 0.5, security: 0.1, product: 0.2, talent: 0.2 } }` (the old safety share folds into training, so talent spend, recipe slots and growth stay exactly as before); remove `overflow` from `state.compute`.
   - `sim/turn.js`: `BUDGET_KEYS = ['training', 'security', 'product', 'talent']`; at the top of `setBudget` add `if (budget?.split && Object.hasOwn(budget.split, 'safety')) return { ok: false, error: 'the budget split has no safety slice: safety now runs on compute' };`. In `budgetEffects` delete the `state.alignmentDebt -= split.safety ...` line. In `endTurn`, after the budget block: `if (actions.computeSplit) { const r = setComputeSplit(state, actions.computeSplit); if (!r.ok) errors.push(r.error); }` and `if (actions.pledge != null) { const r = makePledge(state, actions.pledge); if (!r.ok) errors.push(r.error); }`. After `budgetEffects(state);` add `for (const e of applySplitEffects(state)) events.push(e);`.
   - `sim/economy.js`: in `updateServing` delete the `state.compute.overflow = ...` line; in `projectBurn` replace the `spot` expression with `spotCover(state)` and subtract `resaleCredit(state)`; replace the body of plan 2A's `safetySpend(state)` with `return safetyValue(state);`.
   - `sim/training.js`: `export const availableUnits = (state) => computeSlices(state).idle;` and in `advanceRun` replace `state.compute.online < run.units` with `computeSlices(state).training < run.units`.
   - `sim/advisors.js`: if any expression still reads `state.budget.split.safety`, replace it with `state.compute.split.safety`.
   - `sim/data/events.js`: `openletter` "Meet their demands" effect becomes `state.compute.split.safety = Math.min(0.5, state.compute.split.safety + 0.1); state.staffTrust += 8;`. The `promise` event's trigger also fires when `state.flags.brokenPromise` is true, and both its choices also `delete state.flags.brokenPromise`.
   - `tools/balance.js`: remove `safety` from every strategy's money `split` (fold that share into `training`) and send `computeSplit: { safety: X }` with X = speed 0.02, safety 0.2, balanced 0.12, random `Math.round(rng.next() * 30) / 100`.
-  - `ui/logic/actions.js`: `budgetFromSliders` takes `{ training, security, product, talent }`; update `tests/ui-actions.test.js` to those four keys (same assertions, spend values unchanged).
+  - `ui/logic/actions.js`: `budgetFromSliders` takes `{ training, security, product, talent }`; update `tests/ui-actions.test.js` to those four keys (same assertions, spend values unchanged). In the same commit remove the `safety` entry from the budget dialog's slider data array so the running game never sends a budget the sim rejects (Task 7 adds the compute bar).
+  - Outage feed post (spec §5.2): in `endTurn`, for an `outage` event call `pushFeed(state, '@downdetector', 'users report outages across your apps', 'feed')`.
 - [ ] **Step 5: Run** `npm test`.
-- [ ] **Step 6: Keep old tests testing what they tested.** Tests that assert exact free compute (in `tests/training.test.js`: `starting a run pays cash and reserves compute`, `a run fails to start without enough compute`, `a run pauses without reserved compute and resumes when capacity returns`; in `tests/turn.test.js`: `a due release consumes serving compute before move validation`) set `s.compute.split.safety = 0` in their setup. `tests/economy.test.js` `serving load uses compute and overflows at scale`: replace the two `overflow` assertions with `computeSlices(s).shortfall === 0` and `> 0` at the same two points.
+- [ ] **Step 6: Keep old tests testing what they tested.** Every test budget literal that has a `safety` key drops it (for example `tests/turn.test.js` `a new budget updates emergency eligibility…`). Plan 2A tests that switch on interpretability through the money share (`tests/hazards.test.js` `interpretability spend exposes a tenth…`, era 1, and `tests/launch.test.js` `interpretability spend cuts eval gaming`, era 4) instead give the lab enough safety compute for its era: `s.compute.online = 10 * eraScale(s.era); s.compute.split.safety = 0.5;` (so `safetySpend(s)` is 7.3, above the threshold of 5, in any era), add `assert.ok(safetySpend(s) >= 5)` as a precondition, and keep their expected numbers. Tests that assert exact free compute (in `tests/training.test.js`: `starting a run pays cash and reserves compute`, `a run fails to start without enough compute`, `a run pauses without reserved compute and resumes when capacity returns`; in `tests/turn.test.js`: `a due release consumes serving compute before move validation`) set `s.compute.split.safety = 0` in their setup. `tests/economy.test.js` `serving load uses compute and overflows at scale`: replace the two `overflow` assertions with `computeSlices(s).shortfall === 0` and `> 0` at the same two points.
 - [ ] **Step 7: Run** `npm test` → pass; `npm run balance` completes. **Commit** — `feat(sim): compute split with serving, control, safety and training; safety leaves the money budget; the safety pledge`
 
 ---
@@ -1286,18 +1349,19 @@ export function makePledge(state, share) {
 
 | id | kind | trigger | warning | card title / post | choices (id · label · cost · effects) |
 |---|---|---|---|---|---|
-| `neocloudTrouble` | world | any contract with `troubled` | `@marketwire`: "CoreFlame's biggest customer missed a payment" | "Your neocloud is failing" / `@marketwire`: "CoreFlame's lenders call in a $4B loan" | `spot` · Move the capacity to spot · spot prices · every troubled contract: `supplier = 'spot'`, `price = SPOT_PRICE[era]`, `string = 'bumpable'`, `monthsLeft = monthsPerTurn`, `troubled = false`; `rescue` · Prepay 3 months to keep them alive · 3 months of the bill · `cash −= RESCUE_MONTHS × contractBill(c)`, `troubled = false`; `letgo` · Let it go · lose the capacity · remove troubled contracts, `refreshOnline` |
-| `siteOpposition` | world | a gas site not yet online; on first fire pick it, `state.flags.oppositionSite = site.id`, `site.oppositionCut = rng.chance(0.3)`, fire with chance 0.15; once picked, return true | `@localnews`: "residents pack the town hall over the new gas site" | "Local opposition to your gas site" / `@localnews`: "county votes to delay the permit" | `benefits` · Pay for community benefits · one month of the site's lease · `cash −= leaseMonthly(site.units)`; `move` · Move the site · two turns · `site.arrivesTurn += 2`; `push` · Push through · public trust · `publicTrust −= 5`; if `site.oppositionCut`, `site.units = Math.round(site.units * 0.7)` |
+| `neocloudTrouble` | world (repeatable) | any contract with `troubled` | `@marketwire`: "CoreFlame's biggest customer missed a payment" | "Your neocloud is failing" / `@marketwire`: "CoreFlame's lenders call in a $4B loan" | `spot` · Move the capacity to spot · spot prices · every troubled contract: `supplier = 'spot'`, `price = SPOT_PRICE[era]`, `string = 'bumpable'`, `monthsLeft = null` (it renews like other spot), `troubled = false`; `rescue` · Prepay 3 months to keep them alive · 3 months of the bill · `cash −= RESCUE_MONTHS × contractBill(c)`, `troubled = false`; `letgo` · Let it go · lose the capacity · remove troubled contracts, `refreshOnline` |
+| `siteOpposition` | world | if `state.flags.oppositionSite` is set, return true; otherwise, if a gas site is not yet online, roll `rng.chance(0.15)`; only on a hit pick the first such site, set `state.flags.oppositionSite = site.id` and `site.oppositionCut = rng.chance(0.3)`, and return true | `@localnews`: "residents pack the town hall over the new gas site" | "Local opposition to your gas site" / `@localnews`: "county votes to delay the permit" | `benefits` · Pay for community benefits · one month of the site's lease · `cash −= leaseMonthly(site.units)`; `move` · Move the site · two turns · `site.arrivesTurn += 2`; `push` · Push through · public trust · `publicTrust −= 5`; if `site.oppositionCut`, `site.units = Math.round(site.units * 0.7)` |
 | `pledgeDrop` | world | `era === 2` and a `safetyCompute` promise exists | none | "An investor wants the pledge gone" / `@growthfund`: "safety pledges are a luxury at this stage" | `drop` · Drop the pledge · staff trust · `cash += Math.round(valuation × 0.05)`, `staffTrust −= 8`, remove the promise; `refuse` · Keep it · board support · every board member −2 |
 | `agentSurge` | world | `era === 3` and an active model has flag `agentic` | none | "Agent launch swamps your servers" / `@marketwire`: "agent usage doubles overnight" | `spot` · Buy spot to keep up · spot prices · `surge = { mult: 2, turnsLeft: 2 }`, `split.coverWithSpot = true`; `route` · Route users to a cheaper model · public trust · `surge = { mult: 1.4, turnsLeft: 2 }`, `publicTrust −= 1`; `cap` · Cap serving and accept outages · users · `surge = { mult: 2, turnsLeft: 2 }`, `split.coverWithSpot = false` |
-| `pooling` | world | `era === 5` and `turnInEra >= 1`; on first call set `state.flags.poolingRisk ??= rng.chance(0.2)` | none | "Washington asks for your compute" / `@commerce_dept`: "national AI effort to pool frontier compute" | `accept` · Give 30% of your compute · compute · `compute.pooled = 0.3`, `govFavor.us += 10`, `flags.pooled = true`, `refreshOnline`; `refuse` · Refuse · US favor · `govFavor.us −= 8`, `flags.supplyChainRisk ||= flags.poolingRisk` |
+| `pooling` | world | `era === 4` and `turnInEra === ERAS[3].turns − 1` (the last era 4 turn, so the card is answered at the start of era 5, before the summit move); on first call set `state.flags.poolingRisk ??= rng.chance(0.2)` | none | "Washington asks for your compute" / `@commerce_dept`: "national AI effort to pool frontier compute" | `accept` · Give 30% of your compute · compute · `compute.pooled = 0.3`, `govFavor.us += 10`, `flags.pooled = true`, `refreshOnline`; `refuse` · Refuse · US favor · `govFavor.us −= 8`, `flags.supplyChainRisk ||= flags.poolingRisk` |
 
-  - `neocloudTrouble` has `defuse(state)`: every troubled contract gets `troubled = false` (acting on the warning refinances CoreFlame early). In `sim/events.js` `addressWarning`, after removing the warning, call `e.defuse?.(state)`.
+  - `neocloudTrouble` has `defuse(state)`: every troubled contract gets `troubled = false` (acting on the warning refinances CoreFlame early). In `sim/events.js` `addressWarning`, call `e.defuse?.(state)` as the **last** line before `return` (after its `seenEvents.push(id)`, so `defuse` can take the id back out). Because the event engine fires each non-internal event once per game, `defuse` and all three choices end with `state.seenEvents = state.seenEvents.filter((id) => id !== 'neocloudTrouble')`, so a later CoreFlame failure can fire again.
+  - `agentSurge` choices store the player's earlier setting in the surge (`surge.restoreCover = split.coverWithSpot` before changing it); when the surge ends, restore `split.coverWithSpot = surge.restoreCover`.
   - Delete the `datacenter` row.
   - The humanoid serving card of spec §5.5 is not built: the humanoid line does not exist yet (open owner decision B7).
 - [ ] **Step 2: Wire the effects**
   - `sim/economy.js` `updateServing`: multiply the final `units` by `state.compute.surge?.mult ?? 1` before storing `servingUnits`.
-  - `sim/turn.js`: after `applyEconomy(state)`, `if (state.compute.surge && --state.compute.surge.turnsLeft <= 0) state.compute.surge = null;`.
+  - `sim/turn.js`: after `applyEconomy(state)`, `if (state.compute.surge && --state.compute.surge.turnsLeft <= 0) { state.compute.split.coverWithSpot = state.compute.surge.restoreCover ?? state.compute.split.coverWithSpot; state.compute.surge = null; }`.
   - `sim/contracts.js` `refreshOnline`: `state.compute.online = Math.floor(p.online * (1 - (state.compute.pooled ?? 0)));`.
   - `sim/summit.js`: add `+ (state.flags.pooled ? 0.1 : 0)` to every party's stance.
   - `sim/state.js`: `state.compute.surge = null`, `state.compute.pooled = 0`.
@@ -1358,9 +1422,9 @@ test('the agent surge doubles serving demand', () => {
   assert.ok(Math.abs(updateServing(s) - 2 * base) < 1e-9);
 });
 
-test('pooling takes a share of compute for US favor', () => {
+test('pooling takes a share of compute for US favor, decided before the summit', () => {
   const s = createInitialState();
-  s.era = 5; s.turnInEra = 1;
+  s.era = 4; s.turnInEra = 3;
   eventsTick(s, no);
   const gov = s.govFavor.us;
   resolveEvent(s, 'pooling', 'accept');
@@ -1406,6 +1470,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import { dealCards, commitmentsView, queueView, computeBar, sitesView, opinions } from '../ui/logic/compute.js';
+import { BALANCE } from '../sim/balance.js';
+import { allocate, rivalOrders, released } from '../sim/queue.js';
 
 test('deal cards mirror the offers and name each catch', () => {
   const s = createInitialState();
@@ -1428,9 +1494,9 @@ test('the queue preview compares standard and prepaid', () => {
   const s = createInitialState();
   s.era = 3;
   const q = queueView(s, { units: 60, tier: 'standard' });
-  assert.equal(q.released, 150);
-  assert.equal(q.you.standard, 40);
-  assert.equal(q.you.prepaid, 60);
+  assert.equal(q.released, released(s));
+  assert.equal(q.you.standard, allocate(released(s), [...rivalOrders(s), { lab: 'you', units: 60, tier: 'standard' }]).you);
+  assert.equal(q.you.prepaid, allocate(released(s), [...rivalOrders(s), { lab: 'you', units: 60, tier: 'prepaid' }]).you);
   assert.equal(q.rows.find((r) => r.lab === 'qilin').tier, 'none');
 });
 
@@ -1451,7 +1517,7 @@ test('the sites view counts dark chips and their bill', () => {
   s.power.sites.push({ id: 'grid-1', source: 'grid', units: 500, arrivesTurn: 0, online: true, oppositionCut: null });
   const v = sitesView(s);
   assert.equal(v.unpowered, 200);
-  assert.ok(Math.abs(v.unpoweredBill - 200 * 1.46) < 1e-9);
+  assert.ok(Math.abs(v.unpoweredBill - 200 * BALANCE.unitMonthlyCost) < 1e-9);
 });
 
 test('each screen gets four advisor opinions without hidden numbers', () => {
@@ -1498,7 +1564,7 @@ Precondition: plan 2A Task 8 merged.
 
 **Interfaces:**
 - Consumes: everything above; plan 2A's `report(n)` in `tools/balance.js`.
-- Produces: `report(n)` rows gain `perEra: { [era]: { computeShare, arr, turns } }`, `queueShortTurns`, `queueTurns`; new strategies `overCommitter`, `handToMouth`, `balancedNoGrid`, `balancedLowSafety`, `balancedHighSafety` (the last three for the A/B targets, excluded from the one-third rule together with the two probes).
+- Produces: `report(n)` rows gain `perEra: { [era]: { computeShare, arr, turns } }`, `queueShortTurns`, `queueTurns`, `meanRankAtEra4End`; new strategies `overCommitter`, `handToMouth`, `balancedNoGrid`, `balancedLowSafety`, `balancedHighSafety`; `export const PROBES = ['overCommitter', 'handToMouth', 'balancedNoGrid', 'balancedLowSafety', 'balancedHighSafety']`. Plan 2A's difficulty tests in `tests/balance.test.js` loop over every report row; change their loops to skip `PROBES` (the one-third and era 3–4 rules apply to the four scripted strategies only).
 
 - [ ] **Step 1: Compute policies** in `tools/balance.js` (each strategy returns `computeSplit` and compute moves; keep at most two moves per turn, training and release first):
   - `speed`: signs the largest Verde offer each era when it has cash for the upfront; prepaid queue order sized to its next run in era 3; builds gas in era 4; safety share 0.02; pledges 10% in era 1 and never keeps it (share stays 0.02).
@@ -1558,5 +1624,27 @@ test('the era 3 queue leaves someone short most turns', () => {
 ## Self-review notes (for the orchestrator)
 
 - Spec coverage: §2 era scale and display → Tasks 1, 4, 7; §3 contracts, strings, billing → Task 2 (wired in Task 4); §4 queue → Task 3 (wired in Task 4); §5.1–5.4 split and pledge → Task 5; §5.5 pressure cards → Task 6 (the humanoid card is not built: no humanoid line yet); §6 power and opposition → Tasks 1, 4, 6; §7 era 5 → Task 2 offer menu, Task 6 pooling; §8 state → Tasks 4–6; §9 screens → Task 7; §10 coordination → sequencing table and Tasks 4–6; §11 tests → every task; §11b balance → Task 8.
-- Plan 2A constraints handled: events fire once per game (`seenEvents`), so neocloud trouble and site opposition are one-shot; `effects(state)` has no rng, so the 30% site cut is rolled when the warning fires; plan 2A's difficulty tests are marked `todo` between Tasks 4 and 8 rather than weakened.
+- Plan 2A constraints handled: events fire once per game (`seenEvents`), so site opposition is one-shot, while neocloud trouble removes itself from `seenEvents` to stay repeatable; `effects(state)` has no rng, so the 30% site cut is rolled when the warning fires; plan 2A's difficulty tests are marked `todo` between Tasks 4 and 8 rather than weakened.
 - Spot "available now" means it arrives during the move, so a run started later in the same turn can use it.
+
+## Review record (2026-09-25)
+
+The Codex adversarial pass could not run (Codex auth failed: "refresh token was revoked"); a fresh Opus reviewer ran instead, read-only. It re-ran Tasks 1–3's code and tests (25 new, 117 total, all passing) and returned REVISE with 11 important findings. The Codex pass is still owed once `codex login` is fixed. Outcomes:
+
+- Fixed:
+  1. Spot could never be pulled back, because it expired first. Spot now renews each turn until broken (free) or pulled.
+  2. The new default money budget changed talent slots and gains. The safety share now folds into training.
+  3. Plan 2A's interpretability tests broke. They are listed in Task 5 Step 6 and switch to the compute share.
+  4. The same-turn deal test's fix still failed. It now uses spot.
+  5. Era scaling broke two tests. They are listed in Task 4.
+  6. The power test crossed the era 4 gate and was flaky. It now brings the site forward instead.
+  7. Tests hard-coded tuned numbers. Expectations now come from exports, and rival speed is pinned where it matters. Re-verified with `ERA_SCALE = [1, 3, 8, 30, 80]` and a unit price of 2.1: all pass.
+  8. The UI seams were not in plan 2B's text. The stop rule now covers sim seams only, and Task 7 builds the UI seams if missing.
+  9. Pooling was answered after the summit. It now fires on the last era 4 turn.
+  10. The era 5 export-license stake caused a ruinous bill. It gives no compute in era 5 and brings its own power before that.
+  11. The emergency rescue deepened debt. Its units are no longer era-scaled.
+  - Minor findings fixed: the grep check; a new queue order no longer drops a waiting order; CoreFlame trouble can recur; the surge restores the spot-cover setting; the outage feed post; a test for the compute-share safety readers; probes are excluded from the one-third rule; the site-opposition roll order is spelled out; the budget slider loses safety in the same commit as the sim; equity-for-compute counts as an Azuria contract for exclusivity; the Gulf offer is hidden under supply-chain risk; the move-limit test is fixed.
+- Not fixed, with reasons:
+  - "One board member switches to favoring speed" (spec §3.2): the board has no preference model, only support numbers. The equity card costs every member 3 support instead.
+  - Spite orders have no effect on rivals: rivals have no compute model. A spite order only raises race heat and costs the player the delivered chips, as the spec says.
+  - The interpretability threshold works out to about 3.4 × `ERA_SCALE` safety units, against 3 × in the spec. That is close enough, and it keeps plan 2A's `safetySpend ≥ 5` rule unchanged.
