@@ -7,6 +7,8 @@ export function activeModels(state) {
   return state.models.filter((m) => m.active && m.channel !== 'open' && state.turn >= m.activeFromTurn);
 }
 
+export const safetySpend = (state) => state.budget.spend * state.budget.split.safety;
+
 export const revenuePerUser = (model) => REVENUE_PER_USER[model.channel] * PRICE_STANCE[model.priceStance].rev;
 
 export function updateServing(state) {

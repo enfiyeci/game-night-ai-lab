@@ -55,6 +55,14 @@ test('an outside or government eval gate cuts eval gaming', () => {
   assert.ok(evalGaming(s, 80, ['govEval']) < evalGaming(s, 80, []));
 });
 
+test('interpretability spend cuts eval gaming', () => {
+  const s = createInitialState();
+  s.era = 4; s.concealedDebt = 40;
+  const base = evalGaming(s, 80, []);
+  s.budget.split = { training: 0.2, safety: 0.3, security: 0.1, product: 0.2, talent: 0.2 };
+  assert.ok(evalGaming(s, 80, []) < base);
+});
+
 test('press scores are 1 to 10 with quips, and reactions are picked from flags', () => {
   const s = createInitialState();
   const r = scoreLaunch(s, { ...plain, flags: ['sycophancy', 'jailbreakWaiting'] }, zeroRng);

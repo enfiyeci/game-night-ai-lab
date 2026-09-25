@@ -21,7 +21,7 @@ export const CRITICS = [
   { id: 'pitchcrunch', name: 'PitchCrunch', bias: (c) => (c.flags.includes('agentic') ? 1 : 0) + (c.launch.beats >= 4 ? 1 : 0),
     quips: { high: 'Finally, an agent that finishes the ticket.', mid: 'Solid upgrade, same pitch deck.', low: 'Where is the magic?' } },
   { id: 'strategery', name: 'Strategery', bias: (c) => (c.rank === 1 ? 1 : c.rank > 2 ? -1 : 0),
-    quips: { high: 'They just took the lead.', mid: 'Strong, but Lodestar is breathing down its neck.', low: 'Falling behind, and it shows.' } },
+    quips: { high: 'A serious move in the race.', mid: 'Strong, but Lodestar is breathing down its neck.', low: 'Falling behind, and it shows.' } },
   { id: 'snakeeyes', name: 'AI Snake Eyes', bias: (c) => -1 - (c.flags.includes('contaminated') ? 2 : 0),
     quips: { high: 'Grudgingly: this one is real.', mid: 'Benchmarks up, vibes unclear.', low: 'Show us the test set.' } },
   { id: 'aeon', name: 'Æon Review', bias: (c) => (c.safetyShown - 70) / 15 - (c.flags.includes('sycophancy') ? 1 : 0),

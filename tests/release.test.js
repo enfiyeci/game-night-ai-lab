@@ -80,6 +80,25 @@ test('release enum values must be own table entries', () => {
   }
 });
 
+test('a failed release leaves a pending training hazard untouched', () => {
+  const s = trainedState();
+  s.pendingModel.hazard = { type: 'rewardHacking', size: 6 };
+  const before = structuredClone(s);
+  assert.equal(releaseModel(s, { ...release, price: 'constructor' }, rng).ok, false);
+  assert.deepEqual(s, before);
+});
+
+test('releasing with an unresolved hazard ignores it, and an outside eval exposes concealed debt', () => {
+  const s = trainedState();
+  s.era = 2;
+  s.alignmentDebt = 0; s.concealedDebt = 20;
+  s.pendingModel.hazard = { type: 'rewardHacking', size: 6 };
+  const r = releaseModel(s, { ...release, picks: ['eval-third', 'channel-app'] }, rng);
+  assert.equal(r.ok, true);
+  assert.equal(s.concealedDebt, 10);
+  assert.equal(s.alignmentDebt, 6 + 10);
+});
+
 test('a new model on the same channel retires the old one', () => {
   const s = trainedState();
   const first = releaseModel(s, release, rng).model;

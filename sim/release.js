@@ -3,6 +3,7 @@ import { clamp, sigmoid } from './util.js';
 import { validatePicks, resolveCards } from './recipe.js';
 import { PRICE_STANCE } from './serving.js';
 import { scoreLaunch } from './launch.js';
+import { resolveHazard, exposeConcealed } from './hazards.js';
 
 export const TIER_WORDS = { small: 'Swift', medium: 'Core', large: 'Grand', xl: 'Apex' };
 export const REASONING_BONUS = { off: 0, low: 2, medium: 4, high: 6 };
@@ -53,13 +54,17 @@ export function releaseModel(state, release, rng) {
   const cash = cards.reduce((s, c) => s + (c.cost.cash ?? 0), 0);
   if (cash > state.cash) return { ok: false, error: 'not enough cash' };
   state.cash -= cash;
+  // An unanswered training hazard ships as-is.
+  if (m.hazard) resolveHazard(state, 'ignore');
 
   const effects = cards.map((c) => c.effects);
   const sum = (key) => effects.reduce((s, e) => s + (e[key] ?? 0), 0);
-  const delay = cards.reduce((s, c) => s + (c.cost.turns ?? 0), 0);
+  const delay = cards.reduce((s, c) => s + (c.cost.turns ?? 0), m.releaseDelay ?? 0);
   const spec = Object.assign({}, m.spec, ...effects.map((e) => e.spec ?? {}), { reasoning });
   const flags = [...new Set([...m.flags, ...effects.flatMap((e) => e.flags ?? [])])];
   if (spec.channel === 'enterprise' && flags.includes('agentic')) spec.channel = 'agent';
+
+  if (flags.includes('thirdPartyEval') || flags.includes('govEval')) exposeConcealed(state, 0.5);
 
   const generation = release.generation ?? 1;
   const name = modelName({ family: release.family, generation, size: m.size });

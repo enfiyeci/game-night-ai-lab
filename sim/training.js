@@ -2,6 +2,7 @@ import { BALANCE } from './balance.js';
 import { eraById } from './data/eras.js';
 import { SIZE_CAP, LENGTHS, validateRecipe, recipeCost, recipeCards, talentSpend } from './recipe.js';
 import { standardTechniques } from './techniques.js';
+import { rollTrainingHazard, applyAlignmentFaking } from './hazards.js';
 
 export function availableUnits(state) {
   const run = state.activeRun ? state.activeRun.units : 0;
@@ -55,7 +56,8 @@ export function resolveRun(state, run, rng) {
 
   const sum = (key) => effects.reduce((s, e) => s + (e[key] ?? 0), 0);
   const era = eraById(state.era);
-  state.alignmentDebt += gain * (era.targetSafetyShare - alignShare) * BALANCE.alignDebtFactor + sum('ad');
+  const debtDelta = gain * (era.targetSafetyShare - alignShare) * BALANCE.alignDebtFactor + sum('ad');
+  state.alignmentDebt += applyAlignmentFaking(state, debtDelta, capability);
   state.misuseExposure += sum('mx');
   state.perceivedAdOffset += sum('perceivedAdOffset');
   for (const e of effects) {
@@ -68,6 +70,7 @@ export function resolveRun(state, run, rng) {
     { size, arch: 'dense', context: 'short', precision: 'bf16', guard: false, reasoningCapable: false },
     ...effects.map((e) => e.spec ?? {}),
   );
+  const flags = [...new Set(effects.flatMap((e) => e.flags ?? []))];
   const openWeightsMx =
     cards.reduce((v, c) => c.effects.openWeightsMx ?? v, 20) * cards.reduce((m, c) => m * (c.effects.openWeightsMult ?? 1), 1);
 
@@ -76,7 +79,7 @@ export function resolveRun(state, run, rng) {
     gain,
     size,
     spec,
-    flags: [...new Set(effects.flatMap((e) => e.flags ?? []))],
+    flags,
     openWeightsMx,
     publicEffects: {
       pt: sum('pt'),
@@ -86,5 +89,7 @@ export function resolveRun(state, run, rng) {
       govIntl: sum('govIntl'),
       usersMult: effects.reduce((m, e) => m * (e.usersMult ?? 1), 1),
     },
+    hazard: rollTrainingHazard(state, cards, flags, rng),
+    releaseDelay: 0,
   };
 }

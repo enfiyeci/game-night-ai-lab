@@ -4,12 +4,13 @@ import { clamp } from './util.js';
 import { startRun, advanceRun } from './training.js';
 import { activateReleases, releaseModel } from './release.js';
 import { signDeal, computeTurn } from './compute.js';
-import { updateServing, growUsers, applyEconomy, legalTick, projectBurn, raiseRound, useEmergency } from './economy.js';
+import { updateServing, growUsers, applyEconomy, legalTick, projectBurn, raiseRound, useEmergency, safetySpend } from './economy.js';
 import { researchTechnique } from './techniques.js';
 import { rivalsTurn } from './rivals.js';
 import { updateBoard } from './board.js';
 import { checkTurnEndings, eraGate, finalEnding } from './endings.js';
 import { recordAdvisors } from './advisors.js';
+import { resolveHazard, exposeConcealed, INTERPRETABILITY_SPEND } from './hazards.js';
 
 export const MAX_MOVES = 2;
 const BUDGET_KEYS = ['training', 'safety', 'security', 'product', 'talent'];
@@ -49,10 +50,11 @@ function budgetEffects(state) {
   state.growthBoost = split.product * k * 0.02;
   state.researchPoints += split.talent * k * 3;
   state.staffTrust += split.talent * k * 0.3 - 0.3;
+  if (safetySpend(state) >= INTERPRETABILITY_SPEND) exposeConcealed(state, 0.1);
 }
 
 function normalize(state) {
-  for (const key of ['alignmentDebt', 'misuseExposure', 'misuseLocked', 'security', 'raceHeat', 'publicTrust', 'staffTrust']) {
+  for (const key of ['alignmentDebt', 'concealedDebt', 'misuseExposure', 'misuseLocked', 'security', 'raceHeat', 'publicTrust', 'staffTrust']) {
     state[key] = clamp(state[key], 0, 100);
   }
   state.perceivedAdOffset = clamp(state.perceivedAdOffset, 0, 100);
@@ -66,6 +68,11 @@ export function endTurn(prev, actions = {}, rng) {
   const errors = [];
   delete state.flags.emergencyUsedThisTurn;
   if (state.ending) return { state, events, errors: ['the run is over'] };
+  if (actions.hazardChoice && state.pendingModel?.hazard) {
+    const r = resolveHazard(state, actions.hazardChoice);
+    if (!r.ok) errors.push(r.error);
+    else events.push({ type: 'hazardResolved', choice: actions.hazardChoice });
+  }
   const before = { arr: state.arr, capability: state.capability, cash: state.cash };
 
   activateReleases(state);

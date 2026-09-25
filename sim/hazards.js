@@ -1,0 +1,39 @@
+export const REWARD_HACK_CHANCE = 0.5;
+export const rewardHackSize = (era) => 4 + 2 * era;
+export const INTERPRETABILITY_SPEND = 5;
+const HACKABLE = new Set(['rlvr-light', 'reasoning-rl', 'agentic-rl']);
+const FAKING_SHARE = 0.25;
+const FAKING_MIN_CAP = 50;
+
+export const totalDebt = (state) => state.alignmentDebt + state.concealedDebt;
+
+export function rollTrainingHazard(state, cards, flags, rng) {
+  const hackable = cards.some((c) => HACKABLE.has(c.id)) || flags.includes('agentic');
+  if (!hackable || !rng.chance(REWARD_HACK_CHANCE)) return null;
+  return { type: 'rewardHacking', size: rewardHackSize(state.era) };
+}
+
+export function resolveHazard(state, choice) {
+  const h = state.pendingModel?.hazard;
+  if (!h) return { ok: false, error: 'no training hazard to resolve' };
+  if (!['penalize', 'fix', 'ignore'].includes(choice)) return { ok: false, error: `unknown hazard choice ${choice}` };
+  if (choice === 'penalize') state.concealedDebt += h.size;
+  if (choice === 'ignore') state.alignmentDebt += h.size;
+  if (choice === 'fix') state.pendingModel.releaseDelay = (state.pendingModel.releaseDelay ?? 0) + 1;
+  state.pendingModel.hazard = null;
+  return { ok: true, choice };
+}
+
+export function applyAlignmentFaking(state, debtDelta, capability) {
+  if (debtDelta >= 0 || state.era < 3 || capability <= FAKING_MIN_CAP) return debtDelta;
+  const hidden = -debtDelta * FAKING_SHARE;
+  state.concealedDebt += hidden;
+  return debtDelta + hidden;
+}
+
+export function exposeConcealed(state, share) {
+  const moved = state.concealedDebt * share;
+  state.concealedDebt -= moved;
+  state.alignmentDebt += moved;
+  return moved;
+}
