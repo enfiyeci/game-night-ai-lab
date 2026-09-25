@@ -57,14 +57,18 @@ test('at most two cards wait at once, and unanswered cards use passive fallbacks
   assert.deepEqual(auto.map((e) => e.choiceId), ['deny', 'blame']);
 });
 
-test('an internal stage-2 incident warns before becoming the oversight card', () => {
+test('an internal stage-2 incident becomes the oversight card', () => {
   const s = createInitialState();
   s.internal = { control: 0, stage: 2, turns: 1, stageTurn: 0 };
   eventsTick(s, no);
-  assert.ok(s.warnings.oversightTamper);
-  assert.equal(s.pendingEvents.length, 0);
-  s.turn += 1;
+  assert.equal(s.pendingEvents[0].id, 'oversightTamper');
+});
+
+test('addressWarning cannot target an internal incident', () => {
+  const s = createInitialState();
+  s.internal = { control: 0, stage: 2, turns: 1, stageTurn: 0 };
   eventsTick(s, no);
+  assert.equal(addressWarning(s, 'oversightTamper').ok, false);
   assert.equal(s.pendingEvents[0].id, 'oversightTamper');
 });
 

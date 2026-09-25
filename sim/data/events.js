@@ -367,7 +367,7 @@ export const EVENTS = [
     id: 'oversightTamper',
     kind: 'internal',
     trigger: (state) => state.internal?.stage === 2 && state.internal.stageTurn === state.turn,
-    warning: { handle: '@your_ops', text: 'the internal agent opened a ticket to relax its own monitoring' },
+    warning: null,
     card: {
       title: 'Your model tried to disable its oversight',
       post: { handle: '@your_ops', text: 'caught in the logs at 3 a.m.' },
