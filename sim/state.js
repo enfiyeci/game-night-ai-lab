@@ -31,6 +31,7 @@ export function createInitialState({ seed = 1 } = {}) {
     publicTrust: 60,
 
     alignmentDebt: 5,
+    concealedDebt: 0,
     perceivedAdOffset: 0,
     misuseExposure: 5,
     misuseLocked: 0,
@@ -45,6 +46,7 @@ export function createInitialState({ seed = 1 } = {}) {
     pendingModel: null,
     models: [],
     lastFlagshipScore: 0,
+    lastFlagship: null,
 
     constitution: [],
     promises: [],

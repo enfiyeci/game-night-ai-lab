@@ -28,13 +28,15 @@ test('releasing a consumer model', () => {
   assert.equal(r.ok, true);
   assert.equal(r.model.name, 'Kestrel 1 Core');
   assert.equal(r.model.channel, 'consumer');
-  assert.equal(r.model.outlets.length, 4);
-  assert.ok(r.model.outlets.every((x) => x >= 1 && x <= 10));
+  assert.equal(r.model.launch.benchmarks.length, 5);
+  assert.equal(r.model.launch.press.length, 4);
+  assert.ok(r.model.launch.press.every((p) => p.score >= 1 && p.score <= 10));
+  assert.equal(s.lastFlagship.name, 'Kestrel 1 Core');
+  assert.equal(s.lastFlagshipScore, r.model.launch.capAvg);
   assert.ok(r.model.users > 0);
   assert.equal(s.pendingModel, null);
   assert.equal(s.cash, 1000 - 35 - 10);
   assert.equal(s.capability, r.model.capability);
-  assert.equal(s.lastFlagshipScore, r.model.launchScore);
 });
 
 test('release needs a trained model and a family name', () => {

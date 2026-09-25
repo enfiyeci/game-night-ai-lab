@@ -2,6 +2,7 @@ import { BALANCE } from './balance.js';
 import { clamp, sigmoid } from './util.js';
 import { validatePicks, resolveCards } from './recipe.js';
 import { PRICE_STANCE } from './serving.js';
+import { scoreLaunch } from './launch.js';
 
 export const TIER_WORDS = { small: 'Swift', medium: 'Core', large: 'Grand', xl: 'Apex' };
 export const REASONING_BONUS = { off: 0, low: 2, medium: 4, high: 6 };
@@ -61,28 +62,27 @@ export function releaseModel(state, release, rng) {
   if (spec.channel === 'enterprise' && flags.includes('agentic')) spec.channel = 'agent';
 
   const generation = release.generation ?? 1;
-  const launchScore = m.capability + REASONING_BONUS[reasoning] + (flags.includes('contaminated') ? 3 : 0);
-  const bar = state.lastFlagshipScore + (release.generationJump ? 5 : 0);
-  const outlets = Array.from({ length: 4 }, () => clamp(Math.round(7 + (launchScore - bar) / 3 + rng.int(-1, 1)), 1, 10));
-
-  const quality = clamp(1 + (launchScore - bar) / 20, 0.5, 2);
+  const name = modelName({ family: release.family, generation, size: m.size });
+  const launch = scoreLaunch(state, { capability: m.capability + REASONING_BONUS[reasoning], spec, flags, name, priceStance: release.price }, rng);
+  const quality = clamp(1 + (launch.pressAvg - 6) / 8, 0.5, 1.6);
   const eraGrowth = 1 + 0.5 * (state.era - 1);
   const fresh = Math.round(USERS_BASE[spec.channel] * quality * eraGrowth * PRICE_STANCE[release.price].growth * m.publicEffects.usersMult);
 
   const model = {
-    name: modelName({ family: release.family, generation, size: m.size }),
+    name,
     family: release.family,
     generation,
     size: m.size,
     capability: m.capability,
-    launchScore,
-    bar,
-    outlets,
+    launch,
+    launchScore: launch.capAvg,
+    bar: state.lastFlagshipScore,
     spec,
     channel: spec.channel,
     priceStance: release.price,
     reasoning,
     users: fresh,
+    newUsers: fresh,
     userCap: fresh * 4,
     activeFromTurn: state.turn + delay,
     releaseSequence: state.models.reduce((max, existing, index) => Math.max(max, existing.releaseSequence ?? index), -1) + 1,
@@ -95,7 +95,9 @@ export function releaseModel(state, release, rng) {
   activateReleases(state);
   state.pendingModel = null;
   state.capability = Math.max(state.capability, m.capability);
-  state.lastFlagshipScore = Math.max(state.lastFlagshipScore, launchScore);
+  state.lastFlagship = { name, benchmarks: launch.benchmarks.map(({ id, shown }) => ({ id, shown })) };
+  state.lastFlagshipScore = Math.max(state.lastFlagshipScore, launch.capAvg);
+  state.sentiment = clamp(state.sentiment + (launch.pressAvg - 6) / 20, 0.5, 1.5);
 
   state.publicTrust += m.publicEffects.pt + sum('pt');
   state.staffTrust += m.publicEffects.st + sum('st');
@@ -103,7 +105,6 @@ export function releaseModel(state, release, rng) {
   state.govFavor.intl += m.publicEffects.govIntl + sum('govIntl');
   state.raceHeat += BALANCE.ownReleaseHeat + m.publicEffects.heat + sum('heat');
   state.alignmentDebt += sum('ad');
-  state.sentiment = clamp(state.sentiment + (launchScore - bar) / 50, 0.5, 1.5);
   state.misuseExposure += Math.max(0, m.capability - BALANCE.dangerLine) * 0.3;
   if (spec.channel === 'open') {
     // Open weights add to whatever risk is already permanent, then lock the result.
@@ -112,7 +113,7 @@ export function releaseModel(state, release, rng) {
   }
 
   if (flags.includes('agentic')) {
-    const p = sigmoid((state.alignmentDebt * m.capability / 100 - 40) / 8);
+    const p = sigmoid(((state.alignmentDebt + state.concealedDebt) * m.capability / 100 - 40) / 8);
     if (rng.chance(p)) state.ending = 'misalignment';
   }
   return { ok: true, model };
