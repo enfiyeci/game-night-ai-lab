@@ -63,6 +63,7 @@ export function releaseModel(state, release, rng) {
 
   const generation = release.generation ?? 1;
   const name = modelName({ family: release.family, generation, size: m.size });
+  state.capability = Math.max(state.capability, m.capability);
   const launch = scoreLaunch(state, { capability: m.capability + REASONING_BONUS[reasoning], spec, flags, name, priceStance: release.price }, rng);
   const quality = clamp(1 + (launch.pressAvg - 6) / 8, 0.5, 1.6);
   const eraGrowth = 1 + 0.5 * (state.era - 1);
@@ -94,8 +95,9 @@ export function releaseModel(state, release, rng) {
   state.models.push(model);
   activateReleases(state);
   state.pendingModel = null;
-  state.capability = Math.max(state.capability, m.capability);
-  state.lastFlagship = { name, benchmarks: launch.benchmarks.map(({ id, shown }) => ({ id, shown })) };
+  if (!state.lastFlagship || launch.capAvg > state.lastFlagshipScore) {
+    state.lastFlagship = { name, benchmarks: launch.benchmarks.map(({ id, shown }) => ({ id, shown })) };
+  }
   state.lastFlagshipScore = Math.max(state.lastFlagshipScore, launch.capAvg);
   state.sentiment = clamp(state.sentiment + (launch.pressAvg - 6) / 20, 0.5, 1.5);
 

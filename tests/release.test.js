@@ -4,6 +4,7 @@ import { createInitialState } from '../sim/state.js';
 import { startRun, advanceRun } from '../sim/training.js';
 import { releaseModel, modelName } from '../sim/release.js';
 import * as releaseApi from '../sim/release.js';
+import { rank } from '../sim/rivals.js';
 
 const rng = { next: () => 0.5, int: () => 0, chance: (p) => p > 0.5, normal: (m) => m };
 const recipe = {
@@ -130,4 +131,24 @@ test('agentic releases can end the game in misalignment', () => {
   s.alignmentDebt = 100;
   releaseModel(s, release, rng);
   assert.equal(s.ending, 'misalignment');
+});
+
+test('press and reactions see the post-release rank', () => {
+  const s = trainedState();
+  s.pendingModel.capability = 40;
+  const r = releaseModel(s, release, rng);
+  assert.equal(rank(s), 1);
+  assert.ok(r.model.launch.reactions.some((x) => x.handle === '@lodestar_eng'));
+});
+
+test('the flagship bar is the best release, not the most recent', () => {
+  const s = trainedState();
+  s.pendingModel.capability = 80;
+  const strong = releaseModel(s, release, rng).model;
+  startRun(s, recipe);
+  advanceRun(s, rng);
+  s.pendingModel.capability = 30;
+  releaseModel(s, { ...release, generation: 2 }, rng);
+  assert.equal(s.lastFlagship.name, strong.name);
+  assert.equal(s.lastFlagshipScore, strong.launch.capAvg);
 });

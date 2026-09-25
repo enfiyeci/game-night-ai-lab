@@ -1,6 +1,6 @@
 import { clamp } from './util.js';
 import { leaderCapability, rank } from './rivals.js';
-import { BENCHMARKS, CONTAMINATED_BENCHMARKS, CONTAMINATION_BONUS, CRITICS, REACTIONS } from './data/launch.js';
+import { BENCHMARKS, CONTAMINATED_BENCHMARKS, CONTAMINATION_BONUS, BUG_FLAGS, BUG_PENALTY, CRITICS, REACTIONS } from './data/launch.js';
 
 const GAMING_RATE = { 3: 0.35, 4: 0.55, 5: 0.75 };
 const GAMING_THRESHOLD = 40;
@@ -23,6 +23,7 @@ export function scoreLaunch(state, model, rng) {
   const { capability, spec, flags } = model;
   const prev = state.lastFlagship;
   const rivalCap = leaderCapability(state);
+  const bugCount = BUG_FLAGS.filter((f) => flags.includes(f)).length;
   const benchmarks = BENCHMARKS.map((b) => {
     let truth;
     let shown;
@@ -33,7 +34,7 @@ export function scoreLaunch(state, model, rng) {
       rival = clamp(Math.round(60 + rng.int(-5, 5)), 0, 100);
     } else {
       const fit = b.fit(spec, flags);
-      truth = clamp(Math.round(capability * fit), 0, 100);
+      truth = clamp(Math.round(capability * clamp(fit - BUG_PENALTY * bugCount, 0.6, 1)), 0, 100);
       const contam = flags.includes('contaminated') && CONTAMINATED_BENCHMARKS.includes(b.id) ? CONTAMINATION_BONUS : 0;
       shown = clamp(truth + contam + rng.int(-3, 3), 0, 100);
       rival = clamp(Math.round(rivalCap * fit * 0.95) + rng.int(-3, 3), 0, 100);

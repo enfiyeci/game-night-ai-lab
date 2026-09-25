@@ -73,3 +73,28 @@ test('beating the last flagship is counted per capability benchmark', () => {
   assert.equal(r.beats, 2);
   assert.equal(r.benchmarks[0].flagship, 10);
 });
+
+test('capability benchmark fit stays within 0.6 to 1.0', () => {
+  const s = createInitialState();
+  for (const m of [plain, { ...plain, spec: { reasoningCapable: true } }, { ...plain, flags: ['agentic'] },
+    { ...plain, spec: { reasoningCapable: true }, flags: ['agentic'] }]) {
+    for (const b of scoreLaunch(s, m, zeroRng).benchmarks.filter((x) => x.kind === 'cap')) {
+      assert.ok(b.truth >= Math.round(m.capability * 0.6) && b.truth <= Math.round(m.capability * 1.0), `${b.id} ${b.truth}`);
+    }
+  }
+});
+
+test('bugs lower the true score but not the rival bar', () => {
+  const s = createInitialState();
+  const patch = (r) => r.benchmarks.find((x) => x.id === 'patchwork');
+  const clean = patch(scoreLaunch(s, plain, zeroRng));
+  const buggy = patch(scoreLaunch(s, { ...plain, flags: ['quickEval', 'scraped'] }, zeroRng));
+  assert.ok(buggy.truth < clean.truth);
+  assert.equal(buggy.rival, clean.rival);
+});
+
+test('a plain launch draws four or five reactions', () => {
+  const s = createInitialState();
+  const r = scoreLaunch(s, plain, zeroRng);
+  assert.ok(r.reactions.length >= 4 && r.reactions.length <= 5);
+});
