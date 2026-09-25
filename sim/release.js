@@ -106,8 +106,9 @@ export function releaseModel(state, release, rng) {
   state.sentiment = clamp(state.sentiment + (launchScore - bar) / 50, 0.5, 1.5);
   state.misuseExposure += Math.max(0, m.capability - BALANCE.dangerLine) * 0.3;
   if (spec.channel === 'open') {
-    state.misuseExposure += m.openWeightsMx;
-    state.misuseLocked = Math.max(state.misuseLocked, state.misuseExposure);
+    // Open weights add to whatever risk is already permanent, then lock the result.
+    state.misuseExposure = Math.max(state.misuseExposure, state.misuseLocked) + m.openWeightsMx;
+    state.misuseLocked = state.misuseExposure;
   }
 
   if (flags.includes('agentic')) {

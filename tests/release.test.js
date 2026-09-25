@@ -53,6 +53,16 @@ test('open weights lock in misuse exposure', () => {
   assert.equal(s.misuseLocked, s.misuseExposure);
 });
 
+test('a later open-weight release adds to the already locked misuse', () => {
+  const s = trainedState();
+  s.misuseLocked = 60;
+  s.misuseExposure = 50;
+  const openWeightsMx = s.pendingModel.openWeightsMx;
+  releaseModel(s, { ...release, picks: ['channel-open'] }, rng);
+  assert.equal(s.misuseLocked, 60 + openWeightsMx);
+  assert.equal(s.misuseExposure, 60 + openWeightsMx);
+});
+
 test('release enum values must be own table entries', () => {
   for (const invalid of [
     { price: 'constructor' },
