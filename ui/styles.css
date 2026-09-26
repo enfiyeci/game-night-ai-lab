@@ -2796,7 +2796,6 @@ svg.room {
 .reveal-estimate b { color: var(--ink); font-weight: 900; }
 
 /* Launch show before the summary (owner pick 2026-09-26: reveal option B plus the leaderboard climb). */
-.reveal.rshow-on { height: 700px; }
 .rshow-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; padding: 16px 26px 12px;
   border-bottom: 2px solid color-mix(in oklab, var(--wood) 35%, transparent); }
 .rshow-head h1 { margin: 0; font-weight: 300; font-size: 38px; line-height: 1; overflow-wrap: anywhere; text-wrap: balance; }
@@ -2806,7 +2805,7 @@ svg.room {
   border: 1.5px solid var(--wood); background: var(--paper); color: color-mix(in oklab, var(--wood) 50%, var(--ink)); }
 .rshow-sound[aria-pressed="false"] { border-color: color-mix(in oklab, var(--ink) 25%, transparent); color: color-mix(in oklab, var(--ink) 55%, var(--paper)); }
 .rshow-sound:focus-visible, .rshow-all:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
-.rshow-body { position: relative; flex: 1; overflow: hidden; }
+.rshow-body { position: relative; flex: 1; min-height: 566px; overflow: hidden; } /* a two-line title grows the panel instead */
 .rshow-scene { position: absolute; inset: 0; padding: 22px 70px; display: flex; flex-direction: column; justify-content: center; gap: 20px;
   transition: opacity .3s, transform .35s; }
 .rshow-scene.in { opacity: 0; transform: translateX(40px); }
@@ -2882,6 +2881,7 @@ svg.room {
 @keyframes rshow-shake { 20% { transform: translate(3px, -2px); } 40% { transform: translate(-3px, 2px); } 60% { transform: translate(2px, 1px); } 80% { transform: translate(-1px, -1px); } }
 .rshow-flash { animation: rshow-flash .5s ease-out; }
 @keyframes rshow-flash { from { box-shadow: 0 0 0 6px color-mix(in oklab, var(--teal) 45%, transparent); } }
+.rshow-burst { position: absolute; inset: 0; pointer-events: none; }
 .rshow-confetti { position: absolute; z-index: 5; width: 8px; height: 12px; border-radius: 2px; pointer-events: none; animation: rshow-confetti 1.1s cubic-bezier(.15, .7, .4, 1) forwards; }
 @keyframes rshow-confetti { to { transform: translate(var(--dx), var(--dy)) rotate(var(--r)); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .reveal * { animation: none !important; } }

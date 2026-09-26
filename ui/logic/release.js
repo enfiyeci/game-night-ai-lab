@@ -227,7 +227,7 @@ export const salesEstimate = (model) => (model.channel === 'open' ? 0 : (model.n
 // The flagship this launch was compared with: the earlier model whose score set the bar.
 export const flagshipBefore = (state, model) => state.models.find((other) => other.releaseSequence !== model.releaseSequence && other.launchScore === model.bar);
 
-const oneDecimal = (value) => Math.round(value * 10) / 10;
+export const oneDecimal = (value) => Math.round(value * 10) / 10;
 
 // The launch leaderboard (owner pick 2026-09-26: reveal option B plus the leaderboard climb).
 // Scores are averages of the four capability benchmarks. The sim keeps one strength per rival lab
@@ -244,8 +244,7 @@ export function leaderboard(state, model) {
     .filter(({ other }) => other.releaseSequence !== model.releaseSequence && other.launch)
     .sort((a, b) => a.order - b.order)
     .slice(-2)
-    .map(({ other }) => other)
-    .map((other) => ({ name: other.name, kind: 'own', score: oneDecimal(other.launch.capAvg) }));
+    .map(({ other }) => ({ name: other.name, kind: 'own', score: oneDecimal(other.launch.capAvg) }));
   return {
     leader: leader.name,
     rows: [...rivals, ...own].sort((a, b) => b.score - a.score),

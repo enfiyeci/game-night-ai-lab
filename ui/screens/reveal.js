@@ -1,6 +1,6 @@
 import { roundMarkDay, storyDate } from '../../sim/time.js';
 import { money, pct, users } from '../logic/format.js';
-import { beatCount, checkLabel, flagshipBefore, leaderboard, perMillion, priceSheet, salesEstimate } from '../logic/release.js';
+import { beatCount, checkLabel, flagshipBefore, leaderboard, oneDecimal, perMillion, priceSheet, salesEstimate } from '../logic/release.js';
 import { createSfx } from '../sfx.js';
 
 // Coral stays for the misalignment warning post, so ordinary avatars never look like a warning (mockup avatar set).
@@ -15,7 +15,6 @@ const el = (tag, className, text) => {
 };
 
 const shortName = (model) => `${model.family} ${model.generation}`;
-const oneDecimal = (value) => Math.round(value * 10) / 10;
 
 function bar(label, value, kind, mark, me = false) {
   const row = el('div', `reveal-bar${me ? ' me' : ''}`);
@@ -131,8 +130,11 @@ function sheet(model, era) {
 // Before the summary, the release plays as a short show: each benchmark as a race against your last
 // flagship and the leading rival, then the leaderboard climb, then the critics' cards flipped one
 // by one. A click or key finishes the current beat; Escape or "Show all results" jumps to the summary.
+// Numbers are written to Text nodes (`.data`), never with textContent: the clock watches the overlay
+// for added and removed nodes (ui/clock.js watch), and each one re-renders the HUD.
 
-const easeOut = (p) => 1 - (1 - p) ** 3;
+// Owner 2026-09-26: numbers and bars start fast and slow down as they near the real value.
+const easeOut = (p) => 1 - (1 - p) ** 5;
 const sfx = createSfx();
 
 // Waits and tweens the player can hurry: advance() finishes the current beat, end() the whole show.
@@ -188,12 +190,16 @@ class Timeline {
   beat() { this.fast = false; }
 
   advance() {
-    if (this.live) sfx.stamp(0.3);
+    if (this.live) {
+      sfx.hush();
+      sfx.stamp(0.3);
+    }
     this.fast = true;
     this.flush();
   }
 
   end() {
+    if (this.live) sfx.hush();
     this.ended = true;
     this.flush();
   }
@@ -209,39 +215,85 @@ class Timeline {
   }
 }
 
+// A number the show rewrites every frame, as a Text node inside `node`.
+function counter(node, text) {
+  const value = document.createTextNode(text);
+  node.append(value);
+  return value;
+}
+
 function confetti(t, root, x, y, count = 30) {
   if (!t.live) return;
   const colours = ['var(--coral)', 'var(--teal)', 'var(--wood)', 'var(--sky)'];
+  const burst = el('div', 'rshow-burst');
   for (let i = 0; i < count; i += 1) {
     const bit = el('i', 'rshow-confetti');
     const angle = Math.random() * Math.PI * 2;
     const reach = 80 + Math.random() * 160;
     bit.style.cssText = `left:${x}px;top:${y}px;background:${colours[i % colours.length]};--dx:${Math.cos(angle) * reach}px;--dy:${Math.sin(angle) * reach + 120}px;--r:${Math.random() * 720 - 360}deg`;
-    root.append(bit);
-    setTimeout(() => bit.remove(), 1200);
+    burst.append(bit);
   }
+  root.append(burst);
+  setTimeout(() => burst.remove(), 1200);
 }
 
-// Count a number up with a tick whose pitch climbs with the value.
-function countTo(t, node, to, ms, { from = 0, stepSize = 4, base = 392, ticks = true, onValue } = {}) {
-  let lastStep = -1;
+// Count a number up, easing into its landing, with a tick on each new value (at most one per 45 ms)
+// whose pitch climbs two octaves across 0 to 100.
+function countTo(t, text, to, ms, { from = 0, base = 294, ticks = true, onValue } = {}) {
+  let lastValue = null;
+  let lastTick = 0;
   return t.tween(ms, (p) => {
     const value = Math.round(from + (to - from) * easeOut(p));
-    node.textContent = `${value}`;
+    text.data = `${value}`;
     onValue?.(value);
-    const step = Math.floor(value / stepSize);
-    if (ticks && step !== lastStep && p < 1) {
-      lastStep = step;
-      t.sound(() => sfx.tick(Math.max(0, step), { base }));
+    const now = performance.now();
+    if (ticks && p < 1 && value !== lastValue && now - lastTick >= 45) {
+      lastTick = now;
+      t.sound(() => sfx.tick(Math.round(value / 10), { base }));
     }
+    lastValue = value;
   });
 }
 
+// A value being decided: it steps through `values` quickly at first, each step slower than the last,
+// and lands on the final one (owner 2026-09-26). Each step clicks.
+async function slowRoll(t, text, values, { first = 35, growth = 1.22, pitch = 10 } = {}) {
+  let gap = first;
+  for (const [index, value] of values.entries()) {
+    text.data = value;
+    if (index === values.length - 1) break;
+    t.sound(() => sfx.tick(pitch + (index % 2), { base: 660, gain: 0.04 }));
+    await t.wait(gap);
+    gap *= growth;
+  }
+  text.data = values.at(-1);
+}
+
+// The scores a critic's card rolls through: counting up round the 1-10 dial and stopping on `score`.
+export const dialTo = (score, steps = 11) => Array.from({ length: steps }, (_, i) => `${(((score - steps + i) % 10) + 10) % 10 + 1}`);
+
+// The average narrowing in on its value from alternating sides.
+export function narrowTo(mean, steps = 12) {
+  const values = [];
+  for (let i = 0; i < steps - 1; i += 1) {
+    const spread = 3 * (1 - i / (steps - 1)) ** 1.5;
+    const value = Math.min(10, Math.max(1, mean + (i % 2 ? spread : -spread)));
+    values.push(value.toFixed(1));
+  }
+  values.push(mean.toFixed(1));
+  return values;
+}
+
+// The sim scores the safety benchmark's rival bar as a typical lab (around 60), not the leading lab
+// (sim/launch.js scoreLaunch), so only the capability rows are named after the leader.
+const rivalName = (row, leader) => (row.kind === 'safety' ? 'other labs' : leader);
+
 function rivalChip(row, leader) {
+  const name = rivalName(row, leader);
   const diff = row.shown - row.rival;
-  if (diff > 0) return el('em', 'rshow-chip up', `▲ ${diff} over ${leader}`);
-  if (diff === 0) return el('em', 'rshow-chip even', `Ties ${leader}`);
-  return el('em', 'rshow-chip down', `${-diff} short of ${leader}`);
+  if (diff > 0) return el('em', 'rshow-chip up', `▲ ${diff} over ${name}`);
+  if (diff === 0) return el('em', 'rshow-chip even', `Ties ${name}`);
+  return el('em', 'rshow-chip down', `${-diff} short of ${name}`);
 }
 
 function flagshipChip(row, lastName) {
@@ -276,28 +328,27 @@ async function benchmarkRace(t, show, row, index) {
     const track = el('div', 'rshow-track');
     const fill = el('i', `rshow-fill ${kind}`);
     track.append(fill);
-    const value = el('div', 'rshow-value', '0');
+    const value = el('div', 'rshow-value');
     node.append(name, track, value);
-    return { node, fill, value };
+    return { node, fill, text: counter(value, '0') };
   };
   const targets = [];
   if (row.flagship != null) targets.push({ key: 'last', lane: lane(lastName, 'your last flagship', 'k-last'), score: row.flagship });
-  targets.push({ key: 'rival', lane: lane(leader, 'best rival', 'k-rival'), score: row.rival });
+  const rivalLane = row.kind === 'safety' ? lane('Other labs', 'typical score', 'k-rival') : lane(leader, 'best rival', 'k-rival');
+  targets.push({ key: 'rival', lane: rivalLane, score: row.rival });
   const mine = lane(newName, 'new', 'k-new', true);
   const verdict = el('div', 'rshow-verdict');
   scene.append(title, ...targets.map((target) => target.lane.node), mine.node, verdict);
   await showScene(t, body, scene);
 
   for (const { lane: target, score } of targets) {
-    t.sound(() => sfx.whoosh(0.35, 0.03));
-    await countTo(t, target.value, score, 300, { ticks: false, onValue: (value) => { target.fill.style.width = `${value}%`; } });
+    t.sound(() => sfx.whoosh(0.5, 0.03));
+    await countTo(t, target.text, score, 500, { ticks: false, onValue: (value) => { target.fill.style.width = `${value}%`; } });
   }
   await t.wait(300);
-  t.sound(() => sfx.whoosh(1.2, 0.05));
+  t.sound(() => sfx.whoosh(0.9, 0.05));
   const passed = new Set();
-  await countTo(t, mine.value, row.shown, 1100, {
-    stepSize: 3,
-    base: 294,
+  await countTo(t, mine.text, row.shown, 1900, {
     onValue: (value) => {
       mine.fill.style.width = `${value}%`;
       for (const target of targets) {
@@ -330,30 +381,31 @@ async function leaderboardClimb(t, show, launch) {
   title.append(el('small', null, 'Average of the four capability benchmarks'), 'Leaderboard');
   const rowsNode = el('div', 'rshow-rows');
   const result = el('div', 'rshow-result');
-  const ahead = launch.benchmarks.filter((row) => row.shown > row.rival).length;
-  const aheadLine = el('div', 'rshow-result-note', `Ahead of ${board.leader} on ${ahead} of ${launch.benchmarks.length} benchmarks`);
+  const caps = launch.benchmarks.filter((row) => row.kind === 'cap');
+  const ahead = caps.filter((row) => row.shown > row.rival).length;
+  const aheadLine = el('div', 'rshow-result-note', `Ahead of ${board.leader} on ${ahead} of ${caps.length} capability benchmarks`);
   scene.append(title, rowsNode, result, aheadLine);
   const entries = [...board.rows.map((row) => ({ ...row })), { ...board.mine }];
   rowsNode.style.height = `${entries.length * ROW_HEIGHT}px`;
   const labels = { rival: 'Rival lab', own: 'Your lab', new: 'New' };
   for (const entry of entries) {
     const node = el('div', `rshow-row ${entry.kind}`);
-    const rank = el('div', 'rshow-rank');
+    const rankNode = el('div', 'rshow-rank');
     const name = el('div', 'rshow-row-name', entry.name);
     name.append(el('small', null, labels[entry.kind]));
     const bar = el('div', 'rshow-row-bar');
     const fill = el('i');
     fill.style.width = `${entry.score}%`;
     bar.append(fill);
-    const score = el('div', 'rshow-row-score', entry.score.toFixed(1));
-    node.append(rank, name, bar, score);
+    const score = el('div', 'rshow-row-score');
+    node.append(rankNode, name, bar, score);
     rowsNode.append(node);
-    Object.assign(entry, { node, rank, fill, scoreNode: score });
+    Object.assign(entry, { node, rank: counter(rankNode, ''), fill, scoreText: counter(score, entry.score.toFixed(1)) });
   }
   const mine = entries.at(-1);
   const layout = () => entries.forEach((entry, index) => {
     entry.node.style.top = `${index * ROW_HEIGHT}px`;
-    entry.rank.textContent = `#${index + 1}`;
+    entry.rank.data = `#${index + 1}`;
   });
   layout();
   mine.node.classList.add('waiting');
@@ -364,17 +416,17 @@ async function leaderboardClimb(t, show, launch) {
 
   const target = board.mine.score;
   const from = Math.max(0, Math.min(...board.rows.map((row) => row.score), target) - 8);
-  let lastTick = -1;
-  t.sound(() => sfx.whoosh(2.2, 0.05));
-  await t.tween(2400, (p) => {
+  let lastTick = 0;
+  t.sound(() => sfx.whoosh(1.4, 0.05));
+  await t.tween(3200, (p) => {
     const value = p < 1 ? from + (target - from) * easeOut(p) : target;
     mine.score = value;
-    mine.scoreNode.textContent = value.toFixed(1);
+    mine.scoreText.data = value.toFixed(1);
     mine.fill.style.width = `${value}%`;
-    const step = Math.floor(value / 3);
-    if (step !== lastTick && p < 1) {
-      lastTick = step;
-      t.sound(() => sfx.tick(step, { base: 262, gain: 0.05 }));
+    const now = performance.now();
+    if (p < 1 && now - lastTick >= 60) {
+      lastTick = now;
+      t.sound(() => sfx.tick(Math.round(value / 10), { base: 262, gain: 0.05 }));
     }
     let index = entries.indexOf(mine);
     while (index > 0 && value > entries[index - 1].score) {
@@ -398,8 +450,9 @@ async function leaderboardClimb(t, show, launch) {
     confetti(t, panel, 532, 200);
   } else {
     const above = entries[rank - 2];
-    const gap = oneDecimal(above.score - target).toFixed(1);
-    result.textContent = above.kind === 'own' ? `#${rank}: your own ${above.name} still leads by ${gap}` : `#${rank}: ${gap} behind ${above.name}`;
+    const gap = oneDecimal(above.score - target);
+    if (gap === 0) result.textContent = above.kind === 'own' ? `#${rank}: level with your own ${above.name}` : `#${rank}: level with ${above.name}`;
+    else result.textContent = above.kind === 'own' ? `#${rank}: your own ${above.name} still leads by ${gap.toFixed(1)}` : `#${rank}: ${gap.toFixed(1)} behind ${above.name}`;
     t.sound(() => sfx.miss());
   }
   t.kick(result, 'rshow-stamp');
@@ -417,46 +470,43 @@ async function pressFlip(t, show, launch) {
     const back = el('div', 'rshow-face rshow-back', '?');
     const front = el('div', 'rshow-face rshow-front');
     const score = el('div', 'rshow-score');
-    score.append(document.createTextNode('–'), el('small', null, '/10'));
+    const text = counter(score, '–');
+    score.append(el('small', null, '/10'));
     front.append(el('div', 'rshow-critic', critic.name), score, el('div', 'rshow-quip', `"${critic.quip}"`));
     card.append(back, front);
     cards.append(card);
-    return { critic, card, front, score };
+    return { critic, card, front, score, text };
   });
   const average = el('div', 'rshow-average', 'Average score');
-  const averageValue = el('b', null, '–');
+  const averageValue = el('b');
+  const averageText = counter(averageValue, '–');
   average.append(averageValue);
   average.hidden = true;
   scene.append(title, cards, average);
   await showScene(t, body, scene);
 
-  const roll = async (node, ms, final, random) => {
-    await t.tween(ms, (p) => { node.textContent = p < 1 ? random() : final; });
-    node.textContent = final;
-  };
-  for (const { critic, card, front, score } of flips) {
+  for (const { critic, card, front, score, text } of flips) {
     card.classList.add('flip');
     t.sound(() => sfx.whoosh(0.25, 0.04));
     await t.wait(300);
-    t.sound(() => sfx.reel(0.7, 12));
-    await roll(score.firstChild, 700, `${critic.score}`, () => `${1 + Math.floor(Math.random() * 10)}`);
+    await slowRoll(t, text, dialTo(critic.score));
     t.kick(score, 'rshow-stamp');
     t.sound(() => {
       sfx.stamp(0.35);
       if (critic.score >= 9) sfx.sparkle(critic.score === 10 ? 1046.5 : 784);
     });
     if (critic.score >= 9) front.classList.add('hot');
-    await t.wait(300);
+    await t.wait(400);
   }
-  for (const { card, front, critic, score } of flips) {
+  for (const { card, front, critic, text } of flips) {
     card.classList.add('flip');
-    score.firstChild.textContent = `${critic.score}`;
+    text.data = `${critic.score}`;
     if (critic.score >= 9) front.classList.add('hot');
   }
   const mean = launch.press.reduce((sum, critic) => sum + critic.score, 0) / launch.press.length;
   average.hidden = false;
-  t.sound(() => sfx.roll(1.1));
-  await roll(averageValue, 1100, mean.toFixed(1), () => (1 + Math.random() * 9).toFixed(1));
+  t.sound(() => sfx.roll(1.5));
+  await slowRoll(t, averageText, narrowTo(mean), { first: 45, growth: 1.2, pitch: 6 });
   t.kick(averageValue, 'rshow-stamp');
   t.sound(() => {
     sfx.stamp(0.6);
@@ -470,16 +520,16 @@ async function playShow(t, show, launch) {
   for (const [index, row] of launch.benchmarks.entries()) {
     if (t.ended) return;
     t.beat();
-    show.step.textContent = `Benchmark ${index + 1} of ${launch.benchmarks.length}`;
+    show.step.data = `Benchmark ${index + 1} of ${launch.benchmarks.length}`;
     await benchmarkRace(t, show, row, index);
   }
   if (t.ended) return;
   t.beat();
-  show.step.textContent = 'Leaderboard';
+  show.step.data = 'Leaderboard';
   await leaderboardClimb(t, show, launch);
   if (t.ended) return;
   t.beat();
-  show.step.textContent = 'The press';
+  show.step.data = 'The press';
   await pressFlip(t, show, launch);
 }
 
@@ -541,6 +591,7 @@ export function showReveal(overlayRoot, { state, model, misalignmentIncident = f
   const showSide = el('div', 'rshow-side');
   const step = el('div', 'rshow-step');
   step.setAttribute('aria-live', 'polite');
+  const stepText = counter(step, '');
   const soundButton = el('button', 'rshow-sound', sfx.enabled ? 'Sound on' : 'Sound off');
   soundButton.type = 'button';
   soundButton.setAttribute('aria-pressed', `${sfx.enabled}`);
@@ -561,7 +612,7 @@ export function showReveal(overlayRoot, { state, model, misalignmentIncident = f
     body: showBody,
     panel,
     dots,
-    step,
+    step: stepText,
     board,
     leader: board.leader,
     lastName: flagship ? shortName(flagship) : 'Last flagship',
@@ -594,9 +645,11 @@ export function showReveal(overlayRoot, { state, model, misalignmentIncident = f
     onClose?.();
   };
   soundButton.addEventListener('click', () => {
+    if (sfx.enabled) sfx.hush();
     sfx.enabled = !sfx.enabled;
     soundButton.textContent = sfx.enabled ? 'Sound on' : 'Sound off';
     soundButton.setAttribute('aria-pressed', `${sfx.enabled}`);
+    panel.focus(); // keys keep hurrying the show instead of pressing this button again
   });
   allResults.addEventListener('click', showSummary);
   // Capture phase, so a click anywhere during the show hurries it instead of reaching what is under
@@ -628,12 +681,16 @@ export function showReveal(overlayRoot, { state, model, misalignmentIncident = f
         (document.activeElement === allResults ? soundButton : allResults).focus();
         return;
       }
+      if (event.repeat) {
+        event.preventDefault();
+        return;
+      }
       // Enter or Space on a focused show button presses that button.
       if ((event.key === 'Enter' || event.key === ' ') && (event.target === soundButton || event.target === allResults)) return;
       if (['Shift', 'Control', 'Alt', 'Meta'].includes(event.key)) return;
       event.preventDefault();
       if (event.key === 'Escape') showSummary();
-      else if (!event.repeat) timeline.advance();
+      else timeline.advance();
       return;
     }
     if (event.key === 'Tab') {
@@ -665,9 +722,14 @@ export function showReveal(overlayRoot, { state, model, misalignmentIncident = f
     panel.classList.add('rshow-on');
     panel.append(showHead, showBody, showFoot);
     panel.focus();
+    playShow(timeline, show, model.launch).catch((error) => console.error(error)).finally(showSummary);
     sfx.unlock();
-    playShow(timeline, show, model.launch).then(showSummary);
   }
+  // A board meeting that held this reveal restores its own focus right after opening it; take focus
+  // back so keys still reach the reveal.
+  setTimeout(() => {
+    if (!closed && !layer.contains(document.activeElement)) (phase === 'show' ? panel : done).focus();
+  }, 0);
   return layer;
 }
 

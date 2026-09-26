@@ -14,23 +14,39 @@ function readMuted() {
 export function createSfx() {
   let ctx = null;
   let master = null;
+  let broken = false;
   let enabled = !readMuted();
   const volume = 0.6;
+  const playing = new Set();
 
+  // The audio context, or null when sound cannot play right now. A browser that refuses audio
+  // (no Web Audio, a failed context, a context still waiting for a click) never breaks the caller,
+  // and sounds are not queued up to burst out later.
   function ensure() {
-    const Context = globalThis.AudioContext || globalThis.webkitAudioContext;
-    if (!Context) return null;
-    if (!ctx) {
-      ctx = new Context();
-      const comp = ctx.createDynamicsCompressor();
-      comp.threshold.value = -14;
-      comp.ratio.value = 4;
-      master = ctx.createGain();
-      master.gain.value = volume;
-      master.connect(comp).connect(ctx.destination);
+    if (broken) return null;
+    try {
+      const Context = globalThis.AudioContext || globalThis.webkitAudioContext;
+      if (!Context) return null;
+      if (!ctx) {
+        ctx = new Context();
+        const comp = ctx.createDynamicsCompressor();
+        comp.threshold.value = -14;
+        comp.ratio.value = 4;
+        master = ctx.createGain();
+        master.gain.value = volume;
+        master.connect(comp).connect(ctx.destination);
+      }
+      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+      return ctx.state === 'running' ? ctx : null;
+    } catch {
+      broken = true;
+      return null;
     }
-    if (ctx.state === 'suspended') ctx.resume();
-    return ctx;
+  }
+
+  function track(source) {
+    playing.add(source);
+    source.onended = () => playing.delete(source);
   }
 
   function tone({ freq, type = 'sine', at = 0, dur = 0.12, gain = 0.25, attack = 0.004, slideTo = null, detune = 0 }) {
@@ -48,6 +64,7 @@ export function createSfx() {
     g.gain.exponentialRampToValueAtTime(gain, t + attack);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     osc.connect(g).connect(master);
+    track(osc);
     osc.start(t);
     osc.stop(t + dur + 0.02);
   }
@@ -75,6 +92,7 @@ export function createSfx() {
     g.gain.exponentialRampToValueAtTime(gain, t + dur * 0.3);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     src.connect(filter).connect(g).connect(master);
+    track(src);
     src.start(t);
     src.stop(t + dur + 0.02);
   }
@@ -84,7 +102,7 @@ export function createSfx() {
   const ladder = (step, base = 523.25) => base * 2 ** ((PENTA[step % 5] + 12 * Math.floor(step / 5)) / 12);
 
   return {
-    unlock: ensure,
+    unlock() { ensure(); },
     get enabled() { return enabled; },
     set enabled(value) {
       enabled = value;
@@ -93,6 +111,17 @@ export function createSfx() {
       } catch {
         // Storage can be blocked (private window); the choice then lasts for this page only.
       }
+    },
+    // Stop every sound already scheduled (a skipped or closed show, or muting).
+    hush() {
+      for (const source of playing) {
+        try {
+          source.stop();
+        } catch {
+          // Already stopped.
+        }
+      }
+      playing.clear();
     },
     // One count-up step; `step` climbs the pentatonic ladder so pitch tracks the number.
     tick(step = 0, { base = 523.25, gain = 0.08 } = {}) {
@@ -110,16 +139,6 @@ export function createSfx() {
     stamp(gain = 0.5) {
       tone({ freq: 150, type: 'sine', dur: 0.18, gain, slideTo: 55 });
       noise({ dur: 0.05, gain: 0.12, from: 2500, to: 1500, q: 2 });
-    },
-    // A reel or odometer turning: clicks that slow down toward the stop.
-    reel(duration = 0.9, clicks = 14) {
-      let at = 0;
-      for (let i = 0; i < clicks; i += 1) {
-        const p = i / clicks;
-        at += (duration / clicks) * (0.4 + 1.6 * p * p);
-        tone({ freq: 1800 - 500 * p, type: 'square', at, dur: 0.018, gain: 0.035 });
-      }
-      return at;
     },
     // Anticipation: a snare-like roll that speeds up, for the moment before a big number.
     roll(duration = 1.2) {

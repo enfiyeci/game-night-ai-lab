@@ -273,3 +273,23 @@ test('the leaderboard works on a real simulated release', () => {
   assert.ok(board.rows.every((row) => Number.isFinite(row.score)));
   assert.ok(Number.isFinite(board.mine.score));
 });
+
+test('a critic score rolls round the 1-10 dial and stops on the real score', async () => {
+  const { dialTo } = await import('../ui/screens/reveal.js');
+  for (const score of [1, 7, 10]) {
+    const values = dialTo(score).map(Number);
+    assert.equal(values.length, 11);
+    assert.equal(values.at(-1), score);
+    assert.ok(values.every((value) => value >= 1 && value <= 10));
+    values.slice(1).forEach((value, i) => assert.equal(value, (values[i] % 10) + 1)); // one step up the dial each time
+  }
+});
+
+test('the average narrows in on its value from alternating sides', async () => {
+  const { narrowTo } = await import('../ui/screens/reveal.js');
+  const values = narrowTo(9.5).map(Number);
+  assert.equal(values.at(-1), 9.5);
+  assert.ok(values.every((value) => value >= 1 && value <= 10));
+  const misses = narrowTo(5.25).map((value) => Math.abs(Number(value) - 5.25));
+  misses.slice(1).forEach((miss, i) => assert.ok(miss <= misses[i] + 0.05)); // never further away than the step before
+});
