@@ -125,6 +125,7 @@ function dangerState(seed) {
 export const SCENARIOS = {
   start,
   midEra3,
+  era3Idle: (seed) => throughTurn(seed, 20, (s) => s.era === 3 && !s.activeRun && !s.pendingModel),
   release: releaseState,
   event: (seed) => throughTurn(seed, 20, (s) => s.pendingEvents.length > 0),
   summit: (seed) => throughTurn(seed, 20, (s) => s.era === 5 && s.turnInEra === 0 && !s.deal),

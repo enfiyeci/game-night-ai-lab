@@ -22,7 +22,7 @@ function sidePanel(side, position) {
   return panel;
 }
 
-export function dialog({ title, subtitle, left, right, body, okLabel = 'OK', onOk, onCancel }) {
+export function dialog({ title, subtitle, left, right, body, okLabel = 'OK', backLabel, onBack, onOk, onCancel }) {
   const layer = document.createElement('div');
   layer.className = 'dialog-layer';
 
@@ -32,10 +32,10 @@ export function dialog({ title, subtitle, left, right, body, okLabel = 'OK', onO
 
   const panel = document.createElement('section');
   const titleId = `dialog-title-${++nextDialogId}`;
-  panel.className = 'gp dlg';
-  panel.setAttribute('role', 'dialog');
-  panel.setAttribute('aria-modal', 'true');
-  panel.setAttribute('aria-labelledby', titleId);
+  layer.setAttribute('role', 'dialog');
+  layer.setAttribute('aria-modal', 'true');
+  layer.setAttribute('aria-labelledby', titleId);
+  panel.className = 'gp dlg dialog-centre';
   panel.tabIndex = -1;
 
   const heading = document.createElement('h1');
@@ -64,7 +64,17 @@ export function dialog({ title, subtitle, left, right, body, okLabel = 'OK', onO
   ok.type = 'button';
   ok.textContent = okLabel;
   ok.addEventListener('click', () => onOk?.());
-  panel.append(ok);
+  if (backLabel) {
+    const actions = document.createElement('div');
+    actions.className = 'dialog-actions';
+    const back = document.createElement('button');
+    back.className = 'dialog-back';
+    back.type = 'button';
+    back.textContent = backLabel;
+    back.addEventListener('click', () => onBack?.());
+    actions.append(back, ok);
+    panel.append(actions);
+  } else panel.append(ok);
 
   panel.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape') return;
@@ -128,7 +138,7 @@ export function openDialog(overlayRoot, opts) {
     const items = focusable(layer);
     if (items.length === 0) {
       event.preventDefault();
-      layer.querySelector('[role="dialog"]').focus();
+      layer.querySelector('.dialog-centre').focus();
       return;
     }
     const first = items[0];
@@ -147,6 +157,6 @@ export function openDialog(overlayRoot, opts) {
 
   overlayRoot.append(layer);
   requestAnimationFrame(() => layer.classList.add('dialog-open'));
-  layer.querySelector('[role="dialog"]').focus();
+  layer.querySelector('.dialog-centre').focus();
   return layer;
 }

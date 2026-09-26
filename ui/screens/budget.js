@@ -1,4 +1,4 @@
-import { budgetFromSliders, levelFor, normaliseSplit, SPEND_LEVELS, spendFor } from '../logic/actions.js';
+import { budgetFromSliders, levelFor, normaliseSplit, queuedRunProblem, SPEND_LEVELS, spendFor } from '../logic/actions.js';
 import { money, months } from '../logic/format.js';
 import { openDialog } from '../components/dialog.js';
 import { teamPanel } from '../components/team.js';
@@ -101,6 +101,7 @@ export function openBudget(game, overlayRoot) {
 
   let rightContent;
   function renderPreview() {
+    error.textContent = '';
     preview.replaceChildren(allocationBar(values));
     rightContent.replaceChildren(thisTurnPanel(state, values, level));
     for (const button of spendSwitch.querySelectorAll('button')) {
@@ -148,7 +149,14 @@ export function openBudget(game, overlayRoot) {
     right: { title: 'This turn', content: rightContent },
     body,
     onOk() {
-      const result = game.setBudget(budgetFromSliders(values, level, state.era));
+      const budget = budgetFromSliders(values, level, state.era);
+      const problem = queuedRunProblem(game.state, { ...game.queue, budget });
+      if (problem) {
+        const message = problem[0].toUpperCase() + problem.slice(1);
+        error.textContent = `Your queued training run would no longer work: ${message}. Change the run first.`;
+        return;
+      }
+      const result = game.setBudget(budget);
       if (result.ok) opened.close();
       else error.textContent = result.error ?? 'The budget could not be saved.';
     },

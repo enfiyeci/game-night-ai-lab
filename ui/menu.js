@@ -8,7 +8,7 @@ const registeredHandlers = new Map();
 
 const ITEMS = [
   { id: 'budget', label: "Plan this turn's budget", free: true },
-  { id: 'training', label: 'Start a training run', unavailable: (state) => (state.activeRun && 'A run is already under way') || (state.pendingModel && 'Release the trained model first') },
+  { id: 'training', label: 'Start a training run', unavailable: (state, game) => (game.queue.moves.some((move) => move.type === 'startRun') && 'A training run is already queued this turn') || (state.activeRun && 'A run is already under way') || (state.pendingModel && 'Release the trained model first') },
   { id: 'release', label: 'Release a model', unavailable: (state) => !state.pendingModel && 'Release needs a finished model' },
   { id: 'internal', label: 'Deploy a model internally', unavailable: (state) => state.era < 3 && 'Internal deployment opens in era 3' },
   { id: 'constitution', label: 'Amend the constitution' },

@@ -6,6 +6,7 @@ import { SCENARIOS } from './logic/scenarios.js';
 import { dealCards } from './logic/compute.js';
 import { openMenu } from './menu.js';
 import { openBudget } from './screens/budget.js';
+import { mountRecipe, openRecipe } from './screens/recipe.js';
 import {
   mountCompany,
   mountTurnSummary,
@@ -52,6 +53,7 @@ const overlay = document.querySelector('#overlay');
 mountHud(hud, game);
 await mountOffice(office, fx, game).catch((error) => console.error(error));
 mountCompany(game, overlay);
+mountRecipe(game, overlay);
 mountTurnSummary(overlay, game);
 
 function stagePoint(event) {
@@ -68,6 +70,11 @@ office.addEventListener('click', (event) => {
 });
 
 async function openDebugRoute() {
+  const recipeStage = location.hash.match(/^#recipe([123])$/)?.[1];
+  if (recipeStage) {
+    openRecipe(game, overlay, { stage: Number(recipeStage) });
+    return;
+  }
   if (location.hash === '#budget') {
     openBudget(game, overlay);
     return;
