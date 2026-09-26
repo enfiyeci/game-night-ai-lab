@@ -1,9 +1,10 @@
 import { ENDINGS } from '../sim/endings.js';
+import { createClock } from './clock.js';
 import { createGame } from './game.js';
 import { mountHud } from './hud.js';
 import { mountOffice } from './office.js';
 import { SCENARIOS } from './logic/scenarios.js';
-import { dealCards, powerSitesAvailable, queueScreenAvailable } from './logic/compute.js';
+import { powerSitesAvailable, queueScreenAvailable } from './logic/compute.js';
 import { openMenu } from './menu.js';
 import { openBudget } from './screens/budget.js';
 import { mountRecipe, openRecipe } from './screens/recipe.js';
@@ -55,7 +56,11 @@ const hud = document.querySelector('#hud');
 const overlay = document.querySelector('#overlay');
 
 mountHud(hud, game);
+game.clock = createClock(game);
 await mountOffice(office, fx, game).catch((error) => console.error(error));
+game.clock.watch(overlay);
+if (params.has('paused')) game.clock.setSpeed(0);
+game.clock.start();
 mountCompany(game, overlay);
 mountRecipe(game, overlay);
 mountHistory(game, overlay);
@@ -116,12 +121,6 @@ async function openDebugRoute() {
   }
   if (location.hash === '#emergency') {
     openEmergency(game, overlay);
-    return;
-  }
-  if (location.hash === '#summary') {
-    const card = dealCards(game.state).find((offer) => !offer.disabled);
-    if (card) game.addMove(card.move);
-    game.endTurn();
     return;
   }
   if (location.hash === '#history') {

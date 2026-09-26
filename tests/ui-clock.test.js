@@ -53,3 +53,23 @@ test('fractional days carry over between steps', () => {
   for (let i = 1; i <= 100; i += 1) { t = i * 100; clock.step(); } // 10 s at 91 days / 45 s
   assert.equal(game.days, Math.floor((10 * 91) / 45));
 });
+
+test('a synchronous pause while advancing drops the rest of the days owed', () => {
+  let t = 0;
+  const state = { era: 1, day: 0, dayInRound: 0, ending: null };
+  const game = {
+    state,
+    days: 0,
+    advanceDays(n) {
+      assert.equal(n, 1);
+      this.days += n;
+      state.day += n;
+      if (this.days === 3) this.clock.pause('event-card');
+    },
+  };
+  const clock = createClock(game, { now: () => t, secondsPerRound: 91 });
+  game.clock = clock;
+  clock.step();
+  t = 10_000; clock.step();
+  assert.equal(game.days, 3);
+});

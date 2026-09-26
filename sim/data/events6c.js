@@ -38,7 +38,7 @@ export const EVENTS_6C = [
       post: { handle: '@your_research', text: 'the training loss just jumped. the run is wobbling' },
       choices: [
         {
-          id: 'rollback', label: 'Roll back to the last checkpoint', cost: 'one more turn', backers: ['Research'], opposers: ['CFO'],
+          id: 'rollback', label: 'Roll back to the last checkpoint', cost: 'a longer training run', backers: ['Research'], opposers: ['CFO'],
           effects(state) {
             const run = state.activeRun;
             if (run && run.spikes > (run.spikesAnswered ?? 0)) {

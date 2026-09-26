@@ -1,22 +1,37 @@
 import { MAX_MOVES } from '../sim/turn.js';
 import { EMERGENCY_OPTIONS, inDangerZone } from '../sim/economy.js';
 import { TECHNIQUES, techAvailable } from '../sim/techniques.js';
+import { TEAM_OF, TEAMS, teamBusyError } from '../sim/teams.js';
+import { roundWord } from '../sim/time.js';
 import { projectQueue } from './logic/compute.js';
 import { openBudget } from './screens/budget.js';
 
 const registeredHandlers = new Map();
 
+const MOVE_TYPE = {
+  training: 'startRun',
+  release: 'release',
+  internal: 'deployInternal',
+  constitution: 'amendConstitution',
+  meeting: 'meeting',
+  deals: 'deal',
+  power: 'buildSite',
+  raise: 'raise',
+  research: 'research',
+  emergency: 'emergency',
+};
+
+const sentenceCase = (text) => text ? `${text[0].toUpperCase()}${text.slice(1)}` : '';
+
 const ITEMS = [
-  { id: 'budget', label: "Plan this turn's budget", free: true },
-  { id: 'training', label: 'Start a training run', unavailable: (state, game) => (game.queue.moves.some((move) => move.type === 'startRun') && 'A training run is already queued this turn') || (state.activeRun && 'A run is already under way') || (state.pendingModel && 'Release the trained model first') },
+  { id: 'budget', label: 'Plan the budget', free: true },
+  { id: 'training', label: 'Start a training run', unavailable: (state, game) => (game.queue.moves.some((move) => move.type === 'startRun') && `A training run already started this ${roundWord(state.era)}`) || (state.activeRun && 'A run is already under way') || (state.pendingModel && 'Release the trained model first') },
   { id: 'release', label: 'Release a model', unavailable: (state) => !state.pendingModel && 'Release needs a finished model' },
   { id: 'internal', label: 'Deploy a model internally', unavailable: (state) => state.era < 3 && 'Internal deployment opens in era 3' },
   { id: 'constitution', label: 'Amend the constitution' },
   { id: 'meeting', label: 'Take a meeting', unavailable: (state) => !state.meeting && 'No meeting is scheduled' },
   { id: 'company', label: 'Company', free: true, submenu: true },
   { id: 'history', label: 'Lab history', free: true, unavailable: (_state, game) => game.state.models.length === 0 && 'Nothing released yet' },
-  { divider: true },
-  { id: 'endTurn', label: 'End turn', free: true },
 ];
 
 export const COMPANY_ITEMS = [
@@ -29,7 +44,7 @@ export const COMPANY_ITEMS = [
       const queued = game.queue.moves.some((move) => move.type === 'raise')
         && game.state.flags.lastRoundEra !== game.state.era
         && state.flags.lastRoundEra === state.era;
-      if (queued) return 'A round is already queued this turn';
+      if (queued) return `A round already started this ${roundWord(state.era)}`;
       if (state.era < 2) return 'Funding rounds open in era 2';
       if (state.flags.lastRoundEra === state.era) return 'You already raised a round this era';
       return '';
@@ -50,7 +65,7 @@ export const COMPANY_ITEMS = [
       ));
       if (available.some((technique) => state.researchPoints >= technique.researchCost)) return '';
       if (beforeQueue.length > 0 && beforeQueue.every((technique) => queued.has(technique.id))) {
-        return 'Every available technique is already queued this turn';
+        return `Every available technique already started this ${roundWord(state.era)}`;
       }
       if (available.length > 0) return 'Not enough research points';
       return 'Nothing to research early right now';
@@ -71,7 +86,7 @@ export const COMPANY_ITEMS = [
         .filter((move) => move.type === 'emergency')
         .map((move) => move.option));
       return available.length > 0 && available.every((option) => queued.has(option))
-        ? 'Every unused emergency option is already queued this turn' : '';
+        ? `Every unused emergency option already started this ${roundWord(state.era)}` : '';
     },
   },
 ];
@@ -90,11 +105,26 @@ function handlerFor(id, handlers) {
 
 function disabledReason(item, game, handler, state = game.state) {
   if (!item.free && state.ending) return 'A queued move ends the run';
+  const busy = MOVE_TYPE[item.id] && teamBusyError(game.state, { type: MOVE_TYPE[item.id] });
+  if (busy) return sentenceCase(busy);
   const unavailable = item.unavailable?.(state, game);
   if (unavailable) return unavailable;
-  if (!item.free && game.movesLeft() === 0) return 'Both moves are used this turn';
-  if (!handler && item.id !== 'budget' && item.id !== 'endTurn' && item.id !== 'company') return 'Not built yet';
+  if (!item.free && game.movesLeft() === 0) return `Both team actions are used this ${roundWord(state.era)}`;
+  if (!handler && item.id !== 'budget' && item.id !== 'company') return 'Not built yet';
   return '';
+}
+
+function appendTeamTag(button, item, game) {
+  const type = MOVE_TYPE[item.id];
+  const team = TEAM_OF[type];
+  if (!team) return;
+  const busy = teamBusyError(game.state, { type });
+  const busyPrefix = `the ${TEAMS[team]} is `;
+  const status = busy?.startsWith(busyPrefix) ? busy.slice(busyPrefix.length) : busy;
+  const tag = document.createElement('span');
+  tag.className = `team${busy ? ' busy' : ''}`;
+  tag.textContent = `${sentenceCase(TEAMS[team])} · ${status ?? 'free'}`;
+  button.append(tag);
 }
 
 function appendDisabledReason(button, reason) {
@@ -170,7 +200,7 @@ export function openMenu(game, point, { overlay = document.querySelector('#overl
       if (item.hidden?.(projected, game)) continue;
       const customHandler = handlerFor(item.id, handlers);
       const reason = game.movesLeft() === 0
-        ? 'Both moves are used this turn'
+        ? `Both team actions are used this ${roundWord(game.state.era)}`
         : disabledReason(item, game, customHandler, projected);
       const button = document.createElement('button');
       button.className = 'it';
@@ -178,6 +208,7 @@ export function openMenu(game, point, { overlay = document.querySelector('#overl
       button.setAttribute('role', 'menuitem');
       button.dataset.menuId = item.id;
       button.textContent = item.label;
+      appendTeamTag(button, item, game);
       if (reason) appendDisabledReason(button, reason);
       else {
         button.addEventListener('click', () => {
@@ -265,6 +296,7 @@ export function openMenu(game, point, { overlay = document.querySelector('#overl
         else openCompany();
       });
     } else button.textContent = item.label;
+    appendTeamTag(button, item, game);
     if (reason) {
       appendDisabledReason(button, reason);
     } else if (!item.submenu) {
@@ -272,9 +304,6 @@ export function openMenu(game, point, { overlay = document.querySelector('#overl
         if (item.id === 'budget') {
           close();
           openBudget(game, overlay);
-        } else if (item.id === 'endTurn') {
-          close(); // before the turn ends, so a dialog opened by a subscriber keeps focus
-          game.endTurn();
         } else {
           close();
           customHandler(game, overlay);
@@ -287,7 +316,7 @@ export function openMenu(game, point, { overlay = document.querySelector('#overl
   const used = MAX_MOVES - game.movesLeft();
   const counter = document.createElement('div');
   counter.className = 'menu-moves';
-  counter.textContent = `${used} of ${MAX_MOVES} moves used`;
+  counter.textContent = `${used} of ${MAX_MOVES} team actions this ${roundWord(game.state.era)}`;
   menu.append(counter);
   layer.append(markerAt(x, y), menu);
   overlay.append(layer);

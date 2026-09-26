@@ -2390,3 +2390,115 @@ svg.room {
   .bob,
   .advisor-marker { animation: none !important; }
 }
+
+.clock {
+  position: absolute;
+  z-index: 12;
+  top: 90px;
+  right: 15px;
+  display: flex;
+  padding: 4px 5px 4px 12px;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid color-mix(in oklab, var(--ink) 10%, transparent);
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 900;
+  background: var(--paper);
+  box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 12%, transparent);
+  pointer-events: auto;
+}
+
+.clock .date {
+  display: grid;
+  margin-right: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.clock .date small {
+  color: color-mix(in oklab, var(--ink) 58%, var(--paper));
+  font-weight: 700;
+}
+
+.clock .beat {
+  display: block;
+  width: 92px;
+  height: 4px;
+  margin-top: 3px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: color-mix(in oklab, var(--ink) 10%, var(--paper));
+}
+
+.clock .beat i { display: block; height: 100%; background: var(--wood); }
+
+.clock button {
+  display: grid;
+  min-width: 28px;
+  height: 26px;
+  padding: 0 6px;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  color: color-mix(in oklab, var(--ink) 60%, var(--paper));
+  font: inherit;
+  font-size: 12px;
+  font-weight: 900;
+  background: transparent;
+  cursor: pointer;
+}
+
+.clock button.on { color: var(--paper); background: var(--wood); }
+.clock button:focus-visible { outline: 2px solid var(--teal); outline-offset: 1px; }
+
+.clock .sep {
+  width: 1px;
+  height: 20px;
+  margin: 0 3px;
+  background: color-mix(in oklab, var(--ink) 12%, transparent);
+}
+
+.clock button.skip {
+  color: color-mix(in oklab, var(--wood) 70%, var(--ink));
+  white-space: nowrap;
+}
+
+.clock .paused {
+  margin-left: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: color-mix(in oklab, var(--wood) 62%, var(--ink));
+  font-size: 11px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  background: color-mix(in oklab, var(--wood) 20%, var(--paper));
+}
+
+.clock button.play-big {
+  height: 30px;
+  padding: 0 14px;
+  color: var(--paper);
+  font-size: 13px;
+  background: var(--coral);
+  box-shadow: 0 2px 0 color-mix(in oklab, var(--coral) 60%, var(--ink));
+}
+
+.ctx .menu-moves b { color: var(--ink); }
+
+.team {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 7px;
+  border-radius: 999px;
+  color: color-mix(in oklab, var(--teal) 62%, var(--ink));
+  font-size: 10.5px;
+  font-weight: 800;
+  vertical-align: 1px;
+  white-space: nowrap;
+  background: color-mix(in oklab, var(--teal) 14%, var(--paper));
+}
+
+.team.busy {
+  color: color-mix(in oklab, var(--ink) 55%, var(--paper));
+  background: color-mix(in oklab, var(--ink) 7%, var(--paper));
+}

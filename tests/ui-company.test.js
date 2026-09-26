@@ -125,7 +125,7 @@ test('queued prepayments are projected before another deal is offered', () => {
   game.addMove(first.move);
   const result = game.endTurn();
   assert.equal(result.events.filter((event) => event.type === 'deal').length, 1);
-  assert.equal(result.errors.includes(`unknown offer ${first.id}`), true);
+  assert.equal(result.errors.includes('the finance team is busy until Y1 M4 W1'), true);
 });
 
 test('queued research spends points before checking the next technique', () => {
@@ -144,7 +144,7 @@ test('queued research spends points before checking the next technique', () => {
   moves.forEach((move) => game.addMove(move));
   const result = game.endTurn();
   assert.equal(result.events.filter((event) => event.type === 'research').length, 1);
-  assert.equal(result.errors.includes('not enough research points'), true);
+  assert.equal(result.errors.includes('the research team is busy until Y1 M4 W1'), true);
 });
 
 test('a queued raise is reflected in projected round availability', () => {
@@ -160,7 +160,7 @@ test('a queued raise is reflected in projected round availability', () => {
   game.addMove({ type: 'raise', archetype: 'strategic' });
   const result = game.endTurn();
   assert.equal(result.events.filter((event) => event.type === 'raise').length, 1);
-  assert.equal(result.errors.includes('already raised a round this era'), true);
+  assert.equal(result.errors.includes('the finance team is busy until Y1 M4 W1'), true);
 });
 
 test('the queue projection applies new free actions before deterministic moves', () => {

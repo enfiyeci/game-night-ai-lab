@@ -22,7 +22,13 @@ export function createClock(game, { now = () => performance.now(), secondsPerRou
     const days = Math.floor(owed);
     if (days <= 0) return;
     owed -= days;
-    game.advanceDays(days);
+    for (let day = 0; day < days; day += 1) {
+      if (game.state.ending || reasons.size > 0 || speed === 0) {
+        owed = 0;
+        break;
+      }
+      game.advanceDays(1);
+    }
     emit();
   }
 
