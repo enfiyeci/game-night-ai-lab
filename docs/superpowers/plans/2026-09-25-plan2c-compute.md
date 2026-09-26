@@ -966,16 +966,16 @@ test('offers exist from turn 0 and refresh every turn', () => {
   assert.ok(state.compute.offers.every((o) => o.id.endsWith('-1')));
 });
 
-test('a deal move signs an offer, and the contract bill enters the burn when it arrives', () => {
+test('a deal move signs an offer; it is online on its arrival turn and its bill enters the burn', () => {
   const s = createInitialState();
   const cf = offerOf(s, 'coreflame');
   const out = endTurn(s, { moves: [{ type: 'deal', offerId: cf.id }] }, createRng(2));
   assert.deepEqual(out.errors, []);
-  assert.equal(out.state.compute.pipeline.length, 1);
-  const next = endTurn(out.state, {}, createRng(3));
-  assert.equal(next.state.compute.online, 10 + cf.units);
-  assert.ok(next.events.some((e) => e.type === 'computeArrived' && e.supplier === 'coreflame'));
-  assert.ok(computeRent(next.state) > computeRent(s));
+  assert.equal(out.state.turn, s.turn + cf.arrivesIn);
+  assert.equal(out.state.compute.pipeline.length, 0);
+  assert.equal(out.state.compute.online, 10 + cf.units, 'usable for moves and training on its arrival turn');
+  assert.ok(out.events.some((e) => e.type === 'computeArrived' && e.supplier === 'coreflame'));
+  assert.ok(computeRent(out.state) > computeRent(s));
   assert.equal(endTurn(s, { moves: [{ type: 'deal', supplierId: 'coreflame' }] }, createRng(2)).errors.length, 1);
 });
 
@@ -994,7 +994,7 @@ test('training runs cost more compute each era', () => {
   assert.equal(recipeCost(s, recipe).units, e1 * eraScale(4));
 });
 
-test('an era 3 queue order becomes a Verde contract the next turn', () => {
+test('an era 3 queue fill is a Verde contract on the next turn', () => {
   const s = createInitialState();
   s.era = 3; s.turn = 8; s.turnInEra = 0;
   const want = released(s);
@@ -1002,8 +1002,7 @@ test('an era 3 queue order becomes a Verde contract the next turn', () => {
   const out = endTurn(s, { moves: [{ type: 'queueOrder', units: want, tier: 'standard' }] }, createRng(5));
   assert.deepEqual(out.errors, []);
   assert.ok(out.events.some((e) => e.type === 'queueFilled' && e.units === expected));
-  const next = endTurn(out.state, {}, createRng(6));
-  assert.ok(next.state.compute.contracts.some((c) => c.supplier === 'verde' && c.units === expected));
+  assert.ok(out.state.compute.contracts.some((c) => c.supplier === 'verde' && c.units === expected));
 });
 
 test('in era 4 new chips need site power, and the lease starts when the site is online', () => {
@@ -1015,9 +1014,9 @@ test('in era 4 new chips need site power, and the lease starts when the site is 
   assert.equal(built.state.compute.online, 10);
   assert.equal(built.state.compute.unpowered, 100);
   assert.equal(built.state.power.sites[0].source, 'gas');
-  // Bring the site forward instead of playing four turns, so the test never crosses the era 4 gate.
+  // Bring the site forward to next turn instead of playing four turns, so the test never crosses the era 4 gate.
   const st = structuredClone(built.state);
-  st.power.sites[0].arrivesTurn = st.turn;
+  st.power.sites[0].arrivesTurn = st.turn + 1;
   const next = endTurn(st, {}, createRng(8)).state;
   assert.equal(next.power.sites[0].online, true);
   assert.equal(next.compute.online, 10 + Math.min(100, next.power.sites[0].units));
@@ -1049,7 +1048,7 @@ test('in era 4 new chips need site power, and the lease starts when the site is 
 Build the state object into a `const state = { ... }`, then `state.compute.offers = generateOffers(state, sideRng(state, 0)); return state;`.
 
 - [ ] **Step 4: Turn wiring** in `sim/turn.js`:
-  - Imports: remove `signDeal, computeTurn` from `./compute.js`; add `signOffer, contractAction, contractsTurn, expireContracts, spendCredits, refreshOnline, generateOffers, sideRng` from `./contracts.js`, `placeOrder, withdrawOrder, queueTurn` from `./queue.js`, `buildSite, powerTurn` from `./power.js`, `pushFeed` from `./events.js`.
+  - Imports: remove `signDeal, computeTurn` from `./compute.js`; add `signOffer, contractAction, contractsTurn, expireContracts, spendCredits, generateOffers, sideRng` from `./contracts.js`, `placeOrder, withdrawOrder, queueTurn` from `./queue.js`, `buildSite, powerTurn` from `./power.js`, `pushFeed` from `./events.js`.
   - `applyMove`: replace `case 'deal'` with `case 'deal': return signOffer(state, move.offerId, sideRng(state, 1));` and add `case 'queueOrder': return placeOrder(state, move);` and `case 'buildSite': return buildSite(state, move.source, sideRng(state, 2));`.
   - In `endTurn`, right after the budget block and before the moves loop:
 
@@ -1068,22 +1067,13 @@ Build the state object into a `const state = { ... }`, then `state.compute.offer
   }
 ```
 
-  - Replace the `computeTurn` block with:
+  - Replace the `computeTurn` block with the queue allocation only (it stays at turn end, after training):
 
 ```js
-    const c = contractsTurn(state, sideRng(state, 3));
-    for (const x of c.arrived) events.push({ type: 'computeArrived', supplier: x.supplier, units: x.units });
-    for (const x of c.bumped) events.push({ type: 'spotPulled', units: x.units });
-    if (c.warnedBump) {
-      events.push({ type: 'spotWarning' });
-      pushFeed(state, '@marketwire', 'spot GPU capacity is being pulled for prepaid customers', 'warning');
-    }
     for (const e of queueTurn(state, sideRng(state, 4))) {
       events.push(e);
       if (e.type === 'rivalPrepays') pushFeed(state, '@marketwire', `${state.rivals.find((r) => r.id === e.lab).name} prepays Verde for priority`, 'feed');
     }
-    for (const e of powerTurn(state)) events.push(e);
-    refreshOnline(state);
 ```
 
   - Right after `applyEconomy(state);` add:
@@ -1093,7 +1083,23 @@ Build the state object into a `const state = { ... }`, then `state.compute.offer
     for (const x of expireContracts(state)) events.push({ type: 'contractEnded', supplier: x.supplier, units: x.units });
 ```
 
-  - At the very end of `endTurn`, just before the `if (state.ending) events.push(...)` line: `if (!state.ending) state.compute.offers = generateOffers(state, sideRng(state, 5));` (the turn and era have already advanced, so these are next turn's offers).
+  - At the very end of `endTurn`, just before the `if (state.ending) events.push(...)` line, deliver what is due on the new turn and make its offers. The turn and era have already advanced here, so a contract, queue fill or site due on turn T is online in the state the player plans turn T with, and its moves and training can use it (spot arrives during the move itself):
+
+```js
+  if (!state.ending) {
+    for (const e of powerTurn(state)) events.push(e);
+    const c = contractsTurn(state, sideRng(state, 3)); // ends with refreshOnline, which counts the new sites' power
+    for (const x of c.arrived) events.push({ type: 'computeArrived', supplier: x.supplier, units: x.units });
+    for (const x of c.bumped) events.push({ type: 'spotPulled', units: x.units });
+    if (c.warnedBump) {
+      events.push({ type: 'spotWarning' });
+      pushFeed(state, '@marketwire', 'spot GPU capacity is being pulled for prepaid customers', 'warning');
+    }
+    state.compute.offers = generateOffers(state, sideRng(state, 5));
+  }
+```
+
+  (`arrivingBills` in `projectBurn` then finds nothing due during a turn in normal play; it stays as the spec's projection term for hand-built states.)
 - [ ] **Step 5: Economy, runs, control and old callers**
   - `sim/economy.js`: import `monthlyBills, arrivingBills, creditOffset, addPipeline` from `./contracts.js`, `leaseBills` from `./power.js`, `eraScale` from `./data/compute.js`. Replace `computeRent` with `export const computeRent = (state) => monthlyBills(state) + leaseBills(state) - creditOffset(state);`. In `projectBurn` replace the `arrivingRent` expression with `arrivingBills(state)`. In `raiseRound`, delete the `strategic` block's `state.compute.pipeline.push(...)` line (the equity-for-compute offer replaces it; keep `state.flags.strategicStrings = true`). Also delete `units` and `costMult` from `INVESTORS.strategic`. In `useEmergency` `equityForCompute`, replace the pipeline push with `addPipeline(state, { supplier: 'rescue', units: 10, price: 0.5, termMonths: 24, arrivesTurn: state.turn + 1, string: 'moneyBack', needsPower: false });` (its own supplier id, so a failing lab is not also locked out of other clouds by Azuria exclusivity) (not era-scaled: the rescue's compute is a small sweetener, and scaling it would bill a failing lab hundreds of millions a month).
   - `sim/recipe.js` `recipeCost`: `units: Math.round(SIZE_UNITS[size] * mult * eraScale(state.era) * 10) / 10` (import `eraScale`).
@@ -1134,6 +1140,12 @@ import { createInitialState } from '../sim/state.js';
 import { setComputeSplit, computeSlices, spotCover, resaleCredit, applySplitEffects, makePledge, safetyValue } from '../sim/split.js';
 import { availableUnits } from '../sim/training.js';
 import { setBudget } from '../sim/turn.js';
+import { BALANCE } from '../sim/balance.js';
+import { SPOT_PRICE, RESALE } from '../sim/data/compute.js';
+
+// Tests check behaviour against the modules' own exports, not tuned constants (compute spec §11b).
+const U = BALANCE.unitMonthlyCost;
+const contract = (id, units, price) => ({ id, supplier: id, units, price, monthsLeft: 24, needsPower: false, dark: false, string: null });
 
 const at = (online, need, safety = 0.12) => {
   const s = createInitialState();
@@ -1179,7 +1191,7 @@ test('the split is validated', () => {
 test('spot covers a shortfall at the era price, or users suffer an outage', () => {
   const s = at(100, 95, 0.1);
   s.era = 3;
-  assert.ok(Math.abs(spotCover(s) - 5 * 2.5 * 1.46) < 1e-9);
+  assert.ok(Math.abs(spotCover(s) - 5 * SPOT_PRICE[3] * U) < 1e-9);
   s.compute.split.coverWithSpot = false;
   assert.equal(spotCover(s), 0);
   s.models.push({ active: true, users: 1000000, flags: [] });
@@ -1192,8 +1204,17 @@ test('spot covers a shortfall at the era price, or users suffer an outage', () =
 
 test('resale recovers the era share of idle compute', () => {
   const s = at(100, 0, 0);
+  s.compute.contracts = [contract('verde', 100, 1)];
   s.compute.split.resellIdle = true;
-  assert.ok(Math.abs(resaleCredit(s) - 100 * 0.7 * 1.46) < 1e-9);
+  assert.ok(Math.abs(resaleCredit(s) - 100 * RESALE[1] * U) < 1e-9);
+});
+
+test('resale never earns more than the idle chips cost: the cheapest contracts are resold first', () => {
+  const s = at(100, 50, 0); // 50 serving, 50 idle
+  s.compute.contracts = [contract('verde', 50, 1), contract('rescue', 50, 0.5)];
+  s.compute.split.resellIdle = true;
+  assert.ok(Math.abs(resaleCredit(s) - 50 * Math.min(RESALE[1], 0.5) * U) < 1e-9);
+  assert.ok(resaleCredit(s) <= 50 * 0.5 * U + 1e-9);
 });
 
 test('safety compute lowers alignment debt and is valued per era', () => {
@@ -1201,7 +1222,7 @@ test('safety compute lowers alignment debt and is valued per era', () => {
   const debt = s.alignmentDebt = 30;
   applySplitEffects(s);
   assert.ok(s.alignmentDebt < debt);
-  assert.ok(Math.abs(safetyValue(s) - 20 * 1.46) < 1e-9);
+  assert.ok(Math.abs(safetyValue(s) - 20 * U) < 1e-9);
 });
 
 test('the pledge is offered once in eras 1 and 2, and a lower share breaks it', () => {
@@ -1285,8 +1306,20 @@ export function computeSlices(state) {
 
 export const spotCover = (state) =>
   (state.compute.split.coverWithSpot ? computeSlices(state).shortfall * SPOT_PRICE[state.era] * UNIT : 0);
-export const resaleCredit = (state) =>
-  (state.compute.split.resellIdle ? computeSlices(state).idle * RESALE[state.era] * UNIT : 0);
+// Spec §5.3: idle units recover the era's share of the base price, but never more than they bill.
+// Idle units are taken from the cheapest contracts first, so signing cheap capacity (such as the
+// half-price rescue) and reselling it can never lower the burn.
+export function resaleCredit(state) {
+  if (!state.compute.split.resellIdle) return 0;
+  let idle = computeSlices(state).idle;
+  let credit = 0;
+  for (const c of state.compute.contracts.filter((x) => !x.dark).sort((a, b) => a.price - b.price)) {
+    const n = Math.min(idle, c.units);
+    credit += n * Math.min(RESALE[state.era], c.price) * UNIT;
+    idle -= n;
+  }
+  return credit;
+}
 export const safetyValue = (state) => (computeSlices(state).safety * UNIT) / eraScale(state.era);
 
 export function applySplitEffects(state) {
@@ -1338,12 +1371,12 @@ export function makePledge(state, share) {
 ### Task 6: Compute events
 
 **Files:**
-- Modify: `sim/data/events.js`, `sim/events.js` (`addressWarning` calls `defuse`), `sim/economy.js` (`updateServing` surge), `sim/contracts.js` (`refreshOnline` pooling), `sim/summit.js` (pooling stance), `sim/turn.js` (surge countdown)
+- Modify: `sim/data/events.js`, `sim/events.js` (`addressWarning` calls `defuse`), `sim/economy.js` (`updateServing` and `monthlyRevenue` surge), `sim/contracts.js` (`refreshOnline` pooling), `sim/summit.js` (pooling stance), `sim/turn.js` (surge countdown)
 - Create: `tests/compute-events.test.js`
 
 **Interfaces:**
 - Consumes: the event row format of `sim/data/events.js` (plan 2A Task 4): `{ id, kind, trigger(state, rng), warning, card: { title, post, choices: [{ id, label, cost, backers, opposers, effects(state) }] }, flag? }`, plus a new optional `defuse(state)`. Use the backer and opposer label strings already used in that file.
-- Produces: event rows `neocloudTrouble`, `siteOpposition` (replaces the row `datacenter`, which is deleted), `pledgeDrop`, `agentSurge`, `pooling`; `state.compute.surge` = `null` or `{ mult, turnsLeft }`; `state.compute.pooled` (share, default 0); `state.flags.pooled`.
+- Produces: event rows `neocloudTrouble`, `siteOpposition` (replaces the row `datacenter`, which is deleted), `pledgeDrop`, `agentSurge`, `pooling`; `state.compute.surge` = `null` or `{ mult, usage?, turnsLeft, restoreCover }`; `state.compute.pooled` (share, default 0); `state.flags.pooled`.
 
 - [ ] **Step 1: Add the rows** (text and numbers exactly; the LAST choice is the do-nothing default):
 
@@ -1352,7 +1385,7 @@ export function makePledge(state, share) {
 | `neocloudTrouble` | world (repeatable) | any contract with `troubled` | `@marketwire`: "CoreFlame's biggest customer missed a payment" | "Your neocloud is failing" / `@marketwire`: "CoreFlame's lenders call in a $4B loan" | `spot` · Move the capacity to spot · spot prices · every troubled contract: `supplier = 'spot'`, `price = SPOT_PRICE[era]`, `string = 'bumpable'`, `monthsLeft = null` (it renews like other spot), `troubled = false`; `rescue` · Prepay 3 months to keep them alive · 3 months of the bill · `cash −= RESCUE_MONTHS × contractBill(c)`, `troubled = false`; `letgo` · Let it go · lose the capacity · remove troubled contracts, `refreshOnline` |
 | `siteOpposition` | world | if `state.flags.oppositionSite` is set, return true; otherwise, if a gas site is not yet online, roll `rng.chance(0.15)`; only on a hit pick the first such site, set `state.flags.oppositionSite = site.id` and `site.oppositionCut = rng.chance(0.3)`, and return true | `@localnews`: "residents pack the town hall over the new gas site" | "Local opposition to your gas site" / `@localnews`: "county votes to delay the permit" | `benefits` · Pay for community benefits · one month of the site's lease · `cash −= leaseMonthly(site.units)`; `move` · Move the site · two turns · `site.arrivesTurn += 2`; `push` · Push through · public trust · `publicTrust −= 5`; if `site.oppositionCut`, `site.units = Math.round(site.units * 0.7)` |
 | `pledgeDrop` | world | `era === 2` and a `safetyCompute` promise exists | none | "An investor wants the pledge gone" / `@growthfund`: "safety pledges are a luxury at this stage" | `drop` · Drop the pledge · staff trust · `cash += Math.round(valuation × 0.05)`, `staffTrust −= 8`, remove the promise; `refuse` · Keep it · board support · every board member −2 |
-| `agentSurge` | world | `era === 3` and an active model has flag `agentic` | none | "Agent launch swamps your servers" / `@marketwire`: "agent usage doubles overnight" | `spot` · Buy spot to keep up · spot prices · `surge = { mult: 2, turnsLeft: 2 }`, `split.coverWithSpot = true`; `route` · Route users to a cheaper model · public trust · `surge = { mult: 1.4, turnsLeft: 2 }`, `publicTrust −= 1`; `cap` · Cap serving and accept outages · users · `surge = { mult: 2, turnsLeft: 2 }`, `split.coverWithSpot = false` |
+| `agentSurge` | world | `era === 3` and an active model has flag `agentic` | none | "Agent launch swamps your servers" / `@marketwire`: "agent usage doubles overnight" | `spot` · Buy spot to keep up · spot prices · `surge = { mult: 2, turnsLeft: 2 }`, `split.coverWithSpot = true`; `route` · Route users to a cheaper model · usage and public trust · `surge = { mult: 2, usage: 0.7, turnsLeft: 2 }` (usage −30%: it cuts both the serving load and revenue while the surge lasts), `publicTrust −= 1`; `cap` · Cap serving and accept outages · users · `surge = { mult: 2, turnsLeft: 2 }`, `split.coverWithSpot = false` |
 | `pooling` | world | `era === 4` and `turnInEra === ERAS[3].turns − 1` (the last era 4 turn, so the card is answered at the start of era 5, before the summit move); on first call set `state.flags.poolingRisk ??= rng.chance(0.2)` | none | "Washington asks for your compute" / `@commerce_dept`: "national AI effort to pool frontier compute" | `accept` · Give 30% of your compute · compute · `compute.pooled = 0.3`, `govFavor.us += 10`, `flags.pooled = true`, `refreshOnline`; `refuse` · Refuse · US favor · `govFavor.us −= 8`, `flags.supplyChainRisk ||= flags.poolingRisk` |
 
   - `neocloudTrouble` has `defuse(state)`: every troubled contract gets `troubled = false` (acting on the warning refinances CoreFlame early). In `sim/events.js` `addressWarning`, call `e.defuse?.(state)` as the **last** line before `return` (after its `seenEvents.push(id)`, so `defuse` can take the id back out). Because the event engine fires each non-internal event once per game, `defuse` and all three choices end with `state.seenEvents = state.seenEvents.filter((id) => id !== 'neocloudTrouble')`, so a later CoreFlame failure can fire again.
@@ -1360,7 +1393,7 @@ export function makePledge(state, share) {
   - Delete the `datacenter` row.
   - The humanoid serving card of spec §5.5 is not built: the humanoid line does not exist yet (open owner decision B7).
 - [ ] **Step 2: Wire the effects**
-  - `sim/economy.js` `updateServing`: multiply the final `units` by `state.compute.surge?.mult ?? 1` before storing `servingUnits`.
+  - `sim/economy.js` `updateServing`: multiply the final `units` by `(state.compute.surge?.mult ?? 1) * (state.compute.surge?.usage ?? 1)` before storing `servingUnits`. `monthlyRevenue`: multiply the result by `state.compute.surge?.usage ?? 1`, so the route choice's lost usage also costs revenue.
   - `sim/turn.js`: after `applyEconomy(state)`, `if (state.compute.surge && --state.compute.surge.turnsLeft <= 0) { state.compute.split.coverWithSpot = state.compute.surge.restoreCover ?? state.compute.split.coverWithSpot; state.compute.surge = null; }`.
   - `sim/contracts.js` `refreshOnline`: `state.compute.online = Math.floor(p.online * (1 - (state.compute.pooled ?? 0)));`.
   - `sim/summit.js`: add `+ (state.flags.pooled ? 0.1 : 0)` to every party's stance.
@@ -1372,10 +1405,15 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import { eventsTick, addressWarning, resolveEvent } from '../sim/events.js';
-import { updateServing } from '../sim/economy.js';
+import { updateServing, monthlyRevenue } from '../sim/economy.js';
+import { EVENTS } from '../sim/data/events.js';
 
 const no = { next: () => 0.99, int: (a) => a, chance: () => false, pick: (a) => a[0], normal: (m) => m };
 const yes = { ...no, next: () => 0, chance: () => true };
+const kestrel = () => ({
+  name: 'Kestrel 1 Core', active: true, activeFromTurn: 0, channel: 'consumer', priceStance: 'market', users: 4e6, userCap: 16e6, servingCost: 0,
+  spec: { size: 'medium', arch: 'dense', context: 'short', precision: 'bf16', guard: false, channel: 'consumer', reasoning: 'off' },
+});
 
 test('a troubled neocloud warns first, then asks what to do', () => {
   const s = createInitialState();
@@ -1412,14 +1450,24 @@ test('opposition to a gas site: pushing through can cut the site', () => {
 test('the agent surge doubles serving demand', () => {
   const s = createInitialState();
   s.compute.online = 1000;
-  s.models.push({
-    name: 'Kestrel 1 Core', active: true, activeFromTurn: 0, channel: 'consumer', priceStance: 'market', users: 4e6, userCap: 16e6, servingCost: 0,
-    spec: { size: 'medium', arch: 'dense', context: 'short', precision: 'bf16', guard: false, channel: 'consumer', reasoning: 'off' },
-  });
+  s.models.push(kestrel());
   const base = updateServing(s);
   s.compute.surge = { mult: 2, turnsLeft: 2 };
   assert.ok(base > 0);
   assert.ok(Math.abs(updateServing(s) - 2 * base) < 1e-9);
+});
+
+test('routing users to a cheaper model cuts usage: serving load and revenue both fall', () => {
+  const s = createInitialState();
+  s.compute.online = 1000;
+  s.models.push(kestrel());
+  const base = updateServing(s);
+  const revenue = monthlyRevenue(s);
+  EVENTS.find((e) => e.id === 'agentSurge').card.choices.find((c) => c.id === 'route').effects(s);
+  const { mult, usage } = s.compute.surge;
+  assert.ok(usage < 1);
+  assert.ok(Math.abs(updateServing(s) - mult * usage * base) < 1e-9);
+  assert.ok(Math.abs(monthlyRevenue(s) - usage * revenue) < 1e-9);
 });
 
 test('pooling takes a share of compute for US favor, decided before the summit', () => {
@@ -1648,3 +1696,12 @@ The Codex adversarial pass could not run (Codex auth failed: "refresh token was 
   - "One board member switches to favoring speed" (spec §3.2): the board has no preference model, only support numbers. The equity card costs every member 3 support instead.
   - Spite orders have no effect on rivals: rivals have no compute model. A spite order only raises race heat and costs the player the delivered chips, as the spec says.
   - The interpretability threshold works out to about 3.4 × `ERA_SCALE` safety units, against 3 × in the spec. That is close enough, and it keeps plan 2A's `safetySpend ≥ 5` rule unchanged.
+
+### Codex adversarial pass (2026-09-25)
+
+Round 1 ran on `gpt-5.6-terra`, because `gpt-5.6-sol` returned "Selected model is at capacity". Session `01a0db00-2447-74b0-925e-a22abd3f7f48`. Verdict REVISE, four important findings, all fixed:
+
+1. Contracts, queue fills and sites were delivered after the moves and training, so each one was first usable a turn after its arrival turn. Task 4 now delivers what is due right after the turn advances, next to the offer refresh. The state the player plans turn T with then already holds everything due on turn T. The queue allocation stays at turn end. The Task 4 deal and queue tests now check the arrival turn itself.
+2. Idle resale paid the era share of the base price whatever a contract cost, so the half-price rescue capacity earned money when resold. Idle units are now resold from the cheapest contracts first, each at no more than its own price. This refines spec §5.3, which does not cover contracts priced below the resale share. A new split test covers it.
+3. The agent surge's `route` choice never applied its 30% usage loss. The surge now carries `usage: 0.7`, which scales both the serving load and `monthlyRevenue` for its two turns. A new events test covers it.
+4. The split tests hard-coded the unit price, the spot price and the resale share. They now use `BALANCE.unitMonthlyCost`, `SPOT_PRICE` and `RESALE`.
