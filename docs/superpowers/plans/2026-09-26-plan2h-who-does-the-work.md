@@ -21,18 +21,30 @@
 - Before any UI task, load the owner's `design` skill (`~/claude-sync/skills/design/` or `~/.claude/skills/design/`); no screen counts as done until it is rendered and looked at.
 - Tuning numbers live only in `sim/data/automation.js`.
 
+## Real time (added 2026-09-26; overrides anything below that assumes turns)
+
+`origin/ui` now runs on real time (`docs/superpowers/plans/2026-09-26-realtime-stage1.md`): `sim/turn.js` has `applyActions` (player input, applied at once), `advanceDays` (the daily clock) and a private `endRound` at hidden round marks (91 story days in eras 1–2, 30 in eras 3–4, 7 in era 5). `endTurn` remains for tests, scenarios and the balance bot as `applyActions` plus the days to the next mark, so every `endTurn` test below still means what it says. The UI's `game.setField` and `game.addMove` apply at once and return `{ ok, error }`; `game.answerCard(id, choiceId)` answers a card at once; `ui/clock.js` pauses while a `.dialog-layer` or `.menu-layer` is open, and `game.clock.pause(reason)` / `game.clock.resume(reason)` pause it for anything else.
+
+- **Where things go in `sim/turn.js`:** the `actions.automation` block goes in `applyActions`, right after its `computeSplit` block. `automationTick(state, rng)` replaces `internalTick(state, rng)` inside `endRound` (same line). Nothing is added to the daily loop.
+- **`sim/teams.js`:** remove `deployInternal: 'research', stopInternal: 'research',` from `TEAM_OF`, and change the research-busy line to `if (team === 'research' && state.activeRun) return 'the research team is busy with the training run';`. The free action has no team.
+- **`ui/menu.js`:** the new menu has a map from item ids to move types (line 16, `internal: 'deployInternal'`); delete that entry along with the `internal` item.
+- **A run finishes "one round sooner":** runs now count `turnsLeft` down by a fraction each day; subtracting 1 once per run at the mark (as Task 3 does) still works, because `turnsLeft > 1` is checked first.
+- **No "turn" in player copy:** use `roundWord(state.era)` from `sim/time.js` ("quarter", "month", "week"). The grid's right panel is titled `This ${roundWord(state.era)}` and its stat `Checked this ${roundWord(state.era)}`.
+- **`sim/lumen.js` and `tools/demo-seeds.js` are on `ui` now**, so Task 3 Step 9 applies.
+- **The ×2 card's timing:** it gets `landsAt`/`dueAt` like every card (`stampNewCards` at the mark); its missed-deadline fallback is the last choice, "Turn the screen off". Leave `sim/data/eventTiming.js` alone (owned by the events lane); `ownLine` uses the default timing.
+
 ## Before you start (orchestrator)
 
 - [ ] **Step 1: Make the build worktree off the latest `origin/ui`**
 
-The spec and this plan reach `origin/automation-ui` when the spec session pushes them; check first with `git ls-tree -r --name-only origin/automation-ui docs/superpowers/plans/ | grep plan2h` (no output means they are not pushed yet: stop and ask).
+The spec and this plan are on the local branch `automation-ui` (worktrees share one repository, so the checkout below reads it directly).
 
 ```bash
 cd ~/Desktop/game-night-ai-lab
 git fetch origin
 git worktree add ~/worktrees/game-night-ai-lab-automation-build -b automation-build origin/ui
 cd ~/worktrees/game-night-ai-lab-automation-build
-git checkout origin/automation-ui -- docs/superpowers/specs/2026-09-26-who-does-the-work-design.md docs/superpowers/plans/2026-09-26-plan2h-who-does-the-work.md docs/design/mockups/K2-automation.html docs/design/mockups/automation
+git checkout automation-ui -- docs/superpowers/specs/2026-09-26-who-does-the-work-design.md docs/superpowers/plans/2026-09-26-plan2h-who-does-the-work.md docs/design/mockups/K2-automation.html docs/design/mockups/automation
 npm test
 ```
 
@@ -1413,11 +1425,14 @@ function ownLineState(seed) {
   for (let guard = 0; guard < 6 && !state.ending && !state.pendingEvents.some((pending) => pending.id === 'ownLine'); guard += 1) {
     ({ state } = endTurn(state, { ...scriptedActions(state), automation: state.era === 4 ? automation : { checks: automation.checks } }, rng));
   }
+  // Real time: a card lands a few story days after the mark that made it; walk the clock to it.
+  const card = state.pendingEvents.find((pending) => pending.id === 'ownLine');
+  if (card && !state.ending && card.landsAt > state.day) ({ state } = advanceDays(state, card.landsAt - state.day, rng));
   return state;
 }
 ```
 
-and add `automation: automationState,` and `ownLine: ownLineState,` to `SCENARIOS`.
+and add `automation: automationState,` and `ownLine: ownLineState,` to `SCENARIOS` (import `advanceDays` from `../../sim/turn.js` if the file does not already).
 
 - [ ] **Step 5: Run the tests**
 
@@ -1452,6 +1467,7 @@ Create `ui/screens/automation.js`:
 
 ```js
 import { LEVEL_SHORT, LEVELS, MAX_CHECK } from '../../sim/data/automation.js';
+import { roundWord } from '../../sim/time.js';
 import { automationBase, automationDraft, automationOpinions, automationPayload, automationView } from '../logic/automation.js';
 import { computeAmount, money, pct } from '../logic/format.js';
 import { openDialog } from '../components/dialog.js';
@@ -1573,7 +1589,7 @@ export function openAutomation(game, overlayRoot) {
     const extra = element('div');
     extra.append(meter);
     if (view.unchecked > 0) extra.append(element('small', '', 'Hire reviewers or add monitors to check more'));
-    stat('Checked this month', pct(view.checkedShare), "of the AI's work", extra);
+    stat(`Checked this ${roundWord(state.era)}`, pct(view.checkedShare), "of the AI's work", extra);
     return root;
   }
 
@@ -1591,7 +1607,7 @@ export function openAutomation(game, overlayRoot) {
     title: 'Who does the work',
     subtitle: 'How much of each job your AI does inside the lab',
     left: { title: 'Team', content: team },
-    right: { title: 'This month', content: right },
+    right: { title: `This ${roundWord(state.era)}`, content: right },
     body,
     onOk() {
       const view = automationView(state, draft);
@@ -1599,7 +1615,12 @@ export function openAutomation(game, overlayRoot) {
         error.textContent = view.error[0].toUpperCase() + view.error.slice(1);
         return;
       }
-      game.setField('automation', automationPayload(state, draft));
+      // Real time: the choice applies at once; show the sim's reason if it is refused.
+      const result = game.setField('automation', automationPayload(state, draft));
+      if (result && result.ok === false) {
+        error.textContent = result.error[0].toUpperCase() + result.error.slice(1);
+        return;
+      }
       opened.close();
     },
   });
@@ -1766,7 +1787,8 @@ Mockup to match: `docs/design/mockups/automation/t-c.jpg`.
 - Modify: `ui/styles.css` (inside the plan 2H block)
 
 **Interfaces:**
-- Consumes: Task 6's `screenWallView(state)`; the pending card `ownLine`; `game.setField('eventChoices', …)`.
+- Consumes: Task 6's `screenWallView(state)`; the pending card `ownLine`; `hasLanded` and `queueAnswer` from `ui/logic/events.js` (the events lane's helpers: a card is shown only once `state.day >= landsAt`, and `queueAnswer` calls `game.answerCard`); `game.clock`.
+- Modifies (events lane's file, one line; tell `gn-events`): `ui/screens/events.js` `sync()` must skip `ownLine`, because the screen wall shows it: add `.filter((pending) => pending.id !== 'ownLine')` before `.map(cardView)` in the `landed` chain.
 - Produces: `mountScreenWall(game, overlayRoot) → unsubscribe`.
 
 - [ ] **Step 1: Write the screen**
@@ -1776,6 +1798,7 @@ Create `ui/screens/screenwall.js`:
 ```js
 import { ERAS } from '../../sim/data/eras.js';
 import { screenWallView } from '../logic/automation.js';
+import { hasLanded, queueAnswer } from '../logic/events.js';
 
 const W = 900;
 const H = 290;
@@ -1835,22 +1858,24 @@ function openScreenWall(game, overlayRoot, pending) {
     button.type = 'button';
     button.append(element('b', '', choice.label), element('small', '', DETAIL[choice.id] ?? `Amend the policy to ×${view.line + 1}`));
     button.addEventListener('click', () => {
-      game.setField('eventChoices', { ...(game.queue.eventChoices ?? {}), [pending.id]: choice.id });
       layer.remove();
+      game.clock?.resume('screenwall');
+      queueAnswer(game, pending.id, choice.id);
     });
     choices.append(button);
   }
   panel.append(bar, element('h2', '', pending.title), chart(view), choices);
   layer.append(element('div', 'dialog-veil'), panel);
   overlayRoot.append(layer);
+  game.clock?.pause('screenwall'); // the clock only watches .dialog-layer and .menu-layer by itself
   choices.querySelector('button')?.focus();
 }
 
-// Opens when the x2 card is waiting and nothing else is on screen; the choice is queued for this turn.
+// Opens when the x2 card has landed and nothing else is on screen; the answer applies at once.
 export function mountScreenWall(game, overlayRoot) {
   const check = () => {
     if (game.state.ending) return; // a finished run takes no more choices
-    const pending = game.state.pendingEvents.find((card) => card.id === 'ownLine');
+    const pending = game.state.pendingEvents.find((card) => card.id === 'ownLine' && hasLanded(card, game.state));
     if (!pending || Object.hasOwn(game.queue.eventChoices ?? {}, pending.id)) return;
     if (overlayRoot.querySelector('.dialog-layer, .screenwall-layer')) return;
     openScreenWall(game, overlayRoot, pending);
@@ -1897,7 +1922,7 @@ Append inside the plan 2H block of `ui/styles.css`:
 - [ ] **Step 4: Render and look at it**
 
 Run: `tools/shot.sh ownLine` (use the first seed from Task 6 that reaches the card, for example by adding `&seed=N` if `shot.sh` supports a seed, otherwise temporarily pinning it in the scenario call).
-Compare with `docs/design/mockups/automation/t-c.jpg`: the solid measured line reaching the dashed ×2 line, the dotted claim above it, both labels readable and inside the panel, three choices along the bottom. Then in the browser pane, click "Turn the screen off" with the mouse (this also proves the layer takes clicks), end the turn, and confirm in the console that `ownLine` is gone from the pending events and the `hidLine` flag is set (the turn summary does not list explicitly chosen events), and that the wall does not reopen. Also check that on a run that has already ended the wall never opens.
+Compare with `docs/design/mockups/automation/t-c.jpg`: the solid measured line reaching the dashed ×2 line, the dotted claim above it, both labels readable and inside the panel, three choices along the bottom. Then in the browser pane, click "Turn the screen off" with the mouse (this also proves the layer takes clicks), check the clock was paused while the wall was open and runs again after, and confirm in the console that `ownLine` is gone from the pending events and the `hidLine` flag is set (the turn summary does not list explicitly chosen events), and that the wall does not reopen. Also check that on a run that has already ended the wall never opens.
 
 - [ ] **Step 5: Commit**
 

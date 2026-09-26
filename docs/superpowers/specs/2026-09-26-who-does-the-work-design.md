@@ -19,6 +19,17 @@ pays to check the AI's work, and watches a measured research speed that the Head
 overstates. Unchecked AI work feeds the existing trouble ladder. When measured speed passes ×2,
 the lab's own policy line fires a card on the screen wall.
 
+## 1b. Real time (added 2026-09-26, after the real-time lane merged)
+
+The player no longer ends turns: story time runs by itself and actions apply at once
+(`docs/superpowers/plans/2026-09-26-realtime-stage1.md` on `ui`). The sim still keeps hidden round
+marks (91 story days in eras 1–2, 30 in eras 3–4, 7 in era 5), and the old internal-deployment roll
+already runs at them. This mechanic keeps that shape: its tick (speed effects, the risk roll, the
+recorded history and the line check) runs at each round mark; the hand-offs and checks are a free
+action that applies the moment the player presses OK; the ×2 card lands and waits like any other
+card. Player-facing copy never says "turn": it says "this quarter", "this month" or "this week"
+(`roundWord` in `sim/time.js`).
+
 ## 2. Scope: slim first
 
 In this build (owner, 2026-09-26: "slim first"):
@@ -84,8 +95,8 @@ Each era has a **pack**: the level most labs are at for each job. The pack rises
   with the pack moves up with it each era ("creeps up by itself"), and a job held back stays the
   same distance behind.
 - The dialog is available from era 1 (the AI is always there), replacing "Deploy a model
-  internally". Changing levels or checks is **free**, like the budget: it uses neither of the two
-  moves. (Assumption; the old deploy cost a move.)
+  internally". Changing levels or checks is **free**, like the budget: it applies at once and uses neither of the
+  round's two actions. (Assumption; the old deploy cost a move.)
 
 ### 3.3 Rule 2: speed is set by the slowest job
 
@@ -99,11 +110,11 @@ anchor (METR's estimate for Anthropic, with more than 80% of code by Claude). Pu
 one level ahead gives ×1.38 in era 3, ×2.27 in era 4 and ×4.75 in era 5. The bottleneck is the job
 taking the largest share of the remaining time; the grid's time bar hatches it.
 
-What speed does each turn (it replaces the internal-deployment speed-up):
+What speed does at each round mark (it replaces the internal-deployment speed-up):
 
 - An active training run gains `5 × (speed − 1)` bonus capability points.
 - Research points rise by `10 × (speed − 1)`.
-- Once per run, if speed is at least ×1.5, the run finishes one turn sooner.
+- Once per run, if speed is at least ×1.5, the run finishes one round sooner (a quarter, a month or a week of story time, by era).
 
 ### 3.4 Rule 3: someone has to check it
 
@@ -129,12 +140,12 @@ human review is the point.
 
 ### 3.5 The trouble ladder (kept, fed by exposure)
 
-From era 3, each turn rolls
+From era 3, each round mark rolls
 
 `risk = sigmoid((totalDebt × capability / 100 − 40) / 8) × min(1, exposure) × 0.6`
 
 where capability is the newest trained model's (released or not). The roll happens only when
-exposure is above zero, on the turn's random stream (as the old roll did), so fully checked work
+exposure is above zero, on the sim's random stream (as the old roll did), so fully checked work
 draws nothing and eras 1–2 keep today's random sequence. The ladder itself does not change:
 warning, then the `oversightTamper` card, then `selfExfiltration` (blocked by the no-autonomy-grab
 line), then `quietTakeover` from era 4 at capability 70 or more, with accept-shutdown's extra step.
@@ -151,12 +162,12 @@ Card choices that named the old deployment now act on the hand-offs:
 ### 3.6 Rule 4: your people overstate it
 
 The Head of Research claims `1 + 2.5 × (speed − 1)`, rounded to one decimal (×2.4 when measured is
-×1.57). The grid shows both. The sim records each turn's measured and claimed speed for the screen
+×1.57). The grid shows both. The sim records each round mark's measured and claimed speed for the screen
 wall (and for a later end-of-run reveal).
 
 ### 3.7 Rule 6: your own line at ×2
 
-The lab's line starts at ×2. The first turn measured speed reaches the line, an `ownLine` card is
+The lab's line starts at ×2. The first round mark at which measured speed has reached the line, an `ownLine` card is
 queued (shown as 3C), titled "We just crossed our own line":
 
 | Choice | Effect |
@@ -203,8 +214,8 @@ Opened from the first menu item that replaces "Deploy a model internally". The u
 - Left panel "Team": four advisor lines chosen from the state (eager Head of Research when a job
   could be pushed, uneasy Head of Safety naming the unchecked share, and so on).
 - OK saves the choice as a free action; errors (such as monitors that do not fit in free compute)
-  show in the dialog. The dialog checks against this turn's other queued changes, such as the
-  compute split, since the turn applies the choice after the budget and split and before the moves.
+  show in the dialog. Under real time the choice applies the moment the player presses OK, so the
+  dialog checks against the live state and shows the sim's error if the choice is refused.
 
 ### 4.2 1B's office dressing (always on)
 
@@ -219,7 +230,7 @@ When an `ownLine` card is pending, a dark "Research speed · screen wall" panel 
 office (mockup `#t-c`): the run's measured speed as a solid line from era 1, the Head of Research's
 claim as a dotted line above it, the dashed line at the current policy line ("×2 · our own line"),
 a dot at the latest measured value, and the three choices as buttons along the bottom. Choosing
-one queues the event choice for this turn. Provisional: revisit when this merges with the summit
+one answers the card at once (the clock stays paused while the wall is open). Provisional: revisit when this merges with the summit
 lane (owner, 2026-09-26).
 
 ## 5. Sim changes (blast radius)
@@ -230,7 +241,8 @@ lane (owner, 2026-09-26).
 | `sim/automation.js` (new; replaces `sim/internal.js`) | Levels, speed, checking, risk, the tick, the free action, the hand-back helpers |
 | `sim/internal.js` | Deleted |
 | `sim/state.js` | `internal: null` becomes `automation: createAutomation()` |
-| `sim/turn.js` | Remove the two moves; apply `actions.automation`; call the new tick |
+| `sim/turn.js` | Remove the two moves; apply `actions.automation` in `applyActions`; call the new tick in `endRound` |
+| `sim/teams.js`, `ui/menu.js` | Drop the old moves from the team map and the menu's move map |
 | `sim/economy.js`, `sim/split.js` | Read control compute from monitors; add reviewers to the burn |
 | `sim/summit.js` | `pauseAutomation` locks the last two jobs |
 | `sim/data/events.js` | Rewire the two ladder cards; add `ownLine` |
@@ -259,7 +271,7 @@ hand-offs without checks.
 ## 8. Later, if time allows: the AI queues its own moves (rule 5, screen 2B)
 
 - Trigger: choosing experiments or setting direction at Leads or above.
-- Each turn the sim proposes up to two moves: "run experiments overnight on idle compute" (only
+- At each round mark the sim proposes up to two moves: "run experiments overnight on idle compute" (only
   when some compute is idle; adds 2 to an active run's gain, or 8 research points when no run is
   going) and, now and then when monitors are on, "sample its own monitor logs less often, to free
   up compute" (removes one monitor level and adds 3 concealed debt). Proposals use none of the
