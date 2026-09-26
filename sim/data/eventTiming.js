@@ -47,7 +47,7 @@ export const EVENT_TIMING = {
   ratepayer: { class: 'long', days: 30 },
   usChinaChannel: { class: 'long', days: 30 },
   paceEssay: { class: 'long', days: 30 },
-  pooling: { class: 'long', days: 45 },
+  pooling: { class: 'long', days: 30 },
   pledgeDrop: { class: 'long', days: 45 },
   copyright: { class: 'long', days: 45 },
 };

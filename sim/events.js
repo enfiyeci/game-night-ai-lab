@@ -29,7 +29,8 @@ const orderedEvents = () => {
     ...events.filter((event) => !KIND_ORDER.includes(event.kind)),
   ];
 };
-const targetIndices = (state, event) => event.flag
+// A row may name its own targets (a card planted by more than one flag); otherwise the flag decides.
+const targetIndices = (state, event) => event.targets ? event.targets(state) : event.flag
   ? state.models.flatMap((model, index) => ((model.flags ?? []).includes(event.flag) ? [index] : []))
   : [];
 const publicCard = (state, event) => ({
@@ -183,6 +184,8 @@ export function stampNewCards(state) {
       : state.day + rng.int(0, Math.max(0, Math.floor(days * 0.8) - 1));
     const timing = EVENT_TIMING[card.eventId ?? card.id] ?? DEFAULT_EVENT_TIMING;
     card.dueAt = card.landsAt + Math.min(timing.days, state.era === 5 ? 6 : Infinity);
+    // The run ends at era 5's last mark: a card due after it could never fall back, so it is due the day before.
+    if (state.era === 5 && state.turnInEra >= eraById(5).turns - 1) card.dueAt = Math.min(card.dueAt, nextRoundDay(state) - 1);
     // A board card must resolve before its meeting opens: due by the day before the vote round's mark.
     if (byId(card.id)?.kind === 'board') {
       card.dueAt = Math.min(card.dueAt, roundMarkDay(state, eraById(state.era).turns - state.turnInEra) - 1);

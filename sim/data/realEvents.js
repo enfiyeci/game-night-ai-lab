@@ -316,6 +316,8 @@ const hasAiWork = (state) => jobLevels(state).some((level) => level > 0);
 const hardLine = (state) => state.constitution.hardLines.at(-1);
 const copyrightCase = (state) => state.legalCases.find((legalCase) => legalCase.source === 'copyright');
 const gasSite = (state) => state.power.sites.find((site) => site.source === 'gas' && site.online);
+const evaluatedWaiting = (model) => model.active && !model.activated && model.capability >= 30
+  && (model.flags ?? []).some((flag) => flag === 'fullEval' || flag === 'thirdPartyEval');
 const strandedSite = (state) => state.power.sites.find((site) => !site.online && site.arrivesTurn >= state.turn + 3);
 
 function makeEvent(id, { trigger, fallback, effects, anchor = null, warning = COPY[id].warning }) {
@@ -400,11 +402,14 @@ export const REAL_EVENTS = [
   }),
   makeEvent('redTeamLie', {
     fallback: 'omit',
-    trigger: (state) => state.pendingModel?.capability >= 30
-      && (state.pendingModel.flags ?? []).some((flag) => flag === 'fullEval' || flag === 'thirdPartyEval'),
+    // A release that ran full or outside evals, released but not yet live: the red team's finding lands in between.
+    trigger: (state) => state.models.some(evaluatedWaiting),
     effects: {
       publish(state) { state.publicTrust -= 2; state.staffTrust += 3; },
-      delay(state) { if (state.pendingModel) state.pendingModel.releaseDelay += 1; state.alignmentDebt -= 2; },
+      delay(state) {
+        for (const model of state.models.filter(evaluatedWaiting)) model.activeFromTurn = Math.max(model.activeFromTurn ?? 0, state.turn) + 1;
+        state.alignmentDebt -= 2;
+      },
       omit(state) { state.concealedDebt += 3; },
     },
   }),
@@ -418,7 +423,10 @@ export const REAL_EVENTS = [
     },
   }),
   anchor('preReleaseTests', 2, 2, 0.66, 'decline', {
-    sign(state) { state.govFavor.us += 6; state.security += 4; state.flags.govTesting = true; state.researchPoints -= 10; },
+    sign(state) {
+      state.govFavor.us += 6; state.security += 4; state.flags.govTesting = true; state.researchPoints -= 10;
+      if (state.pendingModel) state.pendingModel.releaseDelay = (state.pendingModel.releaseDelay ?? 0) + 1;
+    },
     after(state) { state.govFavor.us += 1; },
     decline(state) { state.govFavor.us -= 5; },
   }),
@@ -491,7 +499,9 @@ export const REAL_EVENTS = [
     effects: {
       settle(state) {
         const legalCase = copyrightCase(state);
-        if (legalCase) state.legalCases.splice(state.legalCases.indexOf(legalCase), 1);
+        // A case already paid while the card waited costs nothing more.
+        if (!legalCase) return;
+        state.legalCases.splice(state.legalCases.indexOf(legalCase), 1);
         state.cash -= 150;
       },
       trial(state) { const legalCase = copyrightCase(state); if (legalCase) legalCase.cost *= 2; },
@@ -530,13 +540,22 @@ export const REAL_EVENTS = [
   }),
   makeEvent('strandedBuild', {
     fallback: 'build',
-    trigger: (state) => state.era === 4 && Boolean(strandedSite(state)) && state.compute.contracts.length > 0,
+    // Remembers the site that raised the card: by the time it is answered the round has moved on.
+    trigger(state) {
+      const site = state.era === 4 && state.compute.contracts.length > 0 ? strandedSite(state) : null;
+      if (!site) return false;
+      state.flags.strandedSite = site.id;
+      return true;
+    },
     effects: {
       cancel(state) {
-        const site = strandedSite(state);
+        const site = state.power.sites.find((candidate) => candidate.id === state.flags.strandedSite);
         if (site) state.power.sites.splice(state.power.sites.indexOf(site), 1);
       },
-      renegotiate(state) { const site = strandedSite(state); if (site) site.arrivesTurn += 1; },
+      renegotiate(state) {
+        const site = state.power.sites.find((candidate) => candidate.id === state.flags.strandedSite);
+        if (site) site.arrivesTurn += 1;
+      },
       build() {},
     },
   }),
@@ -584,7 +603,7 @@ export const REAL_EVENTS = [
     fallback: 'ship',
     trigger: (state) => state.era === 5 && state.seenEvents.includes('paceEssay'),
     effects: {
-      hold(state) { state.publicTrust += 3; state.raceHeat += 3; },
+      hold(state) { state.publicTrust += 3; },
       callout(state) { state.raceHeat += 5; state.publicTrust += 1; },
       ship(state) { state.raceHeat += 8; },
     },

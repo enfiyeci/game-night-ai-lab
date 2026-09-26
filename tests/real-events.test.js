@@ -114,8 +114,8 @@ const reactionCases = [
     (s) => { s.models.push(liveModel({ flags: ['scraped'] })); },
     (s) => { s.era = 3; s.models.push(liveModel({ flags: ['scraped'] })); }],
   ['redTeamLie',
-    (s) => { s.pendingModel = { capability: 30, flags: ['fullEval'], releaseDelay: 0 }; },
-    (s) => { s.pendingModel = { capability: 29, flags: ['fullEval'], releaseDelay: 0 }; }],
+    (s) => { s.models.push({ id: 'r', capability: 30, active: true, activated: false, activeFromTurn: s.turn, flags: ['fullEval'] }); },
+    (s) => { s.models.push({ id: 'r', capability: 30, active: true, activated: true, activeFromTurn: s.turn, flags: ['fullEval'] }); }],
   ['exitGag',
     (s) => { s.era = 2; s.seenEvents.push('safetyQuits'); },
     (s) => { s.era = 2; }],
@@ -228,4 +228,48 @@ test('real-event deadlines use the planned classes and cap era 5 at six days', (
   s.pendingEvents.push({ id: 'paceEssay' });
   stampNewCards(s);
   assert.equal(s.pendingEvents[0].dueAt - s.pendingEvents[0].landsAt, 6);
+});
+
+// Review round 1 fixes (Codex adversarial pass, 2026-09-26).
+const row = (id) => [...EVENTS, ...EVENTS_6C, ...REAL_EVENTS].find((event) => event.id === id);
+
+test('an era-1 fake-citation card targets the quickly checked consumer model it came from', () => {
+  const s = createInitialState();
+  s.era = 1;
+  s.models.push({ id: 'm', capability: 30, users: 1000, channel: 'consumer', active: true, superseded: false, activeFromTurn: 0, flags: ['quickEval'] });
+  assert.equal(row('citations').targets(s).length, 1);
+  s.pendingEvents.push({ id: 'citations', targets: row('citations').targets(s) });
+  resolveEvent(s, 'citations', 'recall');
+  assert.ok(s.models[0].users < 1000);
+});
+
+test('the stranded build-out cancels the site that raised it, even after the round moves on', () => {
+  const s = createInitialState();
+  s.era = 4;
+  s.turn = 12;
+  s.compute.contracts.push({ id: 'c', supplier: 'verde', units: 100, price: 1 });
+  s.power.sites.push({ id: 'gas-9', source: 'gas', units: 300, online: false, arrivesTurn: 15 });
+  assert.equal(row('strandedBuild').trigger(s), true);
+  s.turn = 13; // the round mark passes before the card is answered
+  s.pendingEvents.push({ id: 'strandedBuild' });
+  resolveEvent(s, 'strandedBuild', 'cancel');
+  assert.equal(s.power.sites.some((site) => site.id === 'gas-9'), false);
+});
+
+test('settling a copyright case that was already paid costs nothing', () => {
+  const s = createInitialState();
+  s.era = 3;
+  const cash = s.cash;
+  s.pendingEvents.push({ id: 'copyrightDue' });
+  resolveEvent(s, 'copyrightDue', 'settle');
+  assert.equal(s.cash, cash);
+});
+
+test('holding your release after a rival ships does not heat the race', () => {
+  const s = createInitialState();
+  s.era = 5;
+  const heat = s.raceHeat;
+  s.pendingEvents.push({ id: 'rivalShips' });
+  resolveEvent(s, 'rivalShips', 'hold');
+  assert.equal(s.raceHeat, heat);
 });

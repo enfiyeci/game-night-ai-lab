@@ -125,6 +125,9 @@ export const EVENTS = [
     kind: 'planted',
     flag: 'hallucination',
     fallback: 'blame',
+    // Era 1-2 chatbots made cases up without reasoning training: a quickly checked consumer model counts too.
+    targets: (state) => state.models.flatMap((model, index) => ((model.flags ?? []).includes('hallucination')
+      || (state.era <= 2 && model.channel === 'consumer' && (model.flags ?? []).includes('quickEval')) ? [index] : [])),
     trigger: (state) => liveModelsWithFlag(state, 'hallucination').some((model) => model.channel === 'consumer')
       || (state.era <= 2 && liveModelsWithFlag(state, 'quickEval').some((model) => model.channel === 'consumer')),
     warning: { handle: '@lawyer_lena', text: 'a colleague filed a brief with some very creative case law' },

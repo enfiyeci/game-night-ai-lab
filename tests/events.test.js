@@ -202,15 +202,19 @@ test('the Qilin shock bypasses a full queue and cannot be addressed', () => {
 test('simultaneous flagged-model outcomes do not depend on eventChoices key order', () => {
   const resolveBoth = (eventChoices) => {
     const s = withFlag('sycophancy');
-    s.era = 2;
+    s.era = 3; // flattery fires from era 3, the companion suit from era 2: both are live here
+    s.seenEvents.push('political', 'exitGag', 'hateMeltdown'); // era 3 cards that would otherwise take the two slots
     eventsTick(s, no);
     s.turn += 1;
     eventsTick(s, no);
-    return endTurn(s, { eventChoices }, no).state.models[0].users;
+    assert.deepEqual(s.pendingEvents.map((card) => card.id).filter((id) => !isAnchorId(id)).sort(), ['companion', 'flattery']);
+    const next = endTurn(s, { eventChoices }, no).state;
+    assert.ok(['flattery', 'companion'].every((id) => !next.pendingEvents.some((card) => card.id === id)));
+    return next.models[0].users;
   };
   const catalogOrder = resolveBoth({ flattery: 'rollback', companion: 'settle' });
   const reverseOrder = resolveBoth({ companion: 'settle', flattery: 'rollback' });
-  assert.equal(catalogOrder, 958800);
+  assert.equal(catalogOrder, 707804);
   assert.equal(reverseOrder, catalogOrder);
 });
 

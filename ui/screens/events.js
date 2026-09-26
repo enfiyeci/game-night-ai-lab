@@ -219,7 +219,8 @@ export function mountEvents(game, { stage, overlay }) {
       card.querySelector('.ev-card-main').before(figure);
     }
     const days = preview ? null : remaining(view.id);
-    if (days !== null) card.querySelector('.ev-card-top').append(dueBar(dueText(view.id, days), days / timingFor(view.id).days));
+    const window = pendingOf(view.id) ? pendingOf(view.id).dueAt - pendingOf(view.id).landsAt : NaN;
+    if (days !== null) card.querySelector('.ev-card-top').append(dueBar(dueText(view.id, days), days / (window > 0 ? window : timingFor(view.id).days)));
     card.querySelector('.ev-card-top').after(sourcePost(view.post));
     // Board cards (spec §6.3): the wood kicker bar with the directors watching, their faces from the staff read.
     if (view.kicker) {
