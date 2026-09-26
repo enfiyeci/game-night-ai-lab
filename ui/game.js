@@ -1,6 +1,7 @@
 import { createInitialState } from '../sim/state.js';
 import { createRng } from '../sim/rng.js';
 import { endTurn as runTurn, MAX_MOVES, setBudget as validateBudget } from '../sim/turn.js';
+import { turnRecord } from './logic/finance.js';
 
 const initialQueue = (budget) => ({
   budget: structuredClone(budget),
@@ -12,12 +13,15 @@ const initialQueue = (budget) => ({
   holdOrShip: undefined,
 });
 
-export function createGame({ seed = 1, state } = {}) {
+// history: finance records of turns played before this game object existed (debug scenarios pass their own).
+export function createGame({ seed = 1, state, history = [] } = {}) {
   let currentState = structuredClone(state ?? createInitialState({ seed }));
   const rng = createRng(seed);
   let actions = initialQueue(currentState.budget);
   const subscribers = new Set();
   const rivalReleases = [];
+  const financeHistory = structuredClone(history);
+  let financePlan = null; // the finance planner's goals and rounds, kept between openings; a plan, never a move
 
   return {
     get state() {
@@ -28,6 +32,15 @@ export function createGame({ seed = 1, state } = {}) {
     },
     get rivalReleases() {
       return rivalReleases.map((release) => ({ ...release }));
+    },
+    get financeHistory() {
+      return financeHistory.map((row) => ({ ...row }));
+    },
+    get financePlan() {
+      return financePlan && structuredClone(financePlan);
+    },
+    setFinancePlan(plan) {
+      financePlan = structuredClone(plan);
     },
     setBudget(budget) {
       const candidate = structuredClone(currentState);
@@ -53,8 +66,10 @@ export function createGame({ seed = 1, state } = {}) {
     },
     endTurn() {
       const turn = currentState.turn;
+      const before = currentState;
       const update = runTurn(currentState, actions, rng);
       currentState = update.state;
+      if (!before.ending) financeHistory.push(turnRecord(before, currentState, update.events));
       actions = initialQueue(actions.budget);
       for (const event of update.events) {
         if (event.type === 'rivalRelease') rivalReleases.push({ turn, id: event.id });

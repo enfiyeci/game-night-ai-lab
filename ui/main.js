@@ -2,7 +2,7 @@ import { ENDINGS } from '../sim/endings.js';
 import { createGame } from './game.js';
 import { mountHud } from './hud.js';
 import { mountOffice } from './office.js';
-import { SCENARIOS } from './logic/scenarios.js';
+import { SCENARIOS, scenarioHistory } from './logic/scenarios.js';
 import { dealCards, powerSitesAvailable, queueScreenAvailable } from './logic/compute.js';
 import { openMenu } from './menu.js';
 import { openBudget } from './screens/budget.js';
@@ -19,6 +19,7 @@ import { openQueue } from './screens/compute.js';
 import { openPowerSites } from './screens/sites.js';
 import { mountHistory, openArticle, openHistory } from './screens/history.js';
 import { mountEnding } from './screens/end.js';
+import { mountFinance, openFinance } from './screens/finance.js';
 import { createCollection } from './logic/collection.js';
 import { lumenEpilogue } from '../sim/lumen.js';
 
@@ -48,7 +49,8 @@ addEventListener('resize', fitToWindow);
 const seed = seedForRun();
 const scenarioName = params.get('scenario') ?? 'start';
 const buildScenario = SCENARIOS[scenarioName] ?? SCENARIOS.start;
-const game = createGame({ seed, state: buildScenario(seed) });
+const initialState = buildScenario(seed);
+const game = createGame({ seed, state: initialState, history: scenarioHistory(initialState) });
 if (params.has('lab')) game.state.labName = params.get('lab');
 
 const stage = document.querySelector('#stage');
@@ -63,6 +65,7 @@ mountCompany(game, overlay);
 mountRecipe(game, overlay);
 mountHistory(game, overlay);
 mountTurnSummary(overlay, game);
+mountFinance(game, overlay);
 
 function browserStorage() {
   try {
@@ -142,6 +145,10 @@ async function openDebugRoute() {
     const card = dealCards(game.state).find((offer) => !offer.disabled);
     if (card) game.addMove(card.move);
     game.endTurn();
+    return;
+  }
+  if (location.hash === '#finance' || location.hash === '#books') {
+    openFinance(game, overlay, { view: location.hash === '#books' ? 'books' : 'timeline' });
     return;
   }
   if (location.hash === '#history') {

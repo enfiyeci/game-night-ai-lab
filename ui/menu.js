@@ -20,6 +20,7 @@ const ITEMS = [
 ];
 
 export const COMPANY_ITEMS = [
+  { id: 'finance', label: 'Plan the years ahead', free: true },
   { id: 'deals', label: 'Sign a compute deal' },
   { id: 'power', label: 'Power sites', hidden: (state) => state.era !== 4 },
   {
@@ -169,7 +170,7 @@ export function openMenu(game, point, { overlay = document.querySelector('#overl
     for (const item of COMPANY_ITEMS) {
       if (item.hidden?.(projected, game)) continue;
       const customHandler = handlerFor(item.id, handlers);
-      const reason = game.movesLeft() === 0
+      const reason = !item.free && game.movesLeft() === 0
         ? 'Both moves are used this turn'
         : disabledReason(item, game, customHandler, projected);
       const button = document.createElement('button');
