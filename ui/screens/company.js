@@ -2,6 +2,7 @@ import { openDialog } from '../components/dialog.js';
 import { teamPanel } from '../components/team.js';
 import { projectQueue, turnSummary } from '../logic/compute.js';
 import { money, months, pct } from '../logic/format.js';
+import { outcomeLine } from '../logic/president.js';
 import { registerMenuHandler } from '../menu.js';
 import { openDeals, openQueue } from './compute.js';
 import { openPowerSites } from './sites.js';
@@ -535,10 +536,16 @@ export function mountTurnSummary(overlayRoot, game) {
       return;
     }
     // Subscribers fire every story day; a quiet day keeps whatever toast is showing.
+    const meetingEnded = events.some((event) => event.type === 'meetingOutcome');
+    const skippedMeeting = 'take the President meeting with a meeting move';
+    const skipped = meetingEnded && errors.includes(skippedMeeting);
     const summaries = turnSummary([
       ...events,
-      ...errors.map((error) => ({ type: 'error', error })),
+      ...errors.filter((error) => !(meetingEnded && error === skippedMeeting)).map((error) => ({ type: 'error', error })),
     ], state);
+    for (const event of events) {
+      if (event.type === 'meetingOutcome') summaries.push(outcomeLine(event, { skipped }));
+    }
     if (summaries.length === 0) return;
     if (pendingFrame !== null) cancelAnimationFrame(pendingFrame);
     pendingFrame = null;

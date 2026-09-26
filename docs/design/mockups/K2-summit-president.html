@@ -1,0 +1,945 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="../../../">
+  <meta name="viewport" content="width=1440">
+  <title>Summit and President mockups</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800;900&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Caveat:wght@600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="ui/styles.css">
+  <style>
+    /* Mockup-only styles for plan 2B Task 10. Tokens come from ui/styles.css; no colour literals here. */
+    .dialog-layer { opacity: 1 !important; transition: none !important; }
+    .muted { color: color-mix(in oklab, var(--ink) 58%, var(--paper)); }
+    .serif { font-family: 'Libre Baskerville', Georgia, serif; }
+    .hand { font-family: 'Caveat', cursive; }
+
+    /* Shared bits */
+    .kick { font-size: 11px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: color-mix(in oklab, var(--wood) 62%, var(--ink)); }
+    .chip { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 800; white-space: nowrap; }
+    .chip.for { background: color-mix(in oklab, var(--teal) 14%, var(--paper)); color: color-mix(in oklab, var(--teal) 62%, var(--ink)); }
+    .chip.against { background: color-mix(in oklab, var(--ink) 6%, var(--paper)); color: color-mix(in oklab, var(--ink) 62%, var(--paper)); text-decoration: line-through; text-decoration-thickness: 1.5px; }
+    .chip.wood { background: color-mix(in oklab, var(--wood) 18%, var(--paper)); color: color-mix(in oklab, var(--wood) 58%, var(--ink)); }
+    .chip.sky { background: color-mix(in oklab, var(--sky) 14%, var(--paper)); color: color-mix(in oklab, var(--sky) 62%, var(--ink)); }
+    .chip.coral { background: color-mix(in oklab, var(--coral) 14%, var(--paper)); color: color-mix(in oklab, var(--coral) 62%, var(--ink)); }
+
+    .read { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; font-size: 12px; font-weight: 900; }
+    .read.likely { background: color-mix(in oklab, var(--teal) 22%, var(--paper)); color: color-mix(in oklab, var(--teal) 58%, var(--ink)); }
+    .read.unsure { background: color-mix(in oklab, var(--wood) 24%, var(--paper)); color: color-mix(in oklab, var(--wood) 55%, var(--ink)); }
+    .read.unlikely { background: color-mix(in oklab, var(--ink) 8%, var(--paper)); color: color-mix(in oklab, var(--ink) 60%, var(--paper)); }
+
+    /* Speech bubbles at head anchors (Task 8 grammar) */
+    .sb { position: absolute; z-index: 12; background: var(--paper); border-radius: 12px; padding: 8px 12px 10px; font-size: 13px; font-weight: 700; line-height: 1.3; border: 1px solid color-mix(in oklab, var(--ink) 10%, transparent); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 14%, transparent), 0 8px 18px color-mix(in oklab, var(--ink) 14%, transparent); }
+    .sb::after { content: ""; position: absolute; left: var(--tail, 24px); bottom: -8px; width: 14px; height: 14px; background: var(--paper); transform: rotate(45deg); border-right: 1px solid color-mix(in oklab, var(--ink) 10%, transparent); border-bottom: 1px solid color-mix(in oklab, var(--ink) 10%, transparent); }
+    .sb.up::after { bottom: auto; top: -8px; transform: rotate(225deg); }
+    .sb b.who { display: block; font-size: 10.5px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; color: color-mix(in oklab, var(--wood) 60%, var(--ink)); }
+    .sb .say { margin-top: 2px; font-size: 14px; }
+    .sb .chip { margin-top: 5px; }
+
+    /* Choice rows (Task 8 grammar) */
+    .ch { display: grid; gap: 4px; width: 100%; padding: 9px 12px; border: 2.5px solid color-mix(in oklab, var(--ink) 12%, transparent); border-radius: 12px; background: var(--paper); font: inherit; text-align: left; color: var(--ink); cursor: pointer; }
+    .ch .lb { font-size: 15.5px; font-weight: 900; line-height: 1.2; }
+    .ch .cost { font-size: 12.5px; font-weight: 700; color: color-mix(in oklab, var(--ink) 62%, var(--paper)); }
+    .ch .who { display: flex; gap: 4px; flex-wrap: wrap; }
+    .ch.hot { border-color: var(--coral); }
+
+    /* HUD extras */
+    .pill-tag { position: absolute; z-index: 5; top: 60px; left: 50%; transform: translateX(-50%); padding: 2px 11px 3px; border-radius: 999px; color: var(--paper); background: color-mix(in oklab, var(--sky) 86%, var(--ink)); font-size: 11px; font-weight: 900; box-shadow: 0 1px 0 color-mix(in oklab, var(--ink) 25%, transparent); white-space: nowrap; }
+    .pill-tag::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; background: var(--paper); vertical-align: 1px; }
+    .tag-float { position: absolute; z-index: 9; padding: 3px 9px; border-radius: 8px; font-size: 11.5px; font-weight: 900; color: var(--paper); background: var(--ink); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 30%, transparent); white-space: nowrap; }
+    .tag-float.sky { background: color-mix(in oklab, var(--sky) 70%, var(--ink)); }
+    .theme { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+    .theme svg { position: absolute; inset: 0; }
+
+    /* ---------- Internal deployment ---------- */
+    .ia-body { display: grid; grid-template-columns: 300px 1fr; gap: 22px; align-items: start; text-align: left; padding: 0 6px; }
+    .ia-slider { display: grid; justify-items: center; gap: 6px; }
+    .ia-end { font-size: 13px; font-weight: 900; text-align: center; }
+    .ia-end small { display: block; font-size: 11.5px; font-weight: 700; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); }
+    .internal .dlg { min-height: 0; }
+    .ia-slider .vslider-value { font-size: 13px; }
+    .ia-checks h3, .ic-access h3 { margin: 4px 0 8px; font-size: 13px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; color: color-mix(in oklab, var(--wood) 60%, var(--ink)); }
+    .ia-checks ul { list-style: none; margin: 0; padding: 0; }
+    .ia-checks li { display: grid; grid-template-columns: 24px 1fr; gap: 8px; align-items: start; padding: 9px 0; border-top: 1px solid color-mix(in oklab, var(--wood) 24%, transparent); font-size: 14px; font-weight: 800; line-height: 1.3; }
+    .ia-checks li:first-child { border-top: 0; }
+    .ia-checks li i { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 6px; font-style: normal; font-size: 13px; font-weight: 900; }
+    .ia-checks li.on i { color: var(--paper); background: var(--sky); }
+    .ia-checks li.off { color: color-mix(in oklab, var(--ink) 45%, var(--paper)); }
+    .ia-checks li.off i { border: 2px solid color-mix(in oklab, var(--ink) 20%, var(--paper)); }
+    .meter { margin-top: 18px; text-align: left; }
+    .meter .lbl { display: flex; justify-content: space-between; font-size: 12.5px; font-weight: 800; }
+    .meter .lbl b { font-weight: 900; }
+    .meter .track { position: relative; height: 16px; margin-top: 5px; border-radius: 8px; overflow: hidden; background: color-mix(in oklab, var(--teal) 30%, var(--paper)); }
+    .meter .track i { position: absolute; top: 0; bottom: 0; right: 0; background: repeating-linear-gradient(-45deg, var(--sky) 0 6px, color-mix(in oklab, var(--sky) 55%, var(--paper)) 6px 12px); }
+    .model-card { padding: 12px 14px 14px; text-align: left; }
+    .model-card .nm { font-size: 20px; font-weight: 900; line-height: 1.15; }
+    .model-card dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; margin: 10px 0 0; font-size: 12.5px; }
+    .model-card dt { font-weight: 700; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); }
+    .model-card dd { margin: 0; font-weight: 900; text-align: right; }
+
+    .rack-panel { position: absolute; z-index: 12; width: 400px; padding: 14px 16px 16px; background: var(--paper); border: 3px solid var(--wood); border-radius: 14px; box-shadow: 0 3px 0 color-mix(in oklab, var(--wood) 60%, var(--ink)), 0 14px 32px color-mix(in oklab, var(--ink) 22%, transparent); }
+    .rack-panel::after { content: ""; position: absolute; right: 70px; bottom: -12px; width: 18px; height: 18px; background: var(--paper); border-right: 3px solid var(--wood); border-bottom: 3px solid var(--wood); transform: rotate(45deg); }
+    .rack-panel h2 { margin: 2px 0 10px; font-size: 21px; font-weight: 300; line-height: 1.15; }
+    .seg { display: grid; grid-template-columns: repeat(4, 1fr); border: 2px solid color-mix(in oklab, var(--ink) 14%, transparent); border-radius: 10px; overflow: hidden; }
+    .seg button { padding: 8px 2px 7px; border: 0; border-left: 1px solid color-mix(in oklab, var(--ink) 12%, transparent); background: var(--paper); font: inherit; font-size: 13px; font-weight: 900; color: var(--ink); cursor: pointer; }
+    .seg button:first-child { border-left: 0; }
+    .seg button.on { background: color-mix(in oklab, var(--sky) 22%, var(--paper)); box-shadow: inset 0 -3px 0 var(--sky); }
+    .seg-ends { display: flex; justify-content: space-between; margin-top: 4px; font-size: 11px; font-weight: 800; color: color-mix(in oklab, var(--ink) 55%, var(--paper)); }
+    .rack-panel .row { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+    .act { white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border: 0; border-radius: 10px; font: inherit; font-size: 14px; font-weight: 900; color: var(--paper); background: var(--coral); box-shadow: 0 3px 0 color-mix(in oklab, var(--coral) 60%, var(--ink)); cursor: pointer; }
+    .act.ghost { color: color-mix(in oklab, var(--wood) 72%, var(--ink)); background: transparent; box-shadow: none; padding-inline: 6px; }
+    .act.calm { color: var(--ink); background: var(--paper); border: 2.5px solid color-mix(in oklab, var(--ink) 16%, transparent); box-shadow: 0 3px 0 color-mix(in oklab, var(--ink) 14%, transparent); }
+
+    .ic-body { display: grid; grid-template-columns: 230px 1fr; gap: 24px; text-align: left; padding: 0 4px; }
+    .badge-card { position: relative; margin-top: 18px; padding: 44px 16px 16px; border-radius: 14px; background: var(--paper); border: 2px solid color-mix(in oklab, var(--ink) 12%, transparent); box-shadow: 0 3px 0 color-mix(in oklab, var(--ink) 12%, transparent), 0 10px 20px color-mix(in oklab, var(--ink) 12%, transparent); text-align: center; }
+    .badge-card::before { content: ""; position: absolute; top: -40px; left: 50%; width: 26px; height: 58px; margin-left: -13px; border-radius: 4px; background: repeating-linear-gradient(180deg, var(--sky) 0 8px, color-mix(in oklab, var(--sky) 60%, var(--ink)) 8px 10px); z-index: -1; }
+    .badge-card .slot { position: absolute; top: 12px; left: 50%; width: 46px; height: 9px; margin-left: -23px; border-radius: 5px; background: color-mix(in oklab, var(--ink) 12%, var(--paper)); }
+    .badge-card .stripe { margin: 0 -16px 12px; padding: 4px 0 5px; background: var(--sky); color: var(--paper); font-size: 11px; font-weight: 900; letter-spacing: .16em; }
+    .badge-card .face { width: 96px; height: 96px; margin: 0 auto 8px; }
+    .badge-card .nm { font-size: 19px; font-weight: 900; line-height: 1.1; }
+    .badge-card .role { margin-top: 3px; font-size: 12.5px; font-weight: 800; color: color-mix(in oklab, var(--ink) 60%, var(--paper)); }
+    .badge-card .bar-code { height: 26px; margin: 12px 8px 0; background: repeating-linear-gradient(90deg, var(--ink) 0 2px, transparent 2px 4px, var(--ink) 4px 5px, transparent 5px 9px, var(--ink) 9px 12px, transparent 12px 14px); opacity: .7; }
+    .ic-access ul { list-style: none; margin: 0; padding: 0; }
+    .ic-access li { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; padding: 9px 0; border-top: 1px solid color-mix(in oklab, var(--wood) 24%, transparent); }
+    .ic-access li:first-child { border-top: 0; }
+    .ic-access .t { font-size: 14.5px; font-weight: 900; line-height: 1.2; }
+    .ic-access .t small { display: block; margin-top: 2px; font-size: 11.5px; font-weight: 700; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); }
+    .ic-access .t .chip { display: table; margin-top: 4px; }
+    .sw { position: relative; width: 44px; height: 24px; border-radius: 12px; background: color-mix(in oklab, var(--ink) 16%, var(--paper)); }
+    .sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--paper); box-shadow: 0 1px 2px color-mix(in oklab, var(--ink) 30%, transparent); }
+    .sw.on { background: var(--teal); }
+    .sw.on::after { left: 23px; }
+    .sw.lock { opacity: .55; }
+
+    /* ---------- Summit A (GDT trio) ---------- */
+    .summit-a .dlg { top: 92px; left: 306px; width: 828px; min-height: 0; padding-bottom: 22px; }
+    .summit-a .dialog-left { top: 140px; left: 34px; width: 258px; }
+    .summit-a .dialog-right { top: 140px; right: 34px; width: 258px; }
+    .cards6 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; text-align: left; }
+    .cmt { display: block; width: 100%; font: inherit; color: var(--ink); text-align: left; cursor: pointer;
+      position: relative; min-height: 132px; padding: 12px 14px 12px; border: 2.5px solid color-mix(in oklab, var(--ink) 12%, transparent); border-radius: 12px; background: var(--paper); }
+    .cmt.on { border-color: var(--wood); background: color-mix(in oklab, var(--wood) 10%, var(--paper)); box-shadow: 0 3px 0 color-mix(in oklab, var(--wood) 45%, transparent); }
+    .cmt .n { position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; border: 2px solid color-mix(in oklab, var(--ink) 18%, var(--paper)); font-size: 12px; font-weight: 900; }
+    .cmt.on .n { border: 0; color: var(--paper); background: var(--wood); }
+    .cmt .t { padding-right: 28px; font-size: 15.5px; font-weight: 900; line-height: 1.2; }
+    .cmt .d { margin-top: 5px; font-size: 12.5px; font-weight: 700; line-height: 1.32; color: color-mix(in oklab, var(--ink) 68%, var(--paper)); }
+    .cmt .note { margin-top: 7px; }
+    .sweet { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 14px; margin-top: 16px; text-align: left; }
+    .sweet > b { font-size: 13px; font-weight: 900; }
+    .seg3 { display: grid; grid-template-columns: repeat(3, 1fr); border: 2px solid color-mix(in oklab, var(--ink) 14%, transparent); border-radius: 10px; overflow: hidden; }
+    .seg3 button { padding: 7px 6px 6px; border: 0; border-left: 1px solid color-mix(in oklab, var(--ink) 12%, transparent); background: var(--paper); font: inherit; font-size: 12.5px; font-weight: 900; line-height: 1.2; color: var(--ink); }
+    .seg3 button small { display: block; font-size: 11px; font-weight: 700; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); }
+    .seg3 button:first-child { border-left: 0; }
+    .seg3 button.on { background: color-mix(in oklab, var(--teal) 18%, var(--paper)); box-shadow: inset 0 -3px 0 var(--teal); }
+    .room { padding: 10px 12px 12px; text-align: left; }
+    .room table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .room th { padding: 0 0 6px; font-size: 11px; font-weight: 900; color: color-mix(in oklab, var(--ink) 55%, var(--paper)); text-align: center; }
+    .room th:first-child { text-align: left; }
+    .room td { padding: 5px 0; border-top: 1px solid color-mix(in oklab, var(--wood) 22%, transparent); font-weight: 800; text-align: center; }
+    .room td:first-child { text-align: left; }
+    .room .legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; font-size: 11px; font-weight: 800; color: color-mix(in oklab, var(--ink) 60%, var(--paper)); }
+    .room .legend span { display: inline-flex; align-items: center; gap: 4px; }
+    .room .legend .read { width: 18px; height: 18px; font-size: 10px; }
+    .room q { display: block; margin-top: 10px; padding-top: 9px; border-top: 1px solid color-mix(in oklab, var(--wood) 30%, transparent); font-size: 12.5px; font-style: italic; font-weight: 600; line-height: 1.35; color: color-mix(in oklab, var(--ink) 78%, var(--paper)); }
+    .who-list { padding: 4px 12px 10px; text-align: left; }
+    .who-list div { padding: 7px 0; border-top: 1px solid color-mix(in oklab, var(--wood) 22%, transparent); font-size: 12.5px; font-weight: 700; line-height: 1.3; }
+    .who-list div:first-child { border-top: 0; }
+    .who-list b { display: block; font-size: 13.5px; font-weight: 900; }
+
+    .sig-grid { width: 100%; border-collapse: separate; border-spacing: 0; text-align: center; }
+    .sig-grid th { padding: 0 4px 10px; font-size: 12px; font-weight: 900; line-height: 1.15; vertical-align: bottom; }
+    .sig-grid th:first-child { text-align: left; }
+    .sig-grid td { padding: 10px 4px; border-top: 1px solid color-mix(in oklab, var(--wood) 30%, transparent); }
+    .sig-grid td:first-child { text-align: left; font-size: 14.5px; font-weight: 900; line-height: 1.2; }
+    .tick { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; color: var(--paper); background: color-mix(in oklab, var(--ink) 82%, var(--sky)); font-size: 15px; font-weight: 900; }
+    .blank { display: inline-block; width: 18px; height: 3px; border-radius: 2px; background: color-mix(in oklab, var(--ink) 16%, var(--paper)); }
+    .status { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 900; white-space: nowrap; }
+    .status.bind { color: var(--paper); background: color-mix(in oklab, var(--teal) 78%, var(--ink)); }
+    .status.pledge { color: color-mix(in oklab, var(--wood) 55%, var(--ink)); background: color-mix(in oklab, var(--wood) 22%, var(--paper)); }
+    .sum-lines { margin-top: 14px; text-align: left; font-size: 13.5px; font-weight: 700; line-height: 1.45; }
+    .sum-lines p { margin: 4px 0; }
+
+    /* ---------- Summit B (the hall) + President B (the office) ---------- */
+    .scene { position: absolute; inset: 0; z-index: 8; }
+    .scene svg { position: absolute; inset: 0; }
+    .hand-row { position: absolute; z-index: 10; left: 150px; right: 150px; top: 600px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; align-items: end; }
+    .hcard { display: flex; flex-direction: column; justify-content: flex-start; width: 100%; font: inherit; color: var(--ink); min-height: 196px; padding: 12px 14px 14px; border-radius: 12px; background: var(--paper); border: 2.5px solid color-mix(in oklab, var(--ink) 12%, transparent); box-shadow: 0 3px 0 color-mix(in oklab, var(--ink) 16%, transparent), 0 10px 22px color-mix(in oklab, var(--ink) 18%, transparent); text-align: left; }
+    .hcard.on { transform: translateY(-26px); border-color: var(--wood); box-shadow: 0 3px 0 color-mix(in oklab, var(--wood) 60%, var(--ink)), 0 16px 28px color-mix(in oklab, var(--ink) 24%, transparent); }
+    .hcard.focus { outline: 4px solid color-mix(in oklab, var(--sky) 70%, var(--paper)); outline-offset: 3px; }
+    .hcard .t { font-size: 15px; font-weight: 900; line-height: 1.2; }
+    .hcard .d { margin-top: 6px; font-size: 12px; font-weight: 700; line-height: 1.32; color: color-mix(in oklab, var(--ink) 66%, var(--paper)); }
+    .hcard .k { margin-bottom: 6px; }
+    .hall-bar { position: absolute; z-index: 11; left: 150px; right: 150px; bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .hall-bar .note { font-size: 13.5px; font-weight: 800; color: color-mix(in oklab, var(--ink) 70%, var(--paper)); }
+    .dbub { position: absolute; z-index: 10; padding: 6px 10px 7px; border-radius: 10px; background: var(--paper); border: 1px solid color-mix(in oklab, var(--ink) 12%, transparent); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 14%, transparent); font-size: 12.5px; font-weight: 900; white-space: nowrap; transform: translateX(-50%); }
+    .dbub::after { content: ""; position: absolute; left: 50%; bottom: -6px; width: 10px; height: 10px; margin-left: -5px; background: var(--paper); transform: rotate(45deg); border-right: 1px solid color-mix(in oklab, var(--ink) 12%, transparent); border-bottom: 1px solid color-mix(in oklab, var(--ink) 12%, transparent); }
+    .dbub .read { width: 18px; height: 18px; font-size: 10px; margin-right: 5px; vertical-align: -3px; }
+    .reading { position: absolute; z-index: 10; left: 50%; top: 214px; transform: translateX(-50%); padding: 4px 14px 5px; border-radius: 999px; background: color-mix(in oklab, var(--sky) 20%, var(--paper)); font-size: 13px; font-weight: 900; color: color-mix(in oklab, var(--sky) 55%, var(--ink)); white-space: nowrap; }
+    .tabled { position: absolute; z-index: 10; left: 170px; right: 170px; top: 596px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+    .tabled .hcard { position: relative; min-height: 210px; }
+    .tabled .signers { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+    .stamp { position: absolute; right: 14px; bottom: 12px; padding: 6px 12px; border: 3px solid currentColor; border-radius: 8px; font-size: 15px; font-weight: 900; letter-spacing: .12em; transform: rotate(-9deg); }
+    .stamp.bind { color: color-mix(in oklab, var(--teal) 75%, var(--ink)); }
+    .stamp.pledge { color: color-mix(in oklab, var(--wood) 70%, var(--ink)); font-size: 13px; }
+
+    /* ---------- Summit C (the accord document) ---------- */
+    .doc { position: absolute; z-index: 10; left: 190px; top: 34px; width: 780px; height: 836px; padding: 34px 50px 28px; background: var(--paper); border-radius: 4px; box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 12%, transparent), 0 24px 50px color-mix(in oklab, var(--ink) 28%, transparent); text-align: left; }
+    .doc .draft { display: flex; justify-content: space-between; font-size: 11px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; color: color-mix(in oklab, var(--ink) 50%, var(--paper)); }
+    .doc h1 { margin: 12px 0 6px; font-family: 'Libre Baskerville', Georgia, serif; font-style: italic; font-weight: 400; font-size: 30px; line-height: 1.2; }
+    .doc .pre { font-family: 'Libre Baskerville', Georgia, serif; font-size: 13.5px; line-height: 1.55; color: color-mix(in oklab, var(--ink) 75%, var(--paper)); }
+    .doc hr { margin: 16px 0 12px; border: 0; border-top: 1.5px solid color-mix(in oklab, var(--ink) 20%, transparent); }
+    .doc .sect { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+    .doc .sect b { font-size: 12px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
+    .art { position: relative; display: grid; grid-template-columns: 26px 1fr; gap: 12px; padding: 10px 10px 10px 8px; border-radius: 6px; }
+    .art.on { background: color-mix(in oklab, var(--wood) 11%, var(--paper)); }
+    .box { width: 22px; height: 22px; margin-top: 2px; border-radius: 4px; border: 2px solid color-mix(in oklab, var(--ink) 40%, var(--paper)); display: grid; place-items: center; font-size: 15px; font-weight: 900; }
+    .art.on .box { border-color: var(--ink); background: var(--ink); color: var(--paper); }
+    .art .h { font-size: 15px; font-weight: 900; }
+    .art .h span { font-family: 'Libre Baskerville', Georgia, serif; font-weight: 400; font-style: italic; margin-right: 6px; color: color-mix(in oklab, var(--ink) 60%, var(--paper)); }
+    .art .x { margin-top: 2px; font-family: 'Libre Baskerville', Georgia, serif; font-size: 13px; line-height: 1.5; color: color-mix(in oklab, var(--ink) 76%, var(--paper)); }
+    .art.off .h, .art.off .x { color: color-mix(in oklab, var(--ink) 48%, var(--paper)); }
+    .annex { display: grid; gap: 4px; }
+    .radio { display: grid; grid-template-columns: 22px 1fr; gap: 10px; align-items: center; padding: 5px 8px; font-size: 14px; font-weight: 800; }
+    .radio i { width: 18px; height: 18px; border-radius: 50%; border: 2px solid color-mix(in oklab, var(--ink) 40%, var(--paper)); }
+    .radio.on i { border: 6px solid var(--ink); }
+    .radio small { font-weight: 700; color: color-mix(in oklab, var(--ink) 55%, var(--paper)); }
+    .doc .foot { position: absolute; left: 50px; right: 50px; bottom: 26px; display: flex; justify-content: space-between; align-items: flex-end; }
+    .sigline { width: 280px; font-size: 12px; font-weight: 800; color: color-mix(in oklab, var(--ink) 55%, var(--paper)); }
+    .sigline div { height: 34px; border-bottom: 1.5px solid color-mix(in oklab, var(--ink) 40%, var(--paper)); }
+    .mc { position: absolute; z-index: 11; left: 992px; width: 420px; padding: 9px 12px 10px; border-radius: 8px; background: color-mix(in oklab, var(--wood) 16%, var(--paper)); border-left: 4px solid var(--wood); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 10%, transparent), 0 8px 18px color-mix(in oklab, var(--ink) 14%, transparent); font-size: 13.5px; font-weight: 700; line-height: 1.35; }
+    .mc b { display: block; font-size: 11px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; color: color-mix(in oklab, var(--wood) 58%, var(--ink)); }
+    .mc .reads { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 5px; font-size: 12px; font-weight: 800; }
+    .mc .reads span { display: inline-flex; align-items: center; gap: 4px; }
+    .mc .reads .read { width: 18px; height: 18px; font-size: 10px; }
+    .mc::before { content: ""; position: absolute; left: -24px; top: 18px; width: 20px; border-top: 2px dotted color-mix(in oklab, var(--wood) 70%, var(--paper)); }
+    .signs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px 14px; width: 540px; margin: 6px 0 4px 38px; }
+    .signs div { font-size: 11px; font-weight: 800; color: color-mix(in oklab, var(--ink) 52%, var(--paper)); }
+    .signs .ink { height: 30px; border-bottom: 1.5px solid color-mix(in oklab, var(--ink) 35%, var(--paper)); font-family: 'Caveat', cursive; font-size: 22px; font-weight: 600; line-height: 34px; color: color-mix(in oklab, var(--sky) 45%, var(--ink)); white-space: nowrap; overflow: hidden; }
+    .seal { position: absolute; right: 16px; top: 34px; display: grid; place-items: center; width: 96px; height: 96px; border-radius: 50%; border: 3px double currentColor; font-size: 12px; font-weight: 900; letter-spacing: .12em; text-align: center; line-height: 1.15; transform: rotate(-12deg); }
+    .seal.bind { color: color-mix(in oklab, var(--teal) 72%, var(--ink)); background: color-mix(in oklab, var(--teal) 8%, transparent); }
+    .seal.pledge { color: color-mix(in oklab, var(--wood) 70%, var(--ink)); background: color-mix(in oklab, var(--wood) 8%, transparent); }
+
+    /* ---------- Hold or ship ---------- */
+    .hold-a .dlg { min-height: 0; top: 150px; }
+    .hold-a .dialog-side { top: 220px; }
+    .deal-rows { text-align: left; }
+    .deal-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; padding: 10px 2px; border-top: 1px solid color-mix(in oklab, var(--wood) 28%, transparent); }
+    .deal-row:first-child { border-top: 0; }
+    .deal-row .t { font-size: 15px; font-weight: 900; }
+    .deal-row .who { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
+    .quiet { margin-top: 10px; padding: 9px 12px; border-radius: 10px; background: color-mix(in oklab, var(--teal) 10%, var(--paper)); font-size: 13.5px; font-weight: 800; text-align: left; }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 20px; }
+    .big { display: grid; gap: 3px; padding: 13px 14px 14px; border-radius: 12px; font: inherit; text-align: center; cursor: pointer; }
+    .big b { font-size: 18px; font-weight: 900; }
+    .big small { font-size: 12.5px; font-weight: 700; }
+    .big.holdb { color: var(--ink); background: var(--paper); border: 2.5px solid color-mix(in oklab, var(--teal) 70%, var(--paper)); box-shadow: 0 3px 0 color-mix(in oklab, var(--teal) 45%, transparent); }
+    .big.holdb small { color: color-mix(in oklab, var(--ink) 60%, var(--paper)); }
+    .big.shipb { color: var(--paper); background: var(--coral); border: 0; box-shadow: 0 3px 0 color-mix(in oklab, var(--coral) 60%, var(--ink)); }
+
+    .slim { position: absolute; z-index: 12; left: 250px; right: 250px; bottom: 20px; padding: 0; text-align: left; }
+    .slim .band { display: flex; justify-content: space-between; align-items: center; padding: 6px 18px 7px; background: var(--wood); color: var(--paper); font-size: 12.5px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+    .slim .band span { letter-spacing: 0; text-transform: none; font-weight: 700; }
+    .slim .main { padding: 12px 20px 16px; }
+    .slim h1 { margin: 0; font-size: 27px; font-weight: 300; line-height: 1.1; }
+    .slim .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+    .slim .labs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .fp { display: grid; grid-template-columns: 30px 1fr; gap: 9px; text-align: left; margin-top: 10px; }
+    .fp .av { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; color: var(--paper); font-weight: 900; font-size: 13px; background: color-mix(in oklab, var(--sky) 70%, var(--ink)); }
+    .fp .h { font-size: 12.5px; font-weight: 900; }
+    .fp .x { font-size: 13.5px; font-weight: 600; line-height: 1.32; margin-top: 1px; }
+
+    .board { position: absolute; z-index: 12; width: 330px; overflow: hidden; border-radius: 12px; background: var(--ink); color: var(--paper); box-shadow: 0 3px 0 color-mix(in oklab, var(--ink) 50%, transparent), 0 14px 30px color-mix(in oklab, var(--ink) 28%, transparent); }
+    .board .top { display: flex; justify-content: space-between; align-items: center; padding: 8px 14px; background: color-mix(in oklab, var(--ink) 80%, var(--sky)); font-size: 12px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+    .board .top .live { padding: 1px 7px; border-radius: 4px; background: var(--coral); letter-spacing: .06em; }
+    .board ul { list-style: none; margin: 0; padding: 6px 14px 12px; }
+    .board li { display: grid; grid-template-columns: 1fr auto; align-items: center; padding: 7px 0; border-top: 1px solid color-mix(in oklab, var(--paper) 12%, transparent); font-size: 14px; font-weight: 800; }
+    .board li:first-child { border-top: 0; }
+    .board li span { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 900; }
+    .board li span i { width: 10px; height: 10px; border-radius: 50%; }
+    .board li .ok i { background: var(--teal); }
+    .board li .ok { color: color-mix(in oklab, var(--teal) 45%, var(--paper)); }
+    .board li .unk i { background: transparent; border: 2px solid color-mix(in oklab, var(--paper) 55%, transparent); }
+    .board li .unk { color: color-mix(in oklab, var(--paper) 70%, var(--ink)); }
+    .board li .out { color: color-mix(in oklab, var(--paper) 55%, var(--ink)); }
+    .board li .out i { background: color-mix(in oklab, var(--paper) 30%, var(--ink)); }
+    .board .foot { padding: 8px 14px 10px; font-size: 12px; font-weight: 700; color: color-mix(in oklab, var(--paper) 70%, var(--ink)); border-top: 1px solid color-mix(in oklab, var(--paper) 12%, transparent); }
+    .callout { position: absolute; z-index: 12; padding: 9px 12px 10px; border-radius: 10px; background: var(--paper); border: 2px solid var(--coral); box-shadow: 0 8px 18px color-mix(in oklab, var(--ink) 18%, transparent); font-size: 13px; font-weight: 800; line-height: 1.3; }
+    .callout b { display: block; font-size: 16px; font-weight: 900; }
+
+    /* ---------- President ---------- */
+    .pres-a .dlg { top: 96px; min-height: 0; padding-bottom: 22px; }
+    .pres-a .dialog-side { top: 150px; }
+    .portrait { display: block; width: 100%; height: 170px; }
+    .pat { display: flex; align-items: center; gap: 5px; }
+    .pat i { width: 13px; height: 13px; border-radius: 50%; background: var(--coral); }
+    .pat i.gone { background: transparent; border: 2px solid color-mix(in oklab, var(--ink) 22%, var(--paper)); }
+    .pres-side { padding: 10px 14px 12px; text-align: left; }
+    .pres-side .nm { font-size: 17px; font-weight: 900; }
+    .pres-side .lbl { margin: 10px 0 5px; font-size: 11px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: color-mix(in oklab, var(--wood) 60%, var(--ink)); }
+    .pres-side ul { margin: 0; padding-left: 16px; font-size: 12.5px; font-weight: 700; line-height: 1.5; }
+    .qline { display: flex; justify-content: space-between; align-items: center; }
+    .steps { display: flex; gap: 5px; }
+    .steps i { width: 26px; height: 6px; border-radius: 3px; background: color-mix(in oklab, var(--ink) 12%, var(--paper)); }
+    .steps i.on { background: var(--wood); }
+    .ask { margin: 12px 0 14px; font-size: 23px; font-weight: 800; line-height: 1.28; text-align: left; }
+    .ask::before { content: "“"; margin-right: 2px; color: var(--wood); }
+    .ask::after { content: "”"; color: var(--wood); }
+    .answers { display: grid; gap: 8px; }
+    .answers .ch { grid-template-columns: 26px 1fr; align-items: start; gap: 10px; }
+    .answers .ch .k { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 6px; background: color-mix(in oklab, var(--ink) 8%, var(--paper)); font-size: 12px; font-weight: 900; }
+    .answers .ch .lb { font-size: 14.5px; font-weight: 800; line-height: 1.3; }
+
+    .opt-list { position: absolute; z-index: 11; left: 380px; width: 680px; bottom: 22px; padding: 12px 14px 14px; border-radius: 14px; background: color-mix(in oklab, var(--paper) 94%, transparent); border: 3px solid var(--wood); box-shadow: 0 3px 0 color-mix(in oklab, var(--wood) 60%, var(--ink)), 0 18px 40px color-mix(in oklab, var(--ink) 30%, transparent); }
+    .opt-list .answers { gap: 6px; }
+    .opt-list .ch { padding: 7px 10px; }
+    .opt-list .ch .lb { font-size: 14px; }
+    .pbub { position: absolute; z-index: 11; padding: 12px 16px 14px; border-radius: 14px; background: var(--paper); border: 1px solid color-mix(in oklab, var(--ink) 12%, transparent); box-shadow: 0 3px 0 color-mix(in oklab, var(--ink) 16%, transparent), 0 12px 28px color-mix(in oklab, var(--ink) 20%, transparent); }
+    .pbub::after { content: ""; position: absolute; left: -9px; top: 42px; width: 18px; height: 18px; background: var(--paper); transform: rotate(45deg); border-left: 1px solid color-mix(in oklab, var(--ink) 12%, transparent); border-bottom: 1px solid color-mix(in oklab, var(--ink) 12%, transparent); }
+    .pbub .hdr { display: flex; justify-content: space-between; align-items: center; gap: 14px; font-size: 11px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: color-mix(in oklab, var(--wood) 60%, var(--ink)); }
+    .pbub .say { margin-top: 6px; font-size: 21px; font-weight: 800; line-height: 1.28; }
+
+    .phone { position: absolute; z-index: 12; left: 990px; top: 100px; width: 400px; height: 780px; padding: 12px; border-radius: 44px; background: var(--ink); box-shadow: 0 20px 50px color-mix(in oklab, var(--ink) 40%, transparent); }
+    .phone .scr { position: relative; height: 100%; overflow: hidden; border-radius: 34px; background: var(--paper); display: flex; flex-direction: column; }
+    .phone .stat { display: flex; justify-content: space-between; padding: 12px 26px 4px; font-size: 13px; font-weight: 900; }
+    .phone .head { display: grid; justify-items: center; gap: 3px; padding: 6px 0 10px; border-bottom: 1px solid color-mix(in oklab, var(--ink) 10%, transparent); background: color-mix(in oklab, var(--cream) 30%, var(--paper)); }
+    .phone .head .av { width: 54px; height: 54px; border-radius: 50%; overflow: hidden; background: color-mix(in oklab, var(--sky) 20%, var(--paper)); }
+    .phone .head .nm { font-size: 14px; font-weight: 900; }
+    .phone .head .att { display: flex; align-items: center; gap: 6px; font-size: 10.5px; font-weight: 800; color: color-mix(in oklab, var(--ink) 55%, var(--paper)); }
+    .phone .head .pat i { width: 9px; height: 9px; }
+    .phone .thread { flex: 1; display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; overflow: hidden; }
+    .phone .day { align-self: center; font-size: 11px; font-weight: 800; color: color-mix(in oklab, var(--ink) 50%, var(--paper)); }
+    .msg { max-width: 78%; padding: 8px 12px 9px; border-radius: 18px; font-size: 14.5px; font-weight: 700; line-height: 1.3; }
+    .msg.them { align-self: flex-start; background: color-mix(in oklab, var(--ink) 9%, var(--paper)); border-bottom-left-radius: 6px; }
+    .typing { align-self: flex-start; display: flex; gap: 4px; padding: 10px 12px; border-radius: 18px; background: color-mix(in oklab, var(--ink) 9%, var(--paper)); }
+    .typing i { width: 7px; height: 7px; border-radius: 50%; background: color-mix(in oklab, var(--ink) 40%, var(--paper)); }
+    .phone .tray { padding: 8px 12px 14px; border-top: 1px solid color-mix(in oklab, var(--ink) 10%, transparent); background: color-mix(in oklab, var(--cream) 22%, var(--paper)); display: grid; gap: 6px; }
+    .phone .tray .lbl { font-size: 10.5px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: color-mix(in oklab, var(--ink) 50%, var(--paper)); }
+    .reply { justify-self: end; max-width: 92%; padding: 7px 12px 8px; border: 0; border-radius: 16px; border-bottom-right-radius: 6px; font: inherit; font-size: 13px; font-weight: 700; line-height: 1.28; text-align: left; color: var(--paper); background: color-mix(in oklab, var(--sky) 88%, var(--ink)); cursor: pointer; }
+  </style>
+</head>
+<body>
+  <main id="stage" aria-label="AI lab office">
+    <div id="office"></div>
+    <div id="fx" aria-live="polite"></div>
+    <div id="hud"></div>
+    <div id="overlay"></div>
+  </main>
+<script type="module">
+import { createGame } from './ui/game.js';
+import { mountHud } from './ui/hud.js';
+import { mountOffice } from './ui/office.js';
+import { dialog } from './ui/components/dialog.js';
+import { vslider } from './ui/components/vslider.js';
+import { teamPanel } from './ui/components/team.js';
+import { SCENARIOS } from './ui/logic/scenarios.js';
+import { computeAmount } from './ui/logic/format.js';
+import { endTurn } from './sim/turn.js';
+import { createRng } from './sim/rng.js';
+import { eraById } from './sim/data/eras.js';
+import { readTheRoom, proposeSummit, PARTIES } from './sim/summit.js';
+import { deployInternal, controlUnits } from './sim/internal.js';
+import { availableUnits } from './sim/training.js';
+import { MEETINGS } from './sim/data/president.js';
+
+const zoom = () => { const z = Math.min(innerWidth / 1440, innerHeight / 900, 1); if (z > 0) document.documentElement.style.zoom = `${z}`; };
+zoom(); addEventListener('resize', zoom);
+
+const SEED = 4;
+const route = location.hash || '#i-a';
+const group = route.slice(1, 2);
+const BASIC = { budget: { spend: 25, split: { training: 0.6, security: 0.15, product: 0.1, talent: 0.15 } }, computeSplit: { safety: 0.2 }, moves: [] };
+const OFFER = { proposals: ['evaluators', 'releaseDelay', 'sharedSafety'], sweetener: 'evaluatorsFirst' };
+
+// Every state below is reached by playing the real sim on seed 4.
+function meetingState() {
+  let state = SCENARIOS.era2Deals(SEED);
+  const rng = createRng(40);
+  for (let i = 0; i < 4 && !state.meeting; i += 1) {
+    ({ state } = endTurn(state, { ...BASIC, eventChoices: Object.fromEntries(state.pendingEvents.map((e) => [e.id, e.choices[0].id])) }, rng));
+  }
+  return state;
+}
+function holdState() {
+  const state = SCENARIOS.summit(SEED);
+  return endTurn(state, { ...BASIC, moves: [{ type: 'summit', ...OFFER }] }, createRng(7)).state;
+}
+const STATES = {
+  i: () => { const s = SCENARIOS.era3Idle(SEED); if (route === '#i-on') deployInternal(s, 0.7); return s; },
+  s: () => SCENARIOS.summit(SEED),
+  h: holdState,
+  p: meetingState,
+};
+const state = STATES[group]();
+const game = createGame({ seed: SEED, state });
+mountHud(document.querySelector('#hud'), game);
+// Real time is undecided: keep turn wording out, show the era's name instead.
+const full = document.querySelector('#hud .info .full');
+if (full) full.innerHTML = `<span class="k">Era</span> <b>${state.era}</b> <span class="k">· ${eraById(state.era).name}</span>`;
+await mountOffice(document.querySelector('#office'), document.querySelector('#fx'), game).catch(console.error);
+const stage = document.querySelector('#stage');
+const overlay = document.querySelector('#overlay');
+const fx = document.querySelector('#fx');
+const anchors = await (await fetch(`ui/assets/anchors-era${state.era}.json`)).json();
+const HEAD = anchors.heads;
+
+const el = (html) => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; };
+const esc = (text) => String(text).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const TITLE = { research: 'Head of Research', safety: 'Head of Safety', cfo: 'CFO', policy: 'Policy and Comms' };
+const clearMarkers = () => fx.querySelectorAll('.advisor-marker').forEach((m) => m.remove());
+
+function bubble(role, { say, pick, mood, width = 240, tail = 26, dy = -34 }) {
+  const [x, y] = HEAD[role];
+  const node = el(`<div class="sb"><b class="who">${TITLE[role]}${mood ? ` · ${mood}` : ''}</b><div class="say">${esc(say)}</div></div>`);
+  if (pick) node.append(el(`<span class="chip for">✓ ${esc(pick)}</span>`));
+  node.style.width = `${width}px`;
+  node.style.setProperty('--tail', `${tail}px`);
+  overlay.append(node);
+  node.style.left = `${x - tail - 7}px`;
+  node.style.top = `${y + dy - node.offsetHeight}px`;
+  return node;
+}
+function openLayer(opts, cls) {
+  const layer = dialog(opts);
+  layer.classList.add('dialog-open', ...(cls ? [cls] : []));
+  overlay.append(layer);
+  return layer;
+}
+const opinions = (list) => teamPanel(state, { opinions: list });
+function themeLayer(svg) {
+  const layer = el(`<div class="theme"><svg width="1440" height="900" viewBox="0 0 1440 900" aria-hidden="true">${svg}</svg></div>`);
+  document.querySelector('#office').after(layer);
+}
+function floatTag(text, x, y, tone = '') {
+  const node = el(`<div class="tag-float ${tone}">${esc(text)}</div>`);
+  node.style.left = `${x}px`; node.style.top = `${y}px`;
+  fx.append(node);
+}
+
+// ================= Internal deployment =================
+const newest = state.models.at(-1);
+const MODEL = state.pendingModel ? 'your new model' : newest?.name ?? 'your model';
+const LEVELS = [
+  { value: 0, label: 'Free run' },
+  { value: 35, label: 'Logged' },
+  { value: 70, label: 'Watched' },
+  { value: 100, label: 'Sandboxed' },
+];
+const CHECKS = [
+  ['Every action it takes is logged', 35],
+  ['A second model reads everything it writes', 70],
+  ['No internet and no access to its own weights', 100],
+];
+const free = availableUnits(state);
+const units = (control) => controlUnits({ era: state.era, internal: { control } });
+
+function meter(control) {
+  const node = el(`<div class="meter"><div class="lbl"><span>Watching it uses <b></b> of your free compute</span><span class="muted"></span></div><div class="track"><i></i></div></div>`);
+  node.querySelector('.lbl b').textContent = computeAmount(units(control), state.era);
+  node.querySelector('.lbl .muted').textContent = `${computeAmount(free, state.era)} free`;
+  node.querySelector('.track i').style.width = `${Math.round((units(control) / free) * 100)}%`;
+  return node;
+}
+const TEAM_INTERNAL = [
+  { id: 'research', mood: 'eager', text: 'It already writes half our code. Let it write the other half.' },
+  { id: 'safety', mood: 'uneasy', text: 'If it runs our research, who checks the research?' },
+  { id: 'cfo', mood: 'calm', text: 'A researcher with no salary. I have questions, but not many.' },
+  { id: 'policy', mood: 'uneasy', text: 'If this leaks, the headline writes itself. Please make it a boring one.' },
+];
+function modelCard() {
+  return el(`<div class="model-card"><div class="kick">Goes to work</div><div class="nm">${esc(MODEL)}</div>
+    <dl><dt>Released</dt><dd>${state.pendingModel ? 'Not yet' : 'Yes'}</dd><dt>Newest model</dt><dd>Yes</dd><dt>Size</dt><dd>${esc(newest?.name.split(' ').at(-1) ?? '—')}</dd></dl></div>`);
+}
+
+function showIA() {
+  clearMarkers();
+  const control = 70;
+  const body = el('<div class="ia-body"><div class="ia-slider"></div><div><div class="ia-checks"><h3>Who checks its work</h3><ul></ul></div></div></div>');
+  const slider = vslider({ label: 'Faster research', role: 'Monitors and sandboxing', value: control, min: 0, max: 100, step: 5, colour: 'sky', notches: LEVELS, formatValue: (v) => `Now: ${LEVELS.reduce((a, l) => (v >= l.value ? l.label : a), 'Free run')}` });
+  body.querySelector('.ia-slider').append(slider);
+  const ul = body.querySelector('ul');
+  ul.append(el('<li class="on"><i>✓</i><span>It works on your own systems, not the public’s</span></li>'));
+  for (const [text, at] of CHECKS) ul.append(el(`<li class="${control >= at ? 'on' : 'off'}"><i>${control >= at ? '✓' : ''}</i><span>${text}</span></li>`));
+  body.querySelector('.ia-checks').append(meter(control / 100));
+  openLayer({ title: 'Deploy a model internally', subtitle: `Put ${MODEL} to work inside the lab`, body, okLabel: 'Deploy', left: { title: 'Team', content: opinions(TEAM_INTERNAL) }, right: { title: 'The model', content: modelCard() } }, 'internal');
+}
+
+function rackGlow(extra = '') {
+  const [x, y] = anchors.rack;
+  themeLayer(`<defs><radialGradient id="rg"><stop offset="0" stop-color="var(--sky)" stop-opacity=".55"/><stop offset="1" stop-color="var(--sky)" stop-opacity="0"/></radialGradient></defs>
+    <ellipse cx="${x + 10}" cy="${y + 70}" rx="190" ry="170" fill="url(#rg)"/>${extra}`);
+}
+function camera(x, y) {
+  return `<g transform="translate(${x} ${y})"><rect x="-4" y="-22" width="4" height="22" style="fill:var(--ink)"/><rect x="-26" y="-34" width="34" height="18" rx="4" transform="rotate(18)" style="fill:var(--ink)"/><circle cx="-18" cy="-28" r="4" transform="rotate(18)" style="fill:var(--coral)"/></g>`;
+}
+
+function showIB() {
+  clearMarkers();
+  const [rx, ry] = anchors.rack;
+  rackGlow(camera(rx + 70, ry - 70));
+  floatTag(`${MODEL} · watched`, rx - 40, ry - 40, 'sky');
+  const panel = el(`<section class="rack-panel" aria-label="Put the model to work"><div class="kick">The rack</div><h2>Put ${esc(MODEL)} to work inside the lab</h2>
+    <div class="seg" role="radiogroup">${LEVELS.map((l) => `<button type="button" class="${l.value === 70 ? 'on' : ''}">${l.label}</button>`).join('')}</div>
+    <div class="seg-ends"><span>Faster research</span><span>More checks</span></div>
+    <div class="row"><button type="button" class="act">Put it to work</button><button type="button" class="act ghost">Not now</button><span class="chip wood" style="margin-left:auto">Uses ${computeAmount(units(0.7), state.era)}</span></div></section>`);
+  panel.style.left = `${rx - 280}px`;
+  panel.style.top = '96px';
+  overlay.append(panel);
+  bubble('research', { mood: 'eager', say: 'Give it the codebase. It already writes half of it.', pick: 'Free run', width: 250 });
+  bubble('safety', { mood: 'uneasy', say: 'Fine. But every action gets logged, and I read the logs.', pick: 'Watched', width: 250 });
+  bubble('cfo', { mood: 'calm', say: 'Does it want a desk? Desks are expensive.', width: 220, dy: -40 });
+}
+
+function showIC() {
+  clearMarkers();
+  const face = `<svg class="face" viewBox="0 0 96 96" aria-hidden="true"><rect width="96" height="96" rx="12" style="fill:color-mix(in oklab, var(--sky) 16%, var(--paper))"/>
+    <circle cx="48" cy="48" r="26" style="fill:var(--coral);stroke:color-mix(in oklab, var(--coral) 70%, var(--ink));stroke-width:2"/>
+    <circle cx="48" cy="48" r="36" style="fill:none;stroke:var(--sky);stroke-width:5"/>
+    <circle cx="40" cy="45" r="3.2" style="fill:var(--paper)"/><circle cx="56" cy="45" r="3.2" style="fill:var(--paper)"/>
+    <path d="M40 55 Q48 61 56 55" style="fill:none;stroke:var(--paper);stroke-width:3;stroke-linecap:round"/></svg>`;
+  const ACCESS = [
+    ['Read and write our code', 'It needs this to do any work', true, true],
+    ['Launch training runs', 'Runs finish sooner with it at the controls', true],
+    ['Merge its own code without review', null, false, false, 'Safety wants this off'],
+    ['Browse the internet', null, false],
+    ['Read its own weights', null, false, false, 'Safety wants this off'],
+    ['Edit the logs that watch it', 'Research says it would tidy them up', false],
+  ];
+  const body = el(`<div class="ic-body"><div class="badge-card"><div class="slot"></div>${face}<div class="stripe">STAFF · AI</div><div class="nm">${esc(MODEL)}</div><div class="role">Research team · starts today</div><div class="bar-code"></div></div>
+    <div class="ic-access"><h3>What it can touch</h3><ul></ul></div></div>`);
+  const ul = body.querySelector('ul');
+  for (const [t, note, on, lock, chip] of ACCESS) {
+    ul.append(el(`<li><div class="t">${t}${note ? `<small>${note}</small>` : ''}${chip ? `<span class="chip sky">${chip}</span>` : ''}</div><div class="sw ${on ? 'on' : ''} ${lock ? 'lock' : ''}" role="switch" aria-checked="${on}"></div></li>`));
+  }
+  const withheld = ACCESS.filter(([, , on, lock]) => !on && !lock).length / ACCESS.filter(([, , , lock]) => !lock).length;
+  body.querySelector('.ic-access').append(meter(withheld));
+  openLayer({ title: 'Give it a badge', subtitle: `${MODEL} joins the lab as staff. Choose what it can touch.`, body, okLabel: 'Issue the badge', left: { title: 'Team', content: opinions(TEAM_INTERNAL) } }, 'internal');
+}
+
+function showIOn() {
+  clearMarkers();
+  const [rx, ry] = anchors.rack;
+  rackGlow(camera(rx + 70, ry - 70));
+  document.querySelector('#hud').append(el('<div class="pill-tag">Internal agents at work</div>'));
+  floatTag(`${MODEL} · watched`, rx - 40, ry - 40, 'sky');
+  floatTag('agent-2 · rewriting the data loader', rx - 150, ry + 222, 'sky');
+  floatTag('agent-5 · running evals', rx - 60, ry + 254, 'sky');
+  bubble('research', { mood: 'calm', say: 'Three experiments done before lunch. I could get used to this.', width: 250 });
+}
+
+// ================= Summit =================
+const PARTY = { openbrain: 'OpenBrain', lodestar: 'Lodestar', deepthink: 'DeepThink', qilin: 'Qilin', west: 'Washington', east: 'Beijing' };
+const SHORT = { openbrain: 'OB', lodestar: 'LS', deepthink: 'DT', qilin: 'QL', west: 'WA', east: 'BJ' };
+const COMMIT = {
+  evaluators: ['Outside evaluators', 'Independent testers work inside every signer’s lab.', 'Article I'],
+  computeCap: ['A cap on training runs', 'No signer trains a run above an agreed size.', 'Article II'],
+  releaseDelay: ['A wait between launches', 'Signers leave a set gap between major releases.', 'Article III'],
+  sharedSafety: ['Shared safety research', 'Signers fund one safety programme together.', 'Article IV'],
+  pauseAutomation: ['No AI running AI research', 'No signer lets its own models run its research.', 'Article V'],
+  verification: ['US–China verification', 'Inspectors from both sides check each other’s clusters.', 'Article VI'],
+};
+const COMMIT_DOC = {
+  evaluators: 'Each signatory shall admit independent evaluators to its frontier training runs and share their findings.',
+  computeCap: 'No signatory shall train a model with more compute than the ceiling set in the schedule to this accord.',
+  releaseDelay: 'Signatories shall leave no less than the agreed interval between releases of frontier models.',
+  sharedSafety: 'Signatories shall jointly fund a common programme of safety research, open to all.',
+  pauseAutomation: 'No signatory shall let its own models direct its research and training.',
+  verification: 'The governments of the United States and China shall inspect each other’s training clusters.',
+};
+const READ = { likely: '✓', unsure: '?', unlikely: '✕' };
+const ORDER = Object.keys(COMMIT);
+const room = group === 's' ? readTheRoom(state, createRng(SEED)) : null;
+const result = group === 's' ? proposeSummit(structuredClone(state), OFFER, createRng(5)) : null;
+const partiesBy = (id, word) => PARTIES.filter((p) => room[id][p] === word).map((p) => PARTY[p]);
+const list = (names) => (names.length <= 1 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`);
+function readLine(id) {
+  const yes = partiesBy(id, 'likely');
+  const maybe = partiesBy(id, 'unsure');
+  if (id === 'verification') return 'Only works if both Washington and Beijing sign. It is the one card Qilin will sign.';
+  if (yes.length === 0 && maybe.length === 0) return 'Nobody else wants this one. You would be signing alone.';
+  const bits = [];
+  if (yes.length) bits.push(`${list(yes)} will likely sign`);
+  if (maybe.length) bits.push(`${list(maybe)} might`);
+  return `${bits.join('. ')}. Nobody else will.`;
+}
+const SUMMIT_TEAM = [
+  { id: 'policy', mood: 'uneasy', text: 'Lodestar wants a deal. OpenBrain wants to win. Everyone else wants to see who blinks.' },
+  { id: 'safety', mood: 'uneasy', text: 'Outside evaluators, please. I want someone to check our homework too.' },
+  { id: 'research', mood: 'eager', text: 'Anything but a cap. We are one run from the top.' },
+  { id: 'cfo', mood: 'calm', text: 'Shared research costs money. So does the end of the world, I suppose.' },
+];
+
+function showSA1() {
+  clearMarkers();
+  const picked = OFFER.proposals;
+  const grid = el('<div class="cards6"></div>');
+  for (const id of ORDER) {
+    const [t, d] = COMMIT[id];
+    const n = picked.indexOf(id);
+    const card = el(`<button type="button" class="cmt ${n >= 0 ? 'on' : ''}" aria-pressed="${n >= 0}"><span class="n">${n >= 0 ? n + 1 : ''}</span><div class="t">${t}</div><div class="d">${d}</div></button>`);
+    if (id === 'verification') card.append(el('<div class="note"><span class="chip wood">Needs both governments</span></div>'));
+    grid.append(card);
+  }
+  const body = el('<div></div>');
+  body.append(el(`<div class="muted" style="text-align:left;font-size:13px;font-weight:800;margin:-4px 0 10px">Put up to three on the table · ${picked.length} of 3 picked</div>`), grid);
+  body.append(el(`<div class="sweet"><b>Sweeten the offer</b><div class="seg3"><button type="button">Nothing extra</button><button type="button">Fund shared research<small>$50M</small></button><button type="button" class="on">Evaluators in our lab first</button></div></div>`));
+  const read = el(`<div class="room"><table><thead><tr><th></th>${picked.map((id, i) => `<th title="${COMMIT[id][0]}">${i + 1}</th>`).join('')}</tr></thead><tbody></tbody></table>
+    <div class="legend"><span><i class="read likely">✓</i>likely</span><span><i class="read unsure">?</i>unsure</span><span><i class="read unlikely">✕</i>unlikely</span></div>
+    <q>Lodestar wants a deal. OpenBrain wants to win. The rest want to see who blinks first. <b style="font-style:normal">Policy and Comms</b></q></div>`);
+  const tb = read.querySelector('tbody');
+  for (const p of PARTIES) tb.append(el(`<tr><td>${PARTY[p]}</td>${picked.map((id) => `<td><i class="read ${room[id][p]}" aria-label="${room[id][p]}">${READ[room[id][p]]}</i></td>`).join('')}</tr>`));
+  const whoAt = el(`<div class="who-list">
+    <div><b>OpenBrain</b>Out in front and means to stay there.</div>
+    <div><b>Lodestar</b>Careful. Has wanted a deal for years.</div>
+    <div><b>DeepThink</b>Behind, and in a hurry.</div>
+    <div><b>Qilin</b>Signs one thing only: checks on both sides.</div>
+    <div><b>Washington</b>Wants to beat China more than anything.</div>
+    <div><b>Beijing</b>Wants to not lose, and to be seen as fair.</div></div>`);
+  openLayer({ title: 'The pacing summit', subtitle: 'Every frontier lab and both governments, one room, one afternoon', body, okLabel: 'Go to the summit', left: { title: 'Read the room', content: read }, right: { title: 'Around the table', content: whoAt } }, 'summit-a');
+}
+
+function showSA2() {
+  clearMarkers();
+  const table = el(`<table class="sig-grid"><thead><tr><th></th><th>You</th>${PARTIES.map((p) => `<th>${PARTY[p]}</th>`).join('')}<th></th></tr></thead><tbody></tbody></table>`);
+  const tb = table.querySelector('tbody');
+  for (const id of OFFER.proposals) {
+    const signers = result.signed[id];
+    const binds = result.binding.includes(id);
+    tb.append(el(`<tr><td>${COMMIT[id][0]}</td><td><i class="tick">✓</i></td>${PARTIES.map((p) => `<td>${signers.includes(p) ? '<i class="tick" aria-label="signed">✓</i>' : '<i class="blank" aria-label="did not sign"></i>'}</td>`).join('')}
+      <td>${binds ? '<span class="status bind">Binding</span>' : '<span class="status pledge">Only a pledge</span>'}</td></tr>`));
+  }
+  const body = el('<div></div>');
+  body.append(table);
+  const lines = el('<div class="sum-lines"></div>');
+  for (const id of OFFER.proposals) {
+    const labs = result.signed[id].filter((p) => !['west', 'east'].includes(p)).map((p) => PARTY[p]);
+    const binds = result.binding.includes(id);
+    lines.append(el(`<p><b>${COMMIT[id][0]}:</b> ${binds ? `binds you, ${list(labs)}.` : labs.length ? `${list(labs)} joined, but no government did, so it binds no one.` : 'only you signed. It is a promise, not a deal.'}</p>`));
+  }
+  body.append(lines);
+  const react = [
+    { id: 'policy', mood: 'calm', text: 'Two of three bind. OpenBrain signing the evaluators surprised everyone, including OpenBrain.' },
+    { id: 'safety', mood: 'calm', text: 'Outside evaluators in every lab. I may cry a little.' },
+    { id: 'research', mood: 'uneasy', text: 'Now everybody gets to watch us work. Great.' },
+  ];
+  openLayer({ title: 'The summit signs', subtitle: 'A commitment binds when another lab and a government sign it too', body, okLabel: 'Continue', left: { title: 'Team', content: opinions(react) } }, 'summit-a');
+}
+
+// ---- Summit B: the hall, drawn front-on ----
+const SKIN = ['color-mix(in oklab, var(--wood) 55%, var(--paper))', 'color-mix(in oklab, var(--wood) 80%, var(--ink))', 'color-mix(in oklab, var(--wood) 35%, var(--paper))', 'color-mix(in oklab, var(--wood) 62%, var(--ink))', 'color-mix(in oklab, var(--wood) 45%, var(--paper))', 'color-mix(in oklab, var(--wood) 70%, var(--paper))'];
+const SUIT = ['color-mix(in oklab, var(--coral) 60%, var(--ink))', 'color-mix(in oklab, var(--teal) 55%, var(--ink))', 'color-mix(in oklab, var(--sky) 55%, var(--ink))', 'color-mix(in oklab, var(--wood) 55%, var(--ink))', 'color-mix(in oklab, var(--ink) 88%, var(--sky))', 'color-mix(in oklab, var(--ink) 80%, var(--coral))'];
+const HAIR = ['var(--ink)', 'color-mix(in oklab, var(--wood) 50%, var(--ink))', 'color-mix(in oklab, var(--paper) 55%, var(--ink))', 'var(--ink)', 'color-mix(in oklab, var(--paper) 70%, var(--ink))', 'color-mix(in oklab, var(--coral) 30%, var(--ink))'];
+const SEATS = [250, 438, 626, 814, 1002, 1190];
+
+function person(x, y, i, mood) {
+  const mouth = mood === 'likely' ? `M${x - 9} ${y + 10} Q${x} ${y + 18} ${x + 9} ${y + 10}` : mood === 'unsure' ? `M${x - 8} ${y + 13} L${x + 8} ${y + 12}` : `M${x - 9} ${y + 16} Q${x} ${y + 8} ${x + 9} ${y + 16}`;
+  const brows = mood === 'unlikely' ? `<path d="M${x - 14} ${y - 8} L${x - 5} ${y - 5} M${x + 14} ${y - 8} L${x + 5} ${y - 5}" style="stroke:var(--ink);stroke-width:2.4;stroke-linecap:round"/>` : '';
+  return `<g>
+    <rect x="${x - 46}" y="${y - 36}" width="92" height="150" rx="16" style="fill:color-mix(in oklab, var(--ink) 70%, var(--wood))"/>
+    <path d="M${x - 58} ${y + 128} Q${x - 56} ${y + 44} ${x} ${y + 40} Q${x + 56} ${y + 44} ${x + 58} ${y + 128} Z" style="fill:${SUIT[i]}"/>
+    <path d="M${x - 10} ${y + 40} L${x} ${y + 70} L${x + 10} ${y + 40} Z" style="fill:var(--paper)"/>
+    <rect x="${x - 8}" y="${y + 24}" width="16" height="18" style="fill:${SKIN[i]}"/>
+    <circle cx="${x}" cy="${y}" r="30" style="fill:${SKIN[i]}"/>
+    <path d="M${x - 31} ${y - 2} Q${x - 30} ${y - 36} ${x} ${y - 34} Q${x + 30} ${y - 36} ${x + 31} ${y - 2} Q${x + 18} ${y - 20} ${x} ${y - 20} Q${x - 18} ${y - 20} ${x - 31} ${y - 2} Z" style="fill:${HAIR[i]}"/>
+    <circle cx="${x - 10}" cy="${y + 1}" r="3.2" style="fill:var(--ink)"/><circle cx="${x + 10}" cy="${y + 1}" r="3.2" style="fill:var(--ink)"/>${brows}
+    <path d="${mouth}" style="fill:none;stroke:var(--ink);stroke-width:2.6;stroke-linecap:round"/></g>`;
+}
+function hall(moods) {
+  const people = SEATS.map((x, i) => person(x, 390, i, moods[i])).join('');
+  const placards = SEATS.map((x, i) => `<g transform="translate(${x} 506)"><path d="M-54 0 L54 0 L48 -26 L-48 -26 Z" style="fill:var(--paper)"/><text y="-8" text-anchor="middle" style="font:900 13px Nunito;fill:var(--ink)">${PARTY[PARTIES[i]]}</text></g>`).join('');
+  const mics = SEATS.map((x) => `<path d="M${x + 40} 506 L${x + 30} 466" style="stroke:var(--ink);stroke-width:3"/><circle cx="${x + 30}" cy="464" r="4" style="fill:var(--ink)"/>`).join('');
+  const el2 = el(`<div class="scene"><svg width="1440" height="900" viewBox="0 0 1440 900" role="img" aria-label="The summit hall: six delegates at a long table">
+    <rect width="1440" height="900" style="fill:color-mix(in oklab, var(--cream) 60%, var(--paper))"/>
+    <rect y="0" width="1440" height="560" style="fill:color-mix(in oklab, var(--sky) 14%, var(--cream))"/>
+    ${[0, 1, 2, 3, 4, 5, 6, 7].map((i) => `<rect x="${i * 190 - 20}" y="0" width="16" height="560" style="fill:color-mix(in oklab, var(--sky) 22%, var(--cream))"/>`).join('')}
+    <rect x="300" y="70" width="840" height="120" rx="8" style="fill:color-mix(in oklab, var(--ink) 86%, var(--sky))"/>
+    <text x="720" y="132" text-anchor="middle" style="font:900 40px Nunito;letter-spacing:.14em;fill:var(--paper)">THE PACING SUMMIT</text>
+    <text x="720" y="166" text-anchor="middle" style="font:700 16px Nunito;fill:color-mix(in oklab, var(--paper) 70%, var(--ink))">Frontier labs and governments · closed session</text>
+    <rect y="560" width="1440" height="340" style="fill:color-mix(in oklab, var(--wood) 30%, var(--cream))"/>
+    ${people}
+    <path d="M110 500 L1330 500 L1360 530 L80 530 Z" style="fill:color-mix(in oklab, var(--teal) 62%, var(--ink))"/>
+    <rect x="80" y="530" width="1280" height="70" style="fill:color-mix(in oklab, var(--teal) 48%, var(--ink))"/>
+    ${placards}${mics}
+  </svg></div>`);
+  overlay.append(el2);
+  document.querySelector('#hud').style.visibility = 'hidden';
+}
+function showSB1() {
+  clearMarkers();
+  const focus = 'evaluators';
+  hall(PARTIES.map((p) => room[focus][p]));
+  overlay.append(el(`<div class="reading">How they feel about: ${COMMIT[focus][0]}</div>`));
+  PARTIES.forEach((p, i) => {
+    const b = el(`<div class="dbub"><i class="read ${room[focus][p]}">${READ[room[focus][p]]}</i>${room[focus][p]}</div>`);
+    b.style.left = `${SEATS[i]}px`; b.style.top = '300px';
+    overlay.append(b);
+  });
+  const row = el('<div class="hand-row"></div>');
+  for (const id of ORDER) {
+    const n = OFFER.proposals.indexOf(id);
+    row.append(el(`<button type="button" class="hcard ${n >= 0 ? 'on' : ''} ${id === focus ? 'focus' : ''}"><div class="k kick">${n >= 0 ? `On the table · ${n + 1}` : 'In your hand'}</div><div class="t">${COMMIT[id][0]}</div><div class="d">${COMMIT[id][1]}</div></button>`));
+  }
+  overlay.append(row);
+  overlay.append(el(`<div class="hall-bar"><span class="note">Policy and Comms, in your ear: “Lodestar is nodding. OpenBrain is checking its phone.”</span>
+    <span style="display:flex;gap:10px;align-items:center"><span class="chip wood">Sweetener: evaluators in our lab first</span><button type="button" class="act">Table the offer</button></span></div>`));
+}
+function showSB2() {
+  clearMarkers();
+  const signedAny = PARTIES.map((p) => OFFER.proposals.some((id) => result.signed[id].includes(p)));
+  hall(signedAny.map((s) => (s ? 'likely' : 'unlikely')));
+  PARTIES.forEach((p, i) => {
+    const count = OFFER.proposals.filter((id) => result.signed[id].includes(p)).length;
+    const b = el(`<div class="dbub"><i class="read ${count ? 'likely' : 'unlikely'}">${count ? '✓' : '✕'}</i>${count ? `Signed ${count}` : 'Signed nothing'}</div>`);
+    b.style.left = `${SEATS[i]}px`; b.style.top = '300px';
+    overlay.append(b);
+  });
+  const tabled = el('<div class="tabled"></div>');
+  for (const id of OFFER.proposals) {
+    const binds = result.binding.includes(id);
+    const signers = ['You', ...result.signed[id].map((p) => PARTY[p])];
+    tabled.append(el(`<div class="hcard on"><div class="k kick">${COMMIT[id][2]}</div><div class="t">${COMMIT[id][0]}</div><div class="signers">${signers.map((s) => `<span class="chip for">✓ ${s}</span>`).join('')}</div>
+      <div class="stamp ${binds ? 'bind' : 'pledge'}">${binds ? 'BINDING' : 'ONLY A PLEDGE'}</div></div>`));
+  }
+  overlay.append(tabled);
+  overlay.append(el(`<div class="hall-bar"><span class="note">Policy and Comms: “Two of three bind. Lodestar signing the wait alone binds nobody, but it was sweet of them.”</span><button type="button" class="act">Back to the lab</button></div>`));
+}
+
+// ---- Summit C: the accord as a document ----
+function dimOffice() { stage.querySelector('#office').style.filter = 'saturate(.6) brightness(.9)'; clearMarkers(); document.querySelector('#hud').style.visibility = 'hidden'; }
+function stack(nodes) {
+  let floor = 0;
+  for (const [node, want] of nodes) { const top = Math.max(want, floor); node.style.top = `${top}px`; floor = top + node.offsetHeight + 10; }
+}
+function showSC1() {
+  dimOffice();
+  const doc = el(`<article class="doc"><div class="draft"><span>Draft for signature</span><span>Your lab · 3 of 3 articles chosen</span></div>
+    <h1>Accord on the Pace of Frontier AI</h1>
+    <p class="pre">The undersigned laboratories and governments, aware that no one of them can slow down alone, agree to the articles below.</p>
+    <hr><div class="sect"><b>Articles</b><span class="muted" style="font-size:12px;font-weight:800">Tick up to three</span></div><div class="arts"></div>
+    <hr><div class="sect"><b>Annex · what you bring</b></div><div class="annex">
+      <div class="radio"><i></i><span>Nothing extra</span></div>
+      <div class="radio"><i></i><span>We fund the shared research <small>· $50M</small></span></div>
+      <div class="radio on"><i></i><span>Our lab opens to evaluators first</span></div></div>
+    <div class="foot"><div class="sigline"><div></div>For your lab</div><button type="button" class="btn" style="width:auto;padding-inline:22px">Take it to the summit</button></div></article>`);
+  const arts = doc.querySelector('.arts');
+  for (const id of ORDER) {
+    const on = OFFER.proposals.includes(id);
+    arts.append(el(`<div class="art ${on ? 'on' : 'off'}" data-id="${id}"><div class="box">${on ? '✓' : ''}</div><div><div class="h"><span>${COMMIT[id][2]}.</span>${COMMIT[id][0]}</div><div class="x">${COMMIT_DOC[id]}</div></div></div>`));
+  }
+  overlay.append(doc);
+  const notes = [];
+  for (const id of ORDER) {
+    const row = doc.querySelector(`.art[data-id="${id}"]`);
+    const c = OFFER.proposals.includes(id)
+      ? el(`<aside class="mc"><b>Policy and Comms</b>${esc(readLine(id))}<div class="reads">${PARTIES.map((p) => `<span><i class="read ${room[id][p]}">${READ[room[id][p]]}</i>${PARTY[p]}</span>`).join('')}</div></aside>`)
+      : id === 'computeCap' ? el('<aside class="mc"><b>Head of Research</b>This one caps our next run. Please do not tick it.</aside>') : null;
+    if (!c) continue;
+    overlay.append(c);
+    notes.push([c, doc.offsetTop + row.offsetTop]);
+  }
+  stack(notes);
+}
+function showSC2() {
+  dimOffice();
+  const NAMES = { You: 'Your lab', openbrain: 'OpenBrain', lodestar: 'Lodestar', deepthink: 'DeepThink', qilin: 'Qilin', west: 'Washington', east: 'Beijing' };
+  const SIGS = { You: 'J. Rivers', openbrain: 'M. Okafor', lodestar: 'R. Lindqvist', deepthink: 'P. Anand', qilin: 'L. Wen', west: 'Sec. Hartley', east: 'Min. Zhao' };
+  const doc = el(`<article class="doc" style="height:auto;padding-bottom:40px"><div class="draft"><span>Signed copy</span><span>The pacing summit</span></div>
+    <h1>Accord on the Pace of Frontier AI</h1><p class="pre">Signed this day by the parties below. An article binds where at least one other lab and one government signed it.</p><div class="arts"></div></article>`);
+  const arts = doc.querySelector('.arts');
+  for (const id of OFFER.proposals) {
+    const binds = result.binding.includes(id);
+    const signers = ['You', ...result.signed[id]];
+    const block = el(`<div style="position:relative;margin-top:18px"><div class="art on" style="background:none;padding-bottom:2px"><div class="box">✓</div><div><div class="h"><span>${COMMIT[id][2]}.</span>${COMMIT[id][0]}</div></div></div>
+      <div class="signs">${['You', ...PARTIES].map((p) => `<div><div class="ink">${signers.includes(p) ? SIGS[p] : ''}</div>${NAMES[p]}</div>`).join('')}</div>
+      <div class="seal ${binds ? 'bind' : 'pledge'}">${binds ? 'BINDING' : 'PLEDGE<br>ONLY'}</div></div>`);
+    arts.append(block);
+  }
+  overlay.append(doc);
+  const notes = [
+    ['Policy and Comms', 'Two of three bind. OpenBrain signing the evaluators surprised everyone, including OpenBrain.', 250],
+    ['Head of Safety', 'Evaluators in every lab. I am framing this page.', 470],
+    ['CFO', 'Shared research: $40M. Cheaper than I feared, dearer than I hoped.', 650],
+  ];
+  for (const [who, text, top] of notes) {
+    const c = el(`<aside class="mc"><b>${who}</b>${esc(text)}</aside>`);
+    c.style.top = `${top}px`;
+    overlay.append(c);
+  }
+}
+
+// ================= Hold or ship =================
+const deal = state.deal;
+const LABS = ['openbrain', 'lodestar', 'deepthink', 'qilin'];
+const inDeal = (p) => deal && Object.values(deal.signed).some((s) => s.includes(p));
+const TEAM_HOLD = [
+  { id: 'research', mood: 'eager', text: 'It is ready. DeepThink will not wait for us, so why wait for them?' },
+  { id: 'safety', mood: 'uneasy', text: 'We signed it. Their evaluators are sitting in our kitchen.' },
+  { id: 'cfo', mood: 'calm', text: 'Holding is free. I checked. Twice.' },
+  { id: 'policy', mood: 'uneasy', text: 'If we are caught, the deal is dead, and so are we in Washington.' },
+];
+function dealRows() {
+  const node = el('<div class="deal-rows"></div>');
+  for (const id of deal.binding) {
+    node.append(el(`<div class="deal-row"><div class="t">${COMMIT[id][0]}</div><div class="who">${['You', ...deal.signed[id].map((p) => PARTY[p])].map((s) => `<span class="chip for">✓ ${s}</span>`).join('')}</div></div>`));
+  }
+  return node;
+}
+function showHA() {
+  clearMarkers();
+  const body = el('<div></div>');
+  body.append(el('<div class="kick" style="text-align:left;margin-bottom:4px">The accord binds you to</div>'), dealRows());
+  body.append(el('<div class="quiet">Nobody has been caught breaking it. That is not the same as nobody breaking it.</div>'));
+  body.append(el(`<div class="two"><button type="button" class="big holdb"><b>Hold to the deal</b><small>Keep your word and your evaluators</small></button><button type="button" class="big shipb"><b>Ship anyway</b><small>Race ahead and hope nobody notices</small></button></div>`));
+  const layer = openLayer({ title: 'Hold to the deal?', subtitle: 'Your next model could go out early. The accord says wait.', body, okLabel: '', left: { title: 'Team', content: opinions(TEAM_HOLD) } }, 'hold-a');
+  layer.querySelector('.dialog-ok').remove();
+}
+function showHB() {
+  clearMarkers();
+  bubble('research', { mood: 'eager', say: 'It is ready. DeepThink will not wait for us, so why wait for them?', pick: 'Ship anyway', width: 250, dy: -70 });
+  bubble('safety', { mood: 'uneasy', say: 'We signed it. Their evaluators are sitting in our kitchen.', pick: 'Hold to the deal', width: 250 });
+  bubble('cfo', { mood: 'calm', say: 'Holding is free. I checked. Twice.', width: 200, dy: -40 });
+  bubble('policy', { mood: 'uneasy', say: 'If we get caught, the deal is dead, and so are we in Washington.', pick: 'Hold to the deal', width: 250 });
+  const labs = LABS.map((p) => (inDeal(p) ? `<span class="chip for">✓ ${PARTY[p]} holding</span>` : `<span class="chip against" aria-label="${PARTY[p]} did not sign">${PARTY[p]}</span>`)).join('');
+  overlay.append(el(`<section class="gp slim"><div class="band">The accord <span>Evaluators and shared research bind you</span></div><div class="main">
+    <h1>Hold to the deal, or ship anyway?</h1>
+    <div class="fp"><div class="av">S</div><div><div class="h">@summitwatch</div><div class="x">Day 9 of the pacing accord: every lab that signed says it is holding. Every lab would say that.</div></div></div>
+    <div class="labs">${labs}</div>
+    <div class="opts"><button type="button" class="ch"><span class="lb">Hold to the deal</span><span class="cost">Keep your word, lose a step</span><span class="who"><span class="chip for">✓ Safety</span><span class="chip for">✓ Policy and Comms</span><span class="chip wood">If time runs out</span></span></button>
+    <button type="button" class="ch hot"><span class="lb">Ship anyway</span><span class="cost">A big jump, if nobody notices</span><span class="who"><span class="chip for">✓ Research</span><span class="chip against">Safety</span></span></button></div></div></section>`));
+}
+function showHC() {
+  clearMarkers();
+  const [cx, cy] = HEAD.ceo;
+  // A covered button on the CEO desk, sealed with the accord.
+  themeLayer(`<g transform="translate(${cx + 62} ${cy + 88})">
+    <ellipse cx="0" cy="10" rx="34" ry="13" style="fill:color-mix(in oklab, var(--ink) 30%, transparent)"/>
+    <path d="M-30 4 L-30 -4 A30 11 0 0 1 30 -4 L30 4 A30 11 0 0 1 -30 4 Z" style="fill:var(--ink)"/>
+    <ellipse cx="0" cy="-5" rx="18" ry="7" style="fill:var(--coral)"/>
+    <path d="M-18 -5 L-18 -12 A18 7 0 0 1 18 -12 L18 -5 Z" style="fill:color-mix(in oklab, var(--coral) 80%, var(--ink))"/>
+    <ellipse cx="0" cy="-12" rx="18" ry="7" style="fill:var(--coral)"/>
+    <path d="M-26 -4 L-26 -24 A26 16 0 0 1 26 -24 L26 -4" style="fill:color-mix(in oklab, var(--sky) 22%, transparent);stroke:color-mix(in oklab, var(--paper) 80%, var(--sky));stroke-width:2"/>
+    <rect x="-9" y="-40" width="18" height="30" rx="2" style="fill:var(--paper);stroke:color-mix(in oklab, var(--ink) 30%, transparent)"/>
+    <text x="0" y="-22" text-anchor="middle" style="font:900 6px Nunito;fill:var(--ink)">ACCORD</text></g>`);
+  const call = el(`<div class="callout"><b>Ship anyway</b>Break the seal to ship. Holding needs no click.</div>`);
+  call.style.left = `${cx + 110}px`; call.style.top = `${cy + 110}px`; call.style.width = '230px';
+  overlay.append(call);
+  const board = el(`<section class="board" aria-label="The accord on the screen wall"><div class="top"><span>The accord</span><span class="live">Live</span></div><ul>
+    ${LABS.map((p) => `<li>${PARTY[p]}${!inDeal(p) ? '<span class="out"><i></i>Did not sign</span>' : p === 'openbrain' ? '<span class="unk"><i></i>Gone quiet</span>' : '<span class="ok"><i></i>Holding</span>'}</li>`).join('')}
+    <li>Your lab<span class="ok"><i></i>Holding</span></li></ul><div class="foot">Evaluators and shared research bind you · no one caught yet</div></section>`);
+  board.style.left = '1086px'; board.style.top = '120px';
+  overlay.append(board);
+  themeLayer(`<path d="M1084 250 L1060 330" style="stroke:var(--ink);stroke-width:2;stroke-dasharray:5 4"/>`);
+  bubble('research', { mood: 'eager', say: 'OpenBrain has gone very quiet. Quiet labs ship.', width: 240 });
+}
+
+// ================= President =================
+const meeting = MEETINGS.find((m) => m.id === (state.meeting?.id ?? 'first'));
+const STAKES = ['Export licenses', 'Federal contracts', 'Blocking state safety laws', 'National champion status'];
+function portrait(w = 240, h = 170) {
+  return `<svg class="portrait" viewBox="0 0 ${w} ${h}" role="img" aria-label="The President, in silhouette">
+    <rect width="${w}" height="${h}" style="fill:color-mix(in oklab, var(--sky) 20%, var(--paper))"/>
+    ${[0, 1, 2, 3, 4, 5, 6].map((i) => `<rect x="${w - 70}" y="${i * 14}" width="70" height="7" style="fill:color-mix(in oklab, var(--coral) ${i % 2 ? 0 : 30}%, var(--paper))"/>`).join('')}
+    <rect x="${w - 70}" y="0" width="30" height="35" style="fill:color-mix(in oklab, var(--sky) 45%, var(--paper))"/>
+    <path d="M${w / 2 - 78} ${h} Q${w / 2 - 74} ${h - 62} ${w / 2} ${h - 66} Q${w / 2 + 74} ${h - 62} ${w / 2 + 78} ${h} Z" style="fill:var(--ink)"/>
+    <ellipse cx="${w / 2}" cy="${h - 104}" rx="33" ry="39" style="fill:var(--ink)"/>
+    <path d="M${w / 2 - 36} ${h - 116} Q${w / 2 - 20} ${h - 156} ${w / 2 + 30} ${h - 138} Q${w / 2 + 44} ${h - 128} ${w / 2 + 34} ${h - 112} Z" style="fill:var(--ink)"/>
+    <path d="M${w / 2 - 5} ${h - 64} L${w / 2} ${h - 22} L${w / 2 + 5} ${h - 64} Z" style="fill:var(--coral)"/>
+    <circle cx="${w / 2 - 40}" cy="${h - 42}" r="4" style="fill:var(--coral)"/></svg>`;
+}
+const dots = (left, total = 10) => `<span class="pat" role="img" aria-label="Patience ${left} of ${total}">${Array.from({ length: total }, (_, i) => `<i class="${i < left ? '' : 'gone'}"></i>`).join('')}</span>`;
+function answers(exchange) {
+  const box = el('<div class="answers"></div>');
+  exchange.answers.forEach((a, i) => box.append(el(`<button type="button" class="ch"><span class="k">${i + 1}</span><span class="lb">${esc(a.text)}</span></button>`)));
+  return box;
+}
+function steps(n, total) { return `<span class="steps">${Array.from({ length: total }, (_, i) => `<i class="${i <= n ? 'on' : ''}"></i>`).join('')}</span>`; }
+
+function showPA() {
+  clearMarkers();
+  const ex = meeting.exchanges[0];
+  const body = el('<div style="text-align:left"></div>');
+  body.append(el(`<div class="qline"><span class="kick">Question 1 of ${meeting.exchanges.length}</span>${steps(0, meeting.exchanges.length)}</div>`));
+  body.append(el(`<div class="ask">${esc(ex.prompt)}</div>`), answers(ex));
+  const left = el(`<div>${portrait()}<div class="pres-side"><div class="nm">The President</div><div class="lbl">Patience</div>${dots(state.meeting?.patience ?? 10)}
+    <div class="lbl">He can give you</div><ul>${STAKES.map((s) => `<li>${s}</li>`).join('')}</ul></div></div>`);
+  const right = el(`<div class="pres-side"><q style="display:block;font-size:13px;font-style:italic;font-weight:700;line-height:1.4">Short words. He counts the long ones. And he remembers every promise.</q><div class="lbl" style="margin-top:14px">In the room</div><ul><li>You</li><li>Policy and Comms</li><li>Two aides, one camera</li></ul></div>`);
+  const layer = openLayer({ title: 'A meeting with the President', subtitle: 'His office, twenty minutes, no notes', body, okLabel: '', left: { title: 'Across the desk', content: left }, right: { title: 'Policy and Comms', content: right } }, 'pres-a');
+  layer.querySelector('.dialog-ok').remove();
+}
+
+function office() {
+  const flag = (x) => `<g transform="translate(${x} 150)"><rect x="-3" y="-20" width="6" height="400" style="fill:color-mix(in oklab, var(--wood) 60%, var(--ink))"/><circle cy="-24" r="8" style="fill:color-mix(in oklab, var(--wood) 40%, var(--paper))"/>
+    <path d="M3 0 Q40 14 70 4 Q96 -4 110 8 L110 170 Q90 158 66 168 Q36 180 3 166 Z" style="fill:color-mix(in oklab, var(--coral) 40%, var(--paper))"/>
+    ${[1, 2, 3, 4, 5].map((i) => `<path d="M3 ${i * 28} Q40 ${i * 28 + 12} 70 ${i * 28 + 3} Q96 ${i * 28 - 4} 110 ${i * 28 + 6}" style="fill:none;stroke:var(--paper);stroke-width:9"/>`).join('')}
+    <path d="M3 0 Q24 8 48 6 L48 78 Q24 82 3 76 Z" style="fill:color-mix(in oklab, var(--sky) 60%, var(--ink))"/></g>`;
+  const win = (x) => `<g transform="translate(${x} 80)"><rect width="220" height="400" style="fill:color-mix(in oklab, var(--sky) 30%, var(--paper))"/>
+    <path d="M0 200 L220 200 M110 0 L110 400" style="stroke:var(--paper);stroke-width:8"/>
+    <path d="M-30 -10 Q10 200 -10 420 L40 420 Q20 200 40 -10 Z M250 -10 Q210 200 230 420 L180 420 Q200 200 180 -10 Z" style="fill:color-mix(in oklab, var(--coral) 45%, var(--wood))"/></g>`;
+  overlay.append(el(`<div class="scene"><svg width="1440" height="900" viewBox="0 0 1440 900" role="img" aria-label="The President's office, seen from your chair">
+    <rect width="1440" height="900" style="fill:color-mix(in oklab, var(--cream) 55%, var(--paper))"/>
+    <rect y="500" width="1440" height="90" style="fill:color-mix(in oklab, var(--wood) 35%, var(--cream))"/>
+    <rect y="590" width="1440" height="310" style="fill:color-mix(in oklab, var(--sky) 35%, var(--cream))"/>
+    <ellipse cx="720" cy="760" rx="640" ry="150" style="fill:color-mix(in oklab, var(--sky) 50%, var(--cream))"/>
+    ${win(140)}${win(1080)}${flag(470)}${flag(870)}
+    <rect x="600" y="160" width="240" height="250" rx="40" style="fill:color-mix(in oklab, var(--wood) 55%, var(--ink))"/>
+    <path d="M602 470 Q610 330 720 322 Q830 330 838 470 Z" style="fill:var(--ink)"/>
+    <ellipse cx="720" cy="262" rx="46" ry="54" style="fill:var(--ink)"/>
+    <path d="M672 250 Q690 190 760 212 Q782 226 768 250 Z" style="fill:var(--ink)"/>
+    <path d="M713 330 L720 400 L727 330 Z" style="fill:var(--coral)"/>
+    <rect x="430" y="410" width="580" height="22" style="fill:color-mix(in oklab, var(--wood) 60%, var(--paper))"/>
+    <rect x="450" y="432" width="540" height="150" style="fill:color-mix(in oklab, var(--wood) 70%, var(--ink))"/>
+    <rect x="490" y="452" width="180" height="110" rx="6" style="fill:none;stroke:color-mix(in oklab, var(--wood) 45%, var(--paper));stroke-width:3"/>
+    <rect x="770" y="452" width="180" height="110" rx="6" style="fill:none;stroke:color-mix(in oklab, var(--wood) 45%, var(--paper));stroke-width:3"/>
+    <rect x="560" y="396" width="70" height="14" rx="3" style="fill:var(--paper)"/>
+    <path d="M212 900 Q206 700 300 690 Q394 700 388 900 Z" style="fill:color-mix(in oklab, var(--wood) 60%, var(--ink))"/>
+    <circle cx="300" cy="650" r="46" style="fill:var(--ink)"/><path d="M254 660 Q262 700 300 706 Q338 700 346 660 Z" style="fill:color-mix(in oklab, var(--wood) 55%, var(--paper))"/>
+    <path d="M1052 900 Q1046 700 1140 690 Q1234 700 1228 900 Z" style="fill:color-mix(in oklab, var(--wood) 60%, var(--ink))"/>
+    <circle cx="1140" cy="646" r="44" style="fill:color-mix(in oklab, var(--wood) 50%, var(--ink))"/><path d="M1100 626 Q1110 690 1140 700 Q1170 690 1180 626 Q1170 660 1140 664 Q1110 660 1100 626 Z" style="fill:color-mix(in oklab, var(--wood) 40%, var(--paper))"/>
+  </svg></div>`));
+  document.querySelector('#hud').style.visibility = 'hidden';
+}
+function showPB() {
+  clearMarkers();
+  office();
+  // The player answered the first question with jargon: 2 jargon points cost 6 patience.
+  const ex = meeting.exchanges[1];
+  const b = el(`<div class="pbub"><div class="hdr"><span>The President · 2 of ${meeting.exchanges.length}</span>${dots(4)}</div><div class="say">${esc(ex.prompt)}</div></div>`);
+  b.style.left = '790px'; b.style.top = '196px'; b.style.width = '420px';
+  overlay.append(b);
+  const list2 = el('<div class="opt-list"></div>');
+  list2.append(answers(ex));
+  overlay.append(list2);
+  const w = el('<div class="sb"><b class="who">Policy and Comms · alarmed</b><div class="say">He is checking his watch. No more long words.</div></div>');
+  w.style.left = '1010px'; w.style.top = '520px'; w.style.width = '250px';
+  overlay.append(w);
+  const t = el('<div class="tag-float" style="left:160px;top:560px">He did not like “corrigibility”</div>');
+  overlay.append(t);
+}
+function showPC() {
+  clearMarkers();
+  const ex = meeting.exchanges[0];
+  const phone = el(`<div class="phone" aria-label="Your phone"><div class="scr">
+    <div class="stat"><span>2:14</span><span>●●●</span></div>
+    <div class="head"><div class="av">${portrait(120, 120).replace('class="portrait"', 'width="54" height="54"')}</div><div class="nm">The President</div><div class="att">Patience ${dots(state.meeting?.patience ?? 10)}</div></div>
+    <div class="thread"><div class="day">Today 2:11 AM</div><div class="day">Your meeting moved to text. He is between rallies.</div><div class="msg them">${esc(ex.prompt)}</div><div class="typing"><i></i><i></i><i></i></div></div>
+    <div class="tray"><div class="lbl">Reply</div></div></div></div>`);
+  const tray = phone.querySelector('.tray');
+  for (const a of ex.answers) tray.append(el(`<button type="button" class="reply">${esc(a.text)}</button>`));
+  overlay.append(phone);
+  bubble('policy', { mood: 'alarmed', say: 'Do not say “corrigibility”. Do not say anything with four syllables.', width: 260 });
+  bubble('research', { mood: 'calm', say: 'It is two in the morning. Why is everyone awake?', width: 230 });
+}
+
+const show = {
+  '#i-a': showIA, '#i-b': showIB, '#i-c': showIC, '#i-on': showIOn,
+  '#s-a1': showSA1, '#s-a2': showSA2, '#s-b1': showSB1, '#s-b2': showSB2, '#s-c1': showSC1, '#s-c2': showSC2,
+  '#h-a': showHA, '#h-b': showHB, '#h-c': showHC,
+  '#p-a': showPA, '#p-b': showPB, '#p-c': showPC,
+};
+await (show[route] ?? showIA)();
+document.body.dataset.ready = '1';
+addEventListener('hashchange', () => location.reload());
+</script>
+</body>
+</html>

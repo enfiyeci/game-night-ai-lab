@@ -30,7 +30,11 @@ export const ITEMS = [
   { id: 'release', label: 'Release a model', editsQueued: (game) => releaseQueued(game), unavailable: (state, game) => !releaseQueued(game) && !state.pendingModel && 'Release needs a finished model' },
   { id: 'automation', label: 'Who does the work', free: true },
   { id: 'constitution', label: 'Amend the constitution' },
-  { id: 'meeting', label: 'Take a meeting', unavailable: (state) => !state.meeting && 'No meeting is scheduled' },
+  {
+    id: 'meeting',
+    label: 'Take a meeting',
+    unavailable: (_state, game) => !game.state.meeting && 'No meeting is scheduled',
+  },
   { id: 'company', label: 'Company', free: true, submenu: true },
   { id: 'history', label: 'Lab history', free: true, unavailable: (_state, game) => game.state.models.length === 0 && 'Nothing released yet' },
 ];

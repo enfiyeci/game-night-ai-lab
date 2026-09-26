@@ -232,6 +232,10 @@ export const SCENARIOS = {
   release: releaseState,
   readyToRelease,
   event: eventState,
+  meeting: (seed) => throughTurn(seed, 20, (s) => s.meeting?.id === 'first'),
+  // Seeds 1 and 2 end in era 4 under the current balance. The offset keeps debug seeds 1–4 on runs
+  // that reach the second meeting while preserving the same scripted playthrough.
+  meeting2: (seed) => throughTurn(seed + 2, 20, (s) => s.meeting?.id === 'second'),
   summit: (seed) => throughTurn(seed, 20, (s) => s.era === 5 && s.turnInEra === 0 && !s.deal),
   ending: (seed) => throughTurn(seed, 20),
   danger: dangerState,
