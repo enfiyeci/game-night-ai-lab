@@ -11,7 +11,8 @@ import { buildSite, leaseBills, powerTurn } from './power.js';
 import { updateServing, growUsers, applyEconomy, legalTick, projectBurn, raiseRound, useEmergency, safetySpend } from './economy.js';
 import { researchTechnique } from './techniques.js';
 import { rivalsTurn } from './rivals.js';
-import { updateBoard } from './board.js';
+import { boardSnapshot, updateBoard } from './board.js';
+import { judgeBoardPromise, makeBoardPromise } from './boardPromise.js';
 import { checkTurnEndings, eraGate, finalEnding } from './endings.js';
 import { recordAdvisors } from './advisors.js';
 import { resolveHazard, exposeConcealed, INTERPRETABILITY_SPEND } from './hazards.js';
@@ -99,7 +100,7 @@ export function endTurn(prev, actions = {}, rng, observer = {}) {
   const state = structuredClone(prev);
   const events = [];
   const errors = [];
-  const before = { arr: state.arr, capability: state.capability, cash: state.cash };
+  const before = boardSnapshot(state);
   delete state.flags.emergencyUsedThisTurn;
   if (state.ending) return { state, events, errors: ['the run is over'] };
   if (state.turn === 0) {
@@ -114,6 +115,11 @@ export function endTurn(prev, actions = {}, rng, observer = {}) {
       });
     }
   } else if (actions.constitution) errors.push('the constitution can only be set on turn 0');
+  if (actions.boardPromise) {
+    const r = makeBoardPromise(state, actions.boardPromise);
+    if (r.ok) events.push({ type: 'boardPromise', units: r.units, era: r.era });
+    else errors.push(r.error);
+  }
   const moves = actions.moves ?? [];
   if (moves.length > MAX_MOVES) errors.push(`only ${MAX_MOVES} moves per turn`);
   const activeMoves = moves.slice(0, MAX_MOVES);
@@ -283,7 +289,14 @@ export function endTurn(prev, actions = {}, rng, observer = {}) {
       promiseUpkeep(state, rng);
       for (const e of eventsTick(state, rng)) events.push(e);
       normalize(state);
-      updateBoard(state, before);
+      const judged = judgeBoardPromise(state);
+      if (judged) {
+        events.push(judged);
+        pushFeed(state, '@board_minutes', judged.ratio >= 1
+          ? 'the board says the lab hit the compute it promised. nobody expected that.'
+          : judged.vote ? 'the lab missed its compute promise by a mile. the board wants a vote.' : 'the lab came up short of its compute promise. the board took notes.', 'event');
+      }
+      updateBoard(state, before, events);
       checkTurnEndings(state, rng);
     }
   }
@@ -321,6 +334,11 @@ export function endTurn(prev, actions = {}, rng, observer = {}) {
     state.compute.offers = generateOffers(state, sideRng(state, 5));
     updateServing(state);
     state.burnPlanned = projectBurn(state);
+  }
+  if (state.flags.staffLetterPending) {
+    delete state.flags.staffLetterPending;
+    events.push({ type: 'staffLetter' });
+    pushFeed(state, '@leakwire', 'most of the lab signed a letter: reinstate the ceo or we walk. the board backed down.', 'event');
   }
   if (state.ending) {
     judgeEndingPromises(state);

@@ -21,6 +21,6 @@ export const BALANCE = {
   dangerZoneRunwayMonths: 6,
   gateMaxRank: 2,
   gateMaxGap: 15,
-  boardPassMembers: 3,
+  boardPassMembers: 4, // of seven (sim/board.js)
   boardSupportLine: 55,
 };

@@ -1,7 +1,7 @@
 import { BALANCE } from './balance.js';
 import { eraById } from './data/eras.js';
 import { rank, gapToLeader } from './rivals.js';
-import { boardVote } from './board.js';
+import { holdVote } from './board.js';
 import { EMERGENCY_OPTIONS } from './economy.js';
 import { totalDebt } from './hazards.js';
 
@@ -34,9 +34,7 @@ export function checkTurnEndings(state, rng) {
   }
   if (state.flags.boardVoteDue) {
     delete state.flags.boardVoteDue;
-    const vote = boardVote(state);
-    state.flags.lastBoardVote = { turn: state.turn, yes: vote.yes, passed: vote.passed };
-    if (!vote.passed) return (state.ending = 'boardRemoved');
+    if (!holdVote(state).passed) return (state.ending = 'boardRemoved');
   }
   if (state.capability > BALANCE.dangerLine && effectiveMisuse(state) > BALANCE.misuseDisasterLine && rng.chance(BALANCE.misuseRollChance)) {
     return (state.ending = 'misuse');
@@ -49,7 +47,7 @@ export function checkTurnEndings(state, rng) {
 
 export function eraGate(state) {
   if (rank(state) > BALANCE.gateMaxRank && gapToLeader(state) > BALANCE.gateMaxGap) return (state.ending = 'leftBehind');
-  if (eraById(state.era).boardVoteAtGate && !boardVote(state).passed) return (state.ending = 'boardRemoved');
+  if (eraById(state.era).boardVoteAtGate && !holdVote(state).passed) return (state.ending = 'boardRemoved');
   return null;
 }
 

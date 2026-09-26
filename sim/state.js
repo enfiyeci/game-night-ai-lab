@@ -1,6 +1,7 @@
 import { BALANCE } from './balance.js';
 import { generateOffers, sideRng } from './contracts.js';
 import { createRivals } from './rivals.js';
+import { INITIAL_BOARD } from './board.js';
 
 export function createInitialState({ seed = 1 } = {}) {
   const state = {
@@ -36,7 +37,8 @@ export function createInitialState({ seed = 1 } = {}) {
     power: { sites: [], nextId: 1 },
     capability: BALANCE.startCapability,
 
-    board: [70, 60, 65, 55, 80],
+    board: [...INITIAL_BOARD],
+    boardPromise: null,
     govFavor: { us: 50, intl: 50 },
     staffTrust: 70,
     publicTrust: 60,

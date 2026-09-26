@@ -1,5 +1,5 @@
 import { BALANCE } from '../balance.js';
-import { boardVote } from '../board.js';
+import { boardVote, seat } from '../board.js';
 import { exposeConcealed } from '../hazards.js';
 import { clamp } from '../util.js';
 
@@ -290,7 +290,7 @@ export const EVENTS_6C = [
         },
         {
           id: 'steady', label: 'Hold your course', cost: 'board patience', backers: ['Safety'], opposers: ['Research'],
-          effects(state) { state.board[1] -= 5; },
+          effects(state) { state.board[seat('financier')] -= 5; },
         },
       ],
     },
