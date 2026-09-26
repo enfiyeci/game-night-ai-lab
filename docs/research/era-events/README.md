@@ -8,7 +8,9 @@ the gn-events lane. Each era gets its own folder, filled in order as the owner p
 1. `candidates.md`: the distilled candidate list put to the owner (start here).
 2. `raw-*.md`: the research subagents' reports, unverified by the orchestrator, each with its own
    coverage statement. Cite `candidates.md`, not these.
-3. `picks-page.html`: the review page the owner picked from (published as a private artifact).
+3. `picks-page.html` (era 1) and `../picks-page-eras-2-5.html`: the review pages the owner picks from
+   (published as private artifacts). Eras 2 to 5 come from `tools/eras.py` through `tools/build.py`,
+   which also writes each era's `candidates.md`.
 4. `picks.md` (once the owner answers): the owner's decisions for that era.
 
 ## Owner decisions that apply to every era (2026-09-26)
@@ -18,6 +20,14 @@ the gn-events lane. Each era gets its own folder, filled in order as the owner p
   player's own choices set them up.
 - Real events only, for now: "for now lets only have the real events then we will do the rest". Events drawn
   from plausible futures (escalated near-misses, forecasts) are parked in `docs/notes/later-events.md`.
+
+## Era 5 note
+
+Era 5 is set after today, so its cards reuse the most recent real events that match its themes
+(2025–2026). Its research agent hit a tool limit; the orchestrator re-checked the key items (see the
+verification section at the end of `era5/raw-real-events.md`). A widely repeated story that a pacing
+truce collapsed with releases 90 minutes apart on September 22, 2026 rests on one Substack post and
+was left out.
 
 ## Notable catches
 
