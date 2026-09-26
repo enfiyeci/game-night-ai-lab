@@ -5,15 +5,27 @@ const element = (tag, className, text) => {
   return node;
 };
 
-// The panel re-renders every story day; the rack's position only changes with the era.
+// The panel re-renders every story day; the rack's position only changes with the era. A failed load is logged
+// once and remembered as null (the panel then stays hidden), so it does not raise an error on every daily update.
 const anchorsByEra = new Map();
 const anchorsFor = (era) => {
-  if (!anchorsByEra.has(era)) anchorsByEra.set(era, fetch(`ui/assets/anchors-era${era}.json`).then((response) => response.json()));
+  if (!anchorsByEra.has(era)) {
+    anchorsByEra.set(era, fetch(`ui/assets/anchors-era${era}.json`)
+      .then((response) => {
+        if (!response.ok) throw new Error(`could not load anchors for era ${era}`);
+        return response.json();
+      })
+      .catch((error) => {
+        console.error(error);
+        return null;
+      }));
+  }
   return anchorsByEra.get(era);
 };
 
 // Shows the AI's queued moves at the racks. Each answer applies at once and uses none of the two actions;
-// the panel is not modal, so the clock keeps running. Like the board's bubbles, it steps aside for a card or a dialog.
+// the panel is not modal, so the clock keeps running. Like the board's bubbles, it steps aside for a card, a dialog,
+// the screen wall, and the board's "going quiet" panel, which sits over the racks in the top-right column.
 export async function mountRacks(game, overlayRoot) {
   const root = element('aside', 'racks-panel');
   root.setAttribute('aria-label', 'Your AI wants to');
@@ -24,24 +36,33 @@ export async function mountRacks(game, overlayRoot) {
   safety.append(element('b', '', 'Head of Safety'), element('div', 'ev-say', 'It is asking to watch itself less. Read that one again.'), element('span', 'ev-pick', '✓ Cancel it'));
   safety.hidden = true;
   overlayRoot.append(root, safety);
-  const busy = () => Boolean(overlayRoot.querySelector('.event-layer, .dialog-layer, .screenwall-layer'));
-  let drawn = null; // what is on screen, so the daily notifications do not rebuild buttons under the pointer
-  const render = async () => {
-    const anchors = await anchorsFor(game.state.era);
+  const stage = overlayRoot.parentElement;
+  const busy = () => Boolean(overlayRoot.querySelector('.event-layer, .dialog-layer, .screenwall-layer')
+    || stage?.querySelector('.bd-quiet-slot:not([hidden]) .bd-quiet'));
+  const idle = () => {
     const { proposals, autoApprove } = game.state.automation;
-    if ((proposals.length === 0 && !autoApprove) || busy()) {
-      root.hidden = true;
-      safety.hidden = true;
-      drawn = null;
-      return;
-    }
+    return (proposals.length === 0 && !autoApprove) || busy();
+  };
+  let drawn = null; // what is on screen, so the daily notifications do not rebuild buttons under the pointer
+  const hide = () => {
+    root.hidden = true;
+    safety.hidden = true;
+    drawn = null;
+  };
+  const render = async () => {
+    if (idle()) return hide();
+    const anchors = await anchorsFor(game.state.era);
+    if (!anchors || idle()) return hide();
+    const { proposals, autoApprove } = game.state.automation;
     const key = JSON.stringify([game.state.era, proposals, autoApprove]);
     if (key === drawn) return;
     drawn = key;
     // The tail sits 300 px in and the panel grows upwards from just above the racks, clear of the clock chip.
     root.style.left = `${anchors.rack[0] - 300}px`;
     root.style.bottom = `${900 - anchors.rack[1] + 14}px`;
-    root.replaceChildren(element('small', 'racks-kicker', 'From the racks'), element('h2', '', proposals.length ? 'Your AI wants to' : 'Nothing waiting for you'));
+    const heading = element('h2', '', proposals.length ? 'Your AI wants to' : 'Nothing waiting for you');
+    heading.tabIndex = -1; // focus lands here once the last row is answered
+    root.replaceChildren(element('small', 'racks-kicker', 'From the racks'), heading);
     for (const proposal of proposals) {
       const item = element('div', `racks-item${proposal.risky ? ' risky' : ''}`);
       item.append(element('p', '', proposal.label));
@@ -52,7 +73,9 @@ export async function mountRacks(game, overlayRoot) {
         button.addEventListener('click', async () => {
           game.setField('aiApprovals', { [proposal.id]: value });
           await render();
-          root.querySelector('.racks-actions button, .compute-toggle')?.focus(); // the answered row is gone
+          // The answered row is gone: focus the next row's Cancel, never an Approve (it may be the risky move).
+          const next = root.querySelector('.racks-actions button:not(.approve)') ?? root.querySelector('h2');
+          if (!root.hidden) next?.focus();
         });
         row.append(button);
       }
@@ -80,5 +103,7 @@ export async function mountRacks(game, overlayRoot) {
   };
   await render();
   new MutationObserver(() => { render(); }).observe(overlayRoot, { childList: true });
+  // The board mounts its going-quiet slot on the stage after this panel, so watch the stage's subtree for it.
+  if (stage) new MutationObserver(() => { render(); }).observe(stage, { childList: true, subtree: true });
   return game.subscribe(() => { render(); });
 }

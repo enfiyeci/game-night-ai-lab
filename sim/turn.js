@@ -333,9 +333,9 @@ function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
       if (e.type === 'outage') pushFeed(state, '@downdetector', 'users report outages across your apps', 'feed');
     }
     for (const e of automationTick(state, rng)) events.push(e);
-    state.automation.proposals = aiProposals(state, sideRng(state, AI_PROPOSAL_SALT));
-    if (state.automation.autoApprove) pushAiMoves(state, events, applyApprovals(state, {}));
     if (!state.ending) {
+      state.automation.proposals = aiProposals(state, sideRng(state, AI_PROPOSAL_SALT));
+      if (state.automation.autoApprove) pushAiMoves(state, events, applyApprovals(state, {}));
       if (trainingFraction > 0) {
         const trained = advanceRunBy(state, rng, trainingFraction);
         if (trained?.type === 'runPaused') events.push(trained);

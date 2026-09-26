@@ -90,7 +90,7 @@ mountHistory(game, overlay);
 mountAutomation(game, overlay);
 mountTurnSummary(overlay, game);
 mountScreenWall(game, overlay);
-await mountRacks(game, overlay);
+mountRacks(game, overlay).catch((error) => console.error(error));
 mountFinance(game, overlay);
 const training = mountTraining(game, { stage, hud, overlay });
 mountHazard(game, { stage, overlay });

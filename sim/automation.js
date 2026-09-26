@@ -185,9 +185,14 @@ export function lockDown(state) {
   state.automation.lockedDown = true;
 }
 
-export function aiProposals(state, rng) {
+// The AI proposes its own moves only while choosing or direction is at Leads or above.
+const proposing = (state) => {
   const levels = jobLevels(state);
-  if (levels[3] < PROPOSE_LEVEL && levels[4] < PROPOSE_LEVEL) return [];
+  return levels[3] >= PROPOSE_LEVEL || levels[4] >= PROPOSE_LEVEL;
+};
+
+export function aiProposals(state, rng) {
+  if (!proposing(state)) return [];
   const out = [];
   if (availableUnits(state) >= 1) out.push({ id: 'overnight', label: 'Run experiments overnight on idle compute', risky: false });
   if (state.automation.checks.monitors > 0 && rng.chance(LESS_LOGS_CHANCE)) {
@@ -197,17 +202,25 @@ export function aiProposals(state, rng) {
 }
 
 // Each answer applies at once: approved moves run, cancelled ones are dropped, unanswered ones keep waiting.
+// A move that no longer makes sense when approved (no idle compute, no monitors left) is dropped without effect,
+// and a lock-down withdraws everything that was waiting.
 export function applyApprovals(state, approvals = {}) {
+  if (!proposing(state)) {
+    state.automation.proposals = [];
+    return [];
+  }
   const events = [];
   const answered = (proposal) => state.automation.autoApprove || typeof approvals[proposal.id] === 'boolean';
   for (const proposal of state.automation.proposals) {
     if (!state.automation.autoApprove && approvals[proposal.id] !== true) continue;
     if (proposal.id === 'overnight') {
+      if (availableUnits(state) < 1) continue;
       if (state.activeRun) state.activeRun.bonus += OVERNIGHT_BONUS;
       else state.researchPoints += OVERNIGHT_POINTS;
     }
     if (proposal.id === 'lessLogs') {
-      state.automation.checks.monitors = Math.max(0, state.automation.checks.monitors - 1);
+      if (state.automation.checks.monitors === 0) continue;
+      state.automation.checks.monitors -= 1;
       state.concealedDebt += LESS_LOGS_DEBT;
     }
     events.push({ type: 'aiMove', id: proposal.id });
