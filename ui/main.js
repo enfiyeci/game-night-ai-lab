@@ -8,6 +8,8 @@ import { openMenu } from './menu.js';
 import { openBudget } from './screens/budget.js';
 import { mountRecipe, openRecipe } from './screens/recipe.js';
 import { mountRelease, openRelease } from './screens/release.js';
+import { mountReveal } from './screens/reveal.js';
+import { releaseDraft, releasePayload } from './logic/release.js';
 import {
   mountCompany,
   mountTurnSummary,
@@ -60,6 +62,7 @@ await mountOffice(office, fx, game).catch((error) => console.error(error));
 mountCompany(game, overlay);
 mountRecipe(game, overlay);
 mountRelease(game, overlay);
+mountReveal(game, overlay);
 mountHistory(game, overlay);
 mountTurnSummary(overlay, game);
 
@@ -94,6 +97,13 @@ async function openDebugRoute() {
   }
   if (location.hash === '#release' || location.hash === '#sizes') {
     if (game.state.pendingModel) openRelease(game, overlay, { stage: location.hash === '#sizes' ? 'sizes' : 'main' });
+    return;
+  }
+  if (location.hash === '#reveal') {
+    if (!game.state.pendingModel) return;
+    const draft = { ...releaseDraft(game.state), family: 'Kestrel', picks: ['eval-full'], reasoning: 'medium' };
+    game.addMove({ type: 'release', release: releasePayload(game.state, draft) });
+    game.endTurn();
     return;
   }
   if (location.hash === '#budget') {
