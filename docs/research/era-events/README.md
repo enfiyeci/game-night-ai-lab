@@ -27,6 +27,13 @@ the gn-events lane. Each era gets its own folder, filled in order as the owner p
 4: 10 each; era 5: 7), built by `tools/build_static.py`. It opens in any viewer, including previews that
 block scripts.
 
+## Card copy draft
+
+`copy/card-copy.md` (and the rendered `copy/card-copy.html`) holds Claude's full draft of every word on the
+48 cards: title, post, deadline, warning, choices and costs, advisor lines and outcome lines. It comes from
+`tools/copy.py` through `tools/build_copy.py` and follows the copy tests' rules. It is for owner review and is
+not yet in the game code.
+
 ## Era 5 note
 
 Era 5 is set after today, so its cards reuse the most recent real events that match its themes

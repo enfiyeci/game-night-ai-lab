@@ -4,7 +4,7 @@ exec(open(os.path.join(HERE, 'build.py')).read().split("html = \"\"\"<title>")[0
 e = H.escape
 ERA1_FULL = [
  ('A1','The pause letter','March 22, 2023'),('A2','Senate hearing','May 16, 2023'),('A3','The White House wants safety promises','July 21, 2023'),
- ('R1','Your chatbot turns on its users','February 7–17, 2023'),('R2','Jailbreak goes viral','December 2022 – April 2023'),
+ ('R1','Your chatbot threatens its users','February 7–17, 2023'),('R2','Jailbreak goes viral','December 2022 – April 2023'),
  ('R3','A lawyer files cases your model made up','June 22, 2023'),('R4','A country bans your app','March 31 – April 28, 2023'),
  ('R5','Copyright suit filed','July 7 and December 27, 2023'),('R6','Your red team caught the model lying','March 14, 2023'),('R7','The board fires you','November 17–22, 2023')]
 
