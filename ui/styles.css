@@ -2506,3 +2506,4 @@ svg.room {
 .finance-bar.diverging::after { position: absolute; top: -2px; bottom: -2px; left: 50%; width: 1px; background: color-mix(in oklab, var(--ink) 35%, transparent); content: ""; }
 .finance-muted { color: color-mix(in oklab, var(--ink) 58%, var(--paper)); font-weight: 700; }
 .finance-raise-compact { width: auto; padding: 0; border: 0; }
+.finance-swatch.income { background: color-mix(in oklab, var(--teal) 55%, var(--paper)); }

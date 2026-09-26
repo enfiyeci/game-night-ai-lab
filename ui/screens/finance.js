@@ -204,8 +204,10 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
       maxC = dragScale ?? niceCeil(Math.max(160, ...rows.map((r) => r.signed + r.planned), ...Object.values(plan.goals)) * 1.12);
       lastMaxC = maxC;
       const tM = top + hC + gap, tK = tM + hM + gap;
-      const maxM = niceCeil(Math.max(100, ...rows.map((r) => r.signedBill + r.planBill + r.people + r.ops), ...rows.map((r) => r.grownRevenue ?? r.revenue)) * 1.08);
-      const yM = (v) => tM + hM - (v / maxM) * hM;
+      const maxM = niceCeil(Math.max(100, ...rows.map((r) => Math.max(0, r.signedBill) + r.planBill + r.people + r.ops), ...rows.map((r) => r.grownRevenue ?? r.revenue)) * 1.08);
+      // A net compute bill below zero (cloud credits plus idle resale) is income: it is drawn below the zero line.
+      const lowM = Math.min(0, ...rows.map((r) => r.signedBill));
+      const yM = (v) => tM + hM - ((v - lowM) / (maxM - lowM)) * hM;
       const cashes = rows.flatMap((r) => [r.cashStart + r.raised, r.cashEnd]);
       const lo = Math.min(0, ...cashes), hi = Math.max(1, ...cashes);
       const yK = (v) => tK + hK - ((v - lo) / (hi - lo)) * hK;
@@ -244,6 +246,7 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
           <rect x="${cx - 38}" y="${gy - 11}" width="76" height="22" rx="11" style="fill:var(--ink)"/>
           <text x="${cx}" y="${gy + 4}" text-anchor="middle" style="font-size:11px;font-weight:900;fill:var(--paper)">${label}</text></g>`;
       }
+      if (lowM < 0) s += text(padL - 6, yM(lowM) + 3.5, `+${money(-lowM)}`, 'fill:color-mix(in oklab, var(--teal) 78%, var(--ink))', 'end');
       for (let v = 0; v < maxM * 0.95; v += maxM / 2) {
         s += `<line x1="${padL}" x2="${W - padR}" y1="${yM(v)}" y2="${yM(v)}" style="stroke:color-mix(in oklab, var(--ink) ${v ? 7 : 25}%, transparent)"/>`;
         s += text(padL - 6, yM(v) + 3.5, v ? money(v) : '0', '', 'end');
@@ -258,9 +261,9 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
           s += `<rect x="${x0}" y="${y0 - h}" width="${w}" height="${h}" style="fill:${fill}"/>`;
           y0 -= h;
         };
-        // A net compute bill below zero (credits and resale) takes that much off the running costs, so the bar is the burn.
-        seg(r.people + r.ops + Math.min(0, r.signedBill), `color-mix(in oklab, var(--wood) ${r.past ? 45 : 70}%, var(--paper))`);
+        seg(r.people + r.ops, `color-mix(in oklab, var(--wood) ${r.past ? 45 : 70}%, var(--paper))`);
         seg(r.signedBill, r.past ? 'color-mix(in oklab, var(--coral) 55%, var(--paper))' : 'var(--coral)');
+        if (r.signedBill < 0) s += `<rect x="${x0}" y="${yM(0)}" width="${w}" height="${yM(r.signedBill) - yM(0)}" style="fill:color-mix(in oklab, var(--teal) ${r.past ? 35 : 55}%, var(--paper))"/>`;
         seg(r.planBill, 'url(#finance-bill-hatch)');
       }
       s += `<path d="${rows.map((r, i) => `${i ? 'L' : 'M'}${x(r.turn)} ${yM(r.revenue)} H${x(r.turn + 1)}`).join(' ')}" style="fill:none;stroke:var(--teal);stroke-width:3"/>`;
@@ -294,6 +297,12 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
       s += text(x(LAST_TURN + 1), axisY, `month ${monthOfTurn(LAST_TURN + 1)}`, '', 'end');
       s += '</svg>';
       charts.innerHTML = s;
+      key.querySelector('.finance-key-income')?.remove();
+      if (lowM < 0) {
+        const item = element('span', 'finance-key-income');
+        item.append(element('i', 'finance-swatch income'), document.createTextNode('Compute income (credits and resale), below zero'));
+        key.append(item);
+      }
 
       team.replaceChildren(teamPanel(state, { opinions: planOpinions(state, p, plan) }));
       const summary = byEra(p.rows);

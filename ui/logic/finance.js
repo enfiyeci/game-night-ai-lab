@@ -245,7 +245,9 @@ export function planOpinions(state, projection, plan) {
         ? `We earn nothing yet and spend ${Math.round(last.burn)} million a month by era ${last.era}.${out ? ` We're out in month ${Math.floor(out.atMonth)}.` : ''}`
         : out
           ? `We spend ${ratio} times what we earn by era ${last.era}. Without more money we're out in month ${Math.floor(out.atMonth)}.`
-          : `It holds. We spend ${ratio} times what we earn by era ${last.era}.`,
+          : last.burn <= last.revenue
+            ? `It holds. By era ${last.era} we earn more than we spend.`
+            : `It holds. We spend ${Math.max(1, ratio)} times what we earn by era ${last.era}.`,
     },
     {
       id: 'research',

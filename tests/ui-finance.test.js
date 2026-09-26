@@ -249,3 +249,15 @@ test('idle resale in later turns never earns more than a unit bills', () => {
   const credit = signedAt(state, row.turn).bill - row.signedBill;
   assert.ok(credit <= 40 * 0.5 * BALANCE.unitMonthlyCost + 1e-9, `resale ${credit}`);
 });
+
+test('when the lab earns more than it spends, the CFO says so instead of quoting a multiple', () => {
+  const state = structuredClone(era3());
+  state.compute.contracts = [];
+  state.compute.online = 0;
+  state.compute.servingUnits = 0; // nothing to serve, so no spot cover
+  state.budget = { ...state.budget, spend: 0 };
+  state.models = state.models.map((m) => ({ ...m, users: m.users * 10 })); // revenue above the running costs
+  const plan = { goals: {}, raises: {} };
+  const [cfo] = planOpinions(state, project(state, plan), plan);
+  assert.match(cfo.text, /we earn more than we spend/);
+});
