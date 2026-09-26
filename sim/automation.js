@@ -1,10 +1,11 @@
 import { clamp, sigmoid } from './util.js';
 import { totalDebt } from './hazards.js';
 import { eraScale } from './data/compute.js';
+import { availableUnits } from './training.js';
 import {
-  JOBS, LAST_TWO_JOBS, MAX_LEVEL, LEVEL_SPEED, AI_SHARE, CHECK_LOAD, PACK,
+  JOBS, HANDOFF_JOBS, LAST_TWO_JOBS, MAX_LEVEL, LEVEL_SPEED, AI_SHARE, CHECK_LOAD, PACK,
   REVIEWER_CAPACITY, MONITOR_CAPACITY, REVIEWER_MONTHLY, MONITOR_UNITS, AI_REVIEW_BLIND, RISK_SCALE,
-  CLAIM_INFLATION,
+  CLAIM_INFLATION, MAX_CHECK, HELD_BACK,
 } from './data/automation.js';
 
 // The work is done by the newest trained model, released or not.
@@ -73,4 +74,63 @@ export function effectiveChecks(state) {
 export function automationRisk(state) {
   const base = sigmoid((totalDebt(state) * newestCapability(state) / 100 - 40) / 8);
   return base * Math.min(1, checking(effectiveChecks(state), jobLevels(state)).exposure) * RISK_SCALE;
+}
+
+const isObject = (value) => typeof value === 'object' && value !== null && !Array.isArray(value);
+const CHECK_KEYS = ['reviewers', 'monitors', 'aiReview'];
+
+// The free "who does the work" action. All or nothing: a rejected choice changes nothing.
+export function setAutomation(state, input) {
+  if (!isObject(input)) return { ok: false, error: 'the automation choice must be an object' };
+  const unknown = Reflect.ownKeys(input).find((key) => key !== 'levels' && key !== 'checks');
+  if (unknown !== undefined) return { ok: false, error: `unknown automation key ${String(unknown)}` };
+  const offsets = { ...state.automation.offsets };
+  if (Object.hasOwn(input, 'levels')) {
+    if (!isObject(input.levels)) return { ok: false, error: 'levels must be an object' };
+    for (const key of Reflect.ownKeys(input.levels)) {
+      if (key === 'code') return { ok: false, error: 'writing code follows the pack' };
+      if (!HANDOFF_JOBS.includes(key)) return { ok: false, error: `unknown job ${String(key)}` };
+      const index = JOBS.findIndex((job) => job.id === key);
+      const level = input.levels[key];
+      if (!Number.isInteger(level) || level < 0 || level > maxLevel(state.era, index)) {
+        return { ok: false, error: `${JOBS[index].name.toLowerCase()} can go from people only to one level above the pack` };
+      }
+      if (level > 0 && jobLocked(state, key)) return { ok: false, error: 'choosing and direction are back with people' };
+      offsets[key] = level - PACK[state.era][index];
+    }
+  }
+  const checks = { ...state.automation.checks };
+  if (Object.hasOwn(input, 'checks')) {
+    if (!isObject(input.checks)) return { ok: false, error: 'checks must be an object' };
+    const bad = Reflect.ownKeys(input.checks).find((key) => !CHECK_KEYS.includes(key));
+    if (bad !== undefined) return { ok: false, error: `unknown check ${String(bad)}` };
+    for (const key of ['reviewers', 'monitors']) {
+      if (!Object.hasOwn(input.checks, key)) continue;
+      const value = input.checks[key];
+      if (!Number.isInteger(value) || value < 0 || value > MAX_CHECK) return { ok: false, error: `${key} must be a whole number from 0 to ${MAX_CHECK}` };
+      checks[key] = value;
+    }
+    if (Object.hasOwn(input.checks, 'aiReview')) {
+      if (typeof input.checks.aiReview !== 'boolean') return { ok: false, error: 'aiReview must be true or false' };
+      checks.aiReview = input.checks.aiReview;
+    }
+  }
+  // Monitors run on compute; the current reservation is added back so a player can keep or lower it.
+  if (checks.monitors > state.automation.checks.monitors
+    && monitorUnitsFor(state.era, checks.monitors) > availableUnits(state) + controlUnits(state)) {
+    return { ok: false, error: 'not enough free compute for monitors' };
+  }
+  state.automation.offsets = offsets;
+  state.automation.checks = checks;
+  return { ok: true };
+}
+
+export function handBack(state) {
+  for (const id of HANDOFF_JOBS) state.automation.offsets[id] = HELD_BACK;
+}
+
+export function addMonitor(state) {
+  const monitors = state.automation.checks.monitors + 1;
+  if (monitors > MAX_CHECK) return { ok: false, error: 'monitors are already at the top level' };
+  return setAutomation(state, { checks: { monitors } });
 }

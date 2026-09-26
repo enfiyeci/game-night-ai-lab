@@ -4,8 +4,9 @@ import { createInitialState } from '../sim/state.js';
 import { PACK, createAutomation, REVIEWER_CAPACITY, MONITOR_CAPACITY, AI_REVIEW_BLIND } from '../sim/data/automation.js';
 import {
   jobLevels, researchSpeed, claimedSpeed, codeShare, timeShares, bottleneck, checkLoad, checking,
-  reviewerCost, controlUnits, effectiveChecks, automationRisk,
+  reviewerCost, controlUnits, effectiveChecks, automationRisk, setAutomation, handBack, addMonitor,
 } from '../sim/automation.js';
+import { endTurn } from '../sim/turn.js';
 
 const near = (actual, expected, eps = 0.01) => assert.ok(Math.abs(actual - expected) < eps, `${actual} is not near ${expected}`);
 const atEra = (era) => {
@@ -100,4 +101,68 @@ test('monitors that no longer fit in online compute stop checking', () => {
   assert.equal(effectiveChecks(s).monitors, 1);
   s.compute.online = 500;
   assert.equal(effectiveChecks(s).monitors, 3);
+});
+
+const miss = { next: () => 0.99, int: () => 0, chance: () => false, pick: (a) => a[0], normal: (m) => m };
+
+test('the free action stores hand-offs as offsets from the pack, so they creep with it', () => {
+  const s = atEra(3);
+  assert.deepEqual(setAutomation(s, { levels: { review: 2, experiments: 0 } }), { ok: true });
+  assert.deepEqual(jobLevels(s), [2, 2, 0, 0, 0]);
+  s.era = 4;
+  assert.deepEqual(jobLevels(s), [3, 3, 1, 1, 0]);
+});
+
+test('the free action rejects code, unknown jobs, levels past one above the pack, and bad checks', () => {
+  const s = atEra(3);
+  assert.equal(setAutomation(s, { levels: { code: 3 } }).error, 'writing code follows the pack');
+  assert.equal(setAutomation(s, { levels: { cooking: 1 } }).error, 'unknown job cooking');
+  assert.equal(setAutomation(s, { levels: { review: 3 } }).ok, false);
+  assert.equal(setAutomation(s, { levels: { review: 1.5 } }).ok, false);
+  assert.equal(setAutomation(s, { checks: { reviewers: 4 } }).ok, false);
+  assert.equal(setAutomation(s, { checks: { aiReview: 'yes' } }).ok, false);
+  assert.equal(setAutomation(s, { checks: { interns: 1 } }).ok, false);
+  assert.equal(setAutomation(s, { extra: 1 }).ok, false);
+  assert.equal(setAutomation(s, null).ok, false);
+  assert.equal(setAutomation(s, { levels: { review: 2 }, checks: { reviewers: 9 } }).ok, false);
+  assert.deepEqual(s.automation, createAutomation(), 'a rejected choice changes nothing');
+});
+
+test('monitors must fit in free compute; keeping or lowering them always works', () => {
+  const s = atEra(4);
+  s.compute.online = 30; // one era-4 monitor level is 21 units
+  s.compute.split.safety = 0;
+  assert.equal(setAutomation(s, { checks: { monitors: 2 } }).error, 'not enough free compute for monitors');
+  assert.equal(setAutomation(s, { checks: { monitors: 1 } }).ok, true);
+  s.compute.online = 10;
+  assert.equal(setAutomation(s, { checks: { reviewers: 1 } }).ok, true);
+  assert.equal(setAutomation(s, { checks: { monitors: 0 } }).ok, true);
+});
+
+test('hand-back holds the four jobs at people only in every era until the player changes them', () => {
+  const s = atEra(4);
+  handBack(s);
+  assert.deepEqual(jobLevels(s), [3, 0, 0, 0, 0]);
+  s.era = 5;
+  assert.deepEqual(jobLevels(s), [4, 0, 0, 0, 0]);
+  assert.equal(setAutomation(s, { levels: { review: 3 } }).ok, true);
+  assert.deepEqual(jobLevels(s), [4, 3, 0, 0, 0]);
+});
+
+test('addMonitor adds one level while it fits and stops at the top level', () => {
+  const s = atEra(3);
+  s.compute.online = 200;
+  assert.equal(addMonitor(s).ok, true);
+  assert.equal(s.automation.checks.monitors, 1);
+  s.automation.checks.monitors = 3;
+  assert.equal(addMonitor(s).ok, false);
+});
+
+test('endTurn applies the free action and reports its errors', () => {
+  const s = atEra(3);
+  const ok = endTurn(s, { automation: { levels: { review: 2 } } }, miss);
+  assert.deepEqual(ok.errors, []);
+  assert.equal(jobLevels(ok.state)[1], 2);
+  const bad = endTurn(s, { automation: { levels: { code: 4 } } }, miss);
+  assert.ok(bad.errors.includes('writing code follows the pack'));
 });

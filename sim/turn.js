@@ -35,6 +35,7 @@ import { applySplitEffects, makePledge, setComputeSplit, spotCover } from './spl
 import { ROUND_DAYS, monthsPerDay } from './time.js';
 import { TEAM_OF, teamBusyError } from './teams.js';
 import { feedPosts } from './feed.js';
+import { setAutomation } from './automation.js';
 
 export const MAX_MOVES = 2;
 const BUDGET_KEYS = ['training', 'security', 'product', 'talent'];
@@ -139,6 +140,10 @@ export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = 
   }
   if (Object.hasOwn(actions, 'computeSplit')) {
     const r = setComputeSplit(state, actions.computeSplit);
+    if (!r.ok) errors.push(r.error);
+  }
+  if (Object.hasOwn(actions, 'automation')) {
+    const r = setAutomation(state, actions.automation);
     if (!r.ok) errors.push(r.error);
   }
   if (actions.pledge != null) {
