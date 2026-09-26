@@ -11,6 +11,7 @@ import {
   roundSize, setGoal, signedAt, turnRecord,
 } from '../ui/logic/finance.js';
 import { makeBoardPromise } from '../sim/boardPromise.js';
+import { reviewerCost } from '../sim/automation.js';
 
 const era3 = () => SCENARIOS.era3Queue(4); // seed 4 at the first turn of era 3: one CoreFlame contract, no spot, no resale
 
@@ -103,6 +104,27 @@ test("this turn's row matches the sim's burn with spot cover, cloud credits and 
   // The Azuria bill outlasts the credits, so the plan spends exactly what the lab holds, and no more.
   const used = project(state, defaultPlan(state)).rows.reduce((sum, r) => sum + r.credit * r.months, 0);
   assert.ok(Math.abs(used - 30) < 1e-6, `credits used ${used}`);
+});
+
+test("with reviewers on staff, this turn's row still equals the sim's burn, and their pay stays out of the compute bill", () => {
+  const state = structuredClone(era3());
+  state.automation.checks.reviewers = 2;
+  const cost = reviewerCost(state);
+  assert.ok(cost > 0);
+  const rows = project(state, defaultPlan(state)).rows;
+  assert.ok(Math.abs(rows[0].burn - projectBurn(state)) < 1e-9, `${rows[0].burn} vs ${projectBurn(state)}`);
+  assert.ok(Math.abs(rows[0].people - (state.budget.spend + cost)) < 1e-9);
+  // Later eras pay reviewers more, the way reviewerCost scales with the era.
+  const era5 = rows.find((r) => r.era === 5);
+  assert.ok(Math.abs(era5.people - (state.budget.spend + reviewerCost({ ...state, era: 5 }))) < 1e-9);
+  // A played round: the record's compute bill is the burn less ops and people, reviewers included in people.
+  const after = { ...state, burnHistory: [...state.burnHistory, projectBurn(state)] };
+  const record = turnRecord(state, after, []);
+  assert.ok(Math.abs(record.people - (state.budget.spend + cost)) < 1e-9);
+  assert.ok(Math.abs(record.computeBill - (projectBurn(state) - record.ops - record.people)) < 1e-9);
+  const noReviewers = structuredClone(state);
+  noReviewers.automation.checks.reviewers = 0;
+  assert.ok(Math.abs(record.computeBill - (projectBurn(noReviewers) - record.ops - noReviewers.budget.spend)) < 1e-9);
 });
 
 test('a warned spot contract leaves after its last turn, pooled compute is set aside, and a letter of intent counts its sure 30%', () => {

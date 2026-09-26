@@ -47,7 +47,9 @@ export function openAutomation(game, overlayRoot) {
     root.append(element('span', 'automation-corner'));
     for (const name of LEVEL_SHORT) root.append(element('span', 'automation-head', name));
     for (const row of view.rows) {
-      root.append(element('span', 'automation-job', row.name));
+      const job = element('span', 'automation-job', row.name);
+      if (row.fixed) job.append(element('small', '', 'follows the pack'));
+      root.append(job);
       for (let level = 0; level < LEVELS.length; level += 1) {
         const cell = element('button', 'automation-cell');
         cell.type = 'button';

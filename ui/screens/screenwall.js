@@ -30,15 +30,20 @@ function chart(view) {
     turn += era.turns;
   }
   const latest = view.latest;
+  // Late in the run the labels would run past the right edge, so they flip to the left of the latest point.
+  const flip = latest && x(latest.turn) > 600;
+  const labelAt = (gap) => (flip ? `x="${x(latest.turn) - 12}" text-anchor="end"` : `x="${x(latest.turn) + gap}"`);
+  // Measured sits off the x2 line: below it on the right, above it on the left, where the rising line comes in below.
+  const measuredY = latest && (flip ? Math.min(y(latest.speed), y(view.line)) - 14 : Math.max(y(latest.speed), y(view.line)) + 22);
   const svg = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Research speed over the run against our own line">
     ${grid}
     <line x1="${PAD.left}" y1="${y(view.line)}" x2="${W - 20}" y2="${y(view.line)}" class="screenwall-line"/>
     <text x="${PAD.left + 10}" y="${y(view.line) - 8}" class="screenwall-line-label">×${view.line} · our own line</text>
     <path d="${path('claimed')}" class="screenwall-claimed"/>
     <path d="${path('speed')}" class="screenwall-measured"/>
-    ${latest ? `<text x="${x(latest.turn) + 10}" y="${y(latest.claimed) + 4}" class="screenwall-claim-label">Head of Research says ×${latest.claimed.toFixed(1)}</text>
+    ${latest ? `<text ${labelAt(10)} y="${y(latest.claimed) + 4}" class="screenwall-claim-label">Head of Research says ×${latest.claimed.toFixed(1)}</text>
     <circle cx="${x(latest.turn)}" cy="${y(latest.speed)}" r="7" class="screenwall-dot"/>
-    <text x="${x(latest.turn) + 12}" y="${Math.max(y(latest.speed), y(view.line)) + 22}" class="screenwall-measured-label">Measured ×${latest.speed.toFixed(1)}</text>` : ''}
+    <text ${labelAt(12)} y="${measuredY}" class="screenwall-measured-label">Measured ×${latest.speed.toFixed(1)}</text>` : ''}
   </svg>`;
   const holder = element('div', 'screenwall-chart');
   holder.innerHTML = svg;
@@ -70,6 +75,15 @@ function openScreenWall(game, overlayRoot, pending) {
   }
   panel.append(bar, element('h2', '', pending.title), chart(view), choices);
   layer.append(element('div', 'dialog-veil'), panel);
+  // aria-modal: Tab and Shift+Tab wrap across the three choices instead of leaving the wall.
+  layer.addEventListener('keydown', (event) => {
+    if (event.key !== 'Tab') return;
+    const buttons = [...choices.querySelectorAll('button')];
+    const at = buttons.indexOf(document.activeElement);
+    const next = at === -1 ? 0 : (at + (event.shiftKey ? buttons.length - 1 : 1)) % buttons.length;
+    event.preventDefault();
+    buttons[next]?.focus();
+  });
   overlayRoot.append(layer);
   game.clock?.pause('screenwall'); // the clock only watches .dialog-layer and .menu-layer by itself
   choices.querySelector('button')?.focus();

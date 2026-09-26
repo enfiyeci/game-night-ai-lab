@@ -3461,7 +3461,8 @@ svg.room {
 .automation-body .dialog-error:empty { display: none; }
 .automation-grid { display: grid; grid-template-columns: 170px repeat(5, 1fr); gap: 8px 10px; align-items: center; }
 .automation-head { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: color-mix(in srgb, var(--ink) 60%, transparent); text-align: center; }
-.automation-job { font-weight: 800; color: var(--ink); }
+.automation-job { display: grid; line-height: 1.2; font-weight: 800; color: var(--ink); }
+.automation-job small { font-size: 11.5px; font-weight: 700; color: color-mix(in srgb, var(--ink) 65%, transparent); }
 .automation-cell { position: relative; height: 32px; border-radius: 8px; border: 1.5px solid color-mix(in srgb, var(--sky) 45%, var(--cream)); background: color-mix(in srgb, var(--sky) 14%, var(--paper)); font: inherit; font-size: 13px; font-weight: 800; color: var(--paper); cursor: pointer; }
 .automation-cell:hover:not([aria-disabled="true"]) { border-color: var(--sky); }
 .automation-cell.chosen { background: var(--sky); border-color: color-mix(in srgb, var(--sky) 70%, var(--ink)); }
@@ -3515,7 +3516,7 @@ svg.room {
 .screenwall-axis { font: 700 12px Nunito, sans-serif; fill: color-mix(in srgb, var(--paper) 70%, transparent); }
 .screenwall-grid { stroke: color-mix(in srgb, var(--paper) 14%, transparent); }
 .screenwall-line { stroke: var(--coral); stroke-width: 2.5; stroke-dasharray: 10 7; }
-.screenwall-line-label { font: 800 13px Nunito, sans-serif; fill: var(--coral); }
+.screenwall-line-label { font: 800 13px Nunito, sans-serif; fill: color-mix(in srgb, var(--coral) 70%, var(--paper)); }
 .screenwall-measured { fill: none; stroke: var(--sky); stroke-width: 3.5; stroke-linecap: round; }
 .screenwall-claimed { fill: none; stroke: var(--wood); stroke-width: 2.5; stroke-dasharray: 1 6; stroke-linecap: round; }
 .screenwall-claim-label { font: 800 13px Nunito, sans-serif; fill: var(--wood); }

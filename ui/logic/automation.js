@@ -30,9 +30,15 @@ export function automationPayload(state, draft) {
 }
 
 export function automationView(state, draft) {
-  const preview = structuredClone(state);
-  const result = setAutomation(preview, automationPayload(state, draft));
-  const shown = result.ok ? preview : state;
+  const payload = automationPayload(state, draft);
+  let preview = structuredClone(state);
+  const result = setAutomation(preview, payload);
+  // A refused draft (usually monitors that do not fit) still shows the level picks, with today's checks.
+  if (!result.ok) {
+    preview = structuredClone(state);
+    if (!setAutomation(preview, { levels: payload.levels, checks: { ...state.automation.checks } }).ok) preview = state;
+  }
+  const shown = preview;
   const levels = jobLevels(shown);
   const speed = researchSpeed(levels);
   const check = checking(effectiveChecks(shown), levels);

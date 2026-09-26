@@ -33,6 +33,22 @@ test("the dialog validates against this turn's queued compute split, not the sta
   assert.equal(automationView(base, draft).error, 'not enough free compute for monitors');
 });
 
+test('a refused draft keeps the level picks on the grid and still says why', () => {
+  const s = atEra(4);
+  s.compute.online = 10; // too little for one monitor level
+  const draft = automationDraft(s);
+  draft.levels.review = 3;
+  draft.checks.monitors = 3;
+  const view = automationView(s, draft);
+  assert.equal(view.error, 'not enough free compute for monitors');
+  assert.equal(view.rows.find((row) => row.id === 'review').level, 3);
+  assert.deepEqual(view.checks, s.automation.checks);
+  const picked = automationView(s, { ...draft, checks: { ...s.automation.checks } });
+  assert.equal(picked.error, '');
+  assert.equal(view.speed, picked.speed);
+  assert.deepEqual(view.rows.map((row) => row.timeShare), picked.rows.map((row) => row.timeShare));
+});
+
 test('the payload sends only the jobs the player changed, so a hand-back is not undone by OK', () => {
   const s = atEra(4);
   handBack(s);

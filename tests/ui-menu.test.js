@@ -48,6 +48,7 @@ test('other menu items close when both team actions are used; the budget stays f
     assert.notEqual(reasonFor(game, id), '', `${id} should be disabled`);
   }
   assert.equal(reasonFor(game, 'budget'), '', 'budget stays free');
+  assert.equal(reasonFor(game, 'automation'), '', 'who does the work stays free');
   assert.equal(ITEMS.some((item) => item.id === 'endTurn'), false);
 });
 

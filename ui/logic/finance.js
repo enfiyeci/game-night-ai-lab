@@ -16,6 +16,7 @@ import { leaseMonthly } from '../../sim/power.js';
 import { activeModels, monthlyRevenue, revenuePerUser, INVESTORS } from '../../sim/economy.js';
 import { computeSlices, resaleCredit, spotCover } from '../../sim/split.js';
 import { PRICE_STANCE } from '../../sim/serving.js';
+import { reviewerCost } from '../../sim/automation.js';
 
 export const UNIT_PRICE = BALANCE.unitMonthlyCost;
 export const LAST_TURN = ERAS.reduce((sum, era) => sum + era.turns, 0) - 1;
@@ -46,7 +47,8 @@ export function turnRecord(before, after, events = []) {
   const revenue = after.arr / 12;
   const burn = after.burnHistory.at(-1) ?? 0;
   const ops = opsMonthly(before.era);
-  const people = after.budget.spend;
+  // Reviewers are people too: their pay joins "people and programs", never the compute bill.
+  const people = after.budget.spend + reviewerCost({ automation: after.automation, era: before.era });
   const raised = events.filter((e) => e.type === 'raise' && e.ok).reduce((sum, e) => sum + (e.amount ?? 0), 0);
   return {
     turn: before.turn,
@@ -136,7 +138,7 @@ export function project(state, plan) {
   const surge = state.compute.surge;
   const usageAt = (k) => (surge && k < surge.turnsLeft ? surge.usage ?? 1 : 1);
   const baseRevenue = monthlyRevenue(state) / usageAt(0);
-  const people = state.budget.spend;
+  const budgetSpend = state.budget.spend;
   const round = roundSize(state);
   const pooled = state.compute.pooled ?? 0;
   const slices = computeSlices(state);
@@ -164,6 +166,7 @@ export function project(state, plan) {
     }
     const planBill = bought * UNIT_PRICE;
     const ops = opsMonthly(era);
+    const people = budgetSpend + reviewerCost({ automation: state.automation, era }); // reviewers' pay grows by era
     const credit = Math.min(signed.azuria, credits / months); // creditOffset, spent the way spendCredits spends it
     credits = Math.max(0, credits - credit * months);
     // Compute above today's level covers today's shortfall first and then sits idle; compute below it idles less first.
