@@ -4,6 +4,8 @@ import { clamp } from './util.js';
 import { servingCost, PRICE_STANCE, REVENUE_PER_USER } from './serving.js';
 import { controlUnits } from './internal.js';
 
+export const STATE_PREEMPTION_LEGAL_COST_MULTIPLIER = 0.7;
+
 export function activeModels(state) {
   return state.models.filter((m) => m.active && m.channel !== 'open' && state.turn >= m.activeFromTurn);
 }
@@ -80,7 +82,10 @@ export function runway(state, which) {
 }
 
 export function legalTick(state) {
-  const paid = state.legalCases.filter((c) => c.dueTurn <= state.turn);
+  const multiplier = state.flags.statePreemption === true ? STATE_PREEMPTION_LEGAL_COST_MULTIPLIER : 1;
+  const paid = state.legalCases
+    .filter((c) => c.dueTurn <= state.turn)
+    .map((c) => ({ ...c, cost: c.cost * multiplier }));
   state.legalCases = state.legalCases.filter((c) => c.dueTurn > state.turn);
   for (const c of paid) {
     state.cash -= c.cost;

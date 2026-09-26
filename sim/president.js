@@ -8,6 +8,13 @@ function applyStake(state) {
     state.raceHeat += 5;
     return 'nationalChampion';
   }
+  if (state.govFavor.us >= 62) {
+    if (state.flags.statePreemption !== true) {
+      state.flags.statePreemption = true;
+      state.publicTrust -= 3;
+    }
+    return 'statePreemption';
+  }
   if (state.govFavor.us >= 55) {
     state.compute.pipeline.push({
       supplier: 'federal-export-license',

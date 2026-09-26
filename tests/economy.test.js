@@ -96,6 +96,16 @@ test('lawsuits come due', () => {
   assert.equal(s.legalCases.length, 1);
 });
 
+test('state-law preemption discounts legal cases when they are paid', () => {
+  const s = createInitialState();
+  s.flags.statePreemption = true;
+  s.legalCases.push({ cost: 100, dueTurn: 0, source: 'state safety law' });
+  const paid = legalTick(s);
+  assert.deepEqual(paid, [{ cost: 70, dueTurn: 0, source: 'state safety law' }]);
+  assert.equal(s.cash, 930);
+  assert.equal(s.publicTrust, 57);
+});
+
 test('one funding round per era, with strings attached', () => {
   const s = createInitialState();
   s.era = 2;

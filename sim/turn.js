@@ -99,11 +99,11 @@ export function endTurn(prev, actions = {}, rng) {
   } else if (actions.constitution) errors.push('the constitution can only be set on turn 0');
   if (state.meeting) {
     const id = state.meeting.id;
-    const result = Object.hasOwn(actions, 'presidentAnswers')
-      ? runMeeting(state, actions.presidentAnswers)
-      : expireMeeting(state);
+    const answerIds = Object.hasOwn(actions, 'presidentAnswers') ? actions.presidentAnswers : undefined;
+    const result = runMeeting(state, answerIds);
     if (!result.ok) errors.push(result.error);
-    else events.push({ type: 'meetingOutcome', id, walkedOut: result.outcome.walkedOut, stake: result.outcome.stake });
+    const outcome = result.ok ? result.outcome : expireMeeting(state).outcome;
+    events.push({ type: 'meetingOutcome', id, walkedOut: outcome.walkedOut, stake: outcome.stake });
   } else {
     if (Object.hasOwn(actions, 'presidentAnswers')) errors.push('no open President meeting');
     const id = meetingDue(state);

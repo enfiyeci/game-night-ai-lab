@@ -72,7 +72,7 @@ test('flattery buys government favour at a cost to staff and public trust', () =
   assert.ok(state.govFavor.us > before.gov);
   assert.ok(state.staffTrust < before.staff);
   assert.ok(state.publicTrust < before.public);
-  assert.ok(['nationalChampion', 'exportLicenses', 'federalContract', 'none'].includes(result.outcome.stake));
+  assert.ok(['nationalChampion', 'statePreemption', 'exportLicenses', 'federalContract', 'none'].includes(result.outcome.stake));
 });
 
 test('answering with plain honesty risks the supply-chain designation', () => {
@@ -118,19 +118,22 @@ test('promises are recorded six turns after the meeting', () => {
 
 test('meeting stakes use each final government-favour threshold', () => {
   const cases = [
-    { favor: 70, stake: 'nationalChampion', cash: 150, heat: 5, pipeline: 0 },
-    { favor: 55, stake: 'exportLicenses', cash: 0, heat: 0, pipeline: 1 },
-    { favor: 40, stake: 'federalContract', cash: 60, heat: 0, pipeline: 0 },
-    { favor: 39, stake: 'none', cash: 0, heat: 0, pipeline: 0 },
+    { favor: 70, stake: 'nationalChampion', cash: 150, heat: 5, trust: 0, pipeline: 0 },
+    { favor: 62, stake: 'statePreemption', cash: 0, heat: 0, trust: -3, pipeline: 0 },
+    { favor: 55, stake: 'exportLicenses', cash: 0, heat: 0, trust: 0, pipeline: 1 },
+    { favor: 40, stake: 'federalContract', cash: 60, heat: 0, trust: 0, pipeline: 0 },
+    { favor: 39, stake: 'none', cash: 0, heat: 0, trust: 0, pipeline: 0 },
   ];
   for (const expected of cases) {
     const state = open(createInitialState());
     state.govFavor.us = expected.favor;
-    const before = { cash: state.cash, heat: state.raceHeat };
+    const before = { cash: state.cash, heat: state.raceHeat, trust: state.publicTrust };
     const result = runMeeting(state, plainIds());
     assert.equal(result.outcome.stake, expected.stake);
     assert.equal(state.cash, before.cash + expected.cash);
     assert.equal(state.raceHeat, before.heat + expected.heat);
+    assert.equal(state.publicTrust, before.trust + expected.trust);
+    assert.equal(state.flags.statePreemption === true, expected.stake === 'statePreemption');
     assert.equal(state.compute.pipeline.length, expected.pipeline);
     if (expected.stake === 'exportLicenses') {
       assert.deepEqual(state.compute.pipeline[0], {
@@ -138,6 +141,16 @@ test('meeting stakes use each final government-favour threshold', () => {
       });
     }
   }
+});
+
+test('state-law preemption charges its public-trust cost only once', () => {
+  const state = open(createInitialState());
+  state.govFavor.us = 62;
+  assert.equal(runMeeting(state, plainIds()).outcome.stake, 'statePreemption');
+  assert.equal(state.publicTrust, 57);
+  state.meeting = { id: 'second', patience: 10 };
+  assert.equal(runMeeting(state, plainIds('second')).outcome.stake, 'statePreemption');
+  assert.equal(state.publicTrust, 57);
 });
 
 test('four points of flattery queue the President amendment demand', () => {
@@ -180,19 +193,42 @@ test('an unanswered open meeting expires with one walkout penalty and is held', 
   assert.equal(out.state.meeting, null);
   assert.deepEqual(out.state.meetingsHeld, ['first']);
   assert.equal(out.state.govFavor.us, 40);
+  assert.equal(out.errors.length, 1);
+  assert.match(out.errors[0], /president answers/i);
   assert.deepEqual(out.events.filter((event) => event.type === 'meetingOutcome'), [
     { type: 'meetingOutcome', id: 'first', walkedOut: true, stake: 'federalContract' },
   ]);
 });
 
-test('malformed presidentAnswers records an error without running the meeting', () => {
+function assertInvalidAnswersExpire(actions) {
   const state = open(createInitialState());
-  const out = endTurn(state, { presidentAnswers: plainIds().slice(1) }, no);
-  assert.deepEqual(out.state.meeting, { id: 'first', patience: 10 });
-  assert.deepEqual(out.state.meetingsHeld, []);
+  const out = endTurn(state, actions, no);
+  assert.equal(out.state.meeting, null);
+  assert.deepEqual(out.state.meetingsHeld, ['first']);
+  assert.equal(out.state.govFavor.us, 40);
   assert.equal(out.errors.length, 1);
   assert.match(out.errors[0], /president answers/i);
-  assert.equal(out.events.some((event) => event.type === 'meetingOutcome'), false);
+  assert.deepEqual(out.events.filter((event) => event.type === 'meetingOutcome'), [
+    { type: 'meetingOutcome', id: 'first', walkedOut: true, stake: 'federalContract' },
+  ]);
+}
+
+test('undefined presidentAnswers expires the open meeting', () => {
+  assertInvalidAnswersExpire({ presidentAnswers: undefined });
+});
+
+test('inherited presidentAnswers expires the open meeting', () => {
+  assertInvalidAnswersExpire(Object.create({ presidentAnswers: plainIds() }));
+});
+
+test('two President answer ids for three exchanges expires the open meeting', () => {
+  assertInvalidAnswersExpire({ presidentAnswers: plainIds().slice(0, 2) });
+});
+
+test('an unknown President answer id expires the open meeting', () => {
+  const answerIds = plainIds();
+  answerIds[1] = 'unknown-answer';
+  assertInvalidAnswersExpire({ presidentAnswers: answerIds });
 });
 
 test('meeting flattery causes the President demand card to be queued', () => {
