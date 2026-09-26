@@ -27,6 +27,10 @@ only through search-result snippets, and those claims carry ⚠️ inline.
    calibrate the out-of-money ending.
 6. `feed-dead-buttons.md` — how games treat controls that do nothing on fake websites and
    social feeds (2026-09-26); Football Manager's manual read in full, the rest mostly summaries.
+7. `recursive-self-improvement/README.md` — how the labs describe and measure AI automating AI
+   research (2026-09-26): Anthropic's "When AI builds itself" essay and automation index, the
+   RSP, OpenAI and Google DeepMind thresholds, share-of-code figures, METR's measured speedups,
+   and how other games model a self-accelerating loop. Start with its verified-rows table.
 
 ## Notable catches
 
