@@ -84,7 +84,9 @@ function reactions(state, model, misalignmentIncident) {
   root.append(el('div', 'sec', 'Reactions'));
   const posts = [...model.launch.reactions];
   if (misalignmentIncident) {
-    const warning = state.feed.findLast((post) => post.tag === 'warning');
+    // Other posts share the 'warning' tag too (marketwire spot-GPU in sim/turn.js, event warnings
+    // in sim/events.js); match the handle so this is the misalignment post from sim/release.js.
+    const warning = state.feed.findLast((post) => post.tag === 'warning' && post.handle === '@sre_oncall');
     if (warning) posts.unshift({ handle: warning.handle, text: warning.text, warning: true });
   }
   posts.slice(0, 5).forEach((post, index) => {
@@ -169,7 +171,11 @@ export function showReveal(overlayRoot, { state, model, misalignmentIncident = f
   panel.append(top, cols, foot);
   layer.append(veil, panel);
 
-  // Owner pick 4B: the build-up runs about four seconds; any click or key during it jumps to the end.
+  const previousFocus = document.activeElement;
+  let closed = false;
+  // Owner pick 4B: the build-up runs about four seconds; any click or key during it jumps to the
+  // end. Must stay ahead of the CSS build-up: Continue lights at 4.2s + .3s (.reveal-play
+  // .reveal-continue in ui/styles.css).
   let finished = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const timer = setTimeout(() => { finished = true; }, 4500);
   const finish = () => {
@@ -177,20 +183,34 @@ export function showReveal(overlayRoot, { state, model, misalignmentIncident = f
     panel.classList.add('reveal-skip');
   };
   const close = () => {
+    if (closed) return;
+    closed = true;
     clearTimeout(timer);
     layer.remove();
     overlayRoot.dispatchEvent(new CustomEvent('gdt-dialog-closed'));
+    if (previousFocus?.isConnected && typeof previousFocus.focus === 'function') previousFocus.focus();
     onClose?.();
   };
-  // Capture phase, so a click on Continue or the veil during the build-up only skips.
+  // Capture phase, so a click on Continue or the veil during the build-up only skips. mousedown
+  // is where the browser would otherwise move focus off Continue (e.g. to <body> on a veil
+  // click, since the veil isn't focusable); blocking that keeps focus inside the layer so the
+  // keydown listener below keeps firing after any click.
+  layer.addEventListener('mousedown', (event) => {
+    if (event.target !== done) event.preventDefault();
+  }, true);
   layer.addEventListener('click', (event) => {
     if (!finished) {
       event.preventDefault();
       event.stopPropagation();
       finish();
+      done.focus();
       return;
     }
-    if (event.target === done) close();
+    if (event.target === done) {
+      close();
+      return;
+    }
+    done.focus();
   }, true);
   layer.addEventListener('keydown', (event) => {
     if (!finished) {
@@ -203,7 +223,10 @@ export function showReveal(overlayRoot, { state, model, misalignmentIncident = f
       done.focus();
       return;
     }
-    if (event.key === 'Escape') {
+    if (event.key === 'Enter' || event.key === 'Escape') {
+      if (event.repeat) return;
+      // preventDefault also suppresses the button's native Enter-activation click, so close()
+      // (idempotent via the `closed` guard) only runs once here.
       event.preventDefault();
       close();
     }
