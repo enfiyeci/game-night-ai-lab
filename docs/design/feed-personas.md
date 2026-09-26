@@ -1163,7 +1163,7 @@ Added 2026-09-26 for world news outside AI (owner: "some unrelated world news").
 - **Voice:** headlines, and "Opinion:" pieces that pick a side.
 - **Reacts to:** politics and business (`world-news.md`), `company`.
 
-### 103. Sportsline — `@sportsline`
+### 103. Scoreline — `@scoreline`
 - **Who:** a sports news account; results, transfers, drama.
 - **Voice:** "FULL TIME:", big numbers.
 - **Reacts to:** sport (`world-news.md`).

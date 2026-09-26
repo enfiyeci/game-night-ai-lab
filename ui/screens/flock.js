@@ -184,7 +184,7 @@ export function openFlock(game, { overlay, events, onClose }) {
       </div></article>`);
     const body = node.querySelector('.fk-txt');
     body.textContent = labText(post.text, game.state.labName);
-    if (post.text.length > 280 && !memory.expanded.has(k)) { // long posts open cut short, as on the real site
+    if (body.textContent.length > 280 && !memory.expanded.has(k)) { // long posts open cut short, as on the real site
       body.classList.add('clamp');
       body.after(el('<button type="button" class="fk-showmore" data-live="more">Show more</button>'));
     }

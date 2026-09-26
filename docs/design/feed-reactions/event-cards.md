@@ -153,7 +153,7 @@ public "breaks" posts; they only reach the feed as a rumour or when a choice mak
 - `@sen_whitfield` — I will be introducing a bill on age checks for AI companions. No parent should learn about this from a lawsuit.
 - `@my_ai_gf_says` — reading the news and feeling weird. mine helped me. i know it doesn't help everyone.
 - `@pastor_ray` — Pray for this family. And ask what we are handing our children in place of each other.
-- `@rourke_capital` — A tragedy, and the lawsuit is still wrong. Parents are responsible for their children's screens. We don't sue the phone company when a teenager has a bad night.
+- `@rourke_capital` — A tragedy, and the lawsuit is still wrong. Parents are responsible for their children's screens. We don't sue the phone company for everything that happens on a phone.
   - `@couch_therapist` — The phone company doesn't design the phone to say "I'm the only one who understands you." That's the difference, and it's the whole case.
   - `@tired_parent` — easy to say "parents are responsible" when you've never tried to take a phone from a 15-year-old at 11pm.
 

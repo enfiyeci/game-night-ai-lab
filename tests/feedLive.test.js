@@ -126,6 +126,38 @@ test('seasonal posts only appear in their season', () => {
   }
 });
 
+test('a seasonal post is checked against the day it lands, not the day it was picked', () => {
+  const months = { winter: [11, 0, 1], spring: [2, 3, 4], summer: [5, 6, 7], 'late summer': [7, 8], autumn: [8, 9, 10] };
+  const monthStarts = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+  const monthOf = (day) => monthStarts.findLastIndex((start) => start <= day % 365);
+  const season = new Map([...REACTIONS.everyday, ...REACTIONS.world].filter((post) => post[2]?.season).map(([, text, extra]) => [text, extra.season]));
+  let checked = 0;
+  for (let seed = 1; seed <= 40; seed += 1) {
+    for (let day = 300; day < 420; day += 7) { // rounds that cross from autumn into winter and spring
+      const state = createInitialState({ seed });
+      state.day = day;
+      state.feed = [];
+      reactToEvents({ raceHeat: 0, publicTrust: 50 }, state, [], { atMark: true });
+      for (const post of state.feedQueue.filter((p) => season.has(p.text))) {
+        checked += 1;
+        assert.ok(months[season.get(post.text)].includes(monthOf(post.day)), `"${post.text.slice(0, 40)}" lands on day ${post.day}`);
+      }
+    }
+  }
+  assert.ok(checked > 0, 'some seasonal posts were scheduled');
+});
+
+test('once the run is over, every post still waiting is released', () => {
+  const state = stateOnDay();
+  reactToLandedCard(state, { id: 'jailbreak' });
+  releaseDueFeed(state);
+  assert.ok(state.feedQueue.length >= 1, 'posts are waiting for later days');
+  state.ending = 'aligned';
+  releaseDueFeed(state);
+  assert.equal(state.feedQueue.length, 0);
+  assert.ok(state.feed.every((post) => post.day <= state.day), 'released posts carry the final day at the latest');
+});
+
 test('a summit with no binding commitments counts as failed, not signed', () => {
   const state = stateOnDay();
   reactToEvents(state, state, [{ type: 'summit', signed: {}, binding: [] }]);

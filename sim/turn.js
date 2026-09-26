@@ -518,6 +518,7 @@ export function advanceDays(prev, days, rng, observer = {}) {
     const dayEvents = events.slice(firstEvent);
     if (reachesMark || dayEvents.length) postFeed(mood, state, dayEvents, reachesMark);
   }
+  if (state.ending) releaseDueFeed(state); // no later day comes, so nothing may stay queued
   return { state, events, errors };
 }
 

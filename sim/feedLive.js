@@ -63,11 +63,13 @@ function scheduler(state, salt) {
     rng,
     // Picks up to n unused templates from pool and schedules them; a post's replies follow it the same day or the next.
     add(pool, n, tag, { from = 0, to = 0, ...ctx } = {}) {
-      const free = (pool ?? []).filter(([, text, extra]) => !taken.has(render(state, text, ctx)) && inSeason(extra, state.day + from));
-      for (let k = 0; k < n && free.length; k += 1) {
+      const free = (pool ?? []).filter(([, text]) => !taken.has(render(state, text, ctx)));
+      for (let k = 0; k < n && free.length;) {
         const [handle, raw, extra] = free.splice(rng.int(0, free.length - 1), 1)[0];
         const text = render(state, raw, ctx);
         const day = state.day + rng.int(from, Math.max(from, to));
+        if (!inSeason(extra, day)) continue; // a seasonal post only lands on a day in its season
+        k += 1;
         taken.add(text);
         state.feedQueue.push({ turn: state.turn, day, handle, text, tag });
         // The replies are a conversation: each answers the one before it.
@@ -86,12 +88,14 @@ function scheduler(state, salt) {
   };
 }
 
-// Moves posts whose day has come from the queue into the feed, oldest first.
+// Moves posts whose day has come from the queue into the feed, oldest first. Once the run is over no
+// later day comes, so everything still waiting is released.
 export function releaseDueFeed(state) {
   if (!state.feedQueue?.length) return;
-  const due = state.feedQueue.filter((post) => post.day <= state.day).sort((a, b) => a.day - b.day); // stable: a reply stays after its post
+  const isDue = (post) => Boolean(state.ending) || post.day <= state.day;
+  const due = state.feedQueue.filter(isDue).sort((a, b) => a.day - b.day); // stable: a reply stays after its post
   if (!due.length) return;
-  state.feedQueue = state.feedQueue.filter((post) => post.day > state.day);
+  state.feedQueue = state.feedQueue.filter((post) => !isDue(post));
   for (const post of due) state.feed.push({ ...post, turn: state.turn, day: Math.min(post.day, state.day) });
   if (state.feed.length > FEED_KEEP) state.feed.splice(0, state.feed.length - FEED_KEEP);
 }
