@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { BALANCE } from '../sim/balance.js';
+import { roundSpan } from '../sim/time.js';
 import { growUsers, monthlyRevenue, projectBurn } from '../sim/economy.js';
 import { eraById } from '../sim/data/eras.js';
 import { computeSlices } from '../sim/split.js';
@@ -127,7 +128,7 @@ test("with reviewers on staff, this turn's row still equals the sim's burn, and 
   const era5 = rows.find((r) => r.era === 5);
   assert.ok(Math.abs(era5.people - (state.budget.spend + reviewerCost({ ...state, era: 5 }))) < 1e-9);
   // A played round: the record's compute bill is the burn less ops and people, reviewers included in people.
-  const after = { ...state, burnHistory: [...state.burnHistory, projectBurn(state)] };
+  const after = { ...state, burnHistory: [...state.burnHistory, projectBurn(state)], lastRoundBurn: projectBurn(state) };
   const record = turnRecord(state, after, []);
   assert.ok(Math.abs(record.people - (state.budget.spend + cost)) < 1e-9);
   assert.ok(Math.abs(record.computeBill - (projectBurn(state) - record.ops - record.people)) < 1e-9);
@@ -173,7 +174,7 @@ test('turn records add up to the cash the sim ended with', () => {
 
 test('a turn record counts only successful raises', () => {
   const before = era3();
-  const after = { ...before, cash: before.cash + 500, arr: 0, burnHistory: [...before.burnHistory, 0], budget: before.budget };
+  const after = { ...before, cash: before.cash + 500, arr: 0, burnHistory: [...before.burnHistory, 0], lastRoundBurn: 0, budget: before.budget };
   const record = turnRecord(before, after, [{ type: 'raise', ok: true, amount: 500 }, { type: 'raise', ok: false, error: 'x' }]);
   assert.equal(record.raised, 500);
   assert.ok(Math.abs(record.oneOffs) < 1e-9);
@@ -258,7 +259,7 @@ test("today's serving shortfall stays in later turns until planned compute cover
 
 test('a played turn keeps a negative net compute bill', () => {
   const before = era3();
-  const after = { ...before, arr: 0, burnHistory: [...before.burnHistory, 10], budget: before.budget };
+  const after = { ...before, arr: 0, burnHistory: [...before.burnHistory, 10], lastRoundBurn: 10, budget: before.budget };
   assert.ok(turnRecord(before, after, []).computeBill < 0);
 });
 
@@ -313,4 +314,28 @@ test('a queued board promise reaches the sim when the turn ends', () => {
   assert.deepEqual(errors, []);
   assert.ok(events.some((e) => e.type === 'boardPromise' && e.units === 60 && e.era === 3));
   assert.equal(game.queue.boardPromise, undefined);
+});
+
+test('a round with compute landing mid-round records its real spend, not a phantom one-off', () => {
+  const state = structuredClone(era3());
+  state.cash = 1e5;
+  // A big contract due at the next mark, so it lands inside this round (sim/landings.js).
+  state.compute.pipeline.push({ id: 'cbig', supplier: 'azuria', units: 400, price: 1, termMonths: 24, arrivesTurn: state.turn + 1, string: null, needsPower: false });
+  const game = createGame({ seed: 4, state, history: scenarioHistory(state) });
+  game.endTurn();
+  const row = game.financeHistory.at(-1);
+  assert.ok(game.state.compute.contracts.some((c) => c.id === 'cbig'), 'the contract landed');
+  assert.ok(Math.abs(row.oneOffs) < Math.max(1, Math.abs(row.burn) * row.months * 0.02), `one-offs ${row.oneOffs} against burn ${row.burn}`);
+});
+
+test('in a later row, a delivery landing partway bills its share and adds no capacity yet', () => {
+  const state = structuredClone(era3());
+  const next = state.turn + 1;
+  const { start, end } = roundSpan(next);
+  state.compute.pipeline = [{ id: 'cx', supplier: 'azuria', units: 10, price: 1, termMonths: 24, arrivesTurn: next + 1, string: null, landsDay: start + Math.round((end - start) / 2), landsFor: next }];
+  const row = signedAt(state, next);
+  const whole = signedAt({ ...state, compute: { ...state.compute, pipeline: [] } }, next);
+  const bill = 10 * 1 * BALANCE.unitMonthlyCost;
+  assert.ok(Math.abs(row.bill - whole.bill - bill * (end - state.compute.pipeline[0].landsDay) / (end - start)) < 1e-9);
+  assert.equal(row.units, whole.units);
 });

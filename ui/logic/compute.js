@@ -617,7 +617,8 @@ export function turnSummary(events, state) {
         ?? supplierFromOfferId(event.offerId);
       const subject = supplier ? `You signed with ${supplierName(supplier)}` : 'You signed a compute deal';
       const day = state?.compute?.pipeline?.find((p) => p.id === event.pipelineId && p.landsDay != null)?.landsDay
-        ?? storyDayForTurn(event.arrivesTurn);
+        ?? state?.power?.sites?.find((s) => s.id === event.site)?.landsDay // a grid reservation
+        ?? (event.arrivesTurn <= (state?.turn ?? -1) ? state.day : storyDayForTurn(event.arrivesTurn)); // delivered at once
       lines.push(`${subject} — online from ${storyDate(day).label}`);
     } else if (event.type === 'spotWarning') {
       lines.push(`Spot capacity may be pulled after next ${roundWord(state.era)}`);

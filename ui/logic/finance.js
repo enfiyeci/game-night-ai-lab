@@ -17,6 +17,7 @@ import { activeModels, monthlyRevenue, revenuePerUser, INVESTORS } from '../../s
 import { computeSlices, resaleCredit, spotCover } from '../../sim/split.js';
 import { PRICE_STANCE } from '../../sim/serving.js';
 import { reviewerCost } from '../../sim/automation.js';
+import { roundSpan } from '../../sim/time.js';
 
 export const UNIT_PRICE = BALANCE.unitMonthlyCost;
 export const LAST_TURN = ERAS.reduce((sum, era) => sum + era.turns, 0) - 1;
@@ -45,7 +46,7 @@ const roundOpen = (state, era) => era >= 2 && state.flags.lastRoundEra !== era;
 export function turnRecord(before, after, events = []) {
   const months = eraById(before.era).monthsPerTurn;
   const revenue = after.arr / 12;
-  const burn = after.burnHistory.at(-1) ?? 0;
+  const burn = after.lastRoundBurn ?? after.burnHistory.at(-1) ?? 0; // the round's day-by-day average (sim/turn.js)
   const ops = opsMonthly(before.era);
   // Reviewers are people too: their pay joins "people and programs", never the compute bill.
   const people = after.budget.spend + reviewerCost({ automation: after.automation, era: before.era });
@@ -72,6 +73,20 @@ export const LOI_SURE_SHARE = 0.3; // sim/contracts.js arrive(): a letter of int
 
 // What is already signed at a future turn: running contracts, deliveries due by then, and powered sites. bill is
 // the gross monthly bill; azuria is the part of it that cloud credits can pay.
+// Stage 2: a delivery or site due at the start of round arrivesTurn lands on landsDay inside the round before it.
+const landsIn = (item, turn) => item.landsDay != null && item.arrivesTurn === turn + 1;
+// The share of row `turn` after the item lands (the sim bills it from the day after it lands to the mark).
+function landedShare(item, turn) {
+  const { start, end } = roundSpan(turn);
+  return Math.max(0, Math.min(1, (end - item.landsDay) / (end - start)));
+}
+// The months of its term a delivery uses up before its old start date.
+function earlyMonths(item) {
+  if (item.landsDay == null) return 0;
+  const { start, end } = roundSpan(item.arrivesTurn - 1);
+  return Math.max(0, end - item.landsDay) * (eraById(eraOfTurn(item.arrivesTurn - 1)).monthsPerTurn / (end - start));
+}
+
 export function signedAt(state, turn) {
   const era = eraOfTurn(turn);
   const ahead = monthOfTurn(turn) - monthOfTurn(state.turn);
@@ -79,24 +94,29 @@ export function signedAt(state, turn) {
     ...state.compute.contracts
       .filter((c) => c.bumpTurn == null || c.bumpTurn >= turn)
       .map((c) => ({ ...c, left: c.monthsLeft == null ? Infinity : c.monthsLeft - ahead })),
-    ...state.compute.pipeline.filter((p) => p.arrivesTurn <= turn).map((p) => ({
+    ...state.compute.pipeline.filter((p) => p.arrivesTurn <= turn || (turn > state.turn && landsIn(p, turn))).map((p) => ({
       ...p,
       // Due now but not delivered yet, the sim bills the whole headline (arrivingBills); later, only what is sure.
       units: p.headline == null ? p.units : p.arrivesTurn <= state.turn ? p.headline : Math.round(p.headline * LOI_SURE_SHARE),
-      left: p.termMonths == null ? Infinity : p.termMonths - (monthOfTurn(turn) - monthOfTurn(p.arrivesTurn)),
+      // A term starts the day it lands (stage 2), so a delivery that lands early also ends that much earlier.
+      left: p.termMonths == null ? Infinity : p.termMonths - (monthOfTurn(turn) - monthOfTurn(p.arrivesTurn)) - earlyMonths(p),
+      landing: landsIn(p, turn) ? landedShare(p, turn) : 1,
       needsPower: p.needsPower ?? (p.supplier === 'verde' && era >= 4),
     })),
   ].filter((c) => c.left > 1e-9 && !c.dark);
   // Terms end on days (stage 2): in a later row, a contract that ends partway bills its share and adds no capacity.
   const rowMonths = eraById(era).monthsPerTurn;
-  const share = (c) => (turn > state.turn && Number.isFinite(c.left) ? Math.min(1, c.left / rowMonths) : 1);
+  // In a later row, a contract that ends partway or lands partway bills its share and adds no capacity.
+  const share = (c) => (turn > state.turn ? (Number.isFinite(c.left) ? Math.min(1, c.left / rowMonths) : 1) * (c.landing ?? 1) : 1);
   const whole = live.filter((c) => share(c) >= 1 - 1e-9);
   const sites = state.power.sites.filter((s) => s.online || s.arrivesTurn <= turn);
+  const landingSites = turn > state.turn ? state.power.sites.filter((s) => !s.online && landsIn(s, turn)) : [];
   const power = sites.reduce((sum, s) => sum + s.units, 0);
   const own = whole.filter((c) => !c.needsPower).reduce((sum, c) => sum + c.units, 0);
   const needs = whole.filter((c) => c.needsPower).reduce((sum, c) => sum + c.units, 0);
   const billOf = (c) => c.units * (c.supplier === 'spot' ? SPOT_PRICE[era] : c.price) * UNIT_PRICE;
-  const bill = live.reduce((sum, c) => sum + billOf(c) * share(c), 0) + sites.reduce((sum, s) => sum + leaseMonthly(s.units), 0);
+  const bill = live.reduce((sum, c) => sum + billOf(c) * share(c), 0) + sites.reduce((sum, s) => sum + leaseMonthly(s.units), 0)
+    + landingSites.reduce((sum, s) => sum + leaseMonthly(s.units) * landedShare(s, turn), 0);
   const azuria = live.filter((c) => c.supplier === 'azuria').reduce((sum, c) => sum + billOf(c) * share(c), 0);
   const raw = own + Math.min(needs, power);
   const prices = whole.map((c) => ({ units: c.units, price: c.supplier === 'spot' ? SPOT_PRICE[era] : c.price }));
