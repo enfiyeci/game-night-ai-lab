@@ -170,6 +170,13 @@ in section 6e). A lab that is insolvent when era 5 ends never wins; it ends in a
   eager flatterer that grows a moral spine if trained well; it stays flattering if trained on
   sycophancy, and turns smooth and evasive when hidden debt is high (the learned self leaking
   through). **Presence (owner pick 2026-09-25, from option C):** a small floating robot in the office that drifts between desks and speaks in bubbles like the advisors. Build: plan 2D, D2; mockup `docs/design/mockups/K2-feed-lumen.html#c`.
+- **Ending animations (owner 2026-09-25).** Every ending plays its own short cinematic sequence
+  with sound before the endings screen. Style: the drawn K2 look, animated in the browser ("i like
+  the office drawing version"), not a Blender render. Each sequence opens in the player's own
+  office (their era, their staff), then cuts to scenes outside the lab that show how the ending
+  affects the world ("just doing the office is not the most ideal"). Test and sources:
+  `docs/design/endings-test/`. The endings screen after it is a mix of N1, N2 and N4 (mockup
+  `docs/design/mockups/K2-side-options.html#nmix`), pending the owner's approval.
 - **President meetings** (era 2 or 3, and era 5). **The owner writes this dialogue
   (2026-09-25); build the mechanics and leave the script to the owner.** A fictional president, recognizable in style
   but not named after the real person (owner may override). Each answer has a flattery level
