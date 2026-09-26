@@ -25,6 +25,9 @@ only through search-result snippets, and those claims carry ⚠️ inline.
 5. `runway-history/runway_history.md` — OpenAI and Anthropic cash-runway history and real
    "ran out of money" endings (Inflection, Adept, Character.AI, Stability AI), used to
    calibrate the out-of-money ending.
+6. `event-cards/README.md` — how games present events, dilemmas and warnings (Game Dev Tycoon
+   first), what our specs and sim already decide, and the event-card decisions put to the owner
+   (2026-09-26).
 
 6. `finance-planning/README.md`: game finance screens and real labs' compute plans (2026-09-25),
    behind the finance planner mockups. Subagent output; paywalled figures are second-hand.
