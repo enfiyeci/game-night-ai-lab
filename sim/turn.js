@@ -100,7 +100,7 @@ function normalize(state) {
 
 function finishEnding(state, events) {
   judgeEndingPromises(state);
-  state.pendingEvents = state.pendingEvents.filter((pending) => pending.eventId !== 'promiseCall');
+  state.pendingEvents = []; // nothing can be answered once the run is over
   for (const [id, warning] of Object.entries(state.warnings)) {
     if (warning.eventId === 'promiseCall') delete state.warnings[id];
   }

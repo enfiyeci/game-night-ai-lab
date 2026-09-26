@@ -423,3 +423,14 @@ test('a full run is deterministic for a seed and always ends', () => {
   assert.ok(a.ending);
   assert.ok(a.turn <= 20);
 });
+
+test('a card set aside before the ending is cleared when the run ends', () => {
+  const s = createInitialState();
+  s.pendingEvents.push({ id: 'lossSpike', title: 't', post: { handle: '@x', text: 'y' }, choices: [], targets: [], landsAt: 0, dueAt: 999 });
+  s.cash = -1e6;
+  s.flags.insolvent = true;
+  let out = { state: s };
+  for (let i = 0; i < 30 && !out.state.ending; i += 1) out = endTurn(out.state, {}, createRng(2));
+  assert.ok(out.state.ending);
+  assert.deepEqual(out.state.pendingEvents, []);
+});
