@@ -30,6 +30,8 @@ export function createInitialState({ seed = 1 } = {}) {
       credits: 0,
       unpowered: 0,
       queue: null,
+      surge: null,
+      pooled: 0,
     },
     power: { sites: [], nextId: 1 },
     capability: BALANCE.startCapability,

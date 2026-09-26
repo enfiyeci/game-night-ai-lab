@@ -28,7 +28,9 @@ export function updateServing(state) {
     }, 0);
   const light = unitsAt(0);
   const load = light / capacity;
-  const units = load > 0.8 ? unitsAt(load) : light;
+  const units = (load > 0.8 ? unitsAt(load) : light)
+    * (state.compute.surge?.mult ?? 1)
+    * (state.compute.surge?.usage ?? 1);
   state.compute.servingUnits = units;
   return units;
 }
@@ -42,7 +44,8 @@ export function growUsers(state) {
 }
 
 export function monthlyRevenue(state) {
-  return activeModels(state).reduce((s, m) => s + m.users * revenuePerUser(m), 0) / 1e6;
+  return (activeModels(state).reduce((s, m) => s + m.users * revenuePerUser(m), 0) / 1e6)
+    * (state.compute.surge?.usage ?? 1);
 }
 
 export const computeRent = (state) => monthlyBills(state) + leaseBills(state) - creditOffset(state);

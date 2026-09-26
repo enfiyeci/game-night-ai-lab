@@ -55,6 +55,7 @@ function stance(state, commitmentId, partyId, sweetener, rng) {
     + (state.publicTrust - 50) / 200
     + favor
     + sweetenerBonus(commitmentId, sweetener)
+    + (state.flags.pooled ? 0.1 : 0)
     + rng.normal(0, 0.1);
 }
 

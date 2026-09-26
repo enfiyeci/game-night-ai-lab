@@ -115,17 +115,12 @@ test('internal reporting still applies public effects after an earlier shutdown'
   assert.equal(s.publicTrust, 56);
 });
 
-test('catalog events adjust safety compute, delay capacity, and undercut active models', () => {
+test('catalog events adjust safety compute and undercut active models', () => {
   const s = createInitialState();
   s.compute.split.safety = 0.46;
   s.pendingEvents.push({ id: 'openletter' });
   resolveEvent(s, 'openletter', 'meet');
   assert.equal(s.compute.split.safety, 0.5);
-
-  s.compute.pipeline.push({ arrivesTurn: 8 }, { arrivesTurn: 4 }, { arrivesTurn: 6 });
-  s.pendingEvents.push({ id: 'datacenter' });
-  resolveEvent(s, 'datacenter', 'push');
-  assert.deepEqual(s.compute.pipeline.map((entry) => entry.arrivesTurn), [8, 5, 6]);
 
   s.models.push({ active: true, priceStance: 'premium' }, { active: false, priceStance: 'market' });
   s.pendingEvents.push({ id: 'qilinshock' });

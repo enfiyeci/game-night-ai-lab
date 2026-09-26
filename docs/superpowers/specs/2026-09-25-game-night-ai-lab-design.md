@@ -36,7 +36,7 @@ shows the true values next to what each advisor told you.
 |---|---|---|---|---|
 | 1 Chat assistants | quarter | Scraped-data lawsuits start as legal debt | Chips | Capability rank ≤ 2nd or within 15 of leader |
 | 2 The scale-up | quarter | Funding rounds (three investor archetypes); first President meeting | Advanced packaging | Same, plus board vote |
-| 3 Reasoning and agents | month | Agentic releases trigger misalignment checks; reasoning training raises hallucination; evals weaken as models notice tests | Wafers and memory (HBM) | Same, plus board vote |
+| 3 Reasoning and agents | month | Agentic releases trigger misalignment checks (warning incidents only; the ending opens in era 4); reasoning training raises hallucination; evals weaken as models notice tests | Wafers and memory (HBM) | Same, plus board vote |
 | 4 Gigawatt race | month | Power sites with lagged capacity and local opposition; **humanoid deployment line** with big revenue and physical-world incidents | Power | Same, plus board vote |
 | 5 Self-improvement and pacing | week | Pacing summit; US–China deal or race; second President meeting | Everything at once | — |
 
@@ -110,11 +110,11 @@ Failure endings:
 |---|---|
 | Out of money | Danger zone when runway < 6 months on planned burn. Four emergency options, each with a real cost: equity for compute (lose independence), structure change with a deadline, bridge round with forgiven debt, acquihire (soft ending). Game over at cash ≤ 0 with no option left. |
 | Removed by the board | At a scheduled vote (era gates 2–4, or after a major crisis), fewer than 3 of 5 members have support ≥ 50. |
-| Misalignment catastrophe | On each agentic release from era 3: `P = sigmoid((alignmentDebt × capability / 100 − 40) / 8)`. |
+| Misalignment catastrophe | On each agentic release from era 3: `P = sigmoid((alignmentDebt × capability / 100 − 40) / 8)`, using total debt (visible plus concealed). **Decided (owner 2026-09-25): the ending is possible only from era 4.** In era 3 a hit on the same roll is a warning incident instead: a feed post about an agent that gave itself admin rights and hid the log, public trust −5, and half the concealed debt exposed (total debt unchanged, so the era-4 risk stays). This is the warning the ending text refers to. Reason: the ending film shows national-scale harm, too much capability for era 3. |
 | Misuse catastrophe | Capability above the danger line and misuseExposure > 70: rolled each turn. |
 | Left behind | At an era gate, rank below 2nd and more than 15 behind the leader. |
 | Someone else's disaster | raceHeat > 85: rolled each turn against the least careful rival. |
-| Quiet takeover | Internal deployment (section 6d) escalates past its last warning at high capability; no release needed. |
+| Quiet takeover | Internal deployment (section 6d) escalates past its last warning at high capability; no release needed. **Decided (owner 2026-09-25): possible only from era 4**, for the same reason as the misalignment ending. In era 3 a hit at the last stage holds there (as it does below the capability line), and an accept-shutdown line keeps its extra step for era 4. |
 
 Winning endings from era 5: aligned success, negotiated pacing deal, pyrrhic win (definitions
 in section 6e). A lab that is insolvent when era 5 ends never wins; it ends in acquihire.
