@@ -88,7 +88,7 @@ test('every enabled adapter move resolves as a deal without an error', () => {
     const onlineIn = event.arrivesTurn - state.turn;
     assert.equal(
       Object.fromEntries(card.rows).Arrives,
-      onlineIn === 0 ? 'now' : onlineIn === 1 ? 'next turn' : `in ${onlineIn} turns`,
+      onlineIn === 0 ? 'now' : `in about ${onlineIn * 3} months`,
       card.id,
     );
   }
@@ -228,9 +228,9 @@ test('turn summaries use player-facing words without guessing suppliers or showi
 
   assert.deepEqual(lines, [
     "Verde's chips arrived (10 units)",
-    'You signed with Verde — online from turn 4',
-    'You signed a compute deal — online from turn 0',
-    'Spot capacity may be pulled after next turn',
+    'You signed with Verde — online from Y1 M12 W4',
+    'You signed a compute deal — online from Y1 M1 W1',
+    'Spot capacity may be pulled after next quarter',
     'Spot capacity was pulled',
     'CoreFlame contract ended',
     'Verde filled part of your order; the rest stays queued',
