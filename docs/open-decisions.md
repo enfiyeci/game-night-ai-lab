@@ -20,10 +20,8 @@ difficulty target (spec 9).
 5. **President meetings.** DECIDED 2026-09-25: pick answers from nine styles, his agenda is the
    AI war against "the woke" and China, and promises come due (spec 6, plan 2E). Still open: the
    final dialogue (the owner writes it) and whether he stays fictional (recommended) or is named.
-6. **Finale after era 5.** Which pieces of your original design appear in the 60–90 second
-   card rush: the technofeudal turn (vassal states, your own currency), the race to the bottom
-   (espionage, info-war, sabotage), the AI citizenship vote, a world map. And whether the
-   finale changes the ending or only narrates it.
+6. **Finale after era 5.** DECIDED 2026-09-25: tag mode, four decks plus the citizenship vote,
+   no world map (spec 3, plan 2F).
 7. **Humanoid line in era 4.** How it unlocks (a research technique, a channel, a separate
    product line), what it earns, and what its incidents look like (physical harm, recalls,
    labor backlash). Currently invented, not research-based.

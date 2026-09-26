@@ -43,6 +43,11 @@ shows the true values next to what each advisor told you.
 After era 5 comes a **60–90 second finale**: a rapid run of cards from the owner's original
 design (the technofeudal turn, then the race to the bottom), chosen by the ending the player is
 heading toward, too fast to fully manage.
+**Decided (owner 2026-09-25): tag mode.** Six quick cards: five from a deck chosen by the
+ending (aligned → stewardship, negotiated pace → temptation, costly win → technofeudal,
+overtaken → race to the bottom) and a citizenship vote for the lab's AI. Choices never change the
+ending; they add one tag to its title ("A costly win — with a vassal state") and record the vote.
+No world map. Details: plan 2F.
 
 ## 4. Game state (approved)
 
