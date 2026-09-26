@@ -25,6 +25,8 @@ only through search-result snippets, and those claims carry ⚠️ inline.
 5. `runway-history/runway_history.md` — OpenAI and Anthropic cash-runway history and real
    "ran out of money" endings (Inflection, Adept, Character.AI, Stability AI), used to
    calibrate the out-of-money ending.
+6. `feed-dead-buttons.md` — how games treat controls that do nothing on fake websites and
+   social feeds (2026-09-26); Football Manager's manual read in full, the rest mostly summaries.
 
 ## Notable catches
 
