@@ -56,11 +56,30 @@ test('control reserves compute and lowers risk', () => {
 
 test('trouble escalates warning, incident, exfiltration, then takeover at high capability', () => {
   const s = withModel();
+  s.era = 4;
   s.capability = 75; s.alignmentDebt = 80;
   deployInternal(s, 0);
   assert.equal(internalTick(s, hit)[0].type, 'internalWarning');
   assert.equal(internalTick(s, hit)[0].stage, 2);
   assert.equal(internalTick(s, hit)[0].stage, 3);
+  internalTick(s, hit);
+  assert.equal(s.ending, 'quietTakeover');
+});
+
+test('no takeover before era 4: a hit at stage three holds there, then era 4 can end it', () => {
+  const s = withModel();
+  s.capability = 75; s.alignmentDebt = 80;
+  s.constitution.hardLines = ['accept-shutdown'];
+  deployInternal(s, 0);
+  for (let i = 0; i < 3; i++) internalTick(s, hit);
+  assert.equal(s.internal.stage, 3);
+  for (let i = 0; i < 3; i++) assert.deepEqual(internalTick(s, hit), []);
+  assert.equal(s.ending, null);
+  // The accept-shutdown buffer is still unused when era 4 arrives.
+  assert.equal(s.internal.stage, 3);
+  s.era = 4;
+  assert.deepEqual(internalTick(s, hit), []);
+  assert.equal(s.internal.stage, 4);
   internalTick(s, hit);
   assert.equal(s.ending, 'quietTakeover');
 });

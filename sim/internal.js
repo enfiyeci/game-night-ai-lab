@@ -6,6 +6,8 @@ import { eraScale } from './data/compute.js';
 
 const CONTROL_UNITS = 2;
 const TAKEOVER_CAPABILITY = 70;
+// Owner decision 2026-09-25: the takeover ending needs era-4 capability.
+const TAKEOVER_ERA = 4;
 
 // A deploy puts the newest trained model to work, released or not.
 const newestCapability = (state) => state.pendingModel?.capability ?? state.capability;
@@ -58,7 +60,7 @@ export function internalTick(state, rng) {
   state.researchPoints += 5;
   if (!rng.chance(internalRisk(state))) return [];
   if (it.stage >= 3) {
-    if (internalCapability(state) < TAKEOVER_CAPABILITY) return [];
+    if (internalCapability(state) < TAKEOVER_CAPABILITY || state.era < TAKEOVER_ERA) return [];
     if (it.stage === 3 && hasLine(state, 'accept-shutdown')) {
       it.stage = 4;
       it.stageTurn = state.turn;

@@ -159,6 +159,7 @@ test('no-deceive-lab halves the debt hidden by alignment faking', () => {
 test('accept-shutdown requires two hits after internal stage three', () => {
   const state = createInitialState();
   adopt(state, ['accept-shutdown', 'honest', 'privacy']);
+  state.era = 4;
   state.capability = 80;
   state.internal = { control: 0, stage: 3, turns: 3, capability: 80 };
   assert.deepEqual(internalTick(state, yes), []);

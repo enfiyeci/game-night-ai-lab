@@ -114,7 +114,7 @@ Failure endings:
 | Misuse catastrophe | Capability above the danger line and misuseExposure > 70: rolled each turn. |
 | Left behind | At an era gate, rank below 2nd and more than 15 behind the leader. |
 | Someone else's disaster | raceHeat > 85: rolled each turn against the least careful rival. |
-| Quiet takeover | Internal deployment (section 6d) escalates past its last warning at high capability; no release needed. |
+| Quiet takeover | Internal deployment (section 6d) escalates past its last warning at high capability; no release needed. **Decided (owner 2026-09-25): possible only from era 4**, for the same reason as the misalignment ending. In era 3 a hit at the last stage holds there (as it does below the capability line), and an accept-shutdown line keeps its extra step for era 4. |
 
 Winning endings from era 5: aligned success, negotiated pacing deal, pyrrhic win (definitions
 in section 6e). A lab that is insolvent when era 5 ends never wins; it ends in acquihire.
