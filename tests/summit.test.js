@@ -2,9 +2,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import {
-  proposeSummit, readTheRoom, demandStatus, dealWeek, investigate, expireSuspicions, playerBreak, COMMITMENTS,
+  proposeSummit, voteMotion, readTheRoom, demandStatus, dealWeek, investigate, expireSuspicions, playerBreak, COMMITMENTS,
 } from '../sim/summit.js';
-import { CATCH, BREAK_GAIN, CAUGHT_TRUST } from '../sim/data/summit.js';
+import { CATCH, BREAK_GAIN, CAUGHT_TRUST, DEFAULT_CHECK } from '../sim/data/summit.js';
 import { finalEnding } from '../sim/endings.js';
 import { startRun, advanceRun } from '../sim/training.js';
 import { applyActions, endTurn } from '../sim/turn.js';
@@ -31,19 +31,28 @@ const era5 = () => {
   s.rivals.forEach((r) => { r.capability = s.capability; r.caution = 0.6; });
   return s;
 };
+const asMotions = ({ proposals, checks = {}, promises = {} }) => proposals.map((card, i) => ({
+  card,
+  check: checks[card] ?? DEFAULT_CHECK,
+  promises: i === 0 ? promises : {},
+}));
 const signedAfter = (move) => {
   const s = era5();
-  const r = proposeSummit(s, { type: 'summit', ...move }, calm);
+  const r = proposeSummit(s, { type: 'summit', motions: move.motions ?? asMotions(move) }, calm);
   assert.equal(r.ok, true, r.error);
   return { s, r };
 };
 
 test('the summit opens only in era 5 week 1, once, with one to three proposals', () => {
-  assert.equal(proposeSummit(createInitialState(), { proposals: ['evaluators'] }, calm).ok, false);
+  const move = { motions: [{ card: 'evaluators', check: 2, promises: {} }] };
+  assert.equal(proposeSummit(createInitialState(), move, calm).ok, false);
   const s = era5();
-  assert.equal(proposeSummit(s, { proposals: [] }, calm).ok, false);
-  assert.equal(proposeSummit(s, { proposals: ['evaluators', 'sharedSafety'] }, calm).ok, true);
-  assert.equal(proposeSummit(s, { proposals: ['evaluators'] }, calm).ok, false);
+  assert.equal(proposeSummit(s, { motions: [] }, calm).ok, false);
+  assert.equal(proposeSummit(s, { motions: [
+    { card: 'evaluators', check: 2, promises: {} },
+    { card: 'sharedSafety', check: 2, promises: {} },
+  ] }, calm).ok, true);
+  assert.equal(proposeSummit(s, move, calm).ok, false);
 });
 
 test('bad summit input is rejected without changing the state', () => {
@@ -65,6 +74,99 @@ test('bad summit input is rejected without changing the state', () => {
   const poor = era5();
   poor.cash = 49;
   assert.equal(proposeSummit(poor, { proposals: ['evaluators'], promises: { east: 'pay' } }, calm).ok, false);
+});
+
+test('new summit motions reject repeated promises, too many promises, and an empty agenda', () => {
+  const cases = [
+    [{ motions: [] }, 'choose one to three summit motions'],
+    [{ motions: [
+      { card: 'evaluators', check: 2 },
+      { card: 'evaluators', check: 3 },
+    ] }, 'summit proposals cannot repeat'],
+    [{ motions: [{ card: 'constructor', check: 2 }] }, 'unknown summit proposal'],
+    [{ motions: [{ card: 'evaluators', check: 4 }] }, 'unknown checking level'],
+    [{ motions: [{ card: 'evaluators', check: 2, promises: { martians: 'pay' } }] }, 'unknown summit delegate'],
+    [{ motions: [{ card: 'evaluators', check: 2, promises: { east: 'bribe' } }] }, 'unknown summit promise'],
+    [{ motions: [
+      { card: 'evaluators', check: 2, promises: { east: 'goFirst' } },
+      { card: 'sharedSafety', check: 2, promises: { east: 'inspectors' } },
+    ] }, 'a summit delegate can receive only one promise'],
+    [{ motions: [
+      { card: 'evaluators', check: 2, promises: { east: 'goFirst', west: 'goFirst' } },
+      { card: 'sharedSafety', check: 2, promises: { qilin: 'goFirst', lodestar: 'goFirst' } },
+    ] }, 'at most 3 promises'],
+  ];
+  for (const [move, error] of cases) {
+    const s = era5();
+    const before = structuredClone(s);
+    assert.deepEqual(proposeSummit(s, move, calm), { ok: false, error });
+    assert.deepEqual(s, before);
+  }
+  const poor = era5();
+  poor.cash = 99;
+  assert.equal(proposeSummit(poor, { motions: [
+    { card: 'evaluators', check: 2, promises: { east: 'pay' } },
+    { card: 'sharedSafety', check: 2, promises: { west: 'pay' } },
+  ] }, calm).error, 'not enough cash for those promises');
+});
+
+test('a promise made on a later motion cannot change an earlier vote', () => {
+  const s = era5();
+  const motions = [
+    { card: 'evaluators', check: 2, promises: {} },
+    { card: 'sharedSafety', check: 2, promises: { east: 'goFirst' } },
+  ];
+  const firstAtTheTime = voteMotion(s, motions.slice(0, 1), 0);
+  const firstWithTheFutureKnown = voteMotion(s, motions, 0);
+  assert.deepEqual(firstWithTheFutureKnown, firstAtTheTime);
+  assert.equal(firstAtTheTime.signed.includes('east'), false);
+  assert.equal(voteMotion(s, motions, 1).signed.includes('east'), true);
+
+  const r = proposeSummit(s, { motions }, calm);
+  assert.equal(r.ok, true);
+  assert.deepEqual(r.signed.evaluators, firstAtTheTime.signed);
+});
+
+test('voteMotion is pure and matches every vote recorded by proposeSummit', () => {
+  const s = era5();
+  const motions = [
+    { card: 'evaluators', check: 2, promises: { east: 'goFirst' } },
+    { card: 'sharedSafety', check: 2, promises: { west: 'inspectors' } },
+    { card: 'verification', check: 3, promises: { lodestar: 'pay' } },
+  ];
+  const before = structuredClone(s);
+  const votes = motions.map((motion, i) => [motion.card, voteMotion(s, motions, i)]);
+  assert.deepEqual(s, before);
+
+  let usedTurnRng = false;
+  const r = proposeSummit(s, { motions }, { ...calm, normal: () => { usedTurnRng = true; return 100; } });
+  assert.equal(r.ok, true);
+  assert.equal(usedTurnRng, false);
+  for (const [card, vote] of votes) {
+    assert.deepEqual(s.deal.signed[card], vote.signed);
+    assert.equal(s.deal.binding.includes(card), vote.binds);
+  }
+  assert.deepEqual(s.deal.motions, motions);
+});
+
+test('the old summit shape still works and attaches its promises to the first motion', () => {
+  const s = era5();
+  const move = {
+    proposals: ['evaluators', 'sharedSafety'],
+    checks: { evaluators: 2, sharedSafety: 3 },
+    promises: { east: 'goFirst' },
+  };
+  const r = proposeSummit(s, move, calm);
+  assert.equal(r.ok, true);
+  assert.deepEqual(s.deal.proposals, move.proposals);
+  assert.deepEqual(s.deal.checks, move.checks);
+  assert.deepEqual(s.deal.promises, move.promises);
+  assert.deepEqual(s.deal.motions, [
+    { card: 'evaluators', check: 2, promises: move.promises },
+    { card: 'sharedSafety', check: 3, promises: {} },
+  ]);
+  assert.equal(r.signed.evaluators.includes('east'), true);
+  assert.equal(r.signed.sharedSafety.includes('east'), true);
 });
 
 test('each delegate keeps its fixed demand', () => {
@@ -110,7 +212,11 @@ test('promises cost what they say', () => {
   s.concealedDebt = 20;
   s.alignmentDebt = 10;
   const cash = s.cash;
-  proposeSummit(s, { proposals: ['releaseDelay'], checks: { releaseDelay: 2 }, promises: { east: 'pay', west: 'goFirst', lodestar: 'inspectors' } }, calm);
+  proposeSummit(s, { motions: [
+    { card: 'releaseDelay', check: 2, promises: { east: 'pay' } },
+    { card: 'computeCap', check: 2, promises: { west: 'goFirst' } },
+    { card: 'pauseAutomation', check: 2, promises: { lodestar: 'inspectors' } },
+  ] }, calm);
   assert.equal(s.cash, cash - 50);
   assert.equal(s.concealedDebt, 10);
   assert.equal(s.deal.playerInspected, true);
@@ -119,7 +225,9 @@ test('promises cost what they say', () => {
 test('the President is angered when the West-East inspection line binds after his call', () => {
   const s = era5();
   s.meetingsHeld = ['first', 'second'];
-  const r = proposeSummit(s, { proposals: ['verification'], checks: { verification: 3 }, promises: { west: 'pay', east: 'inspectors' } }, calm);
+  const r = proposeSummit(s, { motions: [
+    { card: 'verification', check: 3, promises: { west: 'pay', east: 'inspectors' } },
+  ] }, calm);
   assert.ok(r.binding.includes('verification'));
   assert.equal(s.govFavor.us, 60);
   assert.ok(r.events.some((e) => e.type === 'presidentAngry'));
@@ -222,7 +330,9 @@ test('skipping the summit costs race heat and favor once', () => {
 
 test('endTurn runs the summit and takes investigate actions', () => {
   const s = era5();
-  const out = endTurn(s, { moves: [{ type: 'summit', proposals: ['evaluators'], checks: { evaluators: 2 }, promises: { east: 'goFirst' } }] }, calm);
+  const out = endTurn(s, { moves: [{
+    type: 'summit', motions: [{ card: 'evaluators', check: 2, promises: { east: 'goFirst' } }],
+  }] }, calm);
   assert.deepEqual(out.errors, []);
   assert.ok(out.events.some((e) => e.type === 'summit'));
   const next = structuredClone(out.state);

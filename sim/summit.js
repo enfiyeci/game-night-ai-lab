@@ -1,4 +1,5 @@
 import { clamp } from './util.js';
+import { sideRng } from './contracts.js';
 import { RIVAL_TEMPLATES, leaderCapability } from './rivals.js';
 import { exposeConcealed } from './hazards.js';
 import {
@@ -67,6 +68,23 @@ function normalizePlan(plan) {
   };
 }
 
+function normalizeMotions(move) {
+  if (Object.hasOwn(move ?? {}, 'motions')) {
+    if (!Array.isArray(move.motions)) return move.motions;
+    return move.motions.map((motion) => ({
+      card: motion?.card,
+      check: motion?.check,
+      promises: { ...(motion?.promises ?? {}) },
+    }));
+  }
+  if (!Array.isArray(move?.proposals)) return move?.proposals;
+  return move.proposals.map((card, i) => ({
+    card,
+    check: move.checks?.[card] ?? DEFAULT_CHECK,
+    promises: i === 0 ? { ...(move.promises ?? {}) } : {},
+  }));
+}
+
 // Whether each party's own demand is met by the plan (a promise always meets it).
 // A follower's demand depends on the vote, so it is null here; see readTheRoom per card.
 export function demandStatus(plan) {
@@ -111,19 +129,41 @@ export function readTheRoom(state, plan) {
 function proposalError(state, move) {
   if (state.era !== 5 || state.turnInEra !== 0) return 'the summit only opens at the start of era 5';
   if (state.deal) return 'the summit has already happened';
-  const proposals = move?.proposals;
-  if (!Array.isArray(proposals) || proposals.length < 1 || proposals.length > 3) return 'choose one to three summit proposals';
-  if (new Set(proposals).size !== proposals.length) return 'summit proposals cannot repeat';
-  if (proposals.some((id) => typeof id !== 'string' || !Object.hasOwn(COMMITMENTS, id))) return 'unknown summit proposal';
-  const checks = move.checks ?? {};
-  if (typeof checks !== 'object' || checks === null || Array.isArray(checks)) return 'summit checks must be an object';
-  for (const [card, level] of Object.entries(checks)) {
-    if (!proposals.includes(card)) return 'a checking level needs its proposal';
-    if (!Number.isInteger(level) || level < 0 || level >= CHECK_LEVELS.length) return 'unknown checking level';
+  let motions;
+  if (Object.hasOwn(move ?? {}, 'motions')) {
+    motions = move.motions;
+    if (!Array.isArray(motions) || motions.length < 1 || motions.length > 3) return 'choose one to three summit motions';
+    if (motions.some((motion) => typeof motion !== 'object' || motion === null || Array.isArray(motion))) return 'summit motions must be objects';
+    const proposals = motions.map((motion) => motion.card);
+    if (new Set(proposals).size !== proposals.length) return 'summit proposals cannot repeat';
+    if (proposals.some((id) => typeof id !== 'string' || !Object.hasOwn(COMMITMENTS, id))) return 'unknown summit proposal';
+    if (motions.some((motion) => !Number.isInteger(motion.check) || motion.check < 0 || motion.check >= CHECK_LEVELS.length)) return 'unknown checking level';
+  } else {
+    const proposals = move?.proposals;
+    if (!Array.isArray(proposals) || proposals.length < 1 || proposals.length > 3) return 'choose one to three summit proposals';
+    if (new Set(proposals).size !== proposals.length) return 'summit proposals cannot repeat';
+    if (proposals.some((id) => typeof id !== 'string' || !Object.hasOwn(COMMITMENTS, id))) return 'unknown summit proposal';
+    const checks = move.checks ?? {};
+    if (typeof checks !== 'object' || checks === null || Array.isArray(checks)) return 'summit checks must be an object';
+    for (const [card, level] of Object.entries(checks)) {
+      if (!proposals.includes(card)) return 'a checking level needs its proposal';
+      if (!Number.isInteger(level) || level < 0 || level >= CHECK_LEVELS.length) return 'unknown checking level';
+    }
+    const promises = move.promises ?? {};
+    if (typeof promises !== 'object' || promises === null || Array.isArray(promises)) return 'summit promises must be an object';
+    motions = normalizeMotions(move);
   }
-  const promises = move.promises ?? {};
-  if (typeof promises !== 'object' || promises === null || Array.isArray(promises)) return 'summit promises must be an object';
-  const entries = Object.entries(promises);
+  const entries = [];
+  const promised = new Set();
+  for (const motion of motions) {
+    const promises = motion.promises ?? {};
+    if (typeof promises !== 'object' || promises === null || Array.isArray(promises)) return 'summit promises must be an object';
+    for (const entry of Object.entries(promises)) {
+      if (promised.has(entry[0])) return 'a summit delegate can receive only one promise';
+      promised.add(entry[0]);
+      entries.push(entry);
+    }
+  }
   if (entries.length > MAX_PROMISES) return `at most ${MAX_PROMISES} promises`;
   for (const [party, type] of entries) {
     if (!PARTIES.includes(party)) return 'unknown summit delegate';
@@ -134,34 +174,54 @@ function proposalError(state, move) {
   return null;
 }
 
-export function proposeSummit(state, move, rng) {
+export function voteMotion(state, motions, i) {
+  const plan = { proposals: [], checks: {}, promises: {} };
+  for (const motion of motions.slice(0, i + 1)) {
+    plan.proposals.push(motion.card);
+    plan.checks[motion.card] = motion.check;
+    Object.assign(plan.promises, motion.promises ?? {});
+  }
+  const card = motions[i].card;
+  const rng = sideRng(state, 2000 + i);
+  const vote = resolveCard(state, card, plan, () => rng.normal(0, 0.1), true);
+  let signed = PARTIES.filter((party) => vote[party] === 'yes');
+  // A follower keeps its word: it signs exactly when the party it follows signed.
+  for (const party of RESOLVE_ORDER) {
+    const rule = DEMANDS[party].rule;
+    if (!rule.follows || Object.hasOwn(plan.promises, party)) continue;
+    const ok = signed.includes(rule.follows) && !(rule.maxCheck != null && plan.checks[card] > rule.maxCheck);
+    signed = signed.filter((id) => id !== party);
+    if (ok) signed.push(party);
+  }
+  signed = PARTIES.filter((party) => signed.includes(party));
+  const labIds = new Set(state.rivals.map((rival) => rival.id));
+  return {
+    signed,
+    binds: signed.some((id) => labIds.has(id)) && signed.some((id) => isGovernment(id)),
+  };
+}
+
+export function proposeSummit(state, move, _rng) {
   const error = proposalError(state, move);
   if (error) return { ok: false, error };
-  const plan = normalizePlan(move);
-  for (const card of plan.proposals) plan.checks[card] = plan.checks[card] ?? DEFAULT_CHECK;
-
-  const signed = Object.fromEntries(Object.keys(COMMITMENTS).map((id) => [id, []]));
-  for (const card of plan.proposals) {
-    const vote = resolveCard(state, card, plan, () => rng.normal(0, 0.1), true);
-    let signers = PARTIES.filter((party) => vote[party] === 'yes');
-    // A follower keeps its word: it signs exactly when the party it follows signed.
-    for (const party of RESOLVE_ORDER) {
-      const rule = DEMANDS[party].rule;
-      if (!rule.follows || Object.hasOwn(plan.promises, party)) continue;
-      const ok = signers.includes(rule.follows) && !(rule.maxCheck != null && plan.checks[card] > rule.maxCheck);
-      signers = signers.filter((id) => id !== party);
-      if (ok) signers.push(party);
-    }
-    signed[card] = PARTIES.filter((party) => signers.includes(party));
+  const motions = normalizeMotions(move);
+  const plan = { proposals: [], checks: {}, promises: {} };
+  for (const motion of motions) {
+    plan.proposals.push(motion.card);
+    plan.checks[motion.card] = motion.check;
+    Object.assign(plan.promises, motion.promises);
   }
 
-  const labIds = new Set(state.rivals.map((rival) => rival.id));
-  const binding = plan.proposals.filter((card) => {
-    const signers = signed[card];
-    return signers.some((id) => labIds.has(id)) && signers.some((id) => isGovernment(id));
+  const signed = Object.fromEntries(Object.keys(COMMITMENTS).map((id) => [id, []]));
+  const binding = [];
+  motions.forEach((motion, i) => {
+    const result = voteMotion(state, motions, i);
+    signed[motion.card] = result.signed;
+    if (result.binds) binding.push(motion.card);
   });
 
   state.deal = {
+    motions,
     proposals: plan.proposals,
     checks: plan.checks,
     promises: plan.promises,
