@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
-import { buildTimeline, shotAt, camAt, sampleKeys, typedText, resolveFilm, fillText, TITLE_DUR } from '../ui/endings/timeline.js';
+import { buildTimeline, shotAt, camAt, sampleKeys, typedText, resolveFilm, fillText, withNarration, TITLE_DUR } from '../ui/endings/timeline.js';
 import { ENDINGS } from '../sim/endings.js';
 import { COMMITMENTS, PARTIES } from '../sim/summit.js';
 import { RIVAL_TEMPLATES } from '../sim/rivals.js';
@@ -172,4 +172,23 @@ test('films without run data are left as they are', () => {
   const film = films.find((f) => f.id === 'misalignment');
   assert.equal(resolveFilm(film, run({ evaluators: ['west'] })).film, film);
   assert.equal(fillText('{a} and {b}', { a: 'x' }), 'x and ');
+});
+
+const narration = JSON.parse(readFileSync('ui/endings/narration.json', 'utf8'));
+
+test('every film has one Lumen line per shot, labelled with the time card of that shot', () => {
+  for (const film of films) {
+    const lines = narration[film.id];
+    assert.ok(lines, `${film.id} has narration`);
+    assert.deepEqual(lines.map((l) => l.shot), film.shots.map((s) => s.card), `${film.id}: one line per shot, in order`);
+    for (const l of lines) assert.ok(l.say.length <= 120, `${film.id}: "${l.say.slice(0, 30)}…" fits two lines of the bar`);
+  }
+  assert.deepEqual(Object.keys(narration).sort(), films.map((f) => f.id).sort());
+});
+
+test('a narration line whose time card no longer matches its shot is left out', () => {
+  const film = { shots: [{ card: 'A' }, { card: 'B' }] };
+  const out = withNarration(film, [{ shot: 'A', say: 'one' }, { shot: 'moved', say: 'two' }]);
+  assert.deepEqual(out.shots.map((s) => s.say), ['one', undefined]);
+  assert.equal(withNarration(film, undefined), film);
 });

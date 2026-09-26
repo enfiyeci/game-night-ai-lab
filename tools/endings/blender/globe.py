@@ -227,7 +227,10 @@ def variant_leader():
 VARIANTS = {"backups": variant_backups, "territories": variant_territories, "spread": variant_spread,
             "calm": variant_calm, "leader": variant_leader}
 SPEC = VARIANTS[VARIANT]()
-FPS = 24
+# How much slower each take runs than in the 30-second cuts, so the 60-second films hold every world shot longer
+# (owner, 2026-09-25). Times in seconds stretch by this factor; the clip is still encoded at 24 fps.
+SLOW = {"backups": 7 / 4.5, "territories": 8 / 6, "spread": 1.6, "calm": 1.75, "leader": 1.6}[VARIANT]
+FPS = 24 * SLOW
 END = round(SPEC["seconds"] * FPS)
 
 # ---------------------------------------------------------------- scene
@@ -377,7 +380,7 @@ for n in list(dn.nodes):
     if n.type != "OUTPUT_MATERIAL":
         dn.nodes.remove(n)
 dout = next(n for n in dn.nodes if n.type == "OUTPUT_MATERIAL")
-T = clock(dn, END)
+T = clock(dn, END, FPS)
 t_on, t_sw, t_off = obj_attr(dn, "t_on"), obj_attr(dn, "t_sw"), obj_attr(dn, "t_off")
 col_a, col_b, halo = obj_attr(dn, "colA"), obj_attr(dn, "colB"), obj_attr(dn, "halo")
 since = mnode(dn, "SUBTRACT", T, t_on.outputs["Fac"])

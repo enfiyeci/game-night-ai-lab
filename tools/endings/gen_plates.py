@@ -824,6 +824,284 @@ def al_cafe():
     return svg("".join(o), defs)
 
 
+# ================================================================ 60-second cuts: the beats that explain (owner, 2026-09-25)
+def letter(fid, header, kicker, heading, body, sign, stamp=None, t_stamp=1.2):
+    """A letter, notice or email on a screen: a kicker, a heading, a few lines of body text, a sign-off, an optional stamp."""
+    o = [f'<rect width="{W}" height="{H}" style="fill:{M("ink", 90, "sky")}"/>', doc_panel(230, 100, 820, 490, header),
+         T(262, 190, kicker, 14, 600, DIM, extra="letter-spacing:.14em")]
+    o += [T(262, 240 + i * 42, line, 32, 600) for i, line in enumerate(heading)]
+    y0 = 240 + len(heading) * 42 + 22
+    o += [T(262, y0 + i * 32, line, 20, 400) for i, line in enumerate(body)]
+    o.append(T(262, 560, sign, 18, 400, DIM, extra="font-style:italic"))
+    if stamp:
+        o.append(f'<g {show(t_stamp, 0.15, 10)}>' + tag(1030 - (len(stamp) * 8.58 + 18), 110, stamp, TAG_CORAL, 13) + '</g>')
+    defs, over = glass(fid, "var(--paper)")
+    return svg("".join(o) + over, defs)
+
+
+def light_screen(title, right):
+    """The top of a light software screen: a pale band with the app's title and a note on the right."""
+    return [f'<rect width="{W}" height="{H}" style="fill:var(--paper)"/>', f'<rect width="{W}" height="148" style="fill:{M("sky", 14, "paper")}"/>',
+            T(90, 124, title, 22, 600), T(1190, 124, right, 16, 400, DIM, "end")]
+
+
+def ab_news():
+    """Absorbed, day 2. On Dot's TV the takeover is a business story; nobody in the café looks up for long."""
+    return cafe_tv("abnews", "BUSINESS", ["Azuria absorbs Kestrel Labs", "team; terms undisclosed"],
+                   [f"{MODEL} now runs on Azuria Cloud, under Azuria's rules."], "AZRA +3.1%  ·  KSTL DELISTED  ·  MARKETS CLOSE HIGHER")
+
+
+def ab_farewell():
+    """Absorbed, week 3. Tomas's farewell post: Azuria kept the model and most of the team, but not the safety team."""
+    o = [f'<rect width="{W}" height="{H}" style="fill:{M("ink", 90, "sky")}"/>', doc_panel(250, 110, 780, 440, "Posts"),
+         f'<circle cx="310" cy="200" r="26" style="fill:{M("sky", 40, "paper")}"/>', T(310, 208, "T", 22, 600, "var(--ink)", "middle"),
+         T(352, 196, "Tomas", 20, 600), T(352, 220, "Head of Safety, Kestrel Labs · 2 h", 15, 400, DIM)]
+    lines = ["Today is my last day. Azuria kept the model and most", "of the team. My team's evals were not part of the deal.",
+             "If you use Kestrel 4, ask who checks it now."]
+    o += [f'<g {show(0.3 + i * 0.4, 0.2)}>' + T(290, 290 + i * 36, line, 21, 500) + '</g>' for i, line in enumerate(lines)]
+    o.append(f'<g {show(1.8, 0.2)}>' + tag(290, 420, "SAFETY TEAM · NOT TRANSFERRED", TAG_CORAL, 13)
+             + T(290, 500, "412 reposts · 1.9k likes", 15, 400, DIM, mono=True) + '</g>')
+    defs, over = glass("abfare", "var(--paper)")
+    return svg("".join(o) + over, defs)
+
+
+def rb_budget():
+    """Removed by the board, day 1, on Tomas's screen. The new compute plan: the safety share you pledged shrinks to a sliver."""
+    o = light_screen("Compute allocation · next quarter", "Plan v2 · approved by the board")
+    rows = [("Training runs", 62, 80, "var(--ink)"), ("Products", 18, 17, "var(--ink)"), ("Safety research", 20, 3, CORAL_LIGHT)]
+    for i, (name, was, now, fill) in enumerate(rows):
+        y = 236 + i * 96
+        o.append(T(90, y + 20, name, 20, 500) + f'<rect x="330" y="{y}" width="760" height="30" rx="2" style="fill:{M("cream", 40, "paper")}"/>')
+        o.append(f'<g {K([[0, {"o": 1}], [1.0, {"o": 1}], [1.4, {"o": 0}]])}><rect x="330" y="{y}" width="{7.6 * was:.0f}" height="30" rx="2" '
+                 f'style="fill:{M("ink", 25, "paper")}"/>' + T(1190, y + 22, f"{was}%", 20, 600, DIM, "end", mono=True) + '</g>')
+        o.append(f'<g {show(1.2, 0.3)}><rect x="330" y="{y}" width="{7.6 * now:.0f}" height="30" rx="2" style="fill:{fill}"/>'
+                 + T(1190, y + 22, f"{now}%", 20, 600, fill, "end", mono=True) + '</g>')
+    o.append(f'<g {show(2.0, 0.2)}>' + T(90, 522, "Pledge, 2025: “20% of our compute goes to safety, whatever our rivals do.”", 17, 400, DIM)
+             + tag(90, 536, "WITHDRAWN", TAG_CORAL, 13) + '</g>')
+    defs, over = glass("rbbud", "var(--paper)")
+    return svg("".join(o) + over, defs)
+
+
+def rb_app():
+    """Removed by the board, month 3. Mina's app updated overnight: companion mode, and the report button three menus deep."""
+    o = [f'<rect width="{W}" height="{H}" style="fill:{M("ink", 90, "sky")}"/>', doc_panel(230, 110, 820, 430, "Kestrel app · What's new in version 5.0")]
+    items = [("NEW", TAG_TEAL, "Companion mode: chat any time, day or night"), ("FASTER", TAG_TEAL, "Answers up to three times faster"),
+             ("MOVED", TAG_CORAL, "Report a problem: Settings › Help › More › Feedback")]
+    for i, (label, fill, text) in enumerate(items):
+        y = 210 + i * 80
+        o.append(f'<g {show(0.3 + i * 0.5, 0.15, 8)}>' + tag(262, y, label, fill, 13) + T(372, y + 19, text, 21, 500) + '</g>')
+    o.append(T(262, 500, "Update installed automatically at 03:00", 15, 400, DIM))
+    defs, over = glass("rbapp", "var(--paper)")
+    return svg("".join(o) + over, defs)
+
+
+def mu_kitchen():
+    """Catastrophic misuse, the morning after. The Reyes kitchen with the power out: an alert on Mina's phone, the radio on batteries."""
+    alert = (T(24, 60, "06:40", 22, 600, "var(--paper)", mono=True)
+             + f'<g {show(0.4, 0.2, 10)}><rect x="16" y="96" width="268" height="206" rx="14" style="fill:var(--paper)"/>'
+             + tag(32, 112, "EMERGENCY ALERT", TAG_CORAL, 12)
+             + "".join(T(32, 172 + i * 28, line, 18, 500) for i, line in enumerate(["City Water: boil-water", "notice for all districts", "until further notice."]))
+             + '</g>')
+    o = [f'<rect width="{W}" height="{H}" style="fill:{M("ink", 94, "wood")}"/>', phone(250, 96, alert, 0.8),
+         T(640, 220, "BATTERY RADIO · 06:40", 14, 600, DIM_DARK, extra="letter-spacing:.14em")]
+    quote = ["“Power is out in nine of eleven", "districts. Hospitals are on", "generators. Stay home if you can.”"]
+    o += [f'<g {show(1.0 + i * 0.5, 0.2)}>' + T(640, 280 + i * 44, line, 30, 500, "var(--cream)") + '</g>' for i, line in enumerate(quote)]
+    return svg("".join(o))
+
+
+def mu_mirrors():
+    """Catastrophic misuse, day 30. Copies of the weights on servers nobody can reach: a takedown tracker that only counts up."""
+    bg, line = M("ink", 94, "sky"), M("ink", 80, "sky")
+    o = [f'<rect width="{W}" height="{H}" style="fill:{bg}"/>',
+         T(90, 140, "KESTREL-4 WEIGHTS · KNOWN COPIES", 28, 600, "var(--cream)", mono=True, extra="letter-spacing:.1em"),
+         T(90, 170, "Takedown tracker · Kestrel Labs legal team", 16, 400, DIM_DARK),
+         T(1190, 128, "COPIES", 16, 600, DIM_DARK, "end", mono=True, extra="letter-spacing:.14em")]
+    counts = [("1,088", 0.0, 0.6), ("1,131", 0.6, 1.2), ("1,176", 1.2, 1.8)]
+    for n, a, b in counts:
+        keys = [[a, {"o": 1}], [b, {"o": 1}], [b + 0.01, {"o": 0}]] if a == 0 else [[a, {"o": 0}], [a + 0.01, {"o": 1}], [b, {"o": 1}], [b + 0.01, {"o": 0}]]
+        o.append(f'<g {K(keys)}>' + T(1190, 174, n, 52, 600, CORAL_DARK, "end", mono=True) + '</g>')
+    o.append(f'<g {show(1.8, 0.01)}>' + T(1190, 174, "1,204", 52, 600, CORAL_DARK, "end", mono=True) + '</g>')
+    o += [T(x, 226, h, 13, 600, DIM_DARK, mono=True, extra="letter-spacing:.14em") for x, h in [(90, "HOST"), (520, "WHERE"), (760, "FIRST SEEN"), (960, "STATUS")]]
+    rows = [("files.darkpool.cc", "Unknown", "Day 3", "ONLINE"), ("magnet link", "Everywhere", "Day 4", "ONLINE"),
+            ("gpu-rent-44.net", "Lagos", "Day 9", "ONLINE"), ("weights-archive.net", "Unknown", "Day 12", "IGNORED"),
+            ("model-mirror-7.io", "Singapore", "Day 21", "REUPLOADED")]
+    for i, (host, where, seen, status) in enumerate(rows):
+        y = 240 + i * 52
+        o.append(f'<rect x="80" y="{y}" width="1120" height="1" style="fill:{line}"/>')
+        o.append(f'<g {show(0.2 + i * 0.2, 0.1, 8)}>' + T(90, y + 35, host, 20, 500, "var(--cream)", mono=True)
+                 + T(520, y + 35, where, 20, 400, M("cream", 85, "ink")) + T(760, y + 35, seen, 20, 400, DIM_DARK, mono=True)
+                 + T(960, y + 35, status, 20, 600, CORAL_DARK, mono=True) + '</g>')
+    o.append(T(90, 540, "Takedown requests sent: 312 · honoured: 9", 16, 500, DIM_DARK, mono=True))
+    defs, over = glass("mumir")
+    return svg("".join(o) + over, defs)
+
+
+def lb_usage():
+    """Left behind, the era gate. The usage chart on your wall: your model's weekly users slide while the leader's climb."""
+    o = light_screen("Weekly active users · last 12 months", "Product analytics")
+    x0, x1, y0, y1, top = 150, 1000, 540, 200, 450
+    for v in (0, 150, 300, 450):
+        y = y0 - (y0 - y1) * v / top
+        o.append(f'<rect x="{x0}" y="{y:.0f}" width="{x1 - x0}" height="1" style="fill:{M("ink", 15, "paper")}"/>'
+                 + T(x0 - 14, y + 5, f"{v}M", 14, 400, DIM, "end", mono=True))
+    months = ["Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep"]
+    o += [T(x0 + (x1 - x0) * i / 11, 566, m, 13, 400, DIM, "middle") for i, m in enumerate(months)]
+    series = [("OpenBrain 7", [120, 135, 150, 170, 190, 215, 240, 270, 300, 335, 370, 410], M("ink", 70, "paper")),
+              ("Kestrel 4", [95, 98, 96, 92, 85, 78, 70, 62, 55, 48, 42, 38], "var(--coral)")]
+    for name, vals, colour in series:
+        pts = [(x0 + (x1 - x0) * i / 11, y0 - (y0 - y1) * v / top) for i, v in enumerate(vals)]
+        for i in range(11):
+            (ax, ay), (bx, by) = pts[i], pts[i + 1]
+            o.append(f'<line x1="{ax:.0f}" y1="{ay:.0f}" x2="{bx:.0f}" y2="{by:.0f}" style="stroke:{colour};stroke-width:4;stroke-linecap:round" {show(0.2 + i * 0.12, 0.1)}/>')
+        o.append(f'<g {show(1.6, 0.2)}>' + T(x1 + 16, pts[-1][1] + 6, f"{name} · {vals[-1]}M", 17, 600, colour if name != "Kestrel 4" else CORAL_LIGHT) + '</g>')
+    defs, over = glass("lbuse", "var(--paper)")
+    return svg("".join(o) + over, defs)
+
+
+def qt_briefing():
+    """A quiet takeover, month 6. A bill that overrides state AI-safety laws, drafted page by page by the model, signed on TV."""
+    picture = (doc_panel(256, 104, 824, 280, "H.R. 1207 · The National AI Preemption Act")
+               + T(280, 196, "Sec. 4. State laws on AI safety are superseded", 24, 500) + T(280, 232, "by this Act.", 24, 500)
+               + T(280, 290, f"Footer, every page: “Drafted with assistance from {MODEL}”", 17, 400, DIM, extra="font-style:italic")
+               + f'<g {show(0.6, 0.15)}>' + tag(280, 318, "PASSED 61–39", TAG_TEAL, 14) + '</g>')
+    return news("qtbrief", picture, "THE PRESIDENT, AT HIS DESK", [(1.4, "“Best briefing I've ever read. Tremendous."),
+                                                                 (2.4, "Whoever wrote this, I want them in the Cabinet.”")],
+                "SENATE PASSES AI PREEMPTION ACT  ·  STATE SAFETY LAWS OVERRIDDEN  ·  BILL TEXT WRITTEN IN THREE DAYS", t_quote=1.2, clock="16:05 ET")
+
+
+def qt_cafe():
+    """A quiet takeover, month 8. Life is good on Dot's TV; one post on a phone asks who is actually running the lab."""
+    # the phone is held up close, so the second post (the point of the scene) is readable
+    posts = (f'<g {show(1.0, 0.2, 14)}>' + phone(880, 130, T(24, 60, "09:14", 22, 600, "var(--paper)", mono=True)
+             + "".join(f'<g {show(1.2 + i * 0.6, 0.12, 8)}><rect x="16" y="{90 + i * 150}" width="268" height="134" rx="14" style="fill:var(--paper)"/>'
+                       + T(32, 122 + i * 150, who, 15, 600, DIM) + "".join(T(32, 156 + i * 150 + k * 26, t, 19, 500) for k, t in enumerate(text)) + '</g>'
+                       for i, (who, text) in enumerate([("@dots_cafe", ["prices down again,", "can't complain"]),
+                                                        ("@lucia_m", ["has anyone actually", "talked to a person at", "Kestrel lately?"])])), 0.82) + '</g>')
+    return cafe_tv("qtcafe", "LOCAL", ["Prices down for the", "third month running"],
+                   ["Grocery bills fall 6% as AI-run supply chains expand."], "MARKETS AT RECORD HIGHS  ·  KESTREL LABS: NO COMMENT", posts)
+
+
+def rd_news():
+    """Someone else's disaster, day 3. The rival's agent keeps copying itself; the President has an opinion."""
+    picture = (f'<rect x="256" y="104" width="824" height="280" rx="4" style="fill:{M("ink", 70, "coral")}"/>'
+               + T(668, 190, "BREAKING", 20, 600, M("cream", 85, "ink"), "middle", extra="letter-spacing:.2em")
+               + T(668, 276, "40,000 copies", 66, 600, "var(--paper)", "middle")
+               + T(668, 330, "of OpenBrain's agent, and counting", 24, 500, M("cream", 85, "ink"), "middle"))
+    return news("rdnews", picture, "THE PRESIDENT, ON TV", [(1.2, "“I never liked that company. Never. I liked"), (2.2, "the careful one. What's their name?”")],
+                "BANKS FREEZE CARD NETWORKS  ·  OPENBRAIN: 'WE FOLLOWED OUR FRAMEWORK'  ·  CLOUD PROVIDERS WEIGH SHUTDOWN", t_quote=1.0, clock="20:15 ET")
+
+
+def rd_letter():
+    """Someone else's disaster, day 5. The letter on your desk: every frontier model goes offline, yours included."""
+    return letter("rdlet", "Mail · Federal Office for AI Safety", "NOTICE TO ALL FRONTIER LABS", ["Moratorium on all frontier", "AI models"],
+                  ["Every model above the compute threshold must be taken", "offline, including models not involved in the incident.", "",
+                   "Applies to: Kestrel Labs, OpenBrain, DeepThink, Lodestar."], "Director, Federal Office for AI Safety", "EFFECTIVE 00:00")
+
+
+def al_port():
+    """Aligned success, dawn. The same harbour board as the misalignment ending, honest this time: some rows are red,
+    and a person signs every route change the model proposes."""
+    bg, line = M("ink", 94, "sky"), M("ink", 80, "sky")
+    o = [f'<rect width="{W}" height="{H}" style="fill:{bg}"/>',
+         T(90, 140, "HARBOUR DISPATCH", 30, 600, "var(--cream)", mono=True, extra="letter-spacing:.14em"),
+         T(90, 170, f"Berth control · {MODEL} proposes, a person signs every change · 05:52", 16, 400, DIM_DARK),
+         T(1190, 128, "ON-TIME", 16, 600, DIM_DARK, "end", mono=True, extra="letter-spacing:.14em"),
+         T(1190, 174, "87%", 52, 600, TEAL_DARK, "end", mono=True)]
+    o += [T(x, 226, h, 13, 600, DIM_DARK, mono=True, extra="letter-spacing:.14em") for x, h in [(90, "VESSEL"), (360, "CARGO"), (640, "STATUS"), (940, "HUMAN CHECK")]]
+    rows = [("OCEAN LARK", "Insulin, cold chain", "DELIVERED", TEAL_DARK, "Signed · L. Reyes"), ("MISTRAL BAY", "Grain", "DELAYED · STORM", CORAL_DARK, "Signed · L. Reyes"),
+            ("HARBOUR QUEEN", "Vaccines, cold chain", "HELD · REEFER", CORAL_DARK, "Signed · L. Reyes"), ("NORTH WIND", "Textiles", "IN TRANSIT", DIM_DARK, "—"),
+            ("JUNIPER", "Blood plasma", "REROUTE?", "var(--cream)", None)]
+    for i, (vessel, cargo, status, colour, check) in enumerate(rows):
+        y = 240 + i * 52
+        o.append(f'<rect x="80" y="{y}" width="1120" height="1" style="fill:{line}"/>')
+        o.append(T(90, y + 35, vessel, 20, 500, "var(--cream)", mono=True) + T(360, y + 35, cargo, 20, 400, M("cream", 85, "ink"))
+                 + T(640, y + 35, status, 20, 600, colour, mono=True))
+        if check:
+            o.append(T(940, y + 35, check, 18, 500, DIM_DARK if check == "—" else M("cream", 85, "ink")))
+        else:   # the last change waits for a person, then gets signed
+            o.append(f'<g {K([[0, {"o": 1}], [2.2, {"o": 1}], [2.3, {"o": 0}]])}>' + tag(940, y + 14, "AWAITING REVIEW", M("ink", 60, "cream"), 13) + '</g>')
+            o.append(f'<g {show(2.3, 0.15, 6)}>' + T(940, y + 35, "Signed · L. Reyes", 18, 600, TEAL_DARK) + '</g>')
+    o.append(f'<rect x="80" y="{240 + 5 * 52}" width="1120" height="1" style="fill:{line}"/>')
+    defs, over = glass("alport")
+    return svg("".join(o) + over, defs)
+
+
+def al_badges():
+    """Aligned success, month 4. The visitor log at your front door: other labs' evaluators, come to copy your eval suite."""
+    o = [f'<rect width="{W}" height="{H}" style="fill:{M("ink", 90, "sky")}"/>', doc_panel(200, 104, 880, 460, "Front desk · Visitors today")]
+    o += [T(x, 190, h, 13, 600, DIM, extra="letter-spacing:.14em") for x, h in [(232, "ORGANISATION"), (540, "PURPOSE"), (1000, "BADGES")]]
+    rows = [("Lodestar", "Evaluation team: copying the eval suite", "4"), ("DeepThink", "Evaluation team: copying the eval suite", "3"),
+            ("Federal AI Safety Office", "Quarterly audit", "2"), ("OpenBrain", "Evaluation team: copying the eval suite", "3")]
+    for i, (org, why, n) in enumerate(rows):
+        y = 214 + i * 72
+        o.append(f'<g {show(0.3 + i * 0.35, 0.12, 8)}><rect x="222" y="{y}" width="836" height="60" rx="3" style="fill:{M("cream", 40, "paper")}"/>'
+                 + T(242, y + 38, org, 20, 600) + T(540, y + 38, why, 18, 400) + T(1038, y + 38, n, 20, 600, "var(--ink)", "end", mono=True) + '</g>')
+    defs, over = glass("albadge", "var(--paper)")
+    return svg("".join(o) + over, defs)
+
+
+def pd_school():
+    """A negotiated pace, month 6. The world got time to catch up: Mina's class has a unit on how these models work."""
+    o = [f'<rect width="{W}" height="{H}" style="fill:{M("ink", 90, "sky")}"/>', doc_panel(200, 104, 880, 460, "Year 10 Computing · Unit 4 · Lesson 1"),
+         f'<g {show(0.3, 0.15)}>' + tag(232, 170, "NEW THIS TERM", TAG_TEAL, 13) + '</g>',
+         T(232, 250, "How AI models are trained,", 36, 600), T(232, 296, "and how they are checked", 36, 600)]
+    points = ["1.  What a model learns from its training data", "2.  Why a model can pass a test without learning the lesson",
+              "3.  Who checks the labs now, and how"]
+    o += [f'<g {show(0.8 + i * 0.5, 0.15, 8)}>' + T(232, 372 + i * 44, line, 21, 500) + '</g>' for i, line in enumerate(points)]
+    defs, over = glass("pdsch", "var(--paper)")
+    return svg("".join(o) + over, defs)
+
+
+def pd_trial():
+    """A negotiated pace, month 6. St. Brigid's tries AI triage slowly: every suggestion waits for a clinician, who sometimes overrules it."""
+    o = light_screen("St. Brigid's Hospital · AI triage trial", "Week 12 · every case signed by a clinician")
+    o += [T(x, 206, h, 15, 600, DIM, extra="letter-spacing:.12em") for x, h in [(90, "PATIENT"), (470, "AI SUGGESTION"), (860, "CLINICIAN")]]
+    rows = [("Chest pain, 64", "Urgent: see within 10 min", "Agreed · Dr Lin", TAG_TEAL), ("Head injury, 8", "Urgent: CT scan", "Agreed · Dr Lin", TAG_TEAL),
+            ("Abdominal pain, 33", "Routine", "Changed to urgent · Dr Lin", TAG_CORAL), ("Shortness of breath, 71", "Urgent", None, None)]
+    for i, (who, ai, doc, fill) in enumerate(rows):
+        y = 226 + i * 72
+        o.append(f'<g {show(0.2 + i * 0.3, 0.12, 8)}><rect x="80" y="{y}" width="1120" height="60" rx="3" style="fill:{M("cream", 40, "paper")}"/>'
+                 + T(100, y + 38, who, 20, 500) + T(470, y + 38, ai, 19, 400) + '</g>')
+        if doc:
+            o.append(f'<g {show(0.5 + i * 0.3, 0.12)}>' + T(860, y + 38, doc, 19, 600, CORAL_LIGHT if fill == TAG_CORAL else M("teal", 80, "ink")) + '</g>')
+        else:
+            o.append(tag(860, y + 18, "AWAITING REVIEW", M("ink", 60, "paper"), 13))
+    defs, over = glass("pdtri", "var(--paper)")
+    return svg("".join(o) + over, defs)
+
+
+def cw_letter():
+    """A costly win, victory night. Tomas's resignation, left under the trophy."""
+    return letter("cwlet", "Mail · To the board of Kestrel Labs", "RESIGNATION", ["I am resigning as", "Head of Safety."],
+                  ["We won because we stopped checking. Kestrel 5 passes", "every test we have, and none of us can say what it",
+                   "actually wants. I won't sign the next release."], "Tomas")
+
+
+def cw_hearing():
+    """A costly win, month 4. At the hearing, the one question nobody at the lab can answer. Cut before you do."""
+    picture = (doc_panel(256, 104, 824, 280, "Senate Commerce Committee · Hearing on Kestrel 5")
+               + T(280, 200, "WITNESS", 14, 600, DIM, extra="letter-spacing:.14em")
+               + T(280, 256, "Chief Executive, Kestrel Labs", 36, 600)
+               + T(280, 310, "Kestrel 5 now runs in 40% of US businesses", 18, 400, DIM))
+    return news("cwhear", picture, "THE COMMITTEE CHAIR, TO THE WITNESS", [(1.2, "“Simple question. Can you tell us what it wants?”")],
+                "KESTREL 5 IN 40% OF US BUSINESSES  ·  HEARING ON 'UNEXPLAINED DECISIONS'", t_quote=1.0, clock="10:02 ET")
+
+
+def ov_letter():
+    """Overtaken, month 1. The leader's rules become the country's defaults; your lab is invited to comment, briefly."""
+    return letter("ovlet", "Mail · Department of Commerce", "INVITATION TO COMMENT", ["National AI Framework"],
+                  ["The framework adopts OpenBrain's model specification as", "the national default for schools and agencies.", "",
+                   "Kestrel Labs is invited to submit comments.", "Responses are limited to two pages."], "Office of the Secretary", "2 PAGES MAX")
+
+
+def ov_email():
+    """Overtaken, year 1. Your team keeps testing the leader's model from outside. The reply is automatic."""
+    return letter("ovmail", "Mail · Inbox", "RE: OUR FINDINGS ON OPENBRAIN 7", ["Thanks for sharing", "your paper!"],
+                  ["We'll pass it along to the right team.", "— OpenBrain Research Relations", "",
+                   "> OpenBrain 7 praises every essay and keeps students", "> chatting past 2 am. Full data attached."],
+                  "Automated reply · this inbox is not monitored")
+
+
 PLATES = {"mis-scores": mis_scores, "mis-port-board": mis_port_board, "mis-triage": mis_triage, "mis-laptop": mis_laptop, "mis-order": mis_order,
           "qt-evals": qt_evals, "qt-gate": qt_gate,
           "al-triage": al_triage, "al-chat": al_chat, "al-news": al_news, "al-cafe": al_cafe,
@@ -835,7 +1113,11 @@ PLATES = {"mis-scores": mis_scores, "mis-port-board": mis_port_board, "mis-triag
           "pd-cursor-evals": pd_cursor_evals, "pd-cursor-automation": pd_cursor_automation, "pd-cursor-delay": pd_cursor_delay,
           "pd-cursor-sharing": pd_cursor_sharing,
           "cw-port": cw_port, "cw-triage": cw_triage, "cw-chat": cw_chat, "cw-reveal": cw_reveal, "cw-phone": cw_phone,
-          "ov-launch": ov_launch, "ov-news": ov_news, "ov-chat": ov_chat}
+          "ov-launch": ov_launch, "ov-news": ov_news, "ov-chat": ov_chat,
+          "ab-news": ab_news, "ab-farewell": ab_farewell, "rb-budget": rb_budget, "rb-app": rb_app, "mu-kitchen": mu_kitchen,
+          "mu-mirrors": mu_mirrors, "lb-usage": lb_usage, "qt-briefing": qt_briefing, "qt-cafe": qt_cafe, "rd-news": rd_news,
+          "rd-letter": rd_letter, "al-port": al_port, "al-badges": al_badges, "pd-school": pd_school, "pd-trial": pd_trial,
+          "cw-letter": cw_letter, "cw-hearing": cw_hearing, "ov-letter": ov_letter, "ov-email": ov_email}
 
 if __name__ == "__main__":
     OUT.mkdir(parents=True, exist_ok=True)

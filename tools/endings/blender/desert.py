@@ -22,7 +22,6 @@ OUT, STILL, OPTS = args()
 VARIANT = OPTS.get("variant", "rising")
 SCALE = float(OPTS.get("scale", 1.0))
 rng = random.Random(11)
-FPS = 24
 FOG_HEX, FOG_K = "#8E89A6", 0.0009
 
 clear_scene()
@@ -68,7 +67,7 @@ def lamp_material(name, hexcol, strength, end, t_off=None):
     if t_off is None:
         bsdf.inputs["Emission Strength"].default_value = strength
     else:
-        T = clock(nt, end)
+        T = clock(nt, end, FPS)
         off = obj_attr(nt, "t_off").outputs["Fac"]
         nt.links.new(mnode(nt, "MULTIPLY", mnode(nt, "LESS_THAN", T, off), strength), bsdf.inputs["Emission Strength"])
     return m
@@ -99,6 +98,10 @@ def variant_emptylot():
 
 VARIANTS = {"rising": variant_rising, "shutdown": variant_shutdown, "paused": variant_paused, "emptylot": variant_emptylot}
 SPEC = VARIANTS[VARIANT]()
+# How much slower each take runs than in the 30-second cuts, so the 60-second films hold every world shot longer
+# (owner, 2026-09-25). Times in seconds stretch by this factor; the clip is still encoded at 24 fps.
+SLOW = {"rising": 1.4, "shutdown": 1.6, "paused": 1.4, "emptylot": 1.4}[VARIANT]
+FPS = 24 * SLOW
 END = round(SPEC["seconds"] * FPS)
 
 # ---------------------------------------------------------------- materials

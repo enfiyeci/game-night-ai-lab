@@ -30,9 +30,13 @@ STILL = len(argv) > 1 and argv[1] == "still"
 OPTS = dict(a.split("=", 1) for a in argv[2:] if "=" in a)
 SCALE = float(OPTS.get("scale", 1.0))
 VARIANT = OPTS.get("variant", "blackout")
-FPS = 24
+# How much slower each take runs than in the 30-second cuts, so the 60-second films hold every world shot longer
+# (owner, 2026-09-25). Times in seconds stretch by this factor; the clip is still encoded at 24 fps.
+SLOW = {"blackout": 1.0, "warm": 1.6, "billboards": 8 / 6, "leftbehind": 8 / 6, "cascade": 8 / 6, "numberone": 1.4}[VARIANT]
+FPS = 24 * SLOW
 SHOT_END, END = {"blackout": (216, 384), "warm": (120, 288), "billboards": (144, 312), "leftbehind": (144, 144),
                   "cascade": (144, 144), "numberone": (120, 120)}[VARIANT]
+SHOT_END, END = round(SHOT_END * SLOW), round(END * SLOW)   # blackout was re-timed by hand for the 9 s shot
 SUN_ROT, SKY_STRENGTH = 90.0, 0.3   # the values the owner saw in the Blender test
 FOG_HEX, FOG_K = "#7A6470", 0.0009
 rng = random.Random(7)
@@ -59,7 +63,8 @@ def node(nt, kind, **inputs):
 # (frame, x of the wave front in world metres); lights right of the front stay on. "warm" keeps the front off the map.
 WAVE = {"blackout": ((10, -440.0), (SHOT_END - 12, -80.0), (END - 40, 320.0)),
         # cascade: substations trip in chunks, so the front jumps rather than sweeps (keys are held, not blended)
-        "cascade": ((1, -9999.0), (24, -330.0), (60, -190.0), (96, -60.0), (132, 120.0), (200, 400.0))}.get(VARIANT, ((1, -9999.0),))
+        "cascade": tuple((round(f * SLOW), x) for f, x in ((1, -9999.0), (24, -330.0), (60, -190.0), (96, -60.0), (132, 120.0), (200, 400.0)))
+        }.get(VARIANT, ((1, -9999.0),))
 
 
 def wave_value(nt):
@@ -376,7 +381,7 @@ for frame, (cx, cy, cz), look_z in ((1, (-262, -160, 44), 58), (END, (-200, -176
 
 # ---------------------------------------------------------------- render settings
 scene.render.resolution_x, scene.render.resolution_y = round(1920 * SCALE), round(1080 * SCALE)
-scene.render.fps = FPS
+scene.render.fps = 24
 scene.frame_start, scene.frame_end = 1, END
 scene.render.image_settings.file_format = "PNG"
 ee = scene.eevee

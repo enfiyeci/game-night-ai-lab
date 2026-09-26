@@ -38,7 +38,7 @@ def film_files(film_id):
 def build(out, ids):
     out = Path(out)
     out.mkdir(parents=True, exist_ok=True)
-    shared = ["ui/endings/player.js", "ui/endings/timeline.js", "ui/endings/endings.css"]
+    shared = ["ui/endings/player.js", "ui/endings/timeline.js", "ui/endings/endings.css", "ui/endings/narration.json"]
     shared += [f"ui/assets/office-era{e}.svg" for e in range(1, 6)] + [f"ui/assets/anchors-era{e}.json" for e in range(1, 6)]
     films = []
     deal_films = []

@@ -56,6 +56,15 @@ export function typedText(text, startAt, t, cps = 26) {
   return text.slice(0, Math.floor((t - startAt) * cps));
 }
 
+// ---------------------------------------------------------------- narration
+// Lumen's lines live in one file for every film (ui/endings/narration.json, the owner edits them there): per film, one
+// {shot, say} per shot in order, where shot repeats that shot's time card so the file reads on its own. A line whose
+// card no longer matches its shot is left out rather than put on the wrong picture.
+export function withNarration(film, lines) {
+  if (!lines?.length) return film;
+  return { ...film, shots: film.shots.map((shot, i) => (lines[i]?.shot === shot.card && lines[i].say ? { ...shot, say: lines[i].say } : shot)) };
+}
+
 // ---------------------------------------------------------------- films that follow the run
 // A film with a deal block (A negotiated pace) shows the deal the run made: {name} in a card, or in a plate's data-fill
 // text, becomes the value of that name; a plate element with data-if="name" shows only when that value is set; and a

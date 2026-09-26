@@ -155,8 +155,8 @@ def stamps(count, step):
 def backups(offset, until):
     """One soft ping per backup of the model, on the globe's schedule (tools/endings/blender/globe.py, backup_time,
     53 data centres), for clip seconds offset..until. Returned relative to offset."""
-    n = 53
-    times = [0.4 + 10.5 * (i / n) ** 0.55 - offset for i in range(n)]
+    n, slow = 53, 7 / 4.5   # globe.py SLOW["backups"]: the 60-second cut holds the globe longer
+    times = [slow * (0.4 + 10.5 * (i / n) ** 0.55) - offset for i in range(n)]
     times = [t for t in times if 0 <= t < until - offset]
     out = np.zeros(int((until - offset + 0.5) * SR))
     for k, t in enumerate(times):
