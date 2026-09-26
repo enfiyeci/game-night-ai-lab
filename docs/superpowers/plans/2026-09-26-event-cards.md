@@ -1420,3 +1420,10 @@ The owner picked week-by-week time (real-time pick 1D) while this plan was being
 - **Bubbles rise above an advisor's "!" marker** (dy −64 when their band is not calm), and `separate()` lifts one of two bubbles that would touch.
 - **The whistleblower's press tag** sits by the door, down-left of the Policy desk, where no bubble covers it.
 - **IBM Plex Mono** was added to the font link in `index.html` for the crisis pictures.
+
+## Review record (tier 2, Codex gpt-5.6-sol, adversarial, 2026-09-26)
+
+- **Round 1: REVISE, five findings.** Fixed in `0bd9e93`: cards now open in the same update that lands them, a live warning's countdown refreshes, the open phone blocks the floor menu and the CEO monitor, and focus returns after the last card. Won't fix here: "turn" wording in three sim cost strings (`capabilityJump.audit`, `siteOpposition.move`, `lossSpike.rollback`). The real-time lane owns those sim files and is rewriting them for week-by-week time.
+- **Round 2: REVISE, two findings.** Fixed in `14b2ae4`: an instant answer no longer closes the next card, and the clock holds while a new era's office positions load.
+- **Round 3: APPROVED**, with no findings.
+- The mutation guard (a check that the review changed no files) was unchanged after every round. The live clock path is still untested, because the real-time lane's clock is not merged into this branch. That lane will merge `events-build` into `realtime` and test the cards against the real `state.day`, `landsAt` and `dueAt`.
