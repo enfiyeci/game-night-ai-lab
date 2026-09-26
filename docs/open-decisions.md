@@ -27,21 +27,21 @@ difficulty target (spec 9).
    labor backlash). Currently invented, not research-based.
    ON THE BACK BURNER (owner 2026-09-25): leaning towards a product line, or deals with outside
    humanoid companies instead of building one; only if time allows.
-8. **A narrator character.** Your original design had Lumen, a player-named AI assistant whose
-   flattery grows into a moral spine and who narrates the endings. Not in the current spec.
-   Include (it gives the end-of-run reveal a voice), or keep the four advisors only.
+8. **A narrator character.** DECIDED 2026-09-25: Lumen, present all game (option a); spec 6.
 9. **Launch reviewers.** DECIDED 2026-09-25: benchmarks plus a press panel of four parody critics (spec 6f).  The launch reveal shows four outlet scores. Use your five parody
    critics from the original design (PitchCrunch, Strategery, AI Snake Eyes, The Toe Rojen
    Experience, Æon Review — pick four), or new ones.
 10. **Names.** Working title; rival labs (provisional: OpenBrain, Lodestar, DeepThink, Qilin);
-    compute suppliers (Verde, Azuria, CoreFlame, a Gulf sovereign campus); the four advisors'
-    names and personalities; model-name theme sets (birds, weather, music, stone, light,
+    compute suppliers (Verde, Azuria, CoreFlame, a Gulf sovereign campus); model-name theme sets (birds, weather, music, stone, light,
     numbers).
 11. **Onboarding.** Judges play once, quickly. Decide between a short guided first turn, an
     advisor-led tutorial, or a one-screen "how to play". Strongly affects the fun score.
 12. **End-of-run reveal.** What it shows: the true hidden values over time next to each
     advisor's readings, which choices planted which incidents, a replay prompt ("try a
     different constitution").
+
+Decided 2026-09-25 and moved into the spec: the advisor cast (spec 6), the feed's purpose
+(spec 6).
 
 ## C. Submission logistics
 
