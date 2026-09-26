@@ -41,7 +41,7 @@ test('stamping gives each scheduled item a day and restamps a moved one', () => 
   const [legal] = s.legalCases;
   assert.equal(legal.landsFor, 3);
   assert.ok(legal.landsDay > roundSpan(3).start && legal.landsDay <= roundSpan(3).end);
-  assert.equal(s.power.sites.find((x) => x.id === 'gas-t').landsDay, undefined); // sites stay on the mark
+  assert.equal(s.power.sites.find((x) => x.id === 'gas-t').landsFor, 2);
   legal.dueTurn += 1; // an event delays the case
   stampLandings(s);
   assert.equal(legal.landsFor, 4);
@@ -119,4 +119,46 @@ test('a landing between marks keeps trust and favor in range', () => {
   r = advanceTo(r.s, due, rng);
   assert.ok(r.events.some((e) => e.type === 'lawsuitPaid' && e.source === 'test'));
   assert.equal(r.s.publicTrust, 0);
+});
+
+import { addPipeline } from '../sim/contracts.js';
+
+test('bought compute arrives on its landing day, a round before its old mark', () => {
+  const rng = createRng(7);
+  let s = createInitialState({ seed: 7 });
+  const id = addPipeline(s, { supplier: 'verde', units: 8, price: 0.9, termMonths: 24, arrivesTurn: 2, needsPower: false });
+  s = applyActions(s, {}, rng).state;
+  const day = s.compute.pipeline.find((p) => p.id === id).landsDay;
+  assert.ok(day > roundSpan(1).start && day <= roundSpan(1).end);
+  let r = advanceTo(s, day - 1, rng);
+  assert.ok(r.s.compute.pipeline.some((p) => p.id === id));
+  r = advanceTo(r.s, day, rng);
+  assert.ok(r.events.some((e) => e.type === 'computeArrived' && e.supplier === 'verde'));
+  assert.ok(r.s.compute.contracts.some((c) => c.id === id));
+});
+
+test('a power site comes online on its landing day', () => {
+  const rng = createRng(7);
+  let s = createInitialState({ seed: 7 });
+  s.power.sites.push({ id: 'gas-t', source: 'gas', units: 40, arrivesTurn: 2, online: false, oppositionCut: null });
+  s = applyActions(s, {}, rng).state;
+  const day = s.power.sites.find((x) => x.id === 'gas-t').landsDay;
+  const r = advanceTo(s, day, rng);
+  assert.ok(r.events.some((e) => e.type === 'siteOnline' && e.id === 'gas-t'));
+  assert.equal(r.s.power.sites.find((x) => x.id === 'gas-t').online, true);
+});
+
+test('chips landing just before era 4 still need power, as they did at the era 4 mark', () => {
+  const rng = createRng(7);
+  let s = createInitialState({ seed: 7 });
+  Object.assign(s, { era: 3, turn: 11, turnInEra: 3, day: roundSpan(11).start, dayInRound: 0 }); // the last round of era 3
+  s.cash = 1e6;
+  const id = addPipeline(s, { supplier: 'verde', units: 8, price: 0.9, termMonths: 24, arrivesTurn: 12 });
+  s = applyActions(s, {}, rng).state;
+  const day = s.compute.pipeline.find((p) => p.id === id).landsDay;
+  assert.ok(day < roundSpan(11).end, 'lands before the era 4 mark');
+  const r = advanceTo(s, day, rng);
+  const contract = r.s.compute.contracts.find((c) => c.id === id);
+  assert.equal(r.s.era, 3);
+  assert.equal(contract.needsPower, true);
 });

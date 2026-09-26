@@ -1,5 +1,6 @@
 import { BALANCE } from './balance.js';
 import { eraById } from './data/eras.js';
+import { eraOfRound } from './time.js';
 import { createRng } from './rng.js';
 import {
   SUPPLIERS, SPOT_PRICE, eraScale, FRAGILE_MONTHLY, BUMP_CHANCE, GULF_OPEN, GULF_REVOKE, EQUITY_SHARE,
@@ -64,7 +65,8 @@ function arrive(state, p, rng) {
   const units = p.headline ? Math.round(p.headline * (0.3 + 0.7 * rng.next())) : p.units;
   const c = {
     id: p.id, supplier: p.supplier, units, price: p.price, monthsLeft: p.termMonths,
-    needsPower: p.needsPower ?? (p.supplier === 'verde' && state.era >= 4), string: p.string, arrivedTurn: state.turn,
+    // A delivery landing early keeps the rules of the era it was due in (stage 2 lands it inside the round before).
+    needsPower: p.needsPower ?? (p.supplier === 'verde' && (p.arrivesTurn == null ? state.era : Math.max(state.era, eraOfRound(p.arrivesTurn))) >= 4), string: p.string, arrivedTurn: p.arrivesTurn ?? state.turn,
     scaledDown: false, troubled: false, dark: p.dark ?? false, bumpTurn: null, exclusiveBought: false, headline: p.headline ?? null,
   };
   state.compute.contracts.push(c);
@@ -118,10 +120,10 @@ export function signOffer(state, offerId, rng) {
 }
 
 // Called once the turn has advanced, so what is due on turn T is online while the player plans turn T.
-export function deliverDue(state, rng) {
+export function deliverDue(state, rng, due = (p) => p.arrivesTurn <= state.turn) {
   const arrived = [];
   state.compute.pipeline = state.compute.pipeline.filter((p) => {
-    if (p.arrivesTurn > state.turn) return true;
+    if (!due(p)) return true;
     arrived.push(arrive(state, p, rng));
     return false;
   });
@@ -152,10 +154,11 @@ export function syncContracts(state) {
 // Called at turn end, before plan 2A's event tick, so a CoreFlame failure is warned about the same turn.
 export function contractsTurn(state, rng) {
   const months = eraById(state.era).monthsPerTurn;
-  const spots = state.compute.contracts.filter((c) => c.supplier === 'spot' && c.bumpTurn == null);
+  const spots = state.compute.contracts.filter((c) => c.supplier === 'spot' && c.bumpTurn == null && c.arrivedTurn <= state.turn);
   const warnedBump = spots.length > 0 && rng.chance(BUMP_CHANCE[state.era] ?? 0);
   if (warnedBump) for (const c of spots) c.bumpTurn = state.turn + 1; // serves (and bills) one more turn
   for (const c of state.compute.contracts) {
+    if (c.arrivedTurn > state.turn) continue;
     if (c.supplier === 'coreflame' && !c.troubled && rng.chance(perTurn(FRAGILE_MONTHLY, months))) c.troubled = true;
   }
   return { warnedBump };
@@ -166,6 +169,7 @@ export function expireContracts(state) {
   const months = eraById(state.era).monthsPerTurn;
   const expired = [];
   state.compute.contracts = state.compute.contracts.filter((c) => {
+    if (c.arrivedTurn > state.turn) return true;
     if (c.monthsLeft == null) return true; // spot rolls over
     c.monthsLeft -= months;
     if (c.monthsLeft > 1e-9) return true;

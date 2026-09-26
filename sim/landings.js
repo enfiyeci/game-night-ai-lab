@@ -4,6 +4,8 @@ import { roundSpan } from './time.js';
 import { landRivals } from './rivals.js';
 import { legalTick } from './economy.js';
 import { keepPromises } from './promises.js';
+import { deliverDue, refreshOnline, sideRng } from './contracts.js';
+import { powerTurn } from './power.js';
 
 // FNV-1a over the seed and a key, so a landing day never draws from the game's shared random numbers.
 function hashKey(seed, key) {
@@ -30,13 +32,14 @@ function stamp(state, item, round, key) {
 }
 
 // Owner pick (2026-09-26): each thing lands in the round whose mark used to fire it, on a day inside that round.
-// Lawsuits and promises fired at the mark ending round dueTurn. Compute and power sites stay on the mark (owner pick C,
-// 2026-09-26: arriving early moved the balance too far to retune tonight).
+// Lawsuits and promises fired at the mark ending round dueTurn; deliveries and sites at the mark ending arrivesTurn - 1.
 export function stampLandings(state) {
   for (const c of state.legalCases) stamp(state, c, c.dueTurn, `legal:${c.source}:${c.cost}:${c.dueTurn}`);
   for (const p of state.promises) {
     if (p.source === 'president' && p.dueTurn != null) stamp(state, p, p.dueTurn, `promise:${p.meeting}:${p.id}`);
   }
+  for (const p of state.compute.pipeline) stamp(state, p, p.arrivesTurn - 1, `pipeline:${p.id}:${p.arrivesTurn}`);
+  for (const s of state.power.sites) if (!s.online) stamp(state, s, s.arrivesTurn - 1, `site:${s.id}`);
 }
 
 // Everything that lands today (stage 2), fired from advanceDays before the mark code.
@@ -47,6 +50,12 @@ export function landDue(state) {
   const landed = (item) => item.landsDay != null && item.landsDay <= state.day;
   for (const c of legalTick(state, landed)) events.push({ type: 'lawsuitPaid', cost: c.cost, source: c.source });
   keepPromises(state, landed);
+  if (state.compute.pipeline.some(landed)) {
+    for (const x of deliverDue(state, sideRng(state, 6), landed)) events.push({ type: 'computeArrived', supplier: x.supplier, units: x.units });
+  }
+  const sites = powerTurn(state, landed);
+  for (const e of sites) events.push(e);
+  if (sites.length) refreshOnline(state);
   // The mark normalizes these; a landing between marks must keep them in range too.
   state.publicTrust = clamp(state.publicTrust, 0, 100);
   state.govFavor.us = clamp(state.govFavor.us, 0, 100);
