@@ -133,7 +133,8 @@ function sheet(model, era) {
 // Numbers are written to Text nodes (`.data`), never with textContent: the clock watches the overlay
 // for added and removed nodes (ui/clock.js watch), and each one re-renders the HUD.
 
-// Owner 2026-09-26: numbers and bars start fast and slow down as they near the real value.
+// Owner 2026-09-26: numbers and bars start fast and slow down as they near the real value, and the whole
+// show runs about 1 min 25 s (about 10 s a benchmark, 12 s for the leaderboard, 23 s for the press).
 const easeOut = (p) => 1 - (1 - p) ** 5;
 const sfx = createSfx();
 
@@ -270,7 +271,7 @@ async function slowRoll(t, text, values, { first = 35, growth = 1.22, pitch = 10
 }
 
 // The scores a critic's card rolls through: counting up round the 1-10 dial and stopping on `score`.
-export const dialTo = (score, steps = 11) => Array.from({ length: steps }, (_, i) => `${(((score - steps + i) % 10) + 10) % 10 + 1}`);
+export const dialTo = (score, steps = 12) => Array.from({ length: steps }, (_, i) => `${(((score - steps + i) % 10) + 10) % 10 + 1}`);
 
 // The average narrowing in on its value from alternating sides.
 export function narrowTo(mean, steps = 12) {
@@ -340,15 +341,17 @@ async function benchmarkRace(t, show, row, index) {
   const verdict = el('div', 'rshow-verdict');
   scene.append(title, ...targets.map((target) => target.lane.node), mine.node, verdict);
   await showScene(t, body, scene);
+  await t.wait(800);
 
   for (const { lane: target, score } of targets) {
-    t.sound(() => sfx.whoosh(0.5, 0.03));
-    await countTo(t, target.text, score, 500, { ticks: false, onValue: (value) => { target.fill.style.width = `${value}%`; } });
+    t.sound(() => sfx.whoosh(0.8, 0.03));
+    await countTo(t, target.text, score, 900, { ticks: false, onValue: (value) => { target.fill.style.width = `${value}%`; } });
+    await t.wait(300);
   }
-  await t.wait(300);
-  t.sound(() => sfx.whoosh(0.9, 0.05));
+  await t.wait(900);
+  t.sound(() => sfx.whoosh(1.2, 0.05));
   const passed = new Set();
-  await countTo(t, mine.text, row.shown, 1900, {
+  await countTo(t, mine.text, row.shown, 3000, {
     onValue: (value) => {
       mine.fill.style.width = `${value}%`;
       for (const target of targets) {
@@ -369,7 +372,7 @@ async function benchmarkRace(t, show, row, index) {
     t.sound(() => sfx.stamp(0.45));
     t.kick(mine.node, 'rshow-flash');
   } else t.sound(() => (diff < 0 ? sfx.miss() : sfx.pop(-3)));
-  await t.wait(700);
+  await t.wait(2600);
 }
 
 const ROW_HEIGHT = 54;
@@ -410,15 +413,16 @@ async function leaderboardClimb(t, show, launch) {
   layout();
   mine.node.classList.add('waiting');
   await showScene(t, body, scene);
+  await t.wait(900);
   mine.node.classList.remove('waiting');
   t.sound(() => sfx.pop(0));
-  await t.wait(400);
+  await t.wait(1000);
 
   const target = board.mine.score;
   const from = Math.max(0, Math.min(...board.rows.map((row) => row.score), target) - 8);
   let lastTick = 0;
-  t.sound(() => sfx.whoosh(1.4, 0.05));
-  await t.tween(3200, (p) => {
+  t.sound(() => sfx.whoosh(2, 0.05));
+  await t.tween(5000, (p) => {
     const value = p < 1 ? from + (target - from) * easeOut(p) : target;
     mine.score = value;
     mine.scoreText.data = value.toFixed(1);
@@ -456,7 +460,7 @@ async function leaderboardClimb(t, show, launch) {
     t.sound(() => sfx.miss());
   }
   t.kick(result, 'rshow-stamp');
-  await t.wait(1200);
+  await t.wait(4500);
 }
 
 async function pressFlip(t, show, launch) {
@@ -484,19 +488,20 @@ async function pressFlip(t, show, launch) {
   average.hidden = true;
   scene.append(title, cards, average);
   await showScene(t, body, scene);
+  await t.wait(800);
 
   for (const { critic, card, front, score, text } of flips) {
     card.classList.add('flip');
     t.sound(() => sfx.whoosh(0.25, 0.04));
-    await t.wait(300);
-    await slowRoll(t, text, dialTo(critic.score));
+    await t.wait(500);
+    await slowRoll(t, text, dialTo(critic.score), { first: 60, growth: 1.2 });
     t.kick(score, 'rshow-stamp');
     t.sound(() => {
       sfx.stamp(0.35);
       if (critic.score >= 9) sfx.sparkle(critic.score === 10 ? 1046.5 : 784);
     });
     if (critic.score >= 9) front.classList.add('hot');
-    await t.wait(400);
+    await t.wait(1500);
   }
   for (const { card, front, critic, text } of flips) {
     card.classList.add('flip');
@@ -504,16 +509,17 @@ async function pressFlip(t, show, launch) {
     if (critic.score >= 9) front.classList.add('hot');
   }
   const mean = launch.press.reduce((sum, critic) => sum + critic.score, 0) / launch.press.length;
+  await t.wait(800);
   average.hidden = false;
-  t.sound(() => sfx.roll(1.5));
-  await slowRoll(t, averageText, narrowTo(mean), { first: 45, growth: 1.2, pitch: 6 });
+  t.sound(() => sfx.roll(3));
+  await slowRoll(t, averageText, narrowTo(mean, 14), { first: 70, growth: 1.18, pitch: 6 });
   t.kick(averageValue, 'rshow-stamp');
   t.sound(() => {
     sfx.stamp(0.6);
     if (mean >= 9) sfx.fanfare();
   });
   if (mean >= 9.5) confetti(t, panel, 532, 520);
-  await t.wait(1100);
+  await t.wait(2600);
 }
 
 async function playShow(t, show, launch) {
