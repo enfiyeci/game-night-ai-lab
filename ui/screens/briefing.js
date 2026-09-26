@@ -17,7 +17,8 @@ export function mountBriefing(game, { office, overlay }) {
   let live = null; // { warning, node }
   let talking = null;
 
-  const cardOpen = () => Boolean(overlay.querySelector('.event-layer'));
+  // An event card or any dialog (the release reveal, a menu screen) holds the stage.
+  const cardOpen = () => Boolean(overlay.querySelector('.event-layer, .dialog-layer'));
   const bandOf = (role) => game.state.lastBriefing?.find((reading) => reading.id === role)?.band ?? 'calm';
   const lookedInto = () => game.queue.addressWarnings ?? [];
 
@@ -136,6 +137,7 @@ export function mountBriefing(game, { office, overlay }) {
   }
 
   overlay.addEventListener('event-card-closed', showNextWarning);
+  overlay.addEventListener('gdt-dialog-closed', showNextWarning);
   // A card takes the stage; a raised warning steps aside and comes back when the card closes.
   overlay.addEventListener('event-card-open', () => {
     clearTalking();

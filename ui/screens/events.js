@@ -172,6 +172,8 @@ export function mountEvents(game, { stage, overlay }) {
   }
 
   function openNext() {
+    // A dialog that is already up (the release reveal, a menu screen) goes first; cards wait for it.
+    if (overlay.querySelector('.dialog-layer')) return;
     while (!current && queue.length) {
       if (openCard(queue.shift())) return;
     }
@@ -247,6 +249,10 @@ export function mountEvents(game, { stage, overlay }) {
     render(view, { preview: Boolean(preview) });
     return true;
   }
+
+  overlay.addEventListener('gdt-dialog-closed', () => {
+    if (!previewing) openNext();
+  });
 
   game.subscribe(({ state, events }) => {
     sync(state, events ?? []);
