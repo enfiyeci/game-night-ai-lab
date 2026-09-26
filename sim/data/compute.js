@@ -21,7 +21,7 @@ export const RESCUE_MONTHS = 3;
 export const SUPPLIERS = {
   verde: { name: 'Verde', kind: 'Chip order', size: [30, 40], arrival: { 1: 3, 2: 3, 4: 2 }, upfrontShare: 0.142, price: 0.85, termMonths: 24, string: null, eras: [1, 2, 4] },
   azuria: { name: 'Azuria', kind: 'Cloud', size: [8, 15], arrival: 1, upfrontShare: 0, price: 2.0, termMonths: 24, string: 'exclusive', eras: [1, 2, 3, 4] },
-  coreflame: { name: 'CoreFlame', kind: 'Neocloud', size: [8, 12], arrival: 1, upfrontShare: 0, price: 0.7, termMonths: 12, string: 'fragile', eras: [1, 2, 3, 4, 5] },
+  coreflame: { name: 'CoreFlame', kind: 'Neocloud', size: [8, 12], arrival: 1, upfrontShare: 0, price: 0.75, termMonths: 12, string: 'fragile', eras: [1, 2, 3, 4, 5] },
   spot: { name: 'Spot market', kind: 'Rent now', size: [2, 5], arrival: 0, upfrontShare: 0, price: null, termMonths: null, string: 'bumpable', eras: [1, 2, 3, 4, 5] },
   azuriaEquity: { name: 'Azuria', kind: 'Investment', size: null, arrival: 1, upfrontShare: 0, price: 1.0, termMonths: 24, string: 'moneyBack', eras: [2, 3, 4] },
   gulf: { name: 'Gulf campus', kind: 'Sovereign', size: [10, 30], arrival: 2, upfrontShare: 0.1, price: 1.0, termMonths: 36, string: 'usGated', eras: [3, 4] },

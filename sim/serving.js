@@ -1,7 +1,7 @@
 // $ per million tokens by era, for a Medium dense model at full precision.
 export const HW = [6.0, 2.5, 1.0, 0.4, 0.15];
 // Millions of tokens per consumer user per month, by era, without reasoning.
-export const USAGE = [0.5, 0.8, 1.5, 1.25, 2.0];
+export const USAGE = [0.5, 0.8, 1.5, 1.5, 1.75];
 export const SIZE = { small: 0.25, medium: 1, large: 3, xl: 8 };
 // [light load, load above 80% of capacity]
 export const ARCH = { dense: [1, 1], moe: [0.5, 0.7], sparse: [0.35, 0.6] };

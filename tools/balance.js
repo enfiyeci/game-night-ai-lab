@@ -15,15 +15,18 @@ import { activateReleases, releaseModel } from '../sim/release.js';
 import { updateServing } from '../sim/economy.js';
 import { ENDINGS } from '../sim/endings.js';
 import { eraById } from '../sim/data/eras.js';
-import { eraScale } from '../sim/data/compute.js';
+import { SUPPLIERS, eraScale } from '../sim/data/compute.js';
 import { setComputeSplit } from '../sim/split.js';
-import { monthlyBills, exclusiveActive } from '../sim/contracts.js';
-import { leaseBills, eraStartTurn } from '../sim/power.js';
-import { spotCover } from '../sim/split.js';
-import { released } from '../sim/queue.js';
+import { exclusiveActive } from '../sim/contracts.js';
+import { eraStartTurn } from '../sim/power.js';
+import { PREPAY_SHARE, QUEUE_TERM_MONTHS, released } from '../sim/queue.js';
 import { rank } from '../sim/rivals.js';
+import { BALANCE } from '../sim/balance.js';
 
 const HAZARD_CHOICES = ['penalize', 'fix', 'ignore'];
+// Mirrors SPEND_LEVELS and spendFor(level, era) in ui/logic/actions.js on the UI branch.
+const SPEND_LEVELS = { lean: 12, steady: 20, aggressive: 35 };
+const spendFor = (level, era) => SPEND_LEVELS[level] * (1 + 0.5 * (era - 1));
 const VALIDATION_RNG = { next: () => 0.5, int: () => 0, chance: () => false, pick: (values) => values[0], normal: (mean) => mean };
 const BALANCED_EVENT_CHOICES = {
   flattery: 'patch',
@@ -190,8 +193,23 @@ function nextRunUnits(state, prefs) {
   return recipe ? Math.ceil(recipeCost(state, recipe).units) : 0;
 }
 
-function committedFreeUnits(state) {
-  const pipeline = state.compute.pipeline.reduce((sum, item) => sum + (item.headline ?? item.units), 0);
+export function committedFreeUnits(state) {
+  const promised = (item) => (item.headline == null ? item.units : Math.round(item.headline * 0.3));
+  let pipeline = state.compute.pipeline.filter((item) => !item.dark).reduce((sum, item) => sum + promised(item), 0);
+  if (state.era >= 4) {
+    const needsPower = (item) => item.needsPower ?? item.supplier === 'verde';
+    const ownPower = state.compute.pipeline
+      .filter((item) => !item.dark && !needsPower(item))
+      .reduce((sum, item) => sum + promised(item), 0);
+    const needs = state.compute.pipeline
+      .filter((item) => !item.dark && needsPower(item))
+      .reduce((sum, item) => sum + promised(item), 0);
+    const projectedPower = state.power.sites.reduce((sum, site) => sum + site.units, 0);
+    const committedPower = state.compute.contracts
+      .filter((contract) => !contract.dark && contract.needsPower)
+      .reduce((sum, contract) => sum + contract.units, 0);
+    pipeline = ownPower + Math.min(needs, Math.max(0, projectedPower - committedPower));
+  }
   return availableUnits(state) + pipeline * (1 - state.compute.split.safety);
 }
 
@@ -229,7 +247,11 @@ function computeMove(state, rng, style, prefs, policy) {
     if (grid && canSign(state, grid)) return { type: 'deal', offerId: grid.id };
   }
   if (state.era === 3 && policy.queue && !state.compute.queue?.order && !state.compute.queue?.carry && need > 0) {
-    return { type: 'queueOrder', units: Math.min(released(), need), tier: policy.queue === 'random' ? rng.pick(['standard', 'prepaid']) : policy.queue };
+    const units = Math.min(released(), need);
+    let tier = policy.queue === 'random' ? rng.pick(['standard', 'prepaid']) : policy.queue;
+    const prepay = Math.round(PREPAY_SHARE * units * SUPPLIERS.verde.price * BALANCE.unitMonthlyCost * QUEUE_TERM_MONTHS);
+    if (tier === 'prepaid' && prepay > state.cash) tier = 'standard';
+    return { type: 'queueOrder', units, tier };
   }
   if (policy.offer === 'verde') {
     if (alreadyDealtThisEra(state, 'verde')) return null;
@@ -267,8 +289,9 @@ function computeMove(state, rng, style, prefs, policy) {
 function makeStrategy(style, prefs, policy = {}) {
   return (state, rng) => {
     const computeSafety = policy.randomSafety ? Math.round(rng.next() * 30) / 100 : prefs.computeSafety;
+    const spendLevel = prefs.spendLevelByEra?.[state.era] ?? prefs.spendLevel;
     const actions = {
-      budget: { spend: prefs.spendByEra?.[state.era] ?? prefs.spend, split: prefs.split },
+      budget: { spend: spendFor(spendLevel, state.era), split: prefs.split },
       computeSplit: { safety: computeSafety },
       moves: [],
       eventChoices: eventChoices(state, style, rng),
@@ -323,7 +346,7 @@ function makeStrategy(style, prefs, policy = {}) {
 
 const speedPrefs = {
   alignShare: 0,
-  spend: 30,
+  spendLevel: 'steady',
   split: { training: 0.55, security: 0.05, product: 0.2, talent: 0.2 },
   computeSafety: 0.02,
   pre: ['sparse-moe', 'moe', 'filtered-data', 'scrape-data'],
@@ -335,8 +358,7 @@ const speed = makeStrategy('speed', speedPrefs, { offer: 'verde', queue: 'prepai
 
 const safetyPrefs = {
   alignShare: 0.4,
-  spend: 35,
-  spendByEra: { 2: 52.5, 3: 70, 4: 87.5, 5: 105 },
+  spendLevel: 'aggressive',
   split: { training: 0.6, security: 0.15, product: 0.1, talent: 0.15 },
   computeSafety: 0.2,
   pre: ['licensed-data', 'hazard-filter-built', 'hazard-filter-reuse'],
@@ -348,8 +370,8 @@ const safety = makeStrategy('safety', safetyPrefs, { offer: 'safe', site: 'nucle
 
 const balancedPrefs = {
   alignShare: 0.2,
-  spend: 25,
-  spendByEra: { 2: 52.5, 3: 70, 4: 87.5, 5: 105 },
+  spendLevel: 'aggressive',
+  spendLevelByEra: { 1: 'steady' },
   split: { training: 0.5, security: 0.1, product: 0.2, talent: 0.2 },
   computeSafety: 0.12,
   pre: ['moe', 'filtered-data', 'stability'],
@@ -363,7 +385,7 @@ function random(state, rng) {
   const ids = (stage) => shuffled(pickableCards(state, stage).map((c) => c.id), rng);
   const strategy = makeStrategy('random', {
     alignShare: Math.round(rng.next() * 50) / 100,
-    spend: 15 + rng.int(0, 25),
+    spendLevel: rng.pick(Object.keys(SPEND_LEVELS)),
     split: { training: 0.5, security: 0.1, product: 0.2, talent: 0.2 },
     computeSafety: 0,
     pre: ids('pre'),
@@ -374,7 +396,7 @@ function random(state, rng) {
   return strategy(state, rng);
 }
 
-const overCommitter = makeStrategy('balanced', balancedPrefs, { offer: 'largest', queue: 'prepaid', site: 'gas' });
+const overCommitter = makeStrategy('balanced', { ...balancedPrefs, spendLevel: 'lean', spendLevelByEra: {} }, { offer: 'largest', queue: 'prepaid', site: 'gas' });
 const handToMouth = makeStrategy('balanced', balancedPrefs, { offer: 'spot' });
 const balancedNoGrid = makeStrategy('balanced', balancedPrefs, { offer: 'cheapest', queue: 'standard' });
 const balancedLowSafety = makeStrategy('balanced', { ...balancedPrefs, computeSafety: 0.05 }, { offer: 'cheapest', queue: 'standard', grid: true });
@@ -386,13 +408,10 @@ export const STRATEGIES = {
 };
 
 function freshMetrics() {
-  return { perEra: {}, queueShortTurns: 0, queueTurns: 0, rankAtEra4End: null };
+  return { perEra: {}, queueShortTurns: 0, queueTurns: 0, rankAtEra4End: null, rejectedActions: 0 };
 }
 
-function observeTurn(metrics, state) {
-  const era = state.era;
-  const burn = state.burnPlanned || projectBurn(state);
-  const compute = monthlyBills(state) + leaseBills(state) + spotCover(state);
+function observeTurn(metrics, { era, burn, compute }) {
   const row = (metrics.perEra[era] ??= { computeShareSum: 0, computeBillsSum: 0, turns: 0, arrSum: 0, arrRuns: 0 });
   row.computeShareSum += burn > 0 ? compute / burn : 0;
   row.computeBillsSum += compute;
@@ -410,10 +429,13 @@ function simulateMeasured(name, seed) {
   let state = createInitialState({ seed });
   const metrics = freshMetrics();
   for (let i = 0; i < 30 && !state.ending; i++) {
-    observeTurn(metrics, state);
     const era = state.era;
     const turnInEra = state.turnInEra;
-    ({ state } = endTurn(state, STRATEGIES[name](state, rng), rng));
+    let economySample = null;
+    const result = endTurn(state, STRATEGIES[name](state, rng), rng, { beforeEconomy: (sample) => { economySample = sample; } });
+    state = result.state;
+    metrics.rejectedActions += result.errors.length;
+    if (economySample) observeTurn(metrics, economySample);
     if (era === 3) {
       metrics.queueTurns += 1;
       if (state.compute.queue?.last?.rows.some((row) => row.got < row.units)) metrics.queueShortTurns += 1;
@@ -446,14 +468,18 @@ export function report(n) {
     let queueTurns = 0;
     let rankAtEra4EndSum = 0;
     let rankAtEra4EndRuns = 0;
+    let rejectedActions = 0;
+    const cashEndingsByEra = {};
     for (let seed = 1; seed <= n; seed++) {
       const { state, metrics } = simulateMeasured(name, seed);
       const r = { ending: state.ending, era: state.era, turn: state.turn };
       endings[r.ending] = (endings[r.ending] ?? 0) + 1;
+      if (r.ending === 'acquihire') cashEndingsByEra[r.era] = (cashEndingsByEra[r.era] ?? 0) + 1;
       eraSum += r.era;
       if (ENDINGS[r.ending]?.kind === 'fail' && (r.era === 3 || r.era === 4)) diedInEra3or4 += 1;
       queueShortTurns += metrics.queueShortTurns;
       queueTurns += metrics.queueTurns;
+      rejectedActions += metrics.rejectedActions;
       if (metrics.rankAtEra4End != null) {
         rankAtEra4EndSum += metrics.rankAtEra4End;
         rankAtEra4EndRuns += 1;
@@ -479,6 +505,8 @@ export function report(n) {
       }])),
       queueShortTurns,
       queueTurns,
+      cashEndingsByEra,
+      rejectedActions,
       meanRankAtEra4End: rankAtEra4EndRuns > 0 ? rankAtEra4EndSum / rankAtEra4EndRuns : null,
     };
   }

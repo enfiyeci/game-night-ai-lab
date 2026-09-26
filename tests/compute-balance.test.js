@@ -11,12 +11,24 @@ test('over-committing mostly ends in running out of money', () => {
   assert.ok((r.overCommitter.endings.acquihire ?? 0) / N >= 0.6, JSON.stringify(r.overCommitter.endings));
 });
 
+test('over-committing fails mostly in eras 3–4', {
+  todo: '8/183 (4.4%) acquihires occur in eras 3–4; needs deposits separated from monthly price or an era-aware commitment rule',
+}, () => {
+  const cash = r.overCommitter.endings.acquihire ?? 0;
+  const late = (r.overCommitter.cashEndingsByEra[3] ?? 0) + (r.overCommitter.cashEndingsByEra[4] ?? 0);
+  assert.ok(late / Math.max(1, cash) >= 0.5, `${late}/${cash} acquihires in eras 3–4`);
+});
+
+test('balance strategies have no rejected actions', () => {
+  for (const [name, row] of Object.entries(r)) assert.equal(row.rejectedActions, 0, name);
+});
+
 test('renting only spot almost never wins', () => {
   assert.ok(wins(r.handToMouth) / N <= 0.1);
 });
 
 test('reserving the grid in era 2 pays off in era 4', {
-  todo: 'balanced rank 1.075 vs no-grid 1.0417; needs cap-preserving era-4 progress or rank tie-break so powered compute matters at capability 100',
+  todo: 'balanced rank 1.0254 vs no-grid 1.0244; needs cap-preserving era-4 progress or rank tie-break so powered compute matters at capability 100',
 }, () => {
   assert.ok(r.balanced.meanRankAtEra4End < r.balancedNoGrid.meanRankAtEra4End);
 });

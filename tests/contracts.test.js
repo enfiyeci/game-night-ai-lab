@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import { BALANCE } from '../sim/balance.js';
 import { createRng } from '../sim/rng.js';
-import { SUPPLIERS, SPOT_PRICE, EQUITY_SHARE, GULF_OPEN, GULF_REVOKE, SCALE_DOWN, SCALE_DOWN_PENALTY_MONTHS, BREAK_SHARE, BUYOUT_MONTHS, eraScale } from '../sim/data/compute.js';
+import { SUPPLIERS, SPOT_PRICE, RESALE, EQUITY_SHARE, GULF_OPEN, GULF_REVOKE, SCALE_DOWN, SCALE_DOWN_PENALTY_MONTHS, BREAK_SHARE, BUYOUT_MONTHS, eraScale } from '../sim/data/compute.js';
 import { SITE_TYPES } from '../sim/power.js';
 import {
   generateOffers, signOffer, deliverDue, contractsTurn, syncContracts, expireContracts, pullBumped, contractAction, monthlyBills,
@@ -53,6 +53,16 @@ test('speed carries the premium: spot costs the most, long reservations the leas
   assert.equal(offer(s, 'verde').upfront, Math.round(SUPPLIERS.verde.upfrontShare * small('verde', 1) * SUPPLIERS.verde.price * U * SUPPLIERS.verde.termMonths));
   assert.equal(offer(fresh(5), 'spot').price, SPOT_PRICE[5]);
   assert.ok(Math.abs(perTurn(0.02, 3) - (1 - 0.98 ** 3)) < 1e-12);
+});
+
+test('every contract price stays above the best idle resale rate', () => {
+  const highestResale = Math.max(...Object.values(RESALE));
+  for (const [supplier, { price }] of Object.entries(SUPPLIERS)) {
+    if (price != null) assert.ok(price > highestResale, `${supplier} price ${price} <= resale ${highestResale}`);
+  }
+  for (const [era, price] of Object.entries(SPOT_PRICE)) {
+    assert.ok(price > highestResale, `spot era ${era} price ${price} <= resale ${highestResale}`);
+  }
 });
 
 test('a signed contract bills every month until its term ends, used or not', () => {

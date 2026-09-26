@@ -4,6 +4,7 @@ import { createInitialState } from '../sim/state.js';
 import { createRng } from '../sim/rng.js';
 import { endTurn, setBudget } from '../sim/turn.js';
 import { startRun } from '../sim/training.js';
+import { BALANCE } from '../sim/balance.js';
 
 const recipe = {
   sliders: { size: 'medium', length: 'optimal', alignShare: 0.15 },
@@ -143,6 +144,19 @@ test('a same-turn compute deal refreshes burn before a later emergency move', ()
   }, createRng(14));
   assert.equal(out.errors.length, 0);
   assert.deepEqual(out.events.slice(0, 2).map((e) => e.type), ['deal', 'emergency']);
+});
+
+test('the economy observer sees the burn and compute billed after same-turn actions', () => {
+  const s = createInitialState();
+  const spot = s.compute.offers.find((offer) => offer.supplier === 'spot');
+  let sample;
+  const out = endTurn(s, {
+    budget: { spend: 35, split: { training: 0.5, security: 0.1, product: 0.2, talent: 0.2 } },
+    moves: [{ type: 'deal', offerId: spot.id }],
+  }, createRng(24), { beforeEconomy: (value) => { sample = value; } });
+  assert.deepEqual(out.errors, []);
+  assert.equal(sample.burn, out.state.burnHistory.at(-1));
+  assert.equal(sample.compute, (10 + spot.units * spot.price) * BALANCE.unitMonthlyCost);
 });
 
 test('a same-turn training run does not inflate serving burn for a later emergency move', () => {
