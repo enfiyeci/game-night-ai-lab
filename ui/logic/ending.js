@@ -1,3 +1,4 @@
+import { storyDate } from '../../sim/time.js';
 import { ENDINGS } from '../../sim/endings.js';
 import { ADVISOR_PROFILES } from '../../sim/data/advisorLines.js';
 import { runSummary } from './summary.js';
@@ -53,7 +54,7 @@ export function endScreenModel(state, entries, { newThisRun = false } = {}) {
   ].map(headline);
   const locked = headlines.filter((h) => !h.found);
   return {
-    kicker: `Run over · era ${state.era}, turn ${state.turn}`,
+    kicker: `Run over · era ${state.era}, ${storyDate(state.day ?? 0).label}`,
     title: ending.title,
     kind: ending.kind,
     text: ending.text,

@@ -1,9 +1,10 @@
 import { ENDINGS } from '../sim/endings.js';
+import { createClock } from './clock.js';
 import { createGame } from './game.js';
 import { mountHud } from './hud.js';
 import { mountOffice } from './office.js';
 import { SCENARIOS, scenarioHistory } from './logic/scenarios.js';
-import { dealCards, powerSitesAvailable, queueScreenAvailable } from './logic/compute.js';
+import { powerSitesAvailable, queueScreenAvailable } from './logic/compute.js';
 import { openMenu } from './menu.js';
 import { openBudget } from './screens/budget.js';
 import { mountRecipe, openRecipe } from './screens/recipe.js';
@@ -21,13 +22,13 @@ import {
 import { openQueue } from './screens/compute.js';
 import { openPowerSites } from './screens/sites.js';
 import { mountHistory, openArticle, openHistory } from './screens/history.js';
+import { mountEvents } from './screens/events.js';
+import { mountBriefing } from './screens/briefing.js';
+import { mountFeed } from './screens/feed.js';
 import { mountEnding } from './screens/end.js';
 import { mountFinance, openFinance } from './screens/finance.js';
 import { createCollection } from './logic/collection.js';
 import { lumenEpilogue } from '../sim/lumen.js';
-import { mountEvents } from './screens/events.js';
-import { mountBriefing } from './screens/briefing.js';
-import { mountFeed } from './screens/feed.js';
 import { mountBoard, openBoard } from './screens/board.js';
 
 const params = new URLSearchParams(location.search);
@@ -68,7 +69,11 @@ const hud = document.querySelector('#hud');
 const overlay = document.querySelector('#overlay');
 
 mountHud(hud, game);
+game.clock = createClock(game);
 await mountOffice(office, fx, game).catch((error) => console.error(error));
+game.clock.watch(overlay);
+if (params.has('paused')) game.clock.setSpeed(0);
+game.clock.start();
 mountCompany(game, overlay);
 mountRecipe(game, overlay);
 mountRelease(game, overlay);
@@ -141,8 +146,7 @@ async function openDebugRoute() {
   if (location.hash === '#reveal') {
     if (!game.state.pendingModel) return;
     const draft = { ...releaseDraft(game.state), family: 'Kestrel', picks: ['eval-full'], reasoning: 'medium' };
-    game.addMove({ type: 'release', release: releasePayload(game.state, draft) });
-    game.endTurn();
+    game.addMove({ type: 'release', release: releasePayload(game.state, draft) }); // applies at once
     return;
   }
   if (location.hash === '#budget') {
@@ -171,12 +175,6 @@ async function openDebugRoute() {
   }
   if (location.hash === '#emergency') {
     openEmergency(game, overlay);
-    return;
-  }
-  if (location.hash === '#summary') {
-    const card = dealCards(game.state).find((offer) => !offer.disabled);
-    if (card) game.addMove(card.move);
-    game.endTurn();
     return;
   }
   if (location.hash === '#finance' || location.hash === '#books') {
@@ -231,11 +229,22 @@ globalThis.game = game;
 // #meeting-vote-last, #meeting-result, #meeting-result-loss, #meeting-result-staff, #meeting-result-backdown,
 // #meeting-4a, #meeting-4a-loss, #meeting-4a-staff.
 import { mountBoardMeeting } from './screens/boardMeeting.js';
+import { boardVoteThisRound } from '../sim/board.js';
+import { nextRoundDay } from '../sim/time.js';
 
 const meeting = mountBoardMeeting(game, { overlay, stage });
+// #meeting-live (debug): run the story days up to the last day before the next mark that holds a vote, where the real
+// meeting opens by itself (in a round that holds one; load ?scenario=boardVote).
+const liveMeetingRoute = () => {
+  if (location.hash !== '#meeting-live' || game.state.ending || !boardVoteThisRound(game.state)) return;
+  const turn = game.state.turn;
+  while (!game.state.ending && game.state.turn === turn && nextRoundDay(game.state) - game.state.day > 1) game.advanceDays(1);
+};
+liveMeetingRoute();
+addEventListener('hashchange', liveMeetingRoute);
 const meetingRoute = () => {
   const step = location.hash.match(/^#meeting(?:-([\w-]+))?$/);
-  if (step && !game.state.ending) meeting.preview(step[1] ?? 'ring');
+  if (step && step[1] !== 'live' && !game.state.ending) meeting.preview(step[1] ?? 'ring');
 };
 meetingRoute();
 addEventListener('hashchange', meetingRoute);

@@ -219,6 +219,13 @@ test('projected contract actions refresh deal cash and exclusivity checks', () =
   assert.match(prepaid.reason, /cash/i);
 });
 
+test('a projection leaves a pending card alone until its story-day deadline', () => {
+  const s = createInitialState();
+  s.pendingEvents.push({ id: 'distill', dueAt: s.day + 10 });
+  const projected = projectQueue(s, { moves: [] });
+  assert.deepEqual(projected.pendingEvents, s.pendingEvents);
+});
+
 test('the compute bar adds up to online compute and marks the pledge', () => {
   const s = createInitialState();
   s.compute.online = 200; s.compute.servingUnits = 90; s.compute.split.safety = 0.12;
@@ -308,7 +315,7 @@ test('site options match the exact side-RNG builds that will be queued', () => {
     const option = view.options.find((candidate) => candidate.source === source);
     assert.equal(option.units, site.units);
     assert.equal(option.lease, leaseMonthly(site.units));
-    assert.equal(option.readyIn, `${site.arrivesTurn - s.turn} turns`);
+    assert.equal(option.readyIn, `about ${site.arrivesTurn - s.turn} months`);
   }
 });
 

@@ -219,7 +219,14 @@ export function mountEnding(game, overlay, { collection, onPlayAgain, loadFilm =
     }
   }
 
+  // Owner 2026-09-26: if the ending came with another dialog (the release reveal), let the player close it first.
+  const playWhenClear = () => {
+    if (overlay?.querySelector('.dialog-layer')) overlay.addEventListener('gdt-dialog-closed', playWhenClear, { once: true });
+    else play();
+  };
+
   // A board meeting holds the film until it closes: the vote that removed you plays out first (board UI plan Task 6).
+  // Then any other dialog (the release reveal, held for the meeting) still goes first.
   let meetingOpen = false;
   let heldForMeeting = false;
   overlay?.addEventListener?.('board-meeting-open', () => { meetingOpen = true; });
@@ -227,14 +234,21 @@ export function mountEnding(game, overlay, { collection, onPlayAgain, loadFilm =
     meetingOpen = false;
     if (!heldForMeeting) return;
     heldForMeeting = false;
-    play();
+    queueMicrotask(playWhenClear); // the release reveal opens on this same event
   });
 
   const unsubscribe = game.subscribe(({ state }) => {
     if (!state.ending || recorded === state.ending) return;
     record(state);
-    if (meetingOpen) heldForMeeting = true;
-    else play();
+    if (meetingOpen) {
+      heldForMeeting = true;
+      return;
+    }
+    // Deferred one microtask: game.js's notify loop runs every subscriber for this endTurn synchronously and
+    // in registration order, so a later subscriber (the release reveal) may not have opened its dialog yet if
+    // we checked right here. Waiting a microtask runs after that whole synchronous loop finishes, so the
+    // dialog is open by the time we check, whichever order the subscribers were registered in.
+    queueMicrotask(playWhenClear);
   });
 
   return { show, play, unsubscribe };

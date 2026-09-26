@@ -1,0 +1,380 @@
+<title>Game Night real-time picks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  /* Palette from the game's own tokens (ui/styles.css): cream, paper, ink, wood, teal, coral. */
+  :root {
+    --paper: #FFFBF1;
+    --cream: #F1E4C8;
+    --ink: #2E2A2B;
+    --soft: #6E6663;
+    --line: #E6D9BF;
+    --wood: #C8864C;
+    --wood-ink: #8A5424;
+    --teal: #2F7F74;
+    --coral: #C24E2B;
+    --sel: #F6E3CD;
+    --shot: #EDE0C4;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #1F1C1C; --cream: #2A2625; --ink: #F1E4C8; --soft: #B5A993; --line: #3B3533;
+      --wood: #D69A62; --wood-ink: #E7B584; --teal: #6FC2B5; --coral: #EE8A68; --sel: #3A2E24; --shot: #2A2625;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #1F1C1C; --cream: #2A2625; --ink: #F1E4C8; --soft: #B5A993; --line: #3B3533;
+    --wood: #D69A62; --wood-ink: #E7B584; --teal: #6FC2B5; --coral: #EE8A68; --sel: #3A2E24; --shot: #2A2625;
+    color-scheme: dark;
+  }
+
+  body { background: var(--paper); color: var(--ink); font-family: 'Nunito', 'Avenir Next', system-ui, sans-serif; font-size: 16px; line-height: 1.5; }
+  .wrap { max-width: 1240px; margin: 0 auto; padding-inline: 24px; padding-block: 32px 120px; }
+  h1, h2, h3 { text-wrap: balance; margin: 0; }
+  h1 { font-size: clamp(28px, 4vw, 40px); font-weight: 900; line-height: 1.1; }
+  h2 { font-size: 24px; font-weight: 900; line-height: 1.2; }
+  h3 { font-size: 17px; font-weight: 900; line-height: 1.25; }
+  p { margin: 0; }
+  .lede { max-width: 68ch; font-size: 17px; color: var(--soft); }
+  .lede b { color: var(--ink); }
+  .code { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-weight: 600; }
+
+  /* Hero: the recommended combination */
+  .hero { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 28px; margin-top: 24px; align-items: start; }
+  .hero figure { margin: 0; }
+  .hero img { display: block; width: 100%; height: auto; border-radius: 10px; background: var(--shot); }
+  .hero figcaption { margin-top: 8px; font-size: 13px; color: var(--soft); }
+  .rec { display: grid; gap: 14px; }
+  .rec .eyebrow { font-size: 12px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; color: var(--wood-ink); }
+  .rec ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  .rec li { display: grid; grid-template-columns: 34px 1fr; gap: 10px; font-size: 15px; }
+  .rec li .code { color: var(--wood-ink); }
+  .must { padding: 12px 14px; border-radius: 10px; background: var(--cream); font-size: 14px; }
+  .must b { display: block; margin-bottom: 2px; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; justify-self: start; padding: 9px 16px; border: 0; border-radius: 10px; font: inherit; font-size: 15px; font-weight: 900; color: var(--paper); background: var(--wood-ink); cursor: pointer; }
+  .btn:focus-visible, .opt:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+
+  .heads { margin-top: 36px; display: grid; grid-template-columns: 34px 1fr; gap: 12px; padding: 16px 18px; border-radius: 12px; background: var(--cream); max-width: 900px; }
+  .heads .mark { font-size: 22px; line-height: 1; }
+  .heads p + p { margin-top: 6px; font-size: 14px; color: var(--soft); }
+
+  /* Choices */
+  section.choice { margin-top: 56px; }
+  .choice header { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; align-items: baseline; max-width: 900px; }
+  .choice .num { grid-row: span 2; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 30px; font-weight: 600; color: var(--wood); line-height: 1; }
+  .choice header p { color: var(--soft); }
+  .opts { display: grid; gap: 18px; margin-top: 20px; }
+  .opts.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .opts.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .opt { position: relative; display: grid; grid-template-rows: auto auto 1fr auto; gap: 8px; padding: 10px 10px 14px; border: 2px solid transparent; border-radius: 12px; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+  .opt:hover { background: var(--cream); }
+  .opt[aria-pressed="true"] { border-color: var(--wood); background: var(--sel); }
+  .opt img { display: block; width: 100%; height: auto; border-radius: 8px; background: var(--shot); }
+  .opt .head { display: flex; gap: 8px; align-items: baseline; }
+  .opt .head .code { color: var(--wood-ink); font-size: 14px; }
+  .opt .body { font-size: 14px; color: var(--soft); display: grid; gap: 6px; align-content: start; }
+  .opt .body b { color: var(--ink); }
+  .tags { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tag { padding: 1px 9px; border-radius: 999px; font-size: 12px; font-weight: 800; white-space: nowrap; background: var(--cream); color: var(--soft); }
+  .tag.yes { color: var(--teal); }
+  .tag.no { color: var(--coral); }
+  .tag.rec { color: var(--paper); background: var(--wood-ink); }
+  .opt[aria-pressed="true"] .tag:not(.rec) { background: var(--paper); }
+
+  /* Speed chart */
+  .speed { display: grid; gap: 6px; padding: 6px 2px 0; }
+  .speed .row { display: grid; grid-template-columns: 1fr; gap: 3px; }
+  .speed .bar { display: flex; height: 22px; gap: 2px; }
+  .speed .bar span { display: grid; place-items: center; border-radius: 3px; font-size: 11px; font-weight: 800; color: var(--paper); background: var(--wood); overflow: hidden; white-space: nowrap; }
+  .speed .bar span.e5 { background: var(--coral); }
+  .speed .axis { position: relative; height: 16px; font-size: 11px; color: var(--soft); font-variant-numeric: tabular-nums; }
+  .speed .axis i { position: absolute; top: 0; transform: translateX(-50%); font-style: normal; }
+  .speed .axis i:first-child { transform: none; }
+  .facts { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; font-size: 13px; }
+  .facts dt { color: var(--soft); }
+  .facts dd { margin: 0; font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+  /* Sources */
+  .sources { margin-top: 64px; max-width: 900px; display: grid; gap: 10px; font-size: 14px; color: var(--soft); }
+  .sources b { color: var(--ink); }
+  .sources code { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12.5px; color: var(--ink); word-break: break-all; }
+
+  /* Picks bar */
+  .picks { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; padding: 12px 24px calc(12px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--paper); }
+  .picks .in { max-width: 1240px; margin: 0 auto; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+  .picks .label { font-size: 13px; font-weight: 800; opacity: .75; }
+  .picks output { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 18px; font-weight: 600; letter-spacing: .04em; }
+  .picks .btn { background: var(--wood); color: var(--ink); }
+  .picks .note { font-size: 13px; opacity: .8; }
+
+  @media (max-width: 1000px) {
+    .hero { grid-template-columns: 1fr; }
+    .opts.four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 640px) {
+    .wrap { padding-inline: 16px; }
+    .opts.four, .opts.three { grid-template-columns: 1fr; }
+    .picks { padding-inline: 16px; }
+  }
+  @media (prefers-reduced-motion: no-preference) { .opt { transition: background .15s, border-color .15s; } }
+</style>
+
+<div class="wrap">
+  <h1>Real time: how should the clock work?</h1>
+  <p class="lede" style="margin-top:10px">You asked for time that flows on its own, like Game Dev Tycoon. There are five small choices below, each with a picture from the real game. <b>My recommendation is 1A 2A 3A 4A 5B:</b> a running clock with pause and fast buttons, built tonight for the submission, with a deeper version after it. Click the options you want, then copy your picks from the bar at the bottom.</p>
+
+  <div class="hero">
+    <figure>
+      <img src="img/hero.jpg" alt="The office with the clock under the info box reading Y2 M5 W2, pause, play and fast buttons, and a Skip to 1 Jul button. The menu shows Skip to 1 Jul and 1 of 2 team actions left this quarter. A chip under the top bar says Starts 1 Jul: Sign a compute deal." width="1200" height="750">
+      <figcaption>The recommended combination in era 2. The date runs by itself; the compute deal you just picked starts when the new quarter begins on 1 July.</figcaption>
+    </figure>
+    <div class="rec">
+      <span class="eyebrow">Recommended picks</span>
+      <ul>
+        <li><span class="code">1A</span><span>The clock runs, and your team acts at each new quarter, month or week.</span></li>
+        <li><span class="code">2A</span><span>Every quarter, month or week takes the same real time, about 45 seconds. A full game is about 15 minutes of running clock.</span></li>
+        <li><span class="code">3A</span><span>Your team can take 2 actions per quarter, month or week.</span></li>
+        <li><span class="code">4A</span><span>"End turn" becomes "Skip to 1 Jul" for impatient players.</span></li>
+        <li><span class="code">5B</span><span>Build this tonight, then make actions start instantly (option 1C) after the submission.</span></li>
+      </ul>
+      <div class="must"><b>Not a choice: the clock pauses for every card, meeting and dialog.</b>When a new quarter starts, the game answers any card you left open with its default answer. It also counts an unanswered President meeting as walking out. So the clock must stop while you decide, then carry on at the speed you had.</div>
+      <button class="btn" type="button" id="use-rec">Use my recommendation</button>
+    </div>
+  </div>
+
+  <div class="heads">
+    <span class="mark" aria-hidden="true">⚠️</span>
+    <div>
+      <p><b>Game Dev Tycoon has no pause, play or fast buttons.</b> Its speed is chosen once, before a game starts, as the number of in-game years, and you can't change it later. You can only pause by opening the menu or certain dialogs. A fan mod exists just to add speed buttons.</p>
+      <p>The pause and fast buttons in these pictures come from RimWorld and the Paradox strategy games, where players expect them. The sources agree, including a reply from Game Dev Tycoon's developer, but I read them through summaries, not the full pages.</p>
+    </div>
+  </div>
+
+  <!-- 1 -->
+  <section class="choice" data-q="1">
+    <header>
+      <span class="num">1</span>
+      <h2>How does time move?</h2>
+      <p>This choice matters most. It decides whether actions start the moment you click, or when the next quarter, month or week begins.</p>
+    </header>
+    <div class="opts four">
+      <button class="opt" type="button" data-pick="A" aria-pressed="false">
+        <img src="img/how-a-crop.jpg" alt="Running clock with Skip to 1 Jul, and a chip saying the compute deal starts 1 Jul" loading="lazy" width="900" height="740">
+        <span class="head"><span class="code">1A</span><h3>The clock runs; your team acts at each new quarter</h3></span>
+        <span class="body"><span>The date ticks by itself. What you pick starts when the next quarter, month or week begins, and the chip at the top shows when.</span><span><b>Keeps</b> every rule, test and balance number we have. <b>Costs</b> a short wait between clicking and seeing something happen.</span></span>
+        <span class="tags"><span class="tag rec">Recommended</span><span class="tag yes">Ready tonight</span></span>
+      </button>
+      <button class="opt" type="button" data-pick="B" aria-pressed="false">
+        <img src="img/how-b-crop.jpg" alt="Clock paused with a Planning label and a coral Play the quarter button" loading="lazy" width="900" height="740">
+        <span class="head"><span class="code">1B</span><h3>Plan, then press play</h3></span>
+        <span class="body"><span>The clock waits while you plan. Press "Play the quarter" and three months play out in a few seconds, then it stops again.</span><span><b>Cheapest</b> to build, but it still feels like turns, which you said you didn't want. Useful as an easy mode if playtesters feel rushed.</span></span>
+        <span class="tags"><span class="tag yes">Ready tonight</span><span class="tag">Still feels like turns</span></span>
+      </button>
+      <button class="opt" type="button" data-pick="C" aria-pressed="false">
+        <img src="img/how-c-crop.jpg" alt="The top bar shows Training Kestrel-3 started today, week 1 of 13, and a toast says training started" loading="lazy" width="900" height="740">
+        <span class="head"><span class="code">1C</span><h3>Click, and it starts right away</h3></span>
+        <span class="body"><span>Start a training run and its progress bar moves at once. The rest of the world (rivals, news, money) still updates at each new quarter.</span><span><b>Feels</b> like Game Dev Tycoon when you click. <b>Needs</b> a careful change to the game's rules engine, in the same area where compute deliveries arriving late took four rounds of fixes.</span></span>
+        <span class="tags"><span class="tag no">After the submission</span></span>
+      </button>
+      <button class="opt" type="button" data-pick="D" aria-pressed="false">
+        <img src="img/how-d-crop.jpg" alt="Speed buttons 1x 2x 4x with no skip; the menu shows which team is free or busy" loading="lazy" width="900" height="740">
+        <span class="head"><span class="code">1D</span><h3>Every week counts, no rounds at all</h3></span>
+        <span class="body"><span>The whole game moves week by week. Lawsuits, promises and training runs last real weeks instead of "4 turns", and each team works on one thing at a time.</span><span><b>Fully</b> what you described. <b>Needs</b> most of the rules engine rewritten, many tests redone and the balance tuned again.</span></span>
+        <span class="tags"><span class="tag no">After the submission</span><span class="tag">Biggest change</span></span>
+      </button>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section class="choice" data-q="2">
+    <header>
+      <span class="num">2</span>
+      <h2>How fast does the calendar run in each era?</h2>
+      <p>The game's rounds shrink from a quarter (eras 1 and 2) to a month (eras 3 and 4) to a week (era 5). So either every round takes the same real time, or the calendar runs at one steady speed. It can't do both. Bars show real minutes of running clock per era; era 5 is in coral.</p>
+    </header>
+    <div class="opts three" id="speed-opts"></div>
+  </section>
+
+  <!-- 3 -->
+  <section class="choice" data-q="3">
+    <header>
+      <span class="num">3</span>
+      <h2>What limits how much you can do?</h2>
+      <p>Today you get 2 moves per turn. Game Dev Tycoon has no such limit; money, staff and time hold you back instead.</p>
+    </header>
+    <div class="opts three">
+      <button class="opt" type="button" data-pick="A" aria-pressed="false">
+        <img src="img/how-a-crop.jpg" alt="Menu footer reads 1 of 2 team actions left this quarter" loading="lazy" width="900" height="740">
+        <span class="head"><span class="code">3A</span><h3>2 team actions per quarter, month or week</h3></span>
+        <span class="body"><span>The same limit as now, in calendar words. The count refills when the new quarter starts.</span><span><b>Nothing</b> changes under the hood.</span></span>
+        <span class="tags"><span class="tag rec">Recommended</span><span class="tag yes">Ready tonight</span></span>
+      </button>
+      <button class="opt" type="button" data-pick="B" aria-pressed="false">
+        <img src="img/limit-queue-crop.jpg" alt="Menu shows an Up next list: 1 Jul Sign a compute deal, 1 Jul Start a training run, 1 Oct Raise a round" loading="lazy" width="900" height="740">
+        <span class="head"><span class="code">3B</span><h3>Pick as much as you like; it lines up</h3></span>
+        <span class="body"><span>No counter. Everything you pick joins an "Up next" list, and the team starts two each quarter.</span><span><b>Risk:</b> something you lined up can stop being possible by the time its turn comes, for example a deal that has sold out.</span></span>
+        <span class="tags"><span class="tag yes">Ready tonight</span></span>
+      </button>
+      <button class="opt" type="button" data-pick="C" aria-pressed="false">
+        <img src="img/limit-teams-crop.jpg" alt="Each menu item carries a team tag, such as Research team busy until W4 or Policy team free" loading="lazy" width="900" height="740">
+        <span class="head"><span class="code">3C</span><h3>Each team does one thing at a time</h3></span>
+        <span class="body"><span>Research, Safety, Policy and the CFO each run one job. A busy team's items say when it frees up. This is the closest to Game Dev Tycoon.</span><span><b>Only works</b> with 1C or 1D, because jobs need real lengths of time.</span></span>
+        <span class="tags"><span class="tag no">After the submission</span></span>
+      </button>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section class="choice" data-q="4">
+    <header>
+      <span class="num">4</span>
+      <h2>What happens to "End turn"?</h2>
+      <p>The clock sits under the info box in the top right. These are the three versions of it.</p>
+    </header>
+    <div class="opts three">
+      <button class="opt" type="button" data-pick="A" aria-pressed="false">
+        <img src="img/skip-ahead.jpg" alt="Clock with pause, play, fast and a Skip to 1 Jul button" loading="lazy" width="600" height="160">
+        <span class="head"><span class="code">4A</span><h3>Skip to the next quarter</h3></span>
+        <span class="body"><span>One press jumps straight to 1 July. It does exactly what "End turn" does today, so there's nothing new to break.</span></span>
+        <span class="tags"><span class="tag rec">Recommended</span><span class="tag yes">Ready tonight</span></span>
+      </button>
+      <button class="opt" type="button" data-pick="B" aria-pressed="false">
+        <img src="img/skip-next.jpg" alt="Clock with pause, play, fast and a Skip to next decision button" loading="lazy" width="600" height="160">
+        <span class="head"><span class="code">4B</span><h3>Skip to the next decision</h3></span>
+        <span class="body"><span>Fast-forwards quarter after quarter until a card, meeting or finished model needs you. Quick, but you may skip past things you wanted to watch. None of the games I checked has this button.</span></span>
+        <span class="tags"><span class="tag yes">Possible tonight</span></span>
+      </button>
+      <button class="opt" type="button" data-pick="C" aria-pressed="false">
+        <img src="img/skip-none.jpg" alt="Clock with pause and three speeds: 1x, 2x and 4x, no skip button" loading="lazy" width="600" height="160">
+        <span class="head"><span class="code">4C</span><h3>No skip, just three speeds</h3></span>
+        <span class="body"><span>Pause, ×1, ×2 and ×4, like RimWorld. Time always flows; the fastest speed is the way to hurry.</span></span>
+        <span class="tags"><span class="tag yes">Ready tonight</span></span>
+      </button>
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section class="choice" data-q="5">
+    <header>
+      <span class="num">5</span>
+      <h2>When does it ship?</h2>
+      <p>Submissions close on 2026-09-27 at 12:00 AM PT, which is tonight. The release lane is editing the same menu files right now, so tonight's build has to be coordinated with it.</p>
+    </header>
+    <div class="opts three">
+      <button class="opt" type="button" data-pick="A" aria-pressed="false">
+        <span class="head"><span class="code">5A</span><h3>Tonight, and stop there</h3></span>
+        <span class="body"><span>Build 1A for the submission and leave it. The game flows in time, but actions still start at each new quarter.</span></span>
+        <span class="tags"><span class="tag yes">Ready tonight</span></span>
+      </button>
+      <button class="opt" type="button" data-pick="B" aria-pressed="false">
+        <span class="head"><span class="code">5B</span><h3>Tonight, then deeper after</h3></span>
+        <span class="body"><span>Build 1A for the submission. After it, make actions start instantly (1C), and later move to week-by-week time (1D) if you still want it.</span></span>
+        <span class="tags"><span class="tag rec">Recommended</span></span>
+      </button>
+      <button class="opt" type="button" data-pick="C" aria-pressed="false">
+        <span class="head"><span class="code">5C</span><h3>Keep turns for the submission</h3></span>
+        <span class="body"><span>Submit the game as it plays now, and build real time after. This keeps tonight free for the event cards and the release screen.</span></span>
+        <span class="tags"><span class="tag">Safest for tonight</span></span>
+      </button>
+    </div>
+  </section>
+
+  <div class="sources">
+    <b>Where this comes from</b>
+    <p>The full research report is <code>docs/research/realtime-time-flow/report.md</code> on branch <code>realtime</code>, with three notes beside it: how Game Dev Tycoon's time works, how other games run a clock, and every place our game assumes turns. The mockups come from <code>docs/design/mockups/K2-realtime.html</code> on the same branch, drawn over a real era-2 save (seed 10).</p>
+    <p>I checked the claims about our code myself in <code>sim/turn.js</code>, <code>sim/data/eras.js</code>, <code>ui/hud.js</code> and <code>ui/game.js</code>. ⚠️ Most claims about other games rest on search summaries or summarized page fetches, not full reads, and the report marks each one. ⚠️ The only real-seconds-per-week figure for Game Dev Tycoon (about 5 seconds) is one reviewer's impression. The 45, 60, 40 and 30 second lengths in choice 2 are my proposals, not measured numbers.</p>
+  </div>
+</div>
+
+<div class="picks" role="region" aria-label="Your picks">
+  <div class="in">
+    <span class="label">Your picks</span>
+    <output id="pick-out">1? 2? 3? 4? 5?</output>
+    <button class="btn" type="button" id="copy">Copy picks</button>
+    <span class="note" id="copy-note" aria-live="polite">Paste them in chat.</span>
+  </div>
+</div>
+
+<script>
+(() => {
+  // Choice 2: real minutes per era for each clock policy (4 rounds per era).
+  // Story weeks per round: about 13 (quarter), about 4.33 (month), 1 (week).
+  const WEEKS = [13, 13, 4.33, 4.33, 1];
+  const POLICIES = [
+    { pick: 'A', title: 'Same real time for every round', perRound: [45, 45, 45, 45, 45], rec: true,
+      text: 'Each quarter, month or week takes about 45 seconds. The calendar races early and slows in era 5, so every week feels like it matters.',
+      extra: 'Every balance number keeps its meaning.', tags: [['yes', 'Ready tonight']] },
+    { pick: 'B', title: 'One steady calendar speed', perWeek: 5,
+      text: 'A story week always takes about 5 seconds, the one Game Dev Tycoon figure we found. Era 5 is over in 20 seconds.',
+      extra: 'Surprises and rival moves arrive about 13 times as often in era 5 as in era 1. The game would need retuning.', tags: [['no', 'Needs retuning']] },
+    { pick: 'C', title: 'In between', perRound: [60, 60, 40, 40, 30],
+      text: 'Rounds get shorter each era (60, then 40, then 30 seconds), so the calendar speeds up a little near the end.',
+      extra: 'Surprises come about twice as often in era 5. Probably fine; needs a playtest.', tags: [['yes', 'Ready tonight']] },
+  ];
+  const MAX_MIN = 16;
+  const host = document.getElementById('speed-opts');
+  for (const p of POLICIES) {
+    const secsPerRound = WEEKS.map((w, i) => p.perRound ? p.perRound[i] : w * p.perWeek);
+    const eraMin = secsPerRound.map((s) => (s * 4) / 60);
+    const total = eraMin.reduce((a, b) => a + b, 0);
+    const wk = (i) => (secsPerRound[i] / WEEKS[i]);
+    const fmt = (s) => s < 10 ? s.toFixed(1) : Math.round(s);
+    const b = document.createElement('button');
+    b.className = 'opt'; b.type = 'button'; b.dataset.pick = p.pick; b.setAttribute('aria-pressed', 'false');
+    const segs = eraMin.map((m, i) => `<span class="${i === 4 ? 'e5' : ''}" style="width:${(m / MAX_MIN) * 100}%" title="Era ${i + 1}: ${m.toFixed(1)} min">${m >= 1.2 ? 'E' + (i + 1) : ''}</span>`).join('');
+    b.innerHTML = `
+      <div class="speed" role="img" aria-label="Real minutes per era: ${eraMin.map((m, i) => `era ${i + 1} ${m.toFixed(1)}`).join(', ')}; total ${total.toFixed(0)} minutes">
+        <div class="bar">${segs}</div>
+        <div class="axis"><i style="left:0">0</i><i style="left:${5 / MAX_MIN * 100}%">5</i><i style="left:${10 / MAX_MIN * 100}%">10</i><i style="left:${15 / MAX_MIN * 100}%">15 min</i></div>
+        <dl class="facts">
+          <dt>Whole game</dt><dd>about ${Math.round(total)} minutes of running clock</dd>
+          <dt>One story week</dt><dd>${fmt(wk(0))} s early, ${fmt(wk(2))} s mid, ${fmt(wk(4))} s in era 5</dd>
+        </dl>
+      </div>
+      <span class="head"><span class="code">2${p.pick}</span><h3>${p.title}</h3></span>
+      <span class="body"><span>${p.text}</span><span>${p.extra}</span></span>
+      <span class="tags">${p.rec ? '<span class="tag rec">Recommended</span>' : ''}${p.tags.map(([k, t]) => `<span class="tag ${k}">${t}</span>`).join('')}</span>`;
+    host.append(b);
+  }
+
+  const picks = {};
+  const out = document.getElementById('pick-out');
+  const render = () => {
+    out.textContent = [1, 2, 3, 4, 5].map((q) => `${q}${picks[q] ?? '?'}`).join(' ');
+    document.querySelectorAll('section.choice').forEach((sec) => {
+      sec.querySelectorAll('.opt').forEach((o) => o.setAttribute('aria-pressed', String(picks[sec.dataset.q] === o.dataset.pick)));
+    });
+    try { localStorage.setItem('rt-picks', JSON.stringify(picks)); } catch (e) {}
+  };
+  try { Object.assign(picks, JSON.parse(localStorage.getItem('rt-picks') || '{}')); } catch (e) {}
+  document.querySelectorAll('section.choice').forEach((sec) => {
+    sec.addEventListener('click', (ev) => {
+      const o = ev.target.closest('.opt');
+      if (!o) return;
+      const q = sec.dataset.q;
+      picks[q] = picks[q] === o.dataset.pick ? undefined : o.dataset.pick;
+      render();
+    });
+  });
+  document.getElementById('use-rec').addEventListener('click', () => {
+    Object.assign(picks, { 1: 'A', 2: 'A', 3: 'A', 4: 'A', 5: 'B' });
+    render();
+  });
+  const note = document.getElementById('copy-note');
+  document.getElementById('copy').addEventListener('click', () => {
+    const text = out.textContent;
+    const fallback = () => {
+      const r = document.createRange(); r.selectNodeContents(out);
+      const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+      note.textContent = 'Selected. Press Cmd+C to copy.';
+    };
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).then(() => { note.textContent = 'Copied. Paste them in chat.'; }, fallback);
+    } else fallback();
+  });
+  render();
+})();
+</script>

@@ -49,9 +49,9 @@ test('evaluation cards that cost a turn delay the launch', () => {
   s.era = 2;
   assert.equal(shipDelay(s, ['eval-full']), 0);
   assert.equal(shipDelay(s, ['eval-third']), 1);
-  assert.equal(shipWords(0), 'this turn');
-  assert.equal(shipWords(1), 'next turn');
-  assert.equal(shipWords(2), 'in 2 turns');
+  assert.equal(shipWords(0), 'right away');
+  assert.equal(shipWords(1, 1), 'in about 3 months');
+  assert.equal(shipWords(2, 5), 'in about 2 weeks');
 });
 
 test('the number counts up, and skipping is not offered on the first release', () => {

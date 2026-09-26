@@ -16,6 +16,7 @@ import {
   raceSeries,
 } from '../ui/logic/history.js';
 import { layoutRaceCards } from '../ui/screens/history.js';
+import { storyDate } from '../sim/time.js';
 
 test('every generated release reaction handle has an explicit editorial classification', () => {
   const critical = new Set(CONTROVERSY_HANDLES);
@@ -49,12 +50,18 @@ test('history rows expose release details and public benchmark averages in relea
   });
 });
 
+test('history rows use a model\'s recorded story release day when available', () => {
+  const state = structuredClone(SCENARIOS.summit(4));
+  state.models[0].releasedDay = 123;
+  assert.equal(historyRows(state)[0].releasedDate, storyDate(123).label);
+});
+
 test('article lead uses the five public benchmark hand counts', () => {
   const state = SCENARIOS.summit(4);
   const result = article(state, historyRows(state));
   const lead = result.lead.join('');
   assert.match(lead, /Kestrel 1 Core.*two of five/);
-  assert.match(lead, /Kestrel 4 Core.*all five/);
+  assert.match(lead, new RegExp(`${state.models.at(-1).name}.*all five`));
 });
 
 test('article controversies quote only criticism reactions that occurred', () => {

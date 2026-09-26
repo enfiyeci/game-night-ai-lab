@@ -1,7 +1,8 @@
 import { ERAS } from '../../sim/data/eras.js';
 import { RIVAL_TEMPLATES } from '../../sim/rivals.js';
 import { activeModels } from '../../sim/serving.js';
-import { users as formatUsers } from './format.js';
+import { storyDate } from '../../sim/time.js';
+import { storyDayForTurn, users as formatUsers } from './format.js';
 
 export const HISTORY_CHANNEL_WORDS = {
   enterprise: 'API',
@@ -66,6 +67,9 @@ export function historyRows(state) {
       return {
         name: model.name,
         releasedTurn: model.releasedTurn,
+        releasedDate: Number.isFinite(model.releasedDay)
+          ? storyDate(model.releasedDay).label
+          : storyDate(storyDayForTurn(model.releasedTurn)).label,
         era: eraForTurn(model.releasedTurn).name,
         channelWords: HISTORY_CHANNEL_WORDS[model.channel] ?? model.channel,
         priceWords: HISTORY_PRICE_WORDS[model.priceStance] ?? model.priceStance,
@@ -79,6 +83,9 @@ export function historyRows(state) {
         active: serving.has(model),
         status: statusOf(state, model, serving),
         activeFromTurn: model.activeFromTurn,
+        activeFromDate: Number.isFinite(model.activeFromTurn)
+          ? storyDate(storyDayForTurn(model.activeFromTurn)).label
+          : '',
         benchmarks: model.launch.benchmarks.map(({ name, shown, rival }) => ({ name, shown, rival })),
       };
     });
@@ -199,7 +206,7 @@ export function article(state, rows) {
       benchmarks: first.benchmarks.map((benchmark) => benchmark.name),
       rows: rows.map((row) => ({
         name: row.name,
-        released: `${row.era} · turn ${row.releasedTurn}`,
+        released: `${row.era} · ${row.releasedDate}`,
         access: row.channelWords,
         benchmarks: row.benchmarks.map((benchmark) => benchmark.shown),
         pressAvg: row.pressAvg,
@@ -211,8 +218,8 @@ export function article(state, rows) {
     infobox: {
       family,
       developer,
-      firstRelease: { name: first.name, era: first.era, turn: first.releasedTurn },
-      latestRelease: { name: latest.name, era: latest.era, turn: latest.releasedTurn },
+      firstRelease: { name: first.name, era: first.era, date: first.releasedDate },
+      latestRelease: { name: latest.name, era: latest.era, date: latest.releasedDate },
       models: rows.length,
       type: 'Large language model',
       access: [...new Set(rows.map((row) => row.channelWords))],

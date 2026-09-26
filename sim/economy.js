@@ -36,11 +36,12 @@ export function updateServing(state) {
   return units;
 }
 
-export function growUsers(state) {
+export function growUsers(state, fraction = 1, { round = true } = {}) {
   const months = eraById(state.era).monthsPerTurn;
   for (const m of activeModels(state)) {
     const g = (0.12 * PRICE_STANCE[m.priceStance].growth + (state.growthBoost ?? 0)) * (months / 3);
-    m.users = Math.min(m.userCap, Math.round(m.users * (1 + g)));
+    const grown = Math.min(m.userCap, m.users * (1 + g) ** fraction);
+    m.users = round ? Math.round(grown) : grown;
   }
 }
 
@@ -64,17 +65,26 @@ export function valuationOf(state) {
   return base * multiple * state.sentiment;
 }
 
-export function applyEconomy(state) {
-  const era = eraById(state.era);
+// Daily: cash, ARR and valuation for `months` of story time.
+export function accrueEconomy(state, months) {
   const burn = projectBurn(state);
   state.burnPlanned = burn;
-  state.burnHistory.push(burn);
-  const recent = state.burnHistory.slice(-3);
-  state.burnTrailing = recent.reduce((a, b) => a + b, 0) / recent.length;
   const revenue = monthlyRevenue(state);
   state.arr = revenue * 12;
-  state.cash += (revenue - burn) * era.monthsPerTurn;
+  state.cash += (revenue - burn) * months;
   state.valuation = valuationOf(state);
+}
+
+// Round mark: the trailing-burn history the runway readout uses.
+export function recordBurn(state) {
+  state.burnHistory.push(state.burnPlanned);
+  const recent = state.burnHistory.slice(-3);
+  state.burnTrailing = recent.reduce((a, b) => a + b, 0) / recent.length;
+}
+
+export function applyEconomy(state) {
+  accrueEconomy(state, eraById(state.era).monthsPerTurn);
+  recordBurn(state);
 }
 
 export function runway(state, which) {

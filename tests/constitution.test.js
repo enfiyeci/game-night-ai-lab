@@ -9,8 +9,8 @@ import { resolveRun } from '../sim/training.js';
 import { releaseModel } from '../sim/release.js';
 import { revenuePerUser } from '../sim/economy.js';
 import { EVENTS } from '../sim/data/events.js';
-import { eventsTick, resolveEvent } from '../sim/events.js';
-import { endTurn } from '../sim/turn.js';
+import { eventsTick, resolveEvent, stampNewCards } from '../sim/events.js';
+import { advanceDays, endTurn } from '../sim/turn.js';
 import { INITIAL_BOARD } from '../sim/board.js';
 
 const allRulings = (opt) => Object.fromEntries(CASES.map((c) => [c.id, opt ?? c.options[0].id]));
@@ -229,8 +229,11 @@ test('honest halves citation penalties and adds staff cost to deceptive choices'
   automatic.pendingEvents.push({ id: 'jailbreak' });
   const control = structuredClone(automatic);
   control.constitution.hardLines = control.constitution.hardLines.filter((id) => id !== 'honest');
-  const honestOut = endTurn(automatic, {}, no).state;
-  const controlOut = endTurn(control, {}, no).state;
+  stampNewCards(automatic);
+  stampNewCards(control);
+  const days = automatic.pendingEvents[0].dueAt - automatic.day;
+  const honestOut = advanceDays(automatic, days, no).state;
+  const controlOut = advanceDays(control, days, no).state;
   assert.equal(honestOut.staffTrust, controlOut.staffTrust - 3);
 });
 

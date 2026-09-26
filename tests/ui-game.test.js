@@ -3,19 +3,24 @@ import assert from 'node:assert/strict';
 import { createGame } from '../ui/game.js';
 import { SCENARIOS } from '../ui/logic/scenarios.js';
 
-test('the game queues at most two moves and ends a turn through the sim', () => {
-  const g = createGame({ seed: 3 });
+test('the game allows at most two actions per round and keeps endTurn for tests', () => {
+  const state = SCENARIOS.start(3);
+  state.round.moves = 2;
+  const g = createGame({ seed: 3, state });
   const offerId = g.state.compute.offers.find((offer) => offer.supplier === 'coreflame').id;
-  assert.equal(g.movesLeft(), 2);
-  assert.equal(g.addMove({ type: 'deal', offerId }).ok, true);
-  assert.equal(g.addMove({ type: 'deal', offerId }).ok, true);
+  assert.equal(g.movesLeft(), 0);
   assert.equal(g.addMove({ type: 'deal', offerId }).ok, false);
+  const availableState = SCENARIOS.start(3);
+  availableState.round.moves = 1;
+  const available = createGame({ seed: 3, state: availableState });
+  assert.equal(available.addMove({ type: 'deal', offerId }).ok, true);
+  assert.equal(available.addMove({ type: 'deal', offerId }).ok, false);
   let seen = null;
-  g.subscribe((u) => (seen = u));
-  g.endTurn();
-  assert.equal(g.state.turn, 1);
+  available.subscribe((u) => (seen = u));
+  available.endTurn();
+  assert.equal(available.state.turn, 1);
   assert.equal(seen.state.turn, 1);
-  assert.equal(g.movesLeft(), 2);
+  assert.equal(available.movesLeft(), 2);
 });
 
 test('the same seed and inputs give the same state', () => {
@@ -51,55 +56,29 @@ test('the event scenario stops on the first turn with a pending card', () => {
   assert.ok(s.pendingEvents.length > 0);
 });
 
-test('endRound awaits every round guard before ending the round', async () => {
-  const game = createGame({ seed: 3 });
-  const order = [];
-  game.beforeRoundEnd.push(async () => { order.push('guard'); });
-  game.subscribe(() => order.push('ended'));
-  await game.endRound();
-  assert.deepEqual(order, ['guard', 'ended']);
-  assert.equal(game.state.turn, 1);
+test('an action applies at once and the counter counts the round', () => {
+  const g = createGame({ seed: 1 });
+  assert.equal(g.movesLeft(), 2);
+  const r = g.setBudget({ spend: 40, split: { training: 0.5, security: 0.1, product: 0.2, talent: 0.2 } });
+  assert.equal(r.ok, true);
+  assert.equal(g.state.budget.spend, 40);
 });
 
-test('a throwing round guard is logged and the round still ends', async () => {
-  const game = createGame({ seed: 3 });
-  const logged = [];
-  const error = console.error;
-  console.error = (e) => logged.push(e);
-  try {
-    game.beforeRoundEnd.push(async () => { throw new Error('guard broke'); });
-    await game.endRound();
-  } finally { console.error = error; }
-  assert.equal(game.state.turn, 1);
-  assert.equal(logged.length, 1);
+test('advancing days publishes every date and stops when the clock pauses', () => {
+  const g = createGame({ seed: 1 });
+  const days = [];
+  g.clock = { now: () => ({ paused: days.length >= 3 }) };
+  g.subscribe(({ state }) => { days.push(state.day); });
+  g.advanceDays(5);
+  assert.deepEqual(days, [1, 2, 3]);
+  assert.equal(g.state.day, 3);
 });
 
-test('endRound never rejects when the round end itself throws', async () => {
-  const game = createGame({ seed: 3 });
-  game.endTurn = () => { throw new Error('sim broke'); };
-  const error = console.error;
-  console.error = () => {};
-  let result;
-  try { result = await game.endRound(); } finally { console.error = error; }
-  assert.deepEqual(result.events, []);
-  assert.match(result.errors[0], /sim broke/);
-  assert.equal(game.roundInFlight, null);
-});
-
-test('a second endRound while one is in flight returns the same promise and ends one round', async () => {
-  const game = createGame({ seed: 3 });
-  let open = null;
-  game.beforeRoundEnd.push(() => (open ? undefined : new Promise((resolve) => { open = resolve; })));
-  const first = game.endRound();
-  const second = game.endRound();
-  assert.equal(first, second);
-  assert.equal(game.roundInFlight, first);
-  await new Promise((resolve) => setTimeout(resolve, 0)); // the guard is now waiting
-  assert.equal(game.state.turn, 0);
-  open();
-  await first;
-  assert.equal(game.state.turn, 1);
-  assert.equal(game.roundInFlight, null);
-  await game.endRound();
-  assert.equal(game.state.turn, 2);
+test('advancing several days reports every day\'s events, not only the last', () => {
+  const g = createGame({ seed: 1 });
+  const seen = [];
+  g.subscribe((note) => seen.push(...note.events));
+  const r = g.advanceDays(95); // crosses the first quarter mark
+  assert.equal(g.state.turn, 1);
+  assert.deepEqual(r.events, seen);
 });

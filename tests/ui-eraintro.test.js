@@ -16,11 +16,11 @@ test('every era has an intro with its simulation name', () => {
 
 test('pace follows each era turn length', () => {
   assert.deepEqual(ERAS.map(({ id }) => eraIntro(id).pace), [
-    'Each turn is a quarter.',
-    'Each turn is now a quarter.',
-    'Each turn is now a month.',
-    'Each turn is now a month.',
-    'Each turn is now a week.',
+    'The calendar runs by the quarter.',
+    'The calendar runs by the quarter.',
+    'Things speed up: every month counts now.',
+    'Things speed up: every month counts now.',
+    'Every week counts now.',
   ]);
 });
 

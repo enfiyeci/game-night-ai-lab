@@ -1,6 +1,7 @@
 import { ERAS } from '../../sim/data/eras.js';
+import { storyDate } from '../../sim/time.js';
 import { openDialog } from '../components/dialog.js';
-import { users } from '../logic/format.js';
+import { storyDayForTurn, users } from '../logic/format.js';
 import { article, historyRows, labSummary, raceSeries } from '../logic/history.js';
 import { registerMenuHandler } from '../menu.js';
 
@@ -23,7 +24,7 @@ function svgElement(tag, attrs = {}, text) {
   return node;
 }
 
-const turnWords = (row) => `${row.era} · turn ${row.releasedTurn}`;
+const turnWords = (row) => `${row.era} · ${row.releasedDate}`;
 const clampPercent = (value) => `${Math.max(0, Math.min(100, value))}%`;
 
 function summaryPanel(summary) {
@@ -100,7 +101,7 @@ function modelTable(rows, selectedIndex, onSelect) {
     press.append(element('b', '', row.pressAvg.toFixed(1)), element('span', 'history-muted', ' / 10'));
     const launch = element('td', 'history-models-number', `+${users(row.newUsers)}`);
     const current = element('td', 'history-models-number');
-    const statusWords = { open: 'Open weights', upcoming: `From turn ${row.activeFromTurn}`, retired: 'Retired' };
+    const statusWords = { open: 'Open weights', upcoming: `From ${row.activeFromDate}`, retired: 'Retired' };
     current.append(row.status === 'serving' ? document.createTextNode(users(row.users)) : element('span', 'history-muted', statusWords[row.status]));
     tr.append(name, access, press, averageCell(row), launch, current);
     const select = () => onSelect(index);
@@ -141,7 +142,7 @@ function chartLegend(hasTicks) {
   return root;
 }
 
-function raceChart(rows, series, nowTurn, height = 350) {
+function raceChart(rows, series, nowTurn, nowDate, height = 350) {
   const width = 1280;
   const padLeft = 110;
   const padRight = 16;
@@ -189,7 +190,7 @@ function raceChart(rows, series, nowTurn, height = 350) {
     lab.turns.forEach((turn) => svg.append(svgElement('rect', { x: x(turn) - 5, y: rowY - 3, width: 10, height: 6, rx: 3, class: 'history-race-tick' })));
   });
   svg.append(svgElement('line', { x1: x(nowTurn), x2: x(nowTurn), y1: top - 26, y2: baseY, class: 'history-race-now-line' }));
-  svg.append(svgElement('text', { x: x(nowTurn) + 6, y: baseY - 8, class: 'history-race-now-label' }, `Now · turn ${nowTurn}`));
+  svg.append(svgElement('text', { x: x(nowTurn) + 6, y: baseY - 8, class: 'history-race-now-label' }, `Now · ${nowDate}`));
   return { svg, x };
 }
 
@@ -251,6 +252,7 @@ function raceCards(rows, x) {
 
 export function openHistory(game, overlayRoot, { view = 'models' } = {}) {
   const rows = historyRows(game.state);
+  const nowDate = storyDate(game.state.day ?? storyDayForTurn(game.state.turn)).label;
   let selected = Math.max(0, rows.length - 1);
   let opened;
 
@@ -270,7 +272,7 @@ export function openHistory(game, overlayRoot, { view = 'models' } = {}) {
       : element('p', 'history-empty', 'Release a model to start your lab history.');
     opened = openDialog(overlayRoot, {
       title: 'Lab history',
-      subtitle: `${rows.length} models released · Era ${game.state.era}, turn ${game.state.turn}`,
+      subtitle: `${rows.length} models released · Era ${game.state.era} · ${nowDate}`,
       left: { title: 'Your lab', content: summaryPanel(labSummary(rows)) },
       right: { title: 'Selected model', content: right },
       body,
@@ -286,10 +288,10 @@ export function openHistory(game, overlayRoot, { view = 'models' } = {}) {
     const body = element('div', 'history-race-body');
     const series = raceSeries(rows, game.rivalReleases);
     body.append(chartLegend(series.ticks.length > 0));
-    let chart = raceChart(rows, series, game.state.turn);
+    let chart = raceChart(rows, series, game.state.turn, nowDate);
     const cards = raceCards(rows, chart.x);
     // Two rows of cards leave less room: draw a shorter chart rather than shrinking this one.
-    if (cards.rowsUsed > 1) chart = raceChart(rows, series, game.state.turn, 280);
+    if (cards.rowsUsed > 1) chart = raceChart(rows, series, game.state.turn, nowDate, 280);
     body.append(chart.svg, cards.root);
     opened = openDialog(overlayRoot, {
       title: 'The race so far',
@@ -351,7 +353,7 @@ function definitionList(info) {
   const list = element('dl', 'history-article-facts');
   const releases = (release) => {
     const fragment = document.createDocumentFragment();
-    fragment.append(document.createTextNode(release.name), document.createElement('br'), element('span', 'history-muted', `${release.era} · turn ${release.turn}`));
+    fragment.append(document.createTextNode(release.name), document.createElement('br'), element('span', 'history-muted', `${release.era} · ${release.date}`));
     return fragment;
   };
   const entries = [

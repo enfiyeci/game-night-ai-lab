@@ -1,6 +1,12 @@
 import { createInitialState } from '../sim/state.js';
 import { createRng } from '../sim/rng.js';
-import { endTurn as runTurn, MAX_MOVES, setBudget as validateBudget } from '../sim/turn.js';
+import {
+  applyActions,
+  advanceDays as runDays,
+  endTurn as runTurn,
+  MAX_MOVES,
+  setBudget as validateBudget,
+} from '../sim/turn.js';
 import { turnRecord } from './logic/finance.js';
 
 const initialQueue = (budget) => ({
@@ -22,17 +28,55 @@ export function createGame({ seed = 1, state, history = [] } = {}) {
   const rivalReleases = [];
   const financeHistory = structuredClone(history);
   let financePlan = null; // the finance planner's goals and rounds, kept between openings; a plan, never a move
-  let roundInFlight = null; // endRound's promise while its guards run, so a second caller joins it
+  // The finance history gains a row at each round mark: the round's start state, its end state and every event in it
+  // (instant actions included, so a raise counts in the round it was made).
+  let roundStartState = currentState;
+  let roundEvents = [];
+  let debugActionEvents = [];
+  let debugActionErrors = [];
 
-  return {
-    get state() {
-      return currentState;
-    },
-    get queue() {
-      return actions;
-    },
-    get rivalReleases() {
-      return rivalReleases.map((release) => ({ ...release }));
+  const publish = (update) => {
+    const releaseTurn = currentState.turn;
+    currentState = update.state;
+    roundEvents.push(...update.events);
+    if (currentState.turn !== releaseTurn) {
+      if (!roundStartState.ending) financeHistory.push(turnRecord(roundStartState, currentState, roundEvents));
+      roundStartState = currentState;
+      roundEvents = [];
+    }
+    for (const event of update.events) {
+      if (event.type === 'rivalRelease') rivalReleases.push({ turn: releaseTurn, id: event.id });
+    }
+    const notification = { state: currentState, events: update.events, errors: update.errors };
+    // One broken screen must not stop the others (the board meeting's opener among them) or the clock's loop.
+    for (const subscriber of subscribers) {
+      try {
+        subscriber(notification);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    return {
+      ok: update.errors.length === 0,
+      error: update.errors[0],
+      events: update.events,
+      errors: update.errors,
+    };
+  };
+
+  const game = {
+    get state() { return currentState; },
+    get queue() { return actions; },
+    get rivalReleases() { return rivalReleases.map((release) => ({ ...release })); },
+    clock: null,
+    flush() {
+      const queued = actions;
+      const update = applyActions(currentState, queued, rng);
+      actions = initialQueue(update.state.budget);
+      const result = publish(update);
+      debugActionEvents.push(...result.events);
+      debugActionErrors.push(...result.errors);
+      return result;
     },
     get financeHistory() {
       return financeHistory.map((row) => ({ ...row }));
@@ -46,13 +90,14 @@ export function createGame({ seed = 1, state, history = [] } = {}) {
     setBudget(budget) {
       const candidate = structuredClone(currentState);
       const result = validateBudget(candidate, budget);
-      if (result.ok) actions.budget = structuredClone(candidate.budget);
-      return result;
+      if (!result.ok) return result;
+      actions.budget = structuredClone(candidate.budget);
+      return game.flush();
     },
     addMove(move) {
-      if (actions.moves.length >= MAX_MOVES) return { ok: false, error: `only ${MAX_MOVES} moves per turn` };
+      if (game.movesLeft() <= 0) return { ok: false, error: `only ${MAX_MOVES} actions per round` };
       actions.moves.push(structuredClone(move));
-      return { ok: true };
+      return game.flush();
     },
     removeMove(index) {
       if (!Number.isInteger(index) || index < 0 || index >= actions.moves.length) {
@@ -63,59 +108,44 @@ export function createGame({ seed = 1, state, history = [] } = {}) {
     },
     setField(key, value) {
       actions[key] = structuredClone(value);
-      return { ok: true };
+      return game.flush();
     },
-    endTurn() {
-      const turn = currentState.turn;
-      const before = currentState;
-      const update = runTurn(currentState, actions, rng);
-      currentState = update.state;
-      if (!before.ending) financeHistory.push(turnRecord(before, currentState, update.events));
-      actions = initialQueue(actions.budget);
-      for (const event of update.events) {
-        if (event.type === 'rivalRelease') rivalReleases.push({ turn, id: event.id });
+    answerCard(id, choiceId) {
+      actions.eventChoices = { ...actions.eventChoices, [id]: choiceId };
+      return game.flush();
+    },
+    advanceDays(n) {
+      if (actions.moves.length || Object.keys(actions.eventChoices).length) game.flush();
+      debugActionEvents = [];
+      debugActionErrors = [];
+      const events = [];
+      const errors = [];
+      for (let day = 0; day < n; day += 1) {
+        const result = publish(runDays(currentState, 1, rng));
+        events.push(...result.events);
+        errors.push(...result.errors);
+        if (currentState.ending || game.clock?.now().paused) break;
       }
-      const notification = { state: currentState, events: update.events, errors: update.errors };
-      for (const subscriber of subscribers) subscriber(notification);
-      return { events: update.events, errors: update.errors };
+      return { ok: errors.length === 0, error: errors[0], events, errors };
     },
-    // Round guards (board UI plan Task 6): End turn, and later the real-time clock, await each before the round ends.
-    // The board meeting is one: it opens instead of the round ending when that round holds a vote.
-    // A broken guard is logged and skipped, and a failing round end is logged and reported, so neither can lock the
-    // game; a second call while a round is ending joins it rather than ending another round.
-    beforeRoundEnd: [],
-    get roundInFlight() {
-      return roundInFlight;
-    },
-    endRound() {
-      if (roundInFlight) return roundInFlight;
-      const run = (async () => {
-        await null; // roundInFlight is set before any guard runs
-        for (const guard of [...this.beforeRoundEnd]) {
-          try {
-            await guard(this);
-          } catch (error) {
-            console.error(error);
-          }
-        }
-        try {
-          return this.endTurn();
-        } catch (error) {
-          console.error(error);
-          return { events: [], errors: [String(error?.message ?? error)] };
-        } finally {
-          roundInFlight = null;
-        }
-      })();
-      roundInFlight = run;
-      return run;
+    endTurn() { // debug and tests only; players never skip
+      const queued = actions;
+      const update = runTurn(currentState, queued, rng);
+      actions = initialQueue(update.state.budget);
+      const result = publish(update);
+      const events = [...debugActionEvents, ...result.events];
+      const errors = [...debugActionErrors, ...result.errors];
+      debugActionEvents = [];
+      debugActionErrors = [];
+      return { ok: errors.length === 0, error: errors[0], events, errors };
     },
     subscribe(fn) {
       subscribers.add(fn);
       return () => subscribers.delete(fn);
     },
     movesLeft() {
-      return MAX_MOVES - actions.moves.length;
+      return MAX_MOVES - (currentState.round?.moves ?? 0) - actions.moves.length;
     },
   };
+  return game;
 }

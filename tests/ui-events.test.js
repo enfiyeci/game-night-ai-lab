@@ -10,6 +10,7 @@ import {
   hasLanded, jokeFor, lookIntoCost, openWarnings, queueAnswer, queueLookInto, timingFor,
 } from '../ui/logic/events.js';
 import { DEFAULT_EVENT_TIMING, EVENT_TIMING } from '../sim/data/eventTiming.js';
+import { warningProgress } from '../ui/screens/briefing.js';
 
 const ALL = [...EVENTS, ...EVENTS_6C];
 const pendingOf = (id) => {
@@ -76,6 +77,11 @@ test('deadlines come from the sim\'s story days and read in story words', () => 
   assert.equal(timingFor('weightTheft').days, 14);
 });
 
+test('warning bars use their own deadline span', () => {
+  assert.equal(warningProgress({ day: 100, dueAt: 110 }, 105), 0.5);
+  assert.equal(warningProgress({ day: 100, dueAt: 100 }, 100), 0);
+});
+
 test('the sim timing table names real cards with a known class', () => {
   for (const [id, timing] of Object.entries(EVENT_TIMING)) {
     assert.ok(ALL.some((event) => event.id === id), id);
@@ -110,7 +116,9 @@ test('every card choice has a drafted consequence line', () => {
 });
 
 test('queue helpers merge instead of replacing', () => {
-  const game = createGame({ seed: 10, state: SCENARIOS.event(10) });
+  // Turn mode (no answerCard): answers wait in the queue, so helpers must merge, not replace.
+  const queue = { eventChoices: {}, addressWarnings: [] };
+  const game = { queue, setField(key, value) { queue[key] = value; return { ok: true }; } };
   queueAnswer(game, 'a', 'x');
   queueAnswer(game, 'b', 'y');
   assert.deepEqual(game.queue.eventChoices, { a: 'x', b: 'y' });

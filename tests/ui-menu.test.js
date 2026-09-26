@@ -20,35 +20,32 @@ const releaseMove = (game) => {
   return { type: 'release', release: releasePayload(game.state, draft) };
 };
 
-test('release stays open while a queued release can still be changed, even with both moves used', () => {
+// Real time: a release applies the moment it is confirmed, and the policy team is busy for the round.
+test('a release applies at once, and the policy team is busy until the next round mark', () => {
   const game = readyGame();
   assert.equal(reasonFor(game, 'release'), '');
-  game.addMove(releaseMove(game));
-  assert.equal(projectQueue(game.state, game.queue).pendingModel, null);
-  assert.equal(reasonFor(game, 'release'), '');
-  game.addMove({ type: 'constitution' });
-  assert.equal(game.movesLeft(), 0);
-  assert.equal(reasonFor(game, 'release'), '');
+  assert.equal(game.addMove(releaseMove(game)).ok, true);
+  assert.equal(game.state.pendingModel, null);
+  assert.equal(game.movesLeft(), 1);
+  assert.match(reasonFor(game, 'release'), /^The policy team is busy until Y\d+ M\d+ W\d$/);
 });
 
-test('release is closed with no finished model and nothing queued, and when both moves went elsewhere', () => {
+test('release is closed with no finished model, and when both team actions went elsewhere', () => {
   const game = readyGame();
   game.state.pendingModel = null;
   assert.equal(reasonFor(game, 'release'), 'Release needs a finished model');
 
   const busy = readyGame();
-  busy.addMove({ type: 'constitution' });
-  busy.addMove({ type: 'constitution' });
-  assert.equal(reasonFor(busy, 'release'), 'Both moves are used this turn');
+  busy.state.round.moves = 2;
+  assert.match(reasonFor(busy, 'release'), /^Both team actions are used this (quarter|month|week)$/);
 });
 
-test('other menu items still close when both moves are used, even with a release queued', () => {
+test('other menu items close when both team actions are used; the budget stays free', () => {
   const game = readyGame();
-  game.addMove(releaseMove(game));
-  game.addMove({ type: 'constitution' });
+  game.state.round.moves = 2;
   for (const id of ['training', 'internal', 'constitution', 'meeting']) {
     assert.notEqual(reasonFor(game, id), '', `${id} should be disabled`);
   }
-  for (const id of ['budget', 'endTurn']) assert.equal(reasonFor(game, id), '', `${id} stays free`);
-  assert.equal(ITEMS.filter((item) => item.editsQueued).map((item) => item.id).join(), 'release');
+  assert.equal(reasonFor(game, 'budget'), '', 'budget stays free');
+  assert.equal(ITEMS.some((item) => item.id === 'endTurn'), false);
 });

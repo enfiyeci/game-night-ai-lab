@@ -5,9 +5,9 @@ import { PROMISES } from '../sim/data/promises.js';
 import { MEETINGS } from '../sim/data/president.js';
 import { createPresidentPromise, promiseUpkeep } from '../sim/promises.js';
 import { runMeeting } from '../sim/president.js';
-import { addressWarning, eventsTick, resolveEvent } from '../sim/events.js';
+import { addressWarning, eventsTick, resolveEvent, stampNewCards } from '../sim/events.js';
 import { generateOffers, signOffer } from '../sim/contracts.js';
-import { endTurn } from '../sim/turn.js';
+import { advanceDays, applyActions, endTurn } from '../sim/turn.js';
 
 const no = { next: () => 0.99, int: () => 0, chance: () => false, pick: (a) => a[0], normal: (m) => m };
 const signGulf = (state) => {
@@ -248,8 +248,11 @@ test('eventChoices routes a promise answer only through its unique call id', () 
   state.promises.push(presidentPromise('beatRivals'), presidentPromise('beatChina'));
   promiseUpkeep(state, no);
   eventsTick(state, no);
-  const out = endTurn(state, { eventChoices: { 'promiseCall:1': 'refuse' } }, no);
-  assert.deepEqual(out.errors, []);
+  stampNewCards(state);
+  const acted = applyActions(state, { eventChoices: { 'promiseCall:1': 'refuse' } }, no);
+  const due = acted.state.pendingEvents[0].dueAt - acted.state.day;
+  const out = advanceDays(acted.state, due, no);
+  assert.deepEqual([...acted.errors, ...out.errors], []);
   assert.deepEqual(out.state.promises.map(({ status, stalled }) => ({ status, stalled })), [
     { status: 'open', stalled: true },
     { status: 'refused', stalled: false },
@@ -273,7 +276,9 @@ test('fallback resolves simultaneous promise calls separately', () => {
   promiseUpkeep(state, no);
   eventsTick(state, no);
   const favor = state.govFavor.us;
-  const out = endTurn(state, {}, no);
+  stampNewCards(state);
+  const days = Math.max(...state.pendingEvents.map((event) => event.dueAt)) - state.day;
+  const out = advanceDays(state, days, no);
   assert.deepEqual(out.state.promises.map(({ status, stalled, dueTurn }) => ({ status, stalled, dueTurn })), [
     { status: 'open', stalled: true, dueTurn: 7 },
     { status: 'open', stalled: true, dueTurn: 7 },
@@ -324,13 +329,15 @@ test('refusing a called promise applies the refusal costs', () => {
 
 test('unanswered promise calls stall first and refuse after the one stall', () => {
   const first = failedCall();
-  const stalled = endTurn(first, {}, no);
+  stampNewCards(first);
+  const stalled = advanceDays(first, first.pendingEvents[0].dueAt - first.day, no);
   assert.equal(stalled.state.promises[0].status, 'open');
   assert.equal(stalled.state.promises[0].stalled, true);
   assert.equal(stalled.events.find((event) => event.type === 'eventResolved')?.choiceId, 'stall');
 
   const second = failedCall('beatRivals', { stalled: true });
-  const refused = endTurn(second, {}, no);
+  stampNewCards(second);
+  const refused = advanceDays(second, second.pendingEvents[0].dueAt - second.day, no);
   assert.equal(refused.state.promises[0].status, 'refused');
   assert.equal(refused.events.find((event) => event.type === 'eventResolved')?.choiceId, 'refuse');
 });
