@@ -312,3 +312,10 @@ test('a real CoreFlame trouble card uses the existing compute-failure company ba
   assert.ok(result.events.some((event) => event.type === 'eventCard' && event.id === 'neocloudTrouble'));
   assert.ok(result.state.feed.some((post) => post.tag === 'company' && companyTexts.has(post.text)));
 });
+
+test('with time-based posts off, a quiet moment posts nothing', async () => {
+  const { feedPosts } = await import('../sim/feed.js');
+  const { createInitialState } = await import('../sim/state.js');
+  const s = createInitialState({ seed: 4 });
+  assert.deepEqual(feedPosts(s, s, [], { ambient: false, timeBased: false }), []);
+});

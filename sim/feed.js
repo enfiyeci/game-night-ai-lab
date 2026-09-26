@@ -66,7 +66,7 @@ function moodPool(prev, state) {
   return null;
 }
 
-export function feedPosts(prev, state, events, { ambient = true } = {}) {
+export function feedPosts(prev, state, events, { ambient = true, timeBased = true } = {}) {
   const rng = createRng((state.seed ?? 1) * 7919 + state.turn);
   const blocked = new Set((state.feed ?? []).slice(-20).map((post) => post.text));
   const posts = [];
@@ -86,7 +86,7 @@ export function feedPosts(prev, state, events, { ambient = true } = {}) {
   };
 
   for (const event of events) {
-    if (event.type !== 'release') continue;
+    if (event.type !== 'release' && event.type !== 'modelLive') continue;
     for (const reaction of event.model?.launch?.reactions ?? []) {
       add(reaction.handle, reaction.text, 'launch');
       if (posts.length >= MAX_POSTS) break;
@@ -94,7 +94,7 @@ export function feedPosts(prev, state, events, { ambient = true } = {}) {
     if (posts.length >= MAX_POSTS) break;
   }
 
-  if (posts.length < MAX_POSTS) {
+  if (timeBased && posts.length < MAX_POSTS) {
     const model = newestActiveModel(state);
     const age = model ? state.turn - model.activeFromTurn : null;
     if (age >= 1 && age <= 3) {
@@ -130,7 +130,7 @@ export function feedPosts(prev, state, events, { ambient = true } = {}) {
     if (COMPANY_EVENTS.has(type) || type === 'computeFailed') addFromPool(COMPANY_POSTS[type], 'company');
   }
 
-  if (posts.length < MAX_POSTS) addFromPool(moodPool(prev, state), 'mood');
+  if (timeBased && posts.length < MAX_POSTS) addFromPool(moodPool(prev, state), 'mood');
   if (ambient && posts.length === 0) addFromPool(AMBIENT_POSTS[state.era], 'ambient');
 
   return posts;

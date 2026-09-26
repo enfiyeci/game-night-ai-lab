@@ -434,3 +434,26 @@ test('a card set aside before the ending is cleared when the run ends', () => {
   assert.ok(out.state.ending);
   assert.deepEqual(out.state.pendingEvents, []);
 });
+
+test('a delayed release goes live at the round mark with no player action', async () => {
+  const { SCENARIOS } = await import('../ui/logic/scenarios.js');
+  const { releaseDraft, releasePayload } = await import('../ui/logic/release.js');
+  const { applyActions, advanceDays } = await import('../sim/turn.js');
+  const rng = createRng(1);
+  const ready = SCENARIOS.readyToRelease(1);
+  const draft = { ...releaseDraft(ready), family: 'Kestrel', picks: ['eval-third'] };
+  const acted = applyActions(ready, { moves: [{ type: 'release', release: releasePayload(ready, draft) }] }, rng);
+  const model = acted.state.models.at(-1);
+  assert.equal(model.activated, false, 'an outside evaluation delays the launch');
+  const launches = (state) => state.feed.filter((post) => post.tag === 'launch').length;
+  assert.equal(launches(acted.state), launches(ready), 'no launch posts before it ships');
+  let out = { state: acted.state, events: [] };
+  const events = [];
+  for (let i = 0; i < 200 && !out.state.models.at(-1).activated && !out.state.ending; i += 1) {
+    out = advanceDays(out.state, 1, rng);
+    events.push(...out.events);
+  }
+  assert.equal(out.state.models.at(-1).activated, true);
+  assert.ok(events.some((event) => event.type === 'modelLive'));
+  assert.ok(launches(out.state) > launches(ready), 'launch posts appear when it ships');
+});

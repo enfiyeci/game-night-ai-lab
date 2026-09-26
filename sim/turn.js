@@ -100,8 +100,9 @@ function normalize(state) {
 }
 
 // Feed reactions to what just happened. Ambient filler only at a round mark, so quiet days stay quiet.
-function postFeed(before, state, events, ambient) {
-  for (const post of feedPosts(before, state, events, { ambient })) pushFeed(state, post.handle, post.text, post.tag);
+// Reception, mood and ambient posts are time-based, so they run only at a round mark.
+function postFeed(before, state, events, atMark) {
+  for (const post of feedPosts(before, state, events, { ambient: atMark, timeBased: atMark })) pushFeed(state, post.handle, post.text, post.tag);
 }
 
 function finishEnding(state, events) {
@@ -250,7 +251,8 @@ export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = 
     recordAdvisors(state, rng);
     finishEnding(state, events);
   }
-  if (events.length) postFeed(mood, state, events, false);
+  const announced = events.filter((event) => event.type !== 'release' || event.model?.activated);
+  if (announced.length) postFeed(mood, state, announced, false);
   recheckCapacity(state);
   return { state, events, errors };
 }
@@ -366,6 +368,10 @@ function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
     for (const e of powerTurn(state)) events.push(e);
     for (const x of deliverDue(state, sideRng(state, 6))) events.push({ type: 'computeArrived', supplier: x.supplier, units: x.units });
     state.compute.offers = generateOffers(state, sideRng(state, 5));
+    // A delayed release goes live at the round mark, action or not (the old turn did this first thing next turn).
+    const waiting = state.models.filter((model) => model.active && !model.activated);
+    activateReleases(state);
+    for (const model of waiting) if (model.activated) events.push({ type: 'modelLive', model });
     updateServing(state);
     state.burnPlanned = projectBurn(state);
   }
