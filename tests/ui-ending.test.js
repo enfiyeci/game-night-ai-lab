@@ -89,3 +89,58 @@ test('reaching an ending records it once and plays its film once', async () => {
   assert.deepEqual([films[0].id, films[0].era, films[0].run], ['pacingDeal', 5, { deal: { binding: ['compute', 'evals'] } }]);
   assert.equal(played, 1);
 });
+
+test('the ending film waits for an open dialog (the release reveal), then plays once it closes', async () => {
+  const subscribers = [];
+  const game = { state: createInitialState({ seed: 2 }), subscribe: (fn) => { subscribers.push(fn); return () => {}; } };
+  const collection = { record: () => {}, entries: () => [] };
+  let played = 0;
+  let dialogCount = 1; // the release reveal is already open when the ending arrives
+  const overlay = new EventTarget();
+  overlay.querySelector = (sel) => (sel === '.dialog-layer' && dialogCount > 0 ? {} : null);
+  mountEnding(game, overlay, {
+    collection,
+    loadFilm: async () => ({ play: () => { played += 1; } }),
+  });
+  game.state = { ...game.state, ending: 'pacingDeal', era: 5 };
+  subscribers.forEach((fn) => fn({ state: game.state, events: [], errors: [] }));
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(played, 0, 'the film must not start while a dialog is open');
+
+  dialogCount = 0;
+  overlay.dispatchEvent(new Event('gdt-dialog-closed'));
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(played, 1, 'the film starts once the dialog closes');
+
+  overlay.dispatchEvent(new Event('gdt-dialog-closed'));
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(played, 1, 'a stray later close event must not start it again');
+});
+
+test('the ending film keeps waiting through a second dialog before playing', async () => {
+  const subscribers = [];
+  const game = { state: createInitialState({ seed: 2 }), subscribe: (fn) => { subscribers.push(fn); return () => {}; } };
+  const collection = { record: () => {}, entries: () => [] };
+  let played = 0;
+  let dialogCount = 2; // two dialogs stacked when the ending arrives
+  const overlay = new EventTarget();
+  overlay.querySelector = (sel) => (sel === '.dialog-layer' && dialogCount > 0 ? {} : null);
+  mountEnding(game, overlay, {
+    collection,
+    loadFilm: async () => ({ play: () => { played += 1; } }),
+  });
+  game.state = { ...game.state, ending: 'pacingDeal', era: 5 };
+  subscribers.forEach((fn) => fn({ state: game.state, events: [], errors: [] }));
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(played, 0);
+
+  dialogCount = 1; // the first dialog closes, but a second one is still open
+  overlay.dispatchEvent(new Event('gdt-dialog-closed'));
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(played, 0, 'a second dialog is still open, so the film still waits');
+
+  dialogCount = 0;
+  overlay.dispatchEvent(new Event('gdt-dialog-closed'));
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(played, 1);
+});

@@ -219,10 +219,16 @@ export function mountEnding(game, overlay, { collection, onPlayAgain, loadFilm =
     }
   }
 
+  // Owner 2026-09-26: if the ending came with another dialog (the release reveal), let the player close it first.
+  const playWhenClear = () => {
+    if (overlay?.querySelector('.dialog-layer')) overlay.addEventListener('gdt-dialog-closed', playWhenClear, { once: true });
+    else play();
+  };
+
   const unsubscribe = game.subscribe(({ state }) => {
     if (!state.ending || recorded === state.ending) return;
     record(state);
-    play();
+    playWhenClear();
   });
 
   return { show, play, unsubscribe };
