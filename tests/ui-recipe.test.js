@@ -222,6 +222,15 @@ test('sanitizeDraft trims distinct unlocked picks to the projected slot count', 
   assert.deepEqual(clean.picks.post, ['synthetic-sft', 'thumbs', 'spec-light']);
 });
 
+test('sanitizeDraft drops hidden cards even though the sim still unlocks them', () => {
+  const state = SCENARIOS.era3Idle(1);
+  const hiddenOnly = sanitizeDraft(state, recipe({ post: ['tamper'] }));
+  assert.deepEqual(hiddenOnly.picks.post, []);
+
+  const visibleKept = sanitizeDraft(state, recipe({ post: ['safety-tuning'] }));
+  assert.deepEqual(visibleKept.picks.post, ['safety-tuning']);
+});
+
 test('cardCostWords formats public card costs and omits free parts', () => {
   assert.deepEqual(cardCostWords({ cost: { cash: 10 } }), ['$10M']);
   assert.deepEqual(cardCostWords({ cost: { computeMult: 0.8 } }), ['−20% compute']);
