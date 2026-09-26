@@ -7,8 +7,8 @@ import { inDangerZone, projectBurn } from '../sim/economy.js';
 import { HARD_LINES, CASES } from '../sim/data/constitution.js';
 import { MEETINGS } from '../sim/data/president.js';
 import { COMMITMENTS } from '../sim/summit.js';
-import { jobLocked, maxLevel, setAutomation } from '../sim/automation.js';
-import { HANDOFF_JOBS, JOBS, PACK } from '../sim/data/automation.js';
+import { checkLoad, jobLevels, jobLocked, maxLevel, setAutomation } from '../sim/automation.js';
+import { HANDOFF_JOBS, JOBS, MAX_CHECK, MONITOR_CAPACITY, PACK, REVIEWER_CAPACITY } from '../sim/data/automation.js';
 import { resolveHazard } from '../sim/hazards.js';
 import { addressWarning, resolveEvent } from '../sim/events.js';
 import { runMeeting } from '../sim/president.js';
@@ -119,7 +119,12 @@ function eventChoices(state, style, rng) {
 }
 
 // Who does the work, once per era: speed pushes every hand-off and checks nothing; safety keeps the
-// pack and checks everything it can; balanced keeps the pack with some checks and AI review.
+// pack and buys the fewest checks that cover all of its checking load; balanced keeps the pack, covers
+// most of the load with people and leaves the rest to AI review.
+const CHECK_TARGET = { safety: 1, balanced: 0.75 };
+const CHECK_OPTIONS = Array.from({ length: (MAX_CHECK + 1) ** 2 }, (_, i) => ({ reviewers: Math.floor(i / (MAX_CHECK + 1)), monitors: i % (MAX_CHECK + 1) }))
+  .map((option) => ({ ...option, capacity: option.reviewers * REVIEWER_CAPACITY + option.monitors * MONITOR_CAPACITY }));
+
 function automationChoice(state, style, rng) {
   if (state.turnInEra !== 0) return null;
   const levelFor = (id) => {
@@ -129,13 +134,25 @@ function automationChoice(state, style, rng) {
     return PACK[state.era][index];
   };
   const levels = Object.fromEntries(HANDOFF_JOBS.filter((id) => !jobLocked(state, id)).map((id) => [id, levelFor(id)]));
-  const wanted = style === 'speed' ? { reviewers: 0, monitors: 0, aiReview: false }
-    : style === 'safety' ? { reviewers: 3, monitors: 3, aiReview: true }
-      : style === 'random' ? { reviewers: rng.int(0, 3), monitors: rng.int(0, 3), aiReview: rng.chance(0.5) }
-        : { reviewers: 1, monitors: 2, aiReview: true };
-  for (let monitors = wanted.monitors; monitors >= 0; monitors -= 1) {
-    const choice = { levels, checks: { ...wanted, monitors } };
-    if (setAutomation(structuredClone(state), choice).ok) return choice;
+  const accepted = (checks) => setAutomation(structuredClone(state), { levels, checks }).ok;
+  if (style === 'speed' || style === 'random') {
+    const wanted = style === 'speed' ? { reviewers: 0, monitors: 0, aiReview: false }
+      : { reviewers: rng.int(0, MAX_CHECK), monitors: rng.int(0, MAX_CHECK), aiReview: rng.chance(0.5) };
+    for (let monitors = wanted.monitors; monitors >= 0; monitors -= 1) {
+      if (accepted({ ...wanted, monitors })) return { levels, checks: { ...wanted, monitors } };
+    }
+    return null;
+  }
+  const resulting = structuredClone(state);
+  setAutomation(resulting, { levels });
+  const target = CHECK_TARGET[style] * checkLoad(jobLevels(resulting));
+  // Fewest check levels that cover the target, least spare capacity first; if none fits, the most capacity that does.
+  const covering = CHECK_OPTIONS.filter((option) => option.capacity >= target - 1e-9)
+    .sort((a, b) => a.reviewers + a.monitors - (b.reviewers + b.monitors) || a.capacity - b.capacity);
+  const fallback = [...CHECK_OPTIONS].sort((a, b) => b.capacity - a.capacity);
+  for (const { reviewers, monitors } of [...covering, ...fallback]) {
+    const checks = { reviewers, monitors, aiReview: true };
+    if (accepted(checks)) return { levels, checks };
   }
   return null;
 }
