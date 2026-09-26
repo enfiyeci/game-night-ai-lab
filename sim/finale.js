@@ -14,7 +14,7 @@ export function finaleDeck(endingId) {
     : null;
 }
 
-const render = (text, state) => text.replaceAll('{name}', state.lumenName ?? 'Lumen');
+const render = (text, state) => text.replaceAll('{name}', () => state.lumenName ?? 'Lumen');
 
 const publicCard = (card, state) => ({
   id: card.id,

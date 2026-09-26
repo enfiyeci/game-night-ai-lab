@@ -82,6 +82,14 @@ test('buildFinale gives the five deck cards in order and citizenship last', () =
   assert.equal(buildFinale(finaleState('misuse')), null);
 });
 
+test('buildFinale renders replacement-pattern characters in the AI name literally', () => {
+  for (const name of ['$&', '$$', '$`']) {
+    const { cards } = buildFinale(finaleState('aligned', name));
+    assert.equal(cards[3].prompt, `${name} offers to run the lab's strategy from now on. It would do it better.`);
+    assert.equal(cards[5].prompt, `An AI party asks: should ${name} get legal rights?`);
+  }
+});
+
 test('resolveFinale uses the highest-priority chosen tag and formats the full title', () => {
   const state = finaleState('aligned');
   const result = resolveFinale(state, {
