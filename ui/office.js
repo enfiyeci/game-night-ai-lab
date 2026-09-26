@@ -8,7 +8,8 @@ function moodMap(state) {
 }
 
 // K2's advisor marker (gen_K2.py), 20% larger, with the marks drawn as shapes so they sit centred and bold:
-// one "!" when uneasy, "!!" when alarmed. The tail tip sits just above the head anchor.
+// one "!" when uneasy, "!!" when alarmed. As in K2, the bubble sits up and to the right of the head: its centre is
+// 22 px right of the head anchor, and its tail tip lands about 11 px right of the head's centre, just above the hair.
 const bang = (x, w) => `<path d="M${x - w / 2},-17.5 L${x + w / 2},-17.5 L${x + w * 0.3},-5.5 L${x - w * 0.3},-5.5 Z"
     style="fill:var(--coral);stroke:var(--coral);stroke-width:1.6;stroke-linejoin:round"/>
   <circle cx="${x}" cy="0" r="${w * 0.52}" style="fill:var(--coral)"/>`;

@@ -206,7 +206,7 @@ svg.room {
   position: absolute;
   width: 41px;
   height: 54px;
-  margin: -54px 0 0 -20.5px; /* positioned by the tail tip; transform stays free for the bob */
+  margin: -54px 0 0 -20.5px; /* left/top name the bubble's bottom centre; transform stays free for the bob */
   filter: drop-shadow(0 2px 3px color-mix(in oklab, var(--ink) 18%, transparent));
   animation: bob 2.2s ease-in-out infinite;
 }
