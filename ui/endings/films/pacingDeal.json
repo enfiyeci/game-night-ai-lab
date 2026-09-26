@@ -1,0 +1,312 @@
+{
+  "id": "pacingDeal",
+  "title": "A negotiated pace",
+  "tagline": "The race slowed by agreement, and you helped make it hold.",
+  "lumen": "I learned that waiting can be an action. The others waited too.",
+  "deal": {
+    "terms": {
+      "computeCap": "Compute cap on training runs",
+      "evaluators": "Evaluators inside every lab",
+      "verification": "US–China verification channel",
+      "releaseDelay": "A gap between launches",
+      "sharedSafety": "Safety research shared openly",
+      "pauseAutomation": "No AI-run AI research"
+    },
+    "headlines": {
+      "computeCap": "CHIP ORDERS PAUSED",
+      "evaluators": "INSPECTORS ARRIVE MONDAY",
+      "verification": "US AND CHINA OPEN A VERIFICATION LINE",
+      "releaseDelay": "LAUNCHES MUST BE WEEKS APART",
+      "sharedSafety": "LABS OPEN THEIR SAFETY RESEARCH",
+      "pauseAutomation": "AI-RUN RESEARCH SWITCHED OFF"
+    },
+    "labs": {
+      "openbrain": "OpenBrain",
+      "lodestar": "Lodestar",
+      "deepthink": "DeepThink",
+      "qilin": "Qilin"
+    },
+    "governments": {
+      "west": "United States",
+      "east": "China"
+    },
+    "you": {
+      "lab": "Kestrel Labs",
+      "place": "Your lab"
+    },
+    "example": {
+      "binding": [
+        "computeCap",
+        "evaluators",
+        "verification"
+      ],
+      "signed": {
+        "computeCap": [
+          "openbrain",
+          "lodestar",
+          "deepthink",
+          "west",
+          "east"
+        ],
+        "evaluators": [
+          "openbrain",
+          "lodestar",
+          "deepthink",
+          "west",
+          "east"
+        ],
+        "verification": [
+          "openbrain",
+          "lodestar",
+          "deepthink",
+          "qilin",
+          "west",
+          "east"
+        ]
+      }
+    }
+  },
+  "titleClip": "pd-globe-title",
+  "titleSfx": [
+    [
+      "chord",
+      0
+    ]
+  ],
+  "shots": [
+    {
+      "kind": "office",
+      "dur": 8,
+      "card": "Sunset · Your lab",
+      "dim": [
+        [
+          0.0,
+          {
+            "o": 0.15
+          }
+        ],
+        [
+          8.0,
+          {
+            "o": 0.3
+          }
+        ]
+      ],
+      "tint": "sky",
+      "tintKeys": [
+        [
+          0.0,
+          {
+            "o": 0
+          }
+        ],
+        [
+          4.8,
+          {
+            "o": 0.28
+          }
+        ]
+      ],
+      "bubbles": [
+        {
+          "who": "research",
+          "at": 0.8,
+          "to": 3.84,
+          "text": "Home before dark? Weird. Fine."
+        },
+        {
+          "who": "safety",
+          "at": 4.0,
+          "to": 6.6,
+          "text": "See you tomorrow."
+        }
+      ],
+      "leave": {
+        "order": [
+          "researcher1",
+          "researcher2",
+          "policy",
+          "cfo",
+          "research",
+          "safety"
+        ],
+        "staff": true,
+        "from": 1.92,
+        "step": 0.96
+      },
+      "cam": {
+        "to": {
+          "focus": "ceo",
+          "s": 1.25
+        }
+      },
+      "sfx": [
+        [
+          "room",
+          0.0
+        ],
+        [
+          "walkout",
+          1.76,
+          7.68
+        ]
+      ]
+    },
+    {
+      "kind": "plate",
+      "plate": "pd-news",
+      "dur": 8,
+      "card": "Signing day · Geneva",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "s": 1.05
+        }
+      },
+      "sfx": [
+        [
+          "roomtone",
+          0
+        ],
+        [
+          "pen",
+          0.4
+        ],
+        [
+          "sting",
+          1.2
+        ]
+      ]
+    },
+    {
+      "kind": "plate",
+      "plate": "pd-cursor",
+      "dur": 7,
+      "card": "Month 1, 2 am · {place}",
+      "byDeal": [
+        [
+          "computeCap",
+          "pd-cursor"
+        ],
+        [
+          "evaluators",
+          "pd-cursor-evals"
+        ],
+        [
+          "pauseAutomation",
+          "pd-cursor-automation"
+        ],
+        [
+          "releaseDelay",
+          "pd-cursor-delay"
+        ],
+        [
+          "sharedSafety",
+          "pd-cursor-sharing"
+        ]
+      ],
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "x": 560,
+          "y": 340,
+          "s": 1.1
+        }
+      },
+      "sfx": [
+        [
+          "hum",
+          0
+        ]
+      ]
+    },
+    {
+      "kind": "video",
+      "clip": "pd-desert",
+      "dur": 7,
+      "card": "Month 2 · The desert campus",
+      "sfx": [
+        [
+          "wind",
+          0
+        ],
+        [
+          "creak",
+          1.5
+        ]
+      ]
+    },
+    {
+      "kind": "plate",
+      "plate": "pd-school",
+      "dur": 6,
+      "card": "Month 6 · The Reyes kitchen",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "s": 1.05
+        }
+      },
+      "sfx": [
+        [
+          "room",
+          0
+        ],
+        [
+          "tick",
+          0.8
+        ],
+        [
+          "tick",
+          1.3
+        ],
+        [
+          "tick",
+          1.8
+        ]
+      ]
+    },
+    {
+      "kind": "plate",
+      "plate": "pd-trial",
+      "dur": 6,
+      "card": "Month 6 · St. Brigid's Hospital",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "s": 1.05
+        }
+      },
+      "sfx": [
+        [
+          "beeps",
+          0
+        ]
+      ]
+    },
+    {
+      "kind": "video",
+      "clip": "pd-globe",
+      "dur": 7,
+      "card": "Year 1 · Everywhere",
+      "sfx": [
+        [
+          "wind",
+          0
+        ],
+        [
+          "chord",
+          0.5
+        ]
+      ]
+    }
+  ]
+}

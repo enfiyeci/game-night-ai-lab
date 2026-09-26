@@ -1,0 +1,260 @@
+{
+  "id": "aligned",
+  "title": "Aligned success",
+  "tagline": "You reached the frontier and kept your model trustworthy.",
+  "lumen": "I became more capable without becoming less honest. We did that together.",
+  "titleClip": "al-skyline-title",
+  "titleSfx": [
+    [
+      "chord",
+      0
+    ]
+  ],
+  "shots": [
+    {
+      "kind": "office",
+      "dur": 8,
+      "card": "Morning · Your lab",
+      "dim": [
+        [
+          0.0,
+          {
+            "o": 0.12
+          }
+        ]
+      ],
+      "bubbles": [
+        {
+          "who": "safety",
+          "at": 0.29,
+          "to": 2.18,
+          "text": "Shutdown drill. Three, two, one."
+        },
+        {
+          "who": "lumen",
+          "at": 1.45,
+          "to": 2.69,
+          "text": "This week's eval results show..."
+        },
+        {
+          "who": "lumen",
+          "at": 4.65,
+          "to": 8.0,
+          "text": "...show no regressions."
+        }
+      ],
+      "robot": {
+        "off": [
+          2.62,
+          4.22
+        ],
+        "turn": 4.36
+      },
+      "confetti": {
+        "who": "cfo",
+        "at": 6.11
+      },
+      "cam": {
+        "from": {
+          "focus": "ceo",
+          "s": 1.2
+        },
+        "to": {
+          "focus": "ceo",
+          "s": 1.4
+        }
+      },
+      "sfx": [
+        [
+          "room",
+          0.0
+        ],
+        [
+          "powerdown",
+          2.62,
+          3.93
+        ],
+        [
+          "chime",
+          4.36
+        ],
+        [
+          "party",
+          6.11
+        ]
+      ]
+    },
+    {
+      "kind": "plate",
+      "plate": "al-triage",
+      "dur": 6,
+      "cut": true,
+      "card": "Night · St. Brigid's Hospital",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "s": 1.05
+        }
+      },
+      "sfx": [
+        [
+          "beeps",
+          0
+        ],
+        [
+          "notify",
+          0.4
+        ],
+        [
+          "tick",
+          1.7
+        ]
+      ]
+    },
+    {
+      "kind": "plate",
+      "plate": "al-chat",
+      "dur": 6,
+      "cut": true,
+      "card": "Evening · The Reyes kitchen",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "s": 1.05
+        }
+      },
+      "sfx": [
+        [
+          "fridge",
+          0
+        ],
+        [
+          "notify",
+          0.5
+        ],
+        [
+          "pen",
+          1.6
+        ]
+      ]
+    },
+    {
+      "kind": "plate",
+      "plate": "al-port",
+      "dur": 6,
+      "card": "Dawn · The port",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "s": 1.05
+        }
+      },
+      "sfx": [
+        [
+          "gulls",
+          0
+        ],
+        [
+          "stamps",
+          2.3,
+          1,
+          0.2
+        ]
+      ]
+    },
+    {
+      "kind": "plate",
+      "plate": "al-news",
+      "dur": 7,
+      "card": "Month 2 · Washington",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "s": 1.05
+        }
+      },
+      "sfx": [
+        [
+          "roomtone",
+          0
+        ],
+        [
+          "sting",
+          0
+        ]
+      ]
+    },
+    {
+      "kind": "plate",
+      "plate": "al-badges",
+      "dur": 5,
+      "card": "Month 4 · Your lab's front door",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "s": 1.05
+        }
+      },
+      "sfx": [
+        [
+          "room",
+          0
+        ],
+        [
+          "door",
+          0.3
+        ]
+      ]
+    },
+    {
+      "kind": "plate",
+      "plate": "al-cafe",
+      "dur": 6,
+      "card": "Month 6 · Dot's café",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "s": 1.06
+        }
+      },
+      "sfx": [
+        [
+          "room",
+          0
+        ],
+        [
+          "party",
+          0
+        ]
+      ]
+    },
+    {
+      "kind": "video",
+      "clip": "al-skyline",
+      "dur": 8,
+      "card": "Year 1 · The city",
+      "sfx": [
+        [
+          "city",
+          0
+        ],
+        [
+          "chord",
+          0.5
+        ]
+      ]
+    }
+  ]
+}

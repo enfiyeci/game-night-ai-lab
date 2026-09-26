@@ -119,3 +119,45 @@ test('a plain launch draws four or five reactions', () => {
   const r = scoreLaunch(s, plain, zeroRng);
   assert.ok(r.reactions.length >= 4 && r.reactions.length <= 5);
 });
+
+const flagshipAt = (score) => ({
+  name: 'Kestrel 3 Core',
+  benchmarks: ['patchwork', 'doctorate', 'horizon', 'finalexam'].map((id) => ({ id, shown: score }))
+    .concat({ id: 'gauntlet', shown: 80 }),
+});
+const named = { ...plain, name: 'Kestrel 5 Core', generation: 5 };
+
+test('each skipped version number raises the critics bar by one benchmark point', () => {
+  const s = createInitialState();
+  s.lastFlagship = flagshipAt(54); // plain averages 42, so every critic lands between 6 and 9 (checked 2026-09-26)
+  const a = scoreLaunch(s, { ...named, generation: 4, skipped: 0 }, zeroRng);
+  const b = scoreLaunch(s, { ...named, generation: 7, skipped: 3 }, zeroRng);
+  // Precondition: no critic sits at the 1 or 10 clamp, so a shift of exactly one point shows.
+  assert.ok(a.press.every((p) => p.score > 1 && p.score < 10));
+  // Three skipped numbers raise the bar by 3 points; the press base is (capAvg - bar) / 3, so it drops by exactly 1.
+  a.press.forEach((p, i) => assert.equal(b.press[i].score, p.score - 1));
+});
+
+test('a skipped number that is earned draws impressed posts first', () => {
+  const s = createInitialState();
+  s.lastFlagship = flagshipAt(20); // plain scores a capability average of 42: a gain of 22
+  const r = scoreLaunch(s, { ...named, skipped: 1 }, zeroRng);
+  assert.equal(r.reactions[0].handle, '@benchwatch');
+  assert.equal(r.reactions[0].text, 'ok, the jump to 5 is earned. this is not a point release.');
+  assert.ok(r.reactions.some((x) => x.text === "if we're skipping numbers now, our next one is 7."));
+});
+
+test('a skipped number without a real gain draws mocking posts first', () => {
+  const s = createInitialState();
+  s.lastFlagship = flagshipAt(41); // a gain of 1
+  const r = scoreLaunch(s, { ...named, skipped: 1 }, zeroRng);
+  assert.equal(r.reactions[0].text, 'Kestrel 5 Core? the evals read more like a 3.1');
+  assert.equal(r.reactions[1].text, 'so the version number is marketing now. cool cool.');
+});
+
+test('no jump posts when no number was skipped', () => {
+  const s = createInitialState();
+  s.lastFlagship = flagshipAt(41);
+  const r = scoreLaunch(s, { ...named, skipped: 0 }, zeroRng);
+  assert.ok(!r.reactions.some((x) => /skipping|jump to|evals read|version number/.test(x.text)));
+});

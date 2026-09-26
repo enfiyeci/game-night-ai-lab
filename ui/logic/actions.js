@@ -153,7 +153,7 @@ export function sanitizeDraft(state, draft) {
     const ids = Array.isArray(draft?.picks?.[stage]) ? draft.picks[stage] : [];
     for (const id of ids) {
       const card = cardById(id);
-      if (!card || card.stage !== stage || !cardUnlocked(state, card) || groups.has(card.group)) continue;
+      if (!card || card.stage !== stage || card.hidden || !cardUnlocked(state, card) || groups.has(card.group)) continue;
       selected.push(id);
       groups.add(card.group);
       if (selected.length >= slotsFor(state, stage)) break;

@@ -5,7 +5,6 @@ import {
   SIZES,
   SIZE_UNITS,
   cardById,
-  pickableCards,
   slotsFor,
 } from '../../sim/recipe.js';
 import { modelName } from '../../sim/release.js';
@@ -16,6 +15,7 @@ import { vslider } from '../components/vslider.js';
 import { cardCostWords, recipePreview, sanitizeDraft } from '../logic/actions.js';
 import { projectQueue } from '../logic/compute.js';
 import { computeAmount, money } from '../logic/format.js';
+import { offeredCards } from '../logic/release.js';
 import { registerMenuHandler } from '../menu.js';
 
 const rememberedDrafts = new WeakMap();
@@ -36,6 +36,9 @@ const GROUP_NAMES = {
   rl: 'Reinforcement learning',
   character: 'Character',
   safeguards: 'Safeguards',
+  eval: 'How you check it',
+  channel: 'Who gets it',
+  precision: 'Serving',
 };
 const SIZE_NAMES = { small: 'Small', medium: 'Medium', large: 'Large', xl: 'Extra large' };
 const LENGTH_NAMES = {
@@ -142,7 +145,7 @@ function computeUsageText(used, free, era) {
   return `Uses ${usedValue} of ${freeValue} ${availability}`;
 }
 
-function techniquePanel(state, stage, draft, onChange) {
+export function techniquePanel(state, stage, draft, onChange, { cardNote } = {}) {
   const root = document.createElement('div');
   root.className = 'recipe-techniques';
   const counter = document.createElement('div');
@@ -154,7 +157,7 @@ function techniquePanel(state, stage, draft, onChange) {
 
   const list = document.createElement('div');
   list.className = 'recipe-technique-list';
-  const cards = pickableCards(state, stage);
+  const cards = offeredCards(state, stage);
   const groupIds = [...new Set(cards.map((card) => card.group))];
   if (cards.length === 0) {
     const empty = document.createElement('p');
@@ -178,6 +181,13 @@ function techniquePanel(state, stage, draft, onChange) {
       defaultLine.textContent = `If none: ${fallback.name}`;
       defaultLine.title = fallback.hint;
       section.append(defaultLine);
+      const fallbackNote = cardNote?.(fallback);
+      if (fallbackNote) {
+        const chip = document.createElement('span');
+        chip.className = `release-ship ${fallbackNote.later ? 'later' : 'now'}`;
+        chip.textContent = fallbackNote.text;
+        defaultLine.append(' ', chip);
+      }
     }
 
     const selectedInGroup = selected.find((id) => cardById(id)?.group === group);
@@ -211,6 +221,13 @@ function techniquePanel(state, stage, draft, onChange) {
       hint.className = 'recipe-card-hint';
       hint.textContent = card.hint;
       button.append(main, hint);
+      const note = cardNote?.(card);
+      if (note) {
+        const chip = document.createElement('span');
+        chip.className = `release-ship ${note.later ? 'later' : 'now'}`;
+        chip.textContent = note.text;
+        button.append(chip);
+      }
       if (blocked) {
         const hidden = document.createElement('span');
         hidden.className = 'visually-hidden';
