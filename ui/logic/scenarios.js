@@ -5,6 +5,7 @@ import { cardById, cardUnlocked, recipeCost, slotsFor, validateRecipe } from '..
 import { availableUnits } from '../../sim/training.js';
 import { inDangerZone } from '../../sim/economy.js';
 import { MEETINGS } from '../../sim/data/president.js';
+import { setAutomation } from '../../sim/automation.js';
 
 const preferences = {
   pre: ['licensed-data', 'hazard-filter-built', 'hazard-filter-reuse'],
@@ -225,6 +226,28 @@ function hazardState(seed) {
   return last;
 }
 
+// An era-4 turn with the hand-offs pushed and little checked, for the grid and office screenshots.
+function automationState(seed) {
+  const state = atEra(seed, 4);
+  if (state.ending || state.era !== 4) return state;
+  setAutomation(state, { levels: { review: 3, experiments: 3, choosing: 2 }, checks: { reviewers: 1 } });
+  return state;
+}
+
+// A state with the x2 line card waiting, for the screen-wall screenshot.
+function ownLineState(seed) {
+  const rng = createRng(seed);
+  let state = atEra(seed, 4);
+  const automation = { levels: { review: 3, experiments: 3, choosing: 2, direction: 1 }, checks: { reviewers: 3, aiReview: true } };
+  for (let guard = 0; guard < 6 && !state.ending && !state.pendingEvents.some((pending) => pending.id === 'ownLine'); guard += 1) {
+    ({ state } = endTurn(state, { ...scriptedActions(state), automation: state.era === 4 ? automation : { checks: automation.checks } }, rng));
+  }
+  // Real time: a card lands a few story days after the mark that made it; walk the clock to it.
+  const card = state.pendingEvents.find((pending) => pending.id === 'ownLine');
+  if (card && !state.ending && card.landsAt > state.day) ({ state } = advanceDays(state, card.landsAt - state.day, rng));
+  return state;
+}
+
 export const SCENARIOS = {
   start,
   midEra3,
@@ -244,4 +267,6 @@ export const SCENARIOS = {
   era3Budget: budgetState,
   era4Power: powerState,
   hazard: hazardState,
+  automation: automationState,
+  ownLine: ownLineState,
 };
