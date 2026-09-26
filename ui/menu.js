@@ -96,6 +96,7 @@ export const COMPANY_ITEMS = [
         ? `Every unused emergency option already started this ${roundWord(state.era)}` : '';
     },
   },
+  { id: 'sound', label: 'Sound and music', free: true },
 ];
 
 export function registerMenuHandler(id, fn) {

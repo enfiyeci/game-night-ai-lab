@@ -3613,3 +3613,32 @@ svg.room {
 .racks-panel .compute-toggle { padding-top: 8px; }
 /* The desk phone sits above dialogs and could open an event card over the choice; it steps away until then. */
 .hazard-open .ev-phone, .hazard-open .ev-phone-button { display: none; }
+
+/* ---------- Sound and music (owner pick 6A): Company › Sound and music, two tabs ---------- */
+.dlg.sound-dialog { top: 150px; left: 420px; width: 600px; min-height: 0; }
+.sound-tabs { display: flex; justify-content: center; gap: 4px; margin: -4px 0 10px; }
+.sound-tabbtn { padding: 6px 16px; border: 0; border-radius: 9px 9px 0 0; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); font: inherit; font-size: 14px; font-weight: 900; background: transparent; cursor: pointer; }
+.sound-tabbtn[aria-selected="true"] { color: var(--ink); background: var(--paper); box-shadow: inset 0 3px 0 var(--wood); }
+.sound-tabbtn:focus-visible, .sound-switch:focus-visible, .sound-slider:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+.sound-tab { text-align: left; }
+.sound-row { display: flex; align-items: center; gap: 16px; padding: 11px 0; border-top: 1px solid color-mix(in oklab, var(--wood) 22%, transparent); }
+.sound-name { width: 124px; font-size: 16px; font-weight: 900; }
+.sound-switch { position: relative; flex: none; width: 38px; height: 22px; padding: 0; border: 0; border-radius: 999px; background: color-mix(in oklab, var(--ink) 16%, var(--paper)); cursor: pointer; }
+.sound-switch::after { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--paper); box-shadow: 0 1px 2px color-mix(in oklab, var(--ink) 30%, transparent); content: ""; }
+.sound-switch.on { background: var(--teal); }
+.sound-switch.on::after { left: 19px; }
+.sound-slider { flex: 1; height: 8px; margin: 0; border-radius: 4px; background: linear-gradient(to right, var(--wood) var(--fill, 0%), color-mix(in oklab, var(--ink) 12%, var(--paper)) var(--fill, 0%)); cursor: pointer; appearance: none; -webkit-appearance: none; }
+.sound-slider::-webkit-slider-thumb { width: 20px; height: 20px; border: 3px solid var(--wood); border-radius: 50%; background: var(--paper); box-shadow: 0 2px 3px color-mix(in oklab, var(--ink) 20%, transparent); -webkit-appearance: none; }
+.sound-slider::-moz-range-thumb { width: 14px; height: 14px; border: 3px solid var(--wood); border-radius: 50%; background: var(--paper); box-shadow: 0 2px 3px color-mix(in oklab, var(--ink) 20%, transparent); }
+.sound-slider:disabled { opacity: .45; }
+.sound-value { width: 44px; font-weight: 900; text-align: right; font-variant-numeric: tabular-nums; }
+.sound-now { display: flex; align-items: center; gap: 12px; margin-top: 6px; padding: 11px 14px; border-radius: 10px; background: var(--paper); }
+.sound-now > div { flex: 1; display: grid; }
+.sound-now b { font-size: 15px; font-weight: 900; }
+.sound-by { color: color-mix(in oklab, var(--ink) 60%, var(--paper)); font-size: 12.5px; font-weight: 700; }
+.sound-kicker { color: color-mix(in oklab, var(--wood) 70%, var(--ink)); font-size: 11px; font-weight: 900; letter-spacing: .07em; text-transform: uppercase; }
+.sound-next { margin: 0; }
+.sound-note { margin: 10px 0 0; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); font-size: 12px; font-weight: 700; text-align: center; }
+.sound-credits .sound-kicker:not(:first-child) { margin-top: 14px; }
+.sound-credits p { margin: 6px 0 0; font-size: 13.5px; font-weight: 700; line-height: 1.5; overflow-wrap: anywhere; }
+.clock button.mute svg { display: block; }

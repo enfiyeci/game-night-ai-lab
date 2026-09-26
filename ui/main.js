@@ -10,7 +10,9 @@ import { openMenu } from './menu.js';
 import { openBudget } from './screens/budget.js';
 import { mountRecipe, openRecipe } from './screens/recipe.js';
 import { mountRelease, openRelease } from './screens/release.js';
-import { mountReveal } from './screens/reveal.js';
+import { mountReveal, showReveal } from './screens/reveal.js';
+import { mountSound } from './screens/sound.js';
+import { music } from './music.js';
 import { releaseDraft, releasePayload } from './logic/release.js';
 import {
   mountCompany,
@@ -84,7 +86,13 @@ game.clock.start();
 mountCompany(game, overlay);
 mountRecipe(game, overlay);
 mountRelease(game, overlay);
-mountReveal(game, overlay);
+mountReveal(game, overlay, {
+  show(root, reveal) {
+    music.duck(true);
+    return showReveal(root, { ...reveal, onClose: () => music.duck(false) });
+  },
+});
+mountSound(game, overlay);
 mountPresident(game, overlay);
 mountHistory(game, overlay);
 mountAutomation(game, overlay);

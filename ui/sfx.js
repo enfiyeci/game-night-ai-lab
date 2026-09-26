@@ -1,22 +1,21 @@
 // Synthesised sound effects for the release reveal (Web Audio, no sound files). Every sound is
 // short and soft-edged and goes through one master gain and a compressor, so stacked ticks never
-// clip. The mute choice is remembered per browser.
+// clip. The on/off choice and the volume are remembered per browser; the HUD's master mute
+// (ui/sound.js) silences them without changing either.
+import { browserStorage, readSetting, sound as soundSettings, writeSetting } from './sound.js';
+
 const MUTE_KEY = 'ai-lab-sound-muted';
+const VOLUME_KEY = 'ai-lab-sfx-volume';
+const DEFAULT_VOLUME = 0.6;
+const clamp01 = (value) => Math.min(1, Math.max(0, value));
 
-function readMuted() {
-  try {
-    return globalThis.localStorage?.getItem(MUTE_KEY) === '1';
-  } catch {
-    return false;
-  }
-}
-
-export function createSfx() {
+export function createSfx({ storage = browserStorage(), sound = soundSettings } = {}) {
   let ctx = null;
   let master = null;
   let broken = false;
-  let enabled = !readMuted();
-  const volume = 0.6;
+  let enabled = readSetting(storage, MUTE_KEY) !== '1';
+  const savedVolume = Number.parseFloat(readSetting(storage, VOLUME_KEY));
+  let volume = Number.isFinite(savedVolume) ? clamp01(savedVolume) : DEFAULT_VOLUME;
   const playing = new Set();
 
   // The audio context, or null when sound cannot play right now. A browser that refuses audio
@@ -49,8 +48,10 @@ export function createSfx() {
     source.onended = () => playing.delete(source);
   }
 
+  const silent = () => !enabled || sound.muted;
+
   function tone({ freq, type = 'sine', at = 0, dur = 0.12, gain = 0.25, attack = 0.004, slideTo = null, detune = 0 }) {
-    if (!enabled) return;
+    if (silent()) return;
     const c = ensure();
     if (!c) return;
     const t = c.currentTime + at;
@@ -71,7 +72,7 @@ export function createSfx() {
 
   let noiseBuffer = null;
   function noise({ at = 0, dur = 0.2, gain = 0.2, from = 800, to = 4000, q = 1.2, type = 'bandpass' }) {
-    if (!enabled) return;
+    if (silent()) return;
     const c = ensure();
     if (!c) return;
     if (!noiseBuffer) {
@@ -106,11 +107,13 @@ export function createSfx() {
     get enabled() { return enabled; },
     set enabled(value) {
       enabled = value;
-      try {
-        globalThis.localStorage?.setItem(MUTE_KEY, value ? '0' : '1');
-      } catch {
-        // Storage can be blocked (private window); the choice then lasts for this page only.
-      }
+      writeSetting(storage, MUTE_KEY, value ? '0' : '1');
+    },
+    get volume() { return volume; },
+    set volume(value) {
+      volume = clamp01(Number(value));
+      writeSetting(storage, VOLUME_KEY, volume);
+      if (master) master.gain.value = volume;
     },
     // Stop every sound already scheduled (a skipped or closed show, or muting).
     hush() {
