@@ -6,6 +6,7 @@ import { lumenDisposition, lumenEpilogue, lumenLine } from '../sim/lumen.js';
 import { LUMEN_EPILOGUES, LUMEN_LINES, LUMEN_SIGNOFF } from '../sim/data/lumen.js';
 
 const releasedModel = (releaseSequence, flags = []) => ({ releaseSequence, flags });
+const expectedEndingIds = (endings) => [...new Set([...Object.keys(endings), 'overtaken'])];
 
 test('Lumen grows honest unless sycophancy or learned evasiveness takes priority', () => {
   const state = createInitialState();
@@ -92,9 +93,14 @@ test('line choice follows the turn without consuming randomness', () => {
   assert.notEqual(lumenLine(state).text, first.text);
 });
 
+test('expected ending ids stay unique when overtaken becomes a core ending', () => {
+  const endingIds = expectedEndingIds({ ...ENDINGS, overtaken: {} });
+  assert.equal(endingIds.length, new Set(endingIds).size);
+});
+
 test('every ending and overtaken has a short epilogue and disposition signoff', () => {
   const state = createInitialState();
-  const endingIds = [...Object.keys(ENDINGS), 'overtaken'];
+  const endingIds = expectedEndingIds(ENDINGS);
   assert.deepEqual(Object.keys(LUMEN_EPILOGUES).sort(), endingIds.sort());
 
   for (const ending of endingIds) {
