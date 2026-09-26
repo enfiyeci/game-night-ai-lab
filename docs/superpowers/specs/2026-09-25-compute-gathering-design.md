@@ -71,7 +71,8 @@ the end of the game.
 
 - **Exclusive (Azuria).** While any Azuria contract is signed (in transit) or runs, the player
   cannot sign CoreFlame or Gulf contracts (owner ruling 2026-09-25: the lock starts at signing,
-  so Azuria and CoreFlame cannot both be signed in one turn). Chip titan orders are still allowed. Buyout: pay 3 months of the Azuria bill
+  so CoreFlame or Gulf cannot be signed after Azuria in the same turn; signing them before
+  Azuria is allowed, as with any contract that already exists when Azuria is signed). Chip titan orders are still allowed. Buyout: pay 3 months of the Azuria bill
   to remove the lock. Real model: Microsoft's right of first refusal on OpenAI compute until
   2025.
 - **Fragile (CoreFlame).** Failure risk is 2% per month, converted to the era's turn length
