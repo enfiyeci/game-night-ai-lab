@@ -1,8 +1,9 @@
 // The finance planner (owner pick 2026-09-26: mockups A and B of K2-finance-plan.html, as two views of one screen).
 // Timeline: compute, money each month and cash on one turn axis, with a draggable goal per era. The books: the
 // same plan as an era-by-era ledger next to the actual history. Goals and rounds are a plan only; they queue no move.
-// The one exception is "Promise it to the board": keeping the plan with it switched on queues this turn's board promise.
+// The one exception is "Promise it to the board": keeping the plan with it switched on makes the board promise at once.
 import { ERAS } from '../../sim/data/eras.js';
+import { roundWord } from '../../sim/time.js';
 import { openDialog } from '../components/dialog.js';
 import { teamPanel } from '../components/team.js';
 import { registerMenuHandler } from '../menu.js';
@@ -214,7 +215,7 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
       item.append(element('i', `finance-swatch ${swatch}`), document.createTextNode(label));
       key.append(item);
     }
-    const note = element('p', 'finance-note', `Revenue is held at today's level; the dotted line grows today's users at the game's own rate, with no new releases. Compute bills are after cloud credits, and today's spot cover and idle resale are held at today's level. Compute you haven't signed is billed at the base price, ${unitPrice} a unit each month, from next turn; a letter of intent counts only the 30% it is sure to deliver. Rounds raise at today's valuation.`);
+    const note = element('p', 'finance-note', `Revenue is held at today's level; the dotted line grows today's users at the game's own rate, with no new releases. Compute bills are after cloud credits, and today's spot cover and idle resale are held at today's level. Compute you haven't signed is billed at the base price, ${unitPrice} a unit each month, from next ${roundWord(state.era)}; a letter of intent counts only the 30% it is sure to deliver. Rounds raise at today's valuation.`);
     const body = element('div', 'finance-timeline-body');
     body.append(charts, key, note);
     const team = element('div');
@@ -247,7 +248,7 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
       const cashes = rows.flatMap((r) => [r.cashStart + r.raised, r.cashEnd]);
       const lo = Math.min(0, ...cashes), hi = Math.max(1, ...cashes);
       const yK = (v) => tK + hK - ((v - lo) / (hi - lo)) * hK;
-      let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Compute, money each month and cash from the start of the run to its last turn"><defs>${hatch('finance-plan-hatch', '--sky')}${hatch('finance-bill-hatch', '--coral')}</defs>`;
+      let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Compute, money each month and cash from the start of the run to its end"><defs>${hatch('finance-plan-hatch', '--sky')}${hatch('finance-bill-hatch', '--coral')}</defs>`;
       ERAS.forEach((era, i) => {
         const x0 = x(eraStart(era.id)), x1 = x(eraStart(era.id) + era.turns);
         s += `<rect x="${x0}" y="${top - 18}" width="${x1 - x0}" height="${H - top - 2}" style="fill:${i % 2 ? 'color-mix(in oklab, var(--cream) 45%, var(--paper))' : 'var(--paper)'}"/>`;
@@ -344,7 +345,7 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
       const summary = byEra(p.rows);
       const last = summary.at(-1);
       if (eras.length === 0) {
-        panel.replaceChildren(element('p', 'finance-note', 'This is the last turn, so no new compute can arrive.'));
+        panel.replaceChildren(element('p', 'finance-note', `This is the last ${roundWord(state.era)}, so no new compute can arrive.`));
       } else {
         panel.replaceChildren(element('h4', '', 'Compute goal'));
         goalRows(panel);
