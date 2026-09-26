@@ -209,6 +209,13 @@ function describeMove(move) {
   if (move.type === 'research') return `research ${words(move.techId)}`;
   if (move.type === 'emergency') return `use the ${words(move.option)} emergency option`;
   if (move.type === 'summit') {
+    if (Array.isArray(move.motions)) {
+      const motions = move.motions.map(({ card, check, promises = {} }) => {
+        const made = Object.entries(promises).map(([party, type]) => `${words(type).toLowerCase()} for ${words(party)}`);
+        return `${words(card).toLowerCase()} checked at level ${check}${made.length ? ` with ${made.join(', ')}` : ' with no promises'}`;
+      });
+      return `table summit motions in order: ${motions.join('; ')}`;
+    }
     const proposals = move.proposals?.length ? move.proposals.map((id) => words(id).toLowerCase()).join(', ') : 'no commitments';
     const checks = Object.entries(move.checks ?? {}).map(([id, level]) => `${words(id).toLowerCase()} checked at level ${level}`);
     const promises = Object.entries(move.promises ?? {}).map(([party, type]) => `${words(type).toLowerCase()} for ${words(party)}`);
