@@ -283,7 +283,7 @@ export function poweredUnits(state) {
   - `generateOffers(state, rng)` → offer list. Offer shape: `{ id, supplier, units, arrivesIn, upfront, monthly, termMonths, price, string, credits? }`; the era 3 queue card is `{ id: 'verde-queue-<turn>', supplier: 'verde', viaQueue: true }`; the grid card is `{ id, supplier: 'grid', upfront: 50, string: 'gridReservation' }`.
   - `signOffer(state, offerId, rng)` → `{ ok, offerId?, arrivesTurn?, error? }`.
   - `addPipeline(state, { supplier, units, price, termMonths, arrivesTurn, string, headline? })` → id.
-  - `deliverDue(state, rng)` → the contracts that arrived (pipeline items due by `state.turn`); `contractsTurn(state, rng)` → `{ warnedBump }` (spot pull warnings, CoreFlame trouble rolls, then `syncContracts`); `syncContracts(state)` (no randomness: spot renewals take the era's spot price, Gulf contracts follow the export license); `expireContracts(state)` → expired contracts; `pullBumped(state)` → the spot contracts pulled this turn; `refreshOnline(state)`.
+  - `deliverDue(state, rng)` → the contracts that arrived (pipeline items due by `state.turn`); `contractsTurn(state, rng)` → `{ warnedBump }` (spot pull warnings, CoreFlame trouble rolls); `syncContracts(state)` (no randomness, called by `deliverDue` only: spot renewals take the era's spot price, Gulf contracts follow the export license; both then hold for the whole turn, so the compute a turn uses is the compute it is billed for, and a mid-turn change in US favor takes effect next turn); `expireContracts(state)` → expired contracts; `pullBumped(state)` → the spot contracts pulled this turn; `refreshOnline(state)`.
   - `contractBill(c)`, `monthlyBills(state)`, `arrivingBills(state)`, `creditOffset(state)`, `spendCredits(state)` → $M used; `perTurn(monthly, months)`; `exclusiveActive(state)`.
   - `contractAction(state, { id, action })` → `{ ok }` with actions `scaleDown`, `break`, `buyout`.
   - Contract shape: `{ id, supplier, units, price, monthsLeft, needsPower, string, arrivedTurn, scaledDown, troubled, dark, bumpTurn, exclusiveBought, headline }`. Spot has `monthsLeft: null`: it renews every turn until the player breaks it (free) or it is pulled. `bumpTurn` is null, or the last turn a warned spot contract serves (and is billed) before it is pulled. A pipeline item may carry `needsPower` to override the default (Verde chips arriving in era 4 or later need site power).
@@ -299,7 +299,7 @@ import { createInitialState } from '../sim/state.js';
 import { BALANCE } from '../sim/balance.js';
 import { SUPPLIERS, SPOT_PRICE, EQUITY_SHARE, GULF_OPEN, GULF_REVOKE, SCALE_DOWN, SCALE_DOWN_PENALTY_MONTHS, BREAK_SHARE, BUYOUT_MONTHS, eraScale } from '../sim/data/compute.js';
 import {
-  generateOffers, signOffer, deliverDue, contractsTurn, expireContracts, pullBumped, contractAction, monthlyBills,
+  generateOffers, signOffer, deliverDue, contractsTurn, syncContracts, expireContracts, pullBumped, contractAction, monthlyBills,
   creditOffset, spendCredits, perTurn, exclusiveActive, sideRng,
 } from '../sim/contracts.js';
 
@@ -375,7 +375,7 @@ test('spot arrives at once, renews every turn at the era price, and can be dropp
   const c = s.compute.contracts.find((x) => x.supplier === 'spot');
   assert.ok(c, 'spot rolls over');
   s.era = 3;
-  contractsTurn(s, lo);
+  syncContracts(s);
   assert.equal(c.price, SPOT_PRICE[3], 'a renewal pays the current era price');
   const cash = s.cash;
   assert.equal(contractAction(s, { id: c.id, action: 'break' }).ok, true);
@@ -437,13 +437,15 @@ test('neocloud trouble, and the Gulf license follows US favor', () => {
   const g = s.compute.contracts.find((c) => c.supplier === 'gulf');
   const withGulf = monthlyBills(s);
   s.govFavor.us = 45; contractsTurn(s, lo);
+  assert.equal(g.dark, false, 'the license holds for the rest of the turn');
+  syncContracts(s);
   assert.equal(g.dark, true);
   assert.ok(monthlyBills(s) < withGulf, 'a revoked license pauses billing');
-  s.govFavor.us = 55; contractsTurn(s, lo);
+  s.govFavor.us = 55; syncContracts(s);
   assert.equal(g.dark, true, 'restored only at the opening threshold');
-  s.govFavor.us = GULF_OPEN; contractsTurn(s, lo);
+  s.govFavor.us = GULF_OPEN; syncContracts(s);
   assert.equal(g.dark, false);
-  s.flags.supplyChainRisk = true; contractsTurn(s, lo);
+  s.flags.supplyChainRisk = true; syncContracts(s);
   assert.equal(g.dark, true, 'a supply-chain-risk designation also revokes it');
 });
 
@@ -652,8 +654,9 @@ export function deliverDue(state, rng) {
   return arrived;
 }
 
-// No randomness. Runs at turn end and again after delivery, so a new era's spot price and a
-// revoked Gulf license already show in the state the player plans with.
+// No randomness. Runs only after delivery, at the start of a turn, so a new era's spot price and a
+// changed Gulf license show in the state the player plans with and then hold for the whole turn:
+// the compute a turn uses is the compute it is billed for.
 export function syncContracts(state) {
   for (const c of state.compute.contracts) {
     if (c.supplier === 'spot') c.price = SPOT_PRICE[state.era]; // renewals pay today's spot price
@@ -673,8 +676,6 @@ export function contractsTurn(state, rng) {
   for (const c of state.compute.contracts) {
     if (c.supplier === 'coreflame' && !c.troubled && rng.chance(perTurn(FRAGILE_MONTHLY, months))) c.troubled = true;
   }
-  syncContracts(state);
-  refreshOnline(state);
   return { warnedBump };
 }
 
@@ -1413,7 +1414,7 @@ export function makePledge(state, share) {
   - `sim/advisors.js`: if any expression still reads `state.budget.split.safety`, replace it with `state.compute.split.safety`.
   - `sim/data/events.js`: `openletter` "Meet their demands" effect becomes `state.compute.split.safety = Math.min(0.5, state.compute.split.safety + 0.1); state.staffTrust += 8;`. The `promise` event's trigger also fires when `state.flags.brokenPromise` is true, and both its choices also `delete state.flags.brokenPromise`.
   - `tools/balance.js`: remove `safety` from every strategy's money `split` (fold that share into `training`) and send `computeSplit: { safety: X }` with X = speed 0.02, safety 0.2, balanced 0.12, random `Math.round(rng.next() * 30) / 100`.
-  - `ui/logic/actions.js`: `budgetFromSliders` takes `{ training, security, product, talent }`; update `tests/ui-actions.test.js` to those four keys (same assertions, spend values unchanged). In the same commit remove the `safety` entry from the budget dialog's slider data array so the running game never sends a budget the sim rejects (Task 7 adds the compute bar).
+  - `ui/logic/actions.js`: `budgetFromSliders` takes `{ training, security, product, talent }`; update `tests/ui-actions.test.js` to those four keys (same assertions, spend values unchanged). In the same commit remove the `safety` entry from the budget dialog's slider data array (`BUDGET_SLIDERS` in `ui/screens/budget.js`, entries `{ key, label, token }`, agreed with the UI lane) so the running game never sends a budget the sim rejects (Task 7 adds the compute bar).
   - Outage feed post (spec §5.2): in `endTurn`, for an `outage` event call `pushFeed(state, '@downdetector', 'users report outages across your apps', 'feed')`.
 - [ ] **Step 5: Run** `npm test`.
 - [ ] **Step 6: Keep old tests testing what they tested.** Every test budget literal that has a `safety` key drops it (for example `tests/turn.test.js` `a new budget updates emergency eligibility…`). Plan 2A tests that switch on interpretability through the money share (`tests/hazards.test.js` `interpretability spend exposes a tenth…`, era 1, and `tests/launch.test.js` `interpretability spend cuts eval gaming`, era 4) instead give the lab enough safety compute for its era: `s.compute.online = 10 * eraScale(s.era); s.compute.split.safety = 0.5;` (so `safetySpend(s)` is 7.3, above the threshold of 5, in any era), add `assert.ok(safetySpend(s) >= 5)` as a precondition, and keep their expected numbers. Tests that assert exact free compute (in `tests/training.test.js`: `starting a run pays cash and reserves compute`, `a run fails to start without enough compute`, `a run pauses without reserved compute and resumes when capacity returns`; in `tests/turn.test.js`: `a due release consumes serving compute before move validation`) set `s.compute.split.safety = 0` in their setup. `tests/economy.test.js` `serving load uses compute and overflows at scale`: replace the two `overflow` assertions with `computeSlices(s).shortfall === 0` and `> 0` at the same two points.
@@ -1661,7 +1662,7 @@ test('compute is shown in units until era 4, then in power', () => {
 - [ ] **Step 4: Screens** (match `docs/design/mockups/K2-compute.html` state by state; GDT dialog shell from plan 2B with Team panel left, content centre, status panel right):
   - `ui/screens/compute.js` **Sign a compute deal** (`#deals`): centre = `dealCards` as cards (monogram, name, kind, big number, `per` line, the five rows, catch chip and explanation; selected card has the wood ring and a "Selected" tag; disabled cards greyed with the reason); right = **Commitments** from `commitmentsView` (bill now and after, the stacked bill bar with the new contract striped, one row per contract with "Scale down 30%" / "Break" / "Buy out" buttons → `game.setField('contractActions', [...])`, runway now and after); footer "Signing uses 1 of 2 moves this turn · pay $X now" and the orange **Sign** → `game.addMove({ type: 'deal', offerId })`. The grid card signs the same way.
   - Same file, **Verde allocation** (`#queue`, era 3; opened from the Verde queue card): centre = supply bar (prepaid first), one row per lab with an ordered-versus-served bar, the Eastern lab greyed "Can't buy", announcement line; right of centre = **Your order** box (horizontal order slider, Standard/Prepaid switch, the two outcome boxes from `queueView`, **Order** → `game.addMove({ type: 'queueOrder', units, tier })`); right panel **Why order** (next run's need, free training compute, shortfall).
-  - `ui/screens/budget.js` (`#budget`): the slider data array loses its `safety` entry (four money sliders); below the money row add the full-width **compute allocation bar** from `computeBar` with two drag handles (the serving cap and the safety share, keyboard accessible with arrow keys, 24 px targets), the "users need N" and "pledge X% · kept/broken" markers, the legend, and the two toggles (cover shortfalls with spot, resell idle compute); in eras 1–2, if no pledge exists, a "Make a public pledge" row with 5/10/20% → `game.setField('pledge', share)`. OK sends `setBudget` plus `game.setField('computeSplit', {...})`. Right panel **This turn**: money spend, compute bill, idle cost, runway, pledge status.
+  - `ui/screens/budget.js` (`#budget`): `BUDGET_SLIDERS` has already lost its `safety` entry in Task 5 (four money sliders); below the money row add the full-width **compute allocation bar** from `computeBar` with two drag handles (the serving cap and the safety share, keyboard accessible with arrow keys, 24 px targets), the "users need N" and "pledge X% · kept/broken" markers, the legend, and the two toggles (cover shortfalls with spot, resell idle compute); in eras 1–2, if no pledge exists, a "Make a public pledge" row with 5/10/20% → `game.setField('pledge', share)`. OK sends `setBudget` plus `game.setField('computeSplit', {...})`. Right panel **This turn**: money spend, compute bill, idle cost, runway, pledge status.
   - `ui/screens/sites.js` **Power sites** (`#power`, era 4, Company submenu "Power sites"): centre = the power meter (powered teal, unpowered coral striped with "still billed $X/mo", a power line marker, a dashed marker where the next site arrives, a legend that does not rely on colour alone), then the site option cards with their small isometric drawings (reuse the SVG generator functions from `docs/design/mockups/source/build_compute_mockup.py`, ported to JS or emitted as static SVG files under `ui/assets/sites/`), then **Build** → `game.addMove({ type: 'buildSite', source })`; right panel **Your sites** (status, progress bars, opposition warning line).
   - `ui/screens/company.js`: "Sign a compute deal" opens the new screen; era 4 adds "Power sites".
   - `ui/hud.js`: the compute line in the info-box drop-down uses `format.compute`.
@@ -1786,7 +1787,11 @@ Round 3 (`gpt-5.6-sol`, the last round under the three-round cap). Verdict REVIS
 2. Spot was re-priced at turn end, before the era advanced, so the first turn of a new era showed the old spot price in the returned burn.
 3. `deliverDue` delivered a Gulf contract live even if the export license was revoked while it was in the pipeline.
 
-Findings 2 and 3 are fixed by a new non-random `syncContracts` (the spot price and the Gulf license), which runs at turn end and again after delivery. A new Task 2 test covers both.
+Findings 2 and 3 are fixed by a new non-random `syncContracts` (the spot price and the Gulf license), which runs after delivery. A new Task 2 test covers both.
+
+Round 4 (`gpt-5.6-sol`, an extra round the owner approved). Verdict REVISE, one important finding, fixed:
+
+1. `contractsTurn` also re-checked the Gulf license at turn end. An event choice or move that lowered US favor mid-turn left the Gulf units usable for training and then unbilled, and a recovery did the reverse. `syncContracts` now runs only after delivery, so the license and the spot price hold for the whole turn and a mid-turn change takes effect next turn. The Task 2 Gulf test checks that the license holds until the next sync.
 
 Also fixed in this wave:
 - Plan 2A's balance pass raised every rival's speed (OpenBrain 1.3, Lodestar 0.9, DeepThink 1.05, Qilin 1.15). Under the old queue rule every Western rival prepaid, and their orders (190 units) exceeded the supply (150), so the player got nothing. Rival orders and tiers are now relative to the Western rivals' speeds. Spec §4 was revised to match, with owner approval.
