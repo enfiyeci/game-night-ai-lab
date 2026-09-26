@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { REACTIONS } from '../sim/data/launch.js';
 import { createInitialState } from '../sim/state.js';
+import { activeModels } from '../sim/serving.js';
 import { createGame } from '../ui/game.js';
 import { SCENARIOS } from '../ui/logic/scenarios.js';
 import {
@@ -44,7 +45,7 @@ test('history rows expose release details and public benchmark averages in relea
     released: state.models.length,
     bestPress: Math.max(...state.models.map((model) => model.launch.pressAvg)),
     biggestLaunch: Math.max(...state.models.map((model) => model.newUsers)),
-    stillServing: state.models.filter((model) => model.active).length,
+    stillServing: activeModels(state).length,
   });
 });
 
@@ -198,4 +199,15 @@ test('endTurn subscribers see the rival release log after it is updated', () => 
   game.endTurn();
   game.endTurn();
   assert.equal(sawRelease, true);
+});
+
+test('history status follows what the sim serves: open weights and not-yet-online models are not serving', () => {
+  const state = structuredClone(SCENARIOS.summit(4));
+  const [first, second, third] = state.models;
+  first.active = true; first.channel = 'open';
+  second.active = true; second.activeFromTurn = state.turn + 2;
+  third.active = false;
+  const rows = historyRows(state);
+  assert.deepEqual(rows.slice(0, 3).map((row) => [row.status, row.active]), [['open', false], ['upcoming', false], ['retired', false]]);
+  assert.equal(labSummary(rows).stillServing, activeModels(state).length);
 });

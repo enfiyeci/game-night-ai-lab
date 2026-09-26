@@ -1,5 +1,6 @@
 import { ERAS } from '../../sim/data/eras.js';
 import { RIVAL_TEMPLATES } from '../../sim/rivals.js';
+import { activeModels } from '../../sim/serving.js';
 import { users as formatUsers } from './format.js';
 
 export const HISTORY_CHANNEL_WORDS = {
@@ -45,7 +46,16 @@ function eraForTurn(turn) {
   return ERAS.at(-1);
 }
 
+function statusOf(state, model, serving) {
+  if (serving.has(model)) return 'serving';
+  if (!model.active) return 'retired';
+  if (model.channel === 'open') return 'open';
+  return 'upcoming';
+}
+
 export function historyRows(state) {
+  // Serving means what the sim serves: not open weights, and online from activeFromTurn on.
+  const serving = new Set(activeModels(state));
   return (state.models ?? [])
     .map((model, index) => ({ model, index }))
     .filter(({ model }) => Number.isFinite(model.releasedTurn) && model.launch)
@@ -66,7 +76,9 @@ export function historyRows(state) {
         rivalAvg: mean(publicCapability.map((benchmark) => benchmark.rival)),
         newUsers: model.newUsers,
         users: model.users,
-        active: Boolean(model.active),
+        active: serving.has(model),
+        status: statusOf(state, model, serving),
+        activeFromTurn: model.activeFromTurn,
         benchmarks: model.launch.benchmarks.map(({ name, shown, rival }) => ({ name, shown, rival })),
       };
     });
