@@ -3452,6 +3452,101 @@ svg.room {
   .pres-pat i { transition-duration: 150ms !important; }
 }
 
+/* ---------- The Geneva summit and the deal in play (plan 2026-09-26-summit-build) ---------- */
+[data-p="openbrain"] { --pc: var(--coral); }
+[data-p="lodestar"] { --pc: var(--teal); }
+[data-p="deepthink"] { --pc: var(--sky); }
+[data-p="qilin"] { --pc: var(--wood); }
+[data-p="west"] { --pc: color-mix(in oklab, var(--sky) 55%, var(--ink)); }
+[data-p="east"] { --pc: color-mix(in oklab, var(--coral) 55%, var(--ink)); }
+[data-p="you"] { --pc: var(--ink); }
+.sm-layer { z-index: 11; opacity: 1; background: var(--cream); }
+.sm-layer:focus { outline: none; }
+.sm-hall { position: absolute; inset: 0; }
+.sm-seat { cursor: pointer; }
+.sm-pb { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--pc); color: var(--paper); font-size: 11.5px; font-weight: 900; flex: none; }
+.sm-pb.sm { width: 22px; height: 22px; font-size: 9.5px; }
+.sm-demand { position: absolute; z-index: 2; width: 178px; padding: 7px 10px 8px; border: 0; border-top: 4px solid var(--pc); border-radius: 11px; background: var(--paper); color: var(--ink); font: inherit; font-size: 12.5px; font-weight: 800; line-height: 1.25; text-align: left; cursor: pointer; box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 14%, transparent), 0 6px 14px color-mix(in oklab, var(--ink) 12%, transparent); }
+.sm-demand::after { content: ""; position: absolute; left: 50%; bottom: -7px; width: 12px; height: 12px; margin-left: -6px; background: var(--paper); transform: rotate(45deg); }
+.sm-demand small { display: block; margin-top: 3px; font-size: 10.5px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; color: color-mix(in oklab, var(--ink) 50%, var(--paper)); }
+.sm-demand.met { outline: 2.5px solid var(--teal); }
+.sm-demand.met small { color: color-mix(in oklab, var(--teal) 60%, var(--ink)); }
+.sm-demand.talking { outline: 3px solid var(--coral); }
+.sm-demand:focus-visible, .sm-pc:focus-visible, .sm-lv:focus-visible, .sm-who:focus-visible, .sm-answer:focus-visible, .sm-leave:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+.sm-sticky { position: absolute; z-index: 2; left: 24px; top: 70px; width: 210px; padding: 12px 14px 14px; background: color-mix(in oklab, var(--wood) 24%, var(--paper)); transform: rotate(-2.5deg); box-shadow: 0 6px 14px color-mix(in oklab, var(--ink) 18%, transparent); font-size: 13px; font-weight: 800; line-height: 1.3; }
+.sm-sticky b { display: block; margin-bottom: 3px; font-size: 10.5px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: color-mix(in oklab, var(--wood) 55%, var(--ink)); }
+.sm-say { position: absolute; z-index: 3; width: 300px; padding: 9px 13px 11px; border-radius: 12px; background: var(--paper); border-left: 5px solid var(--pc); font-size: 15px; font-weight: 700; line-height: 1.3; box-shadow: 0 8px 18px color-mix(in oklab, var(--ink) 16%, transparent); }
+.sm-say b { display: block; font-size: 10.5px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; color: color-mix(in oklab, var(--wood) 60%, var(--ink)); }
+.sm-panel { left: 200px; right: 200px; bottom: 16px; padding: 14px 18px 16px; }
+.sm-panel.narrow { left: 300px; right: 300px; }
+.sm-panel h2 { margin: 2px 0 0; font-size: 22px; font-weight: 700; }
+.sm-panel p { margin: 8px 0 0; font-size: 14.5px; font-weight: 700; }
+.sm-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 12px; }
+.sm-row.top { align-items: flex-start; margin-top: 0; }
+.sm-row.end { justify-content: flex-end; }
+.sm-deck { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+.sm-pc { display: grid; align-content: start; gap: 3px; padding: 8px 12px 9px; border: 2.5px solid color-mix(in oklab, var(--ink) 11%, transparent); border-radius: 12px; background: var(--paper); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.sm-pc b { font-size: 14.5px; font-weight: 900; }
+.sm-pc span { font-size: 12px; font-weight: 700; line-height: 1.3; color: color-mix(in oklab, var(--ink) 62%, var(--paper)); }
+.sm-pc:hover { border-color: var(--coral); }
+.sm-pc.alt, .sm-answer.alt { background: color-mix(in oklab, var(--ink) 5%, var(--paper)); }
+.sm-levels { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 12px; }
+.sm-lv { display: grid; gap: 6px; padding: 10px 12px 11px; border: 2.5px solid color-mix(in oklab, var(--ink) 11%, transparent); border-radius: 12px; background: var(--paper); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.sm-lv b { font-size: 15px; font-weight: 900; }
+.sm-lv small { font-size: 12.5px; font-weight: 700; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); }
+.sm-lv.on { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.sm-meter { display: flex; gap: 3px; }
+.sm-meter i { flex: 1; height: 6px; border-radius: 3px; background: color-mix(in oklab, var(--ink) 10%, var(--paper)); }
+.sm-meter i.f { background: var(--sky); }
+.sm-tally { display: flex; gap: 6px; }
+.sm-tally .off { opacity: .3; }
+.sm-choices.two { grid-template-columns: 1fr 1fr; }
+.sm-holdouts { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin-top: 12px; }
+.sm-who { display: grid; grid-template-columns: 30px 1fr; gap: 10px; align-items: center; padding: 8px 12px; border: 0; border-left: 5px solid var(--pc); border-radius: 12px; background: color-mix(in oklab, var(--pc) 10%, var(--paper)); color: var(--ink); font: inherit; font-size: 13.5px; font-weight: 800; line-height: 1.28; text-align: left; cursor: pointer; }
+.sm-who.sel { box-shadow: inset 0 0 0 2.5px var(--coral); }
+.sm-who small { display: block; margin-top: 3px; font-size: 12px; font-weight: 800; color: color-mix(in oklab, var(--wood) 62%, var(--ink)); }
+.sm-muted { color: color-mix(in oklab, var(--ink) 58%, var(--paper)); }
+.sm-actions { display: flex; align-items: center; gap: 12px; }
+.sm-actions .btn { width: auto; padding: 9px 18px; }
+.sm-leave { padding: 6px 4px; border: 0; background: transparent; color: color-mix(in oklab, var(--wood) 72%, var(--ink)); font: inherit; font-size: 13.5px; font-weight: 900; cursor: pointer; }
+.sm-error { margin: 0; font-size: 13px; font-weight: 800; color: color-mix(in oklab, var(--coral) 70%, var(--ink)); }
+.sm-talk { left: 230px; right: 230px; bottom: 16px; padding: 14px 18px; }
+.sm-talk h2 { margin: 0; font-size: 22px; font-weight: 700; }
+.sm-talk p { margin: 8px 0 0; font-size: 14.5px; font-weight: 700; }
+.sm-talk .sm-actions { justify-content: flex-end; margin-top: 12px; }
+.sm-kick { margin-bottom: 3px; font-size: 11px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: color-mix(in oklab, var(--wood) 60%, var(--ink)); }
+.sm-choices { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 12px; }
+.sm-answer { display: grid; gap: 3px; padding: 9px 12px; border: 2.5px solid color-mix(in oklab, var(--ink) 12%, transparent); border-radius: 12px; background: var(--paper); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.sm-answer b { font-size: 14px; font-weight: 900; }
+.sm-answer span { font-size: 12.5px; font-weight: 700; color: color-mix(in oklab, var(--ink) 62%, var(--paper)); }
+.sm-answer.chosen { border-color: var(--coral); }
+.sm-answer:disabled { opacity: .45; cursor: default; }
+.dl-pill { position: absolute; z-index: 5; top: 140px; right: 15px; display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 12px; background: var(--paper); border: 1px solid color-mix(in oklab, var(--ink) 10%, transparent); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 12%, transparent); font-size: 13px; font-weight: 900; pointer-events: auto; }
+.dl-pill small { font-weight: 700; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); }
+.dl-seals { display: flex; }
+.dl-seals .sm-pb { margin-left: -5px; border: 2px solid var(--paper); box-sizing: content-box; letter-spacing: -.03em; }
+.dl-out { position: relative; opacity: .7; }
+.dl-out::after { content: ""; position: absolute; left: -2px; right: 3px; top: 50%; height: 2.5px; background: var(--coral); transform: rotate(-35deg); }
+.dl-bubbles { position: absolute; inset: 0; pointer-events: none; }
+.dl-bubble { pointer-events: auto; }
+.dl-layer { z-index: 11; }
+.dl-card { left: 300px; right: 300px; bottom: 16px; padding: 14px 18px; }
+.dl-card h2 { margin: 0; font-size: 22px; font-weight: 700; }
+.dl-lines { display: grid; gap: 5px; margin-top: 10px; }
+.dl-lines div { display: grid; grid-template-columns: 16px 1fr; gap: 6px; font-size: 14px; font-weight: 700; }
+.dl-lines i { font-style: normal; font-weight: 900; color: color-mix(in oklab, var(--teal) 60%, var(--ink)); }
+.dl-card .sm-actions { justify-content: flex-end; margin-top: 12px; }
+.dl-cap { display: flex; gap: 10px; align-items: flex-start; margin: 10px 0 0; padding: 9px 12px; border-radius: 11px; background: color-mix(in oklab, var(--coral) 8%, var(--paper)); text-align: left; cursor: pointer; }
+.dl-cap input { margin-top: 3px; accent-color: var(--coral); }
+.dl-cap b { display: block; font-size: 14px; }
+.dl-cap small { display: block; font-size: 12.5px; font-weight: 700; color: color-mix(in oklab, var(--ink) 62%, var(--paper)); }
+.dl-anyway { margin-left: 6px; padding: 3px 10px; border: 0; border-radius: 8px; background: var(--coral); color: var(--paper); font: inherit; font-weight: 900; cursor: pointer; }
+.dl-cap-panel { left: 125px; top: 580px; width: 240px; }
+.dl-cap-panel .dl-cap { margin: 0; border-radius: 0; }
+.dl-pill[hidden] { display: none; }
+button.dl-pill { font: inherit; font-size: 13px; font-weight: 900; color: var(--ink); cursor: pointer; }
+.dl-waiting { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--coral); color: var(--paper); font-size: 11px; }
+
 /* Plan 2H: who does the work (1A grid, 1B dressing, 3C screen wall) */
 /* The budget dialog's width, so the wide body clears both side panels (816 px centre, 250 and 266 px sides); top 136 px clears the clock chip and the sides at 190 px clear the board countdown under it. */
 .automation-dialog .dlg { top: 136px; left: 306px; width: 816px; min-height: 0; }

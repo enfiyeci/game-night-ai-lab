@@ -1,4 +1,5 @@
 import { eraScale } from '../../sim/data/compute.js';
+import { genevaCapRow } from './deal.js';
 import { CARDS } from '../../sim/data/cards.js';
 import {
   LENGTHS,
@@ -456,6 +457,7 @@ export function openRecipe(game, overlayRoot, { stage = 1 } = {}) {
       centre.append(sliderWrap, allocation);
     }
 
+    const capRow = number === 3 ? genevaCapRow(game.state) : null;
     body.append(centre, footerSlot, error);
     const nextStage = number === 1 ? (state.era < 2 ? 3 : 2) : 3;
     const previousStage = number === 3 ? (state.era < 2 ? 1 : 2) : 1;
@@ -480,7 +482,8 @@ export function openRecipe(game, overlayRoot, { stage = 1 } = {}) {
           error.textContent = capitaliseError(preview.errors[0]);
           return;
         }
-        const result = game.addMove({ type: 'startRun', recipe: draft });
+        const breakCap = capRow?.querySelector('input')?.checked === true;
+        const result = game.addMove({ type: 'startRun', recipe: draft, ...(breakCap && { breakDeal: true }) });
         if (!result.ok) {
           error.textContent = capitaliseError(result.error);
           return;
@@ -490,6 +493,7 @@ export function openRecipe(game, overlayRoot, { stage = 1 } = {}) {
       },
     });
     opened.classList.add('recipe-dialog', `recipe-dialog-stage-${number}`);
+    if (capRow) opened.append(capRow);
     refresh();
   }
 

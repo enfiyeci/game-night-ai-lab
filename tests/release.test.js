@@ -264,9 +264,14 @@ test('releaseDelay requires two turns between launches without mutating a refuse
   const before = structuredClone(s);
   assert.deepEqual(releaseModel(s, { ...release, generation: 2 }, rng), {
     ok: false,
-    error: 'the summit deal requires a gap between launches',
+    error: 'this launch breaks the Geneva deal',
+    breaksDeal: 'releaseDelay',
   });
   assert.deepEqual(s, before);
+  const broken = structuredClone(s);
+  const early = releaseModel(broken, { ...release, generation: 2, breakDeal: true }, rng);
+  assert.equal(early.ok, true);
+  assert.equal(early.brokeGap, true);
   s.turn = 12;
   assert.equal(releaseModel(s, { ...release, generation: 2 }, rng).ok, true);
 });

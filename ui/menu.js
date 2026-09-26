@@ -15,6 +15,7 @@ const MOVE_TYPE = {
   release: 'release',
   constitution: 'amendConstitution',
   meeting: 'meeting',
+  summit: 'summit',
   deals: 'deal',
   power: 'buildSite',
   raise: 'raise',
@@ -34,6 +35,12 @@ export const ITEMS = [
     id: 'meeting',
     label: 'Take a meeting',
     unavailable: (_state, game) => !game.state.meeting && 'No meeting is scheduled',
+  },
+  {
+    id: 'summit',
+    label: 'Go to the Geneva summit',
+    hidden: (state) => !(state.era === 5 && state.turnInEra === 0 && !state.deal),
+    unavailable: (state) => state.meeting && 'Take the President’s call first',
   },
   { id: 'company', label: 'Company', free: true, submenu: true },
   { id: 'history', label: 'Lab history', free: true, unavailable: (_state, game) => game.state.models.length === 0 && 'Nothing released yet' },
@@ -272,6 +279,7 @@ export function openMenu(game, point, { overlay = document.querySelector('#overl
 
   const projected = projectQueue(game.state, game.queue);
   for (const item of ITEMS) {
+    if (item.hidden?.(projected, game)) continue;
     if (item.divider) {
       const divider = document.createElement('div');
       divider.className = 'sep';

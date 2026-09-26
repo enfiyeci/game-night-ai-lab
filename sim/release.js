@@ -64,7 +64,7 @@ export function releaseModel(state, release, rng) {
   const releaseDelayBinds = state.deal?.collapsed === false && state.deal.binding.includes('releaseDelay');
   const releasedRecently = state.models.some((model) => model.releasedTurn != null
     && state.turn - model.releasedTurn < MIN_RELEASE_GAP_TURNS);
-  if (releaseDelayBinds && releasedRecently) return { ok: false, error: 'the summit deal requires a gap between launches' };
+  if (releaseDelayBinds && releasedRecently && release.breakDeal !== true) return { ok: false, error: 'this launch breaks the Geneva deal', breaksDeal: 'releaseDelay' };
   const errors = validatePicks(state, 'release', release.picks ?? []);
   if (!Object.hasOwn(PRICE_STANCE, release.price)) errors.push(`unknown price stance ${release.price}`);
   const reasoning = m.spec.reasoningCapable ? release.reasoning ?? 'off' : 'off';
@@ -165,7 +165,7 @@ export function releaseModel(state, release, rng) {
       }
     }
   }
-  return { ok: true, model, hazardIgnored, ...(misalignmentIncident && { misalignmentIncident }) };
+  return { ok: true, model, hazardIgnored, brokeGap: releaseDelayBinds && releasedRecently, ...(misalignmentIncident && { misalignmentIncident }) };
 }
 
 function misalignmentWarning(state) {

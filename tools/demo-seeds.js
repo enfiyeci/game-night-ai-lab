@@ -209,9 +209,17 @@ function describeMove(move) {
   if (move.type === 'research') return `research ${words(move.techId)}`;
   if (move.type === 'emergency') return `use the ${words(move.option)} emergency option`;
   if (move.type === 'summit') {
+    if (Array.isArray(move.motions)) {
+      const motions = move.motions.map(({ card, check, promises = {} }) => {
+        const made = Object.entries(promises).map(([party, type]) => `${words(type).toLowerCase()} for ${words(party)}`);
+        return `${words(card).toLowerCase()} checked at level ${check}${made.length ? ` with ${made.join(', ')}` : ' with no promises'}`;
+      });
+      return `table summit motions in order: ${motions.join('; ')}`;
+    }
     const proposals = move.proposals?.length ? move.proposals.map((id) => words(id).toLowerCase()).join(', ') : 'no commitments';
-    const sweetener = move.sweetener ? `sweetener: ${words(move.sweetener).toLowerCase()}` : 'no sweetener';
-    return `propose a summit with ${proposals}; ${sweetener}`;
+    const checks = Object.entries(move.checks ?? {}).map(([id, level]) => `${words(id).toLowerCase()} checked at level ${level}`);
+    const promises = Object.entries(move.promises ?? {}).map(([party, type]) => `${words(type).toLowerCase()} for ${words(party)}`);
+    return `propose a summit with ${proposals}; ${checks.length ? checks.join(', ') : 'default checks'}; ${promises.length ? `promises: ${promises.join(', ')}` : 'no promises'}`;
   }
   if (move.type === 'amendConstitution') {
     const change = move.change ?? {};
@@ -238,6 +246,7 @@ const ACTION_KEYS = new Set([
   'constitution',
   'presidentAnswers',
   'holdOrShip',
+  'investigate',
   'automation',
 ]);
 
@@ -311,11 +320,7 @@ export function describeActions(actions) {
       ? `answer the president: ${answers.map(words).join(', then ')}`
       : 'give the president no answers');
   }
-  if (Object.hasOwn(actions, 'holdOrShip')) {
-    if (actions.holdOrShip === 'hold') descriptions.push('hold to the pacing deal');
-    else if (actions.holdOrShip === 'ship') descriptions.push('ship despite the pacing deal');
-    else descriptions.push(`set the pacing choice to ${words(actions.holdOrShip)}`);
-  }
+  if (actions.investigate?.length) descriptions.push(`look into ${actions.investigate.length} suspicion${actions.investigate.length === 1 ? '' : 's'}`);
 
   if (Object.hasOwn(actions, 'automation')) descriptions.push('change who does the work');
 
