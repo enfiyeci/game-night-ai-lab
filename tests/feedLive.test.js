@@ -201,6 +201,17 @@ test('a new run opens with the era-1 posts', async () => {
   const out = advanceDays(state, 3, createRng(5)).state;
   const era1 = shown(REACTIONS.eras[1]);
   assert.ok([...out.feed, ...out.feedQueue].filter((post) => post.tag === 'era' && era1.has(post.text)).length >= 2);
+  const first = advanceDays(state, 1, createRng(5)).state;
+  assert.ok(first.feed.some((post) => post.tag === 'era' && post.day === first.day), 'the first posts read as today');
+});
+
+test('skipping the Geneva summit gets the failed-summit posts', () => {
+  const state = stateOnDay();
+  reactToEvents(state, state, [{ type: 'summitSkipped' }]);
+  runDays(state, 3);
+  const failed = shown(REACTIONS.summit.failed);
+  assert.ok(state.feed.length >= 1);
+  assert.ok(state.feed.every((post) => failed.has(post.text)));
 });
 
 test('the compute-supplier posts wait for the CoreFlame card to land', () => {

@@ -189,11 +189,12 @@ export function reactToLandedCard(state, card) {
   }
 }
 
-// A new run starts in era 1 without an eraStart event, so the era's opening posts are scheduled here.
+// A new run starts in era 1 without an eraStart event, so the era's opening posts are scheduled here, before
+// the first day passes: they land on day 1, the first day the player sees, and over the week after it.
 export function reactToRunStart(state) {
   const s = scheduler(state, 3);
-  s.add(R.eras[1], 2, 'era', { from: 0, to: 0 });
-  s.add(R.eras[1], 2, 'era', { from: 1, to: 6 });
+  s.add(R.eras[1], 2, 'era', { from: 1, to: 1 });
+  s.add(R.eras[1], 2, 'era', { from: 2, to: 7 });
 }
 
 // Reactions to one step's events. atMark: the step ends a round, so time-based posts run too.
@@ -235,7 +236,7 @@ export function reactToEvents(before, state, events, { atMark = false } = {}) {
         if (event.found) s.add(R.summit.caught, 2, 'summit', { rival: partyName(state, event.party), from: 0, to: 2 });
         else if (event.insulted) s.add(R.summit.falseAlarm, 2, 'summit', { rival: partyName(state, event.party), from: 0, to: 2 });
         break;
-      case 'dealCollapsed': s.add(R.summit.failed, 2, 'summit', { from: 0, to: 2 }); break;
+      case 'dealCollapsed': case 'summitSkipped': s.add(R.summit.failed, 2, 'summit', { from: 0, to: 2 }); break;
       default: break;
     }
   }
