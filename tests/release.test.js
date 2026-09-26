@@ -171,3 +171,22 @@ test('the flagship bar is the best release, not the most recent', () => {
   assert.equal(s.lastFlagship.name, strong.name);
   assert.equal(s.lastFlagshipScore, strong.launch.capAvg);
 });
+
+test('releaseDelay requires two turns between launches without mutating a refused release', () => {
+  const s = trainedState();
+  s.era = 5;
+  s.turn = 10;
+  s.deal = { signed: {}, binding: ['releaseDelay'], trust: 2, collapsed: false, playerShipped: false };
+  assert.equal(releaseModel(s, release, rng).ok, true);
+  startRun(s, recipe);
+  advanceRun(s, rng);
+  s.turn = 11;
+  const before = structuredClone(s);
+  assert.deepEqual(releaseModel(s, { ...release, generation: 2 }, rng), {
+    ok: false,
+    error: 'the summit deal requires a gap between launches',
+  });
+  assert.deepEqual(s, before);
+  s.turn = 12;
+  assert.equal(releaseModel(s, { ...release, generation: 2 }, rng).ok, true);
+});

@@ -9,6 +9,7 @@ import { hasLine } from './constitution.js';
 export const TIER_WORDS = { small: 'Swift', medium: 'Core', large: 'Grand', xl: 'Apex' };
 export const REASONING_BONUS = { off: 0, low: 2, medium: 4, high: 6 };
 export const USERS_BASE = { consumer: 4e6, enterprise: 5e5, agent: 5e4, open: 0 };
+export const MIN_RELEASE_GAP_TURNS = 2;
 
 export const modelName = ({ family, generation, size }) => `${family} ${generation} ${TIER_WORDS[size]}`;
 
@@ -44,6 +45,10 @@ export function activateReleases(state) {
 export function releaseModel(state, release, rng) {
   const m = state.pendingModel;
   if (!m) return { ok: false, error: 'no trained model to release' };
+  const releaseDelayBinds = state.deal?.collapsed === false && state.deal.binding.includes('releaseDelay');
+  const releasedRecently = state.models.some((model) => model.releasedTurn != null
+    && state.turn - model.releasedTurn < MIN_RELEASE_GAP_TURNS);
+  if (releaseDelayBinds && releasedRecently) return { ok: false, error: 'the summit deal requires a gap between launches' };
   const errors = validatePicks(state, 'release', release.picks ?? []);
   if (!Object.hasOwn(PRICE_STANCE, release.price)) errors.push(`unknown price stance ${release.price}`);
   const reasoning = m.spec.reasoningCapable ? release.reasoning ?? 'off' : 'off';
@@ -94,6 +99,7 @@ export function releaseModel(state, release, rng) {
     newUsers: fresh,
     userCap: fresh * 4,
     activeFromTurn: state.turn + delay,
+    releasedTurn: state.turn,
     releaseSequence: state.models.reduce((max, existing, index) => Math.max(max, existing.releaseSequence ?? index), -1) + 1,
     active: true,
     activated: false,

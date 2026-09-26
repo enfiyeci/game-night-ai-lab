@@ -13,6 +13,9 @@ export const COMMITMENTS = Object.freeze({
 });
 
 export const PARTIES = Object.freeze([...RIVAL_TEMPLATES.map((rival) => rival.id), 'west', 'east']);
+export const SUMMIT_SKIP_RACE_HEAT = 8;
+export const SUMMIT_SKIP_US_FAVOR = 5;
+export const SUMMIT_SKIP_INTL_FAVOR = 5;
 
 const SWEETENERS = Object.freeze({ research: true, evaluatorsFirst: true });
 const HOLD_OR_SHIP = Object.freeze({ hold: true, ship: true });
@@ -48,6 +51,7 @@ function stance(state, commitmentId, partyId, sweetener, rng) {
     + (party.caution ?? 0.5)
     - gapBehind(state, party) / 100
     - state.raceHeat / 200
+    + (state.publicTrust - 50) / 200
     + favor
     + sweetenerBonus(commitmentId, sweetener)
     + rng.normal(0, 0.1);
@@ -118,7 +122,8 @@ export function holdOrShipError(choice) {
 
 const signingRivals = (state) => {
   const rivalIds = new Set(state.rivals.map((rival) => rival.id));
-  return [...new Set(Object.values(state.deal.signed).flat())].filter((id) => rivalIds.has(id));
+  const signers = new Set(Object.values(state.deal.signed).flat());
+  return PARTIES.filter((id) => rivalIds.has(id) && signers.has(id));
 };
 
 const removeSigner = (state, partyId) => {
@@ -132,29 +137,23 @@ export function holdOrShip(state, choice, rng) {
   const events = [];
   const evaluators = hasBinding(state, 'evaluators');
   const verification = hasBinding(state, 'verification');
-
-  if (choice === 'ship') {
-    state.capability = clamp(state.capability + 8, 0, 100);
-    if (rng.chance(0.5 + (evaluators ? 0.4 : 0))) {
-      state.publicTrust = clamp(state.publicTrust - 8, 0, 100);
-      state.govFavor.us = clamp(state.govFavor.us - 6, 0, 100);
-      state.deal.collapsed = true;
-      state.deal.playerShipped = true;
-      events.push({ type: 'defection', party: 'player', detected: true });
-      events.push({ type: 'dealCollapsed' });
-      return events;
-    }
-  }
-
+  const capabilityByRival = Object.fromEntries(state.rivals.map((rival) => [rival.id, rival.capability]));
+  const leader = Math.max(state.capability, ...Object.values(capabilityByRival));
+  const raceHeat = state.raceHeat;
   const priorDefections = Math.max(0, 2 - state.deal.trust);
-  for (const partyId of signingRivals(state)) {
-    const rival = state.rivals.find((candidate) => candidate.id === partyId);
-    let chance = 0.15 + state.raceHeat / 200 + gapBehind(state, rival) / 100
+  const detectionChance = clamp(0.3 + (evaluators ? 0.4 : 0) + (verification ? 0.3 : 0), 0, 1);
+  const rivalOutcomes = signingRivals(state).map((partyId) => {
+    let chance = 0.15 + raceHeat / 200 + Math.max(0, leader - capabilityByRival[partyId]) / 100
       - (evaluators ? 0.1 : 0) + priorDefections * 0.1;
     if (partyId === 'qilin' && verification) chance *= 0.3;
-    if (!rng.chance(clamp(chance, 0, 1))) continue;
+    const defected = rng.chance(clamp(chance, 0, 1));
+    return { partyId, defected, detected: defected && rng.chance(detectionChance) };
+  });
+  const playerDetected = choice === 'ship' && rng.chance(0.5 + (evaluators ? 0.4 : 0));
 
-    const detected = rng.chance(clamp(0.3 + (evaluators ? 0.4 : 0) + (verification ? 0.3 : 0), 0, 1));
+  for (const { partyId, defected, detected } of rivalOutcomes) {
+    if (!defected) continue;
+    const rival = state.rivals.find((candidate) => candidate.id === partyId);
     events.push({ type: 'defection', party: partyId, detected });
     removeSigner(state, partyId);
     if (!detected) {
@@ -162,10 +161,19 @@ export function holdOrShip(state, choice, rng) {
       continue;
     }
     state.deal.trust = Math.max(0, state.deal.trust - 1);
-    if (state.deal.trust > 0) continue;
+  }
+  if (choice === 'ship') {
+    state.capability = clamp(state.capability + 8, 0, 100);
+    state.deal.playerShipped = true;
+  }
+  if (playerDetected) {
+    state.publicTrust = clamp(state.publicTrust - 8, 0, 100);
+    state.govFavor.us = clamp(state.govFavor.us - 6, 0, 100);
+    events.push({ type: 'defection', party: 'player', detected: true });
+  }
+  if (playerDetected || state.deal.trust === 0) {
     state.deal.collapsed = true;
     events.push({ type: 'dealCollapsed' });
-    break;
   }
   return events;
 }

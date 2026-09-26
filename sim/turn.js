@@ -15,7 +15,14 @@ import { deployInternal, stopInternal, internalTick } from './internal.js';
 import { addressWarning, resolveEvent, eventsTick, fallbackChoice } from './events.js';
 import { CASES } from './data/constitution.js';
 import { setConstitution, amendConstitution } from './constitution.js';
-import { proposeSummit, holdOrShip, holdOrShipError } from './summit.js';
+import {
+  proposeSummit,
+  holdOrShip,
+  holdOrShipError,
+  SUMMIT_SKIP_RACE_HEAT,
+  SUMMIT_SKIP_US_FAVOR,
+  SUMMIT_SKIP_INTL_FAVOR,
+} from './summit.js';
 
 export const MAX_MOVES = 2;
 const BUDGET_KEYS = ['training', 'safety', 'security', 'product', 'talent'];
@@ -177,6 +184,13 @@ export function endTurn(prev, actions = {}, rng) {
     normalize(state);
     updateBoard(state, before);
     checkTurnEndings(state, rng);
+  }
+
+  if (state.era === 5 && state.turnInEra === 0 && !state.deal) {
+    state.raceHeat += SUMMIT_SKIP_RACE_HEAT;
+    state.govFavor.us -= SUMMIT_SKIP_US_FAVOR;
+    state.govFavor.intl -= SUMMIT_SKIP_INTL_FAVOR;
+    events.push({ type: 'summitSkipped' });
   }
 
   normalize(state);

@@ -48,7 +48,9 @@ export function eraGate(state) {
 }
 
 export function finalEnding(state) {
-  if (state.deal && !state.deal.collapsed && state.deal.binding.length >= 2) return (state.ending = 'pacingDeal');
+  if (state.deal && !state.deal.collapsed && !state.deal.playerShipped && state.deal.binding.length >= 2) {
+    return (state.ending = 'pacingDeal');
+  }
   if (rank(state) === 1 && totalDebt(state) < 40) return (state.ending = 'aligned');
   if (rank(state) === 1) return (state.ending = 'pyrrhic');
   return (state.ending = 'overtaken');

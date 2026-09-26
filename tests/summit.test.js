@@ -35,6 +35,18 @@ test('the summit opens only at the start of era 5, once, with one to three propo
   assert.equal(proposeSummit(t, { proposals: ['evaluators'] }, calm).ok, false);
 });
 
+test('skipping the opening summit costs race heat and government favor once', () => {
+  const s = era5();
+  const first = endTurn(s, {}, calm);
+  assert.equal(first.events.some((event) => event.type === 'summitSkipped'), true);
+  assert.equal(first.state.raceHeat, 27);
+  assert.deepEqual(first.state.govFavor, { us: 45, intl: 45 });
+
+  const second = endTurn(first.state, {}, calm);
+  assert.equal(second.events.some((event) => event.type === 'summitSkipped'), false);
+  assert.deepEqual(second.state.govFavor, { us: 45, intl: 45 });
+});
+
 test('summit inputs reject non-arrays, duplicate and inherited ids, bad sweeteners, and unaffordable research', () => {
   for (const move of [
     { proposals: 'evaluators' },
@@ -67,6 +79,17 @@ test('the room read is a label per party per commitment', () => {
   assert.ok(['likely', 'unsure', 'unlikely'].includes(r.evaluators.west));
   assert.deepEqual(Object.keys(r), Object.keys(COMMITMENTS));
   assert.deepEqual(Object.keys(r.evaluators), PARTIES);
+});
+
+test('public trust changes both the room read and actual signatures', () => {
+  const low = era5();
+  low.publicTrust = 0;
+  const high = era5();
+  high.publicTrust = 100;
+  assert.equal(readTheRoom(low, calm).evaluators.deepthink, 'unlikely');
+  assert.equal(readTheRoom(high, calm).evaluators.deepthink, 'likely');
+  assert.equal(proposeSummit(low, { proposals: ['evaluators'] }, calm).signed.evaluators.includes('deepthink'), false);
+  assert.equal(proposeSummit(high, { proposals: ['evaluators'] }, calm).signed.evaluators.includes('deepthink'), true);
 });
 
 test('evaluators expose half of concealed debt when they bind', () => {
@@ -187,6 +210,37 @@ test('two detected rival defections collapse the deal', () => {
   assert.equal(s.deal.collapsed, true);
 });
 
+test('hold or ship snapshots rival odds, ignores rival order, and still rolls rivals when a ship is detected', () => {
+  const play = (signers, reverseRivals = false) => {
+    const s = era5();
+    s.turnInEra = 1;
+    if (reverseRivals) s.rivals.reverse();
+    s.deal = deal({ signed: { sharedSafety: signers } });
+    const draws = [true, false, false];
+    const chances = [];
+    const rng = { ...calm, chance: (p) => { chances.push(p); return draws.shift() ?? false; } };
+    const events = holdOrShip(s, 'hold', rng);
+    return {
+      chances,
+      events,
+      capabilities: Object.fromEntries(s.rivals.map((rival) => [rival.id, rival.capability])),
+    };
+  };
+  const forward = play(['openbrain', 'lodestar']);
+  const reversed = play(['lodestar', 'openbrain'], true);
+  assert.deepEqual(reversed, forward);
+  assert.deepEqual(forward.chances, [0.25, 0.3, 0.25]);
+  assert.equal(forward.capabilities.openbrain, 26);
+  assert.equal(forward.capabilities.lodestar, 20);
+
+  const shipped = era5();
+  shipped.turnInEra = 1;
+  shipped.deal = deal({ signed: { sharedSafety: ['openbrain', 'lodestar'] } });
+  const events = holdOrShip(shipped, 'ship', { ...calm, chance: () => true });
+  assert.ok(events.some((event) => event.party === 'player' && event.detected));
+  assert.deepEqual(events.filter((event) => event.party !== 'player' && event.type === 'defection').map((event) => event.party), ['openbrain', 'lodestar']);
+});
+
 test('a detected player ship collapses the deal', () => {
   const s = era5();
   s.govFavor = { us: 80, intl: 80 };
@@ -196,6 +250,17 @@ test('a detected player ship collapses the deal', () => {
   assert.ok(events.some((event) => event.type === 'defection' && event.party === 'player' && event.detected));
   assert.equal(s.deal.collapsed, true);
   assert.equal(s.deal.playerShipped, true);
+});
+
+test('an undetected ship still marks the deal broken and cannot earn a pacing deal ending', () => {
+  const s = era5();
+  s.turnInEra = 1;
+  s.alignmentDebt = 60;
+  s.deal = deal({ binding: ['evaluators', 'sharedSafety'] });
+  assert.deepEqual(holdOrShip(s, 'ship', calm), []);
+  assert.equal(s.deal.playerShipped, true);
+  assert.equal(s.deal.collapsed, false);
+  assert.equal(finalEnding(s), 'pyrrhic');
 });
 
 test('endTurn runs hold or ship only in era 5 after the summit turn', () => {
