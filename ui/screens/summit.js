@@ -4,6 +4,7 @@
 import { readTheRoom, voteMotion, COMMITMENTS, PARTIES } from '../../sim/summit.js';
 import { DEMANDS, PROMISES, MAX_PROMISES, DEFAULT_CHECK } from '../../sim/data/summit.js';
 import { registerMenuHandler } from '../menu.js';
+import { ART } from '../assets/summitArt.js';
 
 export const PARTY_INFO = Object.freeze({
   openbrain: { name: 'OpenBrain', ab: 'OB', line: 'Qilin first, then we talk. And testers at most: inspectors make our lawyers cry.' },
@@ -32,49 +33,11 @@ const PROMISE_COPY = Object.freeze({
   inspectors: { label: 'Inspect us too', cost: 'Inspectors can check our own runs' },
 });
 
-// Seat order left to right, with the drawing for each delegate.
-const SKIN = ['color-mix(in oklab, var(--wood) 55%, var(--paper))', 'color-mix(in oklab, var(--wood) 80%, var(--ink))', 'color-mix(in oklab, var(--wood) 35%, var(--paper))', 'color-mix(in oklab, var(--wood) 68%, var(--ink))'];
-const SEATS = Object.freeze([
-  { id: 'openbrain', x: 210, y: 452, skin: SKIN[2], hair: 'var(--ink)', style: 2 },
-  { id: 'deepthink', x: 420, y: 418, skin: SKIN[0], hair: 'color-mix(in oklab, var(--wood) 60%, var(--ink))', style: 1, glasses: true },
-  { id: 'west', x: 620, y: 404, skin: SKIN[2], hair: 'color-mix(in oklab, var(--wood) 30%, var(--paper))', style: 2 },
-  { id: 'east', x: 820, y: 404, skin: SKIN[3], hair: 'var(--ink)', style: 0, glasses: true },
-  { id: 'qilin', x: 1020, y: 418, skin: SKIN[0], hair: 'var(--ink)', style: 3 },
-  { id: 'lodestar', x: 1230, y: 452, skin: SKIN[1], hair: 'var(--ink)', style: 1 },
-]);
-const FLAG_X = [150, 245, 340, 1100, 1195, 1290];
+// Seats left to right, where the generated hall art draws each delegate's head.
+const SEATS = Object.freeze(ART.seats.map((seat) => ({ id: seat.id, x: seat.head[0], y: seat.head[1] })));
 
 const esc = (text) => String(text).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 export const partyBadge = (id, small = false) => `<span class="sm-pb${small ? ' sm' : ''}" data-p="${id}">${esc(id === 'you' ? 'YOU' : PARTY_INFO[id].ab)}</span>`;
-
-function figure(seat, raise) {
-  const { x, y, skin, hair, style, glasses } = seat;
-  const suit = 'color-mix(in oklab, var(--pc) 40%, var(--ink))';
-  const hairPath = [
-    'M-17 -4 Q-18 -24 0 -25 Q18 -24 17 -4 Q14 -16 0 -17 Q-12 -17 -17 -4Z',
-    'M-18 2 Q-20 -26 0 -26 Q20 -26 18 2 Q16 -14 8 -17 Q-2 -12 -14 -14 Q-17 -8 -18 2Z',
-    'M-16 -8 Q-12 -26 4 -24 Q18 -22 17 -8 Q8 -18 -16 -8Z',
-    'M-19 12 Q-22 -26 0 -26 Q22 -26 19 12 L14 12 Q16 -12 0 -15 Q-16 -12 -14 12Z',
-  ][style % 4];
-  const card = raise === 'yes' ? ['var(--teal)', 'SIGN'] : raise === 'maybe' ? ['var(--wood)', '?'] : ['color-mix(in oklab, var(--ink) 20%, var(--paper))', 'NO'];
-  const arm = raise ? `<path d="M20 22 L30 -18" style="stroke:${suit};stroke-width:11;stroke-linecap:round"/><rect x="18" y="-50" width="36" height="28" rx="4" style="fill:${card[0]};stroke:var(--paper);stroke-width:2"/><text x="36" y="-31" text-anchor="middle" style="font:900 12px Nunito;fill:var(--paper)">${card[1]}</text>` : '';
-  return `<g class="sm-seat" data-party="${seat.id}" data-p="${seat.id}" transform="translate(${x} ${y}) scale(1.6)">
-    <path d="M-30 58 Q-30 18 0 16 Q30 18 30 58Z" style="fill:${suit}"/>
-    <path d="M-7 17 L0 30 L7 17Z" style="fill:var(--paper)"/>
-    <rect x="-6" y="8" width="12" height="10" style="fill:${skin}"/>
-    ${arm}
-    <ellipse cx="0" cy="-6" rx="17" ry="19" style="fill:${skin}"/><path d="${hairPath}" style="fill:${hair}"/>
-    <circle cx="-6" cy="-5" r="2.1" style="fill:var(--ink)"/><circle cx="6" cy="-5" r="2.1" style="fill:var(--ink)"/>
-    <path d="M-5 5 Q0 8.5 5 5" style="fill:none;stroke:var(--ink);stroke-width:1.8;stroke-linecap:round"/>
-    ${glasses ? '<circle cx="-6" cy="-5" r="5" style="fill:none;stroke:var(--ink);stroke-width:1.5"/><circle cx="6" cy="-5" r="5" style="fill:none;stroke:var(--ink);stroke-width:1.5"/>' : ''}
-  </g>`;
-}
-
-function screenTitle() {
-  return `<text x="720" y="112" text-anchor="middle" style="font:900 13px Nunito;letter-spacing:.2em;fill:color-mix(in oklab, var(--sky) 40%, var(--paper))">GENEVA</text>
-    <text x="720" y="152" text-anchor="middle" style="font:300 38px Nunito;fill:var(--paper)">The Pacing Summit</text>
-    <text x="720" y="184" text-anchor="middle" style="font:700 14px Nunito;fill:color-mix(in oklab, var(--paper) 70%, var(--sky))">Six delegations · up to three proposals · one vote</text>`;
-}
 
 function screenVote(result, plan) {
   const rows = plan.proposals.map((card, i) => {
@@ -88,28 +51,13 @@ function screenVote(result, plan) {
   return `<text x="720" y="100" text-anchor="middle" style="font:900 12px Nunito;letter-spacing:.2em;fill:color-mix(in oklab, var(--sky) 40%, var(--paper))">THE VOTE</text>${rows}`;
 }
 
-function hallSvg({ raised = {}, screen = screenTitle() } = {}) {
-  const flags = PARTIES.map((id, i) => `<g data-p="${id}" transform="translate(${FLAG_X[i]} ${i < 3 ? 70 : 150})"><rect width="3" height="150" style="fill:color-mix(in oklab, var(--ink) 45%, var(--paper))"/><path d="M3 4 H62 Q56 20 62 36 H3Z" style="fill:var(--pc)"/><text x="30" y="25" text-anchor="middle" style="font:900 12px Nunito;fill:var(--paper)">${PARTY_INFO[id].ab}</text></g>`).join('');
-  const placards = SEATS.map((seat) => {
-    const t = (seat.x - 80) / 1280;
-    const y = 524 - 288 * t * (1 - t);
-    return `<g data-p="${seat.id}" transform="translate(${seat.x} ${y})"><path d="M-50 0 H50 L46 26 H-46Z" style="fill:var(--paper);stroke:color-mix(in oklab, var(--ink) 18%, transparent);stroke-width:1"/><rect x="-50" width="100" height="5" style="fill:var(--pc)"/><text y="19" text-anchor="middle" style="font:900 13px Nunito;fill:var(--ink)">${PARTY_INFO[seat.id].name}</text></g>`;
-  }).join('');
-  return `<svg class="sm-hall" width="1440" height="900" viewBox="0 0 1440 900" aria-hidden="true">
-    <rect width="1440" height="900" style="fill:color-mix(in oklab, var(--cream) 70%, var(--paper))"/>
-    ${Array.from({ length: 16 }, (_, i) => `<rect x="${i * 92}" width="88" height="480" style="fill:color-mix(in oklab, var(--wood) ${i % 2 ? 22 : 16}%, var(--paper))"/>`).join('')}
-    <rect y="470" width="1440" height="14" style="fill:color-mix(in oklab, var(--wood) 45%, var(--paper))"/>
-    ${flags}
-    <rect x="440" y="62" width="560" height="148" rx="10" style="fill:color-mix(in oklab, var(--ink) 92%, var(--sky))"/>
-    <rect x="450" y="72" width="540" height="128" rx="6" style="fill:color-mix(in oklab, var(--sky) 38%, var(--ink))"/>
-    ${screen}
-    <rect y="484" width="1440" height="416" style="fill:color-mix(in oklab, var(--wood) 26%, var(--paper))"/>
-    <ellipse cx="720" cy="760" rx="600" ry="150" style="fill:color-mix(in oklab, var(--sky) 20%, var(--paper))"/>
-    ${SEATS.map((seat) => figure(seat, raised[seat.id])).join('')}
-    <path d="M80 548 Q720 404 1360 548 L1360 590 Q720 446 80 590Z" style="fill:color-mix(in oklab, var(--wood) 62%, var(--ink))"/>
-    <path d="M80 522 Q720 378 1360 522 L1360 552 Q720 408 80 552Z" style="fill:var(--wood)"/>
-    ${placards}
-  </svg>`;
+// The hall (tools/office/gen_summit.py), seen over your and Jules's shoulders. A delegate's face and
+// placard follow their lean; with no lean they sit neutral and hold no placard.
+function hallSvg({ raised = {}, screen = '' } = {}) {
+  const seats = ART.seats.map((seat) => `<g class="sm-seat" data-party="${seat.id}" data-p="${seat.id}">${seat.body}${seat.faces[raised[seat.id] ?? 'maybe']}</g>`).join('');
+  const placards = ART.seats.map((seat) => (raised[seat.id] ? seat.placards[raised[seat.id]] : '')).join('');
+  return `<svg class="sm-hall" width="1440" height="900" viewBox="0 0 1440 900" aria-hidden="true">${ART.back}${seats}${ART.desk}${ART.seats.map((seat) => seat.hands).join('')}${placards}
+    <g transform="translate(0 20)">${screen}</g>${ART.front}</svg>`;
 }
 
 // A delegate's demand, judged on the motion on the floor at its current checking level.
@@ -198,7 +146,7 @@ export function openSummit(game, overlayRoot) {
       const status = p ? `Promised: ${PROMISE_COPY[p].label}` : met ? 'Met' : 'Not met yet';
       const shift = id === 'openbrain' ? 16 : id === 'lodestar' ? -16 : 0;
       return `<button type="button" class="sm-demand${met ? ' met' : ''}${swingParty === id ? ' talking' : ''}" data-talk="${id}" data-p="${id}"
-        style="left:${seat.x - 89 + shift}px;top:${seat.y - 208}px" aria-label="Talk to ${PARTY_INFO[id].name}">
+        style="left:${seat.x - 89 + shift}px;top:${seat.y - 150}px" aria-label="Talk to ${PARTY_INFO[id].name}">
         ${esc(DEMANDS[id].text)}<small>${esc(status)}</small></button>`;
     }).join('');
   }
