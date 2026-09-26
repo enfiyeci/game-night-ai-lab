@@ -189,7 +189,7 @@ function quietPanel(state) {
   const panel = node('div', 'bd-quiet');
   panel.append(node('div', 'bd-quiet-hd', COPY.QUIET_HEAD));
   for (const member of boardView(state).members) {
-    const row = el(`<div class="bd-quiet-row">${portrait(member.id, 30, member.mood)}<b></b><span></span><span class="bd-quiet-band">${band(member, 120)}</span></div>`);
+    const row = el(`<div class="bd-quiet-row">${portrait(member.id, 30, member.mood)}<b></b><span></span><span class="bd-quiet-band">${band(member, 140)}</span></div>`);
     row.querySelector('b').textContent = member.short;
     row.querySelector('span').textContent = COPY.QUIET_SEEN;
     panel.append(row);
@@ -210,7 +210,7 @@ export function mountBoard(game, { overlay, stage }) {
 
   let anchors = null;
   let anchorsEra = null;
-  const said = new Set(); // "era:kind" meetings whose warning or quiet lines have been raised
+  const said = new Set(); // "warning:era:kind" and "quiet:era:kind": what each meeting has already raised
   let wanted = []; // bubbles that should be on screen: { kind: 'warning' | 'quiet', role, say }
   let shown = [];
 
@@ -276,7 +276,9 @@ export function mountBoard(game, { overlay, stage }) {
     chip.hidden = !info;
     chip.classList.toggle('urgent', Boolean(warning));
     if (info) chip.querySelector('span').textContent = countdownText(info);
-    quietSlot.replaceChildren(...(quiet ? [quietPanel(state)] : []));
+    // The panel shows only while the warning is on: with a clock the sim's quiet flag lasts the whole vote round,
+    // which can be longer than the month the warning covers.
+    quietSlot.replaceChildren(...(quiet && warning ? [quietPanel(state)] : []));
     quietSlot.hidden = Boolean(overlay.querySelector('.dialog-layer'));
 
     const key = info ? `${state.era}:${info.kind}` : null;
@@ -285,16 +287,19 @@ export function mountBoard(game, { overlay, stage }) {
     if (!quiet) wanted = wanted.filter((want) => want.kind !== 'quiet');
     // A warning still up keeps its time current ("four weeks", then "three weeks").
     wanted = wanted.map((want) => (want.kind === 'warning' && want.say !== warning.text ? { ...want, say: warning.text } : want));
-    if (key && !said.has(key) && quiet) {
-      said.add(key); // the quiet lines take the warning's place
+    // Each meeting raises the warning once and the quiet lines once. Policy and Comms keep the warning and its link
+    // while the board goes quiet; their own quiet line is said only when there is no warning.
+    if (key && warning && !said.has(`warning:${key}`)) {
+      said.add(`warning:${key}`);
+      wanted = [...wanted.filter((want) => want.role !== 'policy'), { kind: 'warning', role: 'policy', say: warning.text }];
+    }
+    if (key && quiet && !said.has(`quiet:${key}`)) {
+      said.add(`quiet:${key}`);
       wanted = [
-        ...wanted.filter((want) => want.kind !== 'warning'),
-        { kind: 'quiet', role: 'policy', say: COPY.QUIET_LINES.policy },
+        ...wanted,
+        ...(warning ? [] : [{ kind: 'quiet', role: 'policy', say: COPY.QUIET_LINES.policy }]),
         { kind: 'quiet', role: 'cfo', say: COPY.QUIET_LINES.cfo },
       ];
-    } else if (key && !said.has(key) && warning) {
-      said.add(key);
-      wanted = [...wanted, { kind: 'warning', role: 'policy', say: warning.text }];
     }
     layout();
     // Redraw only when the bubbles change, so a ticking clock does not rebuild them every day.

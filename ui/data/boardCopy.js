@@ -115,9 +115,9 @@ export const QUIET_LINES = {
   policy: 'Nobody on the board is picking up. I’ve never liked this part.', // OWNER WRITES
   cfo: 'Same. The financier left me on read. They never leave me on read.', // OWNER WRITES
 };
-export const QUIET_HEAD = 'Board · last week before the meeting';
+export const QUIET_HEAD = 'Board · before the meeting'; // OWNER WRITES
 export const QUIET_SEEN = 'Seen';
-export const QUIET_FOOT = '7 seen · 0 replies. Your staff can’t read the room this week.';
+export const QUIET_FOOT = '7 seen · 0 replies. Your staff can’t read the room right now.'; // OWNER WRITES
 
 // ---- what sways the board (frame L4) ----------------------------------------------------------------------------
 export const ISSUE_LABEL = {
