@@ -4,6 +4,7 @@ import { mountHud } from './hud.js';
 import { mountOffice } from './office.js';
 import { SCENARIOS } from './logic/scenarios.js';
 import { dealCards, powerSitesAvailable, queueScreenAvailable } from './logic/compute.js';
+import { meetingFor } from './logic/president.js';
 import { openMenu } from './menu.js';
 import { openBudget } from './screens/budget.js';
 import { mountRecipe, openRecipe } from './screens/recipe.js';
@@ -21,6 +22,7 @@ import {
 import { openQueue } from './screens/compute.js';
 import { openPowerSites } from './screens/sites.js';
 import { mountHistory, openArticle, openHistory } from './screens/history.js';
+import { mountPresident, openPresident } from './screens/president.js';
 
 const params = new URLSearchParams(location.search);
 
@@ -63,6 +65,7 @@ mountCompany(game, overlay);
 mountRecipe(game, overlay);
 mountRelease(game, overlay);
 mountReveal(game, overlay);
+mountPresident(game, overlay);
 mountHistory(game, overlay);
 mountTurnSummary(overlay, game);
 
@@ -138,6 +141,15 @@ async function openDebugRoute() {
     const card = dealCards(game.state).find((offer) => !offer.disabled);
     if (card) game.addMove(card.move);
     game.endTurn();
+    return;
+  }
+  if (location.hash === '#president' || location.hash === '#president-q2') {
+    const meeting = meetingFor(game.state);
+    if (!meeting) return;
+    const picked = location.hash === '#president-q2'
+      ? [meeting.exchanges[0].answers.find((answer) => answer.style === 'jargon')?.id].filter(Boolean)
+      : [];
+    await openPresident(game, overlay, { picked });
     return;
   }
   if (location.hash === '#history') {

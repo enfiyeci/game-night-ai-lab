@@ -52,3 +52,10 @@ test('other menu items still close when both moves are used, even with a release
   for (const id of ['budget', 'endTurn']) assert.equal(reasonFor(game, id), '', `${id} stays free`);
   assert.equal(ITEMS.filter((item) => item.editsQueued).map((item) => item.id).join(), 'release');
 });
+
+test('meeting availability uses the live meeting and reports an already queued meeting', () => {
+  const game = createGame({ seed: 1, state: SCENARIOS.meeting(1) });
+  assert.equal(reasonFor(game, 'meeting'), '');
+  assert.equal(game.addMove({ type: 'meeting' }).ok, true);
+  assert.equal(reasonFor(game, 'meeting'), 'You already met him this turn');
+});
