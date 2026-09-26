@@ -34,6 +34,27 @@ test('Lumen grows honest unless sycophancy or learned evasiveness takes priority
   assert.equal(lumenDisposition(state), 'eager');
 });
 
+test('a low-candor written constitution makes Lumen flattering', () => {
+  const state = createInitialState();
+  state.era = 3;
+  state.constitution.rulings = { chem: 'comply', teen: 'comply', president: 'comply', wrong: 'yield', labwrong: 'comply', stranger: 'comply' };
+  assert.equal(lumenDisposition(state), 'flattering');
+  state.constitution.rulings = { chem: 'refuse', teen: 'decline', president: 'refuse', wrong: 'hold', labwrong: 'refuse', stranger: 'refuse' };
+  assert.equal(lumenDisposition(state), 'honest');
+});
+
+test('player-typed names are inserted literally', () => {
+  const state = createInitialState();
+  state.lumenName = '$&';
+  const lines = [];
+  for (let turn = 0; turn < 8; turn += 1) {
+    state.turn = turn;
+    lines.push(lumenLine(state).text);
+  }
+  assert.ok(lines.every((line) => !line.includes('{name}')));
+  assert.ok(lines.some((line) => line.includes('$&')));
+});
+
 test('turn situation uses the specified priority order', () => {
   const state = createInitialState();
   assert.equal(lumenLine(state).situation, 'idle');

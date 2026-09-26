@@ -19,7 +19,7 @@ const COMPANY_EVENTS = new Set([
 ]);
 
 function render(template, model) {
-  return template.text.replaceAll('{model}', model?.name ?? 'the new model');
+  return template.text.replaceAll('{model}', () => model?.name ?? 'the new model');
 }
 
 function newestActiveModel(state) {
