@@ -2,7 +2,7 @@
 
 Variants (variant=<name>):
   blackout  Catastrophic misalignment. Windows and street lights go out in a wave from left to right, while one rooftop
-            LED billboard keeps saying ALL SYSTEMS OPERATIONAL. Frames 1-156 are the shot (6.5 s); frames 157-324 play
+            LED billboard keeps saying ALL SYSTEMS OPERATIONAL. Frames 1-216 are the shot (9 s); frames 217-384 play
             behind the title card (7 s) while the last lights on the right go out.
   warm      Aligned success. Every light stays on; nothing dramatic happens, on purpose. Frames 1-120 are the shot (5 s),
             frames 121-288 play behind the title card.

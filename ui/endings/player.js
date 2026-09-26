@@ -200,7 +200,8 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
     <div class="film-fade" style="position:absolute;inset:0;background:var(--ink);z-index:2;pointer-events:none"></div>
     <div class="film-bar top"></div><div class="film-bar bottom"></div>
     <div class="film-card"></div><div class="film-sub"></div>
-    <div class="film-say" role="note" hidden><small aria-hidden="true">Lumen</small><p aria-hidden="true"><span></span><span class="rest"></span></p></div>
+    <div class="film-say" hidden><small aria-hidden="true">Lumen</small><p aria-hidden="true"><span></span><span class="rest"></span></p></div>
+    <p class="film-say-read" aria-live="polite"></p>
     <div class="film-title" hidden><h1>${esc(fullTitle ?? film.title)}</h1><p class="tagline">${esc(film.tagline ?? '')}</p>
       <p class="lumen"><small>Lumen</small><span></span></p></div>
     <button type="button" class="film-skip">Skip</button></div>`;
@@ -310,7 +311,7 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
       $('.film-card').textContent = shot.card ?? '';
       $('.film-sub').textContent = shot.sub ?? '';
       $('.film-say').hidden = !shot.say;
-      $('.film-say').setAttribute('aria-label', `Lumen: ${shot.say ?? ''}`);
+      $('.film-say-read').textContent = shot.say ? `Lumen: ${shot.say}` : '';   // read out whole, once per shot
       titleEl.hidden = shot.kind !== 'title';
       current = shot;
     }

@@ -40,7 +40,7 @@
   font-size: max(13px, 1.35cqw); font-weight: 700; text-align: center;
 }
 /* Lumen's narration: the AI tells the ending in its own words, typed into the bottom bar like its last line on the
-   title card. The spans inside are hidden from screen readers; the element's label carries the whole line. */
+   title card. The typed spans are hidden from screen readers; .film-say-read, a live region, reads each line whole. */
 .film-say {
   position: absolute; left: 0; right: 0; bottom: 0; height: 11.12%; z-index: 4;
   display: flex; align-items: center; justify-content: center; gap: 1.1em; padding: 0 6%;
@@ -53,6 +53,16 @@
 }
 .film-say p { margin: 0; max-width: 54ch; text-wrap: balance; }
 .film-say .rest { color: transparent; }
+.film-say-read { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; margin: 0; }
+/* A narrow frame (a phone held upright) has no room for two lines in the bar: the narration grows up over the picture
+   on a dark backing, and the time card moves up into the empty top bar so the two never meet. */
+@container (max-width: 720px) {
+  .film-say { height: auto; min-height: 11.12%; padding: .5em 5%; font-size: 12px; gap: .8em;
+    background: color-mix(in oklab, var(--ink) 88%, transparent); }
+  .film-say small { display: none; }
+  .film-say p { max-width: none; }
+  .film-card { bottom: auto; top: 1.2%; padding: .2em .9em; }
+}
 .film-title {
   position: absolute; inset: 11.12% 0; z-index: 4;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.4cqw;
