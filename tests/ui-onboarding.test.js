@@ -83,7 +83,7 @@ test('the finance planner calls a later era by the month it starts, never by its
   const state = createInitialState({ seed: 1 });
   assert.equal(eraLabel(state, 1), 'Era 1');
   assert.equal(eraTitle(state, 1), ERAS[0].name);
-  assert.equal(eraLabel(state, 2), 'From Y2 M1');
+  assert.equal(eraLabel(state, 2), 'From Y1 M12 W4'); // the HUD clock's date for era 2's first day
   assert.equal(eraTitle(state, 2), '');
   assert.equal(eraEndWords(state, 1), 'the end of era 1');
   assert.doesNotMatch(eraEndWords(state, 3), /era/i);

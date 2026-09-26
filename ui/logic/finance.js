@@ -17,6 +17,8 @@ import { activeModels, monthlyRevenue, revenuePerUser, INVESTORS } from '../../s
 import { computeSlices, resaleCredit, spotCover } from '../../sim/split.js';
 import { PRICE_STANCE } from '../../sim/serving.js';
 import { reviewerCost } from '../../sim/automation.js';
+import { storyDate } from '../../sim/time.js';
+import { storyDayForTurn } from './format.js';
 
 export const UNIT_PRICE = BALANCE.unitMonthlyCost;
 export const LAST_TURN = ERAS.reduce((sum, era) => sum + era.turns, 0) - 1;
@@ -32,13 +34,12 @@ export function eraOfTurn(turn) {
 }
 
 // Owner rule 2026-09-26: the planner never names an era the player has not reached. A later era is called by the
-// month it starts (the clock's own Y/M style), and a deadline in it by the month it ends.
-const monthWords = (month) => `Y${Math.floor(month / 12) + 1} M${(month % 12) + 1}`;
-export const eraLabel = (state, era) => (era <= state.era ? `Era ${era}` : `From ${monthWords(monthOfTurn(eraStart(era)))}`);
+// clock date (the HUD's Y M W) of its first day, and a deadline in it by the date of its last day.
+const firstDay = (era) => storyDate(storyDayForTurn(eraStart(era))).label;
+const lastDay = (era) => storyDate(storyDayForTurn(eraStart(era) + eraById(era).turns) - 1).label;
+export const eraLabel = (state, era) => (era <= state.era ? `Era ${era}` : `From ${firstDay(era)}`);
 export const eraTitle = (state, era) => (era <= state.era ? eraById(era).name : '');
-export const eraEndWords = (state, era) => (era <= state.era
-  ? `the end of era ${era}`
-  : monthWords(monthOfTurn(eraStart(era) + eraById(era).turns)));
+export const eraEndWords = (state, era) => (era <= state.era ? `the end of era ${era}` : lastDay(era));
 
 export function monthOfTurn(turn) {
   let month = 0;
@@ -279,7 +280,7 @@ export function planOpinions(state, projection, plan) {
       id: 'safety',
       mood: 'calm',
       text: era4Goal != null
-        ? `At our ${Math.round(state.compute.split.safety * 100)}% share, ${state.era >= 4 ? 'this era' : 'later on'} safety gets ${Math.round(era4Goal * state.compute.split.safety)} units.`
+        ? `At our ${Math.round(state.compute.split.safety * 100)}% share, ${state.era >= 4 ? 'this era' : 'later on'}, safety gets ${Math.round(era4Goal * state.compute.split.safety)} units.`
         : `At our ${Math.round(state.compute.split.safety * 100)}% share, safety gets ${Math.round(finalGoal * state.compute.split.safety)} units.`,
     },
   ];

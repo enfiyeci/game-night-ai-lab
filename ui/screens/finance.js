@@ -83,14 +83,14 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
     const down = element('button', '', '−');
     down.type = 'button';
     down.dataset.focus = `down-${era}`;
-    down.setAttribute('aria-label', `Lower the ${eraLabel(state, era)} goal`);
+    down.setAttribute('aria-label', `Lower the goal for ${eraLabel(state, era).replace(/^From/, 'from')}`);
     down.addEventListener('click', () => changeGoal(era, plan.goals[era] - stepFor(era)));
     const value = element('output', 'finance-step-value', computeAmount(plan.goals[era], era));
     value.setAttribute('aria-live', 'polite');
     const up = element('button', '', '+');
     up.type = 'button';
     up.dataset.focus = `up-${era}`;
-    up.setAttribute('aria-label', `Raise the ${eraLabel(state, era)} goal`);
+    up.setAttribute('aria-label', `Raise the goal for ${eraLabel(state, era).replace(/^From/, 'from')}`);
     up.addEventListener('click', () => changeGoal(era, plan.goals[era] + stepFor(era)));
     root.append(down, value, up);
     return root;
@@ -154,8 +154,9 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
   function goalRows(root) {
     for (const era of eras) {
       const row = element('div', 'finance-goal');
-      const label = element('span', '', eraLabel(state, era));
-      if (eraTitle(state, era)) label.append(element('small', '', eraTitle(state, era)));
+      // A later era shows only its first clock date (owner rule: it is not named yet).
+      const label = element('span', '', eraTitle(state, era) ? eraLabel(state, era) : eraLabel(state, era).replace(/^From /, ''));
+      label.append(element('small', '', eraTitle(state, era) || 'onwards'));
       row.append(label, stepper(era));
       root.append(row);
     }
