@@ -34,15 +34,24 @@ export function createGame({ seed = 1, state, history = [] } = {}) {
   let roundEvents = [];
   let debugActionEvents = [];
   let debugActionErrors = [];
+  let lastAlignShare = currentState.activeRun?.recipe.sliders.alignShare;
 
-  const publish = (update) => {
+  // Remembers the alignment share of the latest run, which the trained model does not keep (for the HUD badge).
+  const publish = (update, queued) => {
     const releaseTurn = currentState.turn;
+    const hadRun = Boolean(currentState.activeRun);
+    if (hadRun) lastAlignShare = currentState.activeRun.recipe.sliders.alignShare;
     currentState = update.state;
     roundEvents.push(...update.events);
     if (currentState.turn !== releaseTurn) {
       if (!roundStartState.ending) financeHistory.push(turnRecord(roundStartState, currentState, roundEvents));
       roundStartState = currentState;
       roundEvents = [];
+    }
+    if (currentState.activeRun) lastAlignShare = currentState.activeRun.recipe.sliders.alignShare;
+    else if (!hadRun && update.events.some((event) => event.type === 'runComplete')) {
+      const started = queued?.moves.find((move) => move.type === 'startRun'); // a run that started and finished in one step
+      if (started) lastAlignShare = started.recipe.sliders.alignShare;
     }
     for (const event of update.events) {
       if (event.type === 'rivalRelease') rivalReleases.push({ turn: releaseTurn, id: event.id });
@@ -73,7 +82,7 @@ export function createGame({ seed = 1, state, history = [] } = {}) {
       const queued = actions;
       const update = applyActions(currentState, queued, rng);
       actions = initialQueue(update.state.budget);
-      const result = publish(update);
+      const result = publish(update, queued);
       debugActionEvents.push(...result.events);
       debugActionErrors.push(...result.errors);
       return result;
@@ -86,6 +95,9 @@ export function createGame({ seed = 1, state, history = [] } = {}) {
     },
     setFinancePlan(plan) {
       financePlan = structuredClone(plan);
+    },
+    get lastAlignShare() {
+      return lastAlignShare;
     },
     setBudget(budget) {
       const candidate = structuredClone(currentState);
@@ -132,7 +144,7 @@ export function createGame({ seed = 1, state, history = [] } = {}) {
       const queued = actions;
       const update = runTurn(currentState, queued, rng);
       actions = initialQueue(update.state.budget);
-      const result = publish(update);
+      const result = publish(update, queued);
       const events = [...debugActionEvents, ...result.events];
       const errors = [...debugActionErrors, ...result.errors];
       debugActionEvents = [];

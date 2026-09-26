@@ -212,6 +212,31 @@ function dangerState(seed) {
   return state;
 }
 
+// A run with full reasoning RL that ends with the cheating trace unanswered. The dice are played from seed 1 up
+// until one rolls the hazard (an even chance each), so the state is always reached by the real sim.
+function hazardState(seed) {
+  const base = SCENARIOS.era3Idle(seed);
+  if (base.ending) return base;
+  const recipe = {
+    sliders: { size: 'small', length: 'optimal', alignShare: 0.25 },
+    picks: { pre: ['licensed-data'], mid: ['anneal'], post: ['human-sft', 'reasoning-rl', 'deliberative'] },
+  };
+  const basic = { budget: { spend: 25, split: { training: 0.6, security: 0.15, product: 0.1, talent: 0.15 } }, computeSplit: { safety: 0.2 } };
+  let last = base;
+  for (let dice = 1; dice <= 20; dice += 1) {
+    const rng = createRng(dice);
+    let state = endTurn(base, { ...basic, moves: [{ type: 'startRun', recipe }] }, rng).state;
+    if (!state.activeRun) return base;
+    for (let i = 0; i < 6 && state.activeRun && !state.ending; i += 1) {
+      const eventChoices = Object.fromEntries(state.pendingEvents.map((event) => [event.id, event.choices[0].id]));
+      state = endTurn(state, { ...basic, moves: [], eventChoices }, rng).state;
+    }
+    last = state;
+    if (state.pendingModel?.hazard) return state;
+  }
+  return last;
+}
+
 export const SCENARIOS = {
   start,
   midEra3,
@@ -219,6 +244,10 @@ export const SCENARIOS = {
   release: releaseState,
   readyToRelease,
   event: eventState,
+  meeting: (seed) => throughTurn(seed, 20, (s) => s.meeting?.id === 'first'),
+  // Seeds 1 and 2 end in era 4 under the current balance. The offset keeps debug seeds 1–4 on runs
+  // that reach the second meeting while preserving the same scripted playthrough.
+  meeting2: (seed) => throughTurn(seed + 2, 20, (s) => s.meeting?.id === 'second'),
   summit: (seed) => throughTurn(seed, 20, (s) => s.era === 5 && s.turnInEra === 0 && !s.deal),
   ending: (seed) => throughTurn(seed, 20),
   danger: dangerState,
@@ -227,4 +256,5 @@ export const SCENARIOS = {
   era3Budget: budgetState,
   era4Power: powerState,
   boardVote: (seed) => throughTurn(seed, 20, (s) => boardVoteThisRound(s)),
+  hazard: hazardState,
 };

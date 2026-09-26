@@ -56,6 +56,11 @@ test('the event scenario stops on the first turn with a pending card', () => {
   assert.ok(s.pendingEvents.length > 0);
 });
 
+test('the President scenarios stop with the requested meeting open', () => {
+  assert.equal(SCENARIOS.meeting(1).meeting?.id, 'first');
+  assert.equal(SCENARIOS.meeting2(1).meeting?.id, 'second');
+});
+
 test('an action applies at once and the counter counts the round', () => {
   const g = createGame({ seed: 1 });
   assert.equal(g.movesLeft(), 2);

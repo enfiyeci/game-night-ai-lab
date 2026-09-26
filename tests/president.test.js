@@ -315,7 +315,7 @@ test('an unanswered open meeting expires with one walkout penalty and is held', 
   assert.equal(out.errors.length, 1);
   assert.match(out.errors[0], /meeting move/i);
   assert.deepEqual(out.events.filter((event) => event.type === 'meetingOutcome'), [
-    { type: 'meetingOutcome', id: 'first', walkedOut: true, stake: 'federalContract' },
+    { type: 'meetingOutcome', id: 'first', walkedOut: true, stake: 'none' },
   ]);
 });
 
@@ -328,7 +328,7 @@ function assertInvalidAnswersExpire(actions) {
   assert.equal(out.errors.length, 1);
   assert.match(out.errors[0], /president answers/i);
   assert.deepEqual(out.events.filter((event) => event.type === 'meetingOutcome'), [
-    { type: 'meetingOutcome', id: 'first', walkedOut: true, stake: 'federalContract' },
+    { type: 'meetingOutcome', id: 'first', walkedOut: true, stake: 'none' },
   ]);
 }
 

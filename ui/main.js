@@ -5,6 +5,7 @@ import { mountHud } from './hud.js';
 import { mountOffice } from './office.js';
 import { SCENARIOS, scenarioHistory } from './logic/scenarios.js';
 import { powerSitesAvailable, queueScreenAvailable } from './logic/compute.js';
+import { meetingFor } from './logic/president.js';
 import { openMenu } from './menu.js';
 import { openBudget } from './screens/budget.js';
 import { mountRecipe, openRecipe } from './screens/recipe.js';
@@ -22,6 +23,7 @@ import {
 import { openQueue } from './screens/compute.js';
 import { openPowerSites } from './screens/sites.js';
 import { mountHistory, openArticle, openHistory } from './screens/history.js';
+import { mountPresident, openPresident } from './screens/president.js';
 import { mountEvents } from './screens/events.js';
 import { mountBriefing } from './screens/briefing.js';
 import { mountFeed } from './screens/feed.js';
@@ -30,6 +32,8 @@ import { mountFinance, openFinance } from './screens/finance.js';
 import { createCollection } from './logic/collection.js';
 import { lumenEpilogue } from '../sim/lumen.js';
 import { mountBoard, openBoard } from './screens/board.js';
+import { mountTraining } from './screens/training.js';
+import { mountHazard } from './screens/hazard.js';
 
 const params = new URLSearchParams(location.search);
 
@@ -78,9 +82,15 @@ mountCompany(game, overlay);
 mountRecipe(game, overlay);
 mountRelease(game, overlay);
 mountReveal(game, overlay);
+mountPresident(game, overlay);
 mountHistory(game, overlay);
 mountTurnSummary(overlay, game);
 mountFinance(game, overlay);
+const training = mountTraining(game, { stage, hud, overlay });
+mountHazard(game, { stage, overlay });
+const events = mountEvents(game, { stage, overlay });
+mountBriefing(game, { office, overlay });
+mountFeed(game, { overlay, events });
 
 function browserStorage() {
   try {
@@ -97,9 +107,6 @@ const ending = mountEnding(game, overlay, {
   onPlayAgain: () => location.assign(location.pathname),
   lumenNote: (state) => lumenEpilogue(state),
 });
-const events = mountEvents(game, { stage, overlay });
-mountBriefing(game, { office, overlay });
-mountFeed(game, { overlay, events });
 const board = mountBoard(game, { overlay, stage });
 
 function stagePoint(event) {
@@ -192,6 +199,15 @@ async function openDebugRoute() {
     board.refresh();
     return;
   }
+  if (location.hash === '#president' || location.hash === '#president-q2') {
+    const meeting = meetingFor(game.state);
+    if (!meeting) return;
+    const picked = location.hash === '#president-q2'
+      ? [meeting.exchanges[0].answers.find((answer) => answer.style === 'jargon')?.id].filter(Boolean)
+      : [];
+    await openPresident(game, overlay, { picked });
+    return;
+  }
   if (location.hash === '#history') {
     openHistory(game, overlay);
     return;
@@ -202,6 +218,10 @@ async function openDebugRoute() {
   }
   if (location.hash === '#article') {
     openArticle(game, overlay);
+    return;
+  }
+  if (location.hash === '#training') {
+    training.replay();
     return;
   }
   if (location.hash !== '#menu' && location.hash !== '#company') return;
