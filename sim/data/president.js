@@ -41,8 +41,9 @@ export const MEETINGS = [
   },
   {
     id: 'second',
-    era: 5,
-    turnInEra: 1,
+    // Owner pick 1C (2026-09-26): he calls just before Geneva. It opens at the last era 4 mark, as era 5 begins.
+    era: 4,
+    turnInEra: 3,
     exchanges: [
       {
         topic: 'control',

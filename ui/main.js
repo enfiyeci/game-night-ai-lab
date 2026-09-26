@@ -222,3 +222,12 @@ game.subscribe(({ state }) => {
 });
 
 globalThis.game = game;
+
+// The Geneva summit and the deal in play (plan 2026-09-26-summit-build).
+const { mountSummit, openSummit } = await import('./screens/summit.js');
+const { mountDeal } = await import('./screens/deal.js');
+mountSummit(game, overlay);
+mountDeal(game, overlay);
+const summitRoute = () => { if (location.hash === '#summit') openSummit(game, overlay); };
+summitRoute();
+addEventListener('hashchange', summitRoute);

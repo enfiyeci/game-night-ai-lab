@@ -84,7 +84,7 @@ test('recording script describes every top-level strategy action and unknown key
     eventChoices: { 'export-controls': 'negotiate' },
     constitution: { hardLines: ['honest', 'accept-shutdown'], rulings: { whistleblower: 'protect' } },
     presidentAnswers: ['be-direct', 'offer-audit'],
-    holdOrShip: 'hold',
+    investigate: ['s1'],
     surpriseAudit: { scope: 'full' },
   });
 
@@ -93,7 +93,7 @@ test('recording script describes every top-level strategy action and unknown key
   assert.match(line, /adopt a constitution with hard lines honest, accept shutdown/);
   assert.match(line, /rule protect for whistleblower/);
   assert.match(line, /answer the president: be direct, then offer audit/);
-  assert.match(line, /hold to the pacing deal/);
+  assert.match(line, /look into 1 suspicion/);
   assert.match(line, /surprise audit: \{"scope":"full"\}/);
 });
 
@@ -128,13 +128,14 @@ test('recording script describes current contract, queue and split controls', ()
   assert.match(line, /withdraw the waiting queue order/);
 });
 
-test('recording script describes summit proposals and the sweetener', () => {
+test('recording script describes summit proposals, checks and promises', () => {
   const line = demoSeeds.describeActions({
-    moves: [{ type: 'summit', proposals: ['evaluators', 'sharedSafety'], sweetener: 'evaluatorsFirst' }],
+    moves: [{ type: 'summit', proposals: ['evaluators', 'sharedSafety'], checks: { evaluators: 2 }, promises: { east: 'goFirst' } }],
   });
 
   assert.match(line, /propose a summit with evaluators, shared safety/);
-  assert.match(line, /sweetener: evaluators first/);
+  assert.match(line, /evaluators checked at level 2/);
+  assert.match(line, /promises: go first for east/);
 });
 
 test('recording script describes every part of a constitution amendment', () => {

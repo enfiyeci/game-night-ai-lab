@@ -99,7 +99,7 @@ export const EVENTS_6C = [
     trigger(state, rng) {
       const model = state.pendingModel;
       if (!model) return false;
-      const capped = state.deal?.collapsed === false && state.deal.binding.includes('computeCap');
+      const capped = state.deal?.collapsed === false && state.deal.binding.includes('computeCap') && !model.uncapped;
       if (capped) return false;
       model.jump ??= rng.chance(JUMP_CHANCE);
       return model.jump === true && !model.jumpAnswered;
