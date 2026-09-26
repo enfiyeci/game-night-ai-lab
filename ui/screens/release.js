@@ -227,6 +227,19 @@ export function openRelease(game, overlayRoot, { stage } = {}) {
         const check = releasePreview(game.state, game.queue, draft);
         if (!check.ok) {
           error.textContent = check.errors[0];
+          // Launching inside the Geneva deal's gap is allowed, as a deliberate break.
+          if (check.errors[0] === 'This launch breaks the Geneva deal') {
+            error.textContent = 'This launch breaks the Geneva deal: the wait between launches is not over, and the agreed checks may catch it. ';
+            const anyway = document.createElement('button');
+            anyway.type = 'button';
+            anyway.className = 'dl-anyway';
+            anyway.textContent = 'Launch anyway';
+            anyway.addEventListener('click', () => {
+              draft.breakDeal = true;
+              opened.querySelector('.dialog-ok')?.click();
+            });
+            error.append(anyway);
+          }
           return;
         }
         const move = { type: 'release', release: releasePayload(projected(), draft) };

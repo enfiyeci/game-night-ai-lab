@@ -151,14 +151,19 @@ export function mountBriefing(game, { office, overlay }) {
 
   overlay.addEventListener('event-card-closed', showNextWarning);
   overlay.addEventListener('gdt-dialog-closed', showNextWarning);
-  // A card takes the stage; a raised warning steps aside and comes back when the card closes.
-  overlay.addEventListener('event-card-open', () => {
+  // A card or a dialog takes the stage; a raised warning steps aside and comes back when it closes.
+  function stepAside() {
     clearTalking();
     if (!live) return;
     live.node.remove();
     waiting.unshift(live.warning);
     live = null;
-  });
+  }
+  overlay.addEventListener('event-card-open', stepAside);
+  // Dialogs (the release flow, a menu screen) send no open event, so watch for them as the clock does.
+  new MutationObserver(() => {
+    if ((live || talking) && cardOpen()) stepAside();
+  }).observe(overlay, { childList: true, subtree: true });
   game.subscribe(({ state }) => refresh(state));
   refresh(game.state);
 }
