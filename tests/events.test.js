@@ -152,7 +152,8 @@ test('rival releases are stored and a Qilin release triggers its card', () => {
   const s = createInitialState();
   s.era = 2;
   s.rivals.find((rival) => rival.id === 'qilin').progress = 1;
-  const out = endTurn(s, {}, no);
+  let out = endTurn(s, {}, no);
+  out = endTurn(out.state, {}, no);
   assert.equal(out.state.lastRivalReleases.some((release) => release.id === 'qilin'), true);
   assert.equal(out.state.pendingEvents.some((event) => event.id === 'qilinshock'), true);
 });

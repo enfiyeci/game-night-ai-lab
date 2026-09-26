@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import { roundSpan } from '../sim/time.js';
 import { landingDay, stampLandings } from '../sim/landings.js';
+import { createRng } from '../sim/rng.js';
+import { advanceDays } from '../sim/turn.js';
+import { rivalsTurn, landRivals } from '../sim/rivals.js';
 
 test('a landing day falls inside its round and never in the past', () => {
   const s = createInitialState({ seed: 4 });
@@ -33,4 +36,37 @@ test('stamping gives each scheduled item a day and restamps a moved one', () => 
   stampLandings(s);
   assert.equal(site.landsFor, 3);
   assert.ok(site.landsDay > roundSpan(3).start);
+});
+
+test('a rolled launch waits for its day in the next round', () => {
+  const s = createInitialState({ seed: 1 });
+  const fake = { next: () => 0, int: () => 0 };
+  s.rivals[0].progress = 0.99;
+  const cap = s.rivals[0].capability;
+  const rolled = rivalsTurn(s, fake, { deferTo: 1 });
+  assert.equal(rolled.length, 1);
+  assert.equal(s.rivals[0].capability, cap); // nothing yet
+  const [launch] = s.rivalLaunches;
+  assert.ok(launch.day > roundSpan(1).start && launch.day <= roundSpan(1).end);
+  s.day = launch.day - 1;
+  assert.deepEqual(landRivals(s), []);
+  s.day = launch.day;
+  const [landed] = landRivals(s);
+  assert.equal(landed.id, 'openbrain');
+  assert.ok(s.rivals[0].capability > cap);
+  assert.deepEqual(s.rivalLaunchesThisRound.map((x) => x.id), ['openbrain']);
+});
+
+test('rival launches spread across the days, not only on marks', () => {
+  const rng = createRng(3);
+  let s = createInitialState({ seed: 3 });
+  const marks = new Set(Array.from({ length: 20 }, (_, r) => roundSpan(r).end));
+  const days = [];
+  while (!s.ending && s.turn < 8) {
+    const r = advanceDays(s, 1, rng);
+    s = r.state;
+    for (const e of r.events) if (e.type === 'rivalRelease') days.push(s.day);
+  }
+  assert.ok(days.length >= 3, `launches: ${days}`);
+  assert.ok(days.some((day) => !marks.has(day)), `launch days: ${days}`);
 });

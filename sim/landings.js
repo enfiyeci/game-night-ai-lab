@@ -1,5 +1,6 @@
 import { createRng } from './rng.js';
 import { roundSpan } from './time.js';
+import { landRivals } from './rivals.js';
 
 // FNV-1a over the seed and a key, so a landing day never draws from the game's shared random numbers.
 function hashKey(seed, key) {
@@ -34,4 +35,12 @@ export function stampLandings(state) {
   }
   for (const p of state.compute.pipeline) stamp(state, p, p.arrivesTurn - 1, `pipeline:${p.id}:${p.arrivesTurn}`);
   for (const s of state.power.sites) if (!s.online) stamp(state, s, s.arrivesTurn - 1, `site:${s.id}`);
+}
+
+// Everything that lands today (stage 2), fired from advanceDays before the mark code.
+export function landDue(state) {
+  stampLandings(state);
+  const events = [];
+  for (const r of landRivals(state)) events.push({ type: 'rivalRelease', ...r });
+  return events;
 }

@@ -38,6 +38,7 @@ import { ROUND_DAYS, monthsPerDay } from './time.js';
 import { TEAM_OF, teamBusyError } from './teams.js';
 import { feedPosts } from './feed.js';
 import { setAutomation, automationTick, aiProposals, applyApprovals } from './automation.js';
+import { landDue, stampLandings } from './landings.js';
 
 export const MAX_MOVES = 2;
 const BUDGET_KEYS = ['training', 'security', 'product', 'talent'];
@@ -291,6 +292,7 @@ export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = 
   }
   const announced = events.filter((event) => event.type !== 'release' || event.model?.activated);
   if (announced.length) postFeed(mood, state, announced, false);
+  stampLandings(state);
   recheckCapacity(state);
   return { state, events, errors };
 }
@@ -373,8 +375,10 @@ function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
         events.push({ type: 'conversionFight' });
       }
       for (const c of legalTick(state)) events.push({ type: 'lawsuitPaid', cost: c.cost, source: c.source });
-      state.lastRivalReleases = rivalsTurn(state, rng);
-      for (const r of state.lastRivalReleases) events.push({ type: 'rivalRelease', ...r });
+      // Stage 2: the event cards read the launches that landed this round; the roll schedules next round's.
+      state.lastRivalReleases = state.rivalLaunchesThisRound ?? [];
+      state.rivalLaunchesThisRound = [];
+      rivalsTurn(state, rng, { deferTo: state.turn + 1 });
       state.raceHeat -= BALANCE.raceHeatDecay;
       promiseUpkeep(state, rng);
       for (const e of eventsTick(state, rng)) events.push(e);
@@ -467,6 +471,7 @@ function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
   if (state.ending) {
     finishEnding(state, events, roundTurn);
   }
+  if (!state.ending) stampLandings(state);
 }
 
 function postLandedCards(state) {
@@ -506,6 +511,12 @@ export function advanceDays(prev, days, rng, observer = {}) {
     state.dayInRound += 1;
     postLandedCards(state);
     for (const e of resolveDue(state)) events.push(e);
+    const landed = landDue(state);
+    if (landed.length) {
+      events.push(...landed);
+      updateServing(state);
+      state.burnPlanned = projectBurn(state);
+    }
     if (reachesMark) {
       endRound(state, rng, observer, events, errors, fraction);
       postLandedCards(state);

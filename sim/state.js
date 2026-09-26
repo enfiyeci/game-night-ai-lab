@@ -74,6 +74,8 @@ export function createInitialState({ seed = 1 } = {}) {
     feed: [],
     seenEvents: [],
     lastRivalReleases: [],
+    rivalLaunches: [], // launches rolled at a mark, landing on their day in the next round (stage 2)
+    rivalLaunchesThisRound: [],
     lastFlagshipScore: 0,
     lastFlagship: null,
 
