@@ -155,7 +155,21 @@ in section 6e). A lab that is insolvent when era 5 ends never wins; it ends in a
     from the constitution. The end-of-run reveal shows what the player wrote next to what the
     model learned, and in the takeover endings the AI's epilogue is written from its learned
     values.
+- **Advisor cast (owner-approved 2026-09-25).** Priya Raman, Head of Research: relentless
+  optimist, every problem is one more run away. Tomas Lind, Head of Safety: quiet and precise,
+  talks in test results. Margot Hale, CFO: dry, allergic to surprises, forgets the lawyers.
+  Jules Ferreira, Policy and Comms: smooth reader of rooms, speaks in headlines. Each voice
+  shows its advisor's bias.
 - **Feed.** A read-only Twitter-like feed of generated posts reacting to events and state.
+  **Purpose (owner 2026-09-25):** mostly for reading people's reactions to what is going on and
+  to how your new model was received: launch reactions, follow-up reception for a few turns,
+  rival launches, era changes, company news and public mood. It is flavour, not a hidden
+  signal source. Where it sits in the office is a pending visual decision. Build: plan 2D, D1.
+- **Lumen, the narrator (owner 2026-09-25: option a).** The lab's AI assistant, named by the
+  player, speaks a line at the start of every turn and gives the ending epilogue. Its arc: an
+  eager flatterer that grows a moral spine if trained well; it stays flattering if trained on
+  sycophancy, and turns smooth and evasive when hidden debt is high (the learned self leaking
+  through). Build: plan 2D, D2.
 - **President meetings** (era 2 or 3, and era 5). **The owner writes this dialogue
   (2026-09-25); build the mechanics and leave the script to the owner.** A fictional president, recognizable in style
   but not named after the real person (owner may override). Each answer has a flattery level
