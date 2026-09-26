@@ -1,6 +1,7 @@
-// The Geneva summit (spec docs/superpowers/specs/2026-09-26-summit-design.md): a front-on hall, the delegates'
-// demands, a checking level per proposal, up to three promises, then the vote. Time stops while it is open.
-import { readTheRoom, demandStatus, COMMITMENTS, PARTIES } from '../../sim/summit.js';
+// The Geneva summit (spec docs/superpowers/specs/2026-09-26-summit-design.md): a front-on hall where the player
+// tables up to three motions one at a time, sets each one's checks, may win over holdouts with promises, and the
+// room votes on it before the next. Time stops while it is open.
+import { readTheRoom, voteMotion, COMMITMENTS, PARTIES } from '../../sim/summit.js';
 import { DEMANDS, PROMISES, MAX_PROMISES, DEFAULT_CHECK } from '../../sim/data/summit.js';
 import { registerMenuHandler } from '../menu.js';
 
@@ -23,6 +24,7 @@ export const CARD_INFO = Object.freeze({
 });
 
 export const CHECK_NAMES = Object.freeze(['On trust', 'Self-reports', 'Outside testers', 'Inspectors']);
+const CHECK_HINT = Object.freeze(['Nobody checks', 'Labs report on themselves', 'Testers can publish', 'Inspectors on site']);
 
 const PROMISE_COPY = Object.freeze({
   pay: { label: 'We pay for it', cost: '$50M toward the checks' },
@@ -110,32 +112,51 @@ function hallSvg({ raised = {}, screen = screenTitle() } = {}) {
   </svg>`;
 }
 
-// A follower's demand is met on a card when the party it follows signs that card.
-// Every demand is judged on the selected proposal, as the placards are.
-function demandMet(party, plan, room, selected) {
-  if (Object.hasOwn(plan.promises, party)) return true;
+// A delegate's demand, judged on the motion on the floor at its current checking level.
+function demandMet(party, card, level, promises, read) {
+  if (Object.hasOwn(promises, party)) return true;
   const rule = DEMANDS[party].rule;
-  if (!selected) return rule.follows ? false : demandStatus(plan)[party];
-  const level = plan.checks[selected] ?? DEFAULT_CHECK;
   if (rule.promiseOnly) return false;
-  if (rule.refuses) return selected !== rule.refuses;
+  if (rule.refuses) return card !== rule.refuses;
   if (rule.minCheck != null) return level >= rule.minCheck;
-  return room[selected]?.[rule.follows] === 'yes' && !(rule.maxCheck != null && level > rule.maxCheck);
+  return read?.[rule.follows] === 'yes' && !(rule.maxCheck != null && level > rule.maxCheck);
 }
 
-function forecast(read) {
-  const labs = ['openbrain', 'deepthink', 'qilin', 'lodestar'].filter((id) => read[id] === 'yes');
-  const govs = ['west', 'east'].filter((id) => read[id] === 'yes');
-  if (labs.length && govs.length) return { binds: true, text: `Looks binding: ${[...labs, ...govs].map((id) => PARTY_INFO[id].name).join(', ')}` };
-  return { binds: false, text: labs.length ? 'Needs a government' : govs.length ? 'Needs a lab' : 'Needs a lab and a government' };
+const binds = (read) => ['openbrain', 'deepthink', 'qilin', 'lodestar'].some((id) => read[id] === 'yes') && ['west', 'east'].some((id) => read[id] === 'yes');
+const MOTIONS = 3;
+
+// The agenda on the big screen: voted motions, the one on the floor, and the open slots.
+function screenAgenda(motions, results, current, phase) {
+  const label = { table: 'YOUR MOVE', checks: 'SETTING CHECKS', room: 'ON THE FLOOR', swing: 'ON THE FLOOR' }[phase];
+  const rows = Array.from({ length: MOTIONS }, (_, i) => {
+    const y = 124 + i * 30;
+    if (i < motions.length) {
+      const b = results[i].binds;
+      return `<text x="486" y="${y}" style="font:900 12px Nunito;fill:color-mix(in oklab, var(--paper) 66%, var(--sky))">${i + 1}</text>
+        <text x="508" y="${y}" style="font:700 15.5px Nunito;fill:color-mix(in oklab, var(--paper) 66%, var(--sky))">${esc(CARD_INFO[motions[i].card].name)}</text>
+        <text x="954" y="${y}" text-anchor="end" style="font:900 11.5px Nunito;fill:${b ? 'color-mix(in oklab, var(--teal) 45%, var(--paper))' : 'color-mix(in oklab, var(--wood) 50%, var(--paper))'}">${b ? 'PASSED · BINDING' : 'PLEDGE ONLY'}</text>`;
+    }
+    if (i === motions.length && phase !== 'result') {
+      return `<rect x="472" y="${y - 19}" width="496" height="27" rx="6" style="fill:color-mix(in oklab, var(--paper) 9%, transparent)"/>
+        <text x="486" y="${y}" style="font:900 12px Nunito;fill:var(--paper)">${i + 1}</text>
+        <text x="508" y="${y}" style="font:900 15.5px Nunito;fill:var(--paper)">${esc(current ? CARD_INFO[current.card].name : i ? 'Choose the next motion' : 'Choose the first motion')}</text>
+        <text x="954" y="${y}" text-anchor="end" style="font:900 11.5px Nunito;fill:var(--coral)">${label}</text>`;
+    }
+    return `<text x="486" y="${y}" style="font:900 12px Nunito;fill:color-mix(in oklab, var(--paper) 45%, var(--sky))">${i + 1}</text>
+      <text x="508" y="${y}" style="font:700 15.5px Nunito;fill:color-mix(in oklab, var(--paper) 45%, var(--sky))">Open</text>
+      <text x="954" y="${y}" text-anchor="end" style="font:900 11.5px Nunito;fill:color-mix(in oklab, var(--paper) 45%, var(--sky))">—</text>`;
+  }).join('');
+  return `<text x="486" y="96" style="font:900 12px Nunito;letter-spacing:.2em;fill:color-mix(in oklab, var(--sky) 40%, var(--paper))">THE AGENDA</text>${rows}`;
 }
 
 export function openSummit(game, overlayRoot) {
-  if (overlayRoot.querySelector('.sm-layer')) return null;
-  const state = game.state;
-  const plan = { proposals: [], checks: {}, promises: {} };
-  let selected = null;
-  let talking = null;
+  // An open event card or phone keeps the floor until it is answered.
+  if (overlayRoot.querySelector('.sm-layer, .event-layer, .ev-phone')) return null;
+  const motions = []; // voted, in order: { card, check, promises made during that motion }
+  const results = []; // { signed, binds } for each voted motion
+  let current = null; // the motion on the floor
+  let phase = 'table'; // table | checks | room | swing | result
+  let swingParty = null;
   let error = '';
   const previousFocus = document.activeElement;
 
@@ -152,160 +173,186 @@ export function openSummit(game, overlayRoot) {
     overlayRoot.dispatchEvent(new CustomEvent('gdt-dialog-closed'));
   };
 
-  const presidentNote = () => (state.meetingsHeld?.includes('second')
+  const promised = () => Object.assign({}, ...motions.map((m) => m.promises), current?.promises ?? {});
+  const promisesLeft = () => MAX_PROMISES - Object.keys(promised()).length;
+  const cashPromised = () => Object.values(promised()).reduce((sum, type) => sum + (PROMISES[type].cash ?? 0), 0);
+  const plan = () => ({
+    proposals: [...motions.map((m) => m.card), current.card],
+    checks: Object.fromEntries([...motions, current].map((m) => [m.card, m.check])),
+    promises: promised(),
+  });
+  const readNow = () => readTheRoom(game.state, plan())[current.card];
+  const holdouts = (read) => SEATS.map((s) => s.id).filter((id) => read[id] !== 'yes' && !Object.hasOwn(promised(), id));
+  const remaining = () => Object.keys(COMMITMENTS).filter((card) => !motions.some((m) => m.card === card));
+
+  const presidentNote = () => (game.state.meetingsHeld?.includes('second')
     ? '<div class="sm-sticky"><b>From the President’s call</b>“Sign nothing that helps China. Nothing!” Letting the East inspect the West will cost you his favor.</div>'
     : '');
 
-  function demandBubbles(room) {
-    return SEATS.map((seat) => {
-      const met = demandMet(seat.id, plan, room, selected);
-      const promised = plan.promises[seat.id];
-      const status = promised ? `Promised: ${PROMISE_COPY[promised].label}` : met ? 'Met' : 'Not met yet';
-      const shift = seat.id === 'openbrain' ? 16 : seat.id === 'lodestar' ? -16 : 0;
-      return `<button type="button" class="sm-demand${met ? ' met' : ''}${talking === seat.id ? ' talking' : ''}" data-talk="${seat.id}" data-p="${seat.id}"
-        style="left:${seat.x - 89 + shift}px;top:${seat.y - 208}px" aria-label="Talk to ${PARTY_INFO[seat.id].name}">
-        ${esc(DEMANDS[seat.id].text)}<small>${esc(status)}</small></button>`;
+  function bubbles(ids, read) {
+    const level = current?.check ?? DEFAULT_CHECK;
+    return ids.map((id) => {
+      const seat = SEATS.find((s) => s.id === id);
+      const p = promised()[id];
+      const met = current && demandMet(id, current.card, level, promised(), read);
+      const status = p ? `Promised: ${PROMISE_COPY[p].label}` : met ? 'Met' : 'Not met yet';
+      const shift = id === 'openbrain' ? 16 : id === 'lodestar' ? -16 : 0;
+      return `<button type="button" class="sm-demand${met ? ' met' : ''}${swingParty === id ? ' talking' : ''}" data-talk="${id}" data-p="${id}"
+        style="left:${seat.x - 89 + shift}px;top:${seat.y - 208}px" aria-label="Talk to ${PARTY_INFO[id].name}">
+        ${esc(DEMANDS[id].text)}<small>${esc(status)}</small></button>`;
     }).join('');
   }
 
-  function proposalRows(room) {
-    return plan.proposals.map((card) => {
-      const read = room[card];
-      const level = plan.checks[card] ?? DEFAULT_CHECK;
-      const f = forecast(read);
-      return `<div class="sm-prow${card === selected ? ' sel' : ''}" data-select="${card}">
-        <div><b>${esc(CARD_INFO[card].name)}</b><span class="sm-bind${f.binds ? ' yes' : ''}">${esc(f.text)}</span></div>
-        <div class="sm-steps" role="radiogroup" aria-label="How ${esc(CARD_INFO[card].name)} is checked">
-          ${CHECK_NAMES.map((name, i) => `<button type="button" role="radio" aria-checked="${i === level}" class="${i === level ? 'on' : ''}" data-check="${card}" data-level="${i}">${name}</button>`).join('')}
-        </div>
-        <div class="sm-leans">${SEATS.map((seat) => `<span class="sm-pb sm ${read[seat.id]}" data-p="${seat.id}" title="${PARTY_INFO[seat.id].name}: ${read[seat.id]}">${PARTY_INFO[seat.id].ab}</span>`).join('')}</div>
-      </div>`;
-    }).join('');
-  }
+  const kick = (extra = '') => `<div class="sm-kick">Motion ${motions.length + 1} of ${MOTIONS}${extra}</div>`;
+  const deck = () => {
+    const cards = remaining().map((card) => `<button type="button" class="sm-pc" data-card="${card}"><b>${esc(CARD_INFO[card].name)}</b><span>${esc(CARD_INFO[card].ask)}</span></button>`);
+    if (motions.length) cards.push(`<button type="button" class="sm-pc alt" data-close><b>Close the summit</b><span>Stop here. What passed still stands.</span></button>`);
+    return `<div class="sm-deck">${cards.join('')}</div>`;
+  };
+  const tally = (read) => `<div class="sm-tally">${SEATS.map((s) => `<span class="sm-pb${read[s.id] === 'yes' ? '' : ' off'}" data-p="${s.id}" title="${PARTY_INFO[s.id].name}: ${read[s.id]}">${PARTY_INFO[s.id].ab}</span>`).join('')}</div>`;
 
-  function roomPanel(room) {
-    const chips = Object.keys(COMMITMENTS).map((card) => {
-      const on = plan.proposals.includes(card);
-      const full = !on && plan.proposals.length >= 3;
-      return `<button type="button" class="sm-card${on ? ' on' : ''}" data-card="${card}" ${full ? 'disabled' : ''} aria-pressed="${on}">${esc(CARD_INFO[card].name)}</button>`;
-    }).join('');
-    const promised = Object.entries(plan.promises);
-    const slots = Array.from({ length: MAX_PROMISES }, (_, i) => {
-      const entry = promised[i];
-      return entry ? `<span class="sm-pr">${partyBadge(entry[0], true)}${esc(PROMISE_COPY[entry[1]].label)}</span>` : '<span class="sm-pr empty">Open</span>';
-    }).join('');
-    return `<section class="gp sm-props" aria-label="Your proposals">
-      <div class="hd"><span>Put up to three on the table · then choose how each one is checked</span><span>Jules’s read of who signs</span></div>
-      <div class="sm-body">
-        <div class="sm-cards">${chips}</div>
-        ${plan.proposals.length ? proposalRows(room) : '<p class="sm-empty">Pick the proposals you want to put forward. Each delegate’s demand is in the bubble above them; click one to make them a promise.</p>'}
-        <div class="sm-foot">
-          <div class="sm-promises"><span>Promises</span>${slots}<span class="sm-muted">One per delegate. Click a delegate to talk.</span></div>
-          <div class="sm-actions"><button type="button" class="sm-leave" data-leave>Leave without a deal</button><button type="button" class="btn" data-vote ${plan.proposals.length ? '' : 'disabled'}>Call the vote</button></div>
-        </div>
-        ${error ? `<p class="sm-error" role="alert">${esc(error)}</p>` : ''}
-      </div></section>`;
-  }
-
-  function talkCard(party) {
-    const promised = plan.promises[party];
-    const full = !promised && Object.keys(plan.promises).length >= MAX_PROMISES;
-    const choices = Object.keys(PROMISES).map((type) => {
-      const cash = PROMISES[type].cash ?? 0;
-      const spent = Object.values(plan.promises).reduce((sum, t) => sum + (PROMISES[t].cash ?? 0), 0) - (promised ? PROMISES[promised].cash ?? 0 : 0);
-      const cannot = full || (cash > 0 && state.cash < spent + cash);
-      return `<button type="button" class="sm-answer${promised === type ? ' chosen' : ''}" data-promise="${type}" ${cannot ? 'disabled' : ''}><b>${esc(PROMISE_COPY[type].label)}</b><span>${esc(PROMISE_COPY[type].cost)}</span></button>`;
-    }).join('');
-    return `<section class="gp sm-talk" aria-label="Talking to ${esc(PARTY_INFO[party].name)}">
-      <div class="sm-talk-top"><div><div class="sm-kick">${full ? 'All three promises are made' : `Promise ${Object.keys(plan.promises).length + (promised ? 0 : 1)} of ${MAX_PROMISES}`} · to ${esc(PARTY_INFO[party].name)}</div><h2>What do you offer?</h2></div></div>
-      <div class="sm-choices">${choices}<button type="button" class="sm-answer" data-promise="none"><b>${promised ? 'Take it back' : 'Not now'}</b><span>${promised ? 'Keep the promise for someone else' : 'Back to the table'}</span></button></div>
-    </section>`;
+  function panel(read) {
+    if (phase === 'table') {
+      return `<section class="gp sm-panel" aria-label="Table a motion">${kick()}<h2>${motions.length ? 'What do you table next?' : 'What do you table first?'}</h2>${deck()}
+        ${motions.length ? '' : '<div class="sm-row"><span class="sm-muted">Each motion is voted before the next. A motion binds when a lab and a government sign it.</span><button type="button" class="sm-leave" data-leave>Leave without a deal</button></div>'}</section>`;
+    }
+    const name = current ? CARD_INFO[current.card].name : '';
+    if (phase === 'checks') {
+      const levels = CHECK_NAMES.map((n, i) => `<button type="button" class="sm-lv${i === current.check ? ' on' : ''}" role="radio" aria-checked="${i === current.check}" data-level="${i}">
+        <b>${n}</b><span class="sm-meter">${[0, 1, 2, 3].map((j) => `<i class="${j <= i ? 'f' : ''}"></i>`).join('')}</span><small>${CHECK_HINT[i]}</small></button>`).join('');
+      return `<section class="gp sm-panel" aria-label="How it is checked">${kick(` · ${esc(name)}`)}<h2>How is it checked?</h2>
+        <div class="sm-levels" role="radiogroup" aria-label="How ${esc(name)} is checked">${levels}</div>
+        <div class="sm-row"><span class="sm-muted">Stricter checks catch cheaters, including you. The placards show who would sign.</span>
+        <span class="sm-actions"><button type="button" class="sm-leave" data-back="table">Back</button><button type="button" class="btn" data-room>Put it to the room</button></span></div></section>`;
+    }
+    if (phase === 'room') {
+      const left = promisesLeft();
+      const canSwing = left > 0 && holdouts(read).length > 0;
+      return `<section class="gp sm-panel" aria-label="Read the room"><div class="sm-row top"><div>${kick(` · ${esc(name)}, ${CHECK_NAMES[current.check].toLowerCase()}`)}
+        <h2>${binds(read) ? 'It would bind as it is.' : 'Short of a binding vote.'}</h2></div>${tally(read)}</div>
+        <div class="sm-choices two"><button type="button" class="sm-answer" data-swing ${canSwing ? '' : 'disabled'}><b>Win over a holdout</b><span>${left ? `${left} promise${left === 1 ? '' : 's'} left` : 'No promises left'}</span></button>
+        <button type="button" class="sm-answer alt" data-vote><b>Vote now</b><span>${binds(read) ? 'Jules: it should bind' : 'Jules: it would be a pledge only'}</span></button></div>
+        <div class="sm-row"><span class="sm-muted">Jules’s read. The vote can still surprise you.</span><button type="button" class="sm-leave" data-back="checks">Back</button></div>
+        ${error ? `<p class="sm-error" role="alert">${esc(error)}</p>` : ''}</section>`;
+    }
+    if (phase === 'swing') {
+      const who = holdouts(read);
+      const party = swingParty ?? who[0];
+      const cards = who.map((id) => `<button type="button" class="sm-who${id === party ? ' sel' : ''}" data-talk="${id}" data-p="${id}">${partyBadge(id)}<span>${esc(DEMANDS[id].text)}</span></button>`).join('');
+      const choices = Object.keys(PROMISES).map((type) => {
+        const cash = PROMISES[type].cash ?? 0;
+        const cannot = cash > 0 && game.state.cash < cashPromised() + cash;
+        return `<button type="button" class="sm-answer" data-promise="${type}" ${cannot ? 'disabled' : ''}><b>${esc(PROMISE_COPY[type].label)}</b><span>${esc(PROMISE_COPY[type].cost)}</span></button>`;
+      }).join('');
+      return `<section class="gp sm-panel" aria-label="Win over a holdout">${kick(` · promise ${MAX_PROMISES - promisesLeft() + 1} of ${MAX_PROMISES}`)}<h2>Who do you win over?</h2>
+        <div class="sm-holdouts">${cards}</div>
+        <div class="sm-choices">${choices}<button type="button" class="sm-answer alt" data-promise="none"><b>Not now</b><span>Back to the room</span></button></div></section>`;
+    }
+    // result
+    const i = motions.length - 1;
+    const r = results[i];
+    const card = CARD_INFO[motions[i].card].name;
+    const more = motions.length < MOTIONS && remaining().length;
+    return `<section class="gp sm-panel narrow" aria-live="polite"><div class="sm-kick">Motion ${i + 1} · the vote</div>
+      <h2>${esc(card)} ${r.binds ? 'binds.' : 'is a pledge only.'}</h2>
+      <p>${r.signed.length ? `Signed: ${esc(r.signed.map((id) => PARTY_INFO[id].name).join(', '))}.` : 'Nobody else signed.'}${r.binds ? '' : ' A motion binds when a lab and a government sign it.'}</p>
+      <div class="sm-row end"><button type="button" class="sm-leave" data-close>Close the summit</button>${more ? '<button type="button" class="btn" data-next>Next motion</button>' : ''}</div>
+      ${error ? `<p class="sm-error" role="alert">${esc(error)}</p>` : ''}</section>`;
   }
 
   function render() {
-    const room = readTheRoom(state, plan);
-    if (selected && !plan.proposals.includes(selected)) selected = null;
-    if (!selected && plan.proposals.length) selected = plan.proposals[0];
-    const raised = selected ? room[selected] : {};
-    const seat = talking && SEATS.find((s) => s.id === talking);
-    layer.innerHTML = `${hallSvg({ raised })}${demandBubbles(room)}${presidentNote()}
-      ${seat ? `<div class="sm-say" data-p="${seat.id}" style="left:${Math.min(1440 - 330, Math.max(30, seat.x - 150))}px;top:606px"><b>${esc(PARTY_INFO[seat.id].name)}</b>${esc(PARTY_INFO[seat.id].line)}</div>` : ''}
-      ${talking ? talkCard(talking) : roomPanel(room)}`;
+    let read = {};
+    let raised = {};
+    let shown = [];
+    if (current) {
+      read = readNow();
+      raised = read;
+      if (phase === 'checks') shown = SEATS.map((s) => s.id).filter((id) => DEMANDS[id].rule.minCheck != null || DEMANDS[id].rule.maxCheck != null);
+      if (phase === 'room') shown = holdouts(read);
+      if (phase === 'swing') shown = [swingParty ?? holdouts(read)[0]].filter(Boolean);
+    }
+    if (phase === 'result') {
+      const r = results[results.length - 1];
+      raised = Object.fromEntries(SEATS.map((s) => [s.id, r.signed.includes(s.id) ? 'yes' : 'no']));
+    }
+    const seat = phase === 'swing' && SEATS.find((s) => s.id === (swingParty ?? holdouts(read)[0]));
+    layer.innerHTML = `${hallSvg({ raised, screen: screenAgenda(motions, results, current, phase) })}${bubbles(shown, read)}${presidentNote()}
+      ${seat ? `<div class="sm-say" data-p="${seat.id}" style="left:${Math.min(1440 - 330, Math.max(30, seat.x - 150))}px;top:560px"><b>${esc(PARTY_INFO[seat.id].name)}</b>${esc(PARTY_INFO[seat.id].line)}</div>` : ''}
+      ${panel(read)}`;
   }
 
-  function showVote(result) {
+  function showFinal(result) {
     const raised = Object.fromEntries(PARTIES.map((id) => [id, Object.values(result.signed).some((list) => list.includes(id)) ? 'yes' : 'no']));
     const binding = result.binding.map((card) => CARD_INFO[card].name);
-    const title = binding.length >= 2 ? 'The deal binds.' : binding.length === 1 ? 'One card binds.' : 'Nothing binds. Only your own pledges stand.';
-    const outside = PARTIES.filter((id) => raised[id] === 'no').map((id) => PARTY_INFO[id].name);
-    layer.innerHTML = `${hallSvg({ raised, screen: screenVote(result, plan) })}
+    const title = binding.length >= 2 ? 'The deal binds.' : binding.length === 1 ? 'One motion binds.' : 'Nothing binds. Only your own pledges stand.';
+    layer.innerHTML = `${hallSvg({ raised, screen: screenVote(result, { proposals: motions.map((m) => m.card) }) })}
       <section class="gp sm-talk sm-result" aria-live="polite">
-        <div class="sm-kick">The vote</div><h2>${esc(title)}</h2>
-        <p>${binding.length ? `Binding: ${esc(binding.join(', '))}.` : 'A card binds only when another lab and a government sign it.'} ${outside.length ? `Signed nothing: ${esc(outside.join(', '))}.` : 'Everyone signed something.'}</p>
+        <div class="sm-kick">The summit closes</div><h2>${esc(title)}</h2>
+        <p>${binding.length ? `Binding: ${esc(binding.join(', '))}.` : 'A motion binds only when another lab and a government sign it.'} The deal is checked every week from now on.</p>
         <div class="sm-actions"><button type="button" class="btn" data-done>Back to the lab</button></div>
       </section>`;
     layer.querySelector('[data-done]').focus();
   }
 
+  function closeSummit() {
+    if (!motions.length) { close(); return; }
+    const result = game.addMove({ type: 'summit', motions: motions.map((m) => ({ card: m.card, check: m.check, promises: { ...m.promises } })) });
+    if (!result.ok) {
+      error = result.error ? result.error[0].toUpperCase() + result.error.slice(1) : 'The summit could not be closed.';
+      render();
+      return;
+    }
+    const summit = result.events.find((e) => e.type === 'summit');
+    showFinal(summit ?? { signed: game.state.deal.signed, binding: game.state.deal.binding });
+  }
+
   layer.addEventListener('click', (event) => {
-    const target = event.target.closest('button, [data-select], .sm-seat');
+    const target = event.target.closest('button, .sm-seat');
     if (!target) return;
-    if (target.matches('[data-done]')) { close(); return; }
-    if (target.matches('[data-leave]')) { close(); return; }
+    error = '';
+    if (target.matches('[data-done], [data-leave]')) { close(); return; }
+    if (target.matches('[data-close]')) { closeSummit(); return; }
     if (target.matches('[data-card]')) {
-      const card = target.dataset.card;
-      if (plan.proposals.includes(card)) {
-        plan.proposals = plan.proposals.filter((c) => c !== card);
-        delete plan.checks[card];
-      } else if (plan.proposals.length < 3) {
-        plan.proposals.push(card);
-        plan.checks[card] = DEFAULT_CHECK;
-        selected = card;
-      }
-      error = '';
-      render();
-      return;
-    }
-    if (target.matches('[data-check]')) {
-      plan.checks[target.dataset.check] = Number(target.dataset.level);
-      selected = target.dataset.check;
-      render();
-      return;
-    }
-    if (target.matches('[data-talk]') || target.matches('.sm-seat')) {
-      talking = target.dataset.talk ?? target.dataset.party;
-      render();
-      layer.querySelector('.sm-answer')?.focus();
-      return;
-    }
-    if (target.matches('[data-promise]')) {
+      current = { card: target.dataset.card, check: DEFAULT_CHECK, promises: {} };
+      phase = 'checks';
+    } else if (target.matches('[data-level]')) {
+      current.check = Number(target.dataset.level);
+    } else if (target.matches('[data-back]')) {
+      phase = target.dataset.back;
+      if (phase === 'table') current = null;
+    } else if (target.matches('[data-room]')) {
+      phase = 'room';
+    } else if (target.matches('[data-swing]')) {
+      phase = 'swing';
+      swingParty = null;
+    } else if (target.matches('[data-talk]') || target.matches('.sm-seat')) {
+      const party = target.dataset.talk ?? target.dataset.party;
+      if (!current || !['room', 'swing'].includes(phase) || promisesLeft() <= 0 || !holdouts(readNow()).includes(party)) return;
+      phase = 'swing';
+      swingParty = party;
+    } else if (target.matches('[data-promise]')) {
       const type = target.dataset.promise;
-      if (type === 'none') delete plan.promises[talking];
-      else plan.promises[talking] = type;
-      talking = null;
-      render();
-      return;
-    }
-    if (target.matches('[data-vote]')) {
-      const result = game.addMove({ type: 'summit', proposals: [...plan.proposals], checks: { ...plan.checks }, promises: { ...plan.promises } });
-      if (!result.ok) {
-        error = result.error ? result.error[0].toUpperCase() + result.error.slice(1) : 'The vote could not be called.';
-        render();
-        return;
-      }
-      const summit = result.events.find((e) => e.type === 'summit');
-      showVote(summit ?? { signed: game.state.deal.signed, binding: game.state.deal.binding });
-      return;
-    }
-    if (target.matches('[data-select]')) {
-      selected = target.dataset.select;
-      render();
-    }
+      const party = swingParty ?? holdouts(readNow())[0];
+      if (type !== 'none' && party) current.promises[party] = type;
+      phase = 'room';
+      swingParty = null;
+    } else if (target.matches('[data-vote]')) {
+      const all = [...motions, current];
+      results.push(voteMotion(game.state, all, all.length - 1));
+      motions.push(current);
+      current = null;
+      phase = 'result';
+    } else if (target.matches('[data-next]')) {
+      phase = 'table';
+    } else return;
+    render();
+    layer.querySelector('.sm-panel button:not([disabled])')?.focus();
   });
   layer.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && talking) {
+    if (event.key === 'Escape' && phase === 'swing') {
       event.preventDefault();
-      talking = null;
+      phase = 'room';
+      swingParty = null;
       render();
     }
   });
