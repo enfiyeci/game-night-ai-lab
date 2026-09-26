@@ -164,12 +164,12 @@ in section 6e). A lab that is insolvent when era 5 ends never wins; it ends in a
   **Purpose (owner 2026-09-25):** mostly for reading people's reactions to what is going on and
   to how your new model was received: launch reactions, follow-up reception for a few turns,
   rival launches, era changes, company news and public mood. It is flavour, not a hidden
-  signal source. Where it sits in the office is a pending visual decision. Build: plan 2D, D1.
+  signal source. **Placement (owner pick 2026-09-25, option A):** a phone on the CEO desk buzzes with a count of new posts; clicking it slides a phone panel up on the left. Build: plan 2D, D1; mockup `docs/design/mockups/K2-feed-lumen.html#a`.
 - **Lumen, the narrator (owner 2026-09-25: option a).** The lab's AI assistant, named by the
   player, speaks a line at the start of every turn and gives the ending epilogue. Its arc: an
   eager flatterer that grows a moral spine if trained well; it stays flattering if trained on
   sycophancy, and turns smooth and evasive when hidden debt is high (the learned self leaking
-  through). Build: plan 2D, D2.
+  through). **Presence (owner pick 2026-09-25, from option C):** a small floating robot in the office that drifts between desks and speaks in bubbles like the advisors. Build: plan 2D, D2; mockup `docs/design/mockups/K2-feed-lumen.html#c`.
 - **President meetings** (era 2 or 3, and era 5). **The owner writes this dialogue
   (2026-09-25); build the mechanics and leave the script to the owner.** A fictional president, recognizable in style
   but not named after the real person (owner may override). Each answer has a flattery level

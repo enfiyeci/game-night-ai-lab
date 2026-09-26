@@ -203,8 +203,10 @@ eraIntro(era) → { era, name, pace, headline, changes: [string, string, string]
 **Tests:** all five eras present; pace matches `ERAS`; exactly three changes each within 90
 characters; `eraIntro(6)` and `eraIntro(0)` return `null`.
 
-**Follow-up (UI lane, after its dialog shell exists):** on an `eraStart` event, open the card as
-a GDT dialog before the briefing. Commit: `feat(ui): era-change card content`.
+**Follow-up (UI lane):** on an `eraStart` event, show the card as option E2 (owner pick 2026-09-25):
+a ribbon banner over the office, each advisor's reaction in a speech bubble at their head anchor,
+and the three changes as cards along the bottom with Continue. Mockup:
+`docs/design/mockups/K2-side-options.html#e2`. Commit: `feat(ui): era-change card content`.
 
 ---
 
