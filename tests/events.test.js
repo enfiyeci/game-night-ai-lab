@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import { eventsTick, addressWarning, resolveEvent } from '../sim/events.js';
+import { EVENTS } from '../sim/data/events.js';
 import { endTurn } from '../sim/turn.js';
 
 const no = { next: () => 0.99, int: () => 0, chance: () => false, pick: (a) => a[0], normal: (m) => m };
@@ -217,4 +218,104 @@ test('customer incidents ignore staged and superseded models', () => {
   const superseded = withFlag('hallucination', { active: false, superseded: true });
   eventsTick(superseded, no);
   assert.equal(Object.hasOwn(superseded.warnings, 'citations'), false);
+});
+
+test('weight theft triggers only at the capability and security thresholds and its chance succeeds', () => {
+  const event = EVENTS.find((candidate) => candidate.id === 'weightTheft');
+  let rolls = 0;
+  const rng = { chance: (probability) => { rolls += 1; assert.equal(probability, 0.2); return true; } };
+
+  const eligible = createInitialState();
+  eligible.capability = 50;
+  eligible.security = 44;
+  assert.equal(event.trigger(eligible, rng), true);
+  assert.equal(rolls, 1);
+
+  const lowCapability = createInitialState();
+  lowCapability.capability = 49;
+  lowCapability.security = 44;
+  assert.equal(event.trigger(lowCapability, rng), false);
+  const secure = createInitialState();
+  secure.capability = 50;
+  secure.security = 45;
+  assert.equal(event.trigger(secure, rng), false);
+  assert.equal(rolls, 1);
+
+  assert.equal(event.trigger(eligible, { chance: () => false }), false);
+});
+
+test('weight theft warns first and becomes a one-shot card the next turn', () => {
+  const state = createInitialState();
+  state.capability = 50;
+  state.security = 44;
+  eventsTick(state, yes);
+  assert.deepEqual(state.warnings.weightTheft, { turn: 0 });
+  assert.equal(state.feed.at(-1).handle, '@your_security');
+  assert.equal(state.pendingEvents.some((event) => event.id === 'weightTheft'), false);
+
+  state.turn += 1;
+  eventsTick(state, yes);
+  const card = state.pendingEvents.find((event) => event.id === 'weightTheft');
+  assert.equal(card.title, 'Weights stolen by a foreign state');
+  assert.equal(card.post.handle, '@newsdesk');
+  assert.equal(state.seenEvents.includes('weightTheft'), true);
+});
+
+test('addressing the weight-theft warning also raises security', () => {
+  const state = createInitialState();
+  state.era = 3;
+  state.capability = 50;
+  state.security = 40;
+  eventsTick(state, yes);
+  const cash = state.cash;
+  assert.equal(addressWarning(state, 'weightTheft').ok, true);
+  assert.equal(state.cash, cash - 15);
+  assert.equal(state.security, 50);
+  assert.equal(state.seenEvents.includes('weightTheft'), true);
+});
+
+test('every weight-theft choice steals and locks the weights before its response', () => {
+  const cases = [
+    ['report', { cash: 0, gov: 5, public: -5, security: 10, coverUp: false }],
+    ['hunt', { cash: -30, gov: 0, public: 0, security: 15, coverUp: false }],
+    ['silence', { cash: 0, gov: 0, public: 0, security: 0, coverUp: true }],
+  ];
+  for (const [choiceId, effects] of cases) {
+    const state = createInitialState();
+    state.misuseExposure = 20;
+    state.misuseLocked = 25;
+    const qilin = state.rivals.find((rival) => rival.id === 'qilin');
+    state.pendingEvents.push({ id: 'weightTheft' });
+    const before = {
+      cash: state.cash,
+      gov: state.govFavor.us,
+      public: state.publicTrust,
+      security: state.security,
+      qilin: qilin.capability,
+    };
+    assert.equal(resolveEvent(state, 'weightTheft', choiceId).ok, true);
+    assert.equal(state.misuseExposure, 30, choiceId);
+    assert.equal(state.misuseLocked, 30, choiceId);
+    assert.equal(qilin.capability, before.qilin + 5, choiceId);
+    assert.equal(state.cash, before.cash + effects.cash, choiceId);
+    assert.equal(state.govFavor.us, before.gov + effects.gov, choiceId);
+    assert.equal(state.publicTrust, before.public + effects.public, choiceId);
+    assert.equal(state.security, before.security + effects.security, choiceId);
+    assert.equal(state.flags.coverUp === true, effects.coverUp, choiceId);
+  }
+});
+
+test('unanswered weight theft falls back to silence and preserves a higher misuse lock', () => {
+  const state = createInitialState();
+  state.misuseExposure = 20;
+  state.misuseLocked = 40;
+  const qilin = state.rivals.find((rival) => rival.id === 'qilin');
+  const beforeQilin = qilin.capability;
+  state.pendingEvents.push({ id: 'weightTheft' });
+  const out = endTurn(state, {}, no);
+  assert.equal(out.state.flags.coverUp, true);
+  assert.equal(out.state.misuseExposure, 30);
+  assert.equal(out.state.misuseLocked, 40);
+  assert.equal(out.state.rivals.find((rival) => rival.id === 'qilin').capability, beforeQilin + 5);
+  assert.equal(out.events.find((event) => event.id === 'weightTheft')?.choiceId, 'silence');
 });

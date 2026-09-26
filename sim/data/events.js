@@ -31,6 +31,13 @@ function datacenterPush(state) {
   earliest.arrivesTurn += 1;
 }
 
+export function stealWeights(state) {
+  state.misuseExposure += 10;
+  state.misuseLocked = Math.max(state.misuseLocked, state.misuseExposure);
+  const qilin = state.rivals.find((rival) => rival.id === 'qilin');
+  if (qilin) qilin.capability = Math.min(100, qilin.capability + 5);
+}
+
 export const EVENTS = [
   {
     id: 'flattery',
@@ -463,6 +470,44 @@ export const EVENTS = [
           effects(state) {
             state.researchPoints -= 20;
             state.staffTrust -= 3;
+          },
+        },
+      ],
+    },
+  },
+  {
+    id: 'weightTheft',
+    kind: 'world',
+    fallback: 'silence',
+    trigger: (state, rng) => state.capability >= 50 && state.security < 45 && rng.chance(0.2),
+    warning: { handle: '@your_security', text: 'someone is running odd queries against the weight store' },
+    addressEffects(state) { state.security += 10; },
+    card: {
+      title: 'Weights stolen by a foreign state',
+      post: { handle: '@newsdesk', text: "foreign intelligence reportedly copied a frontier lab's model weights" },
+      choices: [
+        {
+          id: 'report', label: 'Report it to the government', cost: 'public trust', backers: ['Government'], opposers: ['Comms'],
+          effects(state) {
+            stealWeights(state);
+            state.govFavor.us += 5;
+            state.publicTrust -= 5;
+            state.security += 10;
+          },
+        },
+        {
+          id: 'hunt', label: 'Hunt the leak quietly', cost: '$30M', backers: ['Security'], opposers: ['CFO'],
+          effects(state) {
+            stealWeights(state);
+            state.cash -= 30;
+            state.security += 15;
+          },
+        },
+        {
+          id: 'silence', label: 'Say nothing', cost: '—', backers: ['Comms'], opposers: ['Government'],
+          effects(state) {
+            stealWeights(state);
+            state.flags.coverUp = true;
           },
         },
       ],

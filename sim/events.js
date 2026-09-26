@@ -106,6 +106,7 @@ export function addressWarning(state, id) {
   if (event.flag) {
     for (const model of state.models) model.flags = (model.flags ?? []).filter((flag) => flag !== event.flag);
   }
+  if (event.addressEffects) event.addressEffects(state);
   if (!state.seenEvents.includes(id)) state.seenEvents.push(id);
   return { ok: true, id };
 }
