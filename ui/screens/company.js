@@ -529,6 +529,10 @@ export function mountTurnSummary(overlayRoot, game) {
     if (pendingFrame !== null) cancelAnimationFrame(pendingFrame);
     pendingFrame = null;
     removeToast();
+    if (state.ending) { // the ending film and the end-of-run screen replace the turn summary
+      pendingSummaries = null;
+      return;
+    }
     const summaries = turnSummary([
       ...events,
       ...errors.map((error) => ({ type: 'error', error })),
