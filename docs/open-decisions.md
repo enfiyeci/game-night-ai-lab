@@ -17,9 +17,9 @@ difficulty target (spec 9).
 
 ## B. Needed before content writing
 
-5. **President meetings.** You write the dialogue. Still open: the interaction format (pick
-   answers / type answers scanned for jargon / hybrid) and whether he is fictional
-   (recommended) or named.
+5. **President meetings.** DECIDED 2026-09-25: pick answers from nine styles, his agenda is the
+   AI war against "the woke" and China, and promises come due (spec 6, plan 2E). Still open: the
+   final dialogue (the owner writes it) and whether he stays fictional (recommended) or is named.
 6. **Finale after era 5.** Which pieces of your original design appear in the 60–90 second
    card rush: the technofeudal turn (vassal states, your own currency), the race to the bottom
    (espionage, info-war, sabotage), the AI citizenship vote, a world map. And whether the
@@ -27,6 +27,8 @@ difficulty target (spec 9).
 7. **Humanoid line in era 4.** How it unlocks (a research technique, a channel, a separate
    product line), what it earns, and what its incidents look like (physical harm, recalls,
    labor backlash). Currently invented, not research-based.
+   ON THE BACK BURNER (owner 2026-09-25): leaning towards a product line, or deals with outside
+   humanoid companies instead of building one; only if time allows.
 8. **A narrator character.** Your original design had Lumen, a player-named AI assistant whose
    flattery grows into a moral spine and who narrates the endings. Not in the current spec.
    Include (it gives the end-of-run reveal a voice), or keep the four advisors only.
@@ -54,6 +56,6 @@ difficulty target (spec 9).
 
 ## D. Scope if time runs short
 
-17. Which deferred features are in or out: weight theft, distilled sibling models, sound
+17. Which deferred features are in or out (weight theft is IN, owner 2026-09-25, plan 2E): distilled sibling models, sound
     effects, music, a save button, mobile layout. Recommended cut order when behind: music →
     save → mobile → distilled siblings → weight theft.

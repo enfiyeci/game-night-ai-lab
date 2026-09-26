@@ -164,6 +164,15 @@ in section 6e). A lab that is insolvent when era 5 ends never wins; it ends in a
   technical term drains his patience; at zero he walks out. Plain answers keep him engaged but
   can over-promise, which comes due later. Stakes: export licenses, federal contracts, a
   preemption of state safety laws, national-champion status.
+  - **Agenda and answer styles (owner 2026-09-25).** He mostly pushes to win the AI war against
+    "the woke" and China. The player picks answers (format decided): each exchange offers five
+    of nine styles: plain, bootlicking, safety-pilled jargon, corporate, mirror, bargainer,
+    comedian, hawk, salesman. Details and draft script: plan 2E.
+  - **Promises come due (owner 2026-09-25: options A, B, D, E).** Each promise is checked at its
+    due turn (kept: favor up). A broken one brings a call from his office: deliver at a cost,
+    stall once, or refuse (favor down, supply-chain-risk designation). Promises that contradict
+    the model's hard lines can leak. Broken promises from the first meeting make the second one
+    harder (less patience, quicker amendment demand). Details: plan 2E.
 
 ## 6b. Models: training recipe, naming and running cost (requested by owner 2026-09-25)
 
@@ -251,7 +260,8 @@ Part 2. That report's menu tables are the working content; this section fixes ho
   - Broken promise revealed ← `brokenPromise` → staff asking pointed questions → come clean /
     cover up; the Head of Safety may quit publicly.
 - **People and company:** star researcher poached; safety-team open letter; whistleblower;
-  weight theft by a foreign state (low security and high capability); board revolt.
+  weight theft by a foreign state (low security and high capability; in scope, owner
+  2026-09-25, plan 2E); board revolt.
 - **World and market:** rival breakthrough; the Eastern lab's cheap open model shocks the
   market; export controls flip; chip or memory shortage (the era's bottleneck); local
   data-center opposition (era 4); rental-cloud partner collapses; price war; copyright suit
