@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import { startRun, advanceRun } from '../sim/training.js';
 import {
-  beatCount, canSkip, checkLabel, laterMoveProblem, nextGeneration, perMillion, priceSheet, pricePerMillion,
-  queueBeforeRelease, releaseDraft, releaseOpinions, releasePayload, releasePreview, releaseSpec, salesEstimate,
-  servingPerMillion, shipDelay, shipWords, tokensPerUser,
+  beatCount, canSkip, checkLabel, laterMoveProblem, nextGeneration, offeredCards, perMillion, priceSheet,
+  pricePerMillion, queueBeforeRelease, releaseDraft, releaseOpinions, releasePayload, releasePreview, releaseSpec,
+  salesEstimate, servingPerMillion, shipDelay, shipWords, tokensPerUser,
 } from '../ui/logic/release.js';
 import { SCENARIOS } from '../ui/logic/scenarios.js';
 
@@ -193,4 +193,22 @@ test('the ready-to-release scenario has a trained model waiting in era 3', () =>
   assert.ok(s.pendingModel);
   assert.equal(s.era, 3);
   assert.ok(s.models.length >= 1);
+});
+
+// Owner 2026-09-26: open weights are hidden from the UI for now (no revenue model yet).
+test('offeredCards excludes hidden cards but keeps the rest pickable', () => {
+  const s = SCENARIOS.readyToRelease(1);
+  assert.ok(!offeredCards(s, 'release').some((card) => card.id === 'channel-open'));
+  assert.ok(offeredCards(s, 'release').some((card) => card.id === 'channel-app'));
+  const era3 = createInitialState();
+  era3.era = 3;
+  assert.ok(!offeredCards(era3, 'post').some((card) => card.id === 'tamper'));
+});
+
+test('releaseDraft drops a remembered pick for a hidden card, and keeps a visible one', () => {
+  const s = trained();
+  const dropped = releaseDraft(s, { picks: ['channel-open'] });
+  assert.ok(!dropped.picks.includes('channel-open'));
+  const kept = releaseDraft(s, { picks: ['channel-app'] });
+  assert.ok(kept.picks.includes('channel-app'));
 });

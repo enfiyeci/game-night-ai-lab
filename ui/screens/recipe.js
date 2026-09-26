@@ -5,7 +5,6 @@ import {
   SIZES,
   SIZE_UNITS,
   cardById,
-  pickableCards,
   slotsFor,
 } from '../../sim/recipe.js';
 import { modelName } from '../../sim/release.js';
@@ -16,6 +15,7 @@ import { vslider } from '../components/vslider.js';
 import { cardCostWords, recipePreview, sanitizeDraft } from '../logic/actions.js';
 import { projectQueue } from '../logic/compute.js';
 import { computeAmount, money } from '../logic/format.js';
+import { offeredCards } from '../logic/release.js';
 import { registerMenuHandler } from '../menu.js';
 
 const rememberedDrafts = new WeakMap();
@@ -157,7 +157,7 @@ export function techniquePanel(state, stage, draft, onChange, { cardNote } = {})
 
   const list = document.createElement('div');
   list.className = 'recipe-technique-list';
-  const cards = pickableCards(state, stage);
+  const cards = offeredCards(state, stage);
   const groupIds = [...new Set(cards.map((card) => card.group))];
   if (cards.length === 0) {
     const empty = document.createElement('p');

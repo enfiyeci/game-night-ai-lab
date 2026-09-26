@@ -57,8 +57,11 @@ export function withCard(picks, card) {
 export const canSkip = (state) => state.models.length > 0;
 export const nextGeneration = (state, skip) => (state.models.at(-1)?.generation ?? 0) + 1 + (skip && canSkip(state) ? 1 : 0);
 
+// Owner 2026-09-26: open weights are off for now (no revenue model yet); hidden cards are not offered in the UI.
+export const offeredCards = (state, stage) => pickableCards(state, stage).filter((card) => !card.hidden);
+
 export function releaseDraft(state, remembered = {}) {
-  const pickable = new Set(pickableCards(state, 'release').map((card) => card.id));
+  const pickable = new Set(offeredCards(state, 'release').map((card) => card.id));
   const picks = [];
   const groups = new Set();
   for (const id of remembered.picks ?? []) {

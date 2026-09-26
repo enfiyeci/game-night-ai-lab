@@ -155,7 +155,10 @@ export function showReveal(overlayRoot, { state, model, misalignmentIncident = f
 
   const foot = el('div', 'reveal-foot');
   const usersLine = el('div', 'reveal-users');
-  usersLine.append('New users this month: ', el('b', null, `+${users(model.newUsers)}`));
+  // Owner 2026-09-26 wording for when open weights returns: no user count to show, since nobody
+  // signs up for a download (the sales estimate is already omitted for open weights below).
+  if (model.channel === 'open') usersLine.textContent = 'Free download. Anyone can run it now.';
+  else usersLine.append('New users this month: ', el('b', null, `+${users(model.newUsers)}`));
   const left = el('div');
   left.append(usersLine);
   const sales = salesEstimate(model);
