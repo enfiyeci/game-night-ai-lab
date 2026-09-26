@@ -913,3 +913,4 @@ Codex `gpt-5.6-sol` adversarial, session 01a0ddb1-4531-7ba2-92df-0ac56e2b719d. T
 - Round 3: APPROVED, no findings.
 
 Tests: 643, 641 pass, 0 fail, 2 known todo. Browser check: the release reveal opens and pauses the clock; a finished run shows the end screen with a story date and the clock stays stopped; the only console error is a missing favicon.
+- From gn-release's pre-merge pair on `ui-endings` (2026-09-26): (a) launch reactions for delayed releases are already fixed here (`modelLive`); (b) won't fix, stage 2: `recordAdvisors` runs before the era advances, so a new era's first briefing can show an old-era line. This predates real time, and moving it changes the random-number order and so the balance.
