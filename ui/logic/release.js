@@ -4,6 +4,7 @@ import { modelName, releaseModel, tierWord } from '../../sim/release.js';
 import { createRng } from '../../sim/rng.js';
 import { CHANNEL, PRICE_STANCE, REASONING, REVENUE_PER_USER, USAGE, margin, servingCost } from '../../sim/serving.js';
 import { applyProjectedMove, projectQueue } from './compute.js';
+import { familyName } from './naming.js';
 
 export const PRICE_STOPS = ['free', 'undercut', 'market', 'premium'];
 export const PRICE_NAMES = { premium: 'Premium', market: 'Market', undercut: 'Undercut', free: 'Free tier' };
@@ -76,7 +77,7 @@ export function releaseDraft(state, remembered = {}) {
     picks,
     price: Object.hasOwn(PRICE_STANCE, remembered.price) ? remembered.price : 'market',
     reasoning: REASONING_STOPS.includes(remembered.reasoning) ? remembered.reasoning : 'off',
-    family: typeof remembered.family === 'string' ? remembered.family : state.models.at(-1)?.family ?? '',
+    family: typeof remembered.family === 'string' ? remembered.family : familyName(state),
     skip: remembered.skip === true && canSkip(state),
     tierWords: Object.fromEntries(SIZE_ORDER.map((size) => [
       size,

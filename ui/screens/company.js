@@ -193,7 +193,7 @@ export function openRaise(game, overlayRoot) {
   const reason = game.movesLeft() === 0
     ? `Both team actions are used this ${roundWord(state.era)}`
     : queued ? `A funding round was already started this ${roundWord(state.era)}`
-      : projected.era < 2 ? 'Funding rounds open in era 2'
+      : projected.era < 2 ? 'Investors are not ready yet'
         : projected.flags.lastRoundEra === projected.era ? 'You already raised a round this era' : '';
   const options = Object.entries(INVESTORS).map(([id, investor]) => ({
     id,
@@ -292,7 +292,7 @@ export function openResearch(game, overlayRoot) {
     const name = document.createElement('strong');
     name.textContent = technique.name;
     const available = document.createElement('span');
-    available.textContent = `Available to everyone in era ${technique.era}`;
+    available.textContent = 'Everyone gets it later';
     copy.append(name, available);
     const cost = document.createElement('span');
     cost.className = 'research-cost';
@@ -330,7 +330,7 @@ export function openResearch(game, overlayRoot) {
       ['Points now', `${Math.round(projected.researchPoints)}`],
       ['Cost', `${technique.researchCost}`],
       ['After research', `${Math.round(projected.researchPoints - technique.researchCost)}`],
-      ['Industry access', `era ${technique.era}`],
+      ['Industry access', 'later'],
     ] : [['Research points', `${Math.round(projected.researchPoints)}`]], technique ? '' : 'Pick an affordable technique.'));
     if (opened) {
       const available = buttons.some((button) => !button.disabled);

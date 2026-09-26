@@ -37,6 +37,8 @@ import { mountHazard } from './screens/hazard.js';
 import { mountAutomation, openAutomation } from './screens/automation.js';
 import { mountScreenWall } from './screens/screenwall.js';
 import { mountRacks } from './screens/racks.js';
+import { mountIntro, mountNaming } from './screens/intro.js';
+import { isFreshStart, tourSeen } from './logic/intro.js';
 
 const params = new URLSearchParams(location.search);
 
@@ -83,6 +85,7 @@ if (params.has('paused')) game.clock.setSpeed(0);
 game.clock.start();
 mountCompany(game, overlay);
 mountRecipe(game, overlay);
+mountNaming(game, overlay); // after the recipe: the first run asks for the model's name
 mountRelease(game, overlay);
 mountReveal(game, overlay);
 mountPresident(game, overlay);
@@ -115,6 +118,12 @@ const ending = mountEnding(game, overlay, {
 });
 const board = mountBoard(game, { overlay, stage });
 
+// The first-minute tour (owner pick B): on a fresh run it starts once nothing else holds the stage. #tour replays it.
+const intro = mountIntro(game, { stage, overlay, storage: browserStorage() });
+if (isFreshStart(game.state, { scenario: scenarioName, hash: location.hash }) && !tourSeen(browserStorage())) intro.start();
+addEventListener('hashchange', () => { if (location.hash === '#tour' && !game.state.ending) intro.start(); });
+if (location.hash === '#tour' && !game.state.ending) intro.start();
+
 function stagePoint(event) {
   const rect = stage.getBoundingClientRect();
   return [
@@ -123,7 +132,7 @@ function stagePoint(event) {
   ];
 }
 
-const blocked = () => Boolean(overlay.querySelector('.dialog-layer, .event-layer, .ev-phone, .screenwall-layer'));
+const blocked = () => Boolean(overlay.querySelector('.dialog-layer, .event-layer, .ev-phone, .screenwall-layer, .intro-layer:not(.intro-open)'));
 
 office.addEventListener('click', (event) => {
   if (event.target.closest?.('#person-ceo') && !blocked()) {

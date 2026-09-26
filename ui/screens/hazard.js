@@ -1,4 +1,4 @@
-import { modelName } from '../../sim/release.js';
+import { workingName as nextName } from '../logic/naming.js';
 
 export const HAZARD_CHOICES = [
   { id: 'penalize', label: 'Penalize the thought' },
@@ -43,8 +43,7 @@ function make(tag, className, text) {
 
 // The working name, by the same rule the HUD pill uses during the run.
 function workingName(state) {
-  const last = state.models.at(-1);
-  return modelName({ family: last?.family ?? 'Kestrel', generation: (last?.generation ?? 0) + 1, size: state.pendingModel.size, tierWords: state.tierWords });
+  return nextName(state, state.pendingModel.size);
 }
 
 function buildCard(name) {

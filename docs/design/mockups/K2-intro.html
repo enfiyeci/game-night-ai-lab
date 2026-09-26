@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>K2 intro mockups</title>
+<style>
+  html, body { margin: 0; padding: 0; background: #F1E4C8; }
+  iframe { display: block; width: 1440px; height: 900px; border: 0; }
+</style>
+</head>
+<body>
+<!-- Mockups for the guided first minute (lane gn-onboarding). Each hash is one frame drawn over the live game:
+     #a1 #a2 #a3 (GDT tutorial notes), #b1 #b2 #b3 (the team shows you round), #c1 #c2 (first-day list on the wall),
+     #d1 (camera tour), #n1 #n2 (naming the first model). Serve the repo root and open /docs/design/mockups/K2-intro.html#b1. -->
+<iframe id="game"></iframe>
+<script type="module">
+const frame = location.hash.slice(1) || 'a1';
+const iframe = document.querySelector('#game');
+const wait = (ms) => new Promise((resolve) => { setTimeout(resolve, ms); });
+
+const CSS = `
+.mk { position: absolute; inset: 0; pointer-events: none; font-family: Nunito, sans-serif; color: var(--ink); z-index: 20; }
+.mk * { box-sizing: border-box; }
+.mk-dim { position: absolute; inset: 0; background: color-mix(in oklab, var(--ink) 46%, transparent); }
+.mk-hole { position: absolute; border-radius: 50%; box-shadow: 0 0 0 2000px color-mix(in oklab, var(--ink) 46%, transparent); }
+.mk-ring { position: absolute; border: 3px solid var(--coral); border-radius: 50%; box-shadow: 0 0 0 6px color-mix(in oklab, var(--coral) 22%, transparent); }
+.mk-rect { position: absolute; border: 3px solid var(--coral); border-radius: 14px; box-shadow: 0 0 0 6px color-mix(in oklab, var(--coral) 22%, transparent); }
+.mk-note { position: absolute; width: 380px; padding: 0; }
+.mk-note .body { padding: 14px 18px 16px; font-size: 16px; font-weight: 700; line-height: 1.4; }
+.mk-note .body p { margin: 0 0 8px; }
+.mk-note .foot { display: flex; justify-content: space-between; align-items: center; padding: 0 18px 16px; }
+.mk-note .count { font-size: 12.5px; font-weight: 800; color: color-mix(in oklab, var(--ink) 55%, var(--paper)); }
+.mk-note .btn { width: 110px; }
+.mk-arrow { position: absolute; width: 0; height: 0; }
+.mk-bar { position: absolute; left: 50%; bottom: 26px; transform: translateX(-50%); display: flex; align-items: center; gap: 18px; padding: 10px 12px 10px 20px; }
+.mk-bar span { font-size: 15px; font-weight: 800; }
+.mk-bar .dots { display: flex; gap: 6px; }
+.mk-bar .dots i { width: 9px; height: 9px; border-radius: 50%; background: color-mix(in oklab, var(--wood) 30%, var(--paper)); }
+.mk-bar .dots i.on { background: var(--wood); }
+.mk-bar .btn { width: 110px; }
+.mk-bar .skip { font-size: 13px; font-weight: 800; color: color-mix(in oklab, var(--ink) 55%, var(--paper)); }
+.mk .ev-bubble { pointer-events: none; }
+.mk .ev-bubble.mk-up::after { top: -8px; bottom: auto; transform: rotate(225deg); }
+.mk-say { width: 280px; }
+.mk-say .ev-say { font-size: 15px; }
+.mk-line { position: absolute; border-top: 2.5px dashed var(--wood); transform-origin: 0 0; }
+.mk-wall { position: absolute; width: 128px; padding: 10px 12px 12px; background: #FFF6C9; box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 16%, transparent), 0 6px 12px color-mix(in oklab, var(--ink) 16%, transparent); transform-origin: 0 0; }
+.mk-wall h4 { margin: 0 0 6px; font-family: 'Libre Baskerville', Georgia, serif; font-style: italic; font-size: 15px; font-weight: 400; }
+.mk-wall li { list-style: none; display: grid; grid-template-columns: 14px 1fr; gap: 5px; font-size: 13px; font-weight: 900; line-height: 1.2; margin-bottom: 6px; }
+.mk-wall ul { margin: 0; padding: 0; }
+.mk-wall .box { width: 12px; height: 12px; margin-top: 1px; border: 2px solid var(--ink); border-radius: 3px; }
+.mk-wall .done { color: color-mix(in oklab, var(--ink) 45%, var(--paper)); text-decoration: line-through; }
+.mk-wall .done .box { background: var(--teal); border-color: var(--teal); }
+.mk-wall .next { color: var(--coral); }
+.mk-wall .next .box { border-color: var(--coral); }
+.mk-letter { position: absolute; left: 0; right: 0; height: 92px; background: var(--ink); }
+.mk-caption { position: absolute; left: 0; right: 0; bottom: 22px; text-align: center; color: var(--paper); font-size: 24px; font-weight: 300; }
+.mk-caption b { display: block; font-size: 12px; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; color: color-mix(in oklab, var(--wood) 70%, var(--paper)); margin-bottom: 4px; }
+.mk-name { position: absolute; left: 470px; top: 210px; width: 500px; text-align: center; padding: 20px 30px 22px; }
+.mk-name h1 { margin: 0; font-size: 31px; font-weight: 300; }
+.mk-name .subt { margin-top: 4px; font-size: 13.5px; font-weight: 700; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); }
+.mk-name label { display: block; text-align: left; font-size: 12px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: color-mix(in oklab, var(--wood) 60%, var(--ink)); margin: 0 0 6px; }
+.mk-input { display: block; width: 100%; padding: 10px 14px; border: 2.5px solid var(--wood); border-radius: 10px; background: var(--paper); font: inherit; font-size: 22px; font-weight: 800; text-align: left; }
+.mk-input .caret { display: inline-block; width: 2px; height: 22px; margin-left: 2px; vertical-align: -3px; background: var(--ink); }
+.mk-name .ships { margin: 14px 0 18px; font-size: 15px; font-weight: 700; }
+.mk-name .ships b { font-weight: 900; }
+.mk-name .ships a { color: var(--sky); font-weight: 800; }
+.mk-name .row { display: flex; justify-content: center; gap: 12px; align-items: center; }
+.mk-name .ghost { font-size: 14px; font-weight: 800; color: color-mix(in oklab, var(--ink) 55%, var(--paper)); }
+.mk-bubble-input { display: flex; gap: 8px; margin-top: 8px; align-items: center; }
+.mk-bubble-input .mk-input { font-size: 17px; padding: 6px 10px; }
+.mk-bubble-input .btn { width: 90px; font-size: 14px; padding: 7px 0; }
+.mk-hint { margin-top: 6px; font-size: 12px; font-weight: 700; color: color-mix(in oklab, var(--ink) 55%, var(--paper)); }
+`;
+
+function add(parent, html) {
+  const template = parent.ownerDocument.createElement('template');
+  template.innerHTML = html.trim();
+  const node = template.content.firstElementChild;
+  parent.append(node);
+  return node;
+}
+
+function place(node, x, y) {
+  node.style.left = `${Math.round(x)}px`;
+  node.style.top = `${Math.round(y)}px`;
+  return node;
+}
+
+// A stage rectangle for an element of the game (the stage is 1440 x 900 and unzoomed here).
+function rect(doc, selector) {
+  const r = doc.querySelector(selector).getBoundingClientRect();
+  return { x: r.left, y: r.top, w: r.width, h: r.height, cx: r.left + r.width / 2, cy: r.top + r.height / 2 };
+}
+
+function ring(layer, x, y, size) { return place(add(layer, `<div class="mk-ring" style="width:${size}px;height:${size}px"></div>`), x - size / 2, y - size / 2); }
+function hole(layer, x, y, size) { return place(add(layer, `<div class="mk-hole" style="width:${size}px;height:${size}px"></div>`), x - size / 2, y - size / 2); }
+function box(layer, r, pad = 8) {
+  const node = add(layer, `<div class="mk-rect" style="width:${r.w + pad * 2}px;height:${r.h + pad * 2}px"></div>`);
+  return place(node, r.x - pad, r.y - pad);
+}
+
+function note(layer, { title = 'Getting started', body, count, x, y, ok = 'Next' }) {
+  const node = add(layer, `<section class="gp mk-note"><div class="hd"></div><div class="body"></div><div class="foot"><span class="count"></span><button class="btn" type="button"></button></div></section>`);
+  node.querySelector('.hd').textContent = title;
+  node.querySelector('.body').innerHTML = body;
+  node.querySelector('.count').textContent = count;
+  node.querySelector('.btn').textContent = ok;
+  return place(node, x, y);
+}
+
+function say(layer, { who, text, x, y, tail = 24, width = 280, extra = '' }) {
+  const node = add(layer, `<div class="ev-bubble mk-say" style="--tail:${tail}px;width:${width}px"><b></b><div class="ev-say"></div>${extra}</div>`);
+  node.querySelector('b').textContent = who;
+  node.querySelector('.ev-say').textContent = text;
+  return place(node, x, y);
+}
+
+function bar(layer, { text, step, of, ok = 'Next' }) {
+  const node = add(layer, `<section class="gp mk-bar"><span></span><div class="dots"></div><span class="skip">Skip the tour</span><button class="btn" type="button"></button></section>`);
+  node.querySelector('span').textContent = text;
+  node.querySelector('.btn').textContent = ok;
+  for (let i = 1; i <= of; i += 1) add(node.querySelector('.dots'), `<i class="${i === step ? 'on' : ''}"></i>`);
+  return node;
+}
+
+function line(layer, [x1, y1], [x2, y2]) {
+  const length = Math.hypot(x2 - x1, y2 - y1);
+  const angle = (Math.atan2(y2 - y1, x2 - x1) * 180) / Math.PI;
+  const node = add(layer, `<div class="mk-line" style="width:${length}px;transform:rotate(${angle}deg)"></div>`);
+  return place(node, x1, y1);
+}
+
+function wallList(layer, items) {
+  const node = add(layer, `<div class="mk-wall"><h4>First day</h4><ul></ul></div>`);
+  for (const [text, state] of items) {
+    const li = add(node.querySelector('ul'), `<li class="${state}"><span class="box"></span><span></span></li>`);
+    li.lastElementChild.textContent = text;
+  }
+  // Pinned to the right-hand wall, beside the whiteboard: the wall rises 29 degrees to the left.
+  node.style.transform = 'skewY(29.4deg)';
+  return place(node, 984, 222);
+}
+
+async function draw() {
+  const doc = iframe.contentDocument;
+  const win = iframe.contentWindow;
+  for (let i = 0; i < 100 && !doc.querySelector('#person-ceo'); i += 1) await wait(50);
+  await wait(300);
+  doc.documentElement.style.zoom = '1';
+  const style = doc.createElement('style');
+  style.textContent = CSS;
+  doc.head.append(style);
+  const stage = doc.querySelector('#stage');
+  const layer = add(stage, '<div class="mk"></div>');
+  const anchors = await (await fetch('../../../ui/assets/anchors-era1.json')).json();
+  const h = anchors.heads;
+  const cap = rect(doc, '.hud .ctr.cap');
+  const ali = rect(doc, '.hud .ctr.ali');
+  const pill = rect(doc, '.hud .pill');
+  const info = rect(doc, '.info');
+  const clock = rect(doc, '.clock');
+  const hudBox = { x: cap.x, y: cap.y, w: ali.x + ali.w - cap.x, h: Math.max(cap.h, pill.h) };
+
+  if (frame === 'a1') {
+    add(layer, '<div class="mk-dim" style="background:color-mix(in oklab, var(--ink) 22%, transparent)"></div>');
+    note(layer, {
+      title: 'Welcome to Halcyon',
+      body: '<p>This is your lab: five people, one server rack and a lot of money that will not last.</p><p>The clock is stopped until you are ready. Take a minute to look around.</p>',
+      count: '1 of 6', x: 530, y: 110, ok: 'Show me',
+    });
+  }
+  if (frame === 'a2') {
+    box(layer, hudBox, 10);
+    note(layer, {
+      body: '<p><b>Capability</b> is how strong your models are. <b>Alignment</b> is how much of that strength you can trust.</p><p>The middle tells you what the lab is working on.</p>',
+      count: '3 of 6', x: 530, y: 120,
+    });
+  }
+  if (frame === 'a3') {
+    note(layer, {
+      body: '<p>Everything you do starts on the floor. <b>Click anywhere on the floor</b> to open this menu.</p><p>Start with a training run.</p>',
+      count: '6 of 6', x: 290, y: 560, ok: 'Got it',
+    });
+  }
+  if (frame === 'b1') {
+    hole(layer, h.research[0], h.research[1] + 52, 190);
+    say(layer, { who: 'Head of Research', text: 'Hi, boss. I build the models. Click on any of us whenever you want to know what we think. We have opinions.', x: h.research[0] - 40, y: h.research[1] - 150, tail: 30, width: 300 });
+    bar(layer, { text: 'Meet your team', step: 1, of: 5 });
+  }
+  if (frame === 'b2') {
+    hole(layer, h.cfo[0], h.cfo[1] + 52, 190);
+    box(layer, info, 8);
+    
+    say(layer, { who: 'CFO', text: 'Cash and runway live up there, top right. Runway is how long until the money runs out. If I start sweating, look at it.', x: h.cfo[0] - 20, y: h.cfo[1] - 170, tail: 30, width: 300 });
+    bar(layer, { text: 'Meet your team', step: 3, of: 5 });
+  }
+  if (frame === 'b3') {
+    const [fx, fy] = anchors.floorMenu;
+    ring(layer, fx, fy - 30, 90);
+    say(layer, { who: 'Head of Research', text: 'When you want us to do something, click the floor. Anywhere. Start with a training run; we are bored.', x: h.research[0] - 40, y: h.research[1] - 150, tail: 30, width: 300 });
+    say(layer, { who: 'Clock', text: 'Time moves when you press play. ×2 and ×4 hurry it.', x: clock.x - 20, y: clock.y + clock.h + 18, tail: 250, width: 280 }).classList.add('mk-up');
+    bar(layer, { text: 'Your turn: click the floor', step: 5, of: 5, ok: 'Done' });
+  }
+  if (frame === 'c1') {
+    wallList(layer, [
+      ['Say hi to the team', 'next'],
+      ['Check the money', ''],
+      ['Press play', ''],
+      ['Click the floor', ''],
+      ['Name our model', ''],
+    ]);
+    ring(layer, h.safety[0], h.safety[1] + 6, 76);
+  }
+  if (frame === 'c2') {
+    wallList(layer, [
+      ['Say hi to the team', 'done'],
+      ['Check the money', 'done'],
+      ['Press play', 'next'],
+      ['Click the floor', ''],
+      ['Name our model', ''],
+    ]);
+    say(layer, { who: 'Head of Safety · calm', text: 'Welcome. I worry so you can sleep. Some nights I worry too much. Some nights not enough.', x: h.safety[0] - 30, y: h.safety[1] - 130, tail: 30, width: 290 });
+    box(layer, rect(doc, '.clock button[data-speed="1"]'), 6);
+  }
+  if (frame === 'd1') {
+    const office = doc.querySelector('#office');
+    office.style.transformOrigin = '0 0';
+    const scale = 1.9;
+    const [tx, ty] = [h.research[0] + 90, h.research[1] + 40];
+    office.style.transform = `translate(${720 - tx * scale}px, ${430 - ty * scale}px) scale(${scale})`;
+    doc.querySelector('#hud').style.opacity = '0';
+    add(layer, '<div class="mk-letter" style="top:0"></div>');
+    add(layer, '<div class="mk-letter" style="bottom:0"></div>');
+    const caption = add(layer, '<div class="mk-caption"><b>Your team</b><span></span></div>');
+    caption.querySelector('span').textContent = 'Four advisors. Each one sees part of the truth, and none of them sees all of it.';
+  }
+  if (frame === 'n1') {
+    add(layer, '<div class="mk-dim" style="background:color-mix(in oklab, var(--cream) 30%, transparent)"></div>');
+    const card = add(layer, `<section class="gp mk-name">
+      <h1>Your first model</h1><div class="subt">Every model you ship will carry this family name</div><div class="rule"></div>
+      <label>Family name</label><div class="mk-input">Aurora<span class="caret"></span></div>
+      <div class="ships">It starts life as <b>Aurora 1 Core</b> · <a>Rename sizes</a></div>
+      <div class="row"><span class="ghost">Back</span><button class="btn" type="button">Plan the run</button></div>
+    </section>`);
+    card.querySelector('.rule').style.margin = '14px 20px 18px';
+  }
+  if (frame === 'n2') {
+    hole(layer, h.research[0], h.research[1] + 52, 190);
+    say(layer, {
+      who: 'Head of Research',
+      text: 'Before we start: what do we call it? Whatever you pick, we will be saying it for years.',
+      x: h.research[0] - 40, y: h.research[1] - 200, tail: 30, width: 320,
+      extra: '<div class="mk-bubble-input"><div class="mk-input">Aurora<span class="caret"></span></div><button class="btn" type="button">Name it</button></div><div class="mk-hint">It will be Aurora 1 Core</div>',
+    });
+    bar(layer, { text: 'Meet your team', step: 4, of: 5 });
+  }
+  document.title = `ready ${frame}`;
+}
+
+iframe.src = `../../../index.html?seed=1&paused&lab=Halcyon${frame === 'a3' ? '#menu' : ''}`;
+iframe.addEventListener('load', () => { draw().catch((error) => { document.title = `error ${error.message}`; console.error(error); }); });
+</script>
+</body>
+</html>
