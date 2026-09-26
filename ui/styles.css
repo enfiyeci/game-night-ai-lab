@@ -3136,3 +3136,11 @@ svg.room {
 .automation-stat small { display: block; font-size: 12px; color: color-mix(in srgb, var(--ink) 70%, transparent); }
 .automation-meter { height: 8px; border-radius: 4px; margin: 6px 0; background: repeating-linear-gradient(135deg, var(--coral) 0 6px, color-mix(in srgb, var(--coral) 60%, var(--paper)) 6px 12px); overflow: hidden; }
 .automation-meter i { display: block; height: 100%; background: var(--teal); }
+.agent-dots, .review-pile, .rack-glow { position: absolute; pointer-events: none; }
+.agent-dots { display: flex; gap: 1px; transform: translate(-50%, 0); }
+.review-pile { width: 30px; display: flex; flex-direction: column-reverse; transform: translate(-50%, -100%); }
+.review-pile i { display: block; height: 5px; margin-top: -1px; border: 1px solid var(--ink); border-radius: 1px; background: var(--paper); }
+.review-pile i:nth-child(odd) { transform: translateX(2px) rotate(-3deg); }
+.review-pile.pile-3 i { background: color-mix(in srgb, var(--coral) 30%, var(--paper)); }
+/* #fx is its own stacking context, so a blend mode would only blend with the empty layer: a light sky haze reads as the glow. */
+.rack-glow { width: 260px; height: 260px; transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, color-mix(in srgb, var(--sky) 80%, var(--paper)) 60%, transparent), transparent 70%); }
