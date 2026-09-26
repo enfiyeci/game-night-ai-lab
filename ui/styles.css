@@ -3453,10 +3453,10 @@ svg.room {
 }
 
 /* Plan 2H: who does the work (1A grid, 1B dressing, 3C screen wall) */
-/* Same frame as the budget dialog, so the wide body clears both side panels (816 px centre, 250 and 266 px sides). */
-.automation-dialog .dlg { top: 94px; left: 306px; width: 816px; min-height: 0; }
-.automation-dialog .dialog-left { top: 150px; left: 40px; width: 250px; }
-.automation-dialog .dialog-right { top: 150px; right: 40px; width: 266px; }
+/* The budget dialog's width, so the wide body clears both side panels (816 px centre, 250 and 266 px sides); top 136 px clears the clock chip and the sides at 190 px clear the board countdown under it. */
+.automation-dialog .dlg { top: 136px; left: 306px; width: 816px; min-height: 0; }
+.automation-dialog .dialog-left { top: 190px; left: 40px; width: 250px; }
+.automation-dialog .dialog-right { top: 190px; right: 40px; width: 266px; }
 .automation-body { display: grid; gap: 14px; text-align: left; }
 .automation-body .dialog-error:empty { display: none; }
 .automation-grid { display: grid; grid-template-columns: 170px repeat(5, 1fr); gap: 8px 10px; align-items: center; }
@@ -3526,5 +3526,3 @@ svg.room {
 .screenwall-choice b { font-size: 16px; }
 .screenwall-choice small { color: color-mix(in srgb, var(--ink) 65%, transparent); }
 .screenwall-choice:hover, .screenwall-choice:focus-visible { outline: 3px solid var(--sky); }
-/* The events lane opens its cards without looking for the wall: keep a card that is already up out of sight until the wall is answered. */
-#overlay:has(.screenwall-layer) .event-layer { visibility: hidden; }

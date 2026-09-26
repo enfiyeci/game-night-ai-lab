@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import { handBack } from '../sim/automation.js';
+import { roundWord } from '../sim/time.js';
 import {
   automationBase, automationDraft, automationPayload, automationView, automationOpinions, dressingView, screenWallView,
 } from '../ui/logic/automation.js';
@@ -65,6 +66,13 @@ test('advisors react to unchecked work and to room to push', () => {
   assert.deepEqual(lines.map((line) => line.id), ['research', 'safety', 'cfo', 'policy']);
   assert.equal(lines[0].mood, 'eager');
   assert.equal(lines[1].mood, 'alarmed');
+});
+
+test('the Safety line names the era\'s round, not always a month', () => {
+  const s = atEra(1);
+  const safety = automationOpinions(automationView(s, automationDraft(s)), roundWord(s.era)).find((line) => line.id === 'safety');
+  assert.match(safety.text, /this quarter/);
+  assert.doesNotMatch(safety.text, /month/);
 });
 
 test('office dressing follows code level, exposure and speed', () => {

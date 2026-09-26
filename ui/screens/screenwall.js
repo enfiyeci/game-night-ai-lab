@@ -63,6 +63,8 @@ function openScreenWall(game, overlayRoot, pending) {
       layer.remove();
       game.clock?.resume('screenwall');
       queueAnswer(game, pending.id, choice.id);
+      // After the answer, so this wall's own check sees it answered; cards and warnings that waited now open.
+      overlayRoot.dispatchEvent(new CustomEvent('gdt-dialog-closed'));
     });
     choices.append(button);
   }

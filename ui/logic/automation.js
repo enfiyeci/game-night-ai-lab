@@ -63,7 +63,7 @@ export function automationView(state, draft) {
   };
 }
 
-export function automationOpinions(view) {
+export function automationOpinions(view, round = 'month') {
   const canPush = view.rows.some((row) => !row.fixed && !row.locked && row.level < row.max);
   const checked = Math.round(view.checkedShare * 100);
   return [
@@ -71,8 +71,8 @@ export function automationOpinions(view) {
       ? { id: 'research', mood: 'eager', text: 'Let it lead the experiments too. We are waiting on ourselves now.' }
       : { id: 'research', mood: 'calm', text: 'We are going as fast as the work allows.' },
     checked >= 100
-      ? { id: 'safety', mood: 'calm', text: 'Everything it did this month was checked.' }
-      : { id: 'safety', mood: checked < 50 ? 'alarmed' : 'uneasy', text: `We checked ${checked}% of what it did this month. I would like to know about the other ${100 - checked}%.` },
+      ? { id: 'safety', mood: 'calm', text: `Everything it did this ${round} was checked.` }
+      : { id: 'safety', mood: checked < 50 ? 'alarmed' : 'uneasy', text: `We checked ${checked}% of what it did this ${round}. I would like to know about the other ${100 - checked}%.` },
     view.checks.reviewers > 0
       ? { id: 'cfo', mood: 'calm', text: `Reviewers cost us ${money(view.reviewerCost)} a month. Agents do not ask for raises.` }
       : { id: 'cfo', mood: 'calm', text: 'Agents do not ask for raises. I am listening.' },

@@ -130,7 +130,7 @@ export function openAutomation(game, overlayRoot) {
     error.textContent = view.error ? view.error[0].toUpperCase() + view.error.slice(1) : '';
     const legend = element('div', 'automation-legend', 'Where most labs are now');
     body.replaceChildren(grid(view), legend, timeBar(view), checksRow(view), error);
-    team.replaceChildren(...teamPanel(state, { opinions: automationOpinions(view) }).children);
+    team.replaceChildren(...teamPanel(state, { opinions: automationOpinions(view, roundWord(state.era)) }).children);
     right.replaceChildren(side(view));
     if (focusLabel) [...body.querySelectorAll('[aria-label]')].find((node) => node.getAttribute('aria-label') === focusLabel)?.focus();
   }
