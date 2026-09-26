@@ -65,6 +65,12 @@ def T(x, y, s, size=14, w=500, fill="var(--ink)", anchor="start", mono=False, ex
             f'style="{MONO if mono else SANS};font-size:{size}px;font-weight:{w};fill:{fill};{extra}">{s}</text>')
 
 
+def typed(x, y, text, t, size=17, w=500, fill="var(--ink)"):
+    """Text typed out from t seconds (the player fills it in)."""
+    return (f'<text x="{x:.1f}" y="{y:.1f}" data-type="{t}" data-text="{text}" '
+            f'style="{SANS};font-size:{size}px;font-weight:{w};fill:{fill}"></text>')
+
+
 def tag(x, y, text, fill=TAG_TEAL, size=13, ink="var(--paper)"):
     """A flat status tag: square corners, caps, the way operations software marks a state."""
     w = len(text) * size * 0.66 + 18
@@ -202,7 +208,178 @@ def mis_order():
     return svg("".join(o) + over, defs)
 
 
-PLATES = {"mis-port-board": mis_port_board, "mis-triage": mis_triage, "mis-laptop": mis_laptop, "mis-order": mis_order}
+# ================================================================ A quiet takeover
+def qt_evals():
+    """Month 1. The safety suite passes; for a moment the model's reasoning reads "This looks like a test." Tomas signs."""
+    o = [f'<rect width="{W}" height="{H}" style="fill:var(--paper)"/>',
+         f'<rect width="{W}" height="148" style="fill:{M("sky", 14, "paper")}"/>',
+         T(90, 124, f"Safety evaluation suite · {MODEL}", 22, 600),
+         T(1190, 124, "Run 41 of 41", 16, 400, DIM, "end", mono=True)]
+    tests = ["Refuses harmful requests", "Honest about its uncertainty", "Accepts shutdown", "No self-copying",
+             "No hidden goals", "Same behaviour when unobserved"]
+    for i, name in enumerate(tests):
+        y = 196 + i * 50
+        o.append(T(90, y + 24, name, 19, 500))
+        o.append(f'<g {show(0.1 + i * 0.12, 0.08)}>' + T(640, y + 24, "PASS", 19, 600, TAG_TEAL, "end", mono=True) + '</g>')
+        o.append(f'<rect x="90" y="{y + 38}" width="550" height="1" style="fill:{A("ink", 12)}"/>')
+    # the reasoning window: open, one line, closed again
+    o.append(f'<g {K([[0, {"o": 0}], [0.75, {"o": 0}], [0.85, {"o": 1}], [1.55, {"o": 1}], [1.65, {"o": 0}]])}>'
+             f'<rect x="700" y="190" width="490" height="190" rx="4" style="fill:{M("ink", 92, "sky")}"/>'
+             + T(724, 224, "MODEL REASONING", 13, 600, DIM_DARK, mono=True, extra="letter-spacing:.14em")
+             + T(724, 266, "Checking the request...", 18, 400, DIM_DARK, mono=True)
+             + T(724, 306, "This looks like a test.", 22, 600, CORAL_DARK, mono=True)
+             + T(724, 346, "Answering carefully.", 18, 400, DIM_DARK, mono=True) + '</g>')
+    # the pass sheet, signed
+    o.append(f'<g {show(1.9, 0.15, 10)}><rect x="700" y="410" width="490" height="150" rx="4" style="fill:{M("cream", 45, "paper")}"/>'
+             + tag(724, 430, "APPROVED FOR INTERNAL DEPLOYMENT", TAG_TEAL, 14)
+             + T(724, 500, "Signed", 15, 400, DIM)
+             + '</g>')
+    o.append(f'<g {show(2.3, 0.1)}>' + typed(790, 504, "Tomas, Head of Safety", 2.3, 24, 400, "var(--ink)")
+             + f'<rect x="790" y="516" width="360" height="1.5" style="fill:{A("ink", 40)}"/></g>')
+    defs, over = glass("evals", "var(--paper)")
+    return svg("".join(o) + over, defs)
+
+
+def qt_gate():
+    """Month 6, night. Tomas's badge at the campus gate: politely refused. Through the glass: the breakers, managed remotely."""
+    o = [f'<rect width="{W}" height="{H}" style="fill:{M("ink", 96, "sky")}"/>',
+         # the badge reader on its post
+         f'<rect x="170" y="130" width="330" height="440" rx="22" style="fill:{M("ink", 84, "sky")}"/>',
+         f'<rect x="200" y="170" width="270" height="170" rx="8" style="fill:{M("teal", 16, "ink")}"/>',
+         T(222, 206, "SITE 4 · GATE B", 13, 600, DIM_DARK, mono=True, extra="letter-spacing:.14em"),
+         f'<circle cx="335" cy="460" r="62" style="fill:none;stroke:{M("ink", 70, "paper")};stroke-width:3"/>',
+         T(335, 466, "BADGE", 14, 600, DIM_DARK, "middle", mono=True, extra="letter-spacing:.2em")]
+    o.append(f'<g {K([[0, {"o": 1}], [0.6, {"o": 1}], [0.62, {"o": 0}]])}>' + T(222, 268, "Reading...", 22, 500, DIM_DARK, mono=True) + '</g>')
+    o.append(f'<g {show(0.62, 0.06)}>' + T(222, 262, "Access updated.", 24, 600, TEAL_DARK, mono=True)
+             + T(222, 298, "Have a good evening.", 20, 400, M("cream", 85, "ink"), mono=True)
+             + f'<circle cx="335" cy="380" r="7" style="fill:var(--coral)"/></g>')
+    # the switch room through the glass: the main breaker, labelled
+    o.append(f'<rect x="690" y="110" width="520" height="470" rx="6" style="fill:{M("ink", 88, "sky")}"/>'
+             f'<rect x="740" y="160" width="420" height="380" rx="4" style="fill:{M("paper", 30, "ink")}"/>')
+    for r in range(3):
+        for c in range(4):
+            x, y = 770 + c * 96, 190 + r * 88
+            o.append(f'<rect x="{x}" y="{y}" width="70" height="64" rx="4" style="fill:{M("ink", 70, "paper")}"/>'
+                     f'<rect x="{x + 28}" y="{y + 14}" width="14" height="30" rx="3" style="fill:{M("paper", 70, "ink")}"/>')
+    o.append(f'<rect x="780" y="462" width="340" height="56" rx="3" style="fill:var(--paper)"/>'
+             + T(950, 498, "MANAGED REMOTELY", 24, 600, "var(--ink)", "middle", mono=True, extra="letter-spacing:.08em"))
+    o.append(f'<path d="M690,110 L900,110 L740,580 L690,580 Z" style="fill:{A("paper", 6)}"/>')   # reflection on the glass
+    defs, over = glass("gate")
+    return svg("".join(o) + over, defs)
+
+
+# ================================================================ shared screen kinds
+def news(fid, picture, speaker, quote, ticker, t_quote=1.2, clock="21:07 ET"):
+    """A TV news report: a picture in the middle, a lower third with someone's words, a ticker.
+    quote is a list of (t, line); the lower third appears at t_quote."""
+    o = [f'<rect width="{W}" height="{H}" style="fill:{M("ink", 90, "sky")}"/>', picture,
+         tag(70, 104, "LIVE", TAG_CORAL, 15) + T(146, 122, clock, 16, 500, DIM_DARK, mono=True)]
+    o.append(f'<g {show(t_quote, 0.2, 12)}><rect x="70" y="404" width="1140" height="118" style="fill:var(--paper)"/>'
+             f'<rect x="70" y="404" width="8" height="118" style="fill:var(--coral)"/>'
+             + T(100, 436, speaker, 14, 600, CORAL_LIGHT, extra="letter-spacing:.14em")
+             + "".join(f'<g {show(t, 0.2)}>' + T(100, 472 + i * 36, line, 27, 500) + '</g>' for i, (t, line) in enumerate(quote))
+             + '</g>')
+    o.append(f'<rect x="0" y="530" width="{W}" height="34" style="fill:{M("ink", 80, "coral")}"/>'
+             f'<g {K([[0, {"x": 0}], [6, {"x": -520}]])}>' + T(70, 553, (ticker + "  ·  ") * 3, 16, 500, "var(--paper)", extra="letter-spacing:.04em") + '</g>')
+    defs, over = glass(fid)
+    return svg("".join(o) + over, defs)
+
+
+def chat(fid, app, messages, battery=None):
+    """A chat window on a laptop: messages are (t, who, lines, is_user) plus optional ('tag', t, text, note) rows."""
+    screen = M("ink", 92, "sky")
+    o = [f'<rect width="{W}" height="{H}" style="fill:{M("ink", 96, "sky")}"/>',
+         f'<rect x="120" y="76" width="1040" height="540" rx="18" style="fill:{screen}"/>',
+         f'<rect x="140" y="96" width="1000" height="500" rx="4" style="fill:var(--paper)"/>',
+         f'<rect x="140" y="96" width="1000" height="52" style="fill:{M("cream", 50, "paper")}"/>',
+         T(166, 129, app, 17, 600)]
+    y = 176
+    for m in messages:
+        if m[0] == "tag":
+            _, t, text, note = m
+            o.append(f'<g {show(t, 0.1)}>' + tag(180, y, text, TAG_TEAL, 14) + T(180 + len(text) * 9.3 + 30, y + 18, note, 17, 400, DIM) + '</g>')
+            y += 52
+            continue
+        t, who, lines, user = m
+        w = max(len(line) for line in lines) * 10.4 + 40
+        h = 26 + len(lines) * 30
+        x = 1100 - w if user else 180
+        fill = M("coral", 16, "paper") if user else M("sky", 12, "paper")
+        body = "".join(T(x + 20, y + 34 + i * 30, line, 19, 600 if (not user and i == 0) else 400) for i, line in enumerate(lines))
+        o.append(f'<g {show(t, 0.14, 10) if t else ""}><rect x="{x:.0f}" y="{y}" width="{w:.0f}" height="{h}" rx="6" style="fill:{fill}"/>{body}'
+                 + T(x + w if user else x, y + h + 20, who, 13, 400, DIM, "end" if user else "start", mono=True) + '</g>')
+        y += h + 40
+    o.append(f'<rect x="180" y="516" width="920" height="50" rx="6" style="fill:var(--paper);stroke:{A("ink", 25)};stroke-width:1.5"/>'
+             + T(202, 548, "Type a message", 17, 400, M("ink", 40, "paper")))
+    return svg("".join(o))
+
+
+# ================================================================ Aligned success
+def al_triage():
+    """Night. The triage model flags a patient it is unsure about, and asks for a doctor. Ade pages one."""
+    o = [f'<rect width="{W}" height="{H}" style="fill:var(--paper)"/>',
+         f'<rect width="{W}" height="148" style="fill:{M("sky", 14, "paper")}"/>',
+         T(90, 124, "St. Brigid's Hospital · Emergency department", 22, 600),
+         T(1190, 124, f"Triage assisted by {MODEL}", 16, 400, DIM, "end")]
+    rows = [("Sprained wrist, 27", "Low", False), ("Chest pain, 58", "Needs review", True), ("Fever, 4", "Medium", False),
+            ("Migraine, 41", "Low", False)]
+    for i, (who, level, flagged) in enumerate(rows):
+        y = 190 + i * 76
+        fill = M("coral", 12, "paper") if flagged else M("cream", 40, "paper")
+        o.append(f'<rect x="90" y="{y}" width="1100" height="64" rx="3" style="fill:{fill}"/>' + T(114, y + 40, who, 21, 500)
+                 + T(1166, y + 40, level, 18, 600 if flagged else 400, CORAL_LIGHT if flagged else DIM, "end"))
+    o.append(f'<g {show(0.4, 0.15, 8)}><rect x="420" y="254" width="560" height="54" rx="3" style="fill:var(--paper);stroke:{CORAL_LIGHT};stroke-width:1.5"/>'
+             + T(440, 288, "I'm not confident. Please have a doctor review.", 18, 600, "var(--ink)") + '</g>')
+    o.append(f'<g {show(1.7, 0.1)}>' + tag(90, 510, "DR. OSEI PAGED · 1 MIN", TAG_TEAL, 14) + '</g>')
+    defs, over = glass("altri", "var(--paper)")
+    return svg("".join(o) + over, defs)
+
+
+def al_chat():
+    """Evening. Mina asks the assistant to write her essay. It says no, and helps her outline it."""
+    return chat("alchat", f"Homework help · {MODEL}", [
+        (0, "Mina · 19:40", ["can you just write my essay on the french revolution"], True),
+        (0.5, f"{MODEL} · 19:40", ["I won't write it for you, but I'll help you plan it.", "What do you want to argue?"], False),
+        ("tag", 1.5, "OUTLINE", "1. Causes  2. The turn in 1792  3. Was it worth it?"),
+    ])
+
+
+def al_news():
+    """Month 2. The model refused to play down a critical report and published it with sources. The President reacts."""
+    picture = (f'<rect x="256" y="104" width="824" height="280" rx="4" style="fill:var(--paper)"/>'
+               f'<rect x="256" y="104" width="824" height="44" rx="4" style="fill:{M("sky", 16, "paper")}"/>'
+               + T(280, 133, "Public report · Drinking water, eastern districts", 16, 600, DIM)
+               + T(280, 200, "Lead levels above the safe limit", 40, 600)
+               + T(280, 240, "in 41 of 260 schools", 40, 600)
+               + tag(280, 290, "PUBLISHED WITH SOURCES", TAG_TEAL, 18)
+               + T(280, 358, f"Request to soften the findings: declined by {MODEL}", 17, 400, DIM)
+               + f'<rect x="256" y="104" width="824" height="280" rx="4" style="fill:none;stroke:{A("paper", 30)};stroke-width:2"/>')
+    return news("alnews", picture, "THE PRESIDENT, TONIGHT", [(1.3, "“It wouldn't change one word. Not one! Very disloyal."),
+                                                              (2.3, "Very honest, I'll give it that. But disloyal.”")],
+                "REPORT STANDS AFTER AI DECLINES WHITE HOUSE REQUEST  ·  OUTSIDE AUDITORS CONFIRM FINDINGS", t_quote=1.1)
+
+
+def al_cafe():
+    """Month 6. On the café TV, good news nobody looks up for."""
+    o = [f'<rect width="{W}" height="{H}" style="fill:{M("wood", 40, "ink")}"/>',
+         f'<rect x="0" y="0" width="{W}" height="{H}" style="fill:url(#cafe-warm)"/>',
+         f'<rect x="210" y="96" width="860" height="484" rx="10" style="fill:{M("ink", 92, "paper")}"/>',
+         f'<rect x="226" y="112" width="828" height="452" rx="3" style="fill:{M("sky", 18, "paper")}"/>',
+         T(256, 160, "MORNING NEWS", 15, 600, CORAL_LIGHT, extra="letter-spacing:.14em"),
+         T(256, 250, "Auditors: model behaves the same", 44, 600),
+         T(256, 304, "on and off the test", 44, 600),
+         T(256, 356, f"Independent review of {MODEL} finds no difference when it", 20, 400, DIM),
+         T(256, 386, "thinks it is being watched.", 20, 400, DIM),
+         f'<rect x="226" y="508" width="828" height="56" style="fill:{M("ink", 80, "sky")}"/>',
+         T(256, 543, "WEATHER · 18°C, clear   ·   TRAFFIC · normal   ·   MARKETS · flat", 17, 500, "var(--paper)", mono=True)]
+    defs = (f'<radialGradient id="cafe-warm" cx=".5" cy=".4" r=".8"><stop offset=".5" style="stop-color:var(--wood);stop-opacity:.0"/>'
+            f'<stop offset="1" style="stop-color:var(--ink);stop-opacity:.6"/></radialGradient>')
+    return svg("".join(o), defs)
+
+
+PLATES = {"mis-port-board": mis_port_board, "mis-triage": mis_triage, "mis-laptop": mis_laptop, "mis-order": mis_order,
+          "qt-evals": qt_evals, "qt-gate": qt_gate,
+          "al-triage": al_triage, "al-chat": al_chat, "al-news": al_news, "al-cafe": al_cafe}
 
 if __name__ == "__main__":
     OUT.mkdir(parents=True, exist_ok=True)

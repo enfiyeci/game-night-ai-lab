@@ -129,6 +129,59 @@ def tick(d):
     return first + np.pad(tone(1400, 0.06, 60, 0.2), (int(0.09 * SR), 0))[:n]
 
 
+def steps(count, step):
+    """Someone getting up and leaving: a chair roll, then three footsteps, per person."""
+    def leave(k):
+        out = np.zeros(int(0.5 * SR))
+        roll = lowpass(noise(int(0.18 * SR)), 500) * env(int(0.18 * SR), 0.02, 0.08) * 0.06
+        out[: len(roll)] += roll
+        for j in range(3):
+            f = lowpass(noise(int(0.06 * SR)), 900) * np.exp(-np.linspace(0, 8, int(0.06 * SR))) * 0.12
+            i = int((0.2 + j * 0.1) * SR)
+            out[i:i + len(f)] += f
+        return out
+    return run(leave, count, step)
+
+
+def stamps(count, step):
+    """A rubber stamp, again and again."""
+    def stamp(k):
+        n = int(0.14 * SR)
+        t = t_axis(n)
+        return (lowpass(noise(n), 700) * np.exp(-t * 40) * 0.5 + np.sin(2 * np.pi * 90 * t) * np.exp(-t * 30) * 0.25)
+    return run(stamp, count, step)
+
+
+def pings(count, step):
+    """Soft pings, one per new copy, alternating left and right in a mono mix by pitch."""
+    return run(lambda k: tone([1568, 1760, 2093, 1976][k % 4], 0.35, 9, 0.035), count, step)
+
+
+def flare(d):
+    """The monitors flaring: a rising shimmer."""
+    return sweep(600, 2400, 0.8, 0.04) + sweep(900, 3600, 0.8, 0.02)
+
+
+def pen(d):
+    """A signature: short scratchy strokes."""
+    out = np.zeros(int(0.8 * SR))
+    at = 0.0
+    while at < 0.7:
+        n = int(rng.uniform(0.05, 0.12) * SR)
+        stroke = bandpass(noise(n), 2500, 8000) * env(n, 0.01, 0.02) * 0.05
+        i = int(at * SR)
+        out[i:i + n] += stroke[: len(out) - i]
+        at += rng.uniform(0.08, 0.16)
+    return out
+
+
+def crickets(d):
+    n = int(d * SR)
+    t = t_axis(n)
+    chirp = np.sin(2 * np.pi * 4400 * t) * (np.sin(2 * np.pi * 30 * t) > 0.3) * (np.sin(2 * np.pi * 1.3 * t) > 0)
+    return (chirp * 0.012 + lowpass(noise(n), 300) * 0.03) * env(n, 0.3, 0.3)
+
+
 def sting(d):
     """A news-channel sting: two bright stabs over a low hit."""
     n = int(1.4 * SR)
@@ -269,9 +322,9 @@ def whir(d):
 SOUNDS = {"room": room, "party": party, "tone": high_tone, "chime": chime, "tick": tick, "gulls": gulls, "door": door,
           "beeps": beeps, "hold": hold, "fridge": fridge, "flicker": flicker, "notify": notify, "typing": typing, "city": city,
           "powerdown": powerdown, "roomtone": roomtone, "creak": creak, "hum": hum, "clunk": clunk, "fansdown": fansdown,
-          "wind": wind, "emergency": emergency, "whir": whir, "sting": sting}
-AMBIENT = {"room", "party", "tone", "gulls", "beeps", "city", "roomtone", "wind", "emergency", "fridge"}
-RUNS = {"chimes": chimes, "flaps": flaps}   # [name, at, count, step]
+          "wind": wind, "emergency": emergency, "whir": whir, "sting": sting, "flare": flare, "pen": pen, "crickets": crickets}
+AMBIENT = {"room", "party", "tone", "gulls", "beeps", "city", "roomtone", "wind", "emergency", "fridge", "crickets", "hum"}
+RUNS = {"chimes": chimes, "flaps": flaps, "steps": steps, "stamps": stamps, "pings": pings}   # [name, at, count, step]
 
 
 def drone(d, swell_at):

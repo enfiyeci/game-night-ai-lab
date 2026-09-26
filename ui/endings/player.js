@@ -62,14 +62,32 @@ function chip(x, y, text, at) {
     <text x="${x - w / 2 + 28}" y="${y + 5}" style="font-size:13px;font-weight:900;letter-spacing:.05em;fill:var(--paper)">${esc(text.toUpperCase())}</text></g>`;
 }
 
-function lumenBot(x, y, turnAt) {
+// Lumen, the floating robot. off = [start, end] powers it down (glow, eyes and antenna light out) and back up.
+function lumenBot(x, y, turnAt, off) {
+  const lit = off ? keysAttr([[off[0], { o: 1 }], [off[0] + 0.25, { o: 0 }], [off[1], { o: 0 }], [off[1] + 0.35, { o: 1 }]]) : '';
   return `<g transform="translate(${x},${y})">
     <ellipse cx="0" cy="58" rx="20" ry="7" style="fill:color-mix(in oklab, var(--ink) 30%, transparent)"/>
-    <circle cx="0" cy="0" r="36" style="fill:url(#film-botglow)"/>
+    <circle cx="0" cy="0" r="36" style="fill:url(#film-botglow)" ${lit}/>
     <circle cx="0" cy="0" r="20" style="fill:var(--paper);stroke:var(--sky);stroke-width:4"/>
-    <g ${keysAttr([[turnAt, { x: 5 }], [turnAt + 0.6, { x: -6 }]])}>
-      <rect x="-8" y="-7" width="4" height="7" rx="2" style="fill:var(--ink)"/><rect x="4" y="-7" width="4" height="7" rx="2" style="fill:var(--ink)"/></g>
-    <line x1="0" y1="-20" x2="0" y2="-29" style="stroke:var(--ink);stroke-width:2"/><circle cx="0" cy="-31" r="3.5" style="fill:var(--sky)"/></g>`;
+    <g ${lit}><g ${keysAttr([[turnAt, { x: 5 }], [turnAt + 0.6, { x: -6 }]])}>
+      <rect x="-8" y="-7" width="4" height="7" rx="2" style="fill:var(--ink)"/><rect x="4" y="-7" width="4" height="7" rx="2" style="fill:var(--ink)"/></g></g>
+    <line x1="0" y1="-20" x2="0" y2="-29" style="stroke:var(--ink);stroke-width:2"/><circle cx="0" cy="-31" r="3.5" style="fill:var(--sky)" ${lit}/></g>`;
+}
+
+// A confetti popper fired at (x, y): pieces burst up and out, then drift down, turning.
+function confetti(x, y, at) {
+  const colours = ['var(--coral)', 'var(--teal)', 'var(--sky)', 'var(--wood)', 'var(--cream)'];
+  let out = '';
+  for (let i = 0; i < 28; i += 1) {
+    const a = -Math.PI / 2 + ((i / 27) - 0.5) * 2.2;
+    const r = 70 + ((i * 37) % 60);
+    const [dx, dy] = [Math.cos(a) * r, Math.sin(a) * r];
+    const fall = 90 + ((i * 53) % 70);
+    out += `<rect x="${x - 4}" y="${y - 3}" width="8" height="6" rx="1" style="fill:${colours[i % colours.length]}" ${keysAttr([
+      [at, { o: 0, x: 0, y: 0, r: 0 }], [at + 0.05, { o: 1, x: 0, y: 0, r: 0 }], [at + 0.45, { o: 1, x: dx, y: dy, r: 180 }],
+      [at + 1.6, { o: 0, x: dx * 1.3, y: dy + fall, r: 420 }]])}/>`;
+  }
+  return out;
 }
 
 function officeShot(svgText, anchors, shot) {
@@ -91,13 +109,31 @@ function officeShot(svgText, anchors, shot) {
     Object.entries(heads).filter(([role]) => role !== 'ceo')
       .forEach(([, [x, y]], i) => { fx += chip(x, y - 62, shot.chips.text, shot.chips.from + i * shot.chips.step); });
   }
+  const robotAt = shot.robot && (shot.robot.from ? [heads[shot.robot.from][0] + 70, heads[shot.robot.from][1] - 20] : [heads.ceo[0] + 96, heads.ceo[1] - 6]);
   for (const b of shot.bubbles ?? []) {
-    const [x, y] = heads[b.who] ?? [720, 450];
+    const [x, y] = b.who === 'lumen' && robotAt ? [robotAt[0], robotAt[1] - 12] : heads[b.who] ?? [720, 450];
     fx += speech(x, y, b.text, b.at, b.to);
   }
+  if (shot.confetti) {
+    const [x, y] = heads[shot.confetti.who];
+    fx += confetti(x, y - 50, shot.confetti.at);
+  }
+  if (shot.leave) {
+    // each person who leaves takes their desk light with them: a soft shadow settles where they sat
+    shot.leave.order.forEach((role, i) => {
+      const [x, y] = heads[role];
+      const at = shot.leave.from + i * shot.leave.step;
+      fx += `<ellipse cx="${x}" cy="${y + 34}" rx="92" ry="60" style="fill:var(--ink);filter:blur(14px)" ${keysAttr([[at, { o: 0 }], [at + 0.5, { o: 0.45 }]])}/>`;
+    });
+  }
   if (shot.robot) {
-    const [x, y] = heads.ceo;
-    fx += lumenBot(x + 96, y - 6, shot.robot.turn ?? 0);
+    // Lumen hovers beside the CEO desk, or drifts from one desk (from) to another (to) during move: [start, end]
+    const { from, to, move } = shot.robot;
+    const [x, y] = from ? heads[from] : heads.ceo;
+    const [bx, by] = from ? [x + 70, y - 20] : [x + 96, y - 6];
+    const [tx, ty] = to ? heads[to] : [bx, by];
+    const drift = move ? keysAttr([[move[0], { x: 0, y: 0 }], [move[1], { x: tx - bx, y: ty - 8 - by }]]) : '';
+    fx += `<g ${drift}>${lumenBot(bx, by, shot.robot.turn ?? 0, shot.robot.off)}</g>`;
   }
   const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
   g.innerHTML = fx;
@@ -195,7 +231,7 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
     shotsHost.append(wrapEl);
     const frame = shot.kind === 'office' ? OFFICE : PLATE;
     return {
-      wrapEl, svg, frame,
+      wrapEl, svg, frame, leave: shot.kind === 'office' ? shot.leave : undefined,
       cam: resolveCam(shot.cam, frame, anchors?.heads),
       keyed: [...svg.querySelectorAll('[data-k]')].map((e) => [e, JSON.parse(e.dataset.k)]),
       typed: [...svg.querySelectorAll('[data-type]')].map((e) => [e, Number(e.dataset.type), e.dataset.text ?? e.textContent]),
@@ -221,6 +257,29 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
     }
   }
 
+  // The office art does not label its people by role, so each seated figure (body and hands are separate groups) is
+  // matched to the nearest head anchor, measured in the SVG's own coordinates once it is in the page.
+  function keyLeavers(node) {
+    node.keyedLeave = true;
+    const heads = anchors.heads;
+    const toSvg = node.svg.getScreenCTM()?.inverse();
+    if (!toSvg) return;
+    for (const g of node.svg.querySelectorAll('.sitter')) {
+      const box = g.getBBox();
+      const m = toSvg.multiply(g.getScreenCTM());
+      const c = new DOMPoint(box.x + box.width / 2, box.y + box.height / 2).matrixTransform(m);
+      let best = null;
+      for (const [role, [hx, hy]] of Object.entries(heads)) {
+        const d = Math.hypot(c.x - hx, c.y - (hy + 40));
+        if (d < 130 && (!best || d < best.d)) best = { role, d };
+      }
+      const i = best ? node.leave.order.indexOf(best.role) : -1;
+      if (i < 0) continue;
+      const at = node.leave.from + i * node.leave.step;
+      node.keyed.push([g, [[at, { o: 1 }], [at + 0.4, { o: 0 }]]]);
+    }
+  }
+
   function render(t) {
     const still = reducedMotion();
     const { shot, local } = shotAt(timeline, t);
@@ -242,6 +301,7 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
     $('.film-fade').style.opacity = still ? 0 : Math.min(1, fadeIn + fadeOut);
     const node = nodes[shot.index];
     if (node?.video) syncClip(node.video, local, shot.dur, still);
+    if (node?.leave && !node.keyedLeave) keyLeavers(node);
     if (shot.kind === 'title') {
       const k = (a, b) => (still ? (local >= a ? 1 : 0) : Math.min(1, Math.max(0, (local - a) / (b - a))));
       if (node?.dim) node.dim.style.opacity = 0.6 * k(0, 1.2);

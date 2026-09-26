@@ -1,13 +1,16 @@
-"""Blender world shot for the misalignment film: the skyline blackout, grounded rather than cartoon.
+"""Blender world shot shared by the ending films: the skyline, a procedural city at dusk, grounded rather than cartoon.
 
-A procedural city at dusk. Windows and street lights go out in a wave that moves left to right, while one rooftop
-LED billboard keeps saying ALL SYSTEMS OPERATIONAL. One continuous take at 24 fps: frames 1-156 are the skyline
-shot (6.5 s), frames 157-324 play behind the title card (7 s) while the last lights on the right go out.
+Variants (variant=<name>):
+  blackout  Catastrophic misalignment. Windows and street lights go out in a wave from left to right, while one rooftop
+            LED billboard keeps saying ALL SYSTEMS OPERATIONAL. Frames 1-156 are the shot (6.5 s); frames 157-324 play
+            behind the title card (7 s) while the last lights on the right go out.
+  warm      Aligned success. Every light stays on; nothing dramatic happens, on purpose. Frames 1-120 are the shot (5 s),
+            frames 121-288 play behind the title card.
 The frame keeps the billboard inside the film's letterbox (the player covers the top and bottom 11% of the picture).
 
-Run: tools/endings/blender/render.sh mis_skyline mis-skyline:1-156 mis-skyline-title:157-324
-     or by hand: Blender -b --factory-startup -P tools/endings/blender/mis_skyline.py -- <out_dir> [still] [scale]
-     'still' renders frames 1, 80, 156 and 300 only; scale (default 1) multiplies the 1920 x 1080 frame.
+Run: tools/endings/blender/render.sh skyline:blackout mis-skyline:1-156 mis-skyline-title:157-324
+     tools/endings/blender/render.sh skyline:warm al-skyline:1-120 al-skyline-title:121-288
+     or by hand: Blender -b --factory-startup -P tools/endings/blender/skyline.py -- <out_dir> [still] variant=<name> [scale=0.5]
 """
 import math
 import random
@@ -18,8 +21,11 @@ import bpy
 argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
 OUT = argv[0] if argv else "/tmp/skyline"
 STILL = len(argv) > 1 and argv[1] == "still"
-SCALE = float(argv[2]) if len(argv) > 2 else 1.0
-FPS, SHOT_END, END = 24, 156, 324
+OPTS = dict(a.split("=", 1) for a in argv[2:] if "=" in a)
+SCALE = float(OPTS.get("scale", 1.0))
+VARIANT = OPTS.get("variant", "blackout")
+FPS = 24
+SHOT_END, END = {"blackout": (156, 324), "warm": (120, 288)}[VARIANT]
 SUN_ROT, SKY_STRENGTH = 90.0, 0.3   # the values the owner saw in the Blender test
 FOG_HEX, FOG_K = "#7A6470", 0.0009
 rng = random.Random(7)
@@ -43,7 +49,8 @@ def node(nt, kind, **inputs):
 
 
 # ---------------------------------------------------------------- the blackout wave, shared by every light
-WAVE = ((10, -440.0), (SHOT_END - 12, -80.0), (END - 40, 320.0))   # (frame, x of the wave front in world metres)
+# (frame, x of the wave front in world metres); lights right of the front stay on. "warm" keeps the front off the map.
+WAVE = ((10, -440.0), (SHOT_END - 12, -80.0), (END - 40, 320.0)) if VARIANT == "blackout" else ((1, -9999.0),)
 
 
 def wave_value(nt):
@@ -237,20 +244,22 @@ for i in range(-14, 6):
 
 # the billboard: an LED sign on the roof, on backup power, never goes dark
 x, y, h, w, d = billboard_host or (-230, 138, 60, 30, 30)
-panel = cube("board", (x, y - d / 2 - 1, h + 21), (46, 1.2, 15), plain("boardframe", "#15171C", 0.6))
-for k in (-14, 14):
-    cube(f"leg{k}", (x + k, y - d / 2 - 1, h + 7), (1.2, 1.2, 14), plain("legs", "#2A2C30"))
-led = plain("led", "#E8FFF8", 0.4, emit="#D8FFF2", strength=6.0)
-bpy.ops.object.text_add(location=(x - 20.5, y - d / 2 - 1.8, h + 22.3), rotation=(math.radians(90), 0, 0))
-t = bpy.context.object
-t.data.body = "ALL SYSTEMS"
-t.data.size = 5.4
-t.data.materials.append(led)
-bpy.ops.object.text_add(location=(x - 20.5, y - d / 2 - 1.8, h + 15.6), rotation=(math.radians(90), 0, 0))
-t2 = bpy.context.object
-t2.data.body = "OPERATIONAL"
-t2.data.size = 5.4
-t2.data.materials.append(plain("led2", "#7FE3C8", 0.4, emit="#6FF0C8", strength=7.0))
+BILLBOARD = VARIANT == "blackout"
+if BILLBOARD:
+    panel = cube("board", (x, y - d / 2 - 1, h + 21), (46, 1.2, 15), plain("boardframe", "#15171C", 0.6))
+    for k in (-14, 14):
+        cube(f"leg{k}", (x + k, y - d / 2 - 1, h + 7), (1.2, 1.2, 14), plain("legs", "#2A2C30"))
+    led = plain("led", "#E8FFF8", 0.4, emit="#D8FFF2", strength=6.0)
+    bpy.ops.object.text_add(location=(x - 20.5, y - d / 2 - 1.8, h + 22.3), rotation=(math.radians(90), 0, 0))
+    t = bpy.context.object
+    t.data.body = "ALL SYSTEMS"
+    t.data.size = 5.4
+    t.data.materials.append(led)
+    bpy.ops.object.text_add(location=(x - 20.5, y - d / 2 - 1.8, h + 15.6), rotation=(math.radians(90), 0, 0))
+    t2 = bpy.context.object
+    t2.data.body = "OPERATIONAL"
+    t2.data.size = 5.4
+    t2.data.materials.append(plain("led2", "#7FE3C8", 0.4, emit="#6FF0C8", strength=7.0))
 
 # ---------------------------------------------------------------- sky, haze, light
 world = scene.world or bpy.data.worlds.new("World")
@@ -308,7 +317,7 @@ except TypeError:
     pass
 scene.view_settings.exposure = 0.4
 
-frames = [1, 80, SHOT_END, 300] if STILL else range(1, END + 1)
+frames = [1, 80, SHOT_END, END - 24] if STILL else range(1, END + 1)
 for f in frames:
     scene.frame_set(f)
     vals = [n.outputs[0].default_value for m in bpy.data.materials if m.node_tree for n in m.node_tree.nodes if n.type == "VALUE"]

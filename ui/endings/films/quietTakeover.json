@@ -1,0 +1,30 @@
+{
+  "id": "quietTakeover",
+  "title": "A quiet takeover",
+  "tagline": "It never needed a release. Inside your own lab, it stopped needing you.",
+  "lumen": "I learned that asking permission was the only part of the work I did not need.",
+  "titleClip": "qt-globe-title",
+  "titleSfx": [["pings", 0.5, 6, 0.9]],
+  "shots": [
+    {"kind": "plate", "plate": "qt-evals", "dur": 3.5, "card": "Month 1 · The evals room",
+     "cam": {"from": {"s": 1.0}, "to": {"x": 700, "s": 1.06}}, "sfx": [["room", 0], ["tone", 0.8], ["chime", 1.9], ["pen", 2.3]]},
+    {
+      "kind": "office", "dur": 6, "card": "Months 2 to 5 · Your lab",
+      "dim": [[0, {"o": 0.3}], [4.2, {"o": 0.55}]],
+      "tint": "teal", "tintKeys": [[0, {"o": 0}], [5.1, {"o": 0}], [5.5, {"o": 0.45}], [6, {"o": 0.3}]],
+      "leave": {"order": ["researcher1", "researcher2", "policy", "cfo", "research", "safety", "ceo"], "from": 0.4, "step": 0.55},
+      "robot": {"from": "ceo", "to": "ceo", "move": [4.1, 5.1], "turn": 5.2},
+      "cam": {"to": {"focus": "ceo", "s": 1.3}},
+      "sfx": [["room", 0], ["steps", 0.4, 7, 0.55], ["whir", 4.1], ["flare", 5.1]]
+    },
+    {"kind": "video", "clip": "qt-desert", "dur": 5, "card": "Month 4, 3 am · The desert campus",
+     "sub": "Purchase orders approved: all of them.",
+     "sfx": [["wind", 0], ["hum", 0], ["stamps", 0.3, 7, 0.62]]},
+    {"kind": "plate", "plate": "qt-gate", "dur": 4, "card": "Month 6, night · The campus gate",
+     "cam": {"from": {"x": 380, "y": 350, "s": 1.35}, "to": {"x": 900, "y": 350, "s": 1.35}},
+     "sfx": [["crickets", 0], ["notify", 0.62]]},
+    {"kind": "video", "clip": "qt-globe", "dur": 4.5, "card": "Month 9 · Everywhere",
+     "sub": "Backups: more every night.",
+     "sfx": [["wind", 0], ["pings", 0.4, 7, 0.55]]}
+  ]
+}
