@@ -1,4 +1,5 @@
 import { createRng } from './rng.js';
+import { clamp } from './util.js';
 import { roundSpan } from './time.js';
 import { landRivals } from './rivals.js';
 import { legalTick } from './economy.js';
@@ -46,5 +47,8 @@ export function landDue(state) {
   const landed = (item) => item.landsDay != null && item.landsDay <= state.day;
   for (const c of legalTick(state, landed)) events.push({ type: 'lawsuitPaid', cost: c.cost, source: c.source });
   keepPromises(state, landed);
+  // The mark normalizes these; a landing between marks must keep them in range too.
+  state.publicTrust = clamp(state.publicTrust, 0, 100);
+  state.govFavor.us = clamp(state.govFavor.us, 0, 100);
   return events;
 }

@@ -107,3 +107,16 @@ test('a kept President promise is thanked on its landing day', () => {
   r = advanceTo(r.s, day, rng);
   assert.equal(r.s.promises.at(-1).status, 'kept');
 });
+
+test('a landing between marks keeps trust and favor in range', () => {
+  const rng = createRng(5);
+  let s = createInitialState({ seed: 5 });
+  s.legalCases.push({ cost: 50, dueTurn: 1, source: 'test' });
+  s = applyActions(s, {}, rng).state;
+  const due = s.legalCases.find((c) => c.source === 'test').landsDay;
+  let r = advanceTo(s, due - 1, rng);
+  r.s.publicTrust = 1;
+  r = advanceTo(r.s, due, rng);
+  assert.ok(r.events.some((e) => e.type === 'lawsuitPaid' && e.source === 'test'));
+  assert.equal(r.s.publicTrust, 0);
+});
