@@ -1,6 +1,6 @@
 # Release flow suggestions (2026-09-26)
 
-Offered to the owner before any mockup. Tags: **decided** (settled; confirm only), **cheap**
+Offered to the owner with a mockup per option (review page, version 2, 2026-09-26). Tags: **decided** (settled; confirm only), **cheap**
 (UI-only, fits the deadline), **costly** (needs a sim change or new systems). The recommended
 option is marked (rec). Sources point at the notes in this folder or at repo files.
 
@@ -17,13 +17,16 @@ option is marked (rec). Sources point at the notes in this folder or at repo fil
 
 ## Suggestions
 
-1. **Price stance switch.** (A, rec) the four stances the sim accepts: Premium, Market, Undercut,
-   Free tier. (B) the plan's three, mapping cheap to undercut and dropping free. Cheap.
+1. **Price stance switch.** (A) four buttons for the stances the sim accepts: Premium, Market,
+   Undercut, Free tier. (B) the plan's three, mapping cheap to undercut and dropping free. (C, rec)
+   a notched vertical slider with the four stances, as spec §6b asks for price and as the recipe
+   screen's sliders look. All cheap.
    Source: `sim/serving.js:13-18`, plan Task 6, `docs/research/training-options/report.md`.
 2. **Make "how sure are you" the dialog's headline decision.** (A, rec) each evaluation card shows
    when the model ships (this turn or next) and what it costs, and the Team panel gives the Head
    of Safety's and CFO's opinions, reusing `opinions(state, screen)` from `ui/logic/compute.js`.
-   (B) plain cards as in the plan. Cheap. Source: eval cards in `sim/data/cards.js:57-61`; no AI
+   (B) plain cards as in the plan. (C) a "how much you'll know" meter (Little, Some, A lot, Most)
+   that fills with stronger checks; combines with A. All cheap. Source: eval cards in `sim/data/cards.js:57-61`; no AI
    tycoon game researched makes ship-now-or-test-more a single release-screen choice
    (`ai-lab-and-tech-games-release.md`); Game Dev Tycoon offers only Release or Cancel.
 3. **Generation "jump" toggle.** (A, rec) drop it; the number is always previous + 1. (B) keep it
@@ -39,10 +42,13 @@ option is marked (rec). Sources point at the notes in this folder or at repo fil
    reveal rests on a search summary only (⚠️).
 5. **Beat badge wording.** (A, rec) "Beats your last flagship on N of 4 benchmarks", hidden on the
    first release, as the plan and `launch.beats` say. (B) "N of 5" as the mockup's placeholder
-   copy reads, which would count the safety score as a capability win. Decided; confirm.
+   copy reads, which would count the safety score as a capability win. (C) a verdict in words
+   ("Better than Kestrel 3", "Mixed", "Worse") with safety in its own small tag. Decided; confirm.
 6. **Say who checked the safety score.** (A, rec) the Jailbreak Gauntlet row carries a small label
    from the evaluation pick: Self-reported (quick checks), Internal evals, Third-party checked,
-   Government tested. The true score still waits for the end-of-run reveal. (B) no label. Cheap.
+   Government tested. The true score still waits for the end-of-run reveal. (B) no label. (C) a
+   striped "could be lower" zone below the shown score, wide after quick checks and narrow after
+   outside checks; it shows uncertainty from the pick, never the real gap. All cheap.
    Source: spec §6f (shown score can be gamed from era 3; an outside eval gate cuts the gaming);
    real launches pair benchmark tables with safety cards and name outside evaluators
    (`ai-lab-and-tech-games-release.md`, Gemini 3 post read via the fetch tool's summary ⚠️).
