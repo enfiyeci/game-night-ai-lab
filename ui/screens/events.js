@@ -167,6 +167,7 @@ export function mountEvents(game, { stage, overlay }) {
     queue = queue.filter((id) => live.has(id));
     const landed = state.pendingEvents
       .filter((pending) => !known.has(pending.id) && hasLanded(pending, state))
+      .filter((pending) => pending.id !== 'ownLine')
       .map(cardView)
       .sort((a, b) => Number(b.crisis) - Number(a.crisis));
     for (const view of landed) {

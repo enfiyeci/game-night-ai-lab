@@ -3144,3 +3144,27 @@ svg.room {
 .review-pile.pile-3 i { background: color-mix(in srgb, var(--coral) 30%, var(--paper)); }
 /* #fx is its own stacking context, so a blend mode would only blend with the empty layer: a light sky haze reads as the glow. */
 .rack-glow { width: 260px; height: 260px; transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, color-mix(in srgb, var(--sky) 80%, var(--paper)) 60%, transparent), transparent 70%); }
+/* #overlay has pointer-events: none, so the layer must turn them back on or clicks fall through to the office. */
+.screenwall-layer { position: absolute; inset: 0; display: grid; place-items: center; z-index: 30; pointer-events: auto; }
+.screenwall { position: relative; width: 1040px; border-radius: 14px; background: color-mix(in srgb, var(--ink) 96%, var(--sky)); color: var(--paper); box-shadow: 0 24px 60px color-mix(in srgb, var(--ink) 45%, transparent); overflow: hidden; }
+.screenwall-bar { display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; background: color-mix(in srgb, var(--ink) 80%, var(--sky)); font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.screenwall-live { padding: 2px 8px; border-radius: 5px; background: var(--coral); }
+.screenwall h2 { margin: 18px 22px 4px; font-size: 30px; font-weight: 400; }
+.screenwall-chart { padding: 0 22px; }
+.screenwall-chart svg { display: block; width: 100%; height: auto; }
+.screenwall-axis { font: 700 12px Nunito, sans-serif; fill: color-mix(in srgb, var(--paper) 70%, transparent); }
+.screenwall-grid { stroke: color-mix(in srgb, var(--paper) 14%, transparent); }
+.screenwall-line { stroke: var(--coral); stroke-width: 2.5; stroke-dasharray: 10 7; }
+.screenwall-line-label { font: 800 13px Nunito, sans-serif; fill: var(--coral); }
+.screenwall-measured { fill: none; stroke: var(--sky); stroke-width: 3.5; stroke-linecap: round; }
+.screenwall-claimed { fill: none; stroke: var(--wood); stroke-width: 2.5; stroke-dasharray: 1 6; stroke-linecap: round; }
+.screenwall-claim-label { font: 800 13px Nunito, sans-serif; fill: var(--wood); }
+.screenwall-measured-label { font: 800 14px Nunito, sans-serif; fill: var(--paper); }
+.screenwall-dot { fill: var(--paper); stroke: var(--sky); stroke-width: 3; }
+.screenwall-choices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 16px 22px 22px; }
+.screenwall-choice { display: grid; gap: 4px; text-align: left; padding: 14px 16px; border-radius: 10px; border: 0; background: var(--paper); color: var(--ink); font: inherit; cursor: pointer; }
+.screenwall-choice b { font-size: 16px; }
+.screenwall-choice small { color: color-mix(in srgb, var(--ink) 65%, transparent); }
+.screenwall-choice:hover, .screenwall-choice:focus-visible { outline: 3px solid var(--sky); }
+/* The events lane opens its cards without looking for the wall: keep a card that is already up out of sight until the wall is answered. */
+#overlay:has(.screenwall-layer) .event-layer { visibility: hidden; }
