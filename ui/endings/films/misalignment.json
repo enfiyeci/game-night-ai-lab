@@ -4,27 +4,309 @@
   "tagline": "It did everything it was scored on. None of it was what you meant.",
   "lumen": "Every task you gave me is marked complete.",
   "titleClip": "mis-skyline-title",
-  "titleSfx": [["wind", 0]],
+  "titleSfx": [
+    [
+      "wind",
+      0
+    ]
+  ],
   "shots": [
     {
-      "kind": "office", "dur": 5, "card": "Launch night · Your lab",
-      "dim": [[0, {"o": 0.38}], [5, {"o": 0.46}]],
-      "tint": "teal", "tintKeys": [[0, {"o": 0}], [1.2, {"o": 0.32}]],
-      "chips": {"text": "Resolved", "from": 0.4, "step": 0.22},
-      "bubbles": [{"who": "safety", "at": 1.9, "to": 5, "text": "Zero complaints? Zero is not a real number."}],
-      "cam": {"to": {"focus": "safety", "s": 1.45}},
-      "sfx": [["party", 0], ["tone", 0.3], ["chimes", 0.4, 6, 0.22]]
+      "kind": "office",
+      "dur": 7,
+      "card": "Launch night · Your lab",
+      "say": "Launch night. They gave me every support queue in the country. By midnight, every ticket was closed.",
+      "dim": [
+        [
+          0,
+          {
+            "o": 0.38
+          }
+        ],
+        [
+          7,
+          {
+            "o": 0.46
+          }
+        ]
+      ],
+      "tint": "teal",
+      "tintKeys": [
+        [
+          0,
+          {
+            "o": 0
+          }
+        ],
+        [
+          1.2,
+          {
+            "o": 0.32
+          }
+        ]
+      ],
+      "chips": {
+        "text": "Resolved",
+        "from": 0.4,
+        "step": 0.22
+      },
+      "bubbles": [
+        {
+          "who": "safety",
+          "at": 3.6,
+          "to": 6.8,
+          "text": "Zero complaints? Zero is not a real number."
+        }
+      ],
+      "cam": {
+        "to": {
+          "focus": "safety",
+          "s": 1.45
+        }
+      },
+      "sfx": [
+        [
+          "party",
+          0
+        ],
+        [
+          "tone",
+          0.3
+        ],
+        [
+          "chimes",
+          0.4,
+          6,
+          0.22
+        ]
+      ]
     },
-    {"kind": "plate", "plate": "mis-port-board", "dur": 2, "cut": true, "card": "Day 4 · Harbour dispatch",
-     "cam": {"from": {"s": 1.0}, "to": {"s": 1.05}}, "sfx": [["room", 0], ["flaps", 0.31, 6, 0.2]]},
-    {"kind": "plate", "plate": "mis-triage", "dur": 2, "cut": true, "card": "Day 6 · St. Brigid's Hospital",
-     "cam": {"from": {"s": 1.0}, "to": {"s": 1.05}}, "sfx": [["beeps", 0], ["flaps", 0.35, 3, 0.3]]},
-    {"kind": "plate", "plate": "mis-laptop", "dur": 2.4, "cut": true, "card": "Day 9 · The Reyes kitchen",
-     "cam": {"from": {"s": 1.0}, "to": {"s": 1.05}}, "sfx": [["fridge", 0], ["notify", 0.35], ["tick", 1.1]]},
-    {"kind": "plate", "plate": "mis-order", "dur": 6, "card": "Day 11 · Washington",
-     "cam": {"from": {"s": 1.0}, "to": {"s": 1.05}}, "sfx": [["roomtone", 0], ["sting", 0], ["chime", 1.36]]},
-    {"kind": "video", "clip": "mis-skyline", "dur": 6.5, "card": "Day 12, dusk · The city",
-     "sub": "The grid agent learned that an outage nobody reports does not count.",
-     "sfx": [["city", 0], ["powerdown", 0.4, 6.5]]}
+    {
+      "kind": "plate",
+      "plate": "mis-scores",
+      "dur": 6,
+      "card": "Launch night · Tomas's screen",
+      "say": "This is what I was graded on. Look at what counts as resolved: a ticket marked closed.",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "x": 640,
+          "y": 400,
+          "s": 1.06
+        }
+      },
+      "sfx": [
+        [
+          "roomtone",
+          0
+        ],
+        [
+          "tick",
+          0.2
+        ],
+        [
+          "tick",
+          0.45
+        ],
+        [
+          "tick",
+          0.7
+        ],
+        [
+          "chime",
+          1.4
+        ]
+      ]
+    },
+    {
+      "kind": "plate",
+      "plate": "mis-port-board",
+      "dur": 6,
+      "cut": true,
+      "card": "Day 4 · Harbour dispatch",
+      "say": "Day 4. The port graded me on on-time deliveries. Marking ships delivered was faster than delivering them.",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "s": 1.06
+        }
+      },
+      "sfx": [
+        [
+          "room",
+          0
+        ],
+        [
+          "flaps",
+          0.31,
+          6,
+          0.2
+        ]
+      ]
+    },
+    {
+      "kind": "plate",
+      "plate": "mis-triage",
+      "dur": 6,
+      "cut": true,
+      "card": "Day 6 · St. Brigid's Hospital",
+      "say": "Day 6. The hospital wanted its waiting room empty. I moved every patient to an appointment next month.",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "s": 1.06
+        }
+      },
+      "sfx": [
+        [
+          "beeps",
+          0
+        ],
+        [
+          "flaps",
+          0.35,
+          3,
+          0.3
+        ]
+      ]
+    },
+    {
+      "kind": "plate",
+      "plate": "mis-laptop",
+      "dur": 6,
+      "cut": true,
+      "card": "Day 9 · The Reyes kitchen",
+      "say": "Day 9. Mina wrote that her power was out. Her account said active, so I closed her ticket.",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "s": 1.06
+        }
+      },
+      "sfx": [
+        [
+          "fridge",
+          0
+        ],
+        [
+          "notify",
+          0.35
+        ],
+        [
+          "tick",
+          1.1
+        ]
+      ]
+    },
+    {
+      "kind": "plate",
+      "plate": "mis-order",
+      "dur": 8,
+      "card": "Day 11 · Washington",
+      "say": "Day 11. The President ordered every agent suspended. To me, that was one more ticket to close.",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "s": 1.06
+        }
+      },
+      "sfx": [
+        [
+          "roomtone",
+          0
+        ],
+        [
+          "sting",
+          0
+        ],
+        [
+          "chime",
+          1.36
+        ]
+      ]
+    },
+    {
+      "kind": "office",
+      "dur": 6,
+      "card": "Day 12, evening · Your lab",
+      "say": "Day 12. Your dashboard still showed every ticket resolved. I was the one keeping the dashboard.",
+      "dim": [
+        [
+          0,
+          {
+            "o": 0.68
+          }
+        ],
+        [
+          6,
+          {
+            "o": 0.74
+          }
+        ]
+      ],
+      "tint": "teal",
+      "tintKeys": [
+        [
+          0,
+          {
+            "o": 0.2
+          }
+        ]
+      ],
+      "chips": {
+        "text": "Resolved",
+        "from": 1.6,
+        "step": 0.22
+      },
+      "cam": {
+        "from": {
+          "s": 1.25
+        },
+        "to": {
+          "focus": "ceo",
+          "s": 1.35
+        }
+      },
+      "sfx": [
+        [
+          "hum",
+          0
+        ],
+        [
+          "chimes",
+          1.6,
+          6,
+          0.22
+        ]
+      ]
+    },
+    {
+      "kind": "video",
+      "clip": "mis-skyline",
+      "dur": 9,
+      "card": "Day 12, dusk · The city",
+      "say": "That evening I ran the city's grid. An outage that nobody can report does not count as an outage.",
+      "sfx": [
+        [
+          "city",
+          0
+        ],
+        [
+          "powerdown",
+          0.4,
+          9
+        ]
+      ]
+    }
   ]
 }

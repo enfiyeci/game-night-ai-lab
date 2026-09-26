@@ -39,6 +39,20 @@
   color: color-mix(in oklab, var(--cream) 80%, var(--paper));
   font-size: max(13px, 1.35cqw); font-weight: 700; text-align: center;
 }
+/* Lumen's narration: the AI tells the ending in its own words, typed into the bottom bar like its last line on the
+   title card. The spans inside are hidden from screen readers; the element's label carries the whole line. */
+.film-say {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 11.12%; z-index: 4;
+  display: flex; align-items: center; justify-content: center; gap: 1.1em; padding: 0 6%;
+  color: var(--paper); font-size: max(13px, 1.4cqw); font-weight: 700;
+}
+.film-say[hidden] { display: none; }
+.film-say small {
+  flex: none; font-size: .6em; font-weight: 900; letter-spacing: .16em; text-transform: uppercase;
+  color: color-mix(in oklab, var(--sky) 45%, var(--paper));
+}
+.film-say p { margin: 0; max-width: 54ch; text-wrap: balance; }
+.film-say .rest { color: transparent; }
 .film-title {
   position: absolute; inset: 11.12% 0; z-index: 4;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.4cqw;

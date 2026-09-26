@@ -14,7 +14,7 @@ Variants (variant=<name>):
   numberone A costly win. Your model's name on every board, the city at full volume (120 frames).
 The frame keeps the billboard inside the film's letterbox (the player covers the top and bottom 11% of the picture).
 
-Run: tools/endings/blender/render.sh skyline:blackout mis-skyline:1-156 mis-skyline-title:157-324
+Run: tools/endings/blender/render.sh skyline:blackout mis-skyline:1-216 mis-skyline-title:217-384
      tools/endings/blender/render.sh skyline:warm al-skyline:1-120 al-skyline-title:121-288
      or by hand: Blender -b --factory-startup -P tools/endings/blender/skyline.py -- <out_dir> [still] variant=<name> [scale=0.5]
 """
@@ -31,7 +31,7 @@ OPTS = dict(a.split("=", 1) for a in argv[2:] if "=" in a)
 SCALE = float(OPTS.get("scale", 1.0))
 VARIANT = OPTS.get("variant", "blackout")
 FPS = 24
-SHOT_END, END = {"blackout": (156, 324), "warm": (120, 288), "billboards": (144, 312), "leftbehind": (144, 144),
+SHOT_END, END = {"blackout": (216, 384), "warm": (120, 288), "billboards": (144, 312), "leftbehind": (144, 144),
                   "cascade": (144, 144), "numberone": (120, 120)}[VARIANT]
 SUN_ROT, SKY_STRENGTH = 90.0, 0.3   # the values the owner saw in the Blender test
 FOG_HEX, FOG_K = "#7A6470", 0.0009

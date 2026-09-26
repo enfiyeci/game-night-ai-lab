@@ -97,10 +97,10 @@ test('every film names a real ending, and every asset it uses exists', () => {
   }
 });
 
-test('films run about 30 seconds (owner, 2026-09-25)', () => {
+test('films run 30 to 60 seconds (owner, 2026-09-25: 30 s cuts, then about 60 s with narration)', () => {
   for (const film of films) {
     const { total } = buildTimeline(film);
-    assert.ok(total >= 25 && total <= 40, `${film.id} runs ${total} s`);
+    assert.ok(total >= 25 && total <= 65, `${film.id} runs ${total} s`);
   }
 });
 

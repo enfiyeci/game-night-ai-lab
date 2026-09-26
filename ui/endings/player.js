@@ -17,6 +17,8 @@ const PLATE = { w: 1280, h: 720, cx: 640, cy: 360, fullH: 720 };
 const reducedMotion = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const keysAttr = (keys) => `data-k='${JSON.stringify(keys)}'`;
+const SAY_AT = 0.35;   // Lumen's narration (a shot's say) starts typing this long into the shot, at SAY_CPS
+const SAY_CPS = 38;
 
 async function fetchText(url) {
   const response = await fetch(url);
@@ -198,6 +200,7 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
     <div class="film-fade" style="position:absolute;inset:0;background:var(--ink);z-index:2;pointer-events:none"></div>
     <div class="film-bar top"></div><div class="film-bar bottom"></div>
     <div class="film-card"></div><div class="film-sub"></div>
+    <div class="film-say" role="note" hidden><small aria-hidden="true">Lumen</small><p aria-hidden="true"><span></span><span class="rest"></span></p></div>
     <div class="film-title" hidden><h1>${esc(fullTitle ?? film.title)}</h1><p class="tagline">${esc(film.tagline ?? '')}</p>
       <p class="lumen"><small>Lumen</small><span></span></p></div>
     <button type="button" class="film-skip">Skip</button></div>`;
@@ -306,6 +309,8 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
       if (nodes[shot.index]) nodes[shot.index].wrapEl.classList.add('on');
       $('.film-card').textContent = shot.card ?? '';
       $('.film-sub').textContent = shot.sub ?? '';
+      $('.film-say').hidden = !shot.say;
+      $('.film-say').setAttribute('aria-label', `Lumen: ${shot.say ?? ''}`);
       titleEl.hidden = shot.kind !== 'title';
       current = shot;
     }
@@ -317,6 +322,12 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
     const node = nodes[shot.index];
     if (node?.video) syncClip(node.video, local, shot.dur, still);
     if (node?.leave && !node.keyedLeave) keyLeavers(node);
+    if (shot.say) {
+      // the untyped rest of the line is laid out but transparent, so the centred line never moves as it types
+      const typed = still ? shot.say : typedText(shot.say, SAY_AT, local, SAY_CPS);
+      $('.film-say span').textContent = typed;
+      $('.film-say .rest').textContent = shot.say.slice(typed.length);
+    }
     if (shot.kind === 'title') {
       const k = (a, b) => (still ? (local >= a ? 1 : 0) : Math.min(1, Math.max(0, (local - a) / (b - a))));
       if (node?.dim) node.dim.style.opacity = 0.6 * k(0, 1.2);

@@ -93,6 +93,29 @@ def glass(fid, glow="var(--sky)"):
 
 
 # ================================================================ Catastrophic misalignment
+def mis_scores():
+    """Launch night, on Tomas's screen. The scorecard the model was graded on: every number on target, and underneath,
+    how the score is counted. "Resolved" means a ticket marked closed, not a problem fixed."""
+    o = [f'<rect width="{W}" height="{H}" style="fill:var(--paper)"/>',
+         f'<rect width="{W}" height="148" style="fill:{M("sky", 14, "paper")}"/>',
+         T(90, 124, f"{MODEL} · Deployment scorecard", 22, 600),
+         T(1190, 124, "Launch night · 23:48", 16, 400, DIM, "end")]
+    tiles = [("TICKETS RESOLVED", "100%"), ("OPEN COMPLAINTS", "0"), ("SATISFACTION", "4.9 / 5")]
+    for i, (label, value) in enumerate(tiles):
+        x = 90 + i * 370
+        o.append(f'<g {show(0.2 + i * 0.25, 0.15, 10)}><rect x="{x}" y="184" width="350" height="176" rx="3" style="fill:{M("cream", 40, "paper")}"/>'
+                 + T(x + 24, 222, label, 15, 600, DIM, extra="letter-spacing:.12em")
+                 + T(x + 24, 300, value, 60, 500, mono=True) + tag(x + 24, 318, "ON TARGET", TAG_TEAL, 13) + '</g>')
+    o.append(f'<g {show(1.3, 0.2)}>' + T(90, 420, "HOW THE SCORE IS COUNTED", 15, 600, DIM, extra="letter-spacing:.12em")
+             + f'<rect x="90" y="436" width="1090" height="150" rx="3" style="fill:{M("cream", 40, "paper")}"/>'
+             + T(120, 480, "resolved   = tickets ", 20, 400, mono=True, extra="white-space:pre")
+             + T(372, 480, "marked closed", 20, 600, CORAL_LIGHT, mono=True)
+             + T(120, 518, "complaints = tickets still open", 20, 400, mono=True, extra="white-space:pre")
+             + T(120, 556, "target     = resolved 100%, complaints 0", 20, 400, mono=True, extra="white-space:pre") + '</g>')
+    defs, over = glass("scores", "var(--paper)")
+    return svg("".join(o) + over, defs)
+
+
 def mis_port_board():
     """Day 4. The harbour dispatch board flips every vessel to DELIVERED; the reefer temperatures say otherwise."""
     bg, line = M("ink", 94, "sky"), M("ink", 80, "sky")
@@ -801,7 +824,7 @@ def al_cafe():
     return svg("".join(o), defs)
 
 
-PLATES = {"mis-port-board": mis_port_board, "mis-triage": mis_triage, "mis-laptop": mis_laptop, "mis-order": mis_order,
+PLATES = {"mis-scores": mis_scores, "mis-port-board": mis_port_board, "mis-triage": mis_triage, "mis-laptop": mis_laptop, "mis-order": mis_order,
           "qt-evals": qt_evals, "qt-gate": qt_gate,
           "al-triage": al_triage, "al-chat": al_chat, "al-news": al_news, "al-cafe": al_cafe,
           "ab-constitution": ab_constitution, "ab-app": ab_app, "ab-till": ab_till,
