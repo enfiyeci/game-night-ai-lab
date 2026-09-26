@@ -116,6 +116,8 @@ function isControversyReaction(reaction) {
   if (!CONTROVERSY_HANDLES.includes(reaction.handle)) return false;
   // Marketwire has both a positive leaderboard headline and a critical underperformance report in the source pool.
   if (reaction.handle === '@marketwire') return reaction.text.includes('underwhelms; analysts question the spend');
+  // Benchwatch also praises an earned version jump (release flow pick 3C); only its doubts are controversies.
+  if (reaction.handle === '@benchwatch') return !reaction.text.includes('is earned');
   return true;
 }
 

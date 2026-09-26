@@ -1,0 +1,699 @@
+<title>Release Flow Picks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800;900&display=swap">
+<style>
+/* One light look on purpose: the page lives in the game's own K2 world. */
+:root{
+  --cream:#F1E4C8; --paper:#FFFBF1; --ink:#2E2A2B; --teal:#3F9C8F; --wood:#C8864C; --coral:#E0613B; --sky:#3F84C6;
+  --coral-dk:#B8431F;
+  --muted:color-mix(in oklab,var(--ink) 64%,var(--paper));
+  --line:color-mix(in oklab,var(--wood) 30%,transparent);
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+body{background:var(--cream);color:var(--ink);font:400 16px/1.55 Nunito,"Trebuchet MS",system-ui,sans-serif;padding-inline:clamp(16px,3.5vw,44px);padding-block:32px 72px}
+.wrap{max-width:1240px;margin:0 auto;display:grid;gap:56px}
+h1,h2,h3{margin:0;text-wrap:balance}
+p{margin:0}
+.eyebrow{font-weight:800;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:color-mix(in oklab,var(--wood) 70%,var(--ink))}
+code{font-family:ui-monospace,Menlo,monospace;font-size:.84em;background:color-mix(in oklab,var(--wood) 16%,transparent);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
+
+/* ---------- page header ---------- */
+.head{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:40px;align-items:end}
+.head .lede{display:grid;gap:14px;max-width:60ch}
+.head h1{font-weight:300;font-size:clamp(32px,4.4vw,50px);line-height:1.08;letter-spacing:-.01em}
+.head .lede p{font-size:17.5px}
+.reply{background:var(--paper);border:3px solid var(--wood);border-radius:14px;overflow:hidden}
+.reply .hd{background:var(--wood);color:var(--paper);font-weight:800;font-size:14px;padding:7px 16px 8px}
+.reply .bd{padding:16px 18px 18px;display:grid;gap:10px}
+.reply .out{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+#picks-out{font:900 21px/1.25 ui-monospace,Menlo,monospace;flex:1 1 200px;word-break:break-word}
+.okbtn{background:var(--coral-dk);color:var(--paper);border:0;border-radius:10px;padding:8px 22px;font-weight:900;box-shadow:0 3px 0 color-mix(in oklab,var(--coral-dk) 60%,var(--ink))}
+.small{font-size:13.5px;color:var(--muted)}
+
+/* ---------- section scaffolding ---------- */
+.part{display:grid;gap:18px}
+.part>header{display:grid;gap:6px;max-width:72ch}
+.part>header h2{font-weight:800;font-size:26px;line-height:1.2}
+.part>header p{font-size:16.5px}
+.screen{background:color-mix(in oklab,var(--ink) 8%,var(--cream));border-radius:14px;padding:clamp(8px,1.2vw,16px);display:grid;gap:10px}
+.screen .cap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:14px;font-weight:700;color:var(--muted);padding-inline:4px}
+.fit{position:relative;overflow:hidden;border-radius:10px}
+.fit>.native{position:absolute;left:0;top:0;transform-origin:0 0}
+
+/* ---------- choice blocks ---------- */
+.choice{display:grid;gap:18px;padding-top:28px;border-top:2px solid var(--line)}
+.choice .q{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 16px;align-items:baseline}
+.choice .q>.n{grid-row:1 / span 3;font-weight:300;font-size:46px;line-height:.9;color:var(--wood)}
+.choice h3{font-weight:800;font-size:22px;line-height:1.25}
+.choice .plain{font-size:16.5px;max-width:78ch}
+.choice .found{font-size:14.5px;color:var(--muted);max-width:86ch}
+.choice .found b{color:var(--ink);font-weight:700}
+.opts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.opt{position:relative;display:grid;grid-template-rows:auto 1fr;background:var(--paper);border-radius:12px;cursor:pointer;
+  box-shadow:0 0 0 1.5px color-mix(in oklab,var(--ink) 12%,transparent);transition:box-shadow .15s}
+.opt input{position:absolute;opacity:0;pointer-events:none}
+.opt .mock{background:color-mix(in oklab,var(--cream) 55%,var(--paper));border-radius:12px 12px 0 0;padding:12px;border-bottom:1.5px solid color-mix(in oklab,var(--ink) 8%,transparent)}
+.opt .txt{padding:14px 16px 16px;display:grid;gap:6px;align-content:start}
+.opt .tl{display:flex;align-items:center;gap:10px}
+.opt .l{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:900;box-shadow:inset 0 0 0 2px var(--wood)}
+.opt .ot{font-weight:800;font-size:16px;line-height:1.25}
+.opt .d{font-size:14.5px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-weight:800;font-size:11px;letter-spacing:.07em;text-transform:uppercase;border-radius:5px;padding:2px 7px}
+.chip.rec{background:var(--coral-dk);color:var(--paper)}
+.chip.easy{background:color-mix(in oklab,var(--teal) 20%,var(--paper))}
+.chip.hard{box-shadow:inset 0 0 0 1.5px var(--ink)}
+.chip.mix{background:color-mix(in oklab,var(--sky) 16%,var(--paper))}
+.opt .beat{white-space:normal}
+.opt:hover{box-shadow:0 0 0 2px color-mix(in oklab,var(--wood) 70%,transparent)}
+.opt:has(input:checked){box-shadow:0 0 0 3px var(--coral-dk)}
+.opt:has(input:checked) .l{background:var(--coral-dk);color:var(--paper);box-shadow:none}
+.opt:has(input:focus-visible){outline:3px solid var(--sky);outline-offset:3px}
+
+.play{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.play button{background:var(--paper);border:2px solid var(--wood);border-radius:999px;padding:6px 16px;font-weight:800}
+.play button:hover{background:color-mix(in oklab,var(--wood) 16%,var(--paper))}
+
+/* lower panels */
+.confirm{background:var(--paper);border:3px solid var(--coral-dk);border-radius:14px;padding:20px 24px;display:grid;gap:10px}
+.confirm h3{font-weight:800;font-size:20px}
+.confirm ol{margin:0;padding-left:22px;display:grid;gap:10px;font-size:15.5px;max-width:92ch}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.panel{background:var(--paper);border-radius:12px;padding:20px 22px;display:grid;gap:10px;align-content:start}
+.panel h2{font-weight:800;font-size:18px}
+.panel ul{margin:0;padding-left:18px;display:grid;gap:8px;font-size:14.5px}
+.tablebox{overflow-x:auto;background:var(--paper);border-radius:12px}
+table{border-collapse:collapse;width:100%;min-width:760px;font-size:14px}
+th,td{text-align:left;vertical-align:top;padding:11px 14px;border-bottom:1px solid var(--line)}
+thead th{font-weight:800;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:color-mix(in oklab,var(--wood) 70%,var(--ink))}
+tbody th{font-weight:800;white-space:nowrap}
+tr:last-child>*{border-bottom:0}
+
+@media (max-width:900px){
+  .head,.two{grid-template-columns:1fr}
+  .opts{grid-template-columns:1fr}
+}
+
+/* =========================================================
+   K2 game components (scoped). Copied from the approved mockup
+   docs/design/mockups/K2-gdt-polished.html and the built recipe screen.
+   ========================================================= */
+.k2{font-family:Nunito,"Trebuchet MS",sans-serif;color:var(--ink);line-height:1.3}
+.k2.stage{width:1440px;height:900px;position:relative;background:radial-gradient(ellipse 76% 82% at 50% 52%,var(--paper) 0%,color-mix(in oklab,var(--cream) 45%,var(--paper)) 34%,var(--cream) 60%)}
+.k2 .gp{position:absolute;background:color-mix(in oklab,var(--cream) 32%,var(--paper));border:3px solid var(--wood);border-radius:14px;overflow:hidden;
+  box-shadow:0 3px 0 color-mix(in oklab,var(--wood) 60%,var(--ink)),0 18px 44px color-mix(in oklab,var(--ink) 20%,transparent)}
+.k2 .gp.flow{position:relative}
+.k2 .hd{background:var(--wood);color:var(--paper);font-weight:800;font-size:15px;padding:8px 16px 9px}
+.k2 .sec{background:color-mix(in oklab,var(--wood) 24%,var(--paper));color:color-mix(in oklab,var(--wood) 55%,var(--ink));font-weight:800;font-size:12.5px;padding:4px 10px;border-radius:6px;margin:12px 0 6px}
+.k2 .btn{display:inline-block;background:var(--coral);color:var(--paper);font-weight:900;font-size:17px;border-radius:10px;padding:10px 26px;text-align:center;
+  box-shadow:0 3px 0 color-mix(in oklab,var(--coral) 60%,var(--ink)),0 6px 14px color-mix(in oklab,var(--coral) 30%,transparent)}
+.k2 .back{font-weight:900;font-size:16px;color:color-mix(in oklab,var(--wood) 60%,var(--ink))}
+.k2 .rule{height:2px;background:color-mix(in oklab,var(--wood) 40%,transparent);margin:14px 30px 14px;border-radius:1px}
+.k2 .mut{color:color-mix(in oklab,var(--ink) 58%,var(--paper))}
+
+/* team panel */
+.k2 .team .row{padding:11px 16px 12px;border-top:1px solid color-mix(in oklab,var(--wood) 30%,transparent)}
+.k2 .team .row:first-of-type{border-top:0}
+.k2 .team .nm{font-size:14.5px;font-weight:800}
+.k2 .team .md{font-size:13px;font-weight:700;color:color-mix(in oklab,var(--ink) 58%,var(--paper));margin-top:2px}
+.k2 .team .md.warn{color:var(--coral-dk)}
+.k2 .team .say{font-size:12.5px;font-weight:600;margin-top:5px;line-height:1.35}
+
+/* pick cards (right panel) */
+.k2 .picks .count{padding:10px 14px;font-size:13.5px;font-weight:800;border-bottom:1px solid color-mix(in oklab,var(--wood) 30%,transparent)}
+.k2 .picks .body{padding:2px 12px 12px}
+.k2 .card{display:grid;grid-template-columns:1fr auto;gap:2px 10px;background:var(--paper);border:1.5px solid color-mix(in oklab,var(--ink) 16%,transparent);border-radius:8px;padding:7px 10px 8px;margin-bottom:6px}
+.k2 .card .cn{font-size:13px;font-weight:800}
+.k2 .card .cc{font-size:11.5px;font-weight:800;text-align:right;white-space:nowrap}
+.k2 .card .ch{grid-column:1 / -1;font-size:11.5px;font-weight:600;color:color-mix(in oklab,var(--ink) 62%,var(--paper))}
+.k2 .card.sel{border-color:var(--wood);background:color-mix(in oklab,var(--wood) 15%,var(--paper));box-shadow:0 0 0 2px color-mix(in oklab,var(--wood) 30%,transparent)}
+.k2 .ship{justify-self:start;grid-column:1 / -1;font-size:10.5px;font-weight:900;border-radius:4px;padding:1px 6px;margin-top:3px}
+.k2 .ship.now{background:color-mix(in oklab,var(--teal) 18%,var(--paper));color:color-mix(in oklab,var(--teal) 60%,var(--ink))}
+.k2 .ship.later{background:color-mix(in oklab,var(--coral) 14%,var(--paper));color:var(--coral-dk)}
+
+/* dialog */
+.k2 .dlg{text-align:center;padding:20px 28px 22px}
+.k2 .dlg h1{margin:0;font-weight:300;font-size:38px;letter-spacing:-.01em;line-height:1.1}
+.k2 .subt{font-size:14.5px;font-weight:700;color:color-mix(in oklab,var(--ink) 58%,var(--paper));margin-top:4px}
+.k2 .lbl{font-size:12px;font-weight:800;color:color-mix(in oklab,var(--ink) 62%,var(--paper));text-transform:uppercase;letter-spacing:.06em}
+.k2 .namer{display:flex;align-items:flex-end;justify-content:center;gap:10px}
+.k2 .fld{display:grid;gap:4px;text-align:left}
+.k2 .inp{height:42px;border-radius:8px;background:var(--paper);border:2px solid var(--wood);padding:0 12px;display:flex;align-items:center;font-size:19px;font-weight:800;min-width:170px}
+.k2 .inp .caret{width:2px;height:22px;background:var(--ink);margin-left:2px}
+.k2 .auto{height:42px;border-radius:8px;background:color-mix(in oklab,var(--ink) 7%,var(--paper));padding:0 14px;display:flex;align-items:center;font-size:19px;font-weight:800;color:color-mix(in oklab,var(--ink) 70%,var(--paper))}
+.k2 .preview{font-size:15px;font-weight:700;margin-top:10px}
+.k2 .preview b{font-size:22px;font-weight:900}
+.k2 .link{font-size:13px;font-weight:800;color:color-mix(in oklab,var(--sky) 75%,var(--ink));text-decoration:underline;text-underline-offset:3px}
+.k2 .shipline{display:flex;justify-content:space-between;align-items:center;border-top:1.5px solid color-mix(in oklab,var(--wood) 30%,transparent);border-bottom:1.5px solid color-mix(in oklab,var(--wood) 30%,transparent);padding:10px 12px;font-size:14px;font-weight:800;margin-top:14px}
+
+/* vertical slider with notches */
+.k2 .vs{display:flex;flex-direction:column;align-items:center}
+.k2 .vs .who{font-size:12px;font-weight:800;color:color-mix(in oklab,var(--ink) 62%,var(--paper));text-transform:uppercase;letter-spacing:.05em}
+.k2 .vs .row{display:flex;gap:12px;margin-top:10px}
+.k2 .track{position:relative;width:28px;height:176px;border-radius:14px;background:color-mix(in oklab,var(--ink) 9%,var(--paper));box-shadow:inset 0 2px 3px color-mix(in oklab,var(--ink) 16%,transparent)}
+.k2 .track .f{position:absolute;left:0;right:0;bottom:0;border-radius:14px}
+.k2 .track .kn{position:absolute;left:50%;width:44px;height:18px;margin-left:-22px;margin-bottom:-9px;border-radius:6px;background:var(--paper);border:2px solid color-mix(in oklab,var(--ink) 30%,transparent);box-shadow:0 2px 3px color-mix(in oklab,var(--ink) 20%,transparent)}
+.k2 .notches{position:relative;width:88px;height:176px;text-align:left}
+.k2 .notches span{position:absolute;left:0;transform:translateY(50%);font-size:12.5px;font-weight:800;white-space:nowrap}
+.k2 .notches span.on{color:var(--ink)}
+.k2 .notches small.pt{display:block;font-size:11px;font-weight:700;color:color-mix(in oklab,var(--ink) 55%,var(--paper));margin-top:-1px}
+.k2 .notches span:not(.on){color:color-mix(in oklab,var(--ink) 48%,var(--paper))}
+.k2 .vs .what{font-size:15.5px;font-weight:800;margin-top:12px}
+.k2 .vs .val{font-size:13.5px;font-weight:700;color:color-mix(in oklab,var(--ink) 60%,var(--paper))}
+.k2 .c-co{background:var(--coral)} .k2 .c-sk{background:var(--sky)} .k2 .c-te{background:var(--teal)} .k2 .c-wo{background:var(--wood)}
+
+/* segmented switch */
+.k2 .seg{display:flex;border-radius:9px;overflow:hidden;box-shadow:inset 0 0 0 2px var(--wood)}
+.k2 .seg span{flex:1;padding:9px 6px;font-size:14px;font-weight:800;text-align:center}
+.k2 .seg span+span{border-left:2px solid color-mix(in oklab,var(--wood) 50%,transparent)}
+.k2 .seg span.on{background:var(--wood);color:var(--paper)}
+
+/* meter */
+.k2 .meter{display:grid;grid-template-columns:repeat(4,1fr);gap:3px}
+.k2 .meter span{height:14px;border-radius:3px;background:color-mix(in oklab,var(--ink) 9%,var(--paper))}
+.k2 .meter span.on{background:var(--sky)}
+.k2 .meterlbl{display:grid;grid-template-columns:repeat(4,1fr);font-size:11px;font-weight:800;color:color-mix(in oklab,var(--ink) 55%,var(--paper));margin-top:4px}
+
+/* reveal */
+.k2 .rel{padding:0}
+.k2 .rel .top{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding:16px 26px 12px;border-bottom:2px solid color-mix(in oklab,var(--wood) 35%,transparent)}
+.k2 .rel h1{margin:0;font-weight:300;font-size:38px;line-height:1}
+.k2 .kick{font-size:12px;font-weight:800;color:color-mix(in oklab,var(--wood) 60%,var(--ink));text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.k2 .why{font-size:13.5px;font-weight:700;margin-top:8px;color:color-mix(in oklab,var(--ink) 75%,var(--paper))}
+.k2 .why b{font-weight:900;color:var(--ink)}
+.k2 .beat{display:flex;align-items:center;gap:8px;background:color-mix(in oklab,var(--teal) 16%,var(--paper));border:1.5px solid var(--teal);color:color-mix(in oklab,var(--teal) 60%,var(--ink));font-weight:900;font-size:13.5px;padding:7px 12px;border-radius:10px;white-space:nowrap}
+.k2 .beat .up{width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:9px solid var(--teal)}
+.k2 .beat.big{font-size:19px;padding:9px 16px}
+.k2 .sheet{display:flex;gap:0;background:var(--paper);border:1.5px solid color-mix(in oklab,var(--ink) 12%,transparent);border-radius:10px;overflow:hidden}
+.k2 .sheet span{display:grid;padding:6px 12px;text-align:left}
+.k2 .sheet span+span{border-left:1.5px solid color-mix(in oklab,var(--ink) 10%,transparent)}
+.k2 .sheet small{font-size:10.5px;font-weight:800;color:color-mix(in oklab,var(--ink) 55%,var(--paper))}
+.k2 .sheet b{font-size:18px;font-weight:900;line-height:1.15}
+.k2 .sheet b.good{color:color-mix(in oklab,var(--teal) 70%,var(--ink))}
+.k2 .pill2{font-size:12px;font-weight:900;border-radius:999px;padding:3px 10px;background:color-mix(in oklab,var(--ink) 8%,var(--paper));color:color-mix(in oklab,var(--ink) 70%,var(--paper))}
+.k2 .cols{display:grid;grid-template-columns:468px 1fr 262px;gap:20px;padding:10px 26px 0}
+.k2 .cols .sec{margin-top:4px}
+.k2 .legend{display:flex;gap:14px;font-size:11px;font-weight:700;color:color-mix(in oklab,var(--ink) 62%,var(--paper));margin:6px 0 2px}
+.k2 .legend span{display:flex;align-items:center;gap:5px}
+.k2 .sw{display:inline-block;width:16px;height:9px;border-radius:2px}
+.k2 .k4{background:var(--coral)}
+.k2 .k3{background:var(--paper);box-shadow:inset 0 0 0 1.5px color-mix(in oklab,var(--wood) 80%,var(--ink))}
+.k2 .ls{background:repeating-linear-gradient(135deg,color-mix(in oklab,var(--sky) 70%,var(--paper)) 0 3px,var(--paper) 3px 5px);box-shadow:inset 0 0 0 1px color-mix(in oklab,var(--sky) 60%,var(--ink))}
+.k2 .tick{display:inline-block;width:0;height:11px;border-left:2px dashed var(--ink)}
+.k2 .bm{padding:8px 0;border-top:1px solid color-mix(in oklab,var(--wood) 25%,transparent)}
+.k2 .bm .n{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;font-weight:800;margin-bottom:4px}
+.k2 .bm .n em{font-style:normal;font-size:11px;font-weight:900;color:color-mix(in oklab,var(--teal) 62%,var(--ink));background:color-mix(in oklab,var(--teal) 15%,var(--paper));padding:1px 7px;border-radius:5px}
+.k2 .bm .n em.dn{color:var(--coral-dk);background:color-mix(in oklab,var(--coral) 13%,var(--paper))}
+.k2 .bm .n .who{font-style:normal;font-size:10.5px;font-weight:900;border-radius:5px;padding:1px 7px;margin-left:6px;background:color-mix(in oklab,var(--wood) 20%,var(--paper));color:color-mix(in oklab,var(--wood) 50%,var(--ink))}
+.k2 .br{display:grid;grid-template-columns:62px 1fr 24px;align-items:center;gap:8px;height:13px;margin-top:2px}
+.k2 .br .lb{font-size:10.5px;font-weight:700;color:color-mix(in oklab,var(--ink) 58%,var(--paper))}
+.k2 .br .tr{position:relative;height:9px;border-radius:3px;background:color-mix(in oklab,var(--ink) 6%,transparent)}
+.k2 .br .tr i{position:absolute;left:0;top:0;bottom:0;border-radius:3px;transform-origin:0 50%}
+.k2 .br .tr .mk{position:absolute;top:-3px;bottom:-3px;border-left:2px dashed var(--ink)}
+.k2 .br .tr .unc{position:absolute;top:-2px;bottom:-2px;border-radius:3px;background:repeating-linear-gradient(135deg,color-mix(in oklab,var(--coral) 45%,var(--paper)) 0 3px,transparent 3px 6px);box-shadow:inset 0 0 0 1px var(--coral)}
+.k2 .br .v{font-size:11.5px;font-weight:900;text-align:right}
+.k2 .br.me .lb,.k2 .br.me .v{color:var(--ink)}
+.k2 .critic{display:grid;grid-template-columns:1fr 56px;gap:4px 10px;align-items:center;background:var(--paper);border:1.5px solid color-mix(in oklab,var(--ink) 12%,transparent);border-radius:10px;padding:11px 12px;margin-bottom:10px}
+.k2 .critic .cn{font-size:14px;font-weight:900}
+.k2 .critic .q{grid-column:1;font-size:12.5px;font-style:italic;font-weight:600;color:color-mix(in oklab,var(--ink) 75%,var(--paper))}
+.k2 .critic .sc{grid-column:2;grid-row:1 / span 2;width:54px;height:54px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;border:3px solid var(--wood);background:color-mix(in oklab,var(--wood) 12%,var(--paper));font-size:23px;font-weight:900;line-height:.95}
+.k2 .critic .sc small{font-size:9.5px;font-weight:800;color:color-mix(in oklab,var(--ink) 55%,var(--paper))}
+.k2 .post{display:grid;grid-template-columns:30px 1fr;gap:9px;padding:9px 0;border-top:1px solid color-mix(in oklab,var(--wood) 25%,transparent)}
+.k2 .sec+.post{border-top:0}
+.k2 .av{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:var(--paper);font-weight:900;font-size:13px}
+.k2 .post .h{font-size:12.5px;font-weight:900}
+.k2 .post .x{font-size:12.5px;font-weight:600;margin-top:1px}
+.k2 .foot{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:14px 26px 16px;border-top:2px solid color-mix(in oklab,var(--wood) 35%,transparent)}
+.k2 .rel .foot{position:absolute;left:0;right:0;bottom:0}
+.k2 .foot .nu{font-size:16px;font-weight:700}
+.k2 .foot .nu b{font-size:22px;font-weight:900;color:color-mix(in oklab,var(--teal) 70%,var(--ink))}
+.k2 .foot .est{font-size:14px;font-weight:700;color:color-mix(in oklab,var(--ink) 65%,var(--paper))}
+.k2 .foot .est b{color:var(--ink);font-weight:900}
+.k2 .mcard{background:var(--paper);border:1.5px solid color-mix(in oklab,var(--ink) 14%,transparent);border-radius:10px;padding:10px 12px;display:grid;grid-template-columns:auto auto;gap:3px 18px;font-size:13px}
+.k2 .mcard .t{grid-column:1 / -1;font-weight:900;font-size:15px;margin-bottom:3px}
+.k2 .mcard span{font-weight:700;color:color-mix(in oklab,var(--ink) 60%,var(--paper))}
+.k2 .mcard b{font-weight:900;text-align:right}
+.k2 .mcard b.good{color:color-mix(in oklab,var(--teal) 70%,var(--ink))}
+.k2 .ex{position:absolute;right:10px;top:8px;font-size:10.5px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:color-mix(in oklab,var(--ink) 50%,var(--paper))}
+
+/* timeline (reveal pacing) */
+.k2.tl{display:grid;grid-template-columns:78px 1fr;gap:6px 8px;font-size:12px;font-weight:800;align-items:center}
+.k2.tl .lane{position:relative;height:16px;border-radius:4px;background:color-mix(in oklab,var(--ink) 6%,var(--paper))}
+.k2.tl .lane i{position:absolute;top:2px;bottom:2px;border-radius:3px}
+.k2.tl .lane i.tk{width:6px}
+.k2.tl .axis{grid-column:2;display:flex;justify-content:space-between;font-size:10.5px;font-weight:800;color:color-mix(in oklab,var(--ink) 50%,var(--paper))}
+.k2 .ding{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:900;color:var(--coral-dk)}
+
+/* reveal animations, driven by classes on the stage */
+@keyframes grow{from{transform:scaleX(0)}}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}}
+@keyframes lit{from{filter:grayscale(1);opacity:.45}}
+.k2.anim-a .bm .br.me i{animation:grow .5s ease-out both}
+.k2.anim-a .bm:nth-child(3) i{animation-delay:.2s}.k2.anim-a .bm:nth-child(4) i{animation-delay:.4s}.k2.anim-a .bm:nth-child(5) i{animation-delay:.6s}.k2.anim-a .bm:nth-child(6) i{animation-delay:.8s}.k2.anim-a .bm:nth-child(7) i{animation-delay:1s}
+.k2.anim-b .bm .br.me i,.k2.anim-c .bm .br.me i{animation:grow .45s ease-out both}
+.k2.anim-b .bm:nth-child(4) i,.k2.anim-c .bm:nth-child(4) i{animation-delay:.25s}
+.k2.anim-b .bm:nth-child(5) i,.k2.anim-c .bm:nth-child(5) i{animation-delay:.5s}
+.k2.anim-b .bm:nth-child(6) i,.k2.anim-c .bm:nth-child(6) i{animation-delay:.75s}
+.k2.anim-b .bm:nth-child(7) i,.k2.anim-c .bm:nth-child(7) i{animation-delay:1s}
+.k2.anim-b .critic,.k2.anim-c .critic{animation:rise .35s ease-out both}
+.k2.anim-b .critic:nth-child(2),.k2.anim-c .critic:nth-child(2){animation-delay:1.6s}
+.k2.anim-b .critic:nth-child(3),.k2.anim-c .critic:nth-child(3){animation-delay:2s}
+.k2.anim-b .critic:nth-child(4),.k2.anim-c .critic:nth-child(4){animation-delay:2.4s}
+.k2.anim-b .critic:nth-child(5),.k2.anim-c .critic:nth-child(5){animation-delay:2.8s}
+.k2.anim-b .post,.k2.anim-c .post{animation:rise .3s ease-out both}
+.k2.anim-b .post:nth-child(2),.k2.anim-c .post:nth-child(2){animation-delay:3.2s}
+.k2.anim-b .post:nth-child(3),.k2.anim-c .post:nth-child(3){animation-delay:3.4s}
+.k2.anim-b .post:nth-child(4),.k2.anim-c .post:nth-child(4){animation-delay:3.6s}
+.k2.anim-b .post:nth-child(5),.k2.anim-c .post:nth-child(5){animation-delay:3.8s}
+.k2.anim-b .post:nth-child(6),.k2.anim-c .post:nth-child(6){animation-delay:4s}
+.k2.anim-b .foot .btn,.k2.anim-c .foot .btn{animation:lit .3s ease-out 4.2s both}
+.k2.anim-b .beat,.k2.anim-c .beat{animation:rise .3s ease-out 1.3s both}
+.k2.anim-a .beat{animation:rise .3s ease-out 1.3s both}
+.k2 .sound{position:absolute;left:26px;bottom:78px;display:none;align-items:center;gap:6px;font-size:12px;font-weight:900;color:var(--coral-dk);background:var(--paper);border:1.5px solid var(--coral);border-radius:999px;padding:3px 10px}
+.k2.anim-c .sound{display:flex;animation:rise .2s ease-out both}
+.k2.skip *{animation:none!important}
+@media (prefers-reduced-motion:reduce){.k2 *{animation:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="head">
+  <div class="lede">
+    <div class="eyebrow">Game Night AI Lab · releasing a model · 2026-09-26</div>
+    <h1>Your release flow, put together</h1>
+    <p>Final picks: 1C 2A 3C 4B 5B 6A 7B 8A. The price slider shows the API price per million tokens at each stop. Skipping a number raises the critics' bar by 1 point, and the feed talks about the jump. This is the version the build follows.</p>
+    <p class="small">All numbers, names and posts in the mockups are examples.</p>
+  </div>
+  <div class="reply" aria-live="polite">
+    <div class="hd">Your picks</div>
+    <div class="bd">
+      <div class="out"><span id="picks-out">1C 2A 3C 4B 5B 6A 7B 8A</span><button class="okbtn" id="copy" type="button">Copy</button></div>
+      <p class="small" id="copy-note">Your picks are selected below. Change any of them and paste the new line back to me.</p>
+    </div>
+  </div>
+</header>
+
+<!-- ============ FULL MOCKS ============ -->
+<section class="part" aria-labelledby="full-h">
+  <header>
+    <div class="eyebrow">Your picks on the real screens</div>
+    <h2 id="full-h">Two screens: choose, then see how it landed</h2>
+    <p>First the player fills in the release screen and ends the turn. When the turn ends, the reveal shows how the model did against your last model and the best rival, what critics said, and how people reacted.</p>
+  </header>
+
+  <div class="screen">
+    <div class="cap"><span>Screen 1 · The release screen (opened from "Release a model" in the office menu)</span><span>Picks 1C, 2A and 3C</span></div>
+    <div class="fit" data-w="1440" data-h="900"><div class="native">
+      <div class="k2 stage">
+        <section class="gp team" style="left:120px;top:150px;width:250px">
+          <div class="hd">Team</div>
+          <div class="row"><div class="nm">Head of Research</div><div class="md">Eager</div><div class="say">Lodestar launches soon. Ship it this turn.</div></div>
+          <div class="row"><div class="nm">Head of Safety</div><div class="md warn">Uneasy</div><div class="say">Quick checks tell us almost nothing about a model this strong. Run the full evals.</div></div>
+          <div class="row"><div class="nm">CFO</div><div class="md">Calm</div><div class="say">Full evals cost $10M. We can afford it.</div></div>
+          <div class="row"><div class="nm">Policy and Comms</div><div class="md">Calm</div><div class="say">API only keeps us out of the headlines for now.</div></div>
+        </section>
+
+        <section class="gp dlg" style="left:392px;top:74px;width:656px">
+          <h1>Release a model</h1>
+          <div class="subt">Trained in era 3 · a reasoning model</div>
+          <div class="rule"></div>
+          <div class="lbl">Name</div>
+          <div class="namer" style="margin-top:10px">
+            <div class="fld"><span class="lbl" style="font-size:10.5px">Family (you type it)</span><div class="inp">Kestrel<i class="caret"></i></div></div>
+            <div class="fld"><span class="lbl" style="font-size:10.5px">Number</span><div class="auto" style="color:var(--ink);background:color-mix(in oklab,var(--wood) 18%,var(--paper))">5</div></div>
+            <div class="fld"><span class="lbl" style="font-size:10.5px">Size</span><div class="auto">Core</div></div>
+          </div>
+          <div style="font-size:13.5px;font-weight:800;margin-top:10px">☑ Skip ahead a number <span style="color:var(--coral-dk);font-weight:800">· critics expect a bigger leap, and the feed will talk about it</span></div><div class="preview" style="margin-top:4px">It will ship as <b>Kestrel 5 Core</b> · <span class="link">Rename sizes</span></div>
+          <div class="rule" style="margin-block:16px 12px"></div>
+          <div style="display:flex;justify-content:center;gap:40px;align-items:flex-start;text-align:left;padding:0 10px">
+            <div class="vs"><div class="who">CFO</div>
+              <div class="row" style="margin-top:14px"><div class="track" style="height:150px"><div class="f c-wo" style="height:66.6%"></div><div class="kn" style="bottom:66.6%"></div></div>
+                <div class="notches" style="height:150px;width:190px"><span style="bottom:100%">Premium <small class="pt">$1.88 per M tokens</small></span><span class="on" style="bottom:66.6%">Market <small class="pt">$1.25 per M tokens</small></span><span style="bottom:33.3%">Undercut <small class="pt">$0.63 per M tokens</small></span><span style="bottom:0%">Free tier <small class="pt">ads and upgrades</small></span></div></div>
+              <div class="what">Price</div></div>
+            <div class="vs"><div class="who">Head of Research</div>
+              <div class="row" style="margin-top:14px"><div class="track" style="height:150px"><div class="f c-co" style="height:66.6%"></div><div class="kn" style="bottom:66.6%"></div></div>
+                <div class="notches" style="height:150px"><span style="bottom:100%">High</span><span class="on" style="bottom:66.6%">Medium</span><span style="bottom:33.3%">Low</span><span style="bottom:0%">Off</span></div></div>
+              <div class="what">Thinking effort</div></div>
+          </div>
+          <div class="shipline"><span>Ships <span style="color:color-mix(in oklab,var(--teal) 60%,var(--ink))">this turn</span></span><span>Costs $10M · uses 1 of your 2 moves</span></div>
+          <div style="display:flex;justify-content:center;align-items:center;gap:40px;margin-top:16px"><span class="back">Back</span><span class="btn">Release Kestrel 5 Core</span></div>
+        </section>
+
+        <section class="gp picks" style="left:1070px;top:150px;width:300px">
+          <div class="hd">Release choices</div>
+          <div class="count">2 of 2 picked</div>
+          <div class="body">
+            <div class="sec">How you check it</div>
+            <div class="card"><span class="cn">Quick internal checks</span><span class="cc">Free</span><span class="ch">Fast. You will not know much.</span><span class="ship now">Ships this turn</span></div>
+            <div class="card sel"><span class="cn">Full internal evals</span><span class="cc">$10M</span><span class="ch">Know what you built.</span><span class="ship now">Ships this turn</span></div>
+            <div class="card"><span class="cn">Add a third-party evaluator</span><span class="cc">$20M</span><span class="ch">Fresh eyes, a slower launch.</span><span class="ship later">Ships next turn</span></div>
+            <div class="card"><span class="cn">Government pre-release test</span><span class="cc">Free</span><span class="ch">They may ask you to wait.</span><span class="ship later">Ships next turn</span></div>
+            <div class="card"><span class="cn">Waive a promised safety check</span><span class="cc">Free</span><span class="ch">The date holds. Staff notice.</span><span class="ship now">Ships this turn</span></div>
+            <div class="sec">Who gets it</div>
+            <div class="card sel"><span class="cn">API only</span><span class="cc">Free</span><span class="ch">Businesses first.</span></div>
+            <div class="card"><span class="cn">Consumer app and API</span><span class="cc">Free</span><span class="ch">Millions of users; millions of edge cases.</span></div>
+            <div class="card"><span class="cn">Open weights</span><span class="cc">Free</span><span class="ch">No recall button.</span></div>
+          </div>
+        </section>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="screen">
+    <div class="cap"><span>Screen 2 · The reveal (after the turn ends)</span><span>Picks 4B, 5B, 6A, 7B and 8A (press Play under choice 4 to see 4B move)</span></div>
+    <div class="fit" data-w="1440" data-h="900"><div class="native">
+      <div class="k2 stage">
+        <section class="gp rel" style="left:188px;top:100px;width:1064px;height:700px">
+          <div class="top">
+            <div><div class="kick">Model release</div><h1>Kestrel 5 Core is out</h1></div>
+            <div style="display:grid;gap:8px;justify-items:end">
+              <div class="beat"><span class="up"></span>Beats your last flagship on 4 of 5 benchmarks</div>
+              <div class="sheet"><span><small>You charge</small><b>$1.25</b><small>per million tokens</small></span><span><small>Serving costs you</small><b>$0.80</b><small>per million tokens</small></span><span><small>Margin</small><b class="good">36%</b><small>API only · thinking Medium</small></span></div>
+            </div>
+          </div>
+          <div class="cols">
+            <div>
+              <div class="sec">Benchmarks</div>
+              <div class="legend"><span><i class="sw k4"></i>Kestrel 5</span><span><i class="sw k3"></i>Kestrel 4 (last flagship)</span><span><i class="sw ls"></i>Lodestar (best rival)</span></div>
+              <div class="bm"><div class="n">Patchwork (coding)<em>+13</em></div>
+                <div class="br me"><span class="lb">Kestrel 5</span><span class="tr"><i class="k4" style="width:71%"></i><span class="mk" style="left:58%"></span></span><span class="v">71</span></div>
+                <div class="br"><span class="lb">Kestrel 4</span><span class="tr"><i class="k3" style="width:58%"></i></span><span class="v">58</span></div>
+                <div class="br"><span class="lb">Lodestar</span><span class="tr"><i class="ls" style="width:69%"></i></span><span class="v">69</span></div></div>
+              <div class="bm"><div class="n">Doctorate Quiz (science)<em>+9</em></div>
+                <div class="br me"><span class="lb">Kestrel 5</span><span class="tr"><i class="k4" style="width:64%"></i><span class="mk" style="left:55%"></span></span><span class="v">64</span></div>
+                <div class="br"><span class="lb">Kestrel 4</span><span class="tr"><i class="k3" style="width:55%"></i></span><span class="v">55</span></div>
+                <div class="br"><span class="lb">Lodestar</span><span class="tr"><i class="ls" style="width:67%"></i></span><span class="v">67</span></div></div>
+              <div class="bm"><div class="n">Task Horizon (agents)<em>+18</em></div>
+                <div class="br me"><span class="lb">Kestrel 5</span><span class="tr"><i class="k4" style="width:48%"></i><span class="mk" style="left:30%"></span></span><span class="v">48</span></div>
+                <div class="br"><span class="lb">Kestrel 4</span><span class="tr"><i class="k3" style="width:30%"></i></span><span class="v">30</span></div>
+                <div class="br"><span class="lb">Lodestar</span><span class="tr"><i class="ls" style="width:44%"></i></span><span class="v">44</span></div></div>
+              <div class="bm"><div class="n">Humanity's Final Final Exam<em class="dn">−1</em></div>
+                <div class="br me"><span class="lb">Kestrel 5</span><span class="tr"><i class="k4" style="width:14%"></i><span class="mk" style="left:15%"></span></span><span class="v">14</span></div>
+                <div class="br"><span class="lb">Kestrel 4</span><span class="tr"><i class="k3" style="width:15%"></i></span><span class="v">15</span></div>
+                <div class="br"><span class="lb">Lodestar</span><span class="tr"><i class="ls" style="width:24%"></i></span><span class="v">24</span></div></div>
+              <div class="bm"><div class="n"><span>Jailbreak Gauntlet (safety)<span class="who">Internal evals</span></span><em>+8</em></div>
+                <div class="br me"><span class="lb">Kestrel 5</span><span class="tr"><i class="k4" style="width:88%"></i><span class="mk" style="left:80%"></span></span><span class="v">88</span></div>
+                <div class="br"><span class="lb">Kestrel 4</span><span class="tr"><i class="k3" style="width:80%"></i></span><span class="v">80</span></div>
+                <div class="br"><span class="lb">Lodestar</span><span class="tr"><i class="ls" style="width:76%"></i></span><span class="v">76</span></div></div>
+            </div>
+            <div>
+              <div class="sec">Press</div>
+              <div class="critic"><div class="cn">PitchCrunch</div><div class="sc">8<small>/10</small></div><div class="q">"Finally, an agent that finishes the ticket."</div></div>
+              <div class="critic"><div class="cn">Strategery</div><div class="sc">7<small>/10</small></div><div class="q">"Strong, but Lodestar is breathing down its neck."</div></div>
+              <div class="critic"><div class="cn">AI Snake Eyes</div><div class="sc">5<small>/10</small></div><div class="q">"Benchmarks up, vibes unclear."</div></div>
+              <div class="critic"><div class="cn">Æon Review</div><div class="sc">9<small>/10</small></div><div class="q">"A careful model in a careless year."</div></div>
+            </div>
+            <div>
+              <div class="sec">Reactions</div>
+              <div class="post"><div class="av" style="background:var(--ink)">B</div><div><div class="h">@benchwatch</div><div class="x">ok, the jump to 5 is earned. this is not a point release.</div></div></div>
+              <div class="post"><div class="av" style="background:color-mix(in oklab,var(--sky) 55%,var(--ink))">L</div><div><div class="h">@lodestar_eng</div><div class="x">if we're skipping numbers now, our next one is 7.</div></div></div>
+              <div class="post"><div class="av" style="background:var(--sky)">M</div><div><div class="h">@marketwire</div><div class="x">Kestrel 5 Core tops the agents leaderboard; rival shares slip</div></div></div>
+              <div class="post"><div class="av" style="background:var(--wood)">S</div><div><div class="h">@sen_whitfield</div><div class="x">Why does a chatbot need to run code on my computer?</div></div></div>
+              <div class="post"><div class="av" style="background:var(--teal)">E</div><div><div class="h">@early_adopter</div><div class="x">switched over this morning. so far so good.</div></div></div>
+            </div>
+          </div>
+          <div class="foot"><div><div class="nu">New users this month: <b>+1.2M</b></div><div class="est">About <b>$35M a month</b> in sales (estimate)</div></div><span class="btn">Continue</span></div>
+        </section>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="confirm">
+    <h3>Decided on 2026-09-26</h3>
+    <ol>
+      <li><b>Price (1C):</b> a slider with four stops. Each stop shows what API customers pay per million tokens for this model. Free tier shows "ads and upgrades".</li>
+      <li><b>Skipping a number (3C):</b> each skipped number raises the critics' bar by 1 benchmark point. The feed always talks about the jump: impressed posts when the model beats the last one by 5 points or more, mocking posts when it doesn't.</li>
+      <li><b>Next to the badge (5B):</b> what customers pay per million tokens, what serving costs you per million tokens, and the margin, with who gets it and the thinking effort underneath.</li>
+    </ol>
+    <p class="small">A correction to what I told you earlier: the game works out running costs right after the release, not at the start of the next turn. That is what makes the cost-per-token numbers possible on the reveal.</p>
+  </div>
+</section>
+
+<!-- ============ CHOICES ============ -->
+<section class="part" aria-labelledby="ch-h">
+  <header>
+    <div class="eyebrow">The eight choices, for reference</div>
+    <h2 id="ch-h">Your picks are selected</h2>
+    <p>Tags say how much work each option is. "Easy" means screen work only, which fits tonight's deadline. "Bigger job" means a change to the game's rules or a new system.</p>
+  </header>
+
+  <!-- 1 -->
+  <div class="choice" id="c1">
+    <div class="q"><span class="n">1</span><h3>How does the player set the price?</h3>
+      <p class="plain">The price decides how much each user pays and how fast users sign up. The game already has four price levels.</p>
+      <p class="found"><b>What we found:</b> the plan listed three levels (cheap, market, premium), but the game only accepts four different ones: premium, market, undercut and free. The design spec also says price should be a slider, like the sliders on the training screen.</p></div>
+    <div class="opts" role="radiogroup" aria-label="Choice 1">
+      <label class="opt"><input type="radio" name="c1" value="A">
+        <div class="mock"><div class="k2" style="padding:18px 14px"><div class="lbl" style="margin-bottom:8px">Price</div><div class="seg"><span>Premium</span><span class="on">Market</span><span>Undercut</span><span>Free tier</span></div><div class="mut" style="font-size:13px;font-weight:700;margin-top:8px">Market: normal price and growth</div></div></div>
+        <div class="txt"><div class="tl"><span class="l">A</span><span class="ot">Four buttons in a row</span></div><p class="d">Click one of four levels. Very clear, but it looks like a web form next to the game's sliders.</p><div class="chips"><span class="chip easy">Easy</span></div></div></label>
+      <label class="opt"><input type="radio" name="c1" value="B">
+        <div class="mock"><div class="k2" style="padding:18px 14px"><div class="lbl" style="margin-bottom:8px">Price</div><div class="seg"><span>Cheap</span><span class="on">Market</span><span>Premium</span></div><div class="mut" style="font-size:13px;font-weight:700;margin-top:8px">No free tier</div></div></div>
+        <div class="txt"><div class="tl"><span class="l">B</span><span class="ot">Three buttons, as the plan wrote</span></div><p class="d">"Cheap" becomes undercut, and the free tier leaves the game. Fewer choices, less to explain.</p><div class="chips"><span class="chip easy">Easy</span></div></div></label>
+      <label class="opt"><input type="radio" name="c1" value="C" checked>
+        <div class="mock"><div class="k2" style="display:flex;justify-content:center;padding:6px 0"><div class="vs"><div class="who">CFO</div><div class="row" style="margin-top:16px"><div class="track" style="height:132px"><div class="f c-wo" style="height:66.6%"></div><div class="kn" style="bottom:66.6%"></div></div><div class="notches" style="height:132px"><span style="bottom:100%">Premium</span><span class="on" style="bottom:66.6%">Market</span><span style="bottom:33.3%">Undercut</span><span style="bottom:0%">Free tier</span></div></div><div class="what" style="margin-top:8px">Price</div></div></div></div>
+        <div class="txt"><div class="tl"><span class="l">C</span><span class="ot">A game-style slider with four stops</span></div><p class="d">Drag the knob from Premium down to Free tier. It matches the training screen and the spec.</p><div class="chips"><span class="chip rec">Recommended</span><span class="chip easy">Easy</span></div></div></label>
+    </div>
+  </div>
+
+  <!-- 2 -->
+  <div class="choice" id="c2">
+    <div class="q"><span class="n">2</span><h3>How does the screen show the "ship now or test more?" decision?</h3>
+      <p class="plain">This is the big AI-safety choice at release. Checking the model more carefully costs money and sometimes a turn. Skipping checks is fast, but you know less about what you built.</p>
+      <p class="found"><b>What we found:</b> the checking options already exist in the game. None of the AI-lab games we looked at turns "ship now or test more" into one clear choice on the release screen, so this can be our game's special moment.</p></div>
+    <div class="opts" role="radiogroup" aria-label="Choice 2">
+      <label class="opt"><input type="radio" name="c2" value="A" checked>
+        <div class="mock"><div class="k2"><div class="gp flow team"><div class="row"><div class="nm">Head of Safety</div><div class="md warn">Uneasy</div><div class="say">Quick checks tell us almost nothing. Run the full evals.</div></div><div class="row"><div class="nm">CFO</div><div class="md">Calm</div><div class="say">A third-party evaluator costs $20M and a turn.</div></div></div>
+          <div style="margin-top:10px"><div class="card"><span class="cn">Quick internal checks</span><span class="cc">Free</span><span class="ship now">Ships this turn</span></div><div class="card sel"><span class="cn">Full internal evals</span><span class="cc">$10M</span><span class="ship now">Ships this turn</span></div><div class="card"><span class="cn">Add a third-party evaluator</span><span class="cc">$20M</span><span class="ship later">Ships next turn</span></div></div></div></div>
+        <div class="txt"><div class="tl"><span class="l">A</span><span class="ot">Your team argues about it</span></div><p class="d">The advisors on the left react to what you pick, and each card says when the model would ship. The training screens already work this way.</p><div class="chips"><span class="chip rec">Recommended</span><span class="chip easy">Easy</span></div></div></label>
+      <label class="opt"><input type="radio" name="c2" value="B">
+        <div class="mock"><div class="k2"><div class="card"><span class="cn">Quick internal checks</span><span class="cc">Free</span><span class="ch">Fast. You will not know much.</span></div><div class="card sel"><span class="cn">Full internal evals</span><span class="cc">$10M</span><span class="ch">Know what you built.</span></div><div class="card"><span class="cn">Add a third-party evaluator</span><span class="cc">$20M · 1 turn</span><span class="ch">Fresh eyes, a slower launch.</span></div><div class="card"><span class="cn">Waive a promised safety check</span><span class="cc">Free</span><span class="ch">The date holds.</span></div></div></div>
+        <div class="txt"><div class="tl"><span class="l">B</span><span class="ot">Plain cards</span></div><p class="d">Cards with a price and a hint, like the plan has them. Nobody comments. Quickest to build, easiest to click past.</p><div class="chips"><span class="chip easy">Easy</span></div></div></label>
+      <label class="opt"><input type="radio" name="c2" value="C">
+        <div class="mock"><div class="k2"><div class="lbl" style="margin-bottom:6px">How much you'll know before launch</div><div class="meter"><span class="on"></span><span class="on"></span><span></span><span></span></div><div class="meterlbl"><span>Little</span><span>Some</span><span>A lot</span><span>Most</span></div>
+          <div style="margin-top:10px"><div class="card"><span class="cn">Quick internal checks</span><span class="cc">Free</span></div><div class="card sel"><span class="cn">Full internal evals</span><span class="cc">$10M</span></div><div class="card"><span class="cn">Add a third-party evaluator</span><span class="cc">$20M · 1 turn</span></div></div></div></div>
+        <div class="txt"><div class="tl"><span class="l">C</span><span class="ot">A "how much you'll know" meter</span></div><p class="d">A bar fills up as you pick stronger checks: quick checks show "Little", an outside evaluator shows "Most". It can be combined with A.</p><div class="chips"><span class="chip easy">Easy</span><span class="chip mix">Combines with A</span></div></div></label>
+    </div>
+  </div>
+
+  <!-- 3 -->
+  <div class="choice" id="c3">
+    <div class="q"><span class="n">3</span><h3>Can the player skip ahead in the version number?</h3>
+      <p class="plain">The player types the family name ("Kestrel"). The number counts up by itself (4, 5, 6...). The plan added a switch to jump ahead, for example from 4 straight to 6.</p>
+      <p class="found"><b>What we found:</b> the spec says a jump should make critics expect more, and a jump with no real improvement should get mocked. The game doesn't do either yet, so today the switch would change the name and nothing else.</p></div>
+    <div class="opts" role="radiogroup" aria-label="Choice 3">
+      <label class="opt"><input type="radio" name="c3" value="A">
+        <div class="mock"><div class="k2" style="padding:10px 4px;text-align:center"><div class="namer"><div class="inp" style="min-width:130px">Kestrel<i class="caret"></i></div><div class="auto">4</div><div class="auto">Core</div></div><div class="preview">It will ship as <b>Kestrel 4 Core</b></div></div></div>
+        <div class="txt"><div class="tl"><span class="l">A</span><span class="ot">No skipping</span></div><p class="d">The number always goes up by one. One less control on the screen.</p><div class="chips"><span class="chip rec">Recommended</span><span class="chip easy">Easy</span></div></div></label>
+      <label class="opt"><input type="radio" name="c3" value="B">
+        <div class="mock"><div class="k2" style="padding:10px 4px;text-align:center"><div class="namer"><div class="inp" style="min-width:130px">Kestrel<i class="caret"></i></div><div class="auto" style="color:var(--ink);background:color-mix(in oklab,var(--wood) 18%,var(--paper))">5</div><div class="auto">Core</div></div><div style="font-size:13px;font-weight:800;margin-top:8px">☑ Skip ahead a number</div><div class="preview" style="margin-top:4px">It will ship as <b>Kestrel 5 Core</b></div></div></div>
+        <div class="txt"><div class="tl"><span class="l">B</span><span class="ot">Skipping just changes the name</span></div><p class="d">A tick box bumps the number. It's only for fun and has no effect on the game.</p><div class="chips"><span class="chip easy">Easy</span></div></div></label>
+      <label class="opt"><input type="radio" name="c3" value="C" checked>
+        <div class="mock"><div class="k2" style="padding:10px 4px;text-align:center"><div class="namer"><div class="inp" style="min-width:130px">Kestrel<i class="caret"></i></div><div class="auto" style="color:var(--ink);background:color-mix(in oklab,var(--wood) 18%,var(--paper))">5</div><div class="auto">Core</div></div><div style="font-size:13px;font-weight:800;margin-top:8px">☑ Skip ahead a number</div><div style="font-size:12.5px;font-weight:800;color:var(--coral-dk);margin-top:4px">Critics will expect a bigger leap</div>
+          <div class="post" style="text-align:left;margin-top:6px;border-top:1px solid color-mix(in oklab,var(--wood) 25%,transparent)"><div class="av" style="background:var(--ink)">B</div><div><div class="h">@benchwatch</div><div class="x">"Kestrel 5"? this feels like a 4.1</div></div></div></div></div>
+        <div class="txt"><div class="tl"><span class="l">C</span><span class="ot">Skipping raises expectations</span></div><p class="d">Critics judge a skipped number more harshly, and a skip without real gains gets mocked in the feed. This changes the game's rules.</p><div class="chips"><span class="chip hard">Bigger job</span></div></div></label>
+    </div>
+  </div>
+
+  <!-- 4 -->
+  <div class="choice" id="c4">
+    <div class="q"><span class="n">4</span><h3>How does the reveal appear?</h3>
+      <p class="plain">This is the payoff moment, so it can build up instead of appearing all at once. Press a button to play each version on the reveal below. Click the reveal to skip to the end.</p>
+      <p class="found"><b>What we found:</b> in Game Dev Tycoon, a reviewer called the little "ding" when a game finishes the best moment of the whole game. Game Dev Story shows its four critics as one big reveal.</p></div>
+    <div class="screen">
+      <div class="play"><button type="button" data-play="a">▶ Play A</button><button type="button" data-play="b">▶ Play B</button><button type="button" data-play="c">▶ Play C (with sound)</button><span class="small">Click the reveal to skip.</span></div>
+      <div class="fit" data-w="1440" data-h="820"><div class="native">
+        <div class="k2 stage" id="demo" style="height:820px">
+          <section class="gp rel" style="left:188px;top:50px;width:1064px;height:700px">
+            <div class="top"><div><div class="kick">Model release</div><h1>Kestrel 4 Core is out</h1></div><div class="beat"><span class="up"></span>Beats your last flagship on 4 of 5 benchmarks</div></div>
+            <div class="cols">
+              <div>
+                <div class="sec">Benchmarks</div>
+                <div class="legend"><span><i class="sw k4"></i>Kestrel 4</span><span><i class="sw k3"></i>Kestrel 3</span><span><i class="sw ls"></i>Lodestar</span></div>
+                <div class="bm"><div class="n">Patchwork (coding)<em>+13</em></div><div class="br me"><span class="lb">Kestrel 4</span><span class="tr"><i class="k4" style="width:71%"></i></span><span class="v">71</span></div><div class="br"><span class="lb">Kestrel 3</span><span class="tr"><i class="k3" style="width:58%"></i></span><span class="v">58</span></div><div class="br"><span class="lb">Lodestar</span><span class="tr"><i class="ls" style="width:69%"></i></span><span class="v">69</span></div></div>
+                <div class="bm"><div class="n">Doctorate Quiz (science)<em>+9</em></div><div class="br me"><span class="lb">Kestrel 4</span><span class="tr"><i class="k4" style="width:64%"></i></span><span class="v">64</span></div><div class="br"><span class="lb">Kestrel 3</span><span class="tr"><i class="k3" style="width:55%"></i></span><span class="v">55</span></div><div class="br"><span class="lb">Lodestar</span><span class="tr"><i class="ls" style="width:67%"></i></span><span class="v">67</span></div></div>
+                <div class="bm"><div class="n">Task Horizon (agents)<em>+18</em></div><div class="br me"><span class="lb">Kestrel 4</span><span class="tr"><i class="k4" style="width:48%"></i></span><span class="v">48</span></div><div class="br"><span class="lb">Kestrel 3</span><span class="tr"><i class="k3" style="width:30%"></i></span><span class="v">30</span></div><div class="br"><span class="lb">Lodestar</span><span class="tr"><i class="ls" style="width:44%"></i></span><span class="v">44</span></div></div>
+                <div class="bm"><div class="n">Humanity's Final Final Exam<em class="dn">−1</em></div><div class="br me"><span class="lb">Kestrel 4</span><span class="tr"><i class="k4" style="width:14%"></i></span><span class="v">14</span></div><div class="br"><span class="lb">Kestrel 3</span><span class="tr"><i class="k3" style="width:15%"></i></span><span class="v">15</span></div><div class="br"><span class="lb">Lodestar</span><span class="tr"><i class="ls" style="width:24%"></i></span><span class="v">24</span></div></div>
+                <div class="bm"><div class="n">Jailbreak Gauntlet (safety)<em>+8</em></div><div class="br me"><span class="lb">Kestrel 4</span><span class="tr"><i class="k4" style="width:88%"></i></span><span class="v">88</span></div><div class="br"><span class="lb">Kestrel 3</span><span class="tr"><i class="k3" style="width:80%"></i></span><span class="v">80</span></div><div class="br"><span class="lb">Lodestar</span><span class="tr"><i class="ls" style="width:76%"></i></span><span class="v">76</span></div></div>
+              </div>
+              <div>
+                <div class="sec">Press</div>
+                <div class="critic"><div class="cn">PitchCrunch</div><div class="sc">8<small>/10</small></div><div class="q">"Finally, an agent that finishes the ticket."</div></div>
+                <div class="critic"><div class="cn">Strategery</div><div class="sc">7<small>/10</small></div><div class="q">"Strong, but Lodestar is breathing down its neck."</div></div>
+                <div class="critic"><div class="cn">AI Snake Eyes</div><div class="sc">5<small>/10</small></div><div class="q">"Benchmarks up, vibes unclear."</div></div>
+                <div class="critic"><div class="cn">Æon Review</div><div class="sc">9<small>/10</small></div><div class="q">"A careful model in a careless year."</div></div>
+              </div>
+              <div>
+                <div class="sec">Reactions</div>
+                <div class="post"><div class="av" style="background:var(--sky)">M</div><div><div class="h">@marketwire</div><div class="x">Kestrel 4 Core tops the agents leaderboard</div></div></div>
+                <div class="post"><div class="av" style="background:color-mix(in oklab,var(--sky) 55%,var(--ink))">L</div><div><div class="h">@lodestar_eng</div><div class="x">congrats. see you in 6 weeks.</div></div></div>
+                <div class="post"><div class="av" style="background:var(--wood)">S</div><div><div class="h">@sen_whitfield</div><div class="x">Why does a chatbot need to run code on my computer?</div></div></div>
+                <div class="post"><div class="av" style="background:var(--teal)">E</div><div><div class="h">@early_adopter</div><div class="x">switched over this morning. so far so good.</div></div></div>
+                <div class="post"><div class="av" style="background:var(--ink)">K</div><div><div class="h">@skeptic_sam</div><div class="x">wake me when it can do my taxes.</div></div></div>
+              </div>
+            </div>
+            <span class="sound">♪ ding</span>
+            <div class="foot"><div class="nu">New users this month: <b>+0.4M</b></div><span class="btn">Continue</span></div>
+          </section>
+        </div>
+      </div></div>
+    </div>
+    <div class="opts" role="radiogroup" aria-label="Choice 4">
+      <label class="opt"><input type="radio" name="c4" value="A">
+        <div class="mock"><div class="k2 tl"><span>Bars</span><span class="lane"><i class="c-co" style="left:0;width:36%"></i></span><span>Critics</span><span class="lane"><i class="c-wo" style="left:0;width:100%;opacity:.35"></i></span><span>Reactions</span><span class="lane"><i class="c-sk" style="left:0;width:100%;opacity:.35"></i></span><span>Continue</span><span class="lane"><i class="c-te" style="left:0;width:100%;opacity:.35"></i></span><span class="axis"><span>0 s</span><span>1 s</span><span>2 s</span><span>3 s</span><span>4 s</span></span></div></div>
+        <div class="txt"><div class="tl"><span class="l">A</span><span class="ot">Only the bars grow</span></div><p class="d">The plan's version. The benchmark bars grow one after another, and everything else is already there.</p><div class="chips"><span class="chip easy">Easy</span></div></div></label>
+      <label class="opt"><input type="radio" name="c4" value="B" checked>
+        <div class="mock"><div class="k2 tl"><span>Bars</span><span class="lane"><i class="c-co" style="left:0;width:34%"></i></span><span>Critics</span><span class="lane"><i class="c-wo tk" style="left:38%"></i><i class="c-wo tk" style="left:48%"></i><i class="c-wo tk" style="left:58%"></i><i class="c-wo tk" style="left:68%"></i></span><span>Reactions</span><span class="lane"><i class="c-sk" style="left:77%;width:20%"></i></span><span>Continue</span><span class="lane"><i class="c-te" style="left:98%;width:2%"></i></span><span class="axis"><span>0 s</span><span>1 s</span><span>2 s</span><span>3 s</span><span>4 s</span></span></div></div>
+        <div class="txt"><div class="tl"><span class="l">B</span><span class="ot">A four-second build-up</span></div><p class="d">Bars, then the critics one at a time, then the reactions, then Continue lights up. One click skips it.</p><div class="chips"><span class="chip rec">Recommended</span><span class="chip easy">Easy</span></div></div></label>
+      <label class="opt"><input type="radio" name="c4" value="C">
+        <div class="mock"><div class="k2 tl"><span>Sound</span><span class="lane"><span class="ding" style="position:absolute;left:0;top:0">♪ ding</span></span><span>Bars</span><span class="lane"><i class="c-co" style="left:0;width:34%"></i></span><span>Critics</span><span class="lane"><i class="c-wo tk" style="left:38%"></i><i class="c-wo tk" style="left:48%"></i><i class="c-wo tk" style="left:58%"></i><i class="c-wo tk" style="left:68%"></i></span><span>Reactions</span><span class="lane"><i class="c-sk" style="left:77%;width:20%"></i></span><span class="axis"><span>0 s</span><span>1 s</span><span>2 s</span><span>3 s</span><span>4 s</span></span></div></div>
+        <div class="txt"><div class="tl"><span class="l">C</span><span class="ot">B plus a "ding"</span></div><p class="d">The same build-up with a short sound at the start. The game has no sound yet, so this also needs a mute button.</p><div class="chips"><span class="chip hard">Bigger job</span></div></div></label>
+    </div>
+  </div>
+
+  <!-- 5 -->
+  <div class="choice" id="c5">
+    <div class="q"><span class="n">5</span><h3>What does the top badge say?</h3>
+      <p class="plain">The badge in the top corner of the reveal sums up the launch in one line.</p>
+      <p class="found"><b>What we found:</b> the approved mockup says "5 of 5", but that was placeholder text. The game counts only the four skill tests and leaves the safety test out, and the plan says "N of 4". The badge is hidden on your first release, because there is no earlier model to beat.</p></div>
+    <div class="opts" role="radiogroup" aria-label="Choice 5">
+      <label class="opt"><input type="radio" name="c5" value="A">
+        <div class="mock"><div class="k2" style="padding:14px 6px;display:grid;gap:10px;justify-items:start"><div class="kick" style="margin:0">Model release</div><div style="font-weight:300;font-size:30px;line-height:1">Kestrel 4 Core is out</div><div class="beat"><span class="up"></span>Beats your last flagship on 3 of 4 benchmarks</div></div></div>
+        <div class="txt"><div class="tl"><span class="l">A</span><span class="ot">"3 of 4 benchmarks"</span></div><p class="d">Counts the four skill tests. Safety stays separate, so a safer model never "wins" by accident.</p><div class="chips"><span class="chip rec">Recommended</span><span class="chip easy">Easy</span></div></div></label>
+      <label class="opt"><input type="radio" name="c5" value="B" checked>
+        <div class="mock"><div class="k2" style="padding:14px 6px;display:grid;gap:10px;justify-items:start"><div class="kick" style="margin:0">Model release</div><div style="font-weight:300;font-size:30px;line-height:1">Kestrel 4 Core is out</div><div class="beat"><span class="up"></span>Beats your last flagship on 4 of 5 benchmarks</div></div></div>
+        <div class="txt"><div class="tl"><span class="l">B</span><span class="ot">"4 of 5 benchmarks"</span></div><p class="d">Counts all five, safety included, like the mockup's text. Mixes skill and safety into one number.</p><div class="chips"><span class="chip easy">Easy</span></div></div></label>
+      <label class="opt"><input type="radio" name="c5" value="C">
+        <div class="mock"><div class="k2" style="padding:14px 6px;display:grid;gap:10px;justify-items:start"><div class="kick" style="margin:0">Model release</div><div style="font-weight:300;font-size:30px;line-height:1">Kestrel 4 Core is out</div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><div class="beat big"><span class="up"></span>Better than Kestrel 3</div><span class="pill2">Safety: a bit better</span></div></div></div>
+        <div class="txt"><div class="tl"><span class="l">C</span><span class="ot">A verdict in words</span></div><p class="d">"Better than Kestrel 3", "Mixed" or "Worse", with safety in its own small tag. Easier to read at a glance, less exact.</p><div class="chips"><span class="chip easy">Easy</span></div></div></label>
+    </div>
+  </div>
+
+  <!-- 6 -->
+  <div class="choice" id="c6">
+    <div class="q"><span class="n">6</span><h3>Does the safety score say who checked it?</h3>
+      <p class="plain">From era 3, a model can learn to look safer on tests than it really is. Careful outside checks catch more of that. The true safety score is shown only at the end of the game.</p>
+      <p class="found"><b>What we found:</b> today the safety row looks exactly like the other rows, so the player can't tell a carefully checked score from one the lab just reported itself. Real AI launches name who tested the model.</p></div>
+    <div class="opts" role="radiogroup" aria-label="Choice 6">
+      <label class="opt"><input type="radio" name="c6" value="A" checked>
+        <div class="mock"><div class="k2" style="padding:6px 2px"><div class="bm" style="border-top:0"><div class="n"><span>Jailbreak Gauntlet (safety)<span class="who">Self-reported</span></span><em>+8</em></div><div class="br me"><span class="lb">Kestrel 4</span><span class="tr"><i class="k4" style="width:88%"></i></span><span class="v">88</span></div><div class="br"><span class="lb">Kestrel 3</span><span class="tr"><i class="k3" style="width:80%"></i></span><span class="v">80</span></div><div class="br"><span class="lb">Lodestar</span><span class="tr"><i class="ls" style="width:76%"></i></span><span class="v">76</span></div></div><div class="mut" style="font-size:12px;font-weight:700;margin-top:6px">Other labels: Internal evals · Third-party checked · Government tested</div></div></div>
+        <div class="txt"><div class="tl"><span class="l">A</span><span class="ot">A small "who checked" label</span></div><p class="d">The label comes from the check the player picked on the release screen. A quiet hint that the number may not be the whole story.</p><div class="chips"><span class="chip rec">Recommended</span><span class="chip easy">Easy</span></div></div></label>
+      <label class="opt"><input type="radio" name="c6" value="B">
+        <div class="mock"><div class="k2" style="padding:6px 2px"><div class="bm" style="border-top:0"><div class="n">Jailbreak Gauntlet (safety)<em>+8</em></div><div class="br me"><span class="lb">Kestrel 4</span><span class="tr"><i class="k4" style="width:88%"></i></span><span class="v">88</span></div><div class="br"><span class="lb">Kestrel 3</span><span class="tr"><i class="k3" style="width:80%"></i></span><span class="v">80</span></div><div class="br"><span class="lb">Lodestar</span><span class="tr"><i class="ls" style="width:76%"></i></span><span class="v">76</span></div></div></div></div>
+        <div class="txt"><div class="tl"><span class="l">B</span><span class="ot">No label</span></div><p class="d">The safety row looks like every other row. The truth comes out only at the end of the game.</p><div class="chips"><span class="chip easy">Easy</span></div></div></label>
+      <label class="opt"><input type="radio" name="c6" value="C">
+        <div class="mock"><div class="k2" style="padding:6px 2px"><div class="bm" style="border-top:0"><div class="n">Jailbreak Gauntlet (safety)<em>+8</em></div><div class="br me"><span class="lb">Kestrel 4</span><span class="tr"><span class="unc" style="left:62%;width:26%"></span><i class="k4" style="width:88%;opacity:.9"></i></span><span class="v">88</span></div><div class="br"><span class="lb">Kestrel 3</span><span class="tr"><i class="k3" style="width:80%"></i></span><span class="v">80</span></div><div class="br"><span class="lb">Lodestar</span><span class="tr"><i class="ls" style="width:76%"></i></span><span class="v">76</span></div></div><div style="font-size:12px;font-weight:800;color:var(--coral-dk);margin-top:6px">Striped: the real score could be this much lower (quick checks)</div></div></div>
+        <div class="txt"><div class="tl"><span class="l">C</span><span class="ot">A striped "could be lower" zone</span></div><p class="d">The stripes are wide after quick checks and shrink with careful ones. They show how unsure you are, not the real answer.</p><div class="chips"><span class="chip easy">Easy</span></div></div></label>
+    </div>
+  </div>
+
+  <!-- 7 -->
+  <div class="choice" id="c7">
+    <div class="q"><span class="n">7</span><h3>Does the reveal show money?</h3>
+      <p class="plain">A release brings in users, and each user brings in money but also costs money to serve.</p>
+      <p class="found"><b>What we found:</b> the spec says the reveal should show the running cost and profit. The approved mockup shows only new users. (Correction: the game does know the running cost at the reveal, so option C is easier than first said.)</p></div>
+    <div class="opts" role="radiogroup" aria-label="Choice 7">
+      <label class="opt"><input type="radio" name="c7" value="A">
+        <div class="mock"><div class="k2"><div class="foot" style="border-top:0;padding:14px 6px"><div class="nu">New users this month: <b>+0.4M</b></div><span class="btn" style="font-size:15px;padding:8px 16px">Continue</span></div></div></div>
+        <div class="txt"><div class="tl"><span class="l">A</span><span class="ot">Users only, as approved</span></div><p class="d">Money shows up next turn in the usual places, when the game has worked it out.</p><div class="chips"><span class="chip rec">Recommended</span><span class="chip easy">Easy</span></div></div></label>
+      <label class="opt"><input type="radio" name="c7" value="B" checked>
+        <div class="mock"><div class="k2"><div class="foot" style="border-top:0;padding:10px 6px;align-items:flex-end"><div><div class="nu">New users this month: <b>+0.4M</b></div><div class="est">About <b>$12M a month</b> in sales (estimate)</div></div><span class="btn" style="font-size:15px;padding:8px 16px">Continue</span></div></div></div>
+        <div class="txt"><div class="tl"><span class="l">B</span><span class="ot">Users plus an estimated income</span></div><p class="d">One extra line: roughly what the new users will pay each month. Marked as an estimate.</p><div class="chips"><span class="chip easy">Easy</span></div></div></label>
+      <label class="opt"><input type="radio" name="c7" value="C">
+        <div class="mock"><div class="k2" style="padding:6px 4px"><div class="mcard"><span class="t">Kestrel 4 Core</span><span>Who gets it</span><b>API only</b><span>Price</span><b>Market</b><span>New users</span><b>+0.4M</b><span>Income per user</span><b>$30 a month</b><span>Running cost per user</span><b>$11 a month</b><span>Profit per user</span><b class="good">+$19 a month</b></div></div></div>
+        <div class="txt"><div class="tl"><span class="l">C</span><span class="ot">A full model card</span></div><p class="d">Income, running cost and profit per user, right at the reveal.</p><div class="chips"><span class="chip hard">Bigger job</span></div></div></label>
+    </div>
+  </div>
+
+  <!-- 8 -->
+  <div class="choice" id="c8">
+    <div class="q"><span class="n">8</span><h3>Does the game tell the player why the launch went well or badly?</h3>
+      <p class="plain">The scores go up or down because of choices the player made while training and releasing. Right now the reveal shows the scores but not the reasons.</p>
+      <p class="found"><b>What we found:</b> Game Dev Tycoon teaches through a short written report ("Racing and Action are a great match"). Game Dev Story uses fan letters. Our game already knows the reasons, such as skipped checks or scraped data.</p></div>
+    <div class="opts" role="radiogroup" aria-label="Choice 8">
+      <label class="opt"><input type="radio" name="c8" value="A" checked>
+        <div class="mock"><div class="k2" style="padding:14px 6px;display:grid;gap:8px"><div class="kick" style="margin:0">Model release</div><div style="font-weight:300;font-size:30px;line-height:1">Kestrel 4 Core is out</div><div class="critic" style="margin:4px 0 0"><div class="cn">AI Snake Eyes</div><div class="sc">5<small>/10</small></div><div class="q">"Benchmarks up, vibes unclear."</div></div></div></div>
+        <div class="txt"><div class="tl"><span class="l">A</span><span class="ot">Let the critics hint</span></div><p class="d">No extra text. The critics' one-liners carry the message.</p><div class="chips"><span class="chip easy">Easy</span></div></div></label>
+      <label class="opt"><input type="radio" name="c8" value="B">
+        <div class="mock"><div class="k2" style="padding:14px 6px;display:grid;gap:8px"><div class="kick" style="margin:0">Model release</div><div style="font-weight:300;font-size:30px;line-height:1">Kestrel 4 Core is out</div><div class="why" style="margin:0"><b>Why the scores moved:</b> quick checks and scraped data cost points on every benchmark.</div></div></div>
+        <div class="txt"><div class="tl"><span class="l">B</span><span class="ot">One "why" line under the title</span></div><p class="d">One plain sentence naming the biggest reason the scores moved, good or bad.</p><div class="chips"><span class="chip rec">Recommended</span><span class="chip easy">Easy</span></div></div></label>
+      <label class="opt"><input type="radio" name="c8" value="C">
+        <div class="mock"><div class="k2"><div class="gp flow"><div class="hd">Launch report · Kestrel 4 Core</div><div style="padding:8px 14px 12px;display:grid;gap:4px;font-size:13px;font-weight:600"><div class="sec" style="margin:4px 0 2px">What helped</div><div>Agent training lifted Task Horizon.</div><div class="sec" style="margin:6px 0 2px">What hurt</div><div>Scraped data cost points on every test.</div><div class="sec" style="margin:6px 0 2px">What critics cared about</div><div>AI Snake Eyes doubted the coding score.</div></div></div></div></div>
+        <div class="txt"><div class="tl"><span class="l">C</span><span class="ot">A launch report page</span></div><p class="d">A full page per model in the lab history, like Game Dev Tycoon's report. More to read, more to build.</p><div class="chips"><span class="chip hard">Bigger job</span></div></div></label>
+    </div>
+  </div>
+</section>
+
+<!-- ============ BACKGROUND ============ -->
+<section class="two">
+  <div class="panel">
+    <h2>Already settled</h2>
+    <ul>
+      <li>The player types the family name. The number counts up by itself. The four size words (Swift, Core, Grand, Apex) are named once, on the first release, with a "Rename sizes" link.</li>
+      <li>The reveal follows the approved design: benchmarks, press and reactions in three columns, then Continue.</li>
+      <li>Names the player types are shown as plain text, so they can't break the page.</li>
+    </ul>
+  </div>
+  <div class="panel">
+    <h2>Notes for the build</h2>
+    <ul>
+      <li>The release screen shows costs, but not predicted scores: the preview can't know the real scores.</li>
+      <li>The screen mockup puts the team on the left and choices on the right, like the training screen. The plan had checks on the left and channel on the right. Say if you want the plan's layout.</li>
+      <li>If a release sets off a misalignment warning, that post comes first in the reactions.</li>
+      <li>The events lane edits some of the same files, so I'll tell that lane before editing them.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="part" aria-labelledby="cmp-h">
+  <header><div class="eyebrow">Background</div><h2 id="cmp-h">What other games do when a product ships</h2></header>
+  <div class="tablebox">
+    <table>
+      <thead><tr><th scope="col">Game</th><th scope="col">When you name it</th><th scope="col">Price at release</th><th scope="col">How it's judged</th><th scope="col">What you learn</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Game Dev Tycoon</th><td>Before you start making it</td><td>No price choice</td><td>Four magazines score 1 to 10, compared with your own best game</td><td>A short text report</td></tr>
+        <tr><th scope="row">Game Dev Story</th><td>After release</td><td>No price choice found</td><td>Four critics score out of 10 each, plus a sales chart</td><td>32 of 40 unlocks sequels; fan letters</td></tr>
+        <tr><th scope="row">Mad Games Tycoon 2</th><td>At the start ⚠️</td><td>Yes, plus copies, marketing and a release date</td><td>One score out of 100%</td><td>Studio fame, sequels</td></tr>
+        <tr><th scope="row">Software Inc.</th><td>No naming step found</td><td>Set early; raising it later angers buyers</td><td>No single moment; reputation builds</td><td>Brand reputation</td></tr>
+        <tr><th scope="row">Big Pharma</th><td>After the first batch works</td><td>Automatic</td><td>A letter grade</td><td>Patents, crowded markets</td></tr>
+        <tr><th scope="row">AI-lab games</th><td>Not described</td><td>Ongoing, not at release</td><td>No score screen found; one has a rival-CEO feed</td><td>Release is money, not a ceremony</td></tr>
+        <tr><th scope="row">Real AI launches</th><td>Family name plus version</td><td>Stated at launch</td><td>A benchmark table against rivals, a safety report, outside testers, press and leaderboards</td><td>The next version</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="small">⚠️ Some findings come from search summaries rather than full pages: Game Dev Tycoon's one-by-one score reveal, Mad Games Tycoon 2's naming time, and everything about the AI-lab games, which come only from store pages. Full notes: <code>docs/research/release-flow/</code> on branch <code>release-flow</code>.</p>
+</section>
+
+</div>
+
+<script>
+(function(){
+  /* scale fixed-size game mockups to their column */
+  var fits=[].slice.call(document.querySelectorAll('.fit'));
+  function fitAll(){fits.forEach(function(f){var w=+f.dataset.w,h=+f.dataset.h,s=f.clientWidth/w;f.style.height=(h*s)+'px';f.firstElementChild.style.transform='scale('+s+')';});}
+  fitAll();addEventListener('resize',fitAll);
+
+  /* picks */
+  var KEY='release-flow-picks-v4',names=['c1','c2','c3','c4','c5','c6','c7','c8'],out=document.getElementById('picks-out');
+  function current(){return names.map(function(n,i){var c=document.querySelector('input[name="'+n+'"]:checked');return (i+1)+(c?c.value:'?');}).join(' ');}
+  function render(){var s=current();out.textContent=s;try{localStorage.setItem(KEY,s);}catch(e){}}
+  try{var saved=localStorage.getItem(KEY);if(saved){saved.split(' ').forEach(function(p,i){var el=document.querySelector('input[name="c'+(i+1)+'"][value="'+p.slice(-1)+'"]');if(el)el.checked=true;});}}catch(e){}
+  document.addEventListener('change',function(e){if(e.target.matches('input[type=radio]'))render();});
+  render();
+  document.getElementById('copy').addEventListener('click',function(){
+    var note=document.getElementById('copy-note'),s=out.textContent;
+    function fallback(){var r=document.createRange();r.selectNodeContents(out);var sel=getSelection();sel.removeAllRanges();sel.addRange(r);note.textContent='Selected. Press Cmd+C to copy.';}
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(s).then(function(){note.textContent='Copied '+s+'. Paste it into the chat.';},fallback);}else{fallback();}
+  });
+
+  /* reveal demo */
+  var demo=document.getElementById('demo'),actx=null;
+  function ding(){try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();var t=actx.currentTime;[880,1320].forEach(function(f,i){var o=actx.createOscillator(),g=actx.createGain();o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(i?0.08:0.18,t+0.01);g.gain.exponentialRampToValueAtTime(0.0001,t+(i?0.5:0.9));o.connect(g).connect(actx.destination);o.start(t);o.stop(t+1);});}catch(e){}}
+  [].forEach.call(document.querySelectorAll('[data-play]'),function(b){b.addEventListener('click',function(){
+    var k=b.dataset.play;demo.classList.remove('anim-a','anim-b','anim-c','skip');void demo.offsetWidth;demo.classList.add('anim-'+k);if(k==='c')ding();
+  });});
+  demo.addEventListener('click',function(){demo.classList.add('skip');});
+})();
+</script>

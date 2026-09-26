@@ -104,7 +104,7 @@ export function applyDealMove(state, move) {
   return signOffer(state, move.offerId, createRng(0));
 }
 
-function applyProjectedMove(state, move, queue) {
+export function applyProjectedMove(state, move, queue) {
   if (move.type === 'startRun') return startRun(state, move.recipe);
   if (move.type === 'deal') return signOffer(state, move.offerId, sideRng(state, 1));
   if (move.type === 'queueOrder') return placeOrder(state, move);

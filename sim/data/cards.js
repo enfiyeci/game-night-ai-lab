@@ -51,7 +51,8 @@ export const CARDS = [
   { id: 'no-safeguards', stage: 'post', group: 'safeguards', default: true, name: 'Skip hardening to hit the date', hint: 'Jailbreakers will find it first.', era: 1, cost: {}, effects: { mx: 6, flags: ['jailbreakWaiting'] } },
   { id: 'safety-tuning', stage: 'post', group: 'safeguards', name: 'Safety tuning + red team', hint: 'The standard.', era: 1, cost: { cash: 10 }, effects: { mx: -3 } },
   { id: 'classifiers', stage: 'post', group: 'safeguards', name: 'Input and output safety classifiers', hint: 'Hard to break; a tax on every request.', era: 3, cost: { cash: 20 }, effects: { mx: -10, spec: { guard: true } } },
-  { id: 'tamper', stage: 'post', group: 'safeguards', name: 'Tamper resistance for open weights', hint: 'Makes fine-tuning the safety away harder.', era: 3, cost: { cash: 30, turns: 1 }, effects: { openWeightsMult: 0.5 } },
+  // Owner 2026-09-26: open weights are off for now (no revenue model yet); hidden cards are not offered in the UI. Delete hidden: true to bring them back.
+  { id: 'tamper', stage: 'post', group: 'safeguards', name: 'Tamper resistance for open weights', hint: 'Makes fine-tuning the safety away harder.', era: 3, cost: { cash: 30, turns: 1 }, effects: { openWeightsMult: 0.5 }, hidden: true },
 
   // Evaluation and release
   { id: 'quick-eval', stage: 'release', group: 'eval', default: true, name: 'Quick internal checks', hint: 'Fast. You will not know much.', era: 1, cost: {}, effects: { ad: 3, flags: ['quickEval'] } },
@@ -61,7 +62,7 @@ export const CARDS = [
   { id: 'waive', stage: 'release', group: 'eval', name: 'Waive a committed threshold', hint: 'The date holds.', era: 1, cost: {}, effects: { st: -8, ad: 3, flags: ['brokenPromise'] } },
   { id: 'channel-api', stage: 'release', group: 'channel', default: true, name: 'API only', hint: 'Businesses first.', era: 1, cost: {}, effects: { spec: { channel: 'enterprise' } } },
   { id: 'channel-app', stage: 'release', group: 'channel', name: 'Consumer app and API', hint: 'Millions of users; millions of edge cases.', era: 1, cost: {}, effects: { spec: { channel: 'consumer' } } },
-  { id: 'channel-open', stage: 'release', group: 'channel', name: 'Open weights', hint: 'No recall button.', era: 1, cost: {}, effects: { spec: { channel: 'open' }, heat: 4, govIntl: 3 } },
+  { id: 'channel-open', stage: 'release', group: 'channel', name: 'Open weights', hint: 'No recall button.', era: 1, cost: {}, effects: { spec: { channel: 'open' }, heat: 4, govIntl: 3 }, hidden: true },
   { id: 'channel-staged', stage: 'release', group: 'channel', name: 'Staged: API first, app next turn', hint: 'Slower, gentler.', era: 1, cost: { turns: 1 }, effects: { spec: { channel: 'consumer' }, pt: 2 } },
   { id: 'fp8', stage: 'release', group: 'precision', name: 'Serve in FP8', hint: 'Cheaper serving, a tiny quality cost.', era: 2, cost: {}, effects: { spec: { precision: 'fp8' } } },
   { id: 'fp4', stage: 'release', group: 'precision', name: 'Serve in FP4', hint: 'Much cheaper serving; needs new hardware.', era: 3, requiresTech: 'fp4', cost: { cash: 5 }, effects: { spec: { precision: 'fp4' } } },

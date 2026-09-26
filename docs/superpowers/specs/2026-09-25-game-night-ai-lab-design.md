@@ -253,6 +253,9 @@ Part 2. That report's menu tables are the working content; this section fixes ho
   (tier word comes from size; theme sets offered, free typing allowed). Generation jumps raise
   the launch bar; rebrands without a real gain draw feed mockery; names matching a real lab's
   product are swapped for a parody.
+  *Update 2026-09-26 (owner):* each skipped number raises the critics' bar by 1 benchmark point, and
+  the feed always talks about the jump (impressed at a capability gain of 5 or more, mocking below).
+  The parody-name swap is not built.
 - **Running cost.** Each model card shows `servingCost` ($ per active user per month) and its
   margin, recomputed every turn:
   `servingCost = USAGE[era] × CHANNEL × REASONING[effort] × HW[era] × SIZE × ARCH(load) ×
@@ -416,6 +419,18 @@ player's own last best, shown through several noisy judges.
   price complaints, rival snark, and political questions about agents.
 - **Effects.** The press average and the flagship result set user growth and hype (sentiment),
   as reviews drive sales in Game Dev Tycoon.
+- **Reveal header (owner picks 2026-09-26).** The badge counts all five rows, safety included
+  ("N of 5"). Beside it, a price sheet: what customers pay per million tokens, what serving costs
+  per million tokens, and the margin. The safety row names who checked it. Build plan:
+  `docs/superpowers/plans/2026-09-26-release-flow.md`.
+- **A release that ends the run (owner pick 2026-09-26, option B).** In era 4 a release can roll
+  the misalignment ending in the same turn. The reveal still plays first, with its good reviews,
+  and the ending film starts only after the player closes it: the contrast is the story beat.
+  The film waits for any open dialog (`.dialog-layer`) and starts on `gdt-dialog-closed`.
+- **Open weights is hidden for now (owner 2026-09-26).** It earns nothing in the sim (no users,
+  no revenue, no serving cost) and only adds race heat, international favour and permanent misuse
+  risk, so the `channel-open` and `tamper` cards carry `hidden: true` and the screens don't offer
+  them. The sim rules stay; see `docs/open-decisions.md` item 18.
 
 ## 7. One turn, screen by screen
 
