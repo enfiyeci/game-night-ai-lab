@@ -75,6 +75,13 @@ test('the money budget rejects unknown split keys', () => {
   assert.match(result.error, /bonus/);
 });
 
+test('endTurn rejects falsy non-object compute splits', () => {
+  for (const computeSplit of [null, 0]) {
+    const result = endTurn(createInitialState(), { computeSplit }, createRng(23));
+    assert.ok(result.errors.some((error) => error.includes('compute split must be an object')));
+  }
+});
+
 test('queue withdrawal accepts only booleans and withdraws only on true', () => {
   const makeState = () => {
     const s = createInitialState();

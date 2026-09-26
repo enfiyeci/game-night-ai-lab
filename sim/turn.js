@@ -33,6 +33,8 @@ import { applySplitEffects, makePledge, setComputeSplit } from './split.js';
 
 export const MAX_MOVES = 2;
 const BUDGET_KEYS = ['training', 'security', 'product', 'talent'];
+// sideRng salts in sim/: 0 initial offers, 1 deals, 3 contracts, 4 queue, 5 offers, 6 deliveries, and 1000 + site ID for builds.
+const SITE_RNG_SALT_BASE = 1000;
 
 export function setBudget(state, budget) {
   if (budget?.split && Object.hasOwn(budget.split, 'safety')) return { ok: false, error: 'the budget split has no safety slice: safety now runs on compute' };
@@ -58,7 +60,7 @@ function applyMove(state, move, rng) {
     case 'release': return releaseModel(state, move.release, rng);
     case 'deal': return signOffer(state, move.offerId, sideRng(state, 1));
     case 'queueOrder': return placeOrder(state, move);
-    case 'buildSite': return buildSite(state, move.source, sideRng(state, 2 + state.power.nextId));
+    case 'buildSite': return buildSite(state, move.source, sideRng(state, SITE_RNG_SALT_BASE + state.power.nextId));
     case 'raise': return raiseRound(state, move.archetype);
     case 'research': return researchTechnique(state, move.techId);
     case 'emergency': return useEmergency(state, move.option);
@@ -128,7 +130,7 @@ export function endTurn(prev, actions = {}, rng) {
     const r = setBudget(state, actions.budget);
     if (!r.ok) errors.push(r.error);
   }
-  if (actions.computeSplit) {
+  if (Object.hasOwn(actions, 'computeSplit')) {
     const r = setComputeSplit(state, actions.computeSplit);
     if (!r.ok) errors.push(r.error);
   }

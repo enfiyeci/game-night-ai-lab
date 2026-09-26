@@ -5,8 +5,10 @@ import { createRng } from '../sim/rng.js';
 import { endTurn } from '../sim/turn.js';
 import { recipeCost } from '../sim/recipe.js';
 import { computeRent, projectBurn } from '../sim/economy.js';
+import { sideRng } from '../sim/contracts.js';
 import { eraScale, SCALE_DOWN } from '../sim/data/compute.js';
 import { allocate, rivalOrders, released } from '../sim/queue.js';
+import { SITE_TYPES } from '../sim/power.js';
 
 const offerOf = (s, supplier) => s.compute.offers.find((o) => o.supplier === supplier && !o.viaQueue);
 
@@ -86,4 +88,22 @@ test('same-turn site builds use distinct deterministic side draws', () => {
   assert.deepEqual(first.errors, []);
   assert.deepEqual(first.state.power.sites, second.state.power.sites);
   assert.notEqual(first.state.power.sites[0].units, first.state.power.sites[1].units);
+});
+
+test('a site build and contractsTurn use different side draws in the same turn', () => {
+  const s = createInitialState({ seed: 1 });
+  s.era = 4;
+  s.turn = 12;
+  s.turnInEra = 0;
+  s.compute.contracts[0].supplier = 'coreflame';
+  const contractDraw = sideRng(s, 3).next();
+  const siteDraw = sideRng(s, 1000 + s.power.nextId).next();
+  const [lo, hi] = SITE_TYPES.gas.size;
+  const gasUnits = (draw) => Math.round((lo + Math.floor(draw * (hi - lo + 1))) / 10) * 10;
+
+  const result = endTurn(s, { moves: [{ type: 'buildSite', source: 'gas' }] }, createRng(1));
+
+  assert.notEqual(siteDraw, contractDraw);
+  assert.equal(result.state.power.sites[0].units, gasUnits(siteDraw));
+  assert.notEqual(result.state.power.sites[0].units, gasUnits(contractDraw));
 });
