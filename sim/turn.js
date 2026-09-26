@@ -366,6 +366,8 @@ function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
   delete state.flags.emergencyUsedThisTurn;
   state.roundStart = { arr: state.arr, capability: state.capability, cash: state.cash };
   if (!state.ending) stampNewCards(state, rng);
+  // A card made on the final mark can never be seen or answered.
+  else state.pendingEvents = state.pendingEvents.filter((card) => card.landsAt != null);
   if (state.ending) {
     finishEnding(state, events);
   }

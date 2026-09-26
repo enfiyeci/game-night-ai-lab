@@ -19,14 +19,14 @@ export function createClock(game, { now = () => performance.now(), secondsPerRou
     const dt = last === null ? 0 : Math.min(MAX_STEP_MS, Math.max(0, t - last));
     last = t;
     if (game.state.ending || reasons.size > 0 || speed === 0) return;
-    owed += dt;
+    owed += dt * speed; // speed-weighted, so a later speed change never rescales time already owed
     let advanced = false;
     while (true) {
       if (game.state.ending || reasons.size > 0 || speed === 0) {
         owed = 0;
         break;
       }
-      const msPerDay = (secondsPerRound * 1000) / ROUND_DAYS[game.state.era] / speed;
+      const msPerDay = (secondsPerRound * 1000) / ROUND_DAYS[game.state.era];
       if (owed + 1e-9 < msPerDay) break;
       owed -= msPerDay;
       game.advanceDays(1);

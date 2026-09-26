@@ -114,3 +114,14 @@ test('a step crossing into era 3 uses era 3 timing for remaining real time', () 
   assert.equal(game.days, 1);
   assert.equal(state.era, 3);
 });
+
+test('a speed change does not rescale time already owed', () => {
+  let t = 0;
+  const game = { state: { era: 1, day: 0, dayInRound: 0, ending: null }, days: 0, advanceDays(n) { this.days += n; this.state.day += n; } };
+  const clock = createClock(game, { now: () => t });
+  clock.step();
+  t = 400; clock.step(); // 400 ms at x1: less than one day (about 495 ms per day in era 1)
+  clock.setSpeed(4);
+  t = 401; clock.step();
+  assert.equal(game.days, 0);
+});

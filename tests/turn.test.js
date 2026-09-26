@@ -292,7 +292,7 @@ test('a quiet takeover stops training and event generation for the turn', () => 
   assert.equal(out.events.some((event) => event.type === 'runComplete'), false);
 });
 
-test('a terminal round does not stamp cards that cannot land', () => {
+test('a card made on the final round mark is dropped, never shown after the ending', () => {
   const s = createInitialState();
   s.era = 5;
   s.turn = 19;
@@ -312,10 +312,9 @@ test('a terminal round does not stamp cards that cannot land', () => {
     spec: { size: 'medium', arch: 'dense', context: 'short', precision: 'bf16', guard: false, channel: 'consumer', reasoning: 'off' },
   });
   const out = endTurn(s, {}, createRng(1));
-  const card = out.state.pendingEvents.find((event) => event.id === 'jailbreak');
   assert.ok(out.state.ending);
-  assert.ok(card);
-  assert.equal(card.landsAt, undefined);
+  assert.equal(out.state.pendingEvents.some((event) => event.id === 'jailbreak'), false);
+  assert.ok(out.state.pendingEvents.every((event) => event.landsAt != null));
 });
 
 test('the board sees card costs from the start-of-turn cash snapshot', () => {

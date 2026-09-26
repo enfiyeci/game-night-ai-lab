@@ -73,3 +73,12 @@ test('advancing days publishes every date and stops when the clock pauses', () =
   assert.deepEqual(days, [1, 2, 3]);
   assert.equal(g.state.day, 3);
 });
+
+test('advancing several days reports every day\'s events, not only the last', () => {
+  const g = createGame({ seed: 1 });
+  const seen = [];
+  g.subscribe((note) => seen.push(...note.events));
+  const r = g.advanceDays(95); // crosses the first quarter mark
+  assert.equal(g.state.turn, 1);
+  assert.deepEqual(r.events, seen);
+});
