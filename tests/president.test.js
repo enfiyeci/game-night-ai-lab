@@ -24,10 +24,11 @@ test('the President meeting script has the required exchanges and answer mix', (
   for (const entry of MEETINGS) {
     assert.equal(entry.exchanges.length, 3);
     for (const exchange of entry.exchanges) {
-      assert.equal(exchange.answers.length, 3);
+      assert.equal(exchange.answers.length, 4);
       assert.ok(exchange.answers.some((answer) => answer.flattery === 0 && answer.jargon === 0));
       assert.ok(exchange.answers.some((answer) => answer.flattery === 2));
       assert.ok(exchange.answers.some((answer) => answer.jargon === 2));
+      assert.ok(exchange.answers.some((answer) => answer.flattery === 1 && answer.jargon === 1));
     }
   }
 });
