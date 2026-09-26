@@ -90,7 +90,7 @@ export function eventsTick(state, rng) {
       out.push({ type: 'eventResolved', id: event.id, choiceId: 'refuse', auto: true });
       continue;
     }
-    if (state.pendingEvents.length >= MAX_CARDS) {
+    if (!event.bypassCardLimit && state.pendingEvents.length >= MAX_CARDS) {
       state.warnings[event.id] = { turn: state.turn, deferred: true };
       continue;
     }
@@ -115,6 +115,7 @@ export function addressWarning(state, id) {
   }
   if (event.addressEffects) event.addressEffects(state);
   if (!state.seenEvents.includes(id)) state.seenEvents.push(id);
+  event.defuse?.(state);
   return { ok: true, id };
 }
 

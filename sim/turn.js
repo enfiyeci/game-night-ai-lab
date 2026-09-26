@@ -33,7 +33,8 @@ import { applySplitEffects, makePledge, setComputeSplit } from './split.js';
 
 export const MAX_MOVES = 2;
 const BUDGET_KEYS = ['training', 'security', 'product', 'talent'];
-// sideRng salts in sim/: 0 initial offers, 1 deals, 3 contracts, 4 queue, 5 offers, 6 deliveries, and 1000 + site ID for builds.
+// sideRng salts in sim/: 0 initial offers, 1 deals, 2 site opposition, 3 contracts, 4 queue,
+// 5 offers, 6 deliveries, 7 pooling, and 1000 + site ID for builds.
 const SITE_RNG_SALT_BASE = 1000;
 
 export function setBudget(state, budget) {
@@ -255,6 +256,10 @@ export function endTurn(prev, actions = {}, rng) {
       growUsers(state);
       updateServing(state);
       applyEconomy(state);
+      if (state.compute.surge && --state.compute.surge.turnsLeft <= 0) {
+        state.compute.split.coverWithSpot = state.compute.surge.restoreCover ?? state.compute.split.coverWithSpot;
+        state.compute.surge = null;
+      }
       spendCredits(state);
       for (const x of expireContracts(state)) events.push({ type: 'contractEnded', supplier: x.supplier, units: x.units });
       for (const x of pullBumped(state)) events.push({ type: 'spotPulled', units: x.units });
