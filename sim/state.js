@@ -23,7 +23,7 @@ export function createInitialState({ seed = 1 } = {}) {
         arrivedTurn: 0, scaledDown: false, troubled: false, dark: false, bumpTurn: null, exclusiveBought: false, headline: null }],
       pipeline: [],
       servingUnits: 0,
-      overflow: 0,
+      split: { safety: 0.1, servingCap: null, coverWithSpot: true, resellIdle: false },
       offers: [],
       delays: {},
       nextId: 1,
@@ -48,7 +48,7 @@ export function createInitialState({ seed = 1 } = {}) {
     legalCases: [],
     raceHeat: 20,
 
-    budget: { spend: 20, split: { training: 0.3, safety: 0.2, security: 0.1, product: 0.2, talent: 0.2 } },
+    budget: { spend: 20, split: { training: 0.5, security: 0.1, product: 0.2, talent: 0.2 } },
     researchPoints: 0,
     researched: [],
     activeRun: null,

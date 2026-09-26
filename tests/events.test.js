@@ -115,14 +115,12 @@ test('internal reporting still applies public effects after an earlier shutdown'
   assert.equal(s.publicTrust, 56);
 });
 
-test('catalog amendments shift budgets, delay compute, and undercut active models', () => {
+test('catalog events adjust safety compute, delay capacity, and undercut active models', () => {
   const s = createInitialState();
-  s.budget.split.training = 0.04;
-  s.budget.split.safety = 0.46;
+  s.compute.split.safety = 0.46;
   s.pendingEvents.push({ id: 'openletter' });
   resolveEvent(s, 'openletter', 'meet');
-  assert.equal(s.budget.split.training, 0);
-  assert.equal(s.budget.split.safety, 0.5);
+  assert.equal(s.compute.split.safety, 0.5);
 
   s.compute.pipeline.push({ arrivesTurn: 8 }, { arrivesTurn: 4 }, { arrivesTurn: 6 });
   s.pendingEvents.push({ id: 'datacenter' });
@@ -135,13 +133,13 @@ test('catalog amendments shift budgets, delay compute, and undercut active model
   assert.deepEqual(s.models.map((model) => model.priceStance), ['undercut', 'market']);
 });
 
-test('the open-letter meeting adjusts the budget submitted on the same turn', () => {
+test('the open-letter meeting adjusts the compute split submitted on the same turn', () => {
   const s = createInitialState();
   s.pendingEvents.push({ id: 'openletter' });
-  const budget = { spend: 20, split: { training: 0.3, safety: 0.2, security: 0.1, product: 0.2, talent: 0.2 } };
-  const out = endTurn(s, { budget, eventChoices: { openletter: 'meet' } }, no);
-  assert.ok(Math.abs(out.state.budget.split.training - 0.2) < 1e-12);
-  assert.ok(Math.abs(out.state.budget.split.safety - 0.3) < 1e-12);
+  const budget = { spend: 20, split: { training: 0.5, security: 0.1, product: 0.2, talent: 0.2 } };
+  const out = endTurn(s, { budget, computeSplit: { safety: 0.2 }, eventChoices: { openletter: 'meet' } }, no);
+  assert.ok(Math.abs(out.state.budget.split.training - 0.5) < 1e-12);
+  assert.ok(Math.abs(out.state.compute.split.safety - 0.3) < 1e-12);
 });
 
 test('rival releases are stored and a Qilin release triggers its card', () => {

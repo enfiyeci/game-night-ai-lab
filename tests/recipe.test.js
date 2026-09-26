@@ -56,13 +56,13 @@ test('midtraining opens in era 2 and compute multipliers stack', () => {
 
 test('talent spend adds a slot', () => {
   const s = createInitialState();
-  s.budget.split = { training: 0.25, safety: 0.2, security: 0.1, product: 0.15, talent: 0.3 };
+  s.budget.split = { training: 0.45, security: 0.1, product: 0.15, talent: 0.3 };
   assert.equal(slotsFor(s, 'pre'), 3);
 });
 
 test('a talent share adds no slot when actual talent spend is zero', () => {
   const s = createInitialState();
-  s.budget = { spend: 0, split: { training: 0, safety: 0, security: 0, product: 0, talent: 1 } };
+  s.budget = { spend: 0, split: { training: 0, security: 0, product: 0, talent: 1 } };
   assert.equal(slotsFor(s, 'pre'), 2);
 });
 

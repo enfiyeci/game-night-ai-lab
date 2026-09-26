@@ -3,15 +3,12 @@ import { eraById } from './data/eras.js';
 import { SIZE_CAP, LENGTHS, validateRecipe, recipeCost, recipeCards, talentSpend } from './recipe.js';
 import { standardTechniques } from './techniques.js';
 import { rollTrainingHazard, applyAlignmentFaking, evalGamingDebt } from './hazards.js';
-import { controlUnits } from './internal.js';
 import { hasLine } from './constitution.js';
+import { computeSlices } from './split.js';
 
 export const SHARED_SAFETY_DEBT_MULT = 0.7;
 
-export function availableUnits(state) {
-  const run = state.activeRun ? state.activeRun.units : 0;
-  return Math.max(0, state.compute.online - state.compute.servingUnits - run - controlUnits(state));
-}
+export const availableUnits = (state) => computeSlices(state).idle;
 
 export function startRun(state, recipe) {
   if (state.activeRun) return { ok: false, error: 'a training run is already active' };
@@ -30,7 +27,7 @@ export function startRun(state, recipe) {
 export function advanceRun(state, rng) {
   const run = state.activeRun;
   if (!run) return null;
-  if (state.compute.online < run.units) return { type: 'runPaused' };
+  if (computeSlices(state).training < run.units) return { type: 'runPaused' };
   if (rng.chance(run.spikeChance)) run.spikes += 1;
   run.turnsLeft -= 1;
   if (run.turnsLeft > 0) return null;

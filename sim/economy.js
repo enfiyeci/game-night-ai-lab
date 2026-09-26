@@ -5,6 +5,7 @@ import { servingCost, PRICE_STANCE, REVENUE_PER_USER } from './serving.js';
 import { controlUnits } from './internal.js';
 import { monthlyBills, arrivingBills, creditOffset, addPipeline } from './contracts.js';
 import { leaseBills } from './power.js';
+import { resaleCredit, safetyValue, spotCover } from './split.js';
 
 export const STATE_PREEMPTION_LEGAL_COST_MULTIPLIER = 0.7;
 
@@ -12,7 +13,7 @@ export function activeModels(state) {
   return state.models.filter((m) => m.active && m.channel !== 'open' && state.turn >= m.activeFromTurn);
 }
 
-export const safetySpend = (state) => state.budget.spend * state.budget.split.safety;
+export const safetySpend = (state) => safetyValue(state);
 
 export const revenuePerUser = (model) => REVENUE_PER_USER[model.channel] * PRICE_STANCE[model.priceStance].rev * (model.revenueMult ?? 1);
 
@@ -29,7 +30,6 @@ export function updateServing(state) {
   const load = light / capacity;
   const units = load > 0.8 ? unitsAt(load) : light;
   state.compute.servingUnits = units;
-  state.compute.overflow = Math.max(0, units - capacity);
   return units;
 }
 
@@ -48,10 +48,10 @@ export function monthlyRevenue(state) {
 export const computeRent = (state) => monthlyBills(state) + leaseBills(state) - creditOffset(state);
 
 export function projectBurn(state) {
-  const spot = state.compute.overflow * BALANCE.unitMonthlyCost * BALANCE.spotPremium;
+  const spot = spotCover(state);
   const ops = BALANCE.baseOpsMonthly * (1 + 0.25 * (state.era - 1));
   const arrivingRent = arrivingBills(state);
-  return ops + computeRent(state) + arrivingRent + spot + state.budget.spend;
+  return ops + computeRent(state) + arrivingRent + spot + state.budget.spend - resaleCredit(state);
 }
 
 export function valuationOf(state) {

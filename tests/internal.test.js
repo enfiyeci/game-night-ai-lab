@@ -108,12 +108,14 @@ test('changing control keeps the turn the stage last rose', () => {
 
 test('control must fit in free compute', () => {
   const s = withModel();
+  s.compute.split.safety = 0;
   s.activeRun = { bonus: 0, units: s.compute.online, turnsLeft: 2 };
   const r = deployInternal(s, 1);
   assert.equal(r.ok, false);
   assert.equal(r.error, 'not enough free compute for control');
   assert.equal(deployInternal(s, 0).ok, true);
   const t = withModel();
+  t.compute.split.safety = 0;
   t.activeRun = { bonus: 0, units: t.compute.online - 20, turnsLeft: 2 };
   assert.equal(deployInternal(t, 0.5).ok, true);
   assert.equal(deployInternal(t, 1).ok, true);

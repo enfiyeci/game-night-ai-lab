@@ -7,6 +7,7 @@ import {
 } from '../sim/economy.js';
 import * as economyApi from '../sim/economy.js';
 import { deployInternal } from '../sim/internal.js';
+import { computeSlices } from '../sim/split.js';
 
 const consumerModel = (users) => ({
   name: 'Kestrel 1 Core', active: true, activeFromTurn: 0, channel: 'consumer', priceStance: 'market',
@@ -14,15 +15,15 @@ const consumerModel = (users) => ({
   spec: { size: 'medium', arch: 'dense', context: 'short', precision: 'bf16', guard: false, channel: 'consumer', reasoning: 'off' },
 });
 
-test('serving load uses compute and overflows at scale', () => {
+test('serving load uses compute and leaves a shortfall at scale', () => {
   const s = createInitialState();
   s.models.push(consumerModel(4e6));
   const units = updateServing(s);
   assert.ok(Math.abs(units - 4e6 * 2.4 / 1.46e6) < 1e-6);
-  assert.equal(s.compute.overflow, 0);
+  assert.equal(computeSlices(s).shortfall, 0);
   s.models[0].users = 8e6;
   updateServing(s);
-  assert.ok(s.compute.overflow > 0);
+  assert.ok(computeSlices(s).shortfall > 0);
 });
 
 test('compute reserved by control is not available for serving', () => {
@@ -35,9 +36,9 @@ test('compute reserved by control is not available for serving', () => {
   s.models[0].users = 15e6; // fits in 30 units, not in the 10 left after control
   const bare = { ...s, internal: null, compute: { ...s.compute } };
   updateServing(bare);
-  assert.equal(bare.compute.overflow, 0);
+  assert.equal(computeSlices(bare).shortfall, 0);
   updateServing(s);
-  assert.ok(s.compute.overflow > 0);
+  assert.ok(computeSlices(s).shortfall > 0);
 });
 
 test('revenue, burn, cash and valuation', () => {

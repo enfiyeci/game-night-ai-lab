@@ -29,11 +29,13 @@ import {
 } from './summit.js';
 import { expireMeeting, meetingDue, openMeeting, runMeeting } from './president.js';
 import { judgeEndingPromises, promiseUpkeep } from './promises.js';
+import { applySplitEffects, makePledge, setComputeSplit } from './split.js';
 
 export const MAX_MOVES = 2;
-const BUDGET_KEYS = ['training', 'safety', 'security', 'product', 'talent'];
+const BUDGET_KEYS = ['training', 'security', 'product', 'talent'];
 
 export function setBudget(state, budget) {
+  if (budget?.split && Object.hasOwn(budget.split, 'safety')) return { ok: false, error: 'the budget split has no safety slice: safety now runs on compute' };
   const spend = budget?.spend;
   if (!Number.isFinite(spend) || spend < 0 || spend > 200) return { ok: false, error: 'spend must be between 0 and 200 $M per month' };
   const values = BUDGET_KEYS.map((k) => budget?.split?.[k]);
@@ -69,7 +71,6 @@ function budgetEffects(state) {
   const { spend, split } = state.budget;
   const k = (spend * eraById(state.era).monthsPerTurn) / 30;
   if (state.activeRun) state.activeRun.bonus += split.training * k;
-  state.alignmentDebt -= split.safety * k * 0.5;
   state.security += split.security * k - 0.5;
   state.growthBoost = split.product * k * 0.02;
   state.researchPoints += split.talent * k * 3;
@@ -121,6 +122,14 @@ export function endTurn(prev, actions = {}, rng) {
   }
   if (actions.budget) {
     const r = setBudget(state, actions.budget);
+    if (!r.ok) errors.push(r.error);
+  }
+  if (actions.computeSplit) {
+    const r = setComputeSplit(state, actions.computeSplit);
+    if (!r.ok) errors.push(r.error);
+  }
+  if (actions.pledge != null) {
+    const r = makePledge(state, actions.pledge);
     if (!r.ok) errors.push(r.error);
   }
   for (const a of actions.contractActions ?? []) {
@@ -216,6 +225,10 @@ export function endTurn(prev, actions = {}, rng) {
 
   if (!state.ending) {
     budgetEffects(state);
+    for (const e of applySplitEffects(state)) {
+      events.push(e);
+      if (e.type === 'outage') pushFeed(state, '@downdetector', 'users report outages across your apps', 'feed');
+    }
     for (const e of internalTick(state, rng)) events.push(e);
     if (!state.ending) {
       const trained = advanceRun(state, rng);

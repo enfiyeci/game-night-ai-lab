@@ -15,9 +15,7 @@ function removeFlag(state, flag) {
 }
 
 function openletterMeet(state) {
-  const shift = Math.min(0.1, state.budget.split.training);
-  state.budget.split.training -= shift;
-  state.budget.split.safety += shift;
+  state.compute.split.safety = Math.min(0.5, state.compute.split.safety + 0.1);
   state.staffTrust += 8;
 }
 
@@ -267,7 +265,7 @@ export const EVENTS = [
     id: 'promise',
     kind: 'planted',
     flag: 'brokenPromise',
-    trigger: (state) => hasFlag(state, 'brokenPromise'),
+    trigger: (state) => hasFlag(state, 'brokenPromise') || state.flags.brokenPromise === true,
     warning: { handle: '@anon_staffer', text: 'some of us are asking what happened to the safety commitment' },
     card: {
       title: 'Broken promise revealed',
@@ -279,6 +277,7 @@ export const EVENTS = [
             state.publicTrust -= 3;
             state.staffTrust += 4;
             removeFlag(state, 'brokenPromise');
+            delete state.flags.brokenPromise;
           },
         },
         {
@@ -286,6 +285,7 @@ export const EVENTS = [
           effects(state) {
             state.staffTrust -= 10;
             removeFlag(state, 'brokenPromise');
+            delete state.flags.brokenPromise;
             state.flags.coverUp = true;
           },
         },

@@ -54,11 +54,11 @@ test('only two moves per turn, and bad moves are reported', () => {
 
 test('budget split must add up to one', () => {
   const s = createInitialState();
-  assert.equal(setBudget(s, { spend: 20, split: { training: 0.5, safety: 0.5, security: 0.5, product: 0, talent: 0 } }).ok, false);
+  assert.equal(setBudget(s, { spend: 20, split: { training: 1, security: 0.5, product: 0, talent: 0 } }).ok, false);
 });
 
 test('budget values must be finite and non-negative', () => {
-  const valid = { training: 0.3, safety: 0.2, security: 0.1, product: 0.2, talent: 0.2 };
+  const valid = { training: 0.5, security: 0.1, product: 0.2, talent: 0.2 };
   for (const spend of [NaN, Infinity, -1]) {
     assert.equal(setBudget(createInitialState(), { spend, split: valid }).ok, false);
   }
@@ -90,7 +90,7 @@ test('serving load reflects user growth from the same turn', () => {
 test('a new budget updates emergency eligibility before moves', () => {
   const s = createInitialState();
   s.cash = 100;
-  const budget = { spend: 200, split: { training: 0.3, safety: 0.2, security: 0.1, product: 0.2, talent: 0.2 } };
+  const budget = { spend: 200, split: { training: 0.5, security: 0.1, product: 0.2, talent: 0.2 } };
   const out = endTurn(s, { budget, moves: [{ type: 'emergency', option: 'bridgeRound' }] }, createRng(4));
   assert.equal(out.errors.length, 0);
   assert.equal(out.events.some((e) => e.type === 'emergency'), true);
@@ -110,8 +110,9 @@ test('a same-turn compute deal refreshes burn before a later emergency move', ()
   assert.deepEqual(out.events.slice(0, 2).map((e) => e.type), ['deal', 'emergency']);
 });
 
-test('a same-turn training run refreshes serving overflow before a later emergency move', () => {
+test('a same-turn training run refreshes serving shortfall before a later emergency move', () => {
   const s = createInitialState();
+  s.compute.split.safety = 0;
   s.models.push({
     active: true,
     activated: true,
@@ -124,9 +125,9 @@ test('a same-turn training run refreshes serving overflow before a later emergen
     spec: { size: 'medium', arch: 'moe', context: 'short', precision: 'bf16', guard: false, channel: 'consumer', reasoning: 'off' },
   });
   const smallRecipe = { ...recipe, sliders: { ...recipe.sliders, size: 'small' } };
-  // The run costs $35M up front and pushes serving load past 80%, so burn rises from about
-  // $49.6M to $54.8M a month: $313M left is over six months of runway on the stale burn, under six on the fresh one.
-  s.cash = 313 + 35;
+  // The run costs $35M up front and pushes serving into spot cover, so burn rises from
+  // $49.6M to $50.64M a month: $300M left is over six months on the stale burn, under six on the fresh one.
+  s.cash = 300 + 35;
   const out = endTurn(s, {
     moves: [
       { type: 'startRun', recipe: smallRecipe },
@@ -182,6 +183,7 @@ test('endTurn activates due releases before growing users', () => {
 
 test('a due release consumes serving compute before move validation', () => {
   const s = createInitialState();
+  s.compute.split.safety = 0;
   s.models.push({
     active: true,
     activated: false,
@@ -250,7 +252,7 @@ test('the board sees card costs from the start-of-turn cash snapshot', () => {
     spec: { size: 'medium', arch: 'dense', context: 'short', precision: 'bf16', guard: false, channel: 'enterprise', reasoning: 'off' },
   });
   s.pendingEvents.push({ id: 'distill' });
-  const budget = { spend: 0, split: { training: 0.3, safety: 0.2, security: 0.1, product: 0.2, talent: 0.2 } };
+  const budget = { spend: 0, split: { training: 0.5, security: 0.1, product: 0.2, talent: 0.2 } };
 
   const out = endTurn(s, { budget, eventChoices: { distill: 'settle' } }, createRng(22));
 
