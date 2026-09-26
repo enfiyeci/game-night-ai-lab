@@ -1,0 +1,63 @@
+/* Copied from origin/events-build ui/styles.css (lines 2397-2457, commit 700a7c1) so the pre-meeting event mockups use the
+   real event-card look. Mockup-only; the build will use the events lane's own stylesheet. */
+.ev-theme, .ev-theme * { pointer-events: none; }
+.ev-theme { position: absolute; inset: 0; z-index: 0; }
+.ev-theme svg { position: absolute; inset: 0; }
+.ev-wash-theft { background: radial-gradient(ellipse 72% 70% at 55% 55%, transparent 35%, color-mix(in oklab, var(--coral) 36%, transparent) 100%); }
+.ev-wash-exfil { background: radial-gradient(ellipse 40% 45% at 80% 50%, color-mix(in oklab, var(--sky) 30%, transparent), transparent 70%), radial-gradient(ellipse 80% 75% at 50% 55%, transparent 45%, color-mix(in oklab, var(--sky) 26%, transparent) 100%); }
+.ev-wash-whistle { background: radial-gradient(ellipse 30% 34% at 36% 28%, color-mix(in oklab, var(--paper) 80%, transparent), transparent 70%); }
+.ev-wash-quits { background: radial-gradient(ellipse 12% 16% at 48% 56%, transparent 50%, color-mix(in oklab, var(--ink) 30%, transparent) 180%); }
+.ev-dim-office #office { filter: saturate(.72) brightness(.94); }
+.ev-grey-office #office { filter: saturate(.35) brightness(.97); }
+.ev-tag { position: absolute; padding: 3px 9px; border-radius: 8px; font-size: 11.5px; font-weight: 900; color: var(--paper); background: var(--ink); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 30%, transparent); white-space: nowrap; }
+.ev-tag.sky { background: color-mix(in oklab, var(--sky) 70%, var(--ink)); }
+.ev-tag.coral { background: color-mix(in oklab, var(--coral) 80%, var(--ink)); }
+
+.ev-post { display: grid; grid-template-columns: 30px 1fr; gap: 9px; text-align: left; }
+.ev-av { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; color: var(--paper); font-weight: 900; font-size: 13px; }
+.ev-handle { font-size: 12.5px; font-weight: 900; }
+.ev-text { font-size: 13.5px; font-weight: 600; line-height: 1.32; margin-top: 1px; }
+
+.ev-act { white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 0; border-radius: 9px; font: inherit; font-size: 13px; font-weight: 900; color: var(--paper); background: var(--coral); box-shadow: 0 2px 0 color-mix(in oklab, var(--coral) 60%, var(--ink)); cursor: pointer; }
+.ev-act.ghost { color: color-mix(in oklab, var(--wood) 72%, var(--ink)); background: transparent; box-shadow: none; padding-inline: 4px; }
+.ev-act:disabled { opacity: .55; cursor: default; }
+
+.ev-due { display: grid; gap: 4px; min-width: 210px; }
+.ev-due span { font-size: 12.5px; font-weight: 900; text-align: right; }
+.ev-due-bar { height: 8px; border-radius: 4px; background: color-mix(in oklab, var(--ink) 9%, var(--paper)); overflow: hidden; }
+.ev-due-bar i { display: block; height: 100%; border-radius: 4px; background: var(--coral); }
+.ev-due.calm .ev-due-bar i { background: var(--wood); }
+
+.ev-bubble { position: absolute; z-index: 2; background: var(--paper); border-radius: 12px; padding: 8px 12px 10px; font-size: 13px; font-weight: 700; line-height: 1.3; border: 1px solid color-mix(in oklab, var(--ink) 10%, transparent); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 14%, transparent), 0 8px 18px color-mix(in oklab, var(--ink) 14%, transparent); }
+.ev-bubble::after { content: ""; position: absolute; left: var(--tail, 24px); bottom: -8px; width: 14px; height: 14px; background: var(--paper); transform: rotate(45deg); border-right: 1px solid color-mix(in oklab, var(--ink) 10%, transparent); border-bottom: 1px solid color-mix(in oklab, var(--ink) 10%, transparent); }
+.ev-bubble b { display: block; font-size: 10.5px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; color: color-mix(in oklab, var(--wood) 60%, var(--ink)); }
+.ev-say { margin-top: 2px; font-size: 14px; }
+.ev-pick { display: inline-block; margin-top: 5px; font-size: 11.5px; font-weight: 800; padding: 1px 8px; border-radius: 999px; background: color-mix(in oklab, var(--teal) 14%, var(--paper)); color: color-mix(in oklab, var(--teal) 62%, var(--ink)); }
+.ev-bubble .ev-row { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+.ev-bubble .ev-due { margin-top: 8px; min-width: 0; }
+.ev-bubble .ev-due span { text-align: left; font-size: 11.5px; }
+
+.ev-choice { display: grid; grid-template-columns: 1fr; gap: 4px; width: 100%; padding: 9px 12px; border: 2.5px solid color-mix(in oklab, var(--ink) 12%, transparent); border-radius: 12px; background: var(--paper); font: inherit; text-align: left; color: var(--ink); cursor: pointer; }
+.ev-choice:hover, .ev-choice:focus-visible { border-color: var(--teal); outline: none; box-shadow: 0 0 0 4px color-mix(in oklab, var(--teal) 16%, transparent); }
+.ev-choice-label { font-size: 15.5px; font-weight: 900; line-height: 1.2; }
+.ev-choice-cost { font-size: 12.5px; font-weight: 700; color: color-mix(in oklab, var(--ink) 62%, var(--paper)); }
+.ev-choice-cost b { color: var(--ink); font-weight: 900; }
+.ev-who { display: flex; gap: 4px; flex-wrap: wrap; }
+.ev-chip { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 800; white-space: nowrap; }
+.ev-chip.for { background: color-mix(in oklab, var(--teal) 14%, var(--paper)); color: color-mix(in oklab, var(--teal) 62%, var(--ink)); }
+.ev-chip.against { background: color-mix(in oklab, var(--ink) 6%, var(--paper)); color: color-mix(in oklab, var(--ink) 62%, var(--paper)); text-decoration: line-through; text-decoration-thickness: 1.5px; }
+.ev-chip.idle { background: color-mix(in oklab, var(--wood) 18%, var(--paper)); color: color-mix(in oklab, var(--wood) 62%, var(--ink)); }
+
+.ev-card { position: absolute; left: 250px; right: 250px; bottom: 20px; padding: 0; text-align: left; display: grid; grid-template-columns: auto 1fr; }
+.ev-crisis { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; padding: 6px 18px 7px; background: var(--coral); color: var(--paper); font-size: 12.5px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+.ev-crisis span { letter-spacing: 0; text-transform: none; font-weight: 700; }
+.ev-pic { margin: 0; width: 214px; padding: 14px 0 16px 18px; }
+.ev-pic svg { display: block; width: 196px; height: 150px; border-radius: 8px; }
+.ev-pic figcaption { margin-top: 5px; font-size: 10.5px; font-weight: 800; color: color-mix(in oklab, var(--ink) 55%, var(--paper)); }
+.ev-card-main { padding: 12px 20px 12px; }
+.ev-card.no-pic .ev-card-main { grid-column: 1 / -1; }
+.ev-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+.ev-card h1 { margin: 0; font-size: 27px; font-weight: 300; line-height: 1.1; }
+.ev-card .ev-post { margin-top: 8px; }
+.ev-choices { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 10px; margin-top: 12px; }
+.ev-card-foot { display: flex; justify-content: flex-end; margin-top: 6px; }
