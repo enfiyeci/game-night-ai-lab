@@ -38,7 +38,7 @@ export function mountHud(root, game) {
         <span id="${infoId}" class="info-more" ${expanded ? '' : 'hidden'}>
           <span class="k">ARR</span><b>${money(state.arr)}</b>
           <span class="k">Users</span><b>${users(totalUsers)}</b>
-          <span class="k">Compute</span><b>${compute(state.compute)}</b>
+          <span class="k">Compute</span><b>${compute(state.compute, state.era)}</b>
           <span class="k">Capability rank</span><b>${ordinal(rank(state))} of 5</b>
           <span class="k">Valuation</span><b>${money(state.valuation)}</b>
         </span>

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { compute, money, months, pct, users } from '../ui/logic/format.js';
+import { compute, computeAmount, money, months, pct, users } from '../ui/logic/format.js';
 
 test('money, months, percentages and user counts', () => {
   assert.equal(money(412), '$412M');
@@ -12,7 +12,14 @@ test('money, months, percentages and user counts', () => {
   assert.equal(pct(0.4), '40%');
   assert.equal(users(14.2e6), '14.2M');
   assert.equal(users(950e3), '950K');
-  assert.equal(compute({ online: 120, pipeline: [{ units: 10 }, { units: 30 }] }), '120 units online · 40 arriving');
+  assert.equal(compute({ online: 120, pipeline: [{ units: 10 }, { units: 30 }] }), '120 units online · 40 units arriving');
+});
+
+test('compute uses power units from era 4', () => {
+  assert.equal(computeAmount(40, 2), '40 units');
+  assert.equal(computeAmount(500, 4), '850 MW');
+  assert.equal(computeAmount(900, 4), '1.53 GW');
+  assert.equal(compute({ online: 500, pipeline: [{ units: 100 }] }, 4), '850 MW online · 170 MW arriving');
 });
 
 test('the project pill names the run after the next model in the family and tracks its stage', async () => {

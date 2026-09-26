@@ -5,10 +5,11 @@ import { SCENARIOS } from '../ui/logic/scenarios.js';
 
 test('the game queues at most two moves and ends a turn through the sim', () => {
   const g = createGame({ seed: 3 });
+  const offerId = g.state.compute.offers.find((offer) => offer.supplier === 'coreflame').id;
   assert.equal(g.movesLeft(), 2);
-  assert.equal(g.addMove({ type: 'deal', supplierId: 'coreflame' }).ok, true);
-  assert.equal(g.addMove({ type: 'deal', supplierId: 'coreflame' }).ok, true);
-  assert.equal(g.addMove({ type: 'deal', supplierId: 'coreflame' }).ok, false);
+  assert.equal(g.addMove({ type: 'deal', offerId }).ok, true);
+  assert.equal(g.addMove({ type: 'deal', offerId }).ok, true);
+  assert.equal(g.addMove({ type: 'deal', offerId }).ok, false);
   let seen = null;
   g.subscribe((u) => (seen = u));
   g.endTurn();
@@ -41,4 +42,10 @@ test('the summit scenario stops on the opening turn of era 5', () => {
   const s = SCENARIOS.summit(1);
   assert.equal(s.era, 5);
   assert.equal(s.turnInEra, 0);
+  assert.equal(s.deal, null);
+});
+
+test('the event scenario stops on the first turn with a pending card', () => {
+  const s = SCENARIOS.event(1);
+  assert.ok(s.pendingEvents.length > 0);
 });

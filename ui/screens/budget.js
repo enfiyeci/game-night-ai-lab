@@ -6,7 +6,6 @@ import { vslider } from '../components/vslider.js';
 
 export const BUDGET_SLIDERS = [
   { key: 'training', label: 'Training', short: 'Training', token: 'coral' },
-  { key: 'safety', label: 'Safety and evals', short: 'Safety', token: 'sky' },
   { key: 'security', label: 'Security', short: 'Security', token: 'ink' },
   { key: 'product', label: 'Product and growth', short: 'Product', token: 'wood' },
   { key: 'talent', label: 'Talent and research', short: 'Talent', token: 'teal' },

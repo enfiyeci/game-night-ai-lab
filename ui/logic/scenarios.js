@@ -4,6 +4,7 @@ import { endTurn } from '../../sim/turn.js';
 import { cardById, cardUnlocked, recipeCost, slotsFor, validateRecipe } from '../../sim/recipe.js';
 import { availableUnits } from '../../sim/training.js';
 import { inDangerZone } from '../../sim/economy.js';
+import { MEETINGS } from '../../sim/data/president.js';
 
 const preferences = {
   pre: ['licensed-data', 'hazard-filter-built', 'hazard-filter-reuse'],
@@ -51,6 +52,23 @@ const release = (state) => ({
 
 function scriptedActions(state) {
   const moves = [];
+  const actions = {
+    budget: { spend: 25, split: { training: 0.6, security: 0.15, product: 0.1, talent: 0.15 } },
+    computeSplit: { safety: 0.2 },
+    addressWarnings: Object.entries(state.warnings)
+      .filter(([, warning]) => !warning.deferred)
+      .map(([id]) => id),
+    eventChoices: Object.fromEntries(state.pendingEvents.map((event) => [event.id, event.choices[0].id])),
+    moves,
+  };
+  if (state.pendingModel?.hazard) actions.hazardChoice = 'ignore';
+  if (state.meeting) {
+    const meeting = MEETINGS.find((entry) => entry.id === state.meeting.id);
+    moves.push({ type: 'meeting' });
+    actions.presidentAnswers = meeting.exchanges.map((exchange) => (
+      exchange.answers.find((answer) => answer.style === 'plain') ?? exchange.answers[0]
+    ).id);
+  }
   if (state.pendingModel) {
     moves.push({ type: 'release', release: release(state) });
   } else if (!state.activeRun) {
@@ -60,12 +78,11 @@ function scriptedActions(state) {
   if (inDangerZone(state) && state.flags.lastRoundEra !== state.era) {
     moves.push({ type: 'raise', archetype: 'vc' });
   } else if (availableUnits(state) < 5) {
-    moves.push({ type: 'deal', supplierId: 'coreflame' });
+    const offer = state.compute.offers.find((candidate) => candidate.supplier === 'coreflame' && !candidate.viaQueue);
+    if (offer && offer.upfront <= state.cash) moves.push({ type: 'deal', offerId: offer.id });
   }
-  return {
-    budget: { spend: 25, split: { training: 0.2, safety: 0.4, security: 0.15, product: 0.1, talent: 0.15 } },
-    moves: moves.slice(0, 2),
-  };
+  actions.moves = moves.slice(0, 2);
+  return actions;
 }
 
 function throughTurn(seed, targetTurn, stopWhen = () => false) {
@@ -92,12 +109,13 @@ function dangerState(seed) {
         sliders: { size: 'small', length: 'optimal', alignShare: 0.4 },
         picks: { pre: [], mid: [], post: [] },
       },
-    }] : [];
+    }] : state.pendingModel ? [{ type: 'release', release: release(state) }] : [];
     ({ state } = endTurn(state, {
       budget: {
         spend: 70,
-        split: { training: 0.5, safety: 0.05, security: 0.05, product: 0.05, talent: 0.35 },
+        split: { training: 0.55, security: 0.05, product: 0.05, talent: 0.35 },
       },
+      computeSplit: { safety: 0.05 },
       moves,
     }, rng));
   }
@@ -108,10 +126,8 @@ export const SCENARIOS = {
   start,
   midEra3,
   release: releaseState,
-  // After Plan 2A merges, this scenario will stop with a pending event card.
-  event: midEra3,
-  // After Plan 2A merges, this scenario will stop with the era-5 summit open.
-  summit: (seed) => throughTurn(seed, 20, (s) => s.era === 5),
+  event: (seed) => throughTurn(seed, 20, (s) => s.pendingEvents.length > 0),
+  summit: (seed) => throughTurn(seed, 20, (s) => s.era === 5 && s.turnInEra === 0 && !s.deal),
   ending: (seed) => throughTurn(seed, 20),
   danger: dangerState,
 };

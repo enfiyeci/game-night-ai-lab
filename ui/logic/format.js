@@ -1,5 +1,6 @@
 import { recipeCost } from '../../sim/recipe.js';
 import { modelName } from '../../sim/release.js';
+import { MW_PER_UNIT } from '../../sim/data/compute.js';
 
 const trimOneDecimal = (value) => value.toFixed(1).replace(/\.0$/, '');
 
@@ -25,10 +26,17 @@ export function users(value) {
   return `${Math.round(value)}`;
 }
 
-export function compute(value) {
+export function computeAmount(units, era = 1) {
+  if (era < 4) return `${trimOneDecimal(units)} units`;
+  const megawatts = units * MW_PER_UNIT;
+  if (megawatts < 1000) return `${trimOneDecimal(megawatts)} MW`;
+  return `${(megawatts / 1000).toFixed(2)} GW`;
+}
+
+export function compute(value, era = 1) {
   const online = value?.online ?? 0;
   const arriving = (value?.pipeline ?? []).reduce((sum, deal) => sum + (deal.units ?? 0), 0);
-  return `${trimOneDecimal(online)} units online · ${trimOneDecimal(arriving)} arriving`;
+  return `${computeAmount(online, era)} online · ${computeAmount(arriving, era)} arriving`;
 }
 
 const STAGE_WORDS = ['pretraining', 'midtraining', 'post-training'];

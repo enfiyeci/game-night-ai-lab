@@ -3,18 +3,23 @@ import assert from 'node:assert/strict';
 import { normaliseSplit, budgetFromSliders, levelFor } from '../ui/logic/actions.js';
 import { setBudget } from '../sim/turn.js';
 import { createInitialState } from '../sim/state.js';
+import { BUDGET_SLIDERS } from '../ui/screens/budget.js';
 
 test('slider values normalise to shares that the sim accepts', () => {
-  const split = normaliseSplit({ training: 78, safety: 45, security: 25, product: 30, talent: 22 });
+  const split = normaliseSplit({ training: 78, security: 25, product: 30, talent: 22 });
   const sum = Object.values(split).reduce((a, b) => a + b, 0);
   assert.ok(Math.abs(sum - 1) < 1e-9);
-  const b = budgetFromSliders({ training: 78, safety: 45, security: 25, product: 30, talent: 22 }, 'steady', 1);
+  const b = budgetFromSliders({ training: 78, security: 25, product: 30, talent: 22 }, 'steady', 1);
   assert.equal(b.spend, 20);
   assert.equal(setBudget(createInitialState(), b).ok, true);
 });
 
 test('spend level scales by era', () => {
-  assert.equal(budgetFromSliders({ training: 1, safety: 1, security: 1, product: 1, talent: 1 }, 'aggressive', 3).spend, 70);
+  assert.equal(budgetFromSliders({ training: 1, security: 1, product: 1, talent: 1 }, 'aggressive', 3).spend, 70);
+});
+
+test('the budget dialog sends exactly the four accepted split keys', () => {
+  assert.deepEqual(BUDGET_SLIDERS.map(({ key }) => key), ['training', 'security', 'product', 'talent']);
 });
 
 test('normaliseSplit keeps exactly the input keys', () => {

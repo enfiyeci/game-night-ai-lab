@@ -9,7 +9,6 @@ const initialQueue = (budget) => ({
   addressWarnings: [],
   eventChoices: {},
   constitution: undefined,
-  presidentAnswers: [],
   holdOrShip: undefined,
 });
 

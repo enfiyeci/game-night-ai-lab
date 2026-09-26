@@ -14,7 +14,7 @@ import { TECHNIQUES, techAvailable } from '../../sim/techniques.js';
 
 const INVESTOR_COPY = {
   vc: { chip: 'Board seat', explanation: 'A growth fund joins the board.' },
-  strategic: { chip: 'Strings attached', explanation: 'Cheap compute next turn, and the partner expects favours.' },
+  strategic: { chip: 'Strings attached', explanation: 'A cloud partner joins the board and expects favours.' },
   sovereign: { chip: 'Costs goodwill', explanation: 'Staff, the public and Washington will notice.' },
 };
 
@@ -76,6 +76,7 @@ function rowValue(card, label) {
 }
 
 function arrivalTurn(state, text) {
+  if (text === 'now') return state.turn;
   if (text === 'next turn') return state.turn + 1;
   const turns = Number.parseInt(text.match(/\d+/)?.[0] ?? '1', 10);
   return state.turn + turns;
@@ -231,16 +232,18 @@ export function openDeals(game, overlayRoot) {
       foot.text.textContent = 'Signing uses 1 of 2 moves this turn';
       return;
     }
-    const upfrontText = rowValue(card, 'Upfront');
+    const upfrontText = rowValue(card, 'Upfront') || 'none';
     const rows = [
       ['Pay now', upfrontText],
       ['Monthly cost', rowValue(card, 'Monthly')],
       ['Online from', `turn ${arrivalTurn(projected, rowValue(card, 'Arrives'))}`],
       ['Runway now', months(runwayNow(projected))],
     ];
-    if (Number.isFinite(card.runwayAfter)) rows.push(['After signing', months(card.runwayAfter)]);
+    if (Number.isFinite(card.runwayAfter)) rows.push(['After signing (full bill)', months(card.runwayAfter)]);
     rightContent.replaceChildren(statusPanel(rows));
-    foot.text.textContent = `Signing uses 1 of 2 moves this turn · pay ${upfrontText === 'none' ? money(0) : upfrontText} now`;
+    foot.text.textContent = upfrontText === 'none'
+      ? 'Signing uses 1 of 2 moves this turn · nothing to pay now'
+      : `Signing uses 1 of 2 moves this turn · pay ${upfrontText} now`;
   }
 
   wireChoices(group, buttons, (id) => {

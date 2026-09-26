@@ -35,7 +35,7 @@ test('records first-found ending details, counts repeats and reports progress', 
 
 test('ignores unknown ending ids', () => {
   const collection = createCollection(memoryStorage());
-  collection.record('overtaken', { seed: 4, era: 2, turn: 8, model: null });
+  collection.record('not-an-ending', { seed: 4, era: 2, turn: 8, model: null });
 
   assert.deepEqual(collection.entries(), []);
   assert.deepEqual(collection.progress(), { found: 0, total: Object.keys(ENDINGS).length });
