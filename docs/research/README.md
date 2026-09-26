@@ -29,6 +29,9 @@ only through search-result snippets, and those claims carry ⚠️ inline.
    how Game Dev Tycoon's time works (it has no speed buttons), how real-time-with-pause games
    run a clock over a fixed tick, every turn assumption in our code with file:line citations,
    and four designs with a ship-by-the-deadline verdict. See `realtime-time-flow/README.md`.
+6. `event-cards/README.md` — how games present events, dilemmas and warnings (Game Dev Tycoon
+   first), what our specs and sim already decide, and the event-card decisions put to the owner
+   (2026-09-26).
 
 ## Notable catches
 

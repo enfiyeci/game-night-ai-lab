@@ -19,6 +19,9 @@ import {
 import { openQueue } from './screens/compute.js';
 import { openPowerSites } from './screens/sites.js';
 import { mountHistory, openArticle, openHistory } from './screens/history.js';
+import { mountEvents } from './screens/events.js';
+import { mountBriefing } from './screens/briefing.js';
+import { mountFeed } from './screens/feed.js';
 
 const params = new URLSearchParams(location.search);
 
@@ -65,6 +68,9 @@ mountCompany(game, overlay);
 mountRecipe(game, overlay);
 mountHistory(game, overlay);
 mountTurnSummary(overlay, game);
+const events = mountEvents(game, { stage, overlay });
+mountBriefing(game, { office, overlay });
+mountFeed(game, { overlay, events });
 
 function stagePoint(event) {
   const rect = stage.getBoundingClientRect();
@@ -74,22 +80,29 @@ function stagePoint(event) {
   ];
 }
 
+const blocked = () => Boolean(overlay.querySelector('.dialog-layer, .event-layer, .ev-phone'));
+
 office.addEventListener('click', (event) => {
-  if (event.target.closest?.('#person-ceo') && !overlay.querySelector('.dialog-layer')) {
+  if (event.target.closest?.('#person-ceo') && !blocked()) {
     openArticle(game, overlay);
     return;
   }
-  if (!event.target.closest?.('#floor') || overlay.querySelector('.dialog-layer')) return;
+  if (!event.target.closest?.('#floor') || blocked()) return;
   openMenu(game, stagePoint(event), { overlay });
 });
 
 office.addEventListener('keydown', (event) => {
   if ((event.key !== 'Enter' && event.key !== ' ') || !event.target.closest?.('#person-ceo')) return;
   event.preventDefault();
-  if (!overlay.querySelector('.dialog-layer')) openArticle(game, overlay);
+  if (!blocked()) openArticle(game, overlay);
 });
 
 async function openDebugRoute() {
+  const previewId = location.hash.match(/^#event-(\w+)$/)?.[1];
+  if (previewId) {
+    await events.preview(previewId);
+    return;
+  }
   const recipeStage = location.hash.match(/^#recipe([123])$/)?.[1];
   if (recipeStage) {
     openRecipe(game, overlay, { stage: Number(recipeStage) });

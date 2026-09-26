@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="../../../">
+  <meta name="viewport" content="width=1440">
+  <title>Event card and warning mockups</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="ui/styles.css">
+  <style>
+    /* Mockup-only styles for plan 2B Task 8. Tokens come from ui/styles.css; no colour literals here. */
+    .muted { color: color-mix(in oklab, var(--ink) 58%, var(--paper)); }
+    .dialog-layer { opacity: 1 !important; transition: none !important; } /* still frames: skip the fade-in */
+    .layer { position: absolute; inset: 0; z-index: 10; pointer-events: none; }
+    .layer > * { pointer-events: auto; }
+
+    /* A feed post, as on the approved phone (K2-feed-lumen.html#a) */
+    .fp { display: grid; grid-template-columns: 30px 1fr; gap: 9px; text-align: left; }
+    .fp .av { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; color: var(--paper); font-weight: 900; font-size: 13px; }
+    .fp .h { font-size: 12.5px; font-weight: 900; }
+    .fp .x { font-size: 13.5px; font-weight: 600; line-height: 1.32; margin-top: 1px; }
+    .fp .when { font-size: 10.5px; font-weight: 700; margin-top: 3px; color: color-mix(in oklab, var(--ink) 60%, var(--paper)); }
+    .tagc { display: inline-block; font-size: 9.5px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; padding: 1px 6px; border-radius: 4px; margin-left: 6px; vertical-align: 1px; background: color-mix(in oklab, var(--ink) 7%, var(--paper)); color: color-mix(in oklab, var(--ink) 74%, var(--paper)); }
+    .tagc.warn { background: color-mix(in oklab, var(--coral) 16%, var(--paper)); color: color-mix(in oklab, var(--coral) 55%, var(--ink)); }
+
+    /* The act-on-it button, smaller than the dialog OK */
+    .act { white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 0; border-radius: 9px; font: inherit; font-size: 13px; font-weight: 900; color: var(--paper); background: var(--coral); box-shadow: 0 2px 0 color-mix(in oklab, var(--coral) 60%, var(--ink)); cursor: pointer; }
+    .act.ghost { color: color-mix(in oklab, var(--wood) 72%, var(--ink)); background: transparent; box-shadow: none; padding-inline: 4px; }
+    .hint { font-size: 11.5px; font-weight: 700; color: color-mix(in oklab, var(--ink) 60%, var(--paper)); }
+
+    /* Warning label: an icon plus the word, never colour alone */
+    .wl { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: color-mix(in oklab, var(--coral) 62%, var(--ink)); }
+    .wl i { display: grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; font-style: normal; font-size: 11px; color: var(--paper); background: var(--coral); }
+
+    /* The phone lying on the CEO desk */
+    .desk-phone { position: absolute; z-index: 6; width: 60px; height: 50px; }
+
+    /* W-A: the warning slides out of the phone */
+    .peek { position: absolute; z-index: 12; width: 340px; padding: 12px 14px 12px; border-radius: 14px; background: var(--paper); border: 1px solid color-mix(in oklab, var(--ink) 10%, transparent); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 16%, transparent), 0 12px 28px color-mix(in oklab, var(--ink) 18%, transparent); display: grid; gap: 9px; }
+    .peek .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+
+    /* W-B: toast under the HUD, in the turn-summary's look */
+    .wtoast { position: absolute; z-index: 12; top: 104px; left: 18px; width: 350px; overflow: hidden; border: 2px solid var(--wood); border-radius: 12px; background: var(--paper); box-shadow: 0 3px 0 color-mix(in oklab, var(--wood) 55%, var(--ink)), 0 12px 28px color-mix(in oklab, var(--ink) 20%, transparent); }
+    .wtoast .hdr { display: flex; justify-content: space-between; align-items: center; min-height: 34px; padding: 5px 12px 5px 14px; color: var(--paper); background: var(--wood); font-size: 14px; font-weight: 900; }
+    .wtoast .bd { display: grid; gap: 10px; padding: 12px 14px 14px; }
+    .wtoast .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+
+    /* Speech bubbles at head anchors (K2 / E2 bubble grammar) */
+    .sb { position: absolute; z-index: 12; background: var(--paper); border-radius: 12px; padding: 8px 12px 10px; font-size: 13px; font-weight: 700; line-height: 1.3; border: 1px solid color-mix(in oklab, var(--ink) 10%, transparent); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 14%, transparent), 0 8px 18px color-mix(in oklab, var(--ink) 14%, transparent); }
+    .sb::after { content: ""; position: absolute; left: var(--tail, 24px); bottom: -8px; width: 14px; height: 14px; background: var(--paper); transform: rotate(45deg); border-right: 1px solid color-mix(in oklab, var(--ink) 10%, transparent); border-bottom: 1px solid color-mix(in oklab, var(--ink) 10%, transparent); }
+    .sb b { display: block; font-size: 10.5px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; color: color-mix(in oklab, var(--wood) 60%, var(--ink)); }
+    .sb .say { margin-top: 2px; font-size: 14px; }
+    .sb .actions { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+
+    /* Event card body inside the real GDT dialog */
+    .ev { display: grid; gap: 12px; text-align: left; }
+    .ev-post { padding: 12px 14px; border-radius: 12px; background: var(--paper); border: 1.5px solid color-mix(in oklab, var(--ink) 10%, transparent); }
+    .ev-choices { display: grid; gap: 9px; }
+    .ch { display: grid; grid-template-columns: 1fr auto; gap: 4px 14px; align-items: center; width: 100%; padding: 11px 14px 11px 16px; border: 2.5px solid color-mix(in oklab, var(--ink) 12%, transparent); border-radius: 12px; background: var(--paper); font: inherit; text-align: left; color: var(--ink); cursor: pointer; }
+    .ch.on { border-color: var(--teal); box-shadow: 0 0 0 4px color-mix(in oklab, var(--teal) 16%, transparent); }
+    .ch .lb { font-size: 17px; font-weight: 900; line-height: 1.2; }
+    .ch .cost { grid-column: 1; font-size: 13px; font-weight: 700; color: color-mix(in oklab, var(--ink) 62%, var(--paper)); }
+    .ch .cost b { color: var(--ink); font-weight: 900; }
+    .ch .who { grid-column: 2; grid-row: 1 / span 2; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+    .chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 800; white-space: nowrap; }
+    .chip.for { background: color-mix(in oklab, var(--teal) 14%, var(--paper)); color: color-mix(in oklab, var(--teal) 62%, var(--ink)); }
+    .chip.against { background: color-mix(in oklab, var(--ink) 6%, var(--paper)); color: color-mix(in oklab, var(--ink) 62%, var(--paper)); text-decoration: line-through; text-decoration-thickness: 1.5px; }
+    .chip.idle { background: color-mix(in oklab, var(--wood) 18%, var(--paper)); color: color-mix(in oklab, var(--wood) 62%, var(--ink)); }
+    .who-row { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+    .dlg .subt .count { font-weight: 900; color: var(--ink); }
+    .crisis-band { margin: -18px -26px 14px; padding: 7px 0 8px; background: var(--coral); color: var(--paper); font-size: 13px; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; }
+    .crisis-band span { letter-spacing: 0; text-transform: none; font-weight: 700; opacity: .92; }
+    .wash { position: absolute; inset: 0; z-index: 1; pointer-events: none; background: radial-gradient(ellipse 70% 65% at 50% 55%, transparent 40%, color-mix(in oklab, var(--coral) 34%, transparent) 100%); }
+    .dim #office { filter: saturate(.7) brightness(.9); }
+
+    /* Right status panel of the dialog */
+    .side-list { display: grid; gap: 0; }
+    .side-list div { padding: 10px 14px; border-top: 1px solid color-mix(in oklab, var(--wood) 22%, transparent); font-size: 13px; font-weight: 700; line-height: 1.3; }
+    .side-list div:first-child { border-top: 0; }
+    .side-list small { display: block; font-size: 10.5px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: color-mix(in oklab, var(--ink) 55%, var(--paper)); margin-bottom: 2px; }
+
+    /* Big phone, as the approved feed phone */
+    .phone { position: absolute; z-index: 12; left: 22px; top: 104px; width: 330px; height: 700px; border-radius: 38px; background: var(--ink); padding: 12px; box-shadow: 0 3px 0 color-mix(in oklab, var(--ink) 70%, var(--cream)), 0 20px 44px color-mix(in oklab, var(--ink) 30%, transparent); }
+    .phone .scr { position: relative; height: 100%; border-radius: 28px; background: var(--paper); overflow: hidden; padding: 0 16px; }
+    .phone .notch { position: absolute; left: 50%; top: 9px; width: 86px; height: 22px; margin-left: -43px; border-radius: 12px; background: var(--ink); }
+    .phone .top { display: flex; justify-content: space-between; align-items: baseline; padding: 44px 2px 8px; border-bottom: 2px solid color-mix(in oklab, var(--wood) 30%, transparent); }
+    .phone h2 { margin: 0; font-size: 22px; font-weight: 900; }
+    .phone .new { font-size: 11.5px; font-weight: 900; color: var(--paper); background: var(--coral); border-radius: 999px; padding: 2px 9px; }
+    .phone .home { position: absolute; left: 50%; bottom: 8px; width: 110px; height: 5px; margin-left: -55px; border-radius: 3px; background: color-mix(in oklab, var(--ink) 30%, var(--paper)); }
+    .phone .sec { margin: 12px 0 6px; font-size: 10.5px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: color-mix(in oklab, var(--ink) 55%, var(--paper)); }
+    .phone .fp { padding: 9px 0; border-top: 1px solid color-mix(in oklab, var(--wood) 25%, transparent); }
+    .pin { margin-top: 10px; padding: 12px; border-radius: 14px; background: color-mix(in oklab, var(--cream) 45%, var(--paper)); border: 2px solid color-mix(in oklab, var(--wood) 45%, var(--paper)); display: grid; gap: 9px; }
+    .pin h3 { margin: 0; font-size: 18px; font-weight: 900; line-height: 1.2; }
+    .pin .ch { padding: 8px 10px 8px 12px; border-radius: 10px; gap: 2px 8px; }
+    .pin .ch .lb { font-size: 14.5px; }
+    .pin .ch .cost { font-size: 12px; }
+    .pin .ch .who { grid-column: 1; grid-row: auto; flex-direction: row; justify-content: flex-start; }
+    .pin .chip { font-size: 10.5px; padding: 1px 7px; }
+    .inbox-row { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; align-items: center; padding: 10px 12px; border-radius: 12px; background: var(--paper); border: 2px solid color-mix(in oklab, var(--wood) 40%, var(--paper)); margin-top: 8px; }
+    .inbox-row b { font-size: 14px; font-weight: 900; line-height: 1.2; }
+    .inbox-row span { grid-column: 1; }
+    .inbox-row.stack { grid-template-columns: 1fr; gap: 8px; }
+    .inbox-row.stack .act { justify-self: end; }
+    .inbox-row .fp { border-top: 0; padding: 0; }
+
+    /* C-C: slim card along the bottom */
+    .slim { position: absolute; z-index: 12; left: 300px; right: 300px; bottom: 22px; padding: 14px 20px 16px; text-align: left; }
+    .slim .top { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; }
+    .slim h1 { margin: 0; font-size: 26px; font-weight: 300; }
+    .slim .fp { margin-top: 8px; }
+    .slim .opts3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 12px; }
+    .slim .ch { padding: 9px 12px; }
+    .slim .ch .lb { font-size: 15.5px; }
+    .slim .ch .who { grid-column: 1; grid-row: auto; flex-direction: row; justify-content: flex-start; flex-wrap: wrap; }
+
+    /* End-turn reminder next to the real menu */
+    .remind { position: absolute; z-index: 30; width: 300px; padding: 14px 16px 14px; text-align: left; }
+    .remind p { margin: 0; font-size: 14px; font-weight: 700; line-height: 1.35; }
+    .remind .row { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
+    .remind .btn { width: auto; padding: 8px 14px; font-size: 14px; }
+
+    /* 7B: a second, card-shaped mark */
+    .card-pill { position: absolute; z-index: 9; display: flex; align-items: center; gap: 7px; padding: 4px 10px 4px 5px; border-radius: 999px; background: var(--paper); border: 2px solid var(--ink); font-size: 12.5px; font-weight: 900; box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 20%, transparent); }
+    .card-mark { position: relative; width: 18px; height: 22px; border-radius: 5px; background: var(--paper); border: 2px solid var(--ink); display: grid; place-items: center; font-size: 13px; font-weight: 900; box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 20%, transparent); }
+    .card-mark::before { content: ""; position: absolute; inset: 5px 5px auto; height: 2px; background: var(--wood); box-shadow: 0 5px 0 var(--wood), 0 10px 0 color-mix(in oklab, var(--wood) 60%, var(--paper)); }
+  </style>
+</head>
+<body>
+  <main id="stage" aria-label="AI lab office">
+    <div id="office"></div>
+    <div id="fx" aria-live="polite"></div>
+    <div id="hud"></div>
+    <div id="overlay"></div>
+  </main>
+<script type="module">
+import { createGame } from './ui/game.js';
+import { mountHud } from './ui/hud.js';
+import { mountOffice } from './ui/office.js';
+import { openDialog } from './ui/components/dialog.js';
+import { teamPanel } from './ui/components/team.js';
+import { openMenu } from './ui/menu.js';
+import { money } from './ui/logic/format.js';
+import { SCENARIOS } from './ui/logic/scenarios.js';
+import { EVENTS } from './sim/data/events.js';
+
+const zoom = () => { const z = Math.min(innerWidth / 1440, innerHeight / 900, 1); if (z > 0) document.documentElement.style.zoom = `${z}`; };
+zoom(); addEventListener('resize', zoom);
+
+// A real era-2 save: seed 10's first turn with a pending card (the CFO is alarmed).
+const state = SCENARIOS.event(10);
+const game = createGame({ seed: 10, state });
+mountHud(document.querySelector('#hud'), game);
+await mountOffice(document.querySelector('#office'), document.querySelector('#fx'), game).catch(console.error);
+const stage = document.querySelector('#stage');
+const overlay = document.querySelector('#overlay');
+const fx = document.querySelector('#fx');
+const anchors = await (await fetch(`ui/assets/anchors-era${state.era}.json`)).json();
+const HEAD = anchors.heads;
+
+const el = (html) => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; };
+const text = (node, sel, value) => { (node.matches(sel) ? node : node.querySelector(sel)).textContent = value; return node; };
+const layer = (cls = '') => { const node = el(`<div class="layer ${cls}"></div>`); overlay.append(node); return node; };
+
+// Real card text from the game's event data.
+const card = (id) => EVENTS.find((event) => event.id === id);
+const FLATTERY = card('flattery');
+const INVESTORS = card('investors');
+const THEFT = card('weightTheft');
+const fallbackOf = (event) => event.fallback ?? event.card.choices.at(-1).id;
+const actCost = `$${5 * state.era}M`;
+
+// Backer tags that are one of the four advisors in the office.
+const TAG_TO_ADVISOR = { Research: 'research', Safety: 'safety', CFO: 'cfo', Comms: 'policy' };
+const ADVISOR_TITLE = { research: 'Head of Research', safety: 'Head of Safety', cfo: 'CFO', policy: 'Policy and Comms' };
+const band = (id) => state.lastBriefing?.find((b) => b.id === id)?.band ?? 'calm';
+
+const AV_COLOURS = ['var(--teal)', 'var(--coral)', 'var(--sky)', 'var(--wood)'];
+function post({ handle, text: body }, { tag = '', tagClass = '', when = '' } = {}) {
+  const node = el(`<div class="fp"><div class="av"></div><div><div class="h"><span></span></div><div class="x"></div>${when ? '<div class="when"></div>' : ''}</div></div>`);
+  const letter = handle.replace('@', '')[0].toUpperCase();
+  node.querySelector('.av').textContent = letter;
+  node.querySelector('.av').style.background = AV_COLOURS[letter.charCodeAt(0) % AV_COLOURS.length];
+  node.querySelector('.h span').textContent = handle;
+  if (tag) {
+    const chip = el(`<span class="tagc ${tagClass}"></span>`);
+    chip.textContent = tag;
+    node.querySelector('.h').append(chip);
+  }
+  node.querySelector('.x').textContent = body;
+  if (when) node.querySelector('.when').textContent = when;
+  return node;
+}
+function warnLabel(word = 'Warning') { return text(el('<span class="wl"><i aria-hidden="true">!</i><span></span></span>'), 'span span', word); }
+
+function choiceRow(event, choice, { selected = false, showIdle = true } = {}) {
+  const row = el('<button type="button" class="ch"><span class="lb"></span><span class="cost">Cost: <b></b></span><span class="who"><span class="who-row"></span></span></button>');
+  row.classList.toggle('on', selected);
+  row.querySelector('.lb').textContent = choice.label;
+  row.querySelector('.cost b').textContent = choice.cost === '—' ? 'nothing up front' : choice.cost;
+  const who = row.querySelector('.who-row');
+  for (const name of choice.backers ?? []) who.append(text(el('<span class="chip for"><span aria-hidden="true">✓</span><span></span></span>'), 'span + span', name));
+  for (const name of choice.opposers ?? []) who.append(text(el('<span class="chip against"><span class="sr"></span></span>'), 'span', name));
+  row.querySelectorAll('.chip.against').forEach((chip) => chip.setAttribute('aria-label', `${chip.textContent} is against`));
+  if (showIdle && choice.id === fallbackOf(event)) row.querySelector('.who').prepend(el('<span class="chip idle">If you do nothing</span>'));
+  return row;
+}
+
+function teamFor(event) {
+  const opinions = Object.entries(ADVISOR_TITLE).map(([id]) => {
+    const backs = event.card.choices.filter((c) => (c.backers ?? []).some((t) => TAG_TO_ADVISOR[t] === id)).map((c) => c.label);
+    const against = event.card.choices.filter((c) => (c.opposers ?? []).some((t) => TAG_TO_ADVISOR[t] === id)).map((c) => c.label);
+    const said = backs.length ? `Backs: ${backs.join(', ')}.` : against.length ? '' : 'No view on this one.';
+    return { id, mood: band(id), text: [said, against.length ? `Against: ${against.join(', ')}.` : ''].filter(Boolean).join(' ') };
+  });
+  return teamPanel(state, { opinions });
+}
+
+function sideList(rows) {
+  const list = el('<div class="side-list"></div>');
+  for (const [k, v] of rows) list.append(text(text(el('<div><small></small><span></span></div>'), 'small', k), 'span', v));
+  return list;
+}
+
+function cardDialog(event, { index = 1, of = 2, selected = null, crisis = false, next = INVESTORS } = {}) {
+  const body = el('<div class="ev"><div class="ev-post"></div><div class="ev-choices"></div></div>');
+  body.querySelector('.ev-post').append(post(event.card.post, { tag: 'on your feed' }));
+  for (const choice of event.card.choices) body.querySelector('.ev-choices').append(choiceRow(event, choice, { selected: choice.id === selected }));
+  const layerNode = openDialog(overlay, {
+    title: event.card.title,
+    subtitle: `Card ${index} of ${of} · answer before you end the turn`,
+    left: { title: 'Team', content: teamFor(event) },
+    right: { title: 'This turn', content: sideList([
+      ['Cash', money(state.cash)],
+      ['Still to answer', `Card ${index + 1}: ${next.card.title}`],
+      ['On your phone', '1 warning'],
+    ]) },
+    body,
+    okLabel: 'Choose',
+    backLabel: 'Decide later',
+  });
+  layerNode.classList.add('dialog-open');
+  const panel = layerNode.querySelector('.dlg');
+  panel.style.minHeight = '0';
+  if (crisis) panel.prepend(el('<div class="crisis-band">Crisis <span>· opens first</span></div>'));
+  return layerNode;
+}
+
+// The phone lying on the CEO desk (approved option A), with a count badge.
+function deskPhone(count, { buzz = true } = {}) {
+  const [x, y] = HEAD.ceo;
+  const node = el(`<svg class="desk-phone" viewBox="-30 -25 60 50" aria-label="Your phone: ${count} new">
+    <g transform="rotate(-30)"><rect x="-15" y="-8" width="30" height="16" rx="4" style="fill:var(--ink)"/><rect x="-12" y="-5.5" width="24" height="11" rx="2" style="fill:color-mix(in oklab, var(--sky) 55%, var(--paper))"/></g>
+    ${buzz ? '<path d="M-22,-18 q-6,6 0,12 M-28,-22 q-10,10 0,20" style="fill:none;stroke:var(--coral);stroke-width:2;stroke-linecap:round"/>' : ''}
+    <circle cx="18" cy="-16" r="9" style="fill:var(--coral);stroke:var(--paper);stroke-width:2"/>
+    <text x="18" y="-12" text-anchor="middle" style="font:900 11px Nunito;fill:var(--paper)">${count}</text></svg>`);
+  node.style.left = `${x + 27 - 30}px`;
+  node.style.top = `${y + 121 - 25}px`;
+  fx.append(node);
+  return { x: x + 27, y: y + 121 };
+}
+
+function bubble(role, { label, say, width = 250, tail = 24, dy = -34 }) {
+  const [x, y] = HEAD[role];
+  const node = el('<div class="sb"><b></b><div class="say"></div></div>');
+  node.querySelector('b').textContent = label;
+  node.querySelector('.say').textContent = say;
+  node.style.width = `${width}px`;
+  node.style.setProperty('--tail', `${tail}px`);
+  overlay.append(node);
+  node.style.left = `${x - tail - 7}px`;
+  node.style.top = `${y + dy - node.offsetHeight}px`;
+  return node;
+}
+
+// ---------- Decision 1: where a warning shows up ----------
+function showWA() {
+  const phone = deskPhone(1);
+  const node = el('<div class="peek"><div class="row"></div><div class="row"><span class="hint">Ignore it and it becomes a card next turn.</span></div></div>');
+  node.querySelector('.row').append(warnLabel('Warning · your phone'));
+  node.insertBefore(post(FLATTERY.warning, { tag: 'your model', tagClass: 'warn' }), node.children[1]);
+  node.lastElementChild.append(text(el('<button type="button" class="act"></button>'), 'button', `Act on it (${actCost})`));
+  overlay.append(node);
+  node.style.left = `${phone.x + 34}px`;
+  node.style.top = `${phone.y - node.offsetHeight + 10}px`;
+}
+
+function showWB() {
+  deskPhone(1, { buzz: false });
+  const node = el('<section class="wtoast" aria-live="polite"><div class="hdr"><span>Warning</span><span aria-hidden="true">×</span></div><div class="bd"><div class="row"></div></div></section>');
+  node.querySelector('.bd').prepend(post(FLATTERY.warning, { tag: 'your model', tagClass: 'warn' }));
+  const row = node.querySelector('.row');
+  row.append(text(el('<span class="hint"></span>'), 'span', 'Ignore it and it becomes a card next turn.'));
+  row.append(text(el('<button type="button" class="act"></button>'), 'button', `Act on it (${actCost})`));
+  overlay.append(node);
+}
+
+function showWC() {
+  deskPhone(1, { buzz: false });
+  const node = bubble('safety', { label: `${ADVISOR_TITLE.safety} · uneasy`, say: `Have you seen this? “${FLATTERY.warning.text}”`, width: 290, tail: 30 });
+  const actions = el('<div class="actions"></div>');
+  actions.append(text(el('<button type="button" class="act"></button>'), 'button', `Act on it (${actCost})`));
+  actions.append(text(el('<button type="button" class="act ghost"></button>'), 'button', 'Not now'));
+  node.append(actions);
+  node.style.top = `${HEAD.safety[1] - 34 - node.offsetHeight}px`;
+}
+
+// ---------- Decision 2: what a card looks like ----------
+function showCA() { deskPhone(1, { buzz: false }); cardDialog(FLATTERY, { selected: 'rollback' }); }
+
+function showCB() {
+  deskPhone(1, { buzz: false });
+  const phone = el(`<div class="phone" style="height:770px"><div class="scr"><div class="notch"></div>
+    <div class="top"><h2>Feed</h2><span class="new">Decide · 1 of 2</span></div>
+    <div class="pin"></div><div class="sec">Also on your feed</div><div class="rest"></div><div class="home"></div></div></div>`);
+  const pin = phone.querySelector('.pin');
+  pin.append(warnLabel('Decide this turn'));
+  pin.append(text(el('<h3></h3>'), 'h3', FLATTERY.card.title));
+  pin.append(post(FLATTERY.card.post, { tag: 'your model', tagClass: 'warn' }));
+  for (const choice of FLATTERY.card.choices) pin.append(choiceRow(FLATTERY, choice, { selected: choice.id === 'rollback' }));
+  pin.append(text(el('<button type="button" class="act ghost" style="justify-self:start"></button>'), 'button', 'Decide later'));
+  const rest = phone.querySelector('.rest');
+  for (const item of state.feed.slice(-1)) rest.append(post(item, { tag: item.tag === 'warning' ? 'warning' : '', tagClass: 'warn', when: 'last turn' }));
+  overlay.append(phone);
+}
+
+function showCC() {
+  deskPhone(1, { buzz: false });
+  const slim = el('<section class="gp slim"><div class="top"><h1></h1><span class="muted" style="font-size:13px;font-weight:800">Card 1 of 2</span></div><div class="opts3"></div></section>');
+  slim.querySelector('h1').textContent = FLATTERY.card.title;
+  slim.querySelector('.top').after(post(FLATTERY.card.post, { tag: 'your model', tagClass: 'warn' }));
+  for (const choice of FLATTERY.card.choices) slim.querySelector('.opts3').append(choiceRow(FLATTERY, choice));
+  overlay.append(slim);
+  // Each advisor with a view speaks from their desk; lines are built from the card's backer tags (placeholder copy).
+  bubble('safety', { label: `${ADVISOR_TITLE.safety}`, say: 'Roll it back. Not a quiet patch, and not a defence.', width: 230, tail: 26 });
+  bubble('cfo', { label: `${ADVISOR_TITLE.cfo}`, say: 'Patch it quietly. $10M is cheap next to losing users.', width: 230, tail: 26, dy: -64 });
+  bubble('policy', { label: `${ADVISOR_TITLE.policy}`, say: 'Defend it. I can handle the press.', width: 210, tail: 26 });
+}
+
+// ---------- Decisions 3 and 4: putting a card aside, and ignored cards ----------
+async function showEnd() {
+  deskPhone(2, { buzz: false });
+  openMenu(game, anchors.floorMenu, { overlay });
+  await new Promise(requestAnimationFrame);
+  const end = overlay.querySelector('[data-menu-id="endTurn"]');
+  const rect = end.getBoundingClientRect();
+  const z = parseFloat(document.documentElement.style.zoom || '1');
+  const node = el('<section class="gp remind"><p></p><div class="row"><button type="button" class="act ghost">Open it</button><button type="button" class="btn">End turn anyway</button></div></section>');
+  node.querySelector('p').textContent = `1 card is still open: “${FLATTERY.card.title}”. If you end the turn, it goes the way marked: “${FLATTERY.card.choices.find((c) => c.id === fallbackOf(FLATTERY)).label}”.`;
+  overlay.append(node);
+  node.style.left = `${rect.left / z - node.offsetWidth - 14}px`;
+  node.style.top = `${Math.min(900 - node.offsetHeight - 12, rect.bottom / z - node.offsetHeight + 8)}px`;
+}
+
+function showIgnored() {
+  const node = el('<section class="turn-summary" aria-live="polite"><div class="turn-summary-header"><strong>This turn</strong><button type="button" aria-label="Dismiss turn summary">×</button></div><ul></ul></section>');
+  const lines = [
+    `Answered: “${INVESTORS.card.title}”. You chose “Refuse”.`,
+    `Ignored: “${FLATTERY.card.title}”. It went the way marked: “${FLATTERY.card.choices.find((c) => c.id === fallbackOf(FLATTERY)).label}”.`,
+    `Warning on your phone: “${THEFT.warning.text}”.`,
+  ];
+  for (const line of lines) node.querySelector('ul').append(text(el('<li></li>'), 'li', line));
+  overlay.append(node);
+}
+
+// ---------- Decision 5: several cards ----------
+function showInbox() {
+  deskPhone(3, { buzz: false });
+  const phone = el(`<div class="phone"><div class="scr"><div class="notch"></div>
+    <div class="top"><h2>Feed</h2><span class="new">3 waiting</span></div>
+    <div class="sec">Decide this turn</div><div class="cards"></div>
+    <div class="sec">Warnings</div><div class="warns"></div>
+    <div class="sec">Also on your feed</div><div class="rest"></div><div class="home"></div></div></div>`);
+  for (const [event, note] of [[FLATTERY, 'If you do nothing: “Defend it”'], [INVESTORS, 'If you do nothing: “Refuse”']]) {
+    const row = el('<div class="inbox-row"><b></b><span class="hint"></span><button type="button" class="act">Open</button></div>');
+    row.querySelector('b').textContent = event.card.title;
+    row.querySelector('.hint').textContent = note;
+    phone.querySelector('.cards').append(row);
+  }
+  const warn = el('<div class="inbox-row stack"><span></span><button type="button" class="act"></button></div>');
+  warn.querySelector('span').append(post(THEFT.warning, { tag: 'warning', tagClass: 'warn' }));
+  warn.querySelector('button').textContent = `Act (${actCost})`;
+  phone.querySelector('.warns').append(warn);
+  for (const item of state.feed.slice(-2, -1)) phone.querySelector('.rest').append(post(item, { when: 'last turn' }));
+  overlay.append(phone);
+}
+
+// ---------- Decision 6: crisis cards ----------
+function showCrisisA() { deskPhone(2, { buzz: false }); cardDialog(THEFT, { crisis: true, next: FLATTERY }); }
+function showCrisisB() {
+  deskPhone(2, { buzz: false });
+  stage.classList.add('dim');
+  stage.insertBefore(el('<div class="wash" aria-hidden="true"></div>'), document.querySelector('#hud'));
+  cardDialog(THEFT, { crisis: true, next: FLATTERY });
+}
+
+// ---------- Decision 7: advisor marks ----------
+function showAdvA() {
+  deskPhone(1, { buzz: false });
+  // The CFO was clicked: their "!!" clears for this turn and their line opens in a bubble.
+  fx.querySelector('.advisor-marker.alarmed')?.remove();
+  const line = state.lastBriefing.find((b) => b.id === 'cfo').line;
+  bubble('cfo', { label: `${ADVISOR_TITLE.cfo} · alarmed`, say: line, width: 250, tail: 26 });
+}
+function showAdvB() {
+  deskPhone(1, { buzz: false });
+  for (const role of ['safety', 'cfo', 'policy']) {
+    const [x, y] = HEAD[role];
+    const mark = el('<div class="card-pill" role="img"><span class="card-mark" aria-hidden="true"></span>1 card</div>');
+    mark.setAttribute('aria-label', `${ADVISOR_TITLE[role]} has a view on a waiting card`);
+    // Above the head, centred; the CFO's sits to the left so it clears their "!!" marker.
+    const [dx, dy] = role === 'cfo' ? [-112, -26] : [-40, -60];
+    mark.style.left = `${x + dx}px`;
+    mark.style.top = `${y + dy}px`;
+    fx.append(mark);
+  }
+}
+
+const show = {
+  '#wa': showWA, '#wb': showWB, '#wc': showWC,
+  '#ca': showCA, '#cb': showCB, '#cc': showCC,
+  '#end': showEnd, '#ignored': showIgnored, '#inbox': showInbox,
+  '#crisisa': showCrisisA, '#crisisb': showCrisisB,
+  '#adva': showAdvA, '#advb': showAdvB,
+};
+await (show[location.hash] ?? showWA)();
+document.body.dataset.ready = '1';
+addEventListener('hashchange', () => location.reload());
+</script>
+</body>
+</html>

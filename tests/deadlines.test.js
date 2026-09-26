@@ -4,7 +4,7 @@ import { createInitialState } from '../sim/state.js';
 import { createRng } from '../sim/rng.js';
 import { advanceDays } from '../sim/turn.js';
 import { stampNewCards, resolveDue } from '../sim/events.js';
-import { DEFAULT_EVENT_TIMING } from '../sim/data/eventTiming.js';
+import { DEFAULT_EVENT_TIMING, EVENT_TIMING } from '../sim/data/eventTiming.js';
 
 const withCard = (seed) => {
   const s = createInitialState({ seed });
@@ -17,7 +17,7 @@ test('a new card lands inside the next round and is due some days later', () => 
   stampNewCards(s, createRng(1));
   const card = s.pendingEvents[0];
   assert.ok(card.landsAt >= s.day && card.landsAt < s.day + 91);
-  assert.equal(card.dueAt, card.landsAt + DEFAULT_EVENT_TIMING.days);
+  assert.equal(card.dueAt, card.landsAt + (EVENT_TIMING.lossSpike ?? DEFAULT_EVENT_TIMING).days);
 });
 
 test('a card past its deadline resolves with its fallback and says why', () => {
