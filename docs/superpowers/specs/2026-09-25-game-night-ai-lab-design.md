@@ -194,6 +194,10 @@ in section 6e). A lab that is insolvent when era 5 ends never wins; it ends in a
   openly hostile variant of `misalignment` (emergent misalignment; needs one sim flag); and short
   President lines in nine endings in a Trump-style voice ("make it sound like trump"), the
   President still unnamed. Build order: `quietTakeover`, then `misalignment` and `aligned`.
+  **World-scene style (owner pick 2026-09-25): B and C** from the four mockups in
+  `docs/design/mockups/world-styles.html` (artifact "Ending world styles"): places drawn front-on
+  as layered stage flats with parallax pans (B), plus shots told through screens such as laptops,
+  phones, camera walls and status pages (C). The office beat stays the isometric K2 office.
 - **President meetings** (era 2 or 3, and era 5). **The owner writes this dialogue
   (2026-09-25); build the mechanics and leave the script to the owner.** A fictional president, recognizable in style
   but not named after the real person (owner may override). Each answer has a flattery level
