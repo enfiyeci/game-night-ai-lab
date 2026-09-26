@@ -119,6 +119,8 @@ function showBusy(overlay, lines, onDismiss) {
 // whether the game notifies once per turn or once per story week (owner pick 1D).
 export function mountEvents(game, { stage, overlay }) {
   let anchors = null;
+  let anchorsEra = null;
+  let returnTo = null; // where focus goes back when the last card in a chain closes
   const known = new Map(); // id -> card view, for every landed card still pending
   const answered = {}; // id -> the choice the player picked, until the card leaves the sim
   const setAside = new Set();
@@ -171,6 +173,14 @@ export function mountEvents(game, { stage, overlay }) {
     }
   }
 
+  // Open the next waiting card; when none is left, give focus back to where the player was.
+  function settle() {
+    openNext();
+    if (current || !returnTo) return;
+    if (returnTo.isConnected) returnTo.focus();
+    returnTo = null;
+  }
+
   function openNext() {
     // A dialog that is already up (the release reveal, a menu screen) goes first; cards wait for it.
     if (overlay.querySelector('.dialog-layer')) return;
@@ -213,13 +223,13 @@ export function mountEvents(game, { stage, overlay }) {
           queueAnswer(game, view.id, choice.id);
         }
         close();
-        openNext();
+        settle();
       });
       card.querySelector('.ev-choices').append(button);
     }
     const later = () => {
       close({ aside: true });
-      openNext();
+      settle();
     };
     card.querySelector('.ev-later').addEventListener('click', later);
     card.addEventListener('keydown', (event) => {
@@ -244,6 +254,8 @@ export function mountEvents(game, { stage, overlay }) {
   function openCard(id, { preview = null } = {}) {
     const view = preview ? cardView(preview) : known.get(id);
     if (!view || !anchors || (!preview && Object.hasOwn(answered, id))) return false;
+    const active = document.activeElement;
+    if (!current && active && active !== document.body && !active.closest('.event-layer')) returnTo = active;
     close({ aside: true });
     setAside.delete(id);
     render(view, { preview: Boolean(preview) });
@@ -254,21 +266,29 @@ export function mountEvents(game, { stage, overlay }) {
     if (!previewing) openNext();
   });
 
-  game.subscribe(({ state, events }) => {
-    sync(state, events ?? []);
-    loadAnchors(state.era).then((loaded) => {
+  function afterAnchors(state) {
+    if (anchors && anchorsEra === state.era) {
+      // Open in the same task as the notification, so a multi-day clock step pauses on the card
+      // before it can run past the card's deadline.
+      if (!previewing) openNext();
+      emit('events-changed');
+      return Promise.resolve();
+    }
+    return loadAnchors(state.era).then((loaded) => {
       anchors = loaded;
+      anchorsEra = state.era;
       if (!previewing) openNext();
       emit('events-changed');
     }).catch((error) => console.error(error));
+  }
+
+  game.subscribe(({ state, events }) => {
+    sync(state, events ?? []);
+    afterAnchors(state);
   });
 
   sync(game.state, []);
-  const ready = loadAnchors(game.state.era).then((loaded) => {
-    anchors = loaded;
-    if (!previewing) openNext();
-    emit('events-changed');
-  }).catch((error) => console.error(error));
+  const ready = afterAnchors(game.state);
 
   return {
     openCard: (id) => openCard(id),

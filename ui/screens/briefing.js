@@ -75,11 +75,8 @@ export function mountBriefing(game, { office, overlay }) {
     const head = anchors?.heads?.[warning.advisor];
     if (!head) return null;
     const extra = el('<div></div>');
-    const dueAt = game.state.warnings?.[warning.id]?.dueAt;
-    if (Number.isFinite(dueAt) && Number.isFinite(game.state.day)) {
-      const days = Math.max(0, dueAt - game.state.day);
-      extra.append(dueBar(`Gets worse in ${formatStoryTime(days)} if nobody acts`, days / WARNING_BAR_DAYS, { calm: true })); // OWNER WRITES
-    }
+    const due = warningDue(warning.id);
+    if (due) extra.append(due);
     const row = el('<div class="ev-row"><button type="button" class="ev-act"></button><button type="button" class="ev-act ghost">Not now</button></div>');
     const act = row.querySelector('.ev-act');
     act.textContent = `Look into it (${money(lookIntoCost(game.state))})`;
@@ -106,6 +103,13 @@ export function mountBriefing(game, { office, overlay }) {
     return node;
   }
 
+  function warningDue(id) {
+    const dueAt = game.state.warnings?.[id]?.dueAt;
+    if (!Number.isFinite(dueAt) || !Number.isFinite(game.state.day)) return null;
+    const days = Math.max(0, dueAt - game.state.day);
+    return dueBar(`Gets worse in ${formatStoryTime(days)} if nobody acts`, days / WARNING_BAR_DAYS, { calm: true }); // OWNER WRITES
+  }
+
   function showNextWarning() {
     while (!cardOpen() && !live && waiting.length) {
       const warning = waiting.shift();
@@ -124,6 +128,10 @@ export function mountBriefing(game, { office, overlay }) {
       live.node.remove();
       live = null;
     }
+    // Story days pass while a warning stays up; keep its countdown current.
+    const oldDue = live?.node.querySelector('.ev-due');
+    const newDue = live ? warningDue(live.warning.id) : null;
+    if (oldDue && newDue) oldDue.replaceWith(newDue);
     for (const warning of open) {
       if (raised.has(warning.id)) continue;
       raised.add(warning.id);

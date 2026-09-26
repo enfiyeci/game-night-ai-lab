@@ -75,7 +75,7 @@ function stagePoint(event) {
   ];
 }
 
-const blocked = () => Boolean(overlay.querySelector('.dialog-layer, .event-layer'));
+const blocked = () => Boolean(overlay.querySelector('.dialog-layer, .event-layer, .ev-phone'));
 
 office.addEventListener('click', (event) => {
   if (event.target.closest?.('#person-ceo') && !blocked()) {
