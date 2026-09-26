@@ -101,24 +101,11 @@ export function endTurn(prev, actions = {}, rng) {
   const moves = actions.moves ?? [];
   if (moves.length > MAX_MOVES) errors.push(`only ${MAX_MOVES} moves per turn`);
   const activeMoves = moves.slice(0, MAX_MOVES);
-  const meetingMove = activeMoves.find((move) => move.type === 'meeting');
-  if (state.meeting) {
-    const id = state.meeting.id;
-    let outcome;
-    if (!meetingMove) {
-      errors.push(Object.hasOwn(actions, 'presidentAnswers')
-        ? 'President answers require a meeting move'
-        : 'take the President meeting with a meeting move');
-      outcome = expireMeeting(state).outcome;
-    } else {
-      const answerIds = Object.hasOwn(actions, 'presidentAnswers') ? actions.presidentAnswers : undefined;
-      const result = runMeeting(state, answerIds);
-      if (!result.ok) errors.push(result.error);
-      outcome = result.ok ? result.outcome : expireMeeting(state).outcome;
+  const meetingIdAtStart = state.meeting?.id ?? null;
+  if (!meetingIdAtStart) {
+    if (activeMoves.some((move) => move.type === 'meeting') || Object.hasOwn(actions, 'presidentAnswers')) {
+      errors.push('no open President meeting');
     }
-    events.push({ type: 'meetingOutcome', id, walkedOut: outcome.walkedOut, stake: outcome.stake });
-  } else {
-    if (meetingMove || Object.hasOwn(actions, 'presidentAnswers')) errors.push('no open President meeting');
     const id = meetingDue(state);
     if (id) {
       state.meeting = { id, patience: 10 };
@@ -170,7 +157,22 @@ export function endTurn(prev, actions = {}, rng) {
   state.burnPlanned = projectBurn(state);
 
   for (const move of activeMoves) {
-    if (move.type === 'meeting') continue;
+    if (move.type === 'meeting') {
+      if (!meetingIdAtStart) continue;
+      if (!state.meeting) {
+        errors.push('no open President meeting');
+        continue;
+      }
+      const id = state.meeting.id;
+      const answerIds = Object.hasOwn(actions, 'presidentAnswers') ? actions.presidentAnswers : undefined;
+      const result = runMeeting(state, answerIds);
+      if (!result.ok) errors.push(result.error);
+      const outcome = result.ok ? result.outcome : expireMeeting(state).outcome;
+      events.push({ type: 'meetingOutcome', id, walkedOut: outcome.walkedOut, stake: outcome.stake });
+      updateServing(state);
+      state.burnPlanned = projectBurn(state);
+      continue;
+    }
     const r = applyMove(state, move, rng);
     if (r.ok) {
       if (move.type === 'summit') events.push({ type: 'summit', signed: r.signed, binding: r.binding });
@@ -180,6 +182,14 @@ export function endTurn(prev, actions = {}, rng) {
       state.burnPlanned = projectBurn(state);
     } else errors.push(r.error);
     if (state.ending) break;
+  }
+
+  if (meetingIdAtStart && state.meeting) {
+    errors.push(Object.hasOwn(actions, 'presidentAnswers')
+      ? 'President answers require a meeting move'
+      : 'take the President meeting with a meeting move');
+    const outcome = expireMeeting(state).outcome;
+    events.push({ type: 'meetingOutcome', id: meetingIdAtStart, walkedOut: outcome.walkedOut, stake: outcome.stake });
   }
 
   if (!state.ending) {

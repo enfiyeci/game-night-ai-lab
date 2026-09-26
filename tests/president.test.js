@@ -264,3 +264,19 @@ test('a meeting move needs an open meeting and consumes one of the two moves', (
   assert.ok(out.errors.some((error) => error.includes('2 moves')));
   assert.equal(out.events.filter((event) => event.type === 'deal').length, 1);
 });
+
+test('a meeting uses government favour after moves that precede it', () => {
+  const state = open(createInitialState());
+  state.govFavor.us = 63;
+  const out = endTurn(state, {
+    moves: [
+      { type: 'deal', supplierId: 'gulf' },
+      { type: 'meeting' },
+    ],
+    presidentAnswers: plainIds(),
+  }, no);
+
+  assert.deepEqual(out.errors, []);
+  assert.equal(out.state.flags.statePreemption, undefined);
+  assert.equal(out.events.find((event) => event.type === 'meetingOutcome')?.stake, 'exportLicenses');
+});
