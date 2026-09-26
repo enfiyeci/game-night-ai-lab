@@ -1,11 +1,14 @@
 import { deployInternal, stopInternal } from '../internal.js';
 import { forceAmendConstitution, hasLine } from '../constitution.js';
-import { contractBill, refreshOnline } from '../contracts.js';
+import { contractBill, refreshOnline, sideRng } from '../contracts.js';
 import { leaseMonthly } from '../power.js';
 import { activeModels } from '../serving.js';
 import { ERAS } from './eras.js';
 import { RESCUE_MONTHS, SPOT_PRICE } from './compute.js';
 import { DEMANDS } from './constitution.js';
+
+const SITE_OPPOSITION_RNG_SALT = 2;
+const POOLING_RNG_SALT = 7;
 
 const modelsWithFlag = (state, flag) => state.models.filter((model) => (model.flags ?? []).includes(flag));
 const hasFlag = (state, flag) => modelsWithFlag(state, flag).length > 0;
@@ -588,9 +591,11 @@ export const EVENTS = [
   {
     id: 'siteOpposition',
     kind: 'world',
-    trigger(state, rng) {
+    trigger(state) {
       if (state.flags.oppositionSite) return true;
-      const site = state.power.sites.find((candidate) => candidate.source === 'gas' && !candidate.online);
+      const site = state.power.sites.find((candidate) => candidate.source === 'gas'
+        && !candidate.online && candidate.arrivesTurn > state.turn + 2);
+      const rng = sideRng(state, SITE_OPPOSITION_RNG_SALT);
       if (!site || !rng.chance(0.15)) return false;
       state.flags.oppositionSite = site.id;
       site.oppositionCut = rng.chance(0.3);
@@ -612,7 +617,10 @@ export const EVENTS = [
           id: 'move', label: 'Move the site', cost: 'two turns', backers: ['Comms'], opposers: ['Research'],
           effects(state) {
             const site = state.power.sites.find((candidate) => candidate.id === state.flags.oppositionSite);
-            if (site) site.arrivesTurn += 2;
+            if (site) {
+              site.arrivesTurn += 2;
+              refreshOnline(state);
+            }
           },
         },
         {
@@ -621,6 +629,7 @@ export const EVENTS = [
             state.publicTrust -= 5;
             const site = state.power.sites.find((candidate) => candidate.id === state.flags.oppositionSite);
             if (site?.oppositionCut) site.units = Math.round(site.units * 0.7);
+            if (site) refreshOnline(state);
           },
         },
       ],
@@ -681,9 +690,10 @@ export const EVENTS = [
   {
     id: 'pooling',
     kind: 'world',
-    trigger(state, rng) {
+    bypassCardLimit: true,
+    trigger(state) {
       if (state.era !== 4 || state.turnInEra !== ERAS[3].turns - 1) return false;
-      state.flags.poolingRisk ??= rng.chance(0.2);
+      state.flags.poolingRisk ??= sideRng(state, POOLING_RNG_SALT).chance(0.2);
       return true;
     },
     warning: null,

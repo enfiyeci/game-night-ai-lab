@@ -91,8 +91,9 @@ test('neocloud choices convert or rescue every troubled contract and remain repe
 });
 
 test('opposition to a gas site: pushing through can cut the site', () => {
-  const s = createInitialState();
+  const s = createInitialState({ seed: 71 });
   s.era = 4;
+  s.turn = 12;
   s.seenEvents = [...EVENTS, ...EVENTS_6C]
     .filter((event) => event.id !== 'siteOpposition')
     .map((event) => event.id);
@@ -103,6 +104,22 @@ test('opposition to a gas site: pushing through can cut the site', () => {
   eventsTick(s, yes);
   assert.equal(resolveEvent(s, 'siteOpposition', 'push').ok, true);
   assert.equal(s.power.sites[0].units, 280);
+});
+
+test('site opposition never targets a site that will be online before its card can be answered', () => {
+  const event = EVENTS.find((candidate) => candidate.id === 'siteOpposition');
+  const sharedRng = { chance: () => assert.fail('site opposition used the shared event RNG') };
+  const soon = createInitialState({ seed: 71 });
+  soon.turn = 12;
+  soon.power.sites.push({ id: 'gas-soon', source: 'gas', units: 400, arrivesTurn: 14, online: false, oppositionCut: null });
+  assert.equal(event.trigger(soon, sharedRng), false);
+  assert.equal(soon.flags.oppositionSite, undefined);
+
+  const building = createInitialState({ seed: 71 });
+  building.turn = 12;
+  building.power.sites.push({ id: 'gas-building', source: 'gas', units: 400, arrivesTurn: 15, online: false, oppositionCut: null });
+  assert.equal(event.trigger(building, sharedRng), true);
+  assert.equal(building.flags.oppositionSite, 'gas-building');
 });
 
 test('site opposition benefits cost one lease month and moving delays the selected site', () => {
@@ -116,10 +133,21 @@ test('site opposition benefits cost one lease month and moving delays the select
 
   const move = createInitialState();
   move.flags.oppositionSite = 'gas-2';
+  move.compute.online = 999;
   move.power.sites.push({ id: 'gas-1', source: 'gas', units: 300, arrivesTurn: 7, online: false, oppositionCut: false });
   move.power.sites.push({ id: 'gas-2', source: 'gas', units: 400, arrivesTurn: 8, online: false, oppositionCut: false });
   event.card.choices.find((choice) => choice.id === 'move').effects(move);
   assert.deepEqual(move.power.sites.map((site) => site.arrivesTurn), [7, 10]);
+  assert.equal(move.compute.online, 10);
+
+  const push = createInitialState();
+  push.flags.oppositionSite = 'gas-3';
+  push.compute.contracts.push({ id: 'v', supplier: 'verde', units: 400, price: 1, monthsLeft: 24, needsPower: true, dark: false });
+  push.power.sites.push({ id: 'gas-3', source: 'gas', units: 400, arrivesTurn: 12, online: true, oppositionCut: true });
+  push.compute.online = 410;
+  event.card.choices.find((choice) => choice.id === 'push').effects(push);
+  assert.equal(push.power.sites[0].units, 280);
+  assert.equal(push.compute.online, 290);
 });
 
 test('dropping the safety pledge preserves its once-ever flag and every President promise', () => {
@@ -205,7 +233,7 @@ test('surge spot and cap choices restore the previous spot setting after two eco
 
 test('pooling takes a share of compute for US favor, decided before the summit', () => {
   const s = createInitialState();
-  s.era = 4; s.turnInEra = 3;
+  s.turn = 15; s.era = 4; s.turnInEra = 3;
   eventsTick(s, no);
   const gov = s.govFavor.us;
   resolveEvent(s, 'pooling', 'accept');
@@ -214,9 +242,41 @@ test('pooling takes a share of compute for US favor, decided before the summit',
   assert.equal(s.flags.pooled, true);
 });
 
+test('pooling bypasses a full card queue before era 5 opens', () => {
+  const s = createInitialState();
+  s.turn = 15;
+  s.era = 4;
+  s.turnInEra = 3;
+  s.capability = 90;
+  s.cash = 250;
+  s.flags.presidentDemand = true;
+  s.seenEvents = [...EVENTS, ...EVENTS_6C]
+    .filter((event) => ['president', 'investors', 'pooling'].includes(event.id) === false)
+    .map((event) => event.id);
+
+  const out = endTurn(s, {}, no);
+
+  assert.equal(out.state.era, 5);
+  assert.equal(out.state.turnInEra, 0);
+  assert.equal(out.state.deal, null);
+  assert.deepEqual(out.state.pendingEvents.map((event) => event.id), ['president', 'investors', 'pooling']);
+});
+
+test('pooling risk uses its compute side stream instead of the shared event RNG', () => {
+  const event = EVENTS.find((candidate) => candidate.id === 'pooling');
+  const s = createInitialState({ seed: 15 });
+  s.turn = 15;
+  s.era = 4;
+  s.turnInEra = 3;
+  const sharedRng = { chance: () => assert.fail('pooling used the shared event RNG') };
+  assert.equal(event.trigger(s, sharedRng), true);
+  assert.equal(s.flags.poolingRisk, true);
+});
+
 test('refusing pooling applies the stored risk, while accepting improves summit stances', () => {
   const event = EVENTS.find((candidate) => candidate.id === 'pooling');
-  const refused = createInitialState();
+  const refused = createInitialState({ seed: 15 });
+  refused.turn = 15;
   refused.era = 4;
   refused.turnInEra = 3;
   assert.equal(event.trigger(refused, yes), true);
