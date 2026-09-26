@@ -40,6 +40,7 @@ export function makeBoardDeals(state, deals) {
       member,
       kind: member,
       madeTurn: state.turn,
+      madeAtVote: state.flags.boardVotesHeld ?? 0, // judged only once a vote has been held since (a vote can wait for insolvency)
       baseline: { arr: state.arr, valuation: state.valuation, candorHits: state.flags.candorHits ?? 0 },
       status: 'open',
     });
@@ -47,12 +48,15 @@ export function makeBoardDeals(state, deals) {
   return { ok: true };
 }
 
-// At the start of the next meeting's endTurn, before its vote. final: the run ended with deals open, so record the
-// outcomes for the feed and end screen without moving anyone.
-export function judgeBoardDeals(state, { final = false } = {}) {
+// At the start of the next meeting's endTurn, before its vote, for deals whose meeting has since held its vote.
+// final: the run ended with deals open, so record the outcomes for the feed and end screen without moving anyone;
+// deals made in the round that ended the run (madeTurn >= madeBefore) never had a next meeting and stay open.
+export function judgeBoardDeals(state, { final = false, madeBefore = state.turn } = {}) {
   const events = [];
+  const votesHeld = state.flags.boardVotesHeld ?? 0;
   for (const deal of state.boardDeals ?? []) {
-    if (deal.status !== 'open' || deal.madeTurn >= state.turn) continue;
+    if (deal.status !== 'open') continue;
+    if (final ? deal.madeTurn >= madeBefore : deal.madeTurn >= state.turn || votesHeld <= (deal.madeAtVote ?? -1)) continue;
     const kept = DEALS[deal.member].kept(state, deal);
     deal.status = kept ? 'kept' : 'broken';
     events.push({ type: 'boardDealJudged', member: deal.member, kept });
@@ -72,3 +76,8 @@ export function judgeBoardDeals(state, { final = false } = {}) {
 }
 
 export const dealText = (id) => DEALS[id]?.text ?? BOARD_MEMBERS.find((member) => member.id === id)?.name;
+
+// The feed line for a judged deal, at a meeting or at the run's end.
+export const dealVerdictPost = (member, kept) => (kept
+  ? `a director says the lab kept its word: ${dealText(member).toLowerCase()}.` // OWNER WRITES
+  : 'a director says the lab broke its word. they are done.'); // OWNER WRITES
