@@ -24,7 +24,7 @@ import {
   SUMMIT_SKIP_INTL_FAVOR,
 } from './summit.js';
 import { expireMeeting, meetingDue, openMeeting, runMeeting } from './president.js';
-import { promiseUpkeep } from './promises.js';
+import { judgeFinalPromises, promiseUpkeep } from './promises.js';
 
 export const MAX_MOVES = 2;
 const BUDGET_KEYS = ['training', 'safety', 'security', 'product', 'talent'];
@@ -248,7 +248,10 @@ export function endTurn(prev, actions = {}, rng) {
     if (!state.ending) {
       if (state.era === 5) {
         if (state.flags.insolvent && state.cash <= 0) state.ending = 'acquihire';
-        else finalEnding(state);
+        else {
+          judgeFinalPromises(state);
+          finalEnding(state);
+        }
       }
       else {
         state.era += 1;

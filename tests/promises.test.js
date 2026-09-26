@@ -134,13 +134,44 @@ test('a failed due promise produces a repeatable promise card with its identity'
   assert.equal(state.seenEvents.includes('promiseCall'), false);
 });
 
-test('endTurn queues a failed promise call in the same turn as its due check', () => {
+test('a first-meeting promise still queues a failed call in the same turn as its due check', () => {
   const state = createInitialState();
   state.turn = 5;
   state.promises.push(presidentPromise('beatRivals'));
   const out = endTurn(state, {}, no);
   assert.equal(out.state.pendingEvents.some((event) =>
     event.eventId === 'promiseCall' && event.promiseId === 'beatRivals'), true);
+});
+
+test('a second-meeting promise due on the final turn produces no promise call', () => {
+  const state = createInitialState();
+  state.turn = 19;
+  state.promises.push(presidentPromise('bigClaim', {
+    meeting: 'second', madeTurn: 18, dueTurn: 19,
+  }));
+  promiseUpkeep(state, no);
+  eventsTick(state, no);
+  assert.equal(state.promises[0].status, 'open');
+  assert.equal(state.pendingEvents.some((event) => event.eventId === 'promiseCall'), false);
+  assert.equal(state.govFavor.us, 50);
+});
+
+test('the final ending judges open President promises as kept or broken without favor changes', () => {
+  const state = createInitialState();
+  state.turn = 19;
+  state.era = 5;
+  state.turnInEra = 3;
+  state.capability = 100;
+  state.promises.push(
+    presidentPromise('beatChina', { meeting: 'second', madeTurn: 18, dueTurn: 19 }),
+    presidentPromise('bigClaim', { meeting: 'second', madeTurn: 18, dueTurn: 19 }),
+  );
+  const favor = state.govFavor.us;
+  const out = endTurn(state, {}, no);
+  assert.ok(out.state.ending);
+  assert.deepEqual(out.state.promises.map(({ status }) => status), ['kept', 'broken']);
+  assert.equal(out.state.govFavor.us, favor);
+  assert.equal(out.state.pendingEvents.some((event) => event.eventId === 'promiseCall'), false);
 });
 
 test('simultaneous promise cards have independent ids and choices', () => {

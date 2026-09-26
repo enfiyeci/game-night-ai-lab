@@ -11,6 +11,7 @@ function pushFeed(state, handle, text, tag = 'feed') {
 
 const promiseDefinition = (promise) => PROMISES[promise.id];
 const isPresidentPromise = (promise) => promise?.source === 'president' && Object.hasOwn(PROMISES, promise.id);
+const isEndgamePromise = (promise) => promise.dueTurn >= LAST_TURN;
 
 export function createPresidentPromise(id, meeting, turn, state) {
   const definition = PROMISES[id];
@@ -39,7 +40,10 @@ export function createPresidentPromise(id, meeting, turn, state) {
 
 export function promiseUpkeep(state, rng) {
   for (const promise of state.promises) {
-    if (!isPresidentPromise(promise) || promise.status !== 'open' || promise.dueTurn > state.turn) continue;
+    if (!isPresidentPromise(promise)
+      || promise.status !== 'open'
+      || isEndgamePromise(promise)
+      || promise.dueTurn > state.turn) continue;
     if (!promiseDefinition(promise).check(state, promise)) continue;
     promise.status = 'kept';
     state.govFavor.us += 5;
@@ -62,8 +66,16 @@ export function failedPresidentPromises(state) {
   return state.promises.filter((promise) =>
     isPresidentPromise(promise)
     && promise.status === 'open'
+    && !isEndgamePromise(promise)
     && promise.dueTurn <= state.turn
     && !promiseDefinition(promise).check(state, promise));
+}
+
+export function judgeFinalPromises(state) {
+  for (const promise of state.promises) {
+    if (!isPresidentPromise(promise) || promise.status !== 'open') continue;
+    promise.status = promiseDefinition(promise).check(state, promise) ? 'kept' : 'broken';
+  }
 }
 
 export function promiseCallCard(event, promise) {
