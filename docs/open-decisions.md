@@ -95,5 +95,6 @@ Everything below was decided during the build so it would not stall; each is a q
    `// OWNER WRITES` in `ui/data/boardCopy.js` and `ui/data/eventCopy.js`, including the lines for losing the vote.
 10. **Not built:** the op-ed card's newspaper picture and the leak's toast from the mockups; calling a director
     (parked in `docs/notes/later.md`); the whistleblower card.
-11. **Real time.** The meeting opens through `game.beforeRoundEnd` / `game.endRound()`. The real-time lane's clock
-    must await the same guards; if it landed a different hook, the board adapts to it at merge.
+11. **Real time.** Ported before merging into `ui`: the meeting opens by itself on the last story day before a vote
+    mark and holds the clock; the board's round-end work runs at the hidden round mark; the finance planner records a
+    history row at each mark.
