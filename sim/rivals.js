@@ -2,10 +2,10 @@ import { BALANCE } from './balance.js';
 
 // Provisional fictional names (spec §11 open question); rename freely.
 export const RIVAL_TEMPLATES = [
-  { id: 'openbrain', name: 'OpenBrain', capability: 26, speed: 0.8, caution: 0.25, eastern: false },
-  { id: 'lodestar', name: 'Lodestar', capability: 22, speed: 0.55, caution: 0.8, eastern: false },
-  { id: 'deepthink', name: 'DeepThink', capability: 24, speed: 0.65, caution: 0.5, eastern: false },
-  { id: 'qilin', name: 'Qilin', capability: 18, speed: 0.7, caution: 0.35, eastern: true },
+  { id: 'openbrain', name: 'OpenBrain', capability: 26, speed: 1.3, caution: 0.25, eastern: false },
+  { id: 'lodestar', name: 'Lodestar', capability: 22, speed: 0.9, caution: 0.8, eastern: false },
+  { id: 'deepthink', name: 'DeepThink', capability: 24, speed: 1.05, caution: 0.5, eastern: false },
+  { id: 'qilin', name: 'Qilin', capability: 18, speed: 1.15, caution: 0.35, eastern: true },
 ];
 
 export function createRivals() {

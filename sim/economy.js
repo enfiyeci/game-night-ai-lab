@@ -1,17 +1,25 @@
 import { BALANCE } from './balance.js';
 import { eraById } from './data/eras.js';
 import { clamp } from './util.js';
-import { servingCost, PRICE_STANCE, REVENUE_PER_USER } from './serving.js';
+import { activeModels, safetyUnits, servingCost, PRICE_STANCE, REVENUE_PER_USER } from './serving.js';
+import { controlUnits } from './internal.js';
+import { monthlyBills, arrivingBills, creditOffset, addPipeline } from './contracts.js';
+import { leaseBills } from './power.js';
+import { resaleCredit, safetyValue, spotCover } from './split.js';
 
-export function activeModels(state) {
-  return state.models.filter((m) => m.active && m.channel !== 'open' && state.turn >= m.activeFromTurn);
-}
+export const STATE_PREEMPTION_LEGAL_COST_MULTIPLIER = 0.7;
 
-export const revenuePerUser = (model) => REVENUE_PER_USER[model.channel] * PRICE_STANCE[model.priceStance].rev;
+export { activeModels } from './serving.js';
+
+export const safetySpend = (state) => safetyValue(state);
+
+export const revenuePerUser = (model) => REVENUE_PER_USER[model.channel] * PRICE_STANCE[model.priceStance].rev * (model.revenueMult ?? 1);
 
 export function updateServing(state) {
-  const runUnits = state.activeRun ? state.activeRun.units : 0;
-  const capacity = Math.max(0.001, state.compute.online - runUnits);
+  const online = state.compute.online;
+  const control = Math.min(online, controlUnits(state));
+  const safety = safetyUnits(online, control, state.compute.split.safety);
+  const capacity = Math.max(0.001, online - control - safety);
   const models = activeModels(state);
   const unitsAt = (load) =>
     models.reduce((s, m) => {
@@ -22,7 +30,6 @@ export function updateServing(state) {
   const load = light / capacity;
   const units = load > 0.8 ? unitsAt(load) : light;
   state.compute.servingUnits = units;
-  state.compute.overflow = Math.max(0, units - capacity);
   return units;
 }
 
@@ -38,17 +45,13 @@ export function monthlyRevenue(state) {
   return activeModels(state).reduce((s, m) => s + m.users * revenuePerUser(m), 0) / 1e6;
 }
 
-export function computeRent(state) {
-  return state.compute.contracts.reduce((s, c) => s + c.units * c.costMult, 0) * BALANCE.unitMonthlyCost;
-}
+export const computeRent = (state) => monthlyBills(state) + leaseBills(state) - creditOffset(state);
 
 export function projectBurn(state) {
-  const spot = state.compute.overflow * BALANCE.unitMonthlyCost * BALANCE.spotPremium;
+  const spot = spotCover(state);
   const ops = BALANCE.baseOpsMonthly * (1 + 0.25 * (state.era - 1));
-  const arrivingRent = state.compute.pipeline
-    .filter((deal) => deal.arrivesTurn <= state.turn)
-    .reduce((sum, deal) => sum + deal.units * deal.costMult, 0) * BALANCE.unitMonthlyCost;
-  return ops + computeRent(state) + arrivingRent + spot + state.budget.spend;
+  const arrivingRent = arrivingBills(state);
+  return ops + computeRent(state) + arrivingRent + spot + state.budget.spend - resaleCredit(state);
 }
 
 export function valuationOf(state) {
@@ -77,7 +80,10 @@ export function runway(state, which) {
 }
 
 export function legalTick(state) {
-  const paid = state.legalCases.filter((c) => c.dueTurn <= state.turn);
+  const multiplier = state.flags.statePreemption === true ? STATE_PREEMPTION_LEGAL_COST_MULTIPLIER : 1;
+  const paid = state.legalCases
+    .filter((c) => c.dueTurn <= state.turn)
+    .map((c) => ({ ...c, cost: c.cost * multiplier }));
   state.legalCases = state.legalCases.filter((c) => c.dueTurn > state.turn);
   for (const c of paid) {
     state.cash -= c.cost;
@@ -88,7 +94,7 @@ export function legalTick(state) {
 
 export const INVESTORS = {
   vc: { name: 'Growth fund', share: 0.1 },
-  strategic: { name: 'Strategic cloud partner', share: 0.06, units: 10, costMult: 0.8 },
+  strategic: { name: 'Strategic cloud partner', share: 0.06 },
   sovereign: { name: 'Sovereign wealth fund', share: 0.15 },
 };
 
@@ -103,7 +109,6 @@ export function raiseRound(state, archetype) {
   state.board = state.board.map((s) => s - 3);
   if (archetype === 'vc') state.board[0] += 8;
   if (archetype === 'strategic') {
-    state.compute.pipeline.push({ supplier: 'strategic', units: inv.units, costMult: inv.costMult, failChance: 0, arrivesTurn: state.turn + 1 });
     state.flags.strategicStrings = true;
   }
   if (archetype === 'sovereign') {
@@ -133,7 +138,7 @@ export function useEmergency(state, option) {
   if (option !== 'acquihire') state.flags.emergencyUsedThisTurn = true;
   if (option === 'equityForCompute') {
     state.cash += 300;
-    state.compute.pipeline.push({ supplier: 'equity-partner', units: 10, costMult: 0.5, failChance: 0, arrivesTurn: state.turn + 1 });
+    addPipeline(state, { supplier: 'rescue', units: 10, price: 0.5, termMonths: 24, arrivesTurn: state.turn + 1, string: 'moneyBack', needsPower: false });
     state.board = state.board.map((s) => s - 8);
     state.flags.independenceLost = true;
   }

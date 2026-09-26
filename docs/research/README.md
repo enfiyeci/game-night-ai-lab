@@ -16,7 +16,13 @@ only through search-result snippets, and those claims carry ⚠️ inline.
    naming; Part 2 is the game's recipe menu, servingCost formula and era locks. Its four notes
    in `training-options/notes/` read most primary technical reports directly, so this is
    better sourced than `ai-lab-mechanics/notes/training_decisions.md`, which it supersedes.
-4. `runway-history/runway_history.md` — OpenAI and Anthropic cash-runway history and real
+4. `compute-mechanics/report.md` — how to gather compute in the game (2026-09-25): real deal
+   structures and numbers (take-or-pay, prepayment, equity-for-compute, cost per gigawatt, lead
+   times), games with similar mechanics, and five candidate designs with a per-era calibration
+   table. Its four notes in `compute-mechanics/notes/` read a few primary sources in full (AMD's
+   warrant filing, Microsoft's and NVIDIA's announcements, four Epoch AI pages); most other
+   figures are snippet-level and carry ⚠️. It deepens `ai-lab-mechanics/notes/compute_race.md`.
+5. `runway-history/runway_history.md` — OpenAI and Anthropic cash-runway history and real
    "ran out of money" endings (Inflection, Adept, Character.AI, Stability AI), used to
    calibrate the out-of-money ending.
 
@@ -28,3 +34,5 @@ only through search-result snippets, and those claims carry ⚠️ inline.
   collapse of a September 2026 pacing truce, a Sora app closure, several 2026 revenue and
   burn figures).
 - Taiwan and TSMC risk was never researched.
+- Compute: the cancelled Abilene expansion is 600 MW in `compute-mechanics/notes/` but 2.1 GW
+  in `ai-lab-mechanics/notes/compute_race.md`; the size of the cut is uncertain.

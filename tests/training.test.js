@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import { startRun, advanceRun, availableUnits } from '../sim/training.js';
+import { recipeCost } from '../sim/recipe.js';
 
 const noLuck = { next: () => 0.99, int: () => 0, chance: () => false, normal: (m) => m };
 const recipe = {
@@ -11,6 +12,7 @@ const recipe = {
 
 test('starting a run pays cash and reserves compute', () => {
   const s = createInitialState();
+  s.compute.split.safety = 0;
   const r = startRun(s, recipe);
   assert.equal(r.ok, true);
   assert.equal(s.cash, 1000 - 53);
@@ -21,6 +23,7 @@ test('starting a run pays cash and reserves compute', () => {
 
 test('a run fails to start without enough compute', () => {
   const s = createInitialState();
+  s.compute.split.safety = 0;
   s.compute.online = 3;
   assert.equal(startRun(s, recipe).ok, false);
 });
@@ -51,6 +54,7 @@ test('zero talent spend provides no talent multiplier bonus', () => {
 
 test('a run pauses without reserved compute and resumes when capacity returns', () => {
   const s = createInitialState();
+  s.compute.split.safety = 0;
   startRun(s, recipe);
   s.compute.online = 4;
   const turnsLeft = s.activeRun.turnsLeft;
@@ -88,6 +92,8 @@ test('trained model capability and gain are capped at the maximum', () => {
 test('standard agent techniques mark era 4 models as agentic', () => {
   const s = createInitialState();
   s.era = 4;
+  s.compute.split.safety = 0;
+  s.compute.online = recipeCost(s, recipe).units + 10;
   startRun(s, recipe);
   const trained = advanceRun(s, noLuck);
   assert.ok(trained.flags.includes('agentic'));
