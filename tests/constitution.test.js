@@ -4,13 +4,14 @@ import { createInitialState } from '../sim/state.js';
 import { setConstitution, amendConstitution, constitutionValues, learnedConstitution, hasLine } from '../sim/constitution.js';
 import { HARD_LINES, CASES } from '../sim/data/constitution.js';
 import { applyAlignmentFaking } from '../sim/hazards.js';
-import { internalTick } from '../sim/internal.js';
+import { automationTick } from '../sim/automation.js';
 import { resolveRun } from '../sim/training.js';
 import { releaseModel } from '../sim/release.js';
 import { revenuePerUser } from '../sim/economy.js';
 import { EVENTS } from '../sim/data/events.js';
 import { eventsTick, resolveEvent, stampNewCards } from '../sim/events.js';
 import { advanceDays, endTurn } from '../sim/turn.js';
+import { INITIAL_BOARD } from '../sim/board.js';
 
 const allRulings = (opt) => Object.fromEntries(CASES.map((c) => [c.id, opt ?? c.options[0].id]));
 const yes = { next: () => 0, int: () => 0, chance: () => true, pick: (a) => a[a.length - 1], normal: (m) => m };
@@ -161,12 +162,12 @@ test('accept-shutdown requires two hits after internal stage three', () => {
   adopt(state, ['accept-shutdown', 'honest', 'privacy']);
   state.era = 4;
   state.capability = 80;
-  state.internal = { control: 0, stage: 3, turns: 3, capability: 80 };
-  assert.deepEqual(internalTick(state, yes), []);
-  assert.equal(state.internal.stage, 4);
+  state.automation.stage = 3;
+  assert.deepEqual(automationTick(state, yes), []);
+  assert.equal(state.automation.stage, 4);
   assert.equal(state.ending, null);
-  assert.deepEqual(internalTick(state, yes), [{ type: 'internalIncident', stage: 4 }]);
-  assert.equal(state.internal.stage, 5);
+  assert.deepEqual(automationTick(state, yes), [{ type: 'internalIncident', stage: 4 }]);
+  assert.equal(state.automation.stage, 5);
   assert.equal(state.ending, 'quietTakeover');
 });
 
@@ -247,7 +248,7 @@ test('no-autonomy-grab blocks agent incidents and reduces agentic RL capability'
   protectedState.era = 3;
   adopt(protectedState, ['no-autonomy-grab', 'honest', 'privacy']);
   protectedState.models.push({ flags: ['agentic'], active: true, activeFromTurn: 0 });
-  protectedState.internal = { stage: 3, stageTurn: protectedState.turn };
+  protectedState.automation.stage = 3; protectedState.automation.stageTurn = protectedState.turn;
   assert.equal(EVENTS.find((event) => event.id === 'agentwreck').trigger(protectedState, no), false);
   assert.equal(EVENTS.find((event) => event.id === 'selfExfiltration').trigger(protectedState, no), false);
 
@@ -296,7 +297,7 @@ test('the investor demand triggers and both choices apply', () => {
   assert.equal(accept.constitution.amendments.at(-1).source, 'investors');
   const refuse = demandState('investors');
   resolveEvent(refuse, 'investors', 'refuse');
-  assert.deepEqual(refuse.board, [67, 57, 62, 52, 77]);
+  assert.deepEqual(refuse.board, INITIAL_BOARD.map((support) => support - 3));
 });
 
 test('the user demand triggers and both choices apply', () => {

@@ -1,5 +1,8 @@
+import { BOARD_MEMBERS } from '../../sim/board.js';
+import { boardRead } from '../../sim/boardRead.js';
 import { PICTURES } from '../data/crisisArt.js';
 import { bubbleAt, choiceButton, dueBar, el, loadAnchors, post } from '../components/eventBits.js';
+import { moodForLean, portrait } from '../components/portraits.js';
 import {
   ADVISOR_TITLE, argueLines, cardView, catalogRow, consequenceLines, daysLeft, dueText, hasLanded, queueAnswer,
   timingFor,
@@ -167,6 +170,7 @@ export function mountEvents(game, { stage, overlay }) {
     queue = queue.filter((id) => live.has(id));
     const landed = state.pendingEvents
       .filter((pending) => !known.has(pending.id) && hasLanded(pending, state))
+      .filter((pending) => pending.id !== 'ownLine')
       .map(cardView)
       .sort((a, b) => Number(b.crisis) - Number(a.crisis));
     for (const view of landed) {
@@ -184,8 +188,8 @@ export function mountEvents(game, { stage, overlay }) {
   }
 
   function openNext() {
-    // A dialog that is already up (the release reveal, a menu screen) goes first; cards wait for it.
-    if (overlay.querySelector('.dialog-layer')) return;
+    // A dialog that is already up (the release reveal, a menu screen, the screen wall) goes first; cards wait for it.
+    if (overlay.querySelector('.dialog-layer, .screenwall-layer')) return;
     while (!current && queue.length) {
       if (openCard(queue.shift())) return;
     }
@@ -217,6 +221,19 @@ export function mountEvents(game, { stage, overlay }) {
     const days = preview ? null : remaining(view.id);
     if (days !== null) card.querySelector('.ev-card-top').append(dueBar(dueText(view.id, days), days / timingFor(view.id).days));
     card.querySelector('.ev-card-top').after(post(view.post));
+    // Board cards (spec §6.3): the wood kicker bar with the directors watching, their faces from the staff read.
+    if (view.kicker) {
+      const read = boardRead(game.state);
+      const bar = el('<div class="bd-kicker"><span></span><span class="bd-watch">Watching: </span></div>');
+      bar.firstElementChild.textContent = view.kicker;
+      for (const id of view.watching) {
+        const lean = read.members.find((member) => member.id === id)?.lean;
+        const face = el(`<i>${portrait(id, 24, moodForLean(lean))}</i>`);
+        face.title = BOARD_MEMBERS.find((member) => member.id === id)?.name ?? id;
+        bar.lastElementChild.append(face);
+      }
+      card.prepend(bar);
+    }
     for (const choice of view.choices) {
       const button = choiceButton(choice);
       button.addEventListener('click', () => {
@@ -317,6 +334,8 @@ export function mountEvents(game, { stage, overlay }) {
           title: row.card.title,
           post: row.card.post,
           choices: row.card.choices.map(({ id: choiceId, label, cost, backers, opposers }) => ({ id: choiceId, label, cost, backers, opposers })),
+          kicker: row.card.kicker,
+          watching: row.card.watching,
         },
       });
     },

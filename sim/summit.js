@@ -1,7 +1,6 @@
 import { clamp } from './util.js';
 import { RIVAL_TEMPLATES, leaderCapability } from './rivals.js';
 import { exposeConcealed } from './hazards.js';
-import { stopInternal } from './internal.js';
 
 export const COMMITMENTS = Object.freeze({
   evaluators: { base: 0.1 },
@@ -113,7 +112,6 @@ export function proposeSummit(state, move, rng) {
     state.alignmentDebt = clamp(state.alignmentDebt - 6, 0, 100);
     for (const rival of state.rivals) rival.caution = Math.min(1, rival.caution + 0.1);
   }
-  if (binding.includes('pauseAutomation') && state.internal) stopInternal(state);
   state.raceHeat = clamp(state.raceHeat - 5 * binding.length, 0, 100);
   return { ok: true, signed, binding };
 }

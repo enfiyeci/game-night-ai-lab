@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="../../../">
+  <meta name="viewport" content="width=1440">
+  <title>Finance planner mockups</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="ui/styles.css">
+  <style>
+    /* Mockup-only styles. Tokens come from ui/styles.css; no colour literals here. */
+    :root {
+      --muted: color-mix(in oklab, var(--ink) 58%, var(--paper));
+      --line: color-mix(in oklab, var(--wood) 24%, transparent);
+      --money-in: color-mix(in oklab, var(--teal) 78%, var(--ink));
+      --money-out: color-mix(in oklab, var(--coral) 78%, var(--ink));
+    }
+    .muted { color: var(--muted); }
+    .num { font-variant-numeric: tabular-nums; }
+    .in { color: var(--money-in); }
+    .out { color: var(--money-out); }
+
+    /* Goal steppers and round toggles, shared by all three directions */
+    .step { display: inline-flex; align-items: center; gap: 4px; }
+    .step button { width: 24px; height: 24px; padding: 0; border: 0; border-radius: 7px; color: var(--paper); font: inherit; font-size: 15px; font-weight: 900; line-height: 1; background: var(--wood); box-shadow: 0 2px 0 color-mix(in oklab, var(--wood) 60%, var(--ink)); cursor: pointer; }
+    .step button:focus-visible, .compute-toggle:focus-visible, .goal-handle:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+    .step output { min-width: 66px; font-size: 13px; font-weight: 900; text-align: center; }
+
+    /* ---------- A: GDT planner dialog ---------- */
+    .fin-a .dlg { top: 96px; left: 300px; width: 840px; min-height: 0; padding-bottom: 16px; }
+    .fin-a .dialog-side { top: 150px; width: 250px; }
+    .fin-a .dialog-left { left: 40px; }
+    .fin-a .dialog-right { right: 40px; top: 118px; }
+    .fin-a .rule { margin: 10px 30px 6px; }
+    .fa-charts { position: relative; text-align: left; }
+    .fa-charts svg { display: block; overflow: visible; touch-action: none; }
+    .fa-key { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 2px 0 0 62px; font-size: 11px; font-weight: 700; color: var(--muted); }
+    .fa-key span { display: inline-flex; align-items: center; gap: 5px; }
+    .fa-key i { display: inline-block; width: 14px; height: 9px; border-radius: 2px; }
+    .fa-foot { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-top: 10px; }
+    .fa-foot p { margin: 0; max-width: 540px; font-size: 11.5px; font-weight: 700; line-height: 1.35; text-align: left; color: var(--muted); }
+    .fin-a .dlg > .dialog-ok { display: none; }
+    .fa-plan { padding: 8px 14px 12px; text-align: left; }
+    .fa-plan h4 { margin: 8px 0 4px; font-size: 10.5px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+    .fa-plan h4:first-child { margin-top: 2px; }
+    .fa-goal { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; border-top: 1px solid var(--line); font-size: 12.5px; font-weight: 800; }
+    .fa-goal:first-of-type { border-top: 0; }
+    .fa-goal small { display: block; font-size: 10.5px; font-weight: 700; color: var(--muted); }
+    .fa-sum { margin-top: 8px; padding-top: 6px; border-top: 2px solid color-mix(in oklab, var(--wood) 35%, transparent); }
+    .fa-sum div { display: flex; justify-content: space-between; padding: 4px 0; font-size: 12px; font-weight: 700; }
+    .fa-sum b { font-weight: 900; }
+    .fa-verdict { margin-top: 8px; padding: 8px 10px; border-radius: 9px; font-size: 12.5px; font-weight: 900; line-height: 1.3; }
+    .fa-verdict.bad { color: var(--money-out); background: color-mix(in oklab, var(--coral) 13%, var(--paper)); }
+    .fa-verdict.good { color: var(--money-in); background: color-mix(in oklab, var(--teal) 13%, var(--paper)); }
+
+    /* ---------- B: the era ledger ---------- */
+    .fin-b .dlg { top: 70px; left: 130px; width: 1180px; min-height: 0; padding: 16px 26px 18px; }
+    .fin-b .rule { margin: 10px 30px 8px; }
+    .fin-b .dlg > .dialog-ok { display: none; }
+    .fb-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 12.5px; table-layout: fixed; }
+    .fb-table col.label { width: 232px; }
+    .fb-table th, .fb-table td { padding: 5px 10px; }
+    .fb-table thead th { vertical-align: bottom; padding-bottom: 6px; font-weight: 900; font-size: 13px; line-height: 1.2; }
+    .fb-table thead th small { display: block; font-size: 10.5px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+    .fb-table thead th .tag { display: inline-block; margin-top: 3px; padding: 1px 6px; border-radius: 5px; font-size: 10px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; }
+    .fb-table .tag.actual { color: var(--muted); background: color-mix(in oklab, var(--ink) 8%, var(--paper)); }
+    .fb-table .tag.plan { color: color-mix(in oklab, var(--sky) 70%, var(--ink)); background: color-mix(in oklab, var(--sky) 15%, var(--paper)); }
+    .fb-table td.plan, .fb-table th.plan { background: color-mix(in oklab, var(--sky) 6%, var(--paper)); }
+    .fb-table tr.sec td { padding-top: 10px; font-size: 10.5px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid color-mix(in oklab, var(--wood) 40%, transparent); }
+    .fb-table tr.sec td.plan { background: color-mix(in oklab, var(--sky) 6%, var(--paper)); }
+    .fb-table tbody td { border-bottom: 1px solid var(--line); vertical-align: middle; }
+    .fb-table tbody td:first-child { font-weight: 800; }
+    .fb-table tr.total td { font-weight: 900; font-size: 13.5px; border-bottom: 2px solid color-mix(in oklab, var(--wood) 40%, transparent); }
+    .fb-cell { display: grid; grid-template-columns: 1fr 64px; gap: 8px; align-items: center; }
+    .fb-cell b { font-weight: 800; text-align: right; font-variant-numeric: tabular-nums; }
+    .fb-bar { position: relative; height: 7px; border-radius: 3px; background: color-mix(in oklab, var(--ink) 6%, var(--paper)); }
+    .fb-bar i { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 3px; }
+    .fb-bar.div i.neg { left: auto; right: 50%; }
+    .fb-bar.div i.pos { left: 50%; }
+    .fb-bar.div::after { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: color-mix(in oklab, var(--ink) 35%, transparent); }
+    .fb-spark { display: block; margin: 0 0 2px; overflow: visible; }
+    .fb-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; gap: 20px; }
+    .fb-foot p { margin: 0; font-size: 11.5px; font-weight: 700; line-height: 1.35; text-align: left; color: var(--muted); }
+    .fb-raise { width: auto; padding: 0; border: 0; }
+
+    /* ---------- C: the roadmap slide on the CEO's screen ---------- */
+    .fin-c { position: absolute; inset: 0; }
+    .fc-win { left: 110px; top: 118px; width: 1220px; height: 668px; border-width: 3px; background: var(--paper); }
+    .fc-chrome { display: flex; align-items: center; gap: 12px; height: 40px; padding: 0 14px; background: color-mix(in oklab, var(--ink) 7%, var(--paper)); border-bottom: 1px solid color-mix(in oklab, var(--ink) 12%, transparent); font-size: 12.5px; font-weight: 800; }
+    .fc-dots { display: flex; gap: 6px; }
+    .fc-dots i { width: 11px; height: 11px; border-radius: 50%; background: color-mix(in oklab, var(--ink) 22%, var(--paper)); }
+    .fc-doc { flex: 1; text-align: center; color: color-mix(in oklab, var(--ink) 70%, var(--paper)); }
+    .fc-body { display: grid; grid-template-columns: 132px 1fr 250px; height: calc(100% - 41px); }
+    .fc-thumbs { padding: 14px 12px; background: color-mix(in oklab, var(--ink) 4%, var(--paper)); border-right: 1px solid color-mix(in oklab, var(--ink) 10%, transparent); }
+    .fc-thumb { display: grid; grid-template-columns: 14px 1fr; gap: 6px; align-items: start; margin-bottom: 12px; font-size: 10px; font-weight: 800; color: var(--muted); }
+    .fc-thumb div { height: 58px; border-radius: 4px; background: var(--paper); box-shadow: 0 0 0 1px color-mix(in oklab, var(--ink) 14%, transparent); padding: 6px; font-size: 7px; line-height: 1.3; color: var(--ink); }
+    .fc-thumb.sel div { box-shadow: 0 0 0 2px var(--coral); }
+    .fc-main { display: flex; flex-direction: column; padding: 18px 20px 14px; background: color-mix(in oklab, var(--ink) 9%, var(--paper)); }
+    .fc-slide { position: relative; width: 790px; height: 444px; margin: 0 auto; padding: 26px 34px; background: var(--paper); box-shadow: 0 2px 10px color-mix(in oklab, var(--ink) 18%, transparent); text-align: left; }
+    .fc-kicker { font-size: 11px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; color: var(--coral); }
+    .fc-title { margin: 4px 0 0; font-size: 38px; font-weight: 300; letter-spacing: -.015em; line-height: 1.05; }
+    .fc-sub { margin: 6px 0 0; font-size: 14px; font-weight: 700; color: var(--muted); }
+    .fc-slide svg, .fa-charts svg { user-select: none; -webkit-user-select: none; }
+    .fc-slide svg { position: absolute; left: 34px; top: 132px; overflow: visible; touch-action: none; }
+    .fc-notes { width: 790px; margin: 12px auto 0; padding: 10px 14px; border-radius: 6px; background: var(--paper); font-size: 13px; line-height: 1.45; text-align: left; box-shadow: 0 0 0 1px color-mix(in oklab, var(--ink) 10%, transparent); }
+    .fc-notes b { display: block; margin-bottom: 2px; font-size: 10.5px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+    .fc-side { padding: 14px 16px; border-left: 1px solid color-mix(in oklab, var(--ink) 10%, transparent); text-align: left; background: color-mix(in oklab, var(--ink) 3%, var(--paper)); }
+    .fc-side h4 { margin: 12px 0 6px; font-size: 10.5px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+    .fc-side h4:first-child { margin-top: 0; }
+    .fc-hint { margin: -2px 0 6px; font-size: 11px; font-weight: 700; }
+    .fc-close { position: absolute; right: 18px; bottom: 14px; width: 120px; }
+  </style>
+</head>
+<body>
+  <main id="stage" aria-label="AI lab office">
+    <div id="office"></div>
+    <div id="fx" aria-live="polite"></div>
+    <div id="hud"></div>
+    <div id="overlay"></div>
+  </main>
+<script type="module">
+import { createGame } from './ui/game.js';
+import { mountHud } from './ui/hud.js';
+import { mountOffice } from './ui/office.js';
+import { SCENARIOS } from './ui/logic/scenarios.js';
+import { openDialog } from './ui/components/dialog.js';
+import { money, computeAmount } from './ui/logic/format.js';
+import { ERAS } from './sim/data/eras.js';
+import { project, byEra, eraOfTurn, monthOfTurn, eraStart, LAST_TURN, UNIT, roundSize } from './docs/design/mockups/finance-plan.js';
+
+const zoom = () => { const z = Math.min(innerWidth / 1440, innerHeight / 900, 1); if (z > 0) document.documentElement.style.zoom = `${z}`; };
+zoom(); addEventListener('resize', zoom);
+
+// The same real run as the data file: seed 4, stopped at the first turn of era 3 (turn 8, month 24).
+const state = SCENARIOS.era3Queue(4);
+const game = createGame({ seed: 4, state });
+mountHud(document.querySelector('#hud'), game);
+await mountOffice(document.querySelector('#office'), document.querySelector('#fx'), game).catch(console.error);
+const data = await (await fetch('docs/design/mockups/finance-seed4.json')).json();
+const overlay = document.querySelector('#overlay');
+const el = (html) => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; };
+
+const NOW = state.turn;
+const FUTURE_ERAS = [...new Set(Array.from({ length: LAST_TURN - NOW + 1 }, (_, i) => eraOfTurn(NOW + i)))];
+const STEP = 10, MAX_GOAL = 800;
+// A plan already under way, so the first look shows a real decision: 1 GW by era 5 with one round raised.
+const plan = { goals: { 3: 120, 4: 400, 5: 600 }, raises: { 3: true } };
+const amount = (units, era) => computeAmount(units, era);
+const perMonth = (m) => `${money(m)}/mo`;
+const unitPrice = `$${UNIT.toFixed(2)}M`;
+const signedMoney = (m) => (m >= 0 ? `+${money(m)}` : money(m));
+const hatch = (id, token) => `<pattern id="${id}" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" style="fill:color-mix(in oklab, var(${token}) 22%, var(--paper))"/><rect width="3" height="6" style="fill:var(${token})"/></pattern>`;
+const text = (x, y, s, style = '', anchor = 'start') => `<text x="${x}" y="${y}" text-anchor="${anchor}" style="font-size:10.5px;font-weight:700;fill:var(--muted);${style}">${s}</text>`;
+
+let draw = () => {};
+const render = () => {
+  const key = document.activeElement?.dataset?.focus;
+  draw();
+  if (key) document.querySelector(`[data-focus="${key}"]`)?.focus();
+};
+function setGoal(era, units) {
+  plan.goals[era] = Math.max(0, Math.min(MAX_GOAL, Math.round(units / STEP) * STEP));
+  // Later eras never plan less than an earlier one: compute you signed for keeps running.
+  for (const e of FUTURE_ERAS) if (e > era && plan.goals[e] < plan.goals[era]) plan.goals[e] = plan.goals[era];
+  for (const e of FUTURE_ERAS) if (e < era && plan.goals[e] > plan.goals[era]) plan.goals[e] = plan.goals[era];
+  render();
+}
+const toggleRaise = (era) => { plan.raises[era] = !plan.raises[era]; render(); };
+
+function stepper(era) {
+  const node = el(`<span class="step"><button type="button" data-focus="down-${era}" aria-label="Lower the era ${era} goal">−</button><output class="num" aria-live="polite">${amount(plan.goals[era], era)}</output><button type="button" data-focus="up-${era}" aria-label="Raise the era ${era} goal">+</button></span>`);
+  const [down, up] = node.querySelectorAll('button');
+  down.onclick = () => setGoal(era, plan.goals[era] - (era >= 4 ? 30 : STEP));
+  up.onclick = () => setGoal(era, plan.goals[era] + (era >= 4 ? 30 : STEP));
+  return node;
+}
+function raiseToggle(era, round, compact = false) {
+  const done = state.flags.lastRoundEra === era;
+  const node = el(`<button type="button" data-focus="raise-${era}" class="compute-toggle" role="switch" aria-checked="${!!plan.raises[era]}" ${done ? 'disabled' : ''}><span><b>${compact ? `Raise about ${money(round)}` : `Raise a round in era ${era}`}</b><small>${done ? 'Already raised this era' : compact ? 'growth fund round' : `about ${money(round)} from a growth fund`}</small></span><i class="${plan.raises[era] ? 'on' : ''}"></i></button>`);
+  node.onclick = () => toggleRaise(era);
+  return node;
+}
+function verdict(p) {
+  if (!p.runsOut) return { cls: 'good', text: `Cash lasts the run. You end with about ${money(p.end)}.` };
+  return { cls: 'bad', text: `Cash runs out in month ${Math.round(p.runsOut.month)} (era ${p.runsOut.era}). You end ${money(-p.end)} short.` };
+}
+
+// Drag goal handles: the container keeps pointer capture because the SVG is redrawn on every move.
+function dragGoals(container, yToUnits) {
+  let era = null;
+  container.addEventListener('pointerdown', (e) => {
+    const h = e.target.closest('[data-era]');
+    if (!h) return;
+    era = +h.dataset.era;
+    container.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  container.addEventListener('pointermove', (e) => {
+    if (era == null) return;
+    const svg = container.querySelector('svg');
+    const r = svg.getBoundingClientRect();
+    const scale = r.height / svg.viewBox.baseVal.height;
+    setGoal(era, yToUnits((e.clientY - r.top) / scale));
+  });
+  const end = () => { era = null; };
+  container.addEventListener('pointerup', end);
+  container.addEventListener('pointercancel', end);
+  container.addEventListener('keydown', (e) => {
+    const h = e.target.closest('[data-era]');
+    if (!h) return;
+    const d = { ArrowUp: 1, ArrowRight: 1, ArrowDown: -1, ArrowLeft: -1 }[e.key];
+    if (!d) return;
+    e.preventDefault();
+    const k = +h.dataset.era;
+    setGoal(k, plan.goals[k] + d * (k >= 4 ? 30 : STEP));
+    container.querySelector(`[data-era="${k}"]`)?.focus();
+  });
+}
+
+// History rows (actual) and projection rows share one shape for the charts.
+const past = data.turns.map((t) => ({ turn: t.turn, era: t.era, month: t.month, months: t.months, signed: t.online, planned: 0, signedBill: t.computeBill, planBill: 0, people: t.people, ops: t.ops, revenue: t.revenue, cashStart: t.cashStart, cashEnd: t.cashEnd, raised: t.raised ? Math.max(0, t.other) : 0, past: true }));
+
+// ---------- A: the GDT planner dialog ----------
+function showA() {
+  const W = 788, padL = 62, padR = 10;
+  const x = (turn) => padL + (turn / (LAST_TURN + 1)) * (W - padL - padR);
+  const bw = (W - padL - padR) / (LAST_TURN + 1);
+  const charts = el(`<div class="fa-charts" tabindex="-1"></div>`);
+  const key = el(`<div class="fa-key">
+    <span><i style="background:var(--sky)"></i>Compute you signed</span>
+    <span><i style="background:repeating-linear-gradient(135deg, var(--sky) 0 3px, color-mix(in oklab, var(--sky) 22%, var(--paper)) 3px 6px)"></i>In the plan, not signed yet</span>
+    <span><i style="background:var(--coral)"></i>Compute bill</span>
+    <span><i style="background:color-mix(in oklab, var(--wood) 70%, var(--paper))"></i>People and running costs</span>
+    <span><i style="background:var(--teal);height:3px"></i>Revenue</span>
+  </div>`);
+  const foot = el(`<div class="fa-foot"><p>Revenue is held at today's ${perMonth(project(state).rows[0].revenue)}. Compute you haven't signed is billed at the base price, ${unitPrice} a unit each month, from next turn. Rounds raise at today's valuation.</p><button class="btn" type="button">Keep this plan</button></div>`);
+  const body = el(`<div></div>`);
+  body.append(charts, key, foot);
+  const planPanel = el(`<div class="fa-plan"></div>`);
+  const team = el(`<div class="budget-team"></div>`);
+  const layer = openDialog(overlay, { title: 'Plan the years ahead', subtitle: `Era ${state.era} · month ${state.monthsElapsed} · compute goals and what they cost each month`, left: { title: 'Team', content: team }, right: { title: 'This plan', content: planPanel }, body, okLabel: 'Close' });
+  layer.classList.add('fin-a');
+
+  const hC = 150, hM = 132, hK = 104, gap = 26, top = 22;
+  const H = top + hC + gap + hM + gap + hK + 34;
+  const yC = (u) => top + hC - (u / MAX_GOAL) * hC;
+  const unitsAtY = (py) => ((top + hC - py) / hC) * MAX_GOAL;
+  dragGoals(charts, unitsAtY);
+
+  draw = () => {
+    const p = project(state, plan);
+    const rows = [...past, ...p.rows];
+    const tM = top + hC + gap, tK = tM + hM + gap;
+    const maxM = Math.max(200, ...rows.map((r) => r.signedBill + r.planBill + r.people + r.ops), ...rows.map((r) => r.revenue)) * 1.08;
+    const yM = (v) => tM + hM - (v / maxM) * hM;
+    const cashes = rows.flatMap((r) => [r.cashStart, r.cashEnd]);
+    const lo = Math.min(0, ...cashes), hi = Math.max(...cashes);
+    const yK = (v) => tK + hK - ((v - lo) / (hi - lo || 1)) * hK;
+    let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Compute, monthly money and cash from the start of the run to the last turn"><defs>${hatch('fa-plan', '--sky')}${hatch('fa-planbill', '--coral')}</defs>`;
+    // Era bands and year marks.
+    ERAS.forEach((e, i) => {
+      const x0 = x(eraStart(e.id)), x1 = x(eraStart(e.id) + e.turns);
+      s += `<rect x="${x0}" y="${top - 18}" width="${x1 - x0}" height="${H - top - 2}" style="fill:${i % 2 ? 'color-mix(in oklab, var(--cream) 45%, var(--paper))' : 'var(--paper)'}"/>`;
+      s += text(x0 + 5, top - 6, `ERA ${e.id}`, 'font-weight:900;font-size:10px;letter-spacing:.06em');
+    });
+    // Compute chart.
+    for (const v of [0, 200, 400, 600]) {
+      s += `<line x1="${padL}" x2="${W - padR}" y1="${yC(v)}" y2="${yC(v)}" style="stroke:color-mix(in oklab, var(--ink) ${v ? 7 : 25}%, transparent)"/>`;
+      s += text(padL - 6, yC(v) + 3.5, v === 0 ? '0' : `${v} u`, '', 'end');
+    }
+    s += text(padL - 6, top - 6, 'COMPUTE', 'font-weight:900;font-size:10px;letter-spacing:.06em;fill:var(--ink)', 'end');
+    for (const r of rows) {
+      const x0 = x(r.turn) + 1.5, w = bw - 3;
+      s += `<rect x="${x0}" y="${yC(r.signed)}" width="${w}" height="${yC(0) - yC(r.signed)}" style="fill:${r.past ? 'color-mix(in oklab, var(--sky) 55%, var(--paper))' : 'var(--sky)'}"/>`;
+      if (r.planned) s += `<rect x="${x0}" y="${yC(r.signed + r.planned)}" width="${w}" height="${yC(r.signed) - yC(r.signed + r.planned)}" style="fill:url(#fa-plan)"/>`;
+    }
+    // Goal lines with handles, one per future era.
+    for (const era of FUTURE_ERAS) {
+      const t0 = Math.max(NOW + 1, eraStart(era)), t1 = eraStart(era) + ERAS[era - 1].turns;
+      if (t0 >= t1) continue;
+      const gy = yC(plan.goals[era]), cx = (x(t0) + x(t1)) / 2;
+      s += `<line x1="${x(t0)}" x2="${x(t1)}" y1="${gy}" y2="${gy}" style="stroke:var(--ink);stroke-width:2;stroke-dasharray:5 4"/>`;
+      s += `<g class="goal-handle" data-era="${era}" tabindex="0" role="slider" aria-label="Era ${era} compute goal" aria-valuemin="0" aria-valuemax="${MAX_GOAL}" aria-valuenow="${plan.goals[era]}" aria-valuetext="${amount(plan.goals[era], era)}" style="cursor:ns-resize">
+        <rect x="${cx - 36}" y="${gy - 11}" width="72" height="22" rx="11" style="fill:var(--ink)"/>
+        <text x="${cx}" y="${gy + 4}" text-anchor="middle" style="font-size:11px;font-weight:900;fill:var(--paper)">${amount(plan.goals[era], era)}</text></g>`;
+    }
+    // Money each month.
+    const tickM = maxM > 800 ? 500 : 250;
+    for (let v = 0; v < maxM * 0.95; v += tickM) s += `<line x1="${padL}" x2="${W - padR}" y1="${yM(v)}" y2="${yM(v)}" style="stroke:color-mix(in oklab, var(--ink) ${v ? 7 : 25}%, transparent)"/>` + text(padL - 6, yM(v) + 3.5, v ? money(v) : '0', '', 'end');
+    s += text(padL - 6, tM - 6, 'EACH MONTH', 'font-weight:900;font-size:10px;letter-spacing:.06em;fill:var(--ink)', 'end');
+    for (const r of rows) {
+      const x0 = x(r.turn) + 4, w = bw - 8;
+      const run = r.people + r.ops;
+      let y0 = yM(0);
+      const seg = (v, fill) => { if (v <= 0) return; const y1 = yM(0) - ((yM(0) - yM(v))); s += `<rect x="${x0}" y="${y0 - (yM(0) - y1)}" width="${w}" height="${yM(0) - y1}" style="fill:${fill}"/>`; y0 -= (yM(0) - y1); };
+      seg(run, `color-mix(in oklab, var(--wood) ${r.past ? 45 : 70}%, var(--paper))`);
+      seg(r.signedBill, r.past ? 'color-mix(in oklab, var(--coral) 55%, var(--paper))' : 'var(--coral)');
+      seg(r.planBill, 'url(#fa-planbill)');
+    }
+    const revPath = rows.map((r, i) => `${i ? 'L' : 'M'}${x(r.turn)} ${yM(r.revenue)} H${x(r.turn + 1)}`).join(' ');
+    s += `<path d="${revPath}" style="fill:none;stroke:var(--teal);stroke-width:3"/>`;
+    s += text(x(NOW) - 6, yM(0) - 24, `Revenue ${perMonth(p.rows[0].revenue)}`, 'fill:var(--money-in);font-weight:900', 'end');
+    s += text(x(NOW) - 6, yC(0) - 16, `${state.compute.online} units signed`, 'fill:color-mix(in oklab, var(--sky) 70%, var(--ink));font-weight:900', 'end');
+    // Cash.
+    s += text(padL - 6, tK - 6, 'CASH', 'font-weight:900;font-size:10px;letter-spacing:.06em;fill:var(--ink)', 'end');
+    if (lo < 0) s += `<rect x="${padL}" y="${yK(0)}" width="${W - padL - padR}" height="${tK + hK - yK(0)}" style="fill:color-mix(in oklab, var(--coral) 10%, transparent)"/>`;
+    s += `<line x1="${padL}" x2="${W - padR}" y1="${yK(0)}" y2="${yK(0)}" style="stroke:color-mix(in oklab, var(--ink) 35%, transparent)"/>` + text(padL - 6, yK(0) + 3.5, '$0', '', 'end');
+    s += text(padL - 6, yK(hi) + 14, money(hi), '', 'end');
+    if (lo < 0) s += text(padL - 6, yK(lo) + 3.5, money(lo), 'fill:var(--money-out)', 'end');
+    const cashPath = (rs) => rs.map((r, i) => `${i ? 'L' : 'M'}${x(r.turn)} ${yK(r.cashStart + r.raised)} L${x(r.turn + 1)} ${yK(r.cashEnd)}`).join(' ');
+    s += `<path d="${cashPath(past)}" style="fill:none;stroke:var(--ink);stroke-width:2.5"/>`;
+    s += `<path d="${cashPath(p.rows)}" style="fill:none;stroke:var(--ink);stroke-width:2.5;stroke-dasharray:6 4"/>`;
+    for (const r of rows.filter((q) => q.raised > 0)) {
+      s += `<line x1="${x(r.turn)}" x2="${x(r.turn)}" y1="${yK(r.cashStart)}" y2="${yK(r.cashStart + r.raised)}" style="stroke:var(--teal);stroke-width:3"/>`;
+      s += text(x(r.turn) + 5, yK(r.cashStart + r.raised) + 11, `+${money(r.raised)}`, 'fill:var(--money-in);font-weight:900');
+    }
+    if (p.runsOut) {
+      const rx = x(p.runsOut.turn + 1);
+      s += `<circle cx="${rx}" cy="${yK(0)}" r="5" style="fill:var(--coral)"/>` + text(rx + 8, yK(0) - 7, `Runs out · month ${Math.round(p.runsOut.month)}`, 'fill:var(--money-out);font-weight:900;font-size:11.5px');
+    }
+    // Now line and axis.
+    s += `<line x1="${x(NOW)}" x2="${x(NOW)}" y1="${top - 18}" y2="${tK + hK + 6}" style="stroke:var(--ink);stroke-width:1.5"/>` + text(x(NOW) + 5, top + 10, 'Now', 'fill:var(--ink);font-weight:900;font-size:11px');
+    const axisY = tK + hK + 20;
+    for (const m of [0, 12, 24]) {
+      const t = rows.find((r) => r.month === m)?.turn;
+      if (t == null) continue;
+      s += text(x(t), axisY, m === 0 ? 'Year 1' : `Year ${m / 12 + 1}`, 'fill:var(--ink);font-weight:900');
+      s += text(x(t), axisY + 12, `month ${m}`);
+    }
+    s += text(x(LAST_TURN + 1), axisY, `month ${monthOfTurn(LAST_TURN + 1)}`, '', 'end');
+    s += `</svg>`;
+    const focused = document.activeElement?.dataset?.era;
+    charts.innerHTML = s;
+    if (focused) charts.querySelector(`[data-era="${focused}"]`)?.focus();
+
+    // Right panel: goals, rounds, what it adds up to.
+    const eras = byEra(p.rows);
+    const last = eras.at(-1);
+    planPanel.replaceChildren(el(`<h4>Compute goal</h4>`));
+    for (const era of FUTURE_ERAS) {
+      const row = el(`<div class="fa-goal"><span>Era ${era}<small>${ERAS[era - 1].name}</small></span></div>`);
+      row.append(stepper(era));
+      planPanel.append(row);
+    }
+    planPanel.append(el(`<h4>Paying for it</h4>`));
+    for (const era of FUTURE_ERAS.filter((e) => e < 5)) planPanel.append(raiseToggle(era, p.round));
+    planPanel.append(el(`<div class="fa-sum">
+      <div><span>Revenue today</span><b class="in">${perMonth(p.rows[0].revenue)}</b></div>
+      <div><span>Spending, era ${last.era}</span><b class="out">${perMonth(last.burn)}</b></div>
+      <div><span>Lowest cash</span><b class="${p.lowest < 0 ? 'out' : ''}">${money(p.lowest)}</b></div>
+    </div>`));
+    const v = verdict(p);
+    planPanel.append(el(`<div class="fa-verdict ${v.cls}">${v.text}</div>`));
+
+    // Team: every line is computed from the projection or the sim's own rules.
+    const e4 = eras.find((e) => e.era === 4);
+    const growth = Math.round((plan.goals[5] ?? plan.goals[4]) / Math.max(1, state.compute.online));
+    const safety = Math.round((plan.goals[4] ?? 0) * state.compute.split.safety);
+    const ratio = Math.round(last.burn / Math.max(1, p.rows[0].revenue));
+    const opinions = [
+      { id: 'cfo', mood: p.runsOut ? 'alarmed' : p.lowest < 500 ? 'uneasy' : 'calm', text: p.runsOut ? `We spend ${ratio} times what we earn by era ${last.era}. Without more money we're out in month ${Math.round(p.runsOut.month)}.` : `It holds, but we spend ${ratio} times what we earn by era ${last.era}.` },
+      { id: 'research', mood: growth >= 10 ? 'eager' : 'calm', text: `${growth} times the compute we run today. That's the race we're in.` },
+      { id: 'safety', mood: 'calm', text: `At our ${Math.round(state.compute.split.safety * 100)}% share, era 4 gives safety ${safety} units.` },
+      { id: 'policy', mood: e4 && e4.planBill > 0 ? 'uneasy' : 'calm', text: 'Chips we own need power from era 4. Grid reservations close after era 3.' },
+    ];
+    team.replaceChildren(...opinions.map((o) => el(`<div class="compute-opinion"><div class="compute-opinion-heading"><span>${{ cfo: 'CFO', research: 'Head of Research', safety: 'Head of Safety', policy: 'Policy and Comms' }[o.id]}</span><span class="compute-mood ${o.mood}">${o.mood}</span></div><q>${o.text}</q></div>`)));
+  };
+  render();
+}
+
+// ---------- B: the era ledger ----------
+function showB() {
+  const body = el(`<div></div>`);
+  const layer = openDialog(overlay, { title: 'The books, era by era', subtitle: `Two years done, three eras to plan · every figure a monthly average unless it says otherwise`, body, okLabel: 'Close' });
+  layer.classList.add('fin-b');
+  const actual = [1, 2].map((era) => {
+    const rs = past.filter((r) => r.era === era);
+    const m = rs.reduce((a, r) => a + r.months, 0);
+    const avg = (k) => rs.reduce((a, r) => a + r[k] * r.months, 0) / m;
+    const other = data.turns.filter((t) => t.era === era).reduce((a, t) => a + t.other, 0);
+    return { era, months: m, revenue: avg('revenue'), signedBill: avg('signedBill'), planBill: 0, people: avg('people'), ops: avg('ops'), burn: avg('signedBill') + avg('people') + avg('ops'), computeEnd: rs.at(-1).signed, cashEnd: rs.at(-1).cashEnd, raised: rs.reduce((a, r) => a + r.raised, 0), oneOffs: other - rs.reduce((a, r) => a + r.raised, 0), past: true };
+  });
+  draw = () => {
+    const p = project(state, plan);
+    const cols = [...actual, ...byEra(p.rows).map((e) => ({ ...e, oneOffs: 0 }))];
+    const maxMonth = Math.max(...cols.map((c) => Math.max(c.revenue, c.burn)));
+    const maxCash = Math.max(...cols.map((c) => Math.abs(c.cashEnd)));
+    const cell = (v, max, fill, fmt = money) => `<div class="fb-cell"><div class="fb-bar"><i style="width:${Math.max(0, (Math.abs(v) / max) * 100)}%;background:${fill}"></i></div><b>${fmt(v)}</b></div>`;
+    const cashCell = (v) => `<div class="fb-cell"><div class="fb-bar div"><i class="${v < 0 ? 'neg' : 'pos'}" style="width:${(Math.abs(v) / maxCash) * 50}%;background:${v < 0 ? 'var(--coral)' : 'var(--ink)'}"></i></div><b class="${v < 0 ? 'out' : ''}">${money(v)}</b></div>`;
+    const td = (c, html) => `<td class="${c.past ? '' : 'plan'}">${html}</td>`;
+    const head = cols.map((c) => `<th class="${c.past ? '' : 'plan'}"><small>${c.past ? `Year ${c.era} · ` : ''}Era ${c.era}${c.era === state.era ? ' · now' : ''}</small>${ERAS[c.era - 1].name}<br><span class="tag ${c.past ? 'actual' : 'plan'}">${c.past ? 'actual' : 'plan'} · ${c.months} mo</span></th>`).join('');
+    // Cash sparkline: one segment per column, drawn across the header row.
+    const colW = (1128 - 232) / cols.length;
+    const turnsIn = (era) => [...past, ...p.rows].filter((r) => r.era === era);
+    const allCash = [...past, ...p.rows].flatMap((r) => [r.cashStart + r.raised, r.cashEnd]);
+    const lo = Math.min(0, ...allCash), hi = Math.max(...allCash);
+    const sy = (v) => 6 + 40 - ((v - lo) / (hi - lo)) * 40;
+    let spark = `<svg class="fb-spark" width="1128" height="54" viewBox="0 0 1128 54" role="img" aria-label="Cash across the run">`;
+    spark += `<text x="222" y="${sy(0) + 4}" text-anchor="end" style="font-size:10.5px;font-weight:900;fill:var(--muted)">CASH  $0</text>`;
+    spark += `<line x1="232" x2="1128" y1="${sy(0)}" y2="${sy(0)}" style="stroke:color-mix(in oklab, var(--ink) 30%, transparent)"/>`;
+    let d = '';
+    cols.forEach((c, i) => {
+      const rs = turnsIn(c.era);
+      const w = colW / rs.length;
+      rs.forEach((r, j) => { const x0 = 232 + i * colW + j * w; d += `${d ? 'L' : 'M'}${x0} ${sy(r.cashStart + r.raised)} L${x0 + w} ${sy(r.cashEnd)} `; });
+      if (i) spark += `<line x1="${232 + i * colW}" x2="${232 + i * colW}" y1="0" y2="54" style="stroke:var(--line)"/>`;
+    });
+    spark += `<path d="${d}" style="fill:none;stroke:var(--ink);stroke-width:2.5"/>`;
+    const xNow = 232 + 2 * colW;
+    spark += `<line x1="${xNow}" x2="${xNow}" y1="0" y2="54" style="stroke:var(--ink);stroke-width:1.5"/><text x="${xNow + 4}" y="52" style="font-size:10.5px;font-weight:900;fill:var(--ink)">Now</text>`;
+    spark += `</svg>`;
+    const table = el(`<div>${spark}<table class="fb-table"><colgroup><col class="label">${cols.map(() => '<col>').join('')}</colgroup>
+      <thead><tr><th></th>${head}</tr></thead><tbody>
+      <tr class="sec"><td>Compute</td>${cols.map((c) => td(c, '')).join('')}</tr>
+      <tr><td>Online at the end of the era</td>${cols.map((c) => td(c, cell(c.computeEnd, MAX_GOAL, c.past ? 'color-mix(in oklab, var(--sky) 55%, var(--paper))' : 'var(--sky)', (u) => amount(u, c.era)))).join('')}</tr>
+      <tr class="goals"><td>Goal <span class="muted">(set it here)</span></td>${cols.map((c) => td(c, c.past ? '<span class="muted">—</span>' : '')).join('')}</tr>
+      <tr class="sec"><td>Each month</td>${cols.map((c) => td(c, '')).join('')}</tr>
+      <tr><td>Revenue</td>${cols.map((c) => td(c, cell(c.revenue, maxMonth, 'var(--teal)'))).join('')}</tr>
+      <tr><td>Compute you signed</td>${cols.map((c) => td(c, cell(-c.signedBill, maxMonth, 'var(--coral)'))).join('')}</tr>
+      <tr><td>Compute in the plan</td>${cols.map((c) => td(c, c.past ? '<span class="muted">—</span>' : cell(-c.planBill, maxMonth, 'repeating-linear-gradient(135deg, var(--coral) 0 3px, color-mix(in oklab, var(--coral) 25%, var(--paper)) 3px 6px)'))).join('')}</tr>
+      <tr><td>People and programs</td>${cols.map((c) => td(c, cell(-c.people, maxMonth, 'color-mix(in oklab, var(--wood) 70%, var(--paper))'))).join('')}</tr>
+      <tr><td>Running the lab</td>${cols.map((c) => td(c, cell(-c.ops, maxMonth, 'color-mix(in oklab, var(--wood) 70%, var(--paper))'))).join('')}</tr>
+      <tr class="total"><td>Net each month</td>${cols.map((c) => { const n = c.revenue - c.burn; return td(c, `<div class="fb-cell"><span></span><b class="${n < 0 ? 'out' : 'in'}">${signedMoney(n)}</b></div>`); }).join('')}</tr>
+      <tr class="sec"><td>Over the whole era</td>${cols.map((c) => td(c, '')).join('')}</tr>
+      <tr><td>Training runs and one-off costs</td>${cols.map((c) => td(c, c.past ? `<div class="fb-cell"><span></span><b>${money(c.oneOffs)}</b></div>` : '<span class="muted">not planned</span>')).join('')}</tr>
+      <tr class="raises"><td>Money raised</td>${cols.map((c) => td(c, c.past ? `<div class="fb-cell"><span></span><b class="${c.raised ? 'in' : ''}">${c.raised ? signedMoney(c.raised) : '—'}</b></div>` : '')).join('')}</tr>
+      <tr class="total"><td>Cash at the end of the era</td>${cols.map((c) => td(c, cashCell(c.cashEnd))).join('')}</tr>
+      </tbody></table></div>`);
+    const planCols = cols.map((c, i) => [c, i]).filter(([c]) => !c.past);
+    const goalCells = table.querySelectorAll('tr.goals td');
+    const raiseCells = table.querySelectorAll('tr.raises td');
+    for (const [c, i] of planCols) {
+      goalCells[i + 1].append(stepper(c.era));
+      if (c.era < 5) { const t = raiseToggle(c.era, p.round, true); t.classList.add('fb-raise'); raiseCells[i + 1].append(t); } else raiseCells[i + 1].innerHTML = '<span class="muted">no rounds in era 5</span>';
+    }
+    const v = verdict(p);
+    const foot = el(`<div class="fb-foot"><p>Plan columns hold revenue at today's ${perMonth(p.rows[0].revenue)}, bill unsigned compute at ${unitPrice} a unit each month, and raise rounds at today's valuation.<br><b class="${v.cls === 'bad' ? 'out' : 'in'}">${v.text}</b></p><button class="btn" type="button">Keep this plan</button></div>`);
+    body.replaceChildren(table, foot);
+  };
+  render();
+}
+
+// ---------- C: the compute roadmap slide ----------
+function showC() {
+  const layer = el(`<div class="fin-c dialog-layer dialog-open"><div class="dialog-veil"></div><section class="gp fc-win">
+    <div class="fc-chrome"><div class="fc-dots"><i></i><i></i><i></i></div><div class="fc-doc">Board update · era ${state.era}.slides</div><span class="muted">Slide 2 of 3</span></div>
+    <div class="fc-body">
+      <div class="fc-thumbs">
+        <div class="fc-thumb"><span>1</span><div><b>Where we are</b><br>Era ${state.era}, month ${state.monthsElapsed}</div></div>
+        <div class="fc-thumb sel"><span>2</span><div><b>Compute roadmap</b><br>Goals by era</div></div>
+        <div class="fc-thumb"><span>3</span><div><b>Paying for it</b><br>Rounds and revenue</div></div>
+      </div>
+      <div class="fc-main"><div class="fc-slide"></div><div class="fc-notes"></div></div>
+      <div class="fc-side"></div>
+    </div><button class="btn fc-close" type="button">Done</button></section></div>`);
+  overlay.append(layer);
+  const slide = layer.querySelector('.fc-slide'), notes = layer.querySelector('.fc-notes'), side = layer.querySelector('.fc-side');
+  const SW = 722, SH = 282, base = 236, barTop = 26;
+  const yB = (u) => base - (u / MAX_GOAL) * (base - barTop);
+  const head = el(`<div></div>`);
+  const holder = el(`<div></div>`);
+  slide.append(head, holder);
+  dragGoals(holder, (py) => ((base - py) / (base - barTop)) * MAX_GOAL);
+  draw = () => {
+    const p = project(state, plan);
+    const eras = byEra(p.rows);
+    const lastEra = FUTURE_ERAS.at(-1);
+    const headline = amount(plan.goals[lastEra], lastEra);
+    head.innerHTML = `<div class="fc-kicker">Compute roadmap</div><h2 class="fc-title">${headline} by era ${lastEra}</h2><p class="fc-sub">From ${state.compute.online} units today. Solid is signed; striped still has to be signed.</p>`;
+    // Bars: today, then each era's goal. Right: who pays.
+    const bars = [{ label: 'Today', units: state.compute.online, signed: state.compute.online, era: state.era, bill: p.rows[0].signedBill }, ...eras.map((e) => ({ label: `Era ${e.era}`, units: plan.goals[e.era], signed: Math.min(plan.goals[e.era], p.rows.filter((r) => r.era === e.era).at(-1).signed), era: e.era, bill: e.signedBill + e.planBill }))];
+    let s = `<svg width="${SW}" height="${SH}" viewBox="0 0 ${SW} ${SH}" role="img" aria-label="Compute goals by era and who pays for them"><defs>${hatch('fc-plan', '--sky')}</defs>`;
+    const bx = (i) => 20 + i * 104, bwid = 70;
+    s += `<line x1="0" x2="430" y1="${base}" y2="${base}" style="stroke:color-mix(in oklab, var(--ink) 35%, transparent)"/>`;
+    bars.forEach((b, i) => {
+      const x0 = bx(i);
+      s += `<rect x="${x0}" y="${yB(b.signed)}" width="${bwid}" height="${base - yB(b.signed)}" style="fill:var(--sky)"/>`;
+      if (b.units > b.signed) s += `<rect x="${x0}" y="${yB(b.units)}" width="${bwid}" height="${yB(b.signed) - yB(b.units)}" style="fill:url(#fc-plan)"/>`;
+      s += `<text x="${x0 + bwid / 2}" y="${yB(b.units) - 8}" text-anchor="middle" style="font-size:17px;font-weight:900;fill:var(--ink)">${amount(b.units, b.era)}</text>`;
+      s += `<text x="${x0 + bwid / 2}" y="${base + 18}" text-anchor="middle" style="font-size:12px;font-weight:900;fill:var(--ink)">${b.label}</text>`;
+      s += `<text x="${x0 + bwid / 2}" y="${base + 34}" text-anchor="middle" style="font-size:11px;font-weight:700;fill:var(--money-out)">${perMonth(b.bill)}</text>`;
+      if (i > 0) s += `<g class="goal-handle" data-era="${b.era}" tabindex="0" role="slider" aria-label="Era ${b.era} compute goal" aria-valuemin="0" aria-valuemax="${MAX_GOAL}" aria-valuenow="${b.units}" aria-valuetext="${amount(b.units, b.era)}" style="cursor:ns-resize"><rect x="${x0 - 4}" y="${yB(b.units) - 14}" width="${bwid + 8}" height="28" style="fill:transparent"/><rect x="${x0 - 4}" y="${yB(b.units) - 5}" width="${bwid + 8}" height="10" rx="5" style="fill:var(--ink)"/></g>`;
+    });
+    s += text(0, base + 34, 'bill', 'fill:var(--money-out)', 'start');
+    // Who pays: a waterfall from cash today to what is left at the end.
+    const monthsLeft = p.rows.reduce((a, r) => a + r.months, 0);
+    const revenue = p.rows.reduce((a, r) => a + r.revenue * r.months, 0);
+    const raised = p.rows.reduce((a, r) => a + r.raised, 0);
+    const spend = p.rows.reduce((a, r) => a + r.burn * r.months, 0);
+    const steps = [{ label: 'Cash now', v: state.cash }, { label: 'Revenue', v: revenue }, { label: 'Rounds', v: raised }, { label: 'Spending', v: -spend }];
+    let run = 0;
+    const vals = [0];
+    for (const st of steps) { run += st.v; vals.push(run); }
+    const wlo = Math.min(0, ...vals), whi = Math.max(...vals);
+    const wy = (v) => barTop + (1 - (v - wlo) / (whi - wlo)) * (base - barTop);
+    const wx = (i) => 468 + i * 52;
+    s += `<text x="468" y="12" style="font-size:12px;font-weight:900;fill:var(--ink)">Who pays, over ${Math.round(monthsLeft)} months</text>`;
+    s += `<line x1="462" x2="${SW}" y1="${wy(0)}" y2="${wy(0)}" style="stroke:color-mix(in oklab, var(--ink) 35%, transparent)"/>`;
+    run = 0;
+    steps.forEach((st, i) => {
+      const a = run, b = run + st.v; run = b;
+      const fill = st.v >= 0 ? (i === 0 ? 'var(--ink)' : 'var(--teal)') : 'var(--coral)';
+      s += `<rect x="${wx(i)}" y="${wy(Math.max(a, b))}" width="40" height="${Math.max(1.5, Math.abs(wy(a) - wy(b)))}" style="fill:${fill}"/>`;
+      s += `<text x="${wx(i) + 20}" y="${base + 18}" text-anchor="middle" style="font-size:10.5px;font-weight:800;fill:var(--ink)">${st.label}</text>`;
+      s += `<text x="${wx(i) + 20}" y="${base + 32}" text-anchor="middle" style="font-size:10.5px;font-weight:800;fill:${i === 0 ? 'var(--ink)' : st.v < 0 ? 'var(--money-out)' : 'var(--money-in)'}">${i === 0 ? money(st.v) : signedMoney(st.v)}</text>`;
+    });
+    const endX = wx(steps.length);
+    s += `<rect x="${endX}" y="${wy(Math.max(0, run))}" width="40" height="${Math.max(1.5, Math.abs(wy(0) - wy(run)))}" style="fill:${run < 0 ? 'url(#fc-short)' : 'var(--ink)'}"/>`;
+    s += `<defs>${hatch('fc-short', '--coral')}</defs>`;
+    s += `<text x="${endX + 20}" y="${base + 18}" text-anchor="middle" style="font-size:10.5px;font-weight:900;fill:var(--ink)">${run < 0 ? 'Short' : 'Left'}</text>`;
+    s += `<text x="${endX + 20}" y="${base + 32}" text-anchor="middle" style="font-size:10.5px;font-weight:900;fill:${run < 0 ? 'var(--money-out)' : 'var(--ink)'}">${money(Math.abs(run))}</text>`;
+    s += `</svg>`;
+    const focused = document.activeElement?.dataset?.era;
+    holder.innerHTML = s;
+    if (focused) holder.querySelector(`[data-era="${focused}"]`)?.focus();
+    const last = eras.at(-1);
+    const ratio = Math.round(last.burn / Math.max(1, p.rows[0].revenue));
+    notes.innerHTML = `<b>Speaker notes · CFO</b>${p.runsOut
+      ? `At ${headline} we'd spend ${perMonth(last.burn)} in era ${last.era}, ${ratio} times what we earn today. The money runs out in month ${Math.round(p.runsOut.month)} unless we raise again or slow the build.`
+      : `At ${headline} we'd spend ${perMonth(last.burn)} in era ${last.era}, ${ratio} times what we earn today. With ${raised ? 'the rounds we plan' : 'what we have'}, cash lasts the run.`}`;
+    side.replaceChildren(el(`<h4>Goal by era</h4>`), el(`<p class="fc-hint muted">Drag a bar top on the slide, or use the buttons.</p>`));
+    for (const era of FUTURE_ERAS) {
+      const row = el(`<div class="fa-goal"><span>Era ${era}<small>${ERAS[era - 1].name}</small></span></div>`);
+      row.append(stepper(era));
+      side.append(row);
+    }
+    side.append(el(`<h4>Rounds</h4>`));
+    for (const era of FUTURE_ERAS.filter((e) => e < 5)) side.append(raiseToggle(era, p.round));
+    const v = verdict(p);
+    side.append(el(`<div class="fa-verdict ${v.cls}">${v.text}</div>`));
+  };
+  render();
+}
+
+const show = { '#a': showA, '#b': showB, '#c': showC };
+(show[location.hash] ?? showA)();
+addEventListener('hashchange', () => location.reload());
+</script>
+</body>
+</html>

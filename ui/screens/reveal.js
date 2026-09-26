@@ -253,10 +253,22 @@ export function showReveal(overlayRoot, { state, model, misalignmentIncident = f
   return layer;
 }
 
-export function mountReveal(game, overlayRoot) {
+// While a board meeting is open the reveal waits, and plays when the meeting closes (board UI review I3).
+export function mountReveal(game, overlayRoot, { show = showReveal } = {}) {
+  let meetingOpen = false;
+  let held = null;
+  overlayRoot?.addEventListener?.('board-meeting-open', () => { meetingOpen = true; });
+  overlayRoot?.addEventListener?.('board-meeting-closed', () => {
+    meetingOpen = false;
+    const waiting = held;
+    held = null;
+    if (waiting) show(overlayRoot, waiting);
+  });
   return game.subscribe(({ state, events }) => {
     const release = events.find((event) => event.type === 'release' && event.ok);
     if (!release) return;
-    showReveal(overlayRoot, { state, model: release.model, misalignmentIncident: Boolean(release.misalignmentIncident) });
+    const reveal = { state, model: release.model, misalignmentIncident: Boolean(release.misalignmentIncident) };
+    if (meetingOpen) held = reveal;
+    else show(overlayRoot, reveal);
   });
 }

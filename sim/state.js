@@ -1,6 +1,8 @@
 import { BALANCE } from './balance.js';
 import { generateOffers, sideRng } from './contracts.js';
 import { createRivals } from './rivals.js';
+import { createAutomation } from './data/automation.js';
+import { INITIAL_BOARD, boardSnapshot } from './board.js';
 
 export function createInitialState({ seed = 1 } = {}) {
   const state = {
@@ -40,7 +42,12 @@ export function createInitialState({ seed = 1 } = {}) {
     power: { sites: [], nextId: 1 },
     capability: BALANCE.startCapability,
 
-    board: [70, 60, 65, 55, 80],
+    board: [...INITIAL_BOARD],
+    boardPromise: null,
+    boardDeals: [],
+    boardLost: [],
+    boardLast: null,
+    boardBefore: null,
     govFavor: { us: 50, intl: 50 },
     staffTrust: 70,
     publicTrust: 60,
@@ -59,7 +66,7 @@ export function createInitialState({ seed = 1 } = {}) {
     researched: [],
     activeRun: null,
     pendingModel: null,
-    internal: null,
+    automation: createAutomation(),
     deal: null,
     models: [],
     warnings: {},
@@ -81,7 +88,11 @@ export function createInitialState({ seed = 1 } = {}) {
     lastBriefing: [],
     ending: null,
   };
-  state.roundStart = { arr: state.arr, capability: state.capability, cash: state.cash, raceHeat: state.raceHeat, publicTrust: state.publicTrust };
+  // The round's start, taken at each round mark: mood posts read raceHeat and publicTrust, the board reads the rest.
+  state.roundStart = {
+    ...boardSnapshot(state), capability: state.capability, cash: state.cash, raceHeat: state.raceHeat, publicTrust: state.publicTrust,
+    board: [...state.board],
+  };
   state.compute.offers = generateOffers(state, sideRng(state, 0));
   return state;
 }

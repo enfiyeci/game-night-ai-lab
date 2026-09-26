@@ -9,7 +9,7 @@ export const TEAMS = {
 };
 
 export const TEAM_OF = {
-  startRun: 'research', research: 'research', deployInternal: 'research', stopInternal: 'research',
+  startRun: 'research', research: 'research',
   amendConstitution: 'safety',
   release: 'policy', summit: 'policy',
   deal: 'cfo', queueOrder: 'cfo', buildSite: 'cfo', raise: 'cfo', emergency: 'cfo',
@@ -22,7 +22,7 @@ export const busySubject = (team) => (team === 'ceo' ? 'you are' : `the ${TEAMS[
 export function teamBusyError(state, move) {
   const team = TEAM_OF[move.type];
   if (!team) return null;
-  if (team === 'research' && state.activeRun && move.type !== 'stopInternal') return 'the research team is busy with the training run';
+  if (team === 'research' && state.activeRun) return 'the research team is busy with the training run';
   if (state.round.teams[team]) return `${busySubject(team)} busy until ${storyDate(nextRoundDay(state)).label}`;
   return null;
 }

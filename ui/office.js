@@ -1,3 +1,5 @@
+import { dressingView } from './logic/automation.js';
+
 const ADVISORS = ['research', 'safety', 'cfo', 'policy'];
 const MOODS = ['calm', 'uneasy', 'alarmed'];
 
@@ -45,6 +47,33 @@ function setMoods(svg, fx, anchors, state) {
   }
 }
 
+const AGENT_SVG = `<svg viewBox="0 0 12 14" width="17" height="20" aria-hidden="true">
+  <line x1="6" y1="0.8" x2="6" y2="3" style="stroke:var(--ink);stroke-width:1.2"/>
+  <rect x="1" y="3" width="10" height="8" rx="3" style="fill:var(--paper);stroke:var(--ink);stroke-width:1.2"/>
+  <circle cx="4.5" cy="7" r="1.1" style="fill:var(--sky)"/><circle cx="7.5" cy="7" r="1.1" style="fill:var(--sky)"/></svg>`;
+
+// 1B's signs without its labels: agents beside the researchers, the unchecked pile on the Safety desk, the racks' glow.
+function dressOffice(fx, anchors, state) {
+  const view = dressingView(state);
+  const add = (className, [x, y], html = '') => {
+    const node = document.createElement('div');
+    node.className = className;
+    node.setAttribute('aria-hidden', 'true');
+    node.style.left = `${x}px`;
+    node.style.top = `${y}px`;
+    node.innerHTML = html;
+    fx.append(node);
+    return node;
+  };
+  for (const key of ['researcher1', 'researcher2']) {
+    const head = anchors?.heads?.[key];
+    if (head && view.agents > 0) add('agent-dots', [head[0] + 38, head[1] + 4], AGENT_SVG.repeat(view.agents));
+  }
+  const safety = anchors?.heads?.safety;
+  if (safety && view.pile > 0) add(`review-pile pile-${view.pile}`, [safety[0] - 38, safety[1] + 62], '<i></i>'.repeat(view.pile * 2));
+  if (anchors?.rack && view.glow > 0) add('rack-glow', anchors.rack).style.opacity = `${view.glow}`;
+}
+
 async function loadEra(era) {
   const [svgText, anchorsResponse] = await Promise.all([
     fetch(`ui/assets/office-era${era}.svg`).then((response) => {
@@ -77,6 +106,7 @@ export async function mountOffice(root, fx, game) {
     const state = game.state;
     if (current?.era === state.era) {
       setMoods(current.svg, fx, current.anchors, state);
+      dressOffice(fx, current.anchors, state);
       return;
     }
 
@@ -92,6 +122,7 @@ export async function mountOffice(root, fx, game) {
     const previous = current;
     current = { era: state.era, ...loaded };
     setMoods(current.svg, fx, current.anchors, state);
+    dressOffice(fx, current.anchors, state);
     root.append(current.svg);
 
     if (!previous || reducedMotion()) {

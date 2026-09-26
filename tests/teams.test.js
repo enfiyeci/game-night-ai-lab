@@ -4,7 +4,7 @@ import { createInitialState } from '../sim/state.js';
 import { TEAM_OF, teamBusyError } from '../sim/teams.js';
 
 test('every move type has a team', () => {
-  for (const type of ['startRun', 'release', 'deal', 'queueOrder', 'buildSite', 'raise', 'research', 'emergency', 'deployInternal', 'stopInternal', 'amendConstitution', 'summit', 'meeting']) {
+  for (const type of ['startRun', 'release', 'deal', 'queueOrder', 'buildSite', 'raise', 'research', 'emergency', 'amendConstitution', 'summit', 'meeting']) {
     assert.ok(TEAM_OF[type], type);
   }
 });

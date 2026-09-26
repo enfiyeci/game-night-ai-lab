@@ -65,7 +65,11 @@ test('turn situation uses the specified priority order', () => {
   state.pendingModel = {};
   assert.equal(lumenLine(state).situation, 'readyToRelease');
 
-  state.internal = {};
+  const atPack = structuredClone(state);
+  atPack.era = 4;
+  assert.equal(lumenLine(atPack).situation, 'readyToRelease', 'era 4 at the pack is not internal');
+
+  state.automation.offsets.review = 1;
   assert.equal(lumenLine(state).situation, 'internal');
 
   state.cash = 50;

@@ -5,6 +5,7 @@ import { projectQueue } from '../ui/logic/compute.js';
 import { releaseDraft, releasePayload } from '../ui/logic/release.js';
 import { SCENARIOS } from '../ui/logic/scenarios.js';
 import { ITEMS, disabledReason } from '../ui/menu.js';
+import { MEETINGS } from '../sim/data/president.js';
 
 const handler = () => {};
 const reasonFor = (game, id) => disabledReason(ITEMS.find((item) => item.id === id), game, handler, projectQueue(game.state, game.queue));
@@ -43,9 +44,22 @@ test('release is closed with no finished model, and when both team actions went 
 test('other menu items close when both team actions are used; the budget stays free', () => {
   const game = readyGame();
   game.state.round.moves = 2;
-  for (const id of ['training', 'internal', 'constitution', 'meeting']) {
+  for (const id of ['training', 'constitution', 'meeting']) {
     assert.notEqual(reasonFor(game, id), '', `${id} should be disabled`);
   }
   assert.equal(reasonFor(game, 'budget'), '', 'budget stays free');
+  assert.equal(reasonFor(game, 'automation'), '', 'who does the work stays free');
   assert.equal(ITEMS.some((item) => item.id === 'endTurn'), false);
+});
+
+test('meeting availability uses the live meeting and closes once he has been met', () => {
+  const game = createGame({ seed: 1, state: SCENARIOS.meeting(1) });
+  assert.equal(reasonFor(game, 'meeting'), '');
+  game.queue.presidentAnswers = MEETINGS[0].exchanges.map((exchange) => exchange.answers[0].id);
+  const result = game.addMove({ type: 'meeting' });
+  assert.equal(result.ok, true);
+  // the answers ride in the same flush as the move, so this is a real meeting, not a walkout
+  assert.equal(result.events.find((event) => event.type === 'meetingOutcome')?.walkedOut, false);
+  assert.equal(game.state.meeting, null);
+  assert.notEqual(reasonFor(game, 'meeting'), '');
 });

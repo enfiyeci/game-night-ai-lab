@@ -37,6 +37,12 @@ export const DUE = {
   senateHearing: 'The hearing is in {time}', // OWNER WRITES
   pooling: 'Washington wants an answer within {time}', // OWNER WRITES
   copyright: 'The first hearing is in {time}', // OWNER WRITES
+  boardRequest: 'The board meets soon. Answer within {time}', // OWNER WRITES
+  boardWobble: 'The board meets soon. Answer within {time}', // OWNER WRITES
+  boardLeak: 'The board meets soon. Answer within {time}', // OWNER WRITES
+  boardOped: 'The board meets soon. Answer within {time}', // OWNER WRITES
+  boardBuyer: 'The board meets soon. Answer within {time}', // OWNER WRITES
+  boardWashington: 'The board meets soon. Answer within {time}', // OWNER WRITES
 };
 
 // What an advisor says from their desk while a card is up. `pick` is a choice id; null means the
@@ -61,6 +67,29 @@ export const ARGUE = {
     cfo: { say: 'One less veto in the room. Let them go.', pick: 'letgo' }, // OWNER WRITES
     policy: { say: 'I can say they were burned out. Everyone is.', pick: 'smear' }, // OWNER WRITES
     research: { say: 'Does this mean I get their monitor?', pick: null }, // OWNER WRITES
+  },
+  // Board cards (frames P1 to P4, R1, R3). Directors are she or he (ui/data/boardCopy.js PRONOUN).
+  boardRequest: {
+    safety: { say: 'Send all of it. She’ll find out anyway, and then it’s worse.', pick: 'send' }, // OWNER WRITES
+    cfo: { say: 'Send the tidy version. Nobody reads appendices.', pick: 'tidy' }, // OWNER WRITES
+    policy: { say: 'Stall. Three weeks is a long time in this business.', pick: 'stall' }, // OWNER WRITES
+  },
+  boardWobble: {
+    cfo: { say: 'Raise prices. He’s not wrong, and neither is my spreadsheet.', pick: 'prices' }, // OWNER WRITES
+    policy: { say: 'A price hike right before the meeting? The trustee reads the news too.', pick: null }, // OWNER WRITES
+  },
+  boardLeak: {
+    policy: { say: 'Get ahead of it. Say the board backs you. Loudly.', pick: 'claim' }, // OWNER WRITES
+    cfo: { say: 'Find who talked. Then we talk about them.', pick: 'hunt' }, // OWNER WRITES
+  },
+  boardOped: {
+    policy: { say: 'Reply, short and calm. The trustee will read every word.', pick: 'reply' }, // OWNER WRITES
+  },
+  boardBuyer: {
+    cfo: { say: 'Take the call. Knowing the number isn’t selling. Probably.', pick: 'call' }, // OWNER WRITES
+  },
+  boardWashington: {
+    policy: { say: 'Get to him before Washington does.', pick: 'brief' }, // OWNER WRITES
   },
 };
 
@@ -210,6 +239,11 @@ export const CONSEQUENCES = {
     report: 'Internal use was shut down and Washington was notified. The disclosure damaged the lab\'s public standing.', // OWNER WRITES
     coverup: 'The logs were wiped. Everyone who saw the terminal learned to stop talking, and the copy was never found.', // OWNER WRITES
   },
+  ownLine: {
+    lockDown: 'Choosing experiments and setting direction went back to people for good. The lab slowed down, and said so in public.', // OWNER WRITES
+    moveLine: 'The policy line was raised one step. The work kept speeding up, and the research staff noticed who had moved it.', // OWNER WRITES
+    screenOff: 'The speed screen went dark. The work carried on at full pace, and nobody outside the lab heard about the line.', // OWNER WRITES
+  },
   lossSpike: {
     rollback: 'The spike was rolled back, and the training schedule slipped while the lost ground was recovered.', // OWNER WRITES
     slow: 'The learning rate was lowered. The run traded a smaller gain for a safer response to the spike.', // OWNER WRITES
@@ -257,6 +291,36 @@ export const CONSEQUENCES = {
     candid: 'The chief testified candidly about the risks. The public response improved, Washington cooled, and the competitive race eased.', // OWNER WRITES
     reassure: 'The committee was reassured. Washington and the public responded well, while staff confidence fell.', // OWNER WRITES
     counsel: 'General counsel appeared in place of the chief. Both the public response and the relationship with Washington worsened.', // OWNER WRITES
+  },
+  boardRequest: {
+    send: 'The full safety results went to the candor watchdog. The safety chair read every page too.', // OWNER WRITES
+    tidy: 'The board got the cleaned-up version. Whether the full one stays in the drawer is another matter.', // OWNER WRITES
+    stall: 'You stalled until after the meeting. The candor watchdog noticed, and wrote it down.', // OWNER WRITES
+  },
+  boardWobble: {
+    prices: 'Prices went up this month. The growth investor had a win for his partners; users had a worse week.', // OWNER WRITES
+    plan: 'You walked the growth investor through the long plan. He nodded, mostly.', // OWNER WRITES
+    vent: 'Nobody called the growth investor back. He vented to his partners instead, and the partners listened.', // OWNER WRITES
+  },
+  boardLeak: {
+    hunt: 'The leak hunt went through every inbox. The candor watchdog hated it, and so did the staff.', // OWNER WRITES
+    claim: 'You posted that the board backs you. The directors who do liked it; the ones who don’t liked it less.', // OWNER WRITES
+    silent: 'Nobody said anything. The rumour stayed, and your staff read the board through the fog until the meeting.', // OWNER WRITES
+  },
+  boardOped: {
+    reply: 'Your reply ran beside the op-ed. The story lasted another day and ended a little kinder.', // OWNER WRITES
+    interview: 'The long interview ran. How it landed depended on who read it.', // OWNER WRITES
+    ignore: 'The op-ed went unanswered, and it was the only side of the story people read.', // OWNER WRITES
+  },
+  boardBuyer: {
+    call: 'You took the call. The money seats liked hearing the number; the oversight seats liked hearing about it much less.', // OWNER WRITES
+    refuse: 'You refused in public. The trustee cheered, and the money seats did the maths on what you turned down.', // OWNER WRITES
+    wait: 'You let it play out. The money seats spent a week wondering why nobody told them anything.', // OWNER WRITES
+  },
+  boardWashington: {
+    brief: 'You briefed the security hawk before Washington did. He walked in knowing your side.', // OWNER WRITES
+    send: 'Your security lead went to the briefing too. Whatever Washington thought of your security, the security hawk heard it first-hand.', // OWNER WRITES
+    stay: 'You stayed out of it. The security hawk went in alone, and came out with Washington’s view of you.', // OWNER WRITES
   },
   viralDemo: {
     ride: 'The lab rode the viral wave. Its newest live model gained users, market enthusiasm rose, and the competitive race intensified.', // OWNER WRITES

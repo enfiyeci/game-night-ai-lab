@@ -452,7 +452,7 @@ def rb_cafe():
                        for i, (who, text) in enumerate([("@shipit", "finally someone who ships"), ("@vc_mark", "great day for Kestrel"),
                                                         ("@ml_ellie", "RIP the safety team lol")])), 0.62) + '</g>')
     return cafe_tv("rbcafe", "BUSINESS", ["Kestrel Labs names", "new CEO; partners cheer"],
-                   ["Founder out after board vote, three to two."], "MARKETS · Kestrel partners up 8%", posts)
+                   ["Founder out after board vote, four to three."], "MARKETS · Kestrel partners up 8%", posts)
 
 
 def rb_hearing():

@@ -34,7 +34,7 @@ function applyStake(state, tierUp) {
 }
 
 function finishMeeting(state, id, walkedOut, flattery, promises, bargain = false) {
-  const stake = applyStake(state, bargain && !walkedOut);
+  const stake = walkedOut ? 'none' : applyStake(state, bargain); // owner 2026-09-26: he left, so nothing comes of it
   if (!state.meetingsHeld.includes(id)) state.meetingsHeld.push(id);
   state.meeting = null;
   return { ok: true, outcome: { walkedOut, flattery, promises, stake } };
