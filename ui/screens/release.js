@@ -259,7 +259,8 @@ export function openRelease(game, overlayRoot, { stage } = {}) {
         remembered.set(game, structuredClone(draft));
         opened.close();
         // The release applied at once and its reveal is already open; closing this dialog moved focus behind it.
-        overlayRoot.querySelector('.reveal-layer .reveal-continue')?.focus();
+        // While the launch show plays there is no Continue yet, so the reveal panel takes focus.
+        (overlayRoot.querySelector('.reveal-layer .reveal-continue') ?? overlayRoot.querySelector('.reveal-layer .reveal'))?.focus();
       },
     });
     opened.classList.add('release-dialog');

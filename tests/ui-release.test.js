@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import { startRun, advanceRun } from '../sim/training.js';
 import {
-  beatCount, canSkip, checkLabel, laterMoveProblem, nextGeneration, offeredCards, perMillion, priceSheet,
+  beatCount, canSkip, checkLabel, laterMoveProblem, leaderboard, nextGeneration, offeredCards, perMillion, priceSheet,
   pricePerMillion, queueBeforeRelease, releaseDraft, releaseOpinions, releasePayload, releasePreview, releaseSpec,
   salesEstimate, servingPerMillion, shipDelay, shipWords, tokensPerUser,
 } from '../ui/logic/release.js';
@@ -228,4 +228,48 @@ test('the release reveal waits while a board meeting is open', async () => {
   assert.deepEqual(shown, ['Kestrel']);
   subscribers.forEach((fn) => fn({ state: {}, events: [{ type: 'release', ok: true, model: 'Wren' }] }));
   assert.deepEqual(shown, ['Kestrel', 'Wren']);
+});
+
+const launchOf = (capAvg, rivals) => ({
+  capAvg,
+  benchmarks: [...rivals.map((rival) => ({ kind: 'cap', rival })), { kind: 'safety', rival: 60 }],
+});
+
+test('the launch leaderboard scales each rival lab from the best-rival bars and lists your last two models', () => {
+  const state = {
+    rivals: [{ name: 'OpenBrain', capability: 50 }, { name: 'Lodestar', capability: 40 }, { name: 'Qilin', capability: 25 }],
+    models: [
+      { name: 'Kestrel 1', releaseSequence: 0, launch: launchOf(20, [20, 20, 20, 20]) },
+      { name: 'Kestrel 2', releaseSequence: 1, launch: launchOf(33.33, [30, 30, 30, 30]) },
+      { name: 'Kestrel 3', releaseSequence: 2, launch: launchOf(47.25, [40, 44, 36, 40]) },
+    ],
+  };
+  const board = leaderboard(state, state.models[2]);
+  assert.equal(board.leader, 'OpenBrain');
+  assert.deepEqual(board.mine, { name: 'Kestrel 3', kind: 'new', score: 47.3 });
+  assert.deepEqual(board.rows, [
+    { name: 'OpenBrain', kind: 'rival', score: 40 }, // the leader's row is the best-rival average itself
+    { name: 'Kestrel 2', kind: 'own', score: 33.3 },
+    { name: 'Lodestar', kind: 'rival', score: 32 },
+    { name: 'Qilin', kind: 'rival', score: 20 },
+    { name: 'Kestrel 1', kind: 'own', score: 20 },
+  ]);
+});
+
+test('a first release has no earlier models on the leaderboard, and only the last two earlier ones count', () => {
+  const rivals = [{ name: 'OpenBrain', capability: 30 }];
+  const first = { name: 'Kestrel 1', releaseSequence: 0, launch: launchOf(25, [22, 22, 22, 22]) };
+  assert.deepEqual(leaderboard({ rivals, models: [first] }, first).rows, [{ name: 'OpenBrain', kind: 'rival', score: 22 }]);
+  const models = [0, 1, 2, 3].map((i) => ({ name: `Kestrel ${i + 1}`, releaseSequence: i, launch: launchOf(10 * (i + 1), [5, 5, 5, 5]) }));
+  const own = leaderboard({ rivals, models: [models[3], models[0], models[2], models[1]] }, models[3]).rows.filter((row) => row.kind === 'own');
+  assert.deepEqual(own.map((row) => row.name), ['Kestrel 3', 'Kestrel 2']);
+});
+
+test('the leaderboard works on a real simulated release', () => {
+  const state = SCENARIOS.readyToRelease(1);
+  const model = state.models.at(-1);
+  const board = leaderboard(state, model);
+  assert.equal(board.rows.filter((row) => row.kind === 'rival').length, state.rivals.length);
+  assert.ok(board.rows.every((row) => Number.isFinite(row.score)));
+  assert.ok(Number.isFinite(board.mine.score));
 });
