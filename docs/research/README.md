@@ -25,6 +25,11 @@ only through search-result snippets, and those claims carry ⚠️ inline.
 5. `runway-history/runway_history.md` — OpenAI and Anthropic cash-runway history and real
    "ran out of money" endings (Inflection, Adept, Character.AI, Stability AI), used to
    calibrate the out-of-money ending.
+6. `model-specs/README.md` — real model specs (Claude's 2023 and 2026 constitutions, OpenAI's
+   Model Spec, Sparrow, Gemini, Grok, China, the US order) and lab missions, read from raw text
+   (2026-09-26). `model-specs/proposals.md` turns them into the game's principles, constitution
+   cases and motto words. Better sourced than the snippet-level folders above; its gaps are
+   listed in its README.
 
 ## Notable catches
 
