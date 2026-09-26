@@ -84,8 +84,9 @@ Everything below was decided during the build so it would not stall; each is a q
    round (it happened in 2 of 400 test runs). Before, both ran and the screen could show only one.
 4. **Deals when a vote is put off.** If the lab is insolvent, a due vote waits a round. The meeting says "the vote
    is put off", and deals made stand; they are judged after the vote that is eventually held.
-5. **Pronouns.** Board copy on the new screens uses they/them for every director. The six card texts keep the
-   mockup frames' lines ("she will notice", "Walk him through the long plan"). Pick one.
+5. **Pronouns.** DECIDED 2026-09-26: she/he. The growth investor, the financier and the security hawk are he; the
+   sovereign fund, the safety chair, the candor watchdog and the mission trustee are she (`PRONOUN` in
+   `ui/data/boardCopy.js`).
 6. **Deal wording.** "Security above 40" and "Public trust above 55" pass at exactly 40 and 55.
 7. **What the board screen reads from true support.** The trend arrows and "Cooling fastest" follow real movement,
    not the staff read (no numbers are shown). Say if they should follow the read instead.
