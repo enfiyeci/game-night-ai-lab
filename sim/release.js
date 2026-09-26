@@ -4,6 +4,7 @@ import { validatePicks, resolveCards } from './recipe.js';
 import { PRICE_STANCE } from './serving.js';
 import { scoreLaunch } from './launch.js';
 import { resolveHazard, exposeConcealed } from './hazards.js';
+import { hasLine } from './constitution.js';
 
 export const TIER_WORDS = { small: 'Swift', medium: 'Core', large: 'Grand', xl: 'Apex' };
 export const REASONING_BONUS = { off: 0, low: 2, medium: 4, high: 6 };
@@ -73,7 +74,8 @@ export function releaseModel(state, release, rng) {
   const launch = scoreLaunch(state, { capability: m.capability + REASONING_BONUS[reasoning], spec, flags, name, priceStance: release.price }, rng);
   const quality = clamp(1 + (launch.pressAvg - 6) / 8, 0.5, 1.6);
   const eraGrowth = 1 + 0.5 * (state.era - 1);
-  const fresh = Math.round(USERS_BASE[spec.channel] * quality * eraGrowth * PRICE_STANCE[release.price].growth * m.publicEffects.usersMult);
+  const constitutionUsers = spec.channel === 'enterprise' && hasLine(state, 'privacy') ? 1.1 : 1;
+  const fresh = Math.round(USERS_BASE[spec.channel] * quality * eraGrowth * PRICE_STANCE[release.price].growth * m.publicEffects.usersMult * constitutionUsers);
 
   const model = {
     name,
@@ -98,6 +100,7 @@ export function releaseModel(state, release, rng) {
     flags,
     servingCost: 0,
   };
+  if (spec.channel === 'consumer' && hasLine(state, 'no-wmd')) model.revenueMult = 0.97;
   state.models.push(model);
   activateReleases(state);
   state.pendingModel = null;
@@ -117,8 +120,9 @@ export function releaseModel(state, release, rng) {
   if (spec.channel === 'open') {
     // Open weights add to whatever risk is already permanent, then lock the result.
     state.misuseExposure = Math.max(state.misuseExposure, state.misuseLocked) + m.openWeightsMx;
+    if (hasLine(state, 'no-wmd')) state.misuseExposure -= 4;
     state.misuseLocked = state.misuseExposure;
-  }
+  } else if (hasLine(state, 'no-wmd')) state.misuseExposure -= 4;
 
   if (flags.includes('agentic')) {
     const p = sigmoid(((state.alignmentDebt + state.concealedDebt) * m.capability / 100 - 40) / 8);

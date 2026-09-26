@@ -13,6 +13,8 @@ import { recordAdvisors } from './advisors.js';
 import { resolveHazard, exposeConcealed, INTERPRETABILITY_SPEND } from './hazards.js';
 import { deployInternal, stopInternal, internalTick } from './internal.js';
 import { addressWarning, resolveEvent, eventsTick, fallbackChoice } from './events.js';
+import { CASES } from './data/constitution.js';
+import { setConstitution, amendConstitution } from './constitution.js';
 
 export const MAX_MOVES = 2;
 const BUDGET_KEYS = ['training', 'safety', 'security', 'product', 'talent'];
@@ -40,6 +42,7 @@ function applyMove(state, move, rng) {
     case 'emergency': return useEmergency(state, move.option);
     case 'deployInternal': return deployInternal(state, move.control);
     case 'stopInternal': return stopInternal(state);
+    case 'amendConstitution': return amendConstitution(state, move.change);
     default: return { ok: false, error: `unknown move ${move.type}` };
   }
 }
@@ -72,6 +75,18 @@ export function endTurn(prev, actions = {}, rng) {
   const errors = [];
   delete state.flags.emergencyUsedThisTurn;
   if (state.ending) return { state, events, errors: ['the run is over'] };
+  if (state.turn === 0) {
+    if (actions.constitution) {
+      const result = setConstitution(state, actions.constitution);
+      if (!result.ok) errors.push(result.error);
+    }
+    if (state.constitution.hardLines.length === 0) {
+      setConstitution(state, {
+        hardLines: ['no-wmd', 'honest', 'accept-shutdown'],
+        rulings: Object.fromEntries(CASES.map((entry) => [entry.id, entry.options[0].id])),
+      });
+    }
+  } else if (actions.constitution) errors.push('the constitution can only be set on turn 0');
   if (actions.hazardChoice && state.pendingModel?.hazard) {
     const r = resolveHazard(state, actions.hazardChoice);
     if (!r.ok) errors.push(r.error);

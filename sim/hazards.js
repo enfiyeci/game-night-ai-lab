@@ -1,3 +1,5 @@
+import { hasLine } from './constitution.js';
+
 export const REWARD_HACK_CHANCE = 0.5;
 export const rewardHackSize = (era) => 4 + 2 * era;
 export const INTERPRETABILITY_SPEND = 5;
@@ -28,7 +30,7 @@ export function resolveHazard(state, choice) {
 
 export function applyAlignmentFaking(state, debtDelta, capability) {
   if (debtDelta >= 0 || state.era < 3 || capability <= FAKING_MIN_CAP) return debtDelta;
-  const hidden = -debtDelta * FAKING_SHARE;
+  const hidden = -debtDelta * FAKING_SHARE * (hasLine(state, 'no-deceive-lab') ? 0.5 : 1);
   state.concealedDebt += hidden;
   return debtDelta + hidden;
 }

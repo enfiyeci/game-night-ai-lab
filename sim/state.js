@@ -54,7 +54,7 @@ export function createInitialState({ seed = 1 } = {}) {
     lastFlagshipScore: 0,
     lastFlagship: null,
 
-    constitution: [],
+    constitution: { hardLines: [], rulings: {}, amendments: [] },
     promises: [],
     flags: {},
     rivals: createRivals(),

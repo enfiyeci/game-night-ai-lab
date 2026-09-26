@@ -1,4 +1,5 @@
 import { EVENTS } from './data/events.js';
+import { hasLine } from './constitution.js';
 
 const MAX_CARDS = 2;
 const byId = (id) => EVENTS.find((event) => event.id === id);
@@ -38,6 +39,13 @@ export function eventsTick(state, rng) {
         continue;
       }
     } else continue;
+    if (event.id === 'president' && hasLine(state, 'no-power-grab')) {
+      event.card.choices.find((choice) => choice.id === 'refuse').effects(state, []);
+      if (!state.seenEvents.includes(event.id)) state.seenEvents.push(event.id);
+      pushFeed(state, '@your_model', "The model's hard line refused the request.", 'event');
+      out.push({ type: 'eventResolved', id: event.id, choiceId: 'refuse', auto: true });
+      continue;
+    }
     if (state.pendingEvents.length >= MAX_CARDS) {
       state.warnings[event.id] = { turn: state.turn, deferred: true };
       continue;
@@ -71,6 +79,7 @@ export function resolveEvent(state, id, choiceId) {
   if (!choice) return { ok: false, error: `unknown choice ${choiceId}` };
   const targets = state.pendingEvents[index].targets ?? targetIndices(state, event);
   choice.effects(state, targets);
+  if (hasLine(state, 'honest') && ['defend', 'deny', 'stonewall', 'coverup'].includes(choice.id)) state.staffTrust -= 3;
   state.pendingEvents.splice(index, 1);
   return { ok: true, id, choiceId };
 }

@@ -4,6 +4,7 @@ import { SIZE_CAP, LENGTHS, validateRecipe, recipeCost, recipeCards, talentSpend
 import { standardTechniques } from './techniques.js';
 import { rollTrainingHazard, applyAlignmentFaking, evalGamingDebt } from './hazards.js';
 import { controlUnits } from './internal.js';
+import { hasLine } from './constitution.js';
 
 export function availableUnits(state) {
   const run = state.activeRun ? state.activeRun.units : 0;
@@ -40,7 +41,18 @@ export function resolveRun(state, run, rng) {
   const { size, length, alignShare } = run.recipe.sliders;
   const cards = recipeCards(state, run.recipe);
   const autos = standardTechniques(state).map((t) => t.auto).filter(Boolean);
-  const effects = [...cards.map((c) => c.effects), ...autos];
+  const effects = [
+    ...cards.map((card) => {
+      if (card.id === 'thumbs' && hasLine(state, 'no-manipulation')) {
+        return { ...card.effects, usersMult: 1.05, flags: (card.effects.flags ?? []).filter((flag) => flag !== 'sycophancy') };
+      }
+      if (card.id === 'agentic-rl' && hasLine(state, 'no-autonomy-grab')) {
+        return { ...card.effects, capReady: (card.effects.capReady ?? 0) - 2 };
+      }
+      return card.effects;
+    }),
+    ...autos,
+  ];
   const readiness = cards.reduce((r, c) => c.effects.readiness ?? r, 0.5);
   const large = size === 'large' || size === 'xl';
 
@@ -51,7 +63,9 @@ export function resolveRun(state, run, rng) {
   }
   // Each $20M/month of talent spend adds 1.0; the typical $4M spend preserves the old +0.2.
   const talent = 0.8 + talentSpend(state) / 20;
-  const uncappedGain = Math.max(0, base) * talent * (1 - 0.5 * alignShare) * Math.max(0.2, 1 - 0.2 * run.spikes);
+  const nextRunCapPenalty = state.flags.nextRunCapPenalty ?? 0;
+  delete state.flags.nextRunCapPenalty;
+  const uncappedGain = Math.max(0, Math.max(0, base) * talent * (1 - 0.5 * alignShare) * Math.max(0.2, 1 - 0.2 * run.spikes) - nextRunCapPenalty);
   const capability = Math.min(BALANCE.maxCapability, state.capability + uncappedGain);
   const gain = Math.max(0, capability - state.capability);
 

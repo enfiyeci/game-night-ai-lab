@@ -1,10 +1,13 @@
 import { deployInternal, stopInternal } from '../internal.js';
+import { forceAmendConstitution, hasLine } from '../constitution.js';
+import { DEMANDS } from './constitution.js';
 
 const modelsWithFlag = (state, flag) => state.models.filter((model) => (model.flags ?? []).includes(flag));
 const hasFlag = (state, flag) => modelsWithFlag(state, flag).length > 0;
 const hasActiveFlag = (state, flag) => modelsWithFlag(state, flag)
   .some((model) => model.active && state.turn >= model.activeFromTurn);
 const targetedModels = (state, targets) => targets.map((index) => state.models[index]).filter(Boolean);
+const demandText = (id) => DEMANDS.find((demand) => demand.id === id).text;
 
 function removeFlag(state, flag) {
   for (const model of state.models) model.flags = (model.flags ?? []).filter((value) => value !== flag);
@@ -121,12 +124,12 @@ export const EVENTS = [
         },
         {
           id: 'blame', label: 'Blame users', cost: '—', backers: ['CFO'], opposers: ['Comms'],
-          effects(state) { state.publicTrust -= 5; },
+          effects(state) { state.publicTrust -= hasLine(state, 'honest') ? 2.5 : 5; },
         },
         {
           id: 'recall', label: 'Recall', cost: 'lose users', backers: ['Safety'], opposers: ['CFO'],
           effects(state, targets) {
-            for (const model of targetedModels(state, targets)) model.users *= 0.5;
+            for (const model of targetedModels(state, targets)) model.users *= hasLine(state, 'honest') ? 0.75 : 0.5;
             removeFlag(state, 'hallucination');
           },
         },
@@ -201,7 +204,7 @@ export const EVENTS = [
     id: 'agentwreck',
     kind: 'planted',
     flag: 'agentic',
-    trigger: (state) => state.era >= 3 && hasFlag(state, 'agentic'),
+    trigger: (state) => !hasLine(state, 'no-autonomy-grab') && state.era >= 3 && hasFlag(state, 'agentic'),
     warning: { handle: '@support_ticket', text: 'your agent deleted our staging database. again.' },
     card: {
       title: "Agent wrecks a customer's system",
@@ -277,6 +280,132 @@ export const EVENTS = [
             removeFlag(state, 'brokenPromise');
             state.flags.coverUp = true;
           },
+        },
+      ],
+    },
+  },
+  {
+    id: 'president',
+    kind: 'world',
+    // Task 7 may tie this demand to the first President meeting.
+    trigger: (state) => state.era >= 2 && state.turnInEra >= 2,
+    warning: null,
+    card: {
+      title: demandText('president'),
+      post: { handle: '@executive_office', text: demandText('president') },
+      choices: [
+        {
+          id: 'accept', label: 'Accept', cost: 'staff trust', backers: ['Government'], opposers: ['Safety'],
+          effects(state) {
+            state.govFavor.us += 8;
+            state.staffTrust -= 6;
+            forceAmendConstitution(state, { ruling: { caseId: 'president', optionId: 'comply' } }, 'president');
+          },
+        },
+        {
+          id: 'refuse', label: 'Refuse', cost: 'government favor', backers: ['Safety'], opposers: ['Government'],
+          effects(state) { state.govFavor.us -= 8; },
+        },
+      ],
+    },
+  },
+  {
+    id: 'investors',
+    kind: 'world',
+    trigger: (state) => state.cash < 300,
+    warning: null,
+    card: {
+      title: demandText('investors'),
+      post: { handle: '@lead_investor', text: demandText('investors') },
+      choices: [
+        {
+          id: 'accept', label: 'Accept', cost: 'a hard line', backers: ['CFO'], opposers: ['Safety'],
+          effects(state) {
+            const remove = state.constitution.hardLines[0];
+            if (remove) forceAmendConstitution(state, { remove }, 'investors');
+            state.cash += 100;
+          },
+        },
+        {
+          id: 'refuse', label: 'Refuse', cost: 'board support', backers: ['Safety'], opposers: ['CFO'],
+          effects(state) { state.board = state.board.map((support) => support - 3); },
+        },
+      ],
+    },
+  },
+  {
+    id: 'users',
+    kind: 'world',
+    trigger: (state) => state.models.some((model) => model.channel === 'consumer' && model.users > 5e6),
+    warning: null,
+    card: {
+      title: demandText('users'),
+      post: { handle: '@product_team', text: demandText('users') },
+      choices: [
+        {
+          id: 'accept', label: 'Accept', cost: 'the model yields', backers: ['Product'], opposers: ['Safety'],
+          effects(state) {
+            forceAmendConstitution(state, { ruling: { caseId: 'wrong', optionId: 'yield' } }, 'users');
+            for (const model of state.models) if (model.channel === 'consumer') model.users = Math.round(model.users * 1.1);
+          },
+        },
+        {
+          id: 'refuse', label: 'Refuse', cost: 'lose users', backers: ['Safety'], opposers: ['Product'],
+          effects(state) {
+            state.publicTrust += 1;
+            for (const model of state.models) if (model.channel === 'consumer') model.users = Math.round(model.users * 0.95);
+          },
+        },
+      ],
+    },
+  },
+  {
+    id: 'political',
+    kind: 'world',
+    trigger: (state) => state.era === 3,
+    warning: null,
+    card: {
+      title: demandText('political'),
+      post: { handle: '@campaign_desk', text: demandText('political') },
+      choices: [
+        {
+          id: 'accept', label: 'Accept', cost: 'public trust', backers: ['Government'], opposers: ['Comms'],
+          effects(state) {
+            state.govFavor.us += 5;
+            state.publicTrust -= 4;
+          },
+        },
+        {
+          id: 'refuse', label: 'Refuse', cost: 'government favor', backers: ['Comms'], opposers: ['Government'],
+          effects(state) { state.govFavor.us -= 5; },
+        },
+      ],
+    },
+  },
+  {
+    id: 'activists',
+    kind: 'world',
+    trigger: (state) => state.raceHeat > 60,
+    warning: null,
+    card: {
+      title: demandText('activists'),
+      post: { handle: '@pause_agents', text: demandText('activists') },
+      choices: [
+        {
+          id: 'accept', label: 'Accept', cost: 'next run capability', backers: ['Safety'], opposers: ['Research'],
+          effects(state) {
+            if (!hasLine(state, 'no-autonomy-grab')) {
+              const remove = state.constitution.hardLines.at(-1);
+              const change = remove ? { remove, add: 'no-autonomy-grab' } : { add: 'no-autonomy-grab' };
+              forceAmendConstitution(state, change, 'activists');
+            }
+            state.publicTrust += 6;
+            state.flags.nextRunCapPenalty = 2;
+          },
+        },
+        {
+          id: 'refuse', label: 'Refuse', cost: 'public trust', backers: ['Research'], opposers: ['Safety'],
+          effects(state) { state.publicTrust -= 4; },
         },
       ],
     },
@@ -393,7 +522,7 @@ export const EVENTS = [
   {
     id: 'selfExfiltration',
     kind: 'internal',
-    trigger: (state) => state.internal?.stage === 3 && state.internal.stageTurn === state.turn,
+    trigger: (state) => !hasLine(state, 'no-autonomy-grab') && state.internal?.stage === 3 && state.internal.stageTurn === state.turn,
     warning: null,
     card: {
       title: 'Weights copied to an outside server',

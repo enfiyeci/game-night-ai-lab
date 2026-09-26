@@ -10,7 +10,7 @@ export function activeModels(state) {
 
 export const safetySpend = (state) => state.budget.spend * state.budget.split.safety;
 
-export const revenuePerUser = (model) => REVENUE_PER_USER[model.channel] * PRICE_STANCE[model.priceStance].rev;
+export const revenuePerUser = (model) => REVENUE_PER_USER[model.channel] * PRICE_STANCE[model.priceStance].rev * (model.revenueMult ?? 1);
 
 export function updateServing(state) {
   const runUnits = state.activeRun ? state.activeRun.units : 0;

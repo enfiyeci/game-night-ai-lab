@@ -1,6 +1,7 @@
 import { sigmoid } from './util.js';
 import { totalDebt } from './hazards.js';
 import { availableUnits } from './training.js';
+import { hasLine } from './constitution.js';
 
 const CONTROL_UNITS = 2;
 const TAKEOVER_CAPABILITY = 70;
@@ -53,6 +54,12 @@ export function internalTick(state, rng) {
   if (!rng.chance(internalRisk(state))) return [];
   if (it.stage >= 3) {
     if (internalCapability(state) < TAKEOVER_CAPABILITY) return [];
+    if (it.stage === 3 && hasLine(state, 'accept-shutdown')) {
+      it.stage = 4;
+      it.stageTurn = state.turn;
+      return [];
+    }
+    if (hasLine(state, 'accept-shutdown')) it.stage = 5;
     state.ending = 'quietTakeover';
     return [{ type: 'internalIncident', stage: 4 }];
   }
