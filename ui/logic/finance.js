@@ -106,6 +106,14 @@ export function defaultPlan(state) {
   return { goals: Object.fromEntries(futureEras(state).map((era) => [era, state.compute.online])), raises: {} };
 }
 
+// What "Promise it to the board" offers: the goal of the nearest era with a turn still ahead, so the board can judge
+// it on that era's last turn. Null with a promise already open, no era left or a goal of zero.
+export function boardPromiseOffer(state, plan) {
+  const era = futureEras(state)[0];
+  if (era == null || state.boardPromise?.status === 'open' || !(plan.goals[era] > 0)) return null;
+  return { units: plan.goals[era], era };
+}
+
 // Goals never fall in later eras: raising one lifts the later ones, lowering one lowers the earlier ones.
 export function setGoal(plan, era, units, eras) {
   const goals = { ...plan.goals, [era]: Math.max(0, Math.round(units)) };

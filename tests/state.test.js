@@ -17,7 +17,7 @@ test('initial state matches the spec', () => {
   assert.equal(s.cash, 1000);
   assert.equal(s.compute.online, 10);
   assert.equal(s.capability, 20);
-  assert.deepEqual(s.board, [70, 60, 65, 55, 80]);
+  assert.deepEqual(s.board, [70, 65, 60, 65, 70, 60, 70]);
   assert.equal(s.alignmentDebt, 5);
   assert.equal(s.raceHeat, 20);
   assert.equal(s.era, 1);

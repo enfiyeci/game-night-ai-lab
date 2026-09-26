@@ -11,6 +11,7 @@ import { revenuePerUser } from '../sim/economy.js';
 import { EVENTS } from '../sim/data/events.js';
 import { eventsTick, resolveEvent } from '../sim/events.js';
 import { endTurn } from '../sim/turn.js';
+import { INITIAL_BOARD } from '../sim/board.js';
 
 const allRulings = (opt) => Object.fromEntries(CASES.map((c) => [c.id, opt ?? c.options[0].id]));
 const yes = { next: () => 0, int: () => 0, chance: () => true, pick: (a) => a[a.length - 1], normal: (m) => m };
@@ -293,7 +294,7 @@ test('the investor demand triggers and both choices apply', () => {
   assert.equal(accept.constitution.amendments.at(-1).source, 'investors');
   const refuse = demandState('investors');
   resolveEvent(refuse, 'investors', 'refuse');
-  assert.deepEqual(refuse.board, [67, 57, 62, 52, 77]);
+  assert.deepEqual(refuse.board, INITIAL_BOARD.map((support) => support - 3));
 });
 
 test('the user demand triggers and both choices apply', () => {

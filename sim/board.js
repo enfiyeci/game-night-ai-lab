@@ -1,6 +1,7 @@
 import { BALANCE } from './balance.js';
 import { eraById } from './data/eras.js';
 import { clamp } from './util.js';
+import { inDangerZone, runway } from './economy.js';
 
 // Owner redesign 2026-09-26, from docs/research/lab-boards/real-lab-boards-2026-09-26.md: three money seats and four
 // oversight seats, each a fictional composite of a real kind of director. Money alone cannot keep you in charge
@@ -17,14 +18,12 @@ export const BOARD_MEMBERS = [
 ];
 export const INITIAL_BOARD = [70, 65, 60, 65, 70, 60, 70];
 export const seat = (id) => BOARD_MEMBERS.findIndex((member) => member.id === id);
-export const STAFF_LETTER_TRUST = 70;
+export const STAFF_LETTER_TRUST = 65;
 
 // What updateBoard compares against: taken at the start of endTurn.
 export function boardSnapshot(state) {
   return {
     arr: state.arr,
-    capability: state.capability,
-    cash: state.cash,
     valuation: state.valuation,
     concealedDebt: state.concealedDebt,
     govUs: state.govFavor.us,
@@ -39,14 +38,14 @@ export function updateBoard(state, before, events = []) {
   const add = (id, amount) => { b[seat(id)] += amount; };
   add('growth', state.arr > before.arr ? 3 : -4);
   add('financier', state.valuation > before.valuation ? 2 : -2);
-  add('sovereign', state.cash < before.cash * 0.7 ? -6 : 1);
+  add('sovereign', inDangerZone(state) ? -3 : runway(state, 'planned') >= 12 ? 3 : 1);
   add('safety', state.compute.split.safety + 1e-9 >= eraById(state.era).targetSafetyShare ? 2 : -3);
   if (events.some((event) => event.type === 'hazardResolved' && event.choice === 'ignore')) add('safety', -8);
-  add('candor', 1);
   if (before.concealedDebt - state.concealedDebt > 0.5) add('candor', -6);
   if (state.promises.filter((promise) => promise.leaked).length > before.leaked) add('candor', -6);
   if (state.flags.brokenPromise === true && !before.brokenPromise) add('candor', -8);
-  add('security', state.security >= 60 ? 2 : state.security < 40 ? -3 : 0);
+  add('security', state.govFavor.us >= 60 ? 2 : state.govFavor.us < 45 ? -2 : 0);
+  if (state.security < 35) add('security', -2);
   if (state.govFavor.us > before.govUs) add('security', 1);
   else if (state.govFavor.us < before.govUs) add('security', -2);
   add('trustee', (state.publicTrust - 55) / 10);

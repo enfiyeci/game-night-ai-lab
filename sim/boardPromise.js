@@ -1,5 +1,6 @@
 import { ERAS, eraById } from './data/eras.js';
 import { seat } from './board.js';
+import { clamp } from './util.js';
 
 // A public compute promise to the board, made from the finance planner (owner design 2026-09-26): "X units by era Y".
 // It pays a little now, and on the promised era's last turn the board reacts on a sliding scale of how close you got.
@@ -33,13 +34,13 @@ export function makeBoardPromise(state, promise) {
   return { ok: true, units, era };
 }
 
-// Runs inside endTurn on the promised era's last turn, with the compute that turn has online.
+// Runs at the end of endTurn on the promised era's last turn, with the compute that turn has online.
 export function judgeBoardPromise(state) {
   const promise = state.boardPromise;
   if (promise?.status !== 'open' || promise.era !== state.era || state.turnInEra !== eraById(state.era).turns - 1) return null;
   const ratio = state.compute.online / promise.units;
   const effects = promiseEffects(ratio);
-  for (const id of ['candor', 'financier', 'growth']) state.board[seat(id)] += effects[id];
+  for (const id of ['candor', 'financier', 'growth']) state.board[seat(id)] = clamp(state.board[seat(id)] + effects[id], 0, 100);
   if (effects.vote) state.flags.boardVoteDue = true;
   promise.status = ratio >= 1 ? 'kept' : 'missed';
   promise.ratio = ratio;

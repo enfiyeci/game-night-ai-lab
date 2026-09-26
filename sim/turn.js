@@ -11,7 +11,7 @@ import { buildSite, leaseBills, powerTurn } from './power.js';
 import { updateServing, growUsers, applyEconomy, legalTick, projectBurn, raiseRound, useEmergency, safetySpend } from './economy.js';
 import { researchTechnique } from './techniques.js';
 import { rivalsTurn } from './rivals.js';
-import { boardSnapshot, updateBoard } from './board.js';
+import { boardSnapshot, holdVote, updateBoard } from './board.js';
 import { judgeBoardPromise, makeBoardPromise } from './boardPromise.js';
 import { checkTurnEndings, eraGate, finalEnding } from './endings.js';
 import { recordAdvisors } from './advisors.js';
@@ -289,15 +289,21 @@ export function endTurn(prev, actions = {}, rng, observer = {}) {
       promiseUpkeep(state, rng);
       for (const e of eventsTick(state, rng)) events.push(e);
       normalize(state);
-      const judged = judgeBoardPromise(state);
+      updateBoard(state, before, events);
+      checkTurnEndings(state, rng);
+      // Judged after this turn's endings, so a vote it calls is held next turn rather than beside the era gate's.
+      const judged = state.ending ? null : judgeBoardPromise(state);
       if (judged) {
         events.push(judged);
         pushFeed(state, '@board_minutes', judged.ratio >= 1
           ? 'the board says the lab hit the compute it promised. nobody expected that.'
           : judged.vote ? 'the lab missed its compute promise by a mile. the board wants a vote.' : 'the lab came up short of its compute promise. the board took notes.', 'event');
+        // Era 5's last turn is the run's last, so there is no next turn: the vote is held now.
+        if (judged.vote && state.era === 5) {
+          delete state.flags.boardVoteDue;
+          if (!holdVote(state).passed) state.ending = 'boardRemoved';
+        }
       }
-      updateBoard(state, before, events);
-      checkTurnEndings(state, rng);
     }
   }
 

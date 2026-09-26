@@ -7,9 +7,10 @@ import { computeSlices } from '../sim/split.js';
 import { createGame } from '../ui/game.js';
 import { SCENARIOS, scenarioHistory } from '../ui/logic/scenarios.js';
 import {
-  byEra, defaultPlan, eraOfTurn, eraStart, futureEras, monthOfTurn, planOpinions, project, roundEras, roundSize, setGoal,
-  signedAt, turnRecord,
+  boardPromiseOffer, byEra, defaultPlan, eraOfTurn, eraStart, futureEras, monthOfTurn, planOpinions, project, roundEras,
+  roundSize, setGoal, signedAt, turnRecord,
 } from '../ui/logic/finance.js';
+import { makeBoardPromise } from '../sim/boardPromise.js';
 
 const era3 = () => SCENARIOS.era3Queue(4); // seed 4 at the first turn of era 3: one CoreFlame contract, no spot, no resale
 
@@ -260,4 +261,25 @@ test('when the lab earns more than it spends, the CFO says so instead of quoting
   const plan = { goals: {}, raises: {} };
   const [cfo] = planOpinions(state, project(state, plan), plan);
   assert.match(cfo.text, /we earn more than we spend/);
+});
+
+test('the board promise offers the nearest era goal the board can still judge', () => {
+  const state = era3();
+  assert.deepEqual(boardPromiseOffer(state, { goals: { 3: 60, 4: 90, 5: 90 }, raises: {} }), { units: 60, era: 3 });
+  const lastOfEra = { ...state, turn: eraStart(4) - 1, turnInEra: 3 };
+  assert.deepEqual(boardPromiseOffer(lastOfEra, { goals: { 4: 90, 5: 90 }, raises: {} }), { units: 90, era: 4 });
+  assert.equal(makeBoardPromise(structuredClone(lastOfEra), { units: 90, era: 4 }).ok, true);
+  assert.equal(boardPromiseOffer(state, { goals: { 3: 0, 4: 0, 5: 0 }, raises: {} }), null);
+  assert.equal(boardPromiseOffer({ ...state, turn: 19 }, { goals: {}, raises: {} }), null);
+  const open = { ...state, boardPromise: { units: 50, era: 3, madeTurn: 8, status: 'open' } };
+  assert.equal(boardPromiseOffer(open, { goals: { 3: 60 }, raises: {} }), null);
+});
+
+test('a queued board promise reaches the sim when the turn ends', () => {
+  const game = createGame({ seed: 4, state: era3() });
+  game.setField('boardPromise', { units: 60, era: 3 });
+  const { events, errors } = game.endTurn();
+  assert.deepEqual(errors, []);
+  assert.ok(events.some((e) => e.type === 'boardPromise' && e.units === 60 && e.era === 3));
+  assert.equal(game.queue.boardPromise, undefined);
 });

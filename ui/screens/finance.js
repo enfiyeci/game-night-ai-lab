@@ -1,13 +1,14 @@
 // The finance planner (owner pick 2026-09-26: mockups A and B of K2-finance-plan.html, as two views of one screen).
 // Timeline: compute, money each month and cash on one turn axis, with a draggable goal per era. The books: the
 // same plan as an era-by-era ledger next to the actual history. Goals and rounds are a plan only; they queue no move.
+// The one exception is "Promise it to the board": keeping the plan with it switched on queues this turn's board promise.
 import { ERAS } from '../../sim/data/eras.js';
 import { openDialog } from '../components/dialog.js';
 import { teamPanel } from '../components/team.js';
 import { registerMenuHandler } from '../menu.js';
 import { computeAmount, money } from '../logic/format.js';
 import {
-  LAST_TURN, UNIT_PRICE, byEra, defaultPlan, eraOfTurn, eraStart, futureEras, monthOfTurn, planOpinions, project,
+  LAST_TURN, UNIT_PRICE, boardPromiseOffer, byEra, defaultPlan, eraOfTurn, eraStart, futureEras, monthOfTurn, planOpinions, project,
   raiseAllowed, roundEras, setGoal,
 } from '../logic/finance.js';
 
@@ -53,6 +54,7 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
   const eras = futureEras(state);
   const rounds = roundEras(state);
   let plan = currentPlan(game);
+  let promising = !!game.queue.boardPromise;
   let opened;
   let draw = () => {};
   let dragScale = null; // the compute axis holds still while a goal is dragged
@@ -69,6 +71,8 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
   };
   const keep = () => {
     game.setFinancePlan(plan);
+    const offer = boardPromiseOffer(state, plan);
+    game.setField('boardPromise', promising && offer ? offer : undefined);
     opened.close();
   };
 
@@ -108,6 +112,38 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
     button.append(words, pill);
     button.addEventListener('click', () => {
       plan = { ...plan, raises: { ...plan.raises, [era]: !plan.raises[era] } };
+      render();
+    });
+    return button;
+  }
+
+  // Promises the nearest era's goal, so the number follows the goal as it is dragged. An open promise is shown as a
+  // plain line at full strength rather than a greyed switch, since it says what the player owes the board.
+  function promiseToggle() {
+    const open = state.boardPromise?.status === 'open' ? state.boardPromise : null;
+    if (open) {
+      const row = element('div', 'compute-toggle finance-promised');
+      const words = element('span');
+      words.append(element('b', '', 'Promised to the board'), element('small', '', `${computeAmount(open.units, open.era)} by the end of era ${open.era}`));
+      row.append(words);
+      return row;
+    }
+    const offer = boardPromiseOffer(state, plan);
+    const on = !!offer && promising;
+    const button = element('button', 'compute-toggle finance-raise');
+    button.type = 'button';
+    button.dataset.focus = 'promise';
+    button.setAttribute('role', 'switch');
+    button.setAttribute('aria-checked', `${on}`);
+    button.disabled = !offer;
+    const words = element('span');
+    words.append(
+      element('b', '', 'Promise it to the board'),
+      element('small', '', offer ? `${computeAmount(offer.units, offer.era)} by the end of era ${offer.era}` : 'Set a goal above zero first'),
+    );
+    button.append(words, element('i', on ? 'on' : ''));
+    button.addEventListener('click', () => {
+      promising = !promising;
       render();
     });
     return button;
@@ -312,6 +348,7 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
       } else {
         panel.replaceChildren(element('h4', '', 'Compute goal'));
         goalRows(panel);
+        panel.append(element('h4', '', 'The board'), promiseToggle());
       }
       if (rounds.length) {
         panel.append(element('h4', '', 'Paying for it'));
