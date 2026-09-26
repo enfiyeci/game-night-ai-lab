@@ -132,6 +132,7 @@ test('the worry tip names the director worryMember picks, so the map can highlig
   const id = worryMember(state);
   assert.equal(id, 'growth');
   assert.match(worryTip(state), /^Growth investor: Revenue/);
+  assert.match(worryTip(state), /and he is leaning away\. .* without him\.$/);
   const calm = era({ era: 3, board: [90, 90, 90, 90, 90, 90, 90] });
   calm.boardLast = [...calm.board];
   assert.equal(worryMember(calm), null);

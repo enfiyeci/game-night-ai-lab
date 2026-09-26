@@ -1,8 +1,8 @@
 // Copy for the board screens (board UI plan Task 4, spec §6). Every line marked OWNER WRITES is a placeholder the
 // owner rewrites. The sim never reads this file. A test forbids time-step words here: time is real now.
 // Text is ported from the mockups in docs/design/mockups/board/ (board-data.js, meeting.js, and the L1, L4, P5 and
-// 4A frames in board-mock.js), reworded to real time. Directors are always they/them. Templates use {name}-style
-// placeholders; fill them with fill() below.
+// 4A frames in board-mock.js), reworded to real time. Directors are she or he (owner, 2026-09-26; PRONOUN below). Templates use
+// {name}-style placeholders; fill them with fill() below.
 
 // Fills {key} placeholders from values; a key with no value stays as written, so a gap is visible on screen.
 export const fill = (template, values = {}) =>
@@ -29,6 +29,17 @@ export const SHORT = {
   candor: 'Candor',
   security: 'Security',
   trustee: 'Trustee',
+};
+
+// Each director's pronouns (owner, 2026-09-26: she/he, matching the card copy and the portraits).
+export const PRONOUN = {
+  growth: { subj: 'he', obj: 'him', poss: 'his' },
+  financier: { subj: 'he', obj: 'him', poss: 'his' },
+  sovereign: { subj: 'she', obj: 'her', poss: 'her' },
+  safety: { subj: 'she', obj: 'her', poss: 'her' },
+  candor: { subj: 'she', obj: 'her', poss: 'her' },
+  security: { subj: 'he', obj: 'him', poss: 'his' },
+  trustee: { subj: 'she', obj: 'her', poss: 'her' },
 };
 
 // What each director wants, from updateBoard in sim/board.js, in player words (mockup MOVES.wants).
@@ -63,7 +74,7 @@ export const SEATS_LINE_EXACT = '{lo} would keep you. You need 4.';
 export const TEAM_ON_BOARD = [
   { id: 'policy', mood: 'uneasy', text: 'I make it four. I also made the last election a landslide.' }, // OWNER WRITES
   { id: 'cfo', mood: 'calm', text: 'The money seats are fine. The money seats are always fine until they aren’t.' }, // OWNER WRITES
-  { id: 'safety', mood: 'alarmed', text: 'The safety chair asked me for our eval results. I said “soon”. They wrote that down.' }, // OWNER WRITES
+  { id: 'safety', mood: 'alarmed', text: 'The safety chair asked me for our eval results. I said “soon”. She wrote that down.' }, // OWNER WRITES
   { id: 'research', mood: 'calm', text: 'Which one is the trustee? The one who emails in all caps?' }, // OWNER WRITES
 ];
 
@@ -113,7 +124,7 @@ export const TIME_WORDS = { months: 'about {n} months', weeks: '{n} weeks', days
 // ---- going quiet (frame P5) ---------------------------------------------------------------------------------------
 export const QUIET_LINES = {
   policy: 'Nobody on the board is picking up. I’ve never liked this part.', // OWNER WRITES
-  cfo: 'Same. The financier left me on read. They never leave me on read.', // OWNER WRITES
+  cfo: 'Same. The financier left me on read. He never leaves me on read.', // OWNER WRITES
 };
 export const QUIET_HEAD = 'Board · before the meeting'; // OWNER WRITES
 export const QUIET_SEEN = 'Seen';
@@ -152,8 +163,8 @@ export const RAISE = '{label} {say}';
 export const ISSUE_KEY = { up: 'pushing them toward you', down: 'pushing them away', flat: 'quiet' };
 // The map's label for screen readers.
 export const MAP_LABEL = 'Which issues sway which director, and which way';
-// The tip under L4. Every director is they/them, so the pronouns are written in.
-export const WORRY = '{name}: {issue} is slipping, and they are leaning away. Fix it before the meeting, or plan without them.'; // OWNER WRITES
+// The tip under L4. {subj} and {obj} come from PRONOUN.
+export const WORRY = '{name}: {issue} is slipping, and {subj} is leaning away. Fix it before the meeting, or plan without {obj}.'; // OWNER WRITES
 
 // ---- deals (spec §5.2) -------------------------------------------------------------------------------------------
 export const DEAL_TEXT = {

@@ -68,14 +68,14 @@ export const ARGUE = {
     policy: { say: 'I can say they were burned out. Everyone is.', pick: 'smear' }, // OWNER WRITES
     research: { say: 'Does this mean I get their monitor?', pick: null }, // OWNER WRITES
   },
-  // Board cards (frames P1 to P4, R1, R3). Directors are they/them.
+  // Board cards (frames P1 to P4, R1, R3). Directors are she or he (ui/data/boardCopy.js PRONOUN).
   boardRequest: {
-    safety: { say: 'Send all of it. They’ll find out anyway, and then it’s worse.', pick: 'send' }, // OWNER WRITES
+    safety: { say: 'Send all of it. She’ll find out anyway, and then it’s worse.', pick: 'send' }, // OWNER WRITES
     cfo: { say: 'Send the tidy version. Nobody reads appendices.', pick: 'tidy' }, // OWNER WRITES
     policy: { say: 'Stall. Three weeks is a long time in this business.', pick: 'stall' }, // OWNER WRITES
   },
   boardWobble: {
-    cfo: { say: 'Raise prices. They’re not wrong, and neither is my spreadsheet.', pick: 'prices' }, // OWNER WRITES
+    cfo: { say: 'Raise prices. He’s not wrong, and neither is my spreadsheet.', pick: 'prices' }, // OWNER WRITES
     policy: { say: 'A price hike right before the meeting? The trustee reads the news too.', pick: null }, // OWNER WRITES
   },
   boardLeak: {
@@ -89,7 +89,7 @@ export const ARGUE = {
     cfo: { say: 'Take the call. Knowing the number isn’t selling. Probably.', pick: 'call' }, // OWNER WRITES
   },
   boardWashington: {
-    policy: { say: 'Get to them before Washington does.', pick: 'brief' }, // OWNER WRITES
+    policy: { say: 'Get to him before Washington does.', pick: 'brief' }, // OWNER WRITES
   },
 };
 
@@ -298,9 +298,9 @@ export const CONSEQUENCES = {
     stall: 'You stalled until after the meeting. The candor watchdog noticed, and wrote it down.', // OWNER WRITES
   },
   boardWobble: {
-    prices: 'Prices went up this month. The growth investor had a win for their partners; users had a worse week.', // OWNER WRITES
-    plan: 'You walked the growth investor through the long plan. They nodded, mostly.', // OWNER WRITES
-    vent: 'Nobody called the growth investor back. They vented to their partners instead, and the partners listened.', // OWNER WRITES
+    prices: 'Prices went up this month. The growth investor had a win for his partners; users had a worse week.', // OWNER WRITES
+    plan: 'You walked the growth investor through the long plan. He nodded, mostly.', // OWNER WRITES
+    vent: 'Nobody called the growth investor back. He vented to his partners instead, and the partners listened.', // OWNER WRITES
   },
   boardLeak: {
     hunt: 'The leak hunt went through every inbox. The candor watchdog hated it, and so did the staff.', // OWNER WRITES
@@ -318,7 +318,7 @@ export const CONSEQUENCES = {
     wait: 'You let it play out. The money seats spent a week wondering why nobody told them anything.', // OWNER WRITES
   },
   boardWashington: {
-    brief: 'You briefed the security hawk before Washington did. They walked in knowing your side.', // OWNER WRITES
+    brief: 'You briefed the security hawk before Washington did. He walked in knowing your side.', // OWNER WRITES
     send: 'Your security lead went to the briefing too. Whatever Washington thought of your security, the security hawk heard it first-hand.', // OWNER WRITES
     stay: 'You stayed out of it. The security hawk went in alone, and came out with Washington’s view of you.', // OWNER WRITES
   },
