@@ -24,7 +24,7 @@ import {
   SUMMIT_SKIP_INTL_FAVOR,
 } from './summit.js';
 import { expireMeeting, meetingDue, openMeeting, runMeeting } from './president.js';
-import { judgeFinalPromises, promiseUpkeep } from './promises.js';
+import { judgeEndingPromises, promiseUpkeep } from './promises.js';
 
 export const MAX_MOVES = 2;
 const BUDGET_KEYS = ['training', 'safety', 'security', 'product', 'talent'];
@@ -130,9 +130,7 @@ export function endTurn(prev, actions = {}, rng) {
   const handledChoices = new Set();
   for (const pending of [...state.pendingEvents]) {
     const { id } = pending;
-    const choiceKey = Object.hasOwn(eventChoices, id)
-      ? id
-      : pending.eventId && Object.hasOwn(eventChoices, pending.eventId) ? pending.eventId : null;
+    const choiceKey = Object.hasOwn(eventChoices, id) ? id : null;
     if (!choiceKey) continue;
     const choiceId = eventChoices[choiceKey];
     const result = resolveEvent(state, id, choiceId);
@@ -248,10 +246,7 @@ export function endTurn(prev, actions = {}, rng) {
     if (!state.ending) {
       if (state.era === 5) {
         if (state.flags.insolvent && state.cash <= 0) state.ending = 'acquihire';
-        else {
-          judgeFinalPromises(state);
-          finalEnding(state);
-        }
+        else finalEnding(state);
       }
       else {
         state.era += 1;
@@ -260,6 +255,13 @@ export function endTurn(prev, actions = {}, rng) {
       }
     }
   }
-  if (state.ending) events.push({ type: 'ending', ending: state.ending });
+  if (state.ending) {
+    judgeEndingPromises(state);
+    state.pendingEvents = state.pendingEvents.filter((pending) => pending.eventId !== 'promiseCall');
+    for (const [id, warning] of Object.entries(state.warnings)) {
+      if (warning.eventId === 'promiseCall') delete state.warnings[id];
+    }
+    events.push({ type: 'ending', ending: state.ending });
+  }
   return { state, events, errors };
 }

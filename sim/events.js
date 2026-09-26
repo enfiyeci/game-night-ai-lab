@@ -29,27 +29,25 @@ export function pushFeed(state, handle, text, tag = 'feed') {
 
 function queuePromiseCalls(state, event, out) {
   for (const promise of failedPresidentPromises(state)) {
-    const queued = state.pendingEvents.some((pending) =>
-      pending.eventId === event.id
-      && pending.promiseId === promise.id
-      && pending.promiseMeeting === promise.meeting);
+    const key = promiseCallKey(state, promise);
+    const queued = state.pendingEvents.some((pending) => pending.id === key);
     if (queued) continue;
-    const key = promiseCallKey(promise);
     if (state.pendingEvents.length >= MAX_CARDS) {
       state.warnings[key] = {
         turn: state.turn,
         deferred: true,
         eventId: event.id,
+        promiseIndex: state.promises.indexOf(promise),
         promiseId: promise.id,
         promiseMeeting: promise.meeting,
       };
       continue;
     }
     delete state.warnings[key];
-    const card = promiseCallCard(event, promise);
+    const card = promiseCallCard(state, event, promise);
     state.pendingEvents.push(card);
     pushFeed(state, card.post.handle, card.post.text, 'event');
-    out.push({ type: 'eventCard', id: event.id, promiseId: promise.id, promiseMeeting: promise.meeting });
+    out.push({ type: 'eventCard', id: card.id, eventId: event.id, promiseId: promise.id, promiseMeeting: promise.meeting });
   }
 }
 
@@ -112,8 +110,7 @@ export function addressWarning(state, id) {
 }
 
 export function resolveEvent(state, id, choiceId) {
-  let index = state.pendingEvents.findIndex((pending) => pending.id === id);
-  if (index < 0) index = state.pendingEvents.findIndex((pending) => pending.eventId === id);
+  const index = state.pendingEvents.findIndex((pending) => pending.id === id);
   if (index < 0) return { ok: false, error: `no pending event ${id}` };
   const pending = state.pendingEvents[index];
   const event = byId(pending.eventId ?? pending.id);

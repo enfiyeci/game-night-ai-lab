@@ -60,7 +60,7 @@ export function promiseUpkeep(state, rng) {
   }
 }
 
-export const promiseCallKey = (promise) => `promiseCall:${promise.meeting}:${promise.id}`;
+export const promiseCallKey = (state, promise) => `promiseCall:${state.promises.indexOf(promise)}`;
 
 export function failedPresidentPromises(state) {
   return state.promises.filter((promise) =>
@@ -71,14 +71,15 @@ export function failedPresidentPromises(state) {
     && !promiseDefinition(promise).check(state, promise));
 }
 
-export function judgeFinalPromises(state) {
+export function judgeEndingPromises(state) {
   for (const promise of state.promises) {
     if (!isPresidentPromise(promise) || promise.status !== 'open') continue;
     promise.status = promiseDefinition(promise).check(state, promise) ? 'kept' : 'broken';
   }
 }
 
-export function promiseCallCard(event, promise) {
+export function promiseCallCard(state, event, promise) {
+  const promiseIndex = state.promises.indexOf(promise);
   const definition = promiseDefinition(promise);
   const choices = event.card.choices
     .filter((choice) => choice.id !== 'stall' || !promise.stalled)
@@ -90,23 +91,26 @@ export function promiseCallCard(event, promise) {
       opposers,
     }));
   return {
-    id: promiseCallKey(promise),
+    id: promiseCallKey(state, promise),
     eventId: event.id,
     title: event.card.title,
     post: { handle: '@executive_office', text: `You promised us: “${promise.text}”` },
     choices,
     targets: [],
+    promiseIndex,
     promiseId: promise.id,
     promiseMeeting: promise.meeting,
   };
 }
 
 function pendingPromise(state, pending) {
-  return state.promises.find((promise) =>
+  const promise = state.promises[pending.promiseIndex];
+  return (
     isPresidentPromise(promise)
     && promise.id === pending.promiseId
     && promise.meeting === pending.promiseMeeting
-    && promise.status === 'open');
+    && promise.status === 'open'
+  ) ? promise : null;
 }
 
 export function resolvePromiseCall(state, pending, choiceId) {
