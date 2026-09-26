@@ -101,6 +101,8 @@ export function endTurn(prev, actions = {}, rng, observer = {}) {
   const events = [];
   const errors = [];
   const before = boardSnapshot(state);
+  state.boardLast = [...prev.board];
+  state.boardBefore = before;
   delete state.flags.emergencyUsedThisTurn;
   if (state.ending) return { state, events, errors: ['the run is over'] };
   if (state.turn === 0) {
@@ -301,7 +303,7 @@ export function endTurn(prev, actions = {}, rng, observer = {}) {
         // Era 5's last turn is the run's last, so there is no next turn: the vote is held now.
         if (judged.vote && state.era === 5) {
           delete state.flags.boardVoteDue;
-          if (!holdVote(state).passed) state.ending = 'boardRemoved';
+          if (!holdVote(state, 'promise').passed) state.ending = 'boardRemoved';
         }
       }
     }

@@ -95,7 +95,8 @@ test('a due board vote is held in checkTurnEndings and can remove the player', (
   lose.staffTrust = STAFF_LETTER_TRUST - 1;
   lose.flags.boardVoteDue = true;
   assert.equal(checkTurnEndings(lose, no), 'boardRemoved');
-  assert.deepEqual(lose.flags.lastBoardVote, { turn: 0, yes: 3, passed: false });
+  const { turn, yes, passed } = lose.flags.lastBoardVote;
+  assert.deepEqual({ turn, yes, passed }, { turn: 0, yes: 3, passed: false });
   assert.equal(lose.flags.boardVoteDue, undefined);
 
   const win = createInitialState();
