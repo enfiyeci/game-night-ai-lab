@@ -2750,3 +2750,98 @@ svg.room {
 .ev-phone-row.stack .ev-act { justify-self: end; }
 .ev-phone-item { padding: 9px 0; border-top: 1px solid color-mix(in oklab, var(--wood) 25%, transparent); }
 #office [id^="person-"]:focus:not(:focus-visible) { outline: none; }
+
+/* ---------- board (board UI plan, docs/design/mockups/board/) ---------- */
+.bd-row .portrait, .bd-quiet-row .portrait, .bd-im-face .portrait { display: block; flex: none; overflow: visible; }
+
+/* the board view (frame L1) */
+.bd-board-dialog .dlg { min-height: 0; }
+.bd-list { text-align: left; }
+.bd-group { display: flex; justify-content: space-between; margin: 4px 0 2px; padding: 5px 10px; border-radius: 6px; color: color-mix(in oklab, var(--wood) 60%, var(--ink)); font-size: 11.5px; font-weight: 900; letter-spacing: .02em; background: color-mix(in oklab, var(--wood) 16%, var(--paper)); }
+.bd-group span + span { font-weight: 700; letter-spacing: 0; color: color-mix(in oklab, var(--ink) 55%, var(--paper)); }
+.bd-row { display: flex; align-items: center; gap: 12px; padding: 5px 10px; border-bottom: 1px solid color-mix(in oklab, var(--wood) 18%, transparent); }
+.bd-row:last-child { border-bottom: 0; }
+.bd-row .portrait { border-radius: 50%; background: color-mix(in oklab, var(--cream) 70%, var(--paper)); }
+.bd-who { display: flex; min-width: 0; flex: 1; flex-direction: column; }
+.bd-who b { font-size: 13.5px; font-weight: 800; }
+.bd-who small { overflow: hidden; max-width: 250px; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); font-size: 11px; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; }
+.bd-right { display: flex; align-items: center; gap: 10px; }
+.bd-tally { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 12px; padding: 9px 12px; border-radius: 8px; font-size: 13px; font-weight: 700; background: color-mix(in oklab, var(--teal) 10%, var(--paper)); }
+.bd-tally b { font-weight: 900; }
+.bd-side-note { margin: 8px 14px 12px; color: color-mix(in oklab, var(--ink) 66%, var(--paper)); font-size: 11px; font-weight: 700; line-height: 1.35; text-align: left; }
+
+/* the staff read: a soft band on a plain track, no cut-off line, no digits */
+.bd-rb { position: relative; display: inline-block; height: 10px; flex: none; border-radius: 5px; background: color-mix(in oklab, var(--ink) 9%, var(--paper)); box-shadow: inset 0 1px 1px color-mix(in oklab, var(--ink) 10%, transparent); }
+.bd-rb i { position: absolute; top: -2px; bottom: -2px; border-radius: 7px; }
+.bd-rb.with i { background: linear-gradient(90deg, transparent, var(--teal) 18%, var(--teal) 82%, transparent); }
+.bd-rb.leanWith i { background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--teal) 82%, var(--paper)) 18%, color-mix(in oklab, var(--teal) 82%, var(--paper)) 82%, transparent); }
+.bd-rb.leanAway i { background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--coral) 60%, var(--paper)) 18%, color-mix(in oklab, var(--coral) 60%, var(--paper)) 82%, transparent); }
+.bd-rb.against i { background: linear-gradient(90deg, transparent, var(--coral) 18%, var(--coral) 82%, transparent); }
+.bd-lean { width: 132px; flex: none; padding: 2px 0; border-radius: 5px; font-size: 10.5px; font-weight: 900; letter-spacing: .04em; text-align: center; text-transform: uppercase; }
+.bd-lean.with { color: color-mix(in oklab, var(--teal) 55%, var(--ink)); background: color-mix(in oklab, var(--teal) 16%, var(--paper)); }
+.bd-lean.leanWith { padding: 1px 0; border: 1px dashed color-mix(in oklab, var(--teal) 55%, var(--paper)); color: color-mix(in oklab, var(--teal) 55%, var(--ink)); }
+.bd-lean.leanAway { padding: 1px 0; border: 1px dashed color-mix(in oklab, var(--coral) 55%, var(--paper)); color: color-mix(in oklab, var(--coral) 60%, var(--ink)); }
+.bd-lean.against { color: var(--paper); background: color-mix(in oklab, var(--coral) 85%, var(--ink)); }
+.bd-trend { width: 16px; flex: none; font-size: 11px; text-align: center; }
+.bd-trend.up { color: color-mix(in oklab, var(--teal) 70%, var(--ink)); }
+.bd-trend.down { color: color-mix(in oklab, var(--coral) 80%, var(--ink)); }
+.bd-trend.flat { color: color-mix(in oklab, var(--ink) 40%, var(--paper)); }
+.bd-seats { display: inline-flex; gap: 5px; }
+.bd-seats i { width: 13px; height: 13px; border-radius: 50%; }
+.bd-seats i.with { background: var(--teal); }
+.bd-seats i.leanWith { border: 2.5px dashed var(--teal); }
+.bd-seats i.leanAway { border: 2.5px dashed color-mix(in oklab, var(--coral) 80%, var(--paper)); }
+.bd-seats i.against { background: color-mix(in oklab, var(--coral) 85%, var(--ink)); }
+
+/* what moves the board (frame L4) */
+.bd-moves-dialog .dlg { top: 72px; left: 259px; width: 922px; min-height: 0; padding-bottom: 16px; }
+.bd-moves-dialog .rule { margin: 10px 30px 4px; }
+.bd-moves-body svg { display: block; overflow: visible; }
+.bd-im-link { fill: none; stroke-width: 3; opacity: .55; }
+.bd-im-link.up { stroke: var(--teal); }
+.bd-im-link.down { stroke: var(--coral); }
+.bd-im-link.flat { stroke: color-mix(in oklab, var(--ink) 25%, var(--paper)); stroke-dasharray: 5 5; }
+.bd-im-link.hi { stroke-width: 5; opacity: 1; }
+.bd-im-issue rect { fill: var(--paper); stroke: color-mix(in oklab, var(--wood) 45%, var(--paper)); stroke-width: 1.5; }
+.bd-im-issue circle { stroke: none; }
+.bd-im-issue.up circle { fill: color-mix(in oklab, var(--teal) 20%, var(--paper)); }
+.bd-im-issue.down circle { fill: color-mix(in oklab, var(--coral) 18%, var(--paper)); }
+.bd-im-issue.flat circle { fill: color-mix(in oklab, var(--ink) 8%, var(--paper)); }
+.bd-im-l { font: 800 14px Nunito, sans-serif; fill: var(--ink); }
+.bd-im-s { font: 700 11.5px Nunito, sans-serif; fill: color-mix(in oklab, var(--ink) 58%, var(--paper)); }
+.bd-im-arrow { font: 900 11px Nunito, sans-serif; }
+.bd-im-issue.up .bd-im-arrow { fill: color-mix(in oklab, var(--teal) 70%, var(--ink)); }
+.bd-im-issue.down .bd-im-arrow { fill: color-mix(in oklab, var(--coral) 80%, var(--ink)); }
+.bd-im-issue.flat .bd-im-arrow { fill: color-mix(in oklab, var(--ink) 45%, var(--paper)); }
+.bd-im-halo { stroke-width: 7; fill: var(--paper); opacity: .9; }
+.bd-im-member.with .bd-im-halo { stroke: var(--teal); }
+.bd-im-member.leanWith .bd-im-halo { stroke: color-mix(in oklab, var(--teal) 55%, var(--paper)); stroke-dasharray: 6 4; }
+.bd-im-member.leanAway .bd-im-halo { stroke: color-mix(in oklab, var(--coral) 55%, var(--paper)); stroke-dasharray: 6 4; }
+.bd-im-member.against .bd-im-halo { stroke: var(--coral); }
+.bd-im-member.hi .bd-im-halo { filter: drop-shadow(0 0 6px color-mix(in oklab, var(--coral) 60%, transparent)); }
+.bd-im-face { width: 56px; height: 56px; overflow: hidden; border-radius: 50%; background: color-mix(in oklab, var(--cream) 70%, var(--paper)); }
+.bd-im-name { font: 800 14px Nunito, sans-serif; fill: var(--ink); }
+.bd-im-leanw { font: 700 11.5px Nunito, sans-serif; fill: color-mix(in oklab, var(--ink) 58%, var(--paper)); }
+.bd-im-key { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 22px; padding: 10px 18px 0; border-top: 1px solid color-mix(in oklab, var(--wood) 25%, transparent); font-size: 12.5px; font-weight: 700; text-align: left; }
+.bd-im-key i { display: inline-block; width: 22px; height: 0; margin-right: 6px; vertical-align: middle; border-top: 3px solid; }
+.bd-im-key i.up { border-color: var(--teal); }
+.bd-im-key i.down { border-color: var(--coral); }
+.bd-im-key i.flat { border-top-style: dashed; border-color: color-mix(in oklab, var(--ink) 30%, var(--paper)); }
+.bd-im-tip { flex-basis: 100%; padding: 8px 12px; border-radius: 8px; background: color-mix(in oklab, var(--coral) 10%, var(--paper)); }
+
+/* the countdown chip, under the HUD's info box (top is set from the info box's height) */
+.bd-count { position: absolute; z-index: 3; top: 92px; right: 14px; display: flex; align-items: center; gap: 7px; padding: 6px 12px; border: 1px solid color-mix(in oklab, var(--ink) 8%, transparent); border-radius: 9px; font-size: 12.5px; font-weight: 900; background: var(--paper); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 14%, transparent), 0 6px 16px color-mix(in oklab, var(--ink) 11%, transparent); }
+.bd-count[hidden] { display: none; }
+.bd-count svg { fill: none; stroke: currentColor; stroke-width: 1.6; }
+.bd-count.urgent { color: color-mix(in oklab, var(--coral) 80%, var(--ink)); }
+
+/* going quiet (frame P5) and the advisors' bubbles */
+.bd-quiet-slot { position: absolute; z-index: 3; top: 140px; right: 14px; }
+.bd-quiet { width: 330px; padding: 12px 14px; border-radius: 12px; background: var(--paper); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 14%, transparent), 0 10px 24px color-mix(in oklab, var(--ink) 16%, transparent); }
+.bd-quiet-hd { margin-bottom: 6px; color: color-mix(in oklab, var(--wood) 60%, var(--ink)); font-size: 11.5px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; }
+.bd-quiet-row { display: grid; grid-template-columns: 30px 70px 36px 1fr; gap: 8px; align-items: center; padding: 3px 0; font-size: 12.5px; }
+.bd-quiet-row .portrait { border-radius: 50%; background: color-mix(in oklab, var(--cream) 70%, var(--paper)); filter: saturate(.6); }
+.bd-quiet-row span { color: color-mix(in oklab, var(--ink) 50%, var(--paper)); font-size: 11px; font-weight: 700; }
+.bd-quiet p { margin: 8px 0 0; color: color-mix(in oklab, var(--coral) 75%, var(--ink)); font-size: 12.5px; font-weight: 800; }
+.bd-say { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
+.bd-say > * { pointer-events: auto; }

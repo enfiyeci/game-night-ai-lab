@@ -176,17 +176,25 @@ export function issuesView(state) {
 }
 
 // The director to worry about: leaning away (or against, when nobody leans away) with an issue pushing them away.
-export function worryTip(state) {
+function worryPick(state) {
   const read = boardRead(state);
   const down = new Set(issuesView(state).filter((issue) => issue.state === 'down').map((issue) => issue.id));
   for (const lean of ['leanAway', 'against']) {
     for (const member of read.members) {
       if (member.lean !== lean) continue;
       const issue = ISSUE_LINKS[member.id].find((id) => down.has(id));
-      if (issue) return fill(COPY.WORRY, { name: nameOf(member.id), issue: COPY.ISSUE_LABEL[issue] });
+      if (issue) return { id: member.id, issue };
     }
   }
   return null;
+}
+
+// Which director the tip names, so the map can highlight them and their links.
+export const worryMember = (state) => worryPick(state)?.id ?? null;
+
+export function worryTip(state) {
+  const pick = worryPick(state);
+  return pick ? fill(COPY.WORRY, { name: nameOf(pick.id), issue: COPY.ISSUE_LABEL[pick.issue] }) : null;
 }
 
 export function dealOptions(state) {

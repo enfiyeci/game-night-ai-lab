@@ -150,6 +150,8 @@ export const ISSUE_SAY = {
 // A line in the meeting's "What they'll raise" list: "Safety share under target".
 export const RAISE = '{label} {say}';
 export const ISSUE_KEY = { up: 'pushing them toward you', down: 'pushing them away', flat: 'quiet' };
+// The map's label for screen readers.
+export const MAP_LABEL = 'Which issues sway which director, and which way';
 // The tip under L4. Every director is they/them, so the pronouns are written in.
 export const WORRY = '{name}: {issue} is slipping, and they are leaning away. Fix it before the meeting, or plan without them.'; // OWNER WRITES
 

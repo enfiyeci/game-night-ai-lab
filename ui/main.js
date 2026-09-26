@@ -28,6 +28,7 @@ import { lumenEpilogue } from '../sim/lumen.js';
 import { mountEvents } from './screens/events.js';
 import { mountBriefing } from './screens/briefing.js';
 import { mountFeed } from './screens/feed.js';
+import { mountBoard, openBoard } from './screens/board.js';
 
 const params = new URLSearchParams(location.search);
 
@@ -58,6 +59,7 @@ const buildScenario = SCENARIOS[scenarioName] ?? SCENARIOS.start;
 const initialState = buildScenario(seed);
 const game = createGame({ seed, state: initialState, history: scenarioHistory(initialState) });
 if (params.has('lab')) game.state.labName = params.get('lab');
+if (location.hash === '#board-warning') delete game.state.flags.boardQuiet; // debug still: the warning without going quiet
 
 const stage = document.querySelector('#stage');
 const office = document.querySelector('#office');
@@ -93,6 +95,7 @@ const ending = mountEnding(game, overlay, {
 const events = mountEvents(game, { stage, overlay });
 mountBriefing(game, { office, overlay });
 mountFeed(game, { overlay, events });
+const board = mountBoard(game, { overlay, stage });
 
 function stagePoint(event) {
   const rect = stage.getBoundingClientRect();
@@ -178,6 +181,17 @@ async function openDebugRoute() {
   }
   if (location.hash === '#finance' || location.hash === '#books') {
     openFinance(game, overlay, { view: location.hash === '#books' ? 'books' : 'timeline' });
+    return;
+  }
+  if (location.hash === '#board' || location.hash === '#board-moves') {
+    openBoard(game, overlay, { view: location.hash === '#board-moves' ? 'moves' : 'board' });
+    return;
+  }
+  if (location.hash === '#board-say' || location.hash === '#board-warning') {
+    // Stills of the board's bubbles: waiting cards are put aside, as "Decide later" does.
+    await new Promise((resolve) => { setTimeout(resolve, 600); });
+    for (let i = 0; i < 5 && overlay.querySelector('.ev-later'); i++) overlay.querySelector('.ev-later').click();
+    board.refresh();
     return;
   }
   if (location.hash === '#history') {

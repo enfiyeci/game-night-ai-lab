@@ -5,7 +5,7 @@ import { createInitialState } from '../sim/state.js';
 import { boardSnapshot, holdVote } from '../sim/board.js';
 import {
   boardView, boardWarning, countdownText, dealOptions, issuesView, meetingInfo, meetingModel, nextMeetingRows,
-  resultModel, voteReveal,
+  resultModel, voteReveal, worryMember, worryTip,
 } from '../ui/logic/board.js';
 import { moodForLean, portrait } from '../ui/components/portraits.js';
 import { SCENARIOS } from '../ui/logic/scenarios.js';
@@ -112,4 +112,17 @@ test('the boardVote scenario is in a vote round', () => {
   const state = SCENARIOS.boardVote(4);
   assert.ok(!state.ending);
   assert.ok(meetingInfo(state).thisRound);
+});
+
+test('the worry tip names the director worryMember picks, so the map can highlight them', () => {
+  const state = era({ era: 3, turnInEra: 1, arr: 100, board: [52, 70, 70, 70, 70, 70, 70] });
+  state.boardLast = [...state.board];
+  state.boardBefore = { ...boardSnapshot(state), arr: 200 }; // revenue fell, and the growth investor leans away
+  const id = worryMember(state);
+  assert.equal(id, 'growth');
+  assert.match(worryTip(state), /^Growth investor: Revenue/);
+  const calm = era({ era: 3, board: [90, 90, 90, 90, 90, 90, 90] });
+  calm.boardLast = [...calm.board];
+  assert.equal(worryMember(calm), null);
+  assert.equal(worryTip(calm), null);
 });
