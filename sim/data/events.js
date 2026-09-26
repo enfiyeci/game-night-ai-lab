@@ -24,10 +24,6 @@ function openletterMeet(state) {
   state.staffTrust += 8;
 }
 
-function repeatNeocloudTrouble(state) {
-  state.seenEvents = state.seenEvents.filter((id) => id !== 'neocloudTrouble');
-}
-
 function startSurge(state, surge, coverWithSpot) {
   state.compute.surge = { ...surge, restoreCover: state.compute.split.coverWithSpot };
   if (coverWithSpot !== undefined) state.compute.split.coverWithSpot = coverWithSpot;
@@ -546,11 +542,11 @@ export const EVENTS = [
   {
     id: 'neocloudTrouble',
     kind: 'world',
+    repeatable: true,
     trigger: (state) => state.compute.contracts.some((contract) => contract.troubled),
     warning: { handle: '@marketwire', text: "CoreFlame's biggest customer missed a payment" },
     defuse(state) {
       for (const contract of state.compute.contracts) if (contract.troubled) contract.troubled = false;
-      repeatNeocloudTrouble(state);
     },
     card: {
       title: 'Your neocloud is failing',
@@ -567,7 +563,6 @@ export const EVENTS = [
               contract.monthsLeft = null;
               contract.troubled = false;
             }
-            repeatNeocloudTrouble(state);
           },
         },
         {
@@ -578,7 +573,6 @@ export const EVENTS = [
               state.cash -= RESCUE_MONTHS * contractBill(contract);
               contract.troubled = false;
             }
-            repeatNeocloudTrouble(state);
           },
         },
         {
@@ -586,7 +580,6 @@ export const EVENTS = [
           effects(state) {
             state.compute.contracts = state.compute.contracts.filter((contract) => !contract.troubled);
             refreshOnline(state);
-            repeatNeocloudTrouble(state);
           },
         },
       ],

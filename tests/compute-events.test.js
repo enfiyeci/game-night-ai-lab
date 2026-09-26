@@ -4,6 +4,7 @@ import { createInitialState } from '../sim/state.js';
 import { eventsTick, addressWarning, resolveEvent } from '../sim/events.js';
 import { updateServing, monthlyRevenue } from '../sim/economy.js';
 import { EVENTS } from '../sim/data/events.js';
+import { EVENTS_6C } from '../sim/data/events6c.js';
 import { endTurn } from '../sim/turn.js';
 import { createRng } from '../sim/rng.js';
 import { contractBill } from '../sim/contracts.js';
@@ -49,10 +50,13 @@ test('acting on the neocloud warning refinances it', () => {
   eventsTick(s, no);
   assert.equal(addressWarning(s, 'neocloudTrouble').ok, true);
   assert.equal(s.compute.contracts.find((c) => c.id === 'cf').troubled, false);
-  assert.equal(s.seenEvents.includes('neocloudTrouble'), false);
   s.compute.contracts.find((c) => c.id === 'cf').troubled = true;
   eventsTick(s, no);
   assert.ok(s.warnings.neocloudTrouble);
+  s.turn += 1;
+  eventsTick(s, no);
+  assert.equal(s.pendingEvents.find((event) => event.id === 'neocloudTrouble')?.id, 'neocloudTrouble');
+  assert.equal(resolveEvent(s, 'neocloudTrouble', 'rescue').ok, true);
 });
 
 test('neocloud choices convert or rescue every troubled contract and remain repeatable', () => {
@@ -64,6 +68,7 @@ test('neocloud choices convert or rescue every troubled contract and remain repe
     { id: 'b', supplier: 'coreflame', units: 7, price: 1, monthsLeft: 12, needsPower: false, dark: false, troubled: true, string: 'fragile' },
   );
   spot.seenEvents.push('neocloudTrouble');
+  assert.equal(event.repeatable, true);
   event.card.choices.find((choice) => choice.id === 'spot').effects(spot);
   for (const contract of spot.compute.contracts.filter((contract) => contract.id === 'a' || contract.id === 'b')) {
     assert.equal(contract.supplier, 'spot');
@@ -72,7 +77,7 @@ test('neocloud choices convert or rescue every troubled contract and remain repe
     assert.equal(contract.monthsLeft, null);
     assert.equal(contract.troubled, false);
   }
-  assert.equal(spot.seenEvents.includes('neocloudTrouble'), false);
+  assert.equal(spot.seenEvents.includes('neocloudTrouble'), true);
 
   const rescue = createInitialState();
   const troubled = { id: 'cf', supplier: 'coreflame', units: 5, price: 1, monthsLeft: 12, needsPower: false, dark: false, troubled: true, string: 'fragile' };
@@ -82,18 +87,21 @@ test('neocloud choices convert or rescue every troubled contract and remain repe
   event.card.choices.find((choice) => choice.id === 'rescue').effects(rescue);
   assert.equal(rescue.cash, cash - RESCUE_MONTHS * contractBill(troubled));
   assert.equal(troubled.troubled, false);
-  assert.equal(rescue.seenEvents.includes('neocloudTrouble'), false);
+  assert.equal(rescue.seenEvents.includes('neocloudTrouble'), true);
 });
 
 test('opposition to a gas site: pushing through can cut the site', () => {
   const s = createInitialState();
   s.era = 4;
+  s.seenEvents = [...EVENTS, ...EVENTS_6C]
+    .filter((event) => event.id !== 'siteOpposition')
+    .map((event) => event.id);
   s.power.sites.push({ id: 'gas-1', source: 'gas', units: 400, arrivesTurn: 99, online: false, oppositionCut: null });
   eventsTick(s, yes);
   assert.ok(s.warnings.siteOpposition);
   s.turn += 1;
   eventsTick(s, yes);
-  resolveEvent(s, 'siteOpposition', 'push');
+  assert.equal(resolveEvent(s, 'siteOpposition', 'push').ok, true);
   assert.equal(s.power.sites[0].units, 280);
 });
 
