@@ -13,7 +13,7 @@ import { placeOrder } from '../../sim/queue.js';
 import { availableUnits, startRun } from '../../sim/training.js';
 import { MAX_MOVES } from '../../sim/turn.js';
 import { projectQueue } from './compute.js';
-import { money } from './format.js';
+import { money, roundsToWords } from './format.js';
 
 export const SPEND_LEVELS = { lean: 12, steady: 20, aggressive: 35 };
 
@@ -164,7 +164,7 @@ export function sanitizeDraft(state, draft) {
   return { sliders: { size, length, alignShare }, picks };
 }
 
-export function cardCostWords(card) {
+export function cardCostWords(card, era = 1) {
   const words = [];
   const cash = card?.cost?.cash ?? 0;
   const computeMult = card?.cost?.computeMult ?? 1;
@@ -174,6 +174,6 @@ export function cardCostWords(card) {
     const change = Math.round(Math.abs(computeMult - 1) * 100);
     words.push(`${computeMult > 1 ? '+' : '−'}${change}% compute`);
   }
-  if (turns !== 0) words.push(`+${turns} ${turns === 1 ? 'turn' : 'turns'}`);
+  if (turns !== 0) words.push(`+${roundsToWords(era, turns)}`);
   return words;
 }

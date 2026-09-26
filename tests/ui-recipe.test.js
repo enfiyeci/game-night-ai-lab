@@ -226,6 +226,6 @@ test('cardCostWords formats public card costs and omits free parts', () => {
   assert.deepEqual(cardCostWords({ cost: { cash: 10 } }), ['$10M']);
   assert.deepEqual(cardCostWords({ cost: { computeMult: 0.8 } }), ['−20% compute']);
   assert.deepEqual(cardCostWords({ cost: { computeMult: 1.15 } }), ['+15% compute']);
-  assert.deepEqual(cardCostWords({ cost: { turns: 1 } }), ['+1 turn']);
+  assert.deepEqual(cardCostWords({ cost: { turns: 1 } }), ['+about 3 months']);
   assert.deepEqual(cardCostWords({ cost: {} }), []);
 });

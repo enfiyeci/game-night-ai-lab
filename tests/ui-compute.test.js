@@ -308,7 +308,7 @@ test('site options match the exact side-RNG builds that will be queued', () => {
     const option = view.options.find((candidate) => candidate.source === source);
     assert.equal(option.units, site.units);
     assert.equal(option.lease, leaseMonthly(site.units));
-    assert.equal(option.readyIn, `${site.arrivesTurn - s.turn} turns`);
+    assert.equal(option.readyIn, `about ${site.arrivesTurn - s.turn} months`);
   }
 });
 
