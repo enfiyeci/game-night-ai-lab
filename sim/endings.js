@@ -34,7 +34,7 @@ export function checkTurnEndings(state, rng) {
   }
   if (state.flags.boardVoteDue) {
     delete state.flags.boardVoteDue;
-    if (!holdVote(state).passed) return (state.ending = 'boardRemoved');
+    if (!holdVote(state, 'promise').passed) return (state.ending = 'boardRemoved');
   }
   if (state.capability > BALANCE.dangerLine && effectiveMisuse(state) > BALANCE.misuseDisasterLine && rng.chance(BALANCE.misuseRollChance)) {
     return (state.ending = 'misuse');
@@ -47,7 +47,7 @@ export function checkTurnEndings(state, rng) {
 
 export function eraGate(state) {
   if (rank(state) > BALANCE.gateMaxRank && gapToLeader(state) > BALANCE.gateMaxGap) return (state.ending = 'leftBehind');
-  if (eraById(state.era).boardVoteAtGate && !holdVote(state).passed) return (state.ending = 'boardRemoved');
+  if (eraById(state.era).boardVoteAtGate && !holdVote(state, 'gate').passed) return (state.ending = 'boardRemoved');
   return null;
 }
 

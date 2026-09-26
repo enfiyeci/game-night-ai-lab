@@ -1,5 +1,6 @@
 import { EVENTS } from './data/events.js';
 import { EVENTS_6C } from './data/events6c.js';
+import { BOARD_EVENTS } from './data/boardEvents.js';
 import { hasLine } from './constitution.js';
 import {
   failedPresidentPromises,
@@ -10,7 +11,7 @@ import {
 } from './promises.js';
 
 const MAX_CARDS = 2;
-const allEvents = () => [...EVENTS, ...EVENTS_6C];
+const allEvents = () => [...EVENTS, ...EVENTS_6C, ...BOARD_EVENTS];
 const byId = (id) => allEvents().find((event) => event.id === id);
 const KIND_ORDER = ['internal', 'training'];
 const orderedEvents = () => {
@@ -29,6 +30,8 @@ const publicCard = (state, event) => ({
   post: event.card.post,
   choices: event.card.choices.map(({ id, label, cost, backers, opposers }) => ({ id, label, cost, backers, opposers })),
   targets: targetIndices(state, event),
+  ...(event.card.kicker ? { kicker: event.card.kicker } : {}),
+  ...(event.card.watching ? { watching: [...event.card.watching] } : {}),
 });
 
 export function pushFeed(state, handle, text, tag = 'feed') {

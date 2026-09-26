@@ -1,5 +1,6 @@
 import { BALANCE } from './balance.js';
-import { eraById } from './data/eras.js';
+import { ERAS, eraById } from './data/eras.js';
+import { PROMISE_VOTE_BELOW } from './boardPromise.js';
 import { clamp } from './util.js';
 import { inDangerZone, runway } from './economy.js';
 
@@ -41,16 +42,21 @@ export function updateBoard(state, before, events = []) {
   add('sovereign', inDangerZone(state) ? -3 : runway(state, 'planned') >= 12 ? 3 : 1);
   add('safety', state.compute.split.safety + 1e-9 >= eraById(state.era).targetSafetyShare ? 2 : -3);
   if (events.some((event) => event.type === 'hazardResolved' && event.choice === 'ignore')) add('safety', -8);
-  if (before.concealedDebt - state.concealedDebt > 0.5) add('candor', -6);
-  if (state.promises.filter((promise) => promise.leaked).length > before.leaked) add('candor', -6);
-  if (state.flags.brokenPromise === true && !before.brokenPromise) add('candor', -8);
+  const candorHit = (amount) => {
+    add('candor', amount);
+    state.flags.candorHits = (state.flags.candorHits ?? 0) + 1; // the candor deal is judged by this count
+  };
+  if (before.concealedDebt - state.concealedDebt > 0.5) candorHit(-6);
+  if (state.promises.filter((promise) => promise.leaked).length > before.leaked) candorHit(-6);
+  if (state.flags.brokenPromise === true && !before.brokenPromise) candorHit(-8);
   add('security', state.govFavor.us >= 60 ? 2 : state.govFavor.us < 45 ? -2 : 0);
   if (state.security < 35) add('security', -2);
   if (state.govFavor.us > before.govUs) add('security', 1);
   else if (state.govFavor.us < before.govUs) add('security', -2);
   add('trustee', (state.publicTrust - 55) / 10);
   if (state.constitution.hardLines.length < before.hardLines) add('trustee', -8);
-  state.board = b.map((s) => clamp(s, 0, 100));
+  const lost = new Set(state.boardLost ?? []);
+  state.board = b.map((s, i) => clamp(lost.has(BOARD_MEMBERS[i].id) ? Math.min(s, BALANCE.boardLostCap) : s, 0, 100));
 }
 
 export function boardVote(state) {
@@ -58,11 +64,56 @@ export function boardVote(state) {
   return { yes, passed: yes >= BALANCE.boardPassMembers };
 }
 
+// A pure hash of (seed, turn, seat): the staff's misread, an integer in [-4, 4]. Never draws from an rng, so reading
+// the board cannot shift any later roll.
+export function misread(state, i) {
+  let h = (Math.imul((state.seed >>> 0) + 1, 2654435761) ^ Math.imul(state.turn + 1, 40503) ^ Math.imul(i + 1, 2246822519)) >>> 0;
+  h = Math.imul(h ^ (h >>> 15), 2246822507) >>> 0;
+  h = Math.imul(h ^ (h >>> 13), 3266489909) >>> 0;
+  h = (h ^ (h >>> 16)) >>> 0;
+  const span = 2 * BALANCE.boardReadMisread + 1;
+  return (h % span) - BALANCE.boardReadMisread;
+}
+
+// The order the UI reveals votes in: most certain first, the closest to the cut-off last (spec §6.4), by the read's
+// centre. Passed to the UI as an order, never as numbers.
+export function voteOrder(state) {
+  const distance = (i) => Math.abs(state.board[i] + misread(state, i) - BALANCE.boardSupportLine);
+  return BOARD_MEMBERS.map((_, i) => i).sort((a, b) => distance(b) - distance(a) || a - b);
+}
+
+// True when the round now being played will hold a vote (spec §5.3). Era 5's promise vote is a forecast: the promise
+// is judged at that round's end, and a bad miss votes at once.
+export function boardVoteThisRound(state) {
+  if (state.ending) return false;
+  if (state.flags.boardVoteDue) return true;
+  // The emergency-vote card (boardRevolt, sim/data/events6c.js) sets boardVoteDue in every choice; it is resolved at
+  // the start of endTurn, so its vote is held in that same round.
+  if (state.pendingEvents.some((pending) => pending.id === 'boardRevolt')) return true;
+  const era = eraById(state.era);
+  const lastRound = state.turnInEra === era.turns - 1;
+  if (era.boardVoteAtGate && lastRound) return true;
+  const promise = state.boardPromise;
+  return state.era === ERAS.length && lastRound && promise?.status === 'open' && promise.era === state.era
+    && state.compute.online < PROMISE_VOTE_BELOW * promise.units;
+}
+
 // A vote that would remove you. Once per run, staff who trust you enough threaten to quit together and the board
 // backs down (OpenAI, November 2023: 745 of 770 staff). It costs staff trust, and the board is only just on side.
-export function holdVote(state) {
+// The record keeps each director's real vote, so the UI reveals what happened, never its own guess.
+export function holdVote(state, kind = 'gate') {
   const vote = boardVote(state);
-  state.flags.lastBoardVote = { turn: state.turn, yes: vote.yes, passed: vote.passed };
+  if (state.flags.lastBoardVote) state.flags.prevBoardVote = state.flags.lastBoardVote;
+  state.flags.boardVotesHeld = (state.flags.boardVotesHeld ?? 0) + 1;
+  state.flags.lastBoardVote = {
+    turn: state.turn,
+    yes: vote.yes,
+    passed: vote.passed,
+    votes: state.board.map((s) => s >= BALANCE.boardSupportLine),
+    kind,
+    order: voteOrder(state),
+  };
+  delete state.flags.boardLeak; // the leak lasts until the meeting
   if (vote.passed || state.flags.staffLetterUsed || state.staffTrust < STAFF_LETTER_TRUST) return vote;
   state.flags.staffLetterUsed = true;
   state.flags.staffLetterPending = true; // endTurn announces it

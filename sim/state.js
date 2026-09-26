@@ -39,6 +39,10 @@ export function createInitialState({ seed = 1 } = {}) {
 
     board: [...INITIAL_BOARD],
     boardPromise: null,
+    boardDeals: [],
+    boardLost: [],
+    boardLast: null,
+    boardBefore: null,
     govFavor: { us: 50, intl: 50 },
     staffTrust: 70,
     publicTrust: 60,
