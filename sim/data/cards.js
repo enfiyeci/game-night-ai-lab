@@ -20,8 +20,8 @@ export const CARDS = [
   { id: 'stability', stage: 'pre', group: 'stability', name: 'Stability engineering', hint: 'Fewer loss spikes, fewer restarts at three in the morning.', era: 1, cost: { cash: 8 }, effects: { spike: -0.1 } },
   { id: 'hazard-filter-reuse', stage: 'pre', group: 'hazard', name: 'Reuse last hazard-knowledge filter', hint: 'Cheap protection that goes stale.', era: 1, requiresModel: true, cost: { cash: 2 }, effects: { mx: -2, openWeightsMx: 14 } },
   { id: 'hazard-filter-built', stage: 'pre', group: 'hazard', name: 'Purpose-built hazard-knowledge filter', hint: 'Real protection; useless against pasted material.', era: 3, cost: { cash: 5 }, effects: { mx: -4, openWeightsMx: 10 } },
-  // Added 2026-09-26 from the gn-recipe research pass (sources mostly read at abstract level; see the lane's
-  // techniques research note). Effects are first-pass and sized like the cards above.
+  // Added 2026-09-26 from the gn-recipe research pass (sources mostly read at abstract level; see
+  // docs/research/training-options/more-techniques-2026-09-26.md). Effects are first-pass, sized like the cards above.
   { id: 'safety-data-early', stage: 'pre', group: 'hazard', name: 'Weave in safety data from the start', hint: 'Teach it the rules while it is still learning to talk.', era: 4, cost: { cash: 4 }, effects: { mx: -2, ad: -1, openWeightsMx: 12 } },
   { id: 'adamw', stage: 'pre', group: 'optim', default: true, name: 'AdamW at full precision', hint: 'The optimizer everyone trusts.', era: 1, cost: {}, effects: {} },
   { id: 'muon', stage: 'pre', group: 'optim', name: 'Muon optimizer', hint: 'Faster learning, if the infra team can keep it stable.', era: 2, cost: { computeMult: 0.85 }, effects: { cap: 1, spike: 0.05 } },
