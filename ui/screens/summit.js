@@ -132,6 +132,24 @@ export function openSummit(game, overlayRoot) {
   const readNow = () => readTheRoom(game.state, plan())[current.card];
   const holdouts = (read) => SEATS.map((s) => s.id).filter((id) => read[id] !== 'yes' && !Object.hasOwn(promised(), id));
   const remaining = () => Object.keys(COMMITMENTS).filter((card) => !motions.some((m) => m.card === card));
+  // Jules's read of a promise to this delegate on the motion on the floor (the promise's kind does not change it).
+  const promiseRead = (party) => {
+    const before = readNow();
+    const after = readTheRoom(game.state, { ...plan(), promises: { ...promised(), [party]: 'goFirst' } })[current.card];
+    const follow = SEATS.map((seat) => seat.id).filter((id) => id !== party && before[id] !== 'yes' && after[id] === 'yes');
+    return { lean: after[party], follow };
+  };
+  const hint = (party) => {
+    const { lean, follow } = promiseRead(party);
+    const also = follow.length ? ` ${follow.map((id) => PARTY_INFO[id].name).join(' and ')} would follow.` : '';
+    if (lean === 'yes') return `Jules: a promise should win them.${also}`;
+    if (lean === 'maybe') return `Jules: could go either way.${also}`;
+    return 'Jules: a promise won’t be enough.';
+  };
+  const bestHoldout = (read) => {
+    const who = holdouts(read);
+    return who.find((id) => promiseRead(id).lean === 'yes') ?? who.find((id) => promiseRead(id).lean === 'maybe') ?? who[0];
+  };
 
   const presidentNote = () => (game.state.meetingsHeld?.includes('second')
     ? '<div class="sm-sticky"><b>From the President’s call</b>“Sign nothing that helps China. Nothing!” Letting the East inspect the West will cost you his favor.</div>'
@@ -160,6 +178,11 @@ export function openSummit(game, overlayRoot) {
   const tally = (read) => `<div class="sm-tally">${SEATS.map((s) => `<span class="sm-pb${read[s.id] === 'yes' ? '' : ' off'}" data-p="${s.id}" title="${PARTY_INFO[s.id].name}: ${read[s.id]}">${PARTY_INFO[s.id].ab}</span>`).join('')}</div>`;
 
   function panel(read) {
+    if (phase === 'table' && !motions.length && game.movesLeft() <= 0) {
+      return `<section class="gp sm-panel narrow" aria-label="No team action left">${kick()}<h2>Both team actions are used.</h2>
+        <p>The summit's vote takes one team action. There is none left this round.</p>
+        <div class="sm-row end"><button type="button" class="btn" data-leave>Back to the lab</button></div></section>`;
+    }
     if (phase === 'table') {
       return `<section class="gp sm-panel" aria-label="Table a motion">${kick()}<h2>${motions.length ? 'What do you table next?' : 'What do you table first?'}</h2>${deck()}
         ${motions.length ? '' : '<div class="sm-row"><span class="sm-muted">Each motion is voted before the next. A motion binds when a lab and a government sign it.</span><button type="button" class="sm-leave" data-leave>Leave without a deal</button></div>'}</section>`;
@@ -185,8 +208,8 @@ export function openSummit(game, overlayRoot) {
     }
     if (phase === 'swing') {
       const who = holdouts(read);
-      const party = swingParty ?? who[0];
-      const cards = who.map((id) => `<button type="button" class="sm-who${id === party ? ' sel' : ''}" data-talk="${id}" data-p="${id}">${partyBadge(id)}<span>${esc(DEMANDS[id].text)}</span></button>`).join('');
+      const party = swingParty ?? bestHoldout(read);
+      const cards = who.map((id) => `<button type="button" class="sm-who${id === party ? ' sel' : ''}" data-talk="${id}" data-p="${id}">${partyBadge(id)}<span>${esc(DEMANDS[id].text)}<small>${esc(hint(id))}</small></span></button>`).join('');
       const choices = Object.keys(PROMISES).map((type) => {
         const cash = PROMISES[type].cash ?? 0;
         const cannot = cash > 0 && game.state.cash < cashPromised() + cash;
@@ -217,13 +240,13 @@ export function openSummit(game, overlayRoot) {
       raised = read;
       if (phase === 'checks') shown = SEATS.map((s) => s.id).filter((id) => DEMANDS[id].rule.minCheck != null || DEMANDS[id].rule.maxCheck != null);
       if (phase === 'room') shown = holdouts(read);
-      if (phase === 'swing') shown = [swingParty ?? holdouts(read)[0]].filter(Boolean);
+      if (phase === 'swing') shown = [swingParty ?? bestHoldout(read)].filter(Boolean);
     }
     if (phase === 'result') {
       const r = results[results.length - 1];
       raised = Object.fromEntries(SEATS.map((s) => [s.id, r.signed.includes(s.id) ? 'yes' : 'no']));
     }
-    const seat = phase === 'swing' && SEATS.find((s) => s.id === (swingParty ?? holdouts(read)[0]));
+    const seat = phase === 'swing' && SEATS.find((s) => s.id === (swingParty ?? bestHoldout(read)));
     layer.innerHTML = `${hallSvg({ raised, screen: screenAgenda(motions, results, current, phase) })}${bubbles(shown, read)}${presidentNote()}
       ${seat ? `<div class="sm-say" data-p="${seat.id}" style="left:${Math.min(1440 - 330, Math.max(30, seat.x - 150))}px;top:560px"><b>${esc(PARTY_INFO[seat.id].name)}</b>${esc(PARTY_INFO[seat.id].line)}</div>` : ''}
       ${panel(read)}`;
@@ -280,7 +303,7 @@ export function openSummit(game, overlayRoot) {
       swingParty = party;
     } else if (target.matches('[data-promise]')) {
       const type = target.dataset.promise;
-      const party = swingParty ?? holdouts(readNow())[0];
+      const party = swingParty ?? bestHoldout(readNow());
       if (type !== 'none' && party) current.promises[party] = type;
       phase = 'room';
       swingParty = null;
@@ -297,6 +320,21 @@ export function openSummit(game, overlayRoot) {
     layer.querySelector('.sm-panel button:not([disabled])')?.focus();
   });
   layer.addEventListener('keydown', (event) => {
+    // Keep focus inside the summit: acting on the game behind it would change the votes already shown.
+    if (event.key === 'Tab') {
+      const items = [...layer.querySelectorAll('button:not([disabled])')];
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (!first) return;
+      if (event.shiftKey && (document.activeElement === first || !layer.contains(document.activeElement) || document.activeElement === layer)) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+      return;
+    }
     if (event.key === 'Escape' && phase === 'swing') {
       event.preventDefault();
       phase = 'room';

@@ -50,7 +50,8 @@ def front():
         col = G.M("coral", 55, "wood") if role == "ceo" else G.M("teal", 55, "wood")
         o.append(f'<g transform="translate({bx},{by}) scale(4.2)">{G.back_person(G.PEOPLE[role])}{GP.armchair_front(col)}</g>')
     o.append('<rect width="1440" height="900" style="fill:url(#shvig)"/>')
-    return "".join(o)
+    # The foreground and the vignette cover the whole canvas; clicks must reach the delegates.
+    return f'<g style="pointer-events:none">{"".join(o)}</g>'
 
 
 def main():

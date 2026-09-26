@@ -3504,6 +3504,7 @@ svg.room {
 .sm-holdouts { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin-top: 12px; }
 .sm-who { display: grid; grid-template-columns: 30px 1fr; gap: 10px; align-items: center; padding: 8px 12px; border: 0; border-left: 5px solid var(--pc); border-radius: 12px; background: color-mix(in oklab, var(--pc) 10%, var(--paper)); color: var(--ink); font: inherit; font-size: 13.5px; font-weight: 800; line-height: 1.28; text-align: left; cursor: pointer; }
 .sm-who.sel { box-shadow: inset 0 0 0 2.5px var(--coral); }
+.sm-who small { display: block; margin-top: 3px; font-size: 12px; font-weight: 800; color: color-mix(in oklab, var(--wood) 62%, var(--ink)); }
 .sm-muted { color: color-mix(in oklab, var(--ink) 58%, var(--paper)); }
 .sm-actions { display: flex; align-items: center; gap: 12px; }
 .sm-actions .btn { width: auto; padding: 9px 18px; }
