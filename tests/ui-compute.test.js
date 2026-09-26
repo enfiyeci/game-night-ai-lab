@@ -361,10 +361,12 @@ test('view-model text never reveals poisoned hidden-state numbers', () => {
 test('sites and signed deals show the landing date, not the old mark', () => {
   const s = createInitialState({ seed: 7 });
   s.power.sites.push({ id: 'gas-t', source: 'gas', units: 40, arrivesTurn: 2, online: false, oppositionCut: null, landsDay: 170, landsFor: 1 });
+  s.power.sites.push({ id: 'nuke-t', source: 'nuclear', units: 30, arrivesTurn: 2, online: false, oppositionCut: null, landsDay: 165, landsFor: 1 });
   const view = sitesView(s);
-  assert.equal(view.nextArrival.day, 170);
+  assert.equal(view.nextArrival.day, 165); // the next to land, not the first built
   assert.match(view.sites.find((x) => x.id === 'gas-t').status, new RegExp(`online ${storyDate(170).label}`));
   s.compute.pipeline.push({ id: 'c9', supplier: 'verde', units: 8, arrivesTurn: 2, landsDay: 175, landsFor: 1 });
-  const lines = turnSummary([{ type: 'deal', supplier: 'verde', arrivesTurn: 2 }], s);
+  s.compute.pipeline.unshift({ id: 'c8', supplier: 'azuria', units: 4, arrivesTurn: 2, landsDay: 160, landsFor: 1 }); // an older deal due the same round
+  const lines = turnSummary([{ type: 'deal', supplier: 'verde', arrivesTurn: 2, pipelineId: 'c9' }], s);
   assert.ok(lines.some((line) => line.includes(storyDate(175).label)), lines.join(' / '));
 });

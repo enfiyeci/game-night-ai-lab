@@ -4,7 +4,7 @@ import { clamp } from './util.js';
 import { startRun, advanceRun, advanceRunBy, recheckCapacity } from './training.js';
 import { activateReleases, releaseModel } from './release.js';
 import {
-  signOffer, contractAction, deliverDue, contractsTurn, expireContracts, pullBumped, spendCredits, generateOffers, monthlyBills, sideRng,
+  signOffer, contractAction, deliverDue, contractsTurn, expireContracts, pullBumped, spendCredits, creditOffset, generateOffers, monthlyBills, sideRng,
 } from './contracts.js';
 import { placeOrder, withdrawOrder, queueTurn } from './queue.js';
 import { buildSite, leaseBills, powerTurn } from './power.js';
@@ -389,7 +389,8 @@ function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
         state.compute.split.coverWithSpot = state.compute.surge.restoreCover ?? state.compute.split.coverWithSpot;
         state.compute.surge = null;
       }
-      spendCredits(state);
+      spendCredits(state, state.compute.creditsUsed ?? 0);
+      state.compute.creditsUsed = 0;
       for (const x of pullBumped(state)) events.push({ type: 'spotPulled', units: x.units });
       if (state.flags.conversionDeadline != null && state.turn >= state.flags.conversionDeadline && !state.flags.converted) {
         state.flags.converted = true;
@@ -531,6 +532,7 @@ export function advanceDays(prev, days, rng, observer = {}) {
     growUsers(state, fraction, { round: false });
     updateServing(state);
     accrueEconomy(state, monthsPerDay(state));
+    state.compute.creditsUsed = (state.compute.creditsUsed ?? 0) + creditOffset(state) * monthsPerDay(state);
     const ended = expireContracts(state, monthsPerDay(state));
     if (ended.length) {
       for (const x of ended) events.push({ type: 'contractEnded', supplier: x.supplier, units: x.units });

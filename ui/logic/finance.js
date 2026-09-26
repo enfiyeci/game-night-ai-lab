@@ -87,15 +87,19 @@ export function signedAt(state, turn) {
       needsPower: p.needsPower ?? (p.supplier === 'verde' && era >= 4),
     })),
   ].filter((c) => c.left > 1e-9 && !c.dark);
+  // Terms end on days (stage 2): in a later row, a contract that ends partway bills its share and adds no capacity.
+  const rowMonths = eraById(era).monthsPerTurn;
+  const share = (c) => (turn > state.turn && Number.isFinite(c.left) ? Math.min(1, c.left / rowMonths) : 1);
+  const whole = live.filter((c) => share(c) >= 1 - 1e-9);
   const sites = state.power.sites.filter((s) => s.online || s.arrivesTurn <= turn);
   const power = sites.reduce((sum, s) => sum + s.units, 0);
-  const own = live.filter((c) => !c.needsPower).reduce((sum, c) => sum + c.units, 0);
-  const needs = live.filter((c) => c.needsPower).reduce((sum, c) => sum + c.units, 0);
+  const own = whole.filter((c) => !c.needsPower).reduce((sum, c) => sum + c.units, 0);
+  const needs = whole.filter((c) => c.needsPower).reduce((sum, c) => sum + c.units, 0);
   const billOf = (c) => c.units * (c.supplier === 'spot' ? SPOT_PRICE[era] : c.price) * UNIT_PRICE;
-  const bill = live.reduce((sum, c) => sum + billOf(c), 0) + sites.reduce((sum, s) => sum + leaseMonthly(s.units), 0);
-  const azuria = live.filter((c) => c.supplier === 'azuria').reduce((sum, c) => sum + billOf(c), 0);
+  const bill = live.reduce((sum, c) => sum + billOf(c) * share(c), 0) + sites.reduce((sum, s) => sum + leaseMonthly(s.units), 0);
+  const azuria = live.filter((c) => c.supplier === 'azuria').reduce((sum, c) => sum + billOf(c) * share(c), 0);
   const raw = own + Math.min(needs, power);
-  const prices = live.map((c) => ({ units: c.units, price: c.supplier === 'spot' ? SPOT_PRICE[era] : c.price }));
+  const prices = whole.map((c) => ({ units: c.units, price: c.supplier === 'spot' ? SPOT_PRICE[era] : c.price }));
   // refreshOnline: pooled compute goes to the government pool; it is still billed.
   return { units: Math.floor(raw * (1 - (state.compute.pooled ?? 0))), raw, bill, azuria, prices };
 }

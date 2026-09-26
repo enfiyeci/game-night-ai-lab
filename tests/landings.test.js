@@ -182,3 +182,45 @@ test('a contract term runs on days: it ends on its end date, and an early landin
   assert.equal(ended, landsDay + 91); // three months of era-1 days (91 days a quarter) after it landed
   assert.ok(days <= 91, `billed on ${days} days`);
 });
+
+import { contractBill } from '../sim/contracts.js';
+
+test('an Azuria contract landing mid-round spends credits only for the days it ran', () => {
+  const rng = createRng(11);
+  let s = createInitialState({ seed: 11 });
+  s.cash = 1e6;
+  s.compute.credits = 1000;
+  const id = addPipeline(s, { supplier: 'azuria', units: 10, price: 1, termMonths: 24, arrivesTurn: 2, needsPower: false });
+  s = applyActions(s, {}, rng).state;
+  const landsDay = s.compute.pipeline.find((p) => p.id === id).landsDay;
+  const r = advanceTo(s, roundSpan(1).end, rng); // the mark that ends round 1
+  const bill = contractBill(r.s.compute.contracts.find((c) => c.id === id));
+  const expected = 1000 - bill * (roundSpan(1).end - landsDay) * (3 / 91);
+  assert.ok(Math.abs(r.s.compute.credits - expected) < 1e-6, `${r.s.compute.credits} vs ${expected}`);
+});
+
+test('a delivery between marks leaves the Gulf license for the mark to decide', () => {
+  const rng = createRng(12);
+  let s = createInitialState({ seed: 12 });
+  s.cash = 1e6;
+  s.compute.contracts.push({ id: 'g1', supplier: 'gulf', units: 5, price: 1, monthsLeft: 24, needsPower: false, string: null, arrivedTurn: 0, scaledDown: false, troubled: false, dark: false, bumpTurn: null, exclusiveBought: false, headline: null });
+  s.govFavor.us = 0;
+  const id = addPipeline(s, { supplier: 'verde', units: 8, price: 0.9, termMonths: 24, arrivesTurn: 1, needsPower: false });
+  s = applyActions(s, {}, rng).state;
+  const day = s.compute.pipeline.find((p) => p.id === id).landsDay;
+  assert.ok(day < roundSpan(0).end, 'lands before the mark');
+  let r = advanceTo(s, day, rng);
+  assert.equal(r.s.compute.contracts.find((c) => c.id === 'g1').dark, false);
+  r = advanceTo(r.s, roundSpan(0).end, rng);
+  assert.equal(r.s.compute.contracts.find((c) => c.id === 'g1')?.dark ?? true, true);
+});
+
+test('a gas site facing local opposition waits for its mark', () => {
+  const s = createInitialState({ seed: 14 });
+  s.power.sites.push({ id: 'gas-o', source: 'gas', units: 40, arrivesTurn: 3, online: false, oppositionCut: null });
+  stampLandings(s);
+  assert.ok(s.power.sites.find((x) => x.id === 'gas-o').landsDay < roundSpan(2).end);
+  s.flags.oppositionSite = 'gas-o';
+  stampLandings(s);
+  assert.equal(s.power.sites.find((x) => x.id === 'gas-o').landsDay, roundSpan(2).end);
+});

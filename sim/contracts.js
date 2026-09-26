@@ -116,18 +116,19 @@ export function signOffer(state, offerId, rng) {
     arrive(state, state.compute.pipeline.splice(i, 1)[0], rng);
     refreshOnline(state);
   }
-  return { ok: true, offerId, arrivesTurn };
+  return { ok: true, offerId, arrivesTurn, pipelineId: id };
 }
 
 // Called once the turn has advanced, so what is due on turn T is online while the player plans turn T.
-export function deliverDue(state, rng, due = (p) => p.arrivesTurn <= state.turn) {
+// sync: false (a delivery between marks) leaves every other contract's Gulf license and spot price to the mark.
+export function deliverDue(state, rng, due = (p) => p.arrivesTurn <= state.turn, { sync = true } = {}) {
   const arrived = [];
   state.compute.pipeline = state.compute.pipeline.filter((p) => {
     if (!due(p)) return true;
     arrived.push(arrive(state, p, rng));
     return false;
   });
-  syncContracts(state);
+  if (sync) syncContracts(state);
   refreshOnline(state);
   return arrived;
 }
@@ -194,8 +195,9 @@ export function creditOffset(state) {
   return Math.min(azuria, state.compute.credits / months);
 }
 
-export function spendCredits(state) {
-  const used = creditOffset(state) * eraById(state.era).monthsPerTurn;
+// `used` defaults to a whole round at today's offset; the day loop passes what the days actually used (stage 2), so an
+// Azuria contract that lands or ends mid-round spends credits only for the days it ran.
+export function spendCredits(state, used = creditOffset(state) * eraById(state.era).monthsPerTurn) {
   state.compute.credits = Math.max(0, state.compute.credits - used);
   return used;
 }

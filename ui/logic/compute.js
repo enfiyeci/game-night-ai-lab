@@ -480,7 +480,7 @@ export function sitesView(state) {
   }
   // The day a site comes online: its landing day once stamped (sim/landings.js), else its old round mark.
   const landing = (site) => site.landsDay ?? storyDayForTurn(site.arrivesTurn);
-  const pending = state.power.sites.filter((site) => !site.online).sort((a, b) => a.arrivesTurn - b.arrivesTurn);
+  const pending = state.power.sites.filter((site) => !site.online).sort((a, b) => landing(a) - landing(b));
   const nextArrival = pending[0] ? {
     turn: pending[0].arrivesTurn,
     turns: Math.max(0, pending[0].arrivesTurn - state.turn),
@@ -616,7 +616,7 @@ export function turnSummary(events, state) {
         ?? state?.compute?.offers?.find((offer) => offer.id === event.offerId)?.supplier
         ?? supplierFromOfferId(event.offerId);
       const subject = supplier ? `You signed with ${supplierName(supplier)}` : 'You signed a compute deal';
-      const day = state?.compute?.pipeline?.find((p) => p.arrivesTurn === event.arrivesTurn && p.landsDay != null)?.landsDay
+      const day = state?.compute?.pipeline?.find((p) => p.id === event.pipelineId && p.landsDay != null)?.landsDay
         ?? storyDayForTurn(event.arrivesTurn);
       lines.push(`${subject} — online from ${storyDate(day).label}`);
     } else if (event.type === 'spotWarning') {

@@ -34,11 +34,18 @@ test('signed compute drops off when a contract term ends', () => {
   const [contract] = state.compute.contracts;
   state.compute.contracts = [contract]; // this contract alone: others land and end on their own days
   state.compute.pipeline = [];
-  const lastBilled = Array.from({ length: 12 }, (_, i) => state.turn + i)
-    .filter((t) => monthOfTurn(t) - monthOfTurn(state.turn) < contract.monthsLeft).at(-1);
-  assert.equal(signedAt(state, lastBilled).units, contract.units);
-  assert.equal(signedAt(state, lastBilled + 1).units, 0);
-  assert.ok(Math.abs(signedAt(state, lastBilled).bill - contract.units * contract.price * BALANCE.unitMonthlyCost) < 1e-9);
+  // Terms end on days: rows the contract fully covers count its capacity and bill; a partial last row bills its share only.
+  const full = contract.units * contract.price * BALANCE.unitMonthlyCost;
+  const ahead = (t) => monthOfTurn(t) - monthOfTurn(state.turn);
+  const rowMonths = (t) => monthOfTurn(t + 1) - monthOfTurn(t);
+  const lastWhole = Array.from({ length: 12 }, (_, i) => state.turn + i)
+    .filter((t) => t === state.turn || ahead(t) + rowMonths(t) <= contract.monthsLeft + 1e-9).at(-1);
+  assert.equal(signedAt(state, lastWhole).units, contract.units);
+  assert.ok(Math.abs(signedAt(state, lastWhole).bill - full) < 1e-9);
+  const next = signedAt(state, lastWhole + 1);
+  assert.equal(next.units, 0);
+  const share = Math.max(0, Math.min(1, (contract.monthsLeft - ahead(lastWhole + 1)) / rowMonths(lastWhole + 1)));
+  assert.ok(Math.abs(next.bill - full * share) < 1e-9);
 });
 
 test('a goal bills the unsigned compute from next turn at the base price', () => {

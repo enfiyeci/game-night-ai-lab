@@ -34,6 +34,8 @@ export function lateInRoundDay(state, key, round) {
   return from + 1 + createRng(hashKey(state.seed ?? 1, key)).int(0, end - from - 1);
 }
 
+const onMarkDay = (state, key, round) => roundSpan(round).end;
+
 function stamp(state, item, round, key, dayFor = landingDay) {
   if (item.landsFor === round && item.landsDay != null) return;
   item.landsFor = round;
@@ -48,7 +50,14 @@ export function stampLandings(state) {
     if (p.source === 'president' && p.dueTurn != null) stamp(state, p, p.dueTurn, `promise:${p.meeting}:${p.id}`);
   }
   for (const p of state.compute.pipeline) stamp(state, p, p.arrivesTurn - 1, `pipeline:${p.id}:${p.arrivesTurn}`, lateInRoundDay);
-  for (const s of state.power.sites) if (!s.online) stamp(state, s, s.arrivesTurn - 1, `site:${s.id}`, lateInRoundDay);
+  for (const s of state.power.sites) {
+    if (s.online) continue;
+    // A site facing local opposition waits for its mark, so the opposition card always lands first, as it did.
+    const held = state.flags.oppositionSite === s.id;
+    if (Boolean(s.landsHeld) !== held) delete s.landsDay;
+    s.landsHeld = held;
+    stamp(state, s, s.arrivesTurn - 1, `site:${s.id}`, held ? onMarkDay : lateInRoundDay);
+  }
 }
 
 // Everything that lands today (stage 2), fired from advanceDays before the mark code.
@@ -60,7 +69,7 @@ export function landDue(state) {
   for (const c of legalTick(state, landed)) events.push({ type: 'lawsuitPaid', cost: c.cost, source: c.source });
   keepPromises(state, landed);
   if (state.compute.pipeline.some(landed)) {
-    for (const x of deliverDue(state, sideRng(state, 6), landed)) events.push({ type: 'computeArrived', supplier: x.supplier, units: x.units });
+    for (const x of deliverDue(state, sideRng(state, 6), landed, { sync: false })) events.push({ type: 'computeArrived', supplier: x.supplier, units: x.units });
   }
   const sites = powerTurn(state, landed);
   for (const e of sites) events.push(e);
