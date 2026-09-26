@@ -2827,3 +2827,5 @@ svg.room {
 .hazard-bubble b { display: block; font-size: 10.5px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; color: color-mix(in oklab, var(--wood) 60%, var(--ink)); }
 .hazard-bubble .chip { display: inline-flex; margin-top: 6px; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 800; background: color-mix(in oklab, var(--teal) 14%, var(--paper)); color: color-mix(in oklab, var(--teal) 62%, var(--ink)); }
 @media (prefers-reduced-motion: reduce) { .hazard-card { animation: none; } }
+/* The desk phone sits above dialogs and could open an event card over the choice; it steps away until then. */
+.hazard-open .ev-phone, .hazard-open .ev-phone-button { display: none; }
