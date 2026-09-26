@@ -1,6 +1,8 @@
 import { createRng } from './rng.js';
 import { roundSpan } from './time.js';
 import { landRivals } from './rivals.js';
+import { legalTick } from './economy.js';
+import { keepPromises } from './promises.js';
 
 // FNV-1a over the seed and a key, so a landing day never draws from the game's shared random numbers.
 function hashKey(seed, key) {
@@ -42,5 +44,8 @@ export function landDue(state) {
   stampLandings(state);
   const events = [];
   for (const r of landRivals(state)) events.push({ type: 'rivalRelease', ...r });
+  const landed = (item) => item.landsDay != null && item.landsDay <= state.day;
+  for (const c of legalTick(state, landed)) events.push({ type: 'lawsuitPaid', cost: c.cost, source: c.source });
+  keepPromises(state, landed);
   return events;
 }

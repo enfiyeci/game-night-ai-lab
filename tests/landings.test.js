@@ -4,8 +4,19 @@ import { createInitialState } from '../sim/state.js';
 import { roundSpan } from '../sim/time.js';
 import { landingDay, stampLandings } from '../sim/landings.js';
 import { createRng } from '../sim/rng.js';
-import { advanceDays } from '../sim/turn.js';
+import { advanceDays, applyActions } from '../sim/turn.js';
 import { rivalsTurn, landRivals } from '../sim/rivals.js';
+import { createPresidentPromise } from '../sim/promises.js';
+
+function advanceTo(s, day, rng) {
+  let events = [];
+  while (s.day < day) {
+    const r = advanceDays(s, 1, rng);
+    s = r.state;
+    events = r.events;
+  }
+  return { s, events };
+}
 
 test('a landing day falls inside its round and never in the past', () => {
   const s = createInitialState({ seed: 4 });
@@ -69,4 +80,31 @@ test('rival launches spread across the days, not only on marks', () => {
   }
   assert.ok(days.length >= 3, `launches: ${days}`);
   assert.ok(days.some((day) => !marks.has(day)), `launch days: ${days}`);
+});
+
+test('a lawsuit is billed on its landing day, inside its round', () => {
+  const rng = createRng(5);
+  let s = createInitialState({ seed: 5 });
+  s.legalCases.push({ cost: 50, dueTurn: 1, source: 'test' });
+  s = applyActions(s, {}, rng).state;
+  const due = s.legalCases.find((c) => c.source === 'test').landsDay;
+  assert.ok(due > roundSpan(1).start && due <= roundSpan(1).end);
+  let r = advanceTo(s, due - 1, rng);
+  assert.ok(r.s.legalCases.some((c) => c.source === 'test'));
+  r = advanceTo(r.s, due, rng);
+  assert.ok(r.events.some((e) => e.type === 'lawsuitPaid' && e.source === 'test'));
+  assert.ok(!r.s.legalCases.some((c) => c.source === 'test'));
+});
+
+test('a kept President promise is thanked on its landing day', () => {
+  const rng = createRng(6);
+  let s = advanceDays(createInitialState({ seed: 6 }), 91, rng).state; // the first mark sets the default constitution
+  const promise = createPresidentPromise('killSwitch', 'second', s.turn, s); // due 2 rounds on; kept while 'accept-shutdown' holds
+  s.promises.push(promise);
+  s = applyActions(s, {}, rng).state;
+  const day = s.promises.at(-1).landsDay;
+  let r = advanceTo(s, day - 1, rng);
+  assert.equal(r.s.promises.at(-1).status, 'open');
+  r = advanceTo(r.s, day, rng);
+  assert.equal(r.s.promises.at(-1).status, 'kept');
 });

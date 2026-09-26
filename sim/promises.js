@@ -38,17 +38,22 @@ export function createPresidentPromise(id, meeting, turn, state) {
   };
 }
 
-export function promiseUpkeep(state, rng) {
+// Thanks the lab for each open President promise that has come due (by `due`) and is kept.
+export function keepPromises(state, due = (promise) => promise.dueTurn <= state.turn) {
   for (const promise of state.promises) {
     if (!isPresidentPromise(promise)
       || promise.status !== 'open'
       || isEndgamePromise(promise)
-      || promise.dueTurn > state.turn) continue;
+      || !due(promise)) continue;
     if (!promiseDefinition(promise).check(state, promise)) continue;
     promise.status = 'kept';
     state.govFavor.us += 5;
     pushFeed(state, '@executive_office', `Thank you to the lab for keeping its promise: “${promise.text}”`, 'event');
   }
+}
+
+export function promiseUpkeep(state, rng) {
+  keepPromises(state);
   for (const promise of state.promises) {
     if (!isPresidentPromise(promise) || promise.status !== 'open' || promise.leaked) continue;
     const contradictsHeldLine = promiseDefinition(promise).contradicts.some((line) => hasLine(state, line));
