@@ -55,3 +55,41 @@ export function typedText(text, startAt, t, cps = 26) {
   if (t < startAt) return '';
   return text.slice(0, Math.floor((t - startAt) * cps));
 }
+
+// ---------------------------------------------------------------- films that follow the run
+// A film with a deal block (A negotiated pace) shows the deal the run made: {name} in a card, or in a plate's data-fill
+// text, becomes the value of that name, and a shot's byDeal list ([[commitment, plate], ..., ['*', plate]]) picks the
+// first plate whose commitment is binding. The 2 am scene happens at a lab that signed what the scene is about. With
+// no run, the film's own example deal is used. run = {deal: {binding: [...], signed: {commitment: [party ids]}}}.
+const NUMBER_WORDS = ['NO', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN'];
+
+export const fillText = (template, values) => template.replace(/\{(\w+)\}/g, (_, key) => values[key] ?? '');
+
+export function resolveFilm(film, run) {
+  const spec = film.deal;
+  if (!spec) return { film, values: {} };
+  const deal = run?.deal ?? spec.example;
+  const binding = Object.keys(spec.terms).filter((c) => deal.binding.includes(c));
+  const signedAny = (names, terms) => Object.keys(names).filter((p) => terms.some((c) => deal.signed?.[c]?.includes(p)));
+  const labs = signedAny(spec.labs, binding);
+  const govs = signedAny(spec.governments, binding);
+
+  const pick = (shot) => shot.byDeal?.find(([c]) => c === '*' || binding.includes(c));
+  const about = film.shots.map(pick).find(Boolean)?.[0];
+  const lab = (about && about !== '*' ? signedAny(spec.labs, [about]) : labs)[0] ?? labs[0] ?? Object.keys(spec.labs)[0];
+
+  const total = Object.keys(spec.labs).length + 1;     // the rivals, and you
+  const signing = labs.length + 1;
+  const count = signing === total ? `ALL ${NUMBER_WORDS[total]}` : `${NUMBER_WORDS[signing]} OF ${NUMBER_WORDS[total]}`;
+  const ticker = [`${count} FRONTIER LABS SIGN`, ...binding.map((c) => spec.headlines[c])].join('  ·  ');
+  const values = { lab: spec.labs[lab], ticker: `${ticker}  ·  `.repeat(4) };
+  binding.forEach((c, i) => { values[`term${i + 1}`] = `${i + 1}.  ${spec.terms[c]}`; });
+  [...labs.slice(0, 3 - govs.length), ...govs].forEach((p, i) => { values[`sig${i + 1}`] = spec.labs[p] ?? spec.governments[p]; });
+
+  const shots = film.shots.map((shot) => ({
+    ...shot,
+    ...(pick(shot) && { plate: pick(shot)[1] }),
+    ...(shot.card && { card: fillText(shot.card, values) }),
+  }));
+  return { film: { ...film, shots }, values };
+}

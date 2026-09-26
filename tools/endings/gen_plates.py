@@ -60,8 +60,8 @@ def during(a, b, dur=0.12):
     return K([[a, {"o": 0}], [a + dur, {"o": 1}], [b - dur, {"o": 1}], [b, {"o": 0}]])
 
 
-def T(x, y, s, size=14, w=500, fill="var(--ink)", anchor="start", mono=False, extra=""):
-    return (f'<text x="{x:.1f}" y="{y:.1f}" text-anchor="{anchor}" '
+def T(x, y, s, size=14, w=500, fill="var(--ink)", anchor="start", mono=False, extra="", attrs=""):
+    return (f'<text x="{x:.1f}" y="{y:.1f}" text-anchor="{anchor}" {attrs}'
             f'style="{MONO if mono else SANS};font-size:{size}px;font-weight:{w};fill:{fill};{extra}">{s}</text>')
 
 
@@ -269,9 +269,10 @@ def qt_gate():
 
 
 # ================================================================ shared screen kinds
-def news(fid, picture, speaker, quote, ticker, t_quote=1.2, clock="21:07 ET"):
+def news(fid, picture, speaker, quote, ticker, t_quote=1.2, clock="21:07 ET", ticker_fill=None):
     """A TV news report: a picture in the middle, a lower third with someone's words, a ticker.
-    quote is a list of (t, line); the lower third appears at t_quote."""
+    quote is a list of (t, line); the lower third appears at t_quote. With ticker_fill, the player writes the ticker
+    from the run (see resolveFilm in ui/endings/timeline.js) and ticker is ignored."""
     o = [f'<rect width="{W}" height="{H}" style="fill:{M("ink", 90, "sky")}"/>', picture,
          tag(70, 104, "LIVE", TAG_CORAL, 15) + T(146, 122, clock, 16, 500, DIM_DARK, mono=True)]
     o.append(f'<g {show(t_quote, 0.2, 12)}><rect x="70" y="404" width="1140" height="118" style="fill:var(--paper)"/>'
@@ -280,7 +281,8 @@ def news(fid, picture, speaker, quote, ticker, t_quote=1.2, clock="21:07 ET"):
              + "".join(f'<g {show(t, 0.2)}>' + T(100, 472 + i * 36, line, 27, 500) + '</g>' for i, (t, line) in enumerate(quote))
              + '</g>')
     o.append(f'<rect x="0" y="530" width="{W}" height="34" style="fill:{M("ink", 80, "coral")}"/>'
-             f'<g {K([[0, {"x": 0}], [6, {"x": -520}]])}>' + T(70, 553, (ticker + "  ·  ") * 3, 16, 500, "var(--paper)", extra="letter-spacing:.04em") + '</g>')
+             f'<g {K([[0, {"x": 0}], [6, {"x": -520}]])}>' + (T(70, 553, "", 16, 500, "var(--paper)", extra="letter-spacing:.04em", attrs=f'data-fill="{ticker_fill}" ') if ticker_fill
+                else T(70, 553, (ticker + "  ·  ") * 3, 16, 500, "var(--paper)", extra="letter-spacing:.04em")) + '</g>')
     defs, over = glass(fid)
     return svg("".join(o) + over, defs)
 
@@ -593,34 +595,54 @@ def rd_card():
 
 # ================================================================ A negotiated pace
 def pd_news():
-    """Signing day. The accord cards, signed by both sides. The President signs last, for the cameras."""
+    """Signing day. The accord as the run made it: its binding terms (two columns of three), up to three signatures and
+    a ticker, all written by the player from the run's deal. The President signs last, for the cameras."""
+    fill = lambda name: f'data-fill="{{{name}}}" '
     picture = doc_panel(256, 104, 824, 280, "The Geneva Accord on Frontier AI · Signed copy")
-    for i, item in enumerate(["Compute cap on training runs", "Evaluators inside every lab", "A verification channel, US and China"]):
-        picture += T(280, 196 + i * 44, f"{i + 1}.  {item}", 24, 500)
-    picture += (f'<g {show(0.4, 0.2)}>' + T(760, 356, "Qilin", 26, 400, M("sky", 70, "ink"), extra="font-style:italic") + '</g>'
-                f'<g {show(0.7, 0.2)}>' + T(900, 356, "US Commerce", 22, 400, M("sky", 70, "ink"), extra="font-style:italic") + '</g>')
+    for i in range(6):
+        picture += T(280 + (i // 3) * 400, 192 + (i % 3) * 42, "", 22, 500, attrs=fill(f"term{i + 1}"))
+    for i in range(3):
+        picture += (f'<g {show(0.4 + i * 0.3, 0.2)}>'
+                    + T(540 + i * 175, 356, "", 20, 400, M("sky", 70, "ink"), extra="font-style:italic", attrs=fill(f"sig{i + 1}")) + '</g>')
     return news("pdnews", picture, "THE PRESIDENT, AT THE SIGNING", [(1.4, "“Great deal. Maybe the greatest deal in the history"),
                                                                     (2.4, "of computers. Nobody slows down better than us.”")],
-                "ALL FIVE FRONTIER LABS SIGN  ·  INSPECTORS ARRIVE MONDAY  ·  CHIP ORDERS PAUSED", t_quote=1.2, clock="12:00 CET")
+                "", t_quote=1.2, clock="12:00 CET", ticker_fill="{ticker}")
 
 
-def pd_cursor():
-    """Month 1, 2 am, at OpenBrain. A cursor hovers over a run that would break the cap, then moves away."""
+def launcher(fid, console, subject, warning, button, evaluator=True):
+    """Month 1, 2 am, at a lab bound by the accord ({lab}, filled in by the player). A cursor comes to rest on a
+    button that would break the deal, waits, then moves away."""
     o = [f'<rect width="{W}" height="{H}" style="fill:{M("ink", 94, "sky")}"/>',
          f'<rect x="170" y="110" width="940" height="440" rx="6" style="fill:var(--paper)"/>',
          f'<rect x="170" y="110" width="940" height="48" rx="6" style="fill:{M("coral", 14, "paper")}"/>',
-         T(196, 142, "OpenBrain · Training launcher · 02:07", 16, 600, DIM),
-         T(210, 220, "run-4411 · 3.1e27 FLOP", 30, 500, mono=True),
-         T(210, 262, "Accord cap: 1.0e27 FLOP", 20, 400, CORAL_LIGHT, mono=True),
+         T(196, 142, "", 16, 600, DIM, attrs=f'data-fill="{{lab}} · {console} · 02:07" '),
+         T(210, 220, subject, 30, 500, mono=True),
+         T(210, 262, warning, 20, 400, CORAL_LIGHT, mono=True),
          f'<rect x="210" y="310" width="380" height="66" rx="6" style="fill:{TAG_CORAL}"/>',
-         T(400, 352, "Start run (exceeds cap)", 22, 600, "var(--paper)", "middle"),
-         T(210, 460, "Embedded evaluator on site: J. Okafor", 17, 400, DIM),
-         f'<circle cx="224" cy="500" r="6" style="fill:{TAG_TEAL}"/>' + T(240, 506, "present", 16, 600, TAG_TEAL, mono=True)]
+         T(400, 352, button, 22, 600, "var(--paper)", "middle")]
+    if evaluator:
+        o += [T(210, 460, "Embedded evaluator on site: J. Okafor", 17, 400, DIM),
+              f'<circle cx="224" cy="500" r="6" style="fill:{TAG_TEAL}"/>' + T(240, 506, "present", 16, 600, TAG_TEAL, mono=True)]
     cur = K([[0, {"x": 0, "y": 0}], [1.0, {"x": 0, "y": 0}], [2.6, {"x": 0, "y": 0}], [3.4, {"x": 360, "y": 120}]])
     o.append(f'<g {K([[0, {"x": -260, "y": 180}], [0.8, {"x": 0, "y": 0}]])}><g {cur}>'
              f'<path d="M548,356 l0,30 l8,-8 l6,13 l5,-2 l-6,-13 l12,0 Z" style="fill:var(--paper);stroke:var(--ink);stroke-width:1.5"/></g></g>')
-    defs, over = glass("pdcur", "var(--paper)")
+    defs, over = glass(fid, "var(--paper)")
     return svg("".join(o) + over, defs)
+
+
+def pd_cursor():
+    """The deal capped compute: a training run over the cap."""
+    return launcher("pdcur", "Training launcher", "run-4411 · 3.1e27 FLOP", "Accord cap: 1.0e27 FLOP", "Start run (exceeds cap)")
+
+
+def pd_cursor_evals():
+    """The deal put evaluators in every lab: a release their evaluator has not signed off."""
+    return launcher("pdcurev", "Release console", "rc-7 · ready to ship", "Accord evaluator sign-off: missing", "Ship without sign-off")
+
+
+def pd_cursor_accord():
+    """Any other deal: a release the accord has not cleared, and nobody in the room to stop it."""
+    return launcher("pdcurac", "Release console", "rc-7 · ready to ship", "Not cleared under the Accord", "Ship anyway", evaluator=False)
 
 
 # ================================================================ A costly win
@@ -777,6 +799,7 @@ PLATES = {"mis-port-board": mis_port_board, "mis-triage": mis_triage, "mis-lapto
           "mu-alert": mu_alert, "mu-room": mu_room, "mu-hospital": mu_hospital, "mu-hearing": mu_hearing,
           "lb-cafe": lb_cafe, "lb-chat": lb_chat, "lb-summit": lb_summit,
           "rd-slide": rd_slide, "rd-card": rd_card, "pd-news": pd_news, "pd-cursor": pd_cursor,
+          "pd-cursor-evals": pd_cursor_evals, "pd-cursor-accord": pd_cursor_accord,
           "cw-port": cw_port, "cw-triage": cw_triage, "cw-chat": cw_chat, "cw-reveal": cw_reveal, "cw-phone": cw_phone,
           "ov-launch": ov_launch, "ov-news": ov_news, "ov-chat": ov_chat}
 

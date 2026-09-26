@@ -15,12 +15,17 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+# Deals to try on a film that follows the run (see resolveFilm in ui/endings/timeline.js); None is the film's own example.
+DEALS = [("Cap, evaluators, verification", None),
+         ("Evaluators and shared safety", (["evaluators", "sharedSafety"], ["deepthink", "lodestar", "west"])),
+         ("Release delay and verification", (["releaseDelay", "verification"], ["qilin", "west", "east"]))]
 
 
 def film_files(film_id):
     film = json.loads((ROOT / f"ui/endings/films/{film_id}.json").read_text())
     files = [f"ui/endings/films/{film_id}.json"]
-    files += [f"ui/assets/endings/plates/{s['plate']}.svg" for s in film["shots"] if s.get("plate")]
+    plates = [s["plate"] for s in film["shots"] if s.get("plate")] + [p for s in film["shots"] for _, p in s.get("byDeal", [])]
+    files += [f"ui/assets/endings/plates/{p}.svg" for p in dict.fromkeys(plates)]
     clips = [s["clip"] for s in film["shots"] if s.get("clip")] + ([film["titleClip"]] if film.get("titleClip") else [])
     files += [f"ui/assets/endings/clips/{c}.mp4" for c in clips]
     total = sum(s["dur"] for s in film["shots"]) + film.get("titleDur", 7)
@@ -33,9 +38,12 @@ def build(out, ids):
     shared = ["ui/endings/player.js", "ui/endings/timeline.js", "ui/endings/endings.css"]
     shared += [f"ui/assets/office-era{e}.svg" for e in range(1, 6)] + [f"ui/assets/anchors-era{e}.json" for e in range(1, 6)]
     films = []
+    deal_films = []
     for fid in ids:
         film, files, total = film_files(fid)
         films.append((fid, film["title"], round(total)))
+        if film.get("deal"):
+            deal_films.append(fid)
         shared += files
         # artifacts serve .mp4 but not .m4a, so each sound is published as an audio-only .mp4
         (out / "ui/assets/endings").mkdir(parents=True, exist_ok=True)
@@ -68,11 +76,11 @@ p {{ margin: 0; font-size: 17px; line-height: 1.55; color: color-mix(in oklab, v
 .pick[aria-pressed="true"] small {{ color: color-mix(in oklab, var(--ink) 60%, var(--paper)); }}
 .row {{ display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }}
 .row span {{ font-size: 14px; font-weight: 800; margin-right: 4px; }}
-.era {{ font: 800 15px "Nunito", sans-serif; padding: 8px 14px; border-radius: 10px; border: 2px solid color-mix(in oklab, var(--paper) 30%, var(--ink));
+.era, .deal {{ font: 800 15px "Nunito", sans-serif; padding: 8px 14px; border-radius: 10px; border: 2px solid color-mix(in oklab, var(--paper) 30%, var(--ink));
   background: transparent; color: var(--paper); cursor: pointer; }}
-.era[aria-pressed="true"] {{ background: var(--paper); color: var(--ink); border-color: var(--paper); }}
+.era[aria-pressed="true"], .deal[aria-pressed="true"] {{ background: var(--paper); color: var(--ink); border-color: var(--paper); }}
 .play {{ font: 900 20px "Nunito", sans-serif; padding: 14px 30px; border-radius: 14px; border: 3px solid var(--wood); background: var(--paper); color: var(--ink); cursor: pointer; justify-self: start; }}
-.pick:focus-visible, .era:focus-visible, .play:focus-visible {{ outline: 3px solid var(--sky); outline-offset: 3px; }}
+.pick:focus-visible, .era:focus-visible, .deal:focus-visible, .play:focus-visible {{ outline: 3px solid var(--sky); outline-offset: 3px; }}
 </style>
 <div class="intro">
   <div class="kick">Game Night &middot; ending films</div>
@@ -81,6 +89,8 @@ p {{ margin: 0; font-size: 17px; line-height: 1.55; color: color-mix(in oklab, v
   <div class="films" role="group" aria-label="Film">{buttons}</div>
   <div class="row" role="group" aria-label="Office era"><span>Office era</span>
     {''.join(f'<button type="button" class="era" data-era="{e}" aria-pressed="{str(e == 4).lower()}">{e}</button>' for e in range(1, 6))}</div>
+  <div class="row" role="group" aria-label="Deal" id="deals" hidden><span>The run's deal</span>
+    {''.join(f'<button type="button" class="deal" data-deal="{i}" aria-pressed="{str(i == 0).lower()}">{name}</button>' for i, (name, _) in enumerate(DEALS))}</div>
   <p>Skip or Escape ends a film early.</p>
   <button type="button" class="play" id="play">Play</button>
 </div>
@@ -88,17 +98,23 @@ p {{ margin: 0; font-size: 17px; line-height: 1.55; color: color-mix(in oklab, v
 import {{ mountFilm }} from './ui/endings/player.js';
 let era = 4;
 let id = {json.dumps(ids[0])};
+let deal = 0;
+const DEAL_FILMS = {json.dumps(deal_films)};
+const RUNS = {json.dumps([None if d is None else {"deal": {"binding": d[0], "signed": {c: d[1] for c in d[0]}}} for _, d in DEALS])};
+const deals = document.getElementById('deals');
+deals.hidden = !DEAL_FILMS.includes(id);
 const choose = (sel, key, set) => document.querySelectorAll(sel).forEach((b) => b.addEventListener('click', () => {{
   set(b.dataset[key]);
   document.querySelectorAll(sel).forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
 }}));
 choose('.era', 'era', (v) => {{ era = Number(v); }});
-choose('.pick', 'id', (v) => {{ id = v; }});
+choose('.pick', 'id', (v) => {{ id = v; deals.hidden = !DEAL_FILMS.includes(id); }});
+choose('.deal', 'deal', (v) => {{ deal = Number(v); }});
 const playBtn = document.getElementById('play');
 playBtn.addEventListener('click', async () => {{
   playBtn.disabled = true;
   try {{
-    const film = await mountFilm(document.body, {{ id, era, audioUrl: `ui/assets/endings/${{id}}.sound.mp4`, onDone: () => {{ playBtn.disabled = false; playBtn.focus(); }} }});
+    const film = await mountFilm(document.body, {{ id, era, run: RUNS[deal] ?? undefined, audioUrl: `ui/assets/endings/${{id}}.sound.mp4`, onDone: () => {{ playBtn.disabled = false; playBtn.focus(); }} }});
     film.play();
   }} catch (error) {{
     playBtn.disabled = false;

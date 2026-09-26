@@ -1,6 +1,7 @@
 #!/bin/sh
 # Screenshot an ending film at given times: tools/endings/shoot.sh <film-id> <era> <t> [t ...]
 # Writes shots/film-<id>-<t>.png (1280 x 720) from ui/endings/preview.html, served from the repo root.
+# QUERY adds preview options, e.g. QUERY='&deal=evaluators,sharedSafety&signers=lodestar,west'.
 set -eu
 [ "$#" -ge 3 ] || { echo "usage: tools/endings/shoot.sh <film-id> <era> <t> [t ...]" >&2; exit 2; }
 ID=$1; ERA=$2; shift 2
@@ -23,7 +24,7 @@ for T in "$@"; do
   rm -f "$OUT"
   "$CHROME" --headless=new --disable-gpu --hide-scrollbars --no-first-run --user-data-dir="$PROFILE/$T" \
     --virtual-time-budget=3000 --window-size=1280,720 --screenshot="$OUT" \
-    "http://127.0.0.1:$PORT/ui/endings/preview.html?id=$ID&era=$ERA&t=$T" >/dev/null 2>&1 &
+    "http://127.0.0.1:$PORT/ui/endings/preview.html?id=$ID&era=$ERA&t=$T${QUERY-}" >/dev/null 2>&1 &
   PID=$!
   for _ in $(seq 1 100); do { [ -s "$OUT" ] || ! kill -0 "$PID" 2>/dev/null; } && break; sleep .2; done
   sleep .3; kill "$PID" 2>/dev/null || true; wait "$PID" 2>/dev/null || true

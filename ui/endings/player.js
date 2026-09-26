@@ -6,9 +6,11 @@
 //   film.play();            // from a click, so the sound may start
 //   film.seek(12.5);        // or show one frame
 //
+// run (optional) is what the run ended with, for films that follow it: {deal: state.deal} (see resolveFilm).
+//
 // Assets: ui/endings/films/<id>.json (the shot list), ui/assets/endings/plates/<plate>.svg, ui/assets/endings/clips/<clip>.mp4,
 // ui/assets/endings/<id>.m4a (sound), and the office art ui/assets/office-era<N>.svg with its anchors.
-import { buildTimeline, shotAt, camAt, sampleKeys, typedText } from './timeline.js';
+import { buildTimeline, shotAt, camAt, sampleKeys, typedText, resolveFilm, fillText } from './timeline.js';
 
 const OFFICE = { w: 1440, h: 810, cx: 720, cy: 450, fullH: 900 };
 const PLATE = { w: 1280, h: 720, cx: 640, cy: 360, fullH: 720 };
@@ -163,8 +165,8 @@ function applyValues(el, v, still) {
   }
 }
 
-export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumenLine, onDone, sound = true, audioUrl }) {
-  const film = JSON.parse(await fetchText(`${base}ui/endings/films/${id}.json`));
+export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumenLine, onDone, sound = true, audioUrl, run }) {
+  const { film, values } = resolveFilm(JSON.parse(await fetchText(`${base}ui/endings/films/${id}.json`)), run);
   const timeline = buildTimeline(film);
   const needsOffice = film.shots.some((s) => s.kind === 'office');
   const [officeText, anchors] = needsOffice
@@ -219,6 +221,7 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
     const wrapEl = document.createElement('div');
     wrapEl.className = 'film-shot';
     const svg = shot.kind === 'office' ? officeShot(officeText, anchors, shot) : parseSvg(plates.get(shot.plate));
+    for (const e of svg.querySelectorAll('[data-fill]')) e.textContent = fillText(e.dataset.fill, values);
     wrapEl.append(svg);
     shotsHost.append(wrapEl);
     const frame = shot.kind === 'office' ? OFFICE : PLATE;
