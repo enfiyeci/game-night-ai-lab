@@ -1,0 +1,608 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="../../../">
+  <meta name="viewport" content="width=1440">
+  <title>Summit selection mockups</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="ui/styles.css">
+  <style>
+    /* Mockup-only styles: the summit selection as a step-by-step flow, four ways, over a polished hall.
+       Tokens come from ui/styles.css; no colour literals here. */
+    body { overflow: hidden; }
+    #stage { position: relative; width: 1440px; height: 900px; overflow: hidden; }
+    .hall { position: absolute; inset: 0; }
+    .lay { position: absolute; inset: 0; }
+    .tag { position: absolute; z-index: 2; left: 16px; top: 14px; padding: 4px 10px; border-radius: 8px; background: var(--ink); color: var(--paper); font-size: 12px; font-weight: 900; letter-spacing: .06em; }
+    .muted { color: color-mix(in oklab, var(--ink) 58%, var(--paper)); }
+    .kick { font-size: 11px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: color-mix(in oklab, var(--wood) 60%, var(--ink)); }
+    .pb { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--pc); color: var(--paper); font-size: 10.5px; font-weight: 900; flex: none; }
+    .pb.sm { width: 20px; height: 20px; font-size: 8.5px; }
+
+    /* Demand bubble, only where a step needs it */
+    .dem { position: absolute; z-index: 3; width: 190px; padding: 7px 11px 8px; border-radius: 11px; background: var(--paper); border-top: 4px solid var(--pc); font-size: 13px; font-weight: 800; line-height: 1.25; box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 14%, transparent), 0 6px 14px color-mix(in oklab, var(--ink) 12%, transparent); }
+    .dem::after { content: ""; position: absolute; left: 50%; bottom: -7px; width: 12px; height: 12px; margin-left: -6px; background: var(--paper); transform: rotate(45deg); }
+    .dem small { display: block; margin-top: 3px; font-size: 10.5px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; color: color-mix(in oklab, var(--ink) 50%, var(--paper)); }
+    .dem.met { outline: 2.5px solid var(--teal); }
+    .dem.met small { color: color-mix(in oklab, var(--teal) 60%, var(--ink)); }
+
+    /* Shared bottom panel */
+    .panel { position: absolute; z-index: 4; left: 200px; right: 200px; bottom: 16px; padding: 14px 18px 16px; }
+    .panel h2 { margin: 2px 0 0; font-size: 22px; font-weight: 700; }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .go { display: flex; align-items: center; gap: 14px; }
+    .go .btn { width: auto; padding: 9px 20px; }
+    .ghost { border: 0; background: transparent; font: inherit; font-size: 13.5px; font-weight: 900; color: color-mix(in oklab, var(--wood) 72%, var(--ink)); }
+
+    /* A: agenda steps */
+    .stepper { display: flex; gap: 6px; }
+    .stepper span { display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px 4px 4px; border-radius: 999px; background: color-mix(in oklab, var(--ink) 6%, var(--paper)); font-size: 12.5px; font-weight: 800; color: color-mix(in oklab, var(--ink) 55%, var(--paper)); }
+    .stepper i { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; font-style: normal; font-size: 11px; font-weight: 900; background: color-mix(in oklab, var(--ink) 14%, var(--paper)); color: var(--paper); }
+    .stepper .done { color: color-mix(in oklab, var(--teal) 60%, var(--ink)); }
+    .stepper .done i { background: var(--teal); }
+    .stepper .now { background: var(--ink); color: var(--paper); }
+    .stepper .now i { background: var(--coral); }
+    .deck { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+    .pc { position: relative; display: grid; gap: 3px; padding: 8px 12px 9px; border-radius: 12px; background: var(--paper); border: 2.5px solid color-mix(in oklab, var(--ink) 11%, transparent); text-align: left; }
+    .pc b { font-size: 14.5px; font-weight: 900; padding-right: 22px; }
+    .pc span { font-size: 12px; font-weight: 700; line-height: 1.3; color: color-mix(in oklab, var(--ink) 62%, var(--paper)); }
+    .pc.on { border-color: var(--coral); background: color-mix(in oklab, var(--coral) 7%, var(--paper)); }
+    .pc.on::after { content: attr(data-n); position: absolute; top: 8px; right: 9px; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; background: var(--coral); color: var(--paper); font-size: 11px; font-weight: 900; }
+    .levels { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 12px; }
+    .lv { display: grid; gap: 6px; padding: 10px 12px 11px; border-radius: 12px; background: var(--paper); border: 2.5px solid color-mix(in oklab, var(--ink) 11%, transparent); text-align: left; }
+    .lv b { font-size: 15px; font-weight: 900; }
+    .lv .meter { display: flex; gap: 3px; }
+    .lv .meter i { flex: 1; height: 6px; border-radius: 3px; background: color-mix(in oklab, var(--ink) 10%, var(--paper)); }
+    .lv .meter i.f { background: var(--sky); }
+    .lv .who { display: flex; gap: 3px; align-items: center; font-size: 11.5px; font-weight: 800; color: color-mix(in oklab, var(--ink) 55%, var(--paper)); }
+    .lv.on { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+    .dots { display: flex; gap: 6px; margin-left: auto; font-size: 12px; font-weight: 800; }
+    .dots i { width: 9px; height: 9px; border-radius: 50%; background: color-mix(in oklab, var(--ink) 16%, var(--paper)); display: inline-block; }
+    .dots i.on { background: var(--coral); }
+
+    /* B: one motion at a time */
+    .agenda text { font-family: Nunito, sans-serif; }
+    .swing { display: grid; grid-template-columns: 1.1fr 1fr 1fr 1fr; gap: 10px; margin-top: 12px; }
+    .who-card { display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: center; padding: 8px 12px; border-radius: 12px; background: color-mix(in oklab, var(--pc) 10%, var(--paper)); border-left: 5px solid var(--pc); font-size: 13.5px; font-weight: 800; line-height: 1.28; }
+    .who-card .pb { width: 34px; height: 34px; font-size: 12px; }
+    .ans { display: grid; gap: 3px; padding: 9px 12px; border-radius: 12px; background: var(--paper); border: 2.5px solid color-mix(in oklab, var(--ink) 11%, transparent); text-align: left; }
+    .ans b { font-size: 14px; font-weight: 900; }
+    .ans span { font-size: 12.5px; font-weight: 700; color: color-mix(in oklab, var(--ink) 62%, var(--paper)); }
+    .ans.alt { background: color-mix(in oklab, var(--ink) 5%, var(--paper)); }
+    .tally { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 800; }
+    .tally .pb.no { opacity: .3; }
+
+    /* C: cards on the table */
+    .hand { position: absolute; z-index: 4; left: 0; right: 0; bottom: -34px; height: 260px; }
+    .card { position: absolute; width: 170px; height: 230px; padding: 14px 14px; border-radius: 14px; background: var(--paper); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 16%, transparent), 0 14px 30px color-mix(in oklab, var(--ink) 22%, transparent); transform-origin: 50% 120%; }
+    .card .k { font-size: 10.5px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; color: color-mix(in oklab, var(--wood) 60%, var(--ink)); }
+    .card b { display: block; margin-top: 6px; font-size: 18px; font-weight: 900; line-height: 1.12; }
+    .card span { display: block; margin-top: 8px; font-size: 12.5px; font-weight: 700; line-height: 1.3; color: color-mix(in oklab, var(--ink) 60%, var(--paper)); }
+    .card .edge { position: absolute; left: 0; right: 0; top: 0; height: 8px; border-radius: 14px 14px 0 0; background: var(--wood); }
+    .card.lift { box-shadow: 0 0 0 3px var(--coral), 0 22px 40px color-mix(in oklab, var(--ink) 28%, transparent); }
+    .played { position: absolute; z-index: 3; width: 150px; padding: 11px 12px 12px; border-radius: 10px; background: var(--paper); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 18%, transparent), 0 8px 16px color-mix(in oklab, var(--ink) 18%, transparent); }
+    .played b { display: block; font-size: 14px; font-weight: 900; line-height: 1.15; }
+    .played .inked { display: inline-block; margin-top: 10px; padding: 3px 8px; border: 2.5px solid var(--sky); border-radius: 6px; color: var(--sky); font-size: 12px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; transform: rotate(-6deg); }
+    .played .inked.ink2 { border-color: var(--teal); color: var(--teal); }
+    .tray { position: absolute; z-index: 5; right: 26px; bottom: 18px; width: 214px; padding: 10px 12px 12px; }
+    .tray .stamps { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: 6px; }
+    .stamp { display: grid; justify-items: center; gap: 4px; padding: 7px 4px 8px; border-radius: 10px; background: color-mix(in oklab, var(--ink) 5%, var(--paper)); font-size: 11.5px; font-weight: 900; }
+    .stamp i { width: 34px; height: 22px; border-radius: 5px 5px 3px 3px; background: color-mix(in oklab, var(--ink) 70%, var(--wood)); position: relative; }
+    .stamp i::before { content: ""; position: absolute; left: 12px; top: -12px; width: 10px; height: 13px; border-radius: 5px 5px 0 0; background: var(--wood); }
+    .stamp.hot { background: color-mix(in oklab, var(--sky) 16%, var(--paper)); box-shadow: inset 0 0 0 2.5px var(--sky); }
+    .tokens { position: absolute; z-index: 5; left: 26px; bottom: 18px; width: 214px; padding: 10px 12px 12px; }
+    .tokens .coins { display: flex; gap: 10px; margin-top: 8px; }
+    .coin { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--wood); color: var(--paper); font-size: 10px; font-weight: 900; box-shadow: inset 0 0 0 4px color-mix(in oklab, var(--wood) 70%, var(--ink)), 0 3px 0 color-mix(in oklab, var(--wood) 50%, var(--ink)); }
+    .coin.used { background: color-mix(in oklab, var(--ink) 10%, var(--paper)); box-shadow: inset 0 0 0 3px color-mix(in oklab, var(--ink) 16%, var(--paper)); color: color-mix(in oklab, var(--ink) 40%, var(--paper)); }
+    .hint { position: absolute; z-index: 5; padding: 6px 12px; border-radius: 10px; background: var(--ink); color: var(--paper); font-size: 13px; font-weight: 800; }
+
+    /* D: the voting board */
+    .dim { position: absolute; inset: 0; z-index: 1; background: color-mix(in oklab, var(--ink) 48%, transparent); pointer-events: none; }
+    .board { position: absolute; z-index: 3; left: 290px; right: 290px; top: 24px; height: 300px; border-radius: 16px; padding: 12px; background: color-mix(in oklab, var(--ink) 92%, var(--sky)); box-shadow: 0 30px 60px color-mix(in oklab, var(--ink) 50%, transparent); }
+    .board .in { height: 100%; border-radius: 10px; padding: 20px 28px; background: color-mix(in oklab, var(--sky) 30%, var(--ink)); color: var(--paper); }
+    .board .k { font-size: 12px; font-weight: 900; letter-spacing: .2em; color: color-mix(in oklab, var(--sky) 40%, var(--paper)); }
+    .board-unused h2 { margin: 6px 0 0; font-size: 34px; font-weight: 300; }
+    .board .sub { margin-top: 4px; font-size: 14.5px; font-weight: 700; color: color-mix(in oklab, var(--paper) 72%, var(--sky)); }
+    .dial { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 16px; }
+    .dial div { padding: 14px 14px 14px; border-radius: 12px; background: color-mix(in oklab, var(--paper) 8%, transparent); border: 2px solid color-mix(in oklab, var(--paper) 16%, transparent); }
+    .dial b { display: block; font-size: 17px; font-weight: 900; }
+    .dial span { display: block; margin-top: 6px; font-size: 12.5px; font-weight: 700; color: color-mix(in oklab, var(--paper) 70%, var(--sky)); }
+    .dial .on { background: var(--paper); border-color: var(--paper); color: var(--ink); }
+    .dial .on span { color: color-mix(in oklab, var(--ink) 60%, var(--paper)); }
+    .lamps { display: flex; gap: 8px; align-items: center; margin-top: 16px; font-size: 13px; font-weight: 800; color: color-mix(in oklab, var(--paper) 72%, var(--sky)); }
+    .lamps i { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
+    .gavel { position: absolute; z-index: 4; left: 50%; bottom: 20px; transform: translateX(-50%); display: flex; gap: 16px; align-items: center; padding: 10px 14px 10px 20px; border-radius: 14px; background: var(--paper); font-size: 14px; font-weight: 800; box-shadow: 0 10px 24px color-mix(in oklab, var(--ink) 30%, transparent); }
+    .gavel .btn { width: auto; padding: 9px 20px; }
+  </style>
+</head>
+<body>
+  <main id="stage" aria-label="Summit selection mockups"></main>
+  <style>
+    /* Added for the full step-by-step flows and the framed screen */
+    .scr-frame { position: absolute; z-index: 3; border-radius: 18px; padding: 10px; background: color-mix(in oklab, var(--ink) 90%, var(--sky)); box-shadow: inset 0 0 0 2px color-mix(in oklab, var(--paper) 10%, transparent), 0 30px 60px color-mix(in oklab, var(--ink) 45%, transparent); }
+    .scr-frame .glass { position: relative; height: 100%; border-radius: 9px; overflow: hidden; background: linear-gradient(180deg, color-mix(in oklab, var(--sky) 40%, var(--ink)) 0%, color-mix(in oklab, var(--sky) 26%, var(--ink)) 100%); color: var(--paper); }
+    .scr-frame .glass::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 40%; background: linear-gradient(180deg, color-mix(in oklab, var(--paper) 7%, transparent), transparent); pointer-events: none; }
+    .scr-head { display: flex; align-items: center; gap: 10px; padding: 9px 18px; background: color-mix(in oklab, var(--ink) 30%, transparent); font-size: 11.5px; font-weight: 900; letter-spacing: .18em; color: color-mix(in oklab, var(--sky) 35%, var(--paper)); }
+    .scr-head .live { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; letter-spacing: .12em; }
+    .scr-head .live i { width: 8px; height: 8px; border-radius: 50%; background: var(--coral); display: inline-block; }
+    .scr-body { padding: 12px 24px 14px; }
+    .scr-body h2 { margin: 2px 0 0; font-size: 28px; font-weight: 300; }
+    .scr-body .sub { margin-top: 4px; font-size: 14px; font-weight: 700; color: color-mix(in oklab, var(--paper) 72%, var(--sky)); }
+    .scr-body .k { font-size: 11.5px; font-weight: 900; letter-spacing: .16em; color: color-mix(in oklab, var(--sky) 40%, var(--paper)); }
+    .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-top: 10px; }
+    .tiles div { padding: 8px 12px; border-radius: 10px; background: color-mix(in oklab, var(--paper) 7%, transparent); border: 2px solid color-mix(in oklab, var(--paper) 14%, transparent); font-size: 14.5px; font-weight: 900; }
+    .tiles div small { display: block; margin-top: 3px; font-size: 12px; font-weight: 700; color: color-mix(in oklab, var(--paper) 62%, var(--sky)); }
+    .tiles .on { background: var(--paper); border-color: var(--paper); color: var(--ink); }
+    .tiles .on small { color: color-mix(in oklab, var(--ink) 58%, var(--paper)); }
+    .lampstrip { display: flex; justify-content: space-between; gap: 6px; margin-top: 12px; padding-top: 10px; border-top: 1px solid color-mix(in oklab, var(--paper) 14%, transparent); }
+    .lampstrip span { display: grid; justify-items: center; gap: 4px; font-size: 11.5px; font-weight: 800; color: color-mix(in oklab, var(--paper) 72%, var(--sky)); }
+    .lampstrip i { width: 16px; height: 16px; border-radius: 50%; display: inline-block; background: color-mix(in oklab, var(--paper) 16%, transparent); }
+    .lampstrip i.yes { background: var(--teal); box-shadow: 0 0 12px var(--teal); }
+    .lampstrip i.maybe { background: var(--wood); box-shadow: 0 0 12px var(--wood); }
+    .lampstrip i.no { background: color-mix(in oklab, var(--coral) 70%, var(--ink)); }
+    .res { display: grid; gap: 7px; margin-top: 14px; }
+    .res div { display: grid; grid-template-columns: 1fr auto 120px; gap: 14px; align-items: center; font-size: 15px; font-weight: 800; }
+    .res .seals { display: flex; gap: 3px; }
+    .res b { font-size: 11.5px; letter-spacing: .06em; text-align: right; }
+    .res b.yes { color: color-mix(in oklab, var(--teal) 45%, var(--paper)); }
+    .res b.no { color: color-mix(in oklab, var(--wood) 45%, var(--paper)); }
+    .hold { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 12px; }
+    .hold .who-card.sel { box-shadow: inset 0 0 0 2.5px var(--coral); }
+    .review { display: grid; gap: 8px; margin-top: 12px; }
+    .review div { display: grid; grid-template-columns: 1fr 150px 230px; gap: 14px; align-items: center; padding: 8px 12px; border-radius: 11px; background: var(--paper); border: 2px solid color-mix(in oklab, var(--ink) 9%, transparent); font-size: 14px; font-weight: 900; }
+    .review .lvl { font-size: 12.5px; font-weight: 800; color: color-mix(in oklab, var(--ink) 62%, var(--paper)); }
+    .review .fc { display: flex; gap: 4px; justify-content: flex-end; align-items: center; font-size: 11px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; color: color-mix(in oklab, var(--teal) 60%, var(--ink)); }
+    .review .fc.no { color: color-mix(in oklab, var(--ink) 50%, var(--paper)); }
+    .slot { width: 150px; height: 104px; border-radius: 10px; border: 2.5px dashed color-mix(in oklab, var(--paper) 70%, var(--wood)); }
+    .bubble2 { position: absolute; z-index: 4; width: 250px; padding: 9px 13px 11px; border-radius: 12px; background: var(--paper); border-left: 5px solid var(--pc); font-size: 14.5px; font-weight: 700; line-height: 1.3; box-shadow: 0 8px 18px color-mix(in oklab, var(--ink) 16%, transparent); }
+    .bubble2 b { display: block; font-size: 10.5px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; color: color-mix(in oklab, var(--wood) 60%, var(--ink)); }
+  </style>
+<script type="module">
+import { SCENARIOS } from './ui/logic/scenarios.js';
+import { readTheRoom } from './sim/summit.js';
+import { DEMANDS } from './sim/data/summit.js';
+
+const SEED = 2;
+const state = SCENARIOS.summit(SEED);
+const view = location.hash.slice(1) || 'a1';
+await document.fonts.load('900 12px Nunito');
+await document.fonts.load('300 36px Nunito');
+await document.fonts.ready;
+
+const stage = document.querySelector('#stage');
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+const add = (html) => stage.insertAdjacentHTML('beforeend', html);
+
+const NAMES = { openbrain: ['OpenBrain', 'OB'], deepthink: ['DeepThink', 'DT'], west: ['The West', 'W'], east: ['The East', 'E'], qilin: ['Qilin', 'QL'], lodestar: ['Lodestar', 'LS'] };
+const LABS = ['openbrain', 'deepthink', 'qilin', 'lodestar'];
+const GOVS = ['west', 'east'];
+const pb = (id, sm = false) => `<span class="pb${sm ? ' sm' : ''}" data-p="${id}">${id === 'you' ? 'YOU' : NAMES[id][1]}</span>`;
+const CARDS = {
+  evaluators: ['Outside testers in every lab', 'Independent testers sit inside each lab and can publish what they find.'],
+  computeCap: ['A cap on training runs', 'No single training run bigger than an agreed size.'],
+  releaseDelay: ['A wait between launches', 'Each lab waits a set time before its next model.'],
+  sharedSafety: ['Pooled safety research', 'Every signer pays into one shared safety lab.'],
+  pauseAutomation: ['No AI doing AI research', 'Labs stop letting their own models run their research.'],
+  verification: ['West–East inspection line', 'Both governments check each other’s labs.'],
+};
+const LEVELS = [['On trust', 'Nobody checks'], ['Self-reports', 'Labs report on themselves'], ['Outside testers', 'Testers can publish'], ['Inspectors', 'Inspectors on site']];
+const PROMISE = [['Inspect us too', 'Inspectors can check our runs'], ['We pay for it', '$50M toward the checks'], ['Our lab goes first', 'Testers start with us']];
+
+// The plan the whole walkthrough follows: two proposals, then one promise to the East.
+const PLAN = { proposals: ['evaluators', 'sharedSafety'], checks: { evaluators: 2, sharedSafety: 3 } };
+const room = (proposals, checks = {}, promises = {}) => readTheRoom(state, { proposals, checks, promises });
+const any = (r, cards) => Object.fromEntries(Object.keys(NAMES).map((id) => {
+  const v = cards.map((c) => r[c][id]);
+  return [id, v.includes('yes') ? 'yes' : v.includes('maybe') ? 'maybe' : 'no'];
+}));
+const binds = (read) => LABS.some((id) => read[id] === 'yes') && GOVS.some((id) => read[id] === 'yes');
+const signers = (read) => Object.keys(NAMES).filter((id) => read[id] === 'yes');
+
+// Is a delegate's demand met, judged on one card (the build's demandMet, ported for the mockup)
+function met(id, card, checks, promises = {}) {
+  if (promises[id]) return true;
+  const rule = DEMANDS[id].rule;
+  const level = checks[card] ?? 1;
+  if (rule.promiseOnly) return false;
+  if (rule.refuses) return card !== rule.refuses;
+  if (rule.minCheck != null) return level >= rule.minCheck;
+  const r = room(Object.keys(checks), checks, promises);
+  return r[card]?.[rule.follows] === 'yes' && !(rule.maxCheck != null && level > rule.maxCheck);
+}
+
+// ---------- the hall ----------
+const SEATS = [
+  { id: 'openbrain', x: 196, y: 424, skin: 'color-mix(in oklab, var(--wood) 35%, var(--paper))', hair: 'var(--ink)', style: 2 },
+  { id: 'deepthink', x: 408, y: 398, skin: 'color-mix(in oklab, var(--wood) 55%, var(--paper))', hair: 'color-mix(in oklab, var(--wood) 60%, var(--ink))', style: 1, glasses: true },
+  { id: 'west', x: 618, y: 386, skin: 'color-mix(in oklab, var(--wood) 35%, var(--paper))', hair: 'color-mix(in oklab, var(--wood) 30%, var(--paper))', style: 2 },
+  { id: 'east', x: 822, y: 386, skin: 'color-mix(in oklab, var(--wood) 68%, var(--ink))', hair: 'var(--ink)', style: 0, glasses: true },
+  { id: 'qilin', x: 1032, y: 398, skin: 'color-mix(in oklab, var(--wood) 55%, var(--paper))', hair: 'var(--ink)', style: 3 },
+  { id: 'lodestar', x: 1244, y: 424, skin: 'color-mix(in oklab, var(--wood) 80%, var(--ink))', hair: 'var(--ink)', style: 1 },
+];
+const deskY = (x) => { const t = (x - 70) / 1300; return 560 - 150 * 4 * t * (1 - t) * 0.62; };
+const lampColor = (v) => (v === 'yes' ? 'var(--teal)' : v === 'maybe' ? 'var(--wood)' : 'color-mix(in oklab, var(--coral) 70%, var(--ink))');
+
+function figure(seat, raise) {
+  const { x, y, skin, hair, style, glasses } = seat;
+  const suit = 'color-mix(in oklab, var(--pc) 38%, var(--ink))';
+  const hairPath = [
+    'M-17 -4 Q-18 -24 0 -25 Q18 -24 17 -4 Q14 -16 0 -17 Q-12 -17 -17 -4Z',
+    'M-18 2 Q-20 -26 0 -26 Q20 -26 18 2 Q16 -14 8 -17 Q-2 -12 -14 -14 Q-17 -8 -18 2Z',
+    'M-16 -8 Q-12 -26 4 -24 Q18 -22 17 -8 Q8 -18 -16 -8Z',
+    'M-19 12 Q-22 -26 0 -26 Q22 -26 19 12 L14 12 Q16 -12 0 -15 Q-16 -12 -14 12Z',
+  ][style % 4];
+  const card = raise === 'yes' ? ['var(--teal)', 'SIGN'] : raise === 'maybe' ? ['var(--wood)', '?'] : ['color-mix(in oklab, var(--ink) 55%, var(--paper))', 'NO'];
+  const arm = raise ? `<path d="M19 22 L28 -14" style="stroke:${suit};stroke-width:10;stroke-linecap:round"/><rect x="14" y="-46" width="38" height="28" rx="4" style="fill:${card[0]};stroke:var(--paper);stroke-width:2"/><text x="33" y="-27" text-anchor="middle" style="font:900 12px Nunito;fill:var(--paper)">${card[1]}</text>` : '';
+  const mouth = raise === 'no' ? 'M-5 6 Q0 3.5 5 6' : 'M-5 5 Q0 8.5 5 5';
+  return `<g data-p="${seat.id}" transform="translate(${x} ${y}) scale(1.75)">
+    <rect x="-34" y="10" width="68" height="44" rx="10" style="fill:color-mix(in oklab, var(--ink) 60%, var(--wood))"/>
+    <path d="M-28 58 Q-28 20 0 18 Q28 20 28 58Z" style="fill:${suit}"/>
+    <path d="M-6 19 L0 30 L6 19Z" style="fill:var(--paper)"/><path d="M-1.6 22 L1.6 22 L2.4 34 L0 37 L-2.4 34Z" style="fill:var(--pc)"/>
+    <rect x="-5.5" y="9" width="11" height="10" style="fill:${skin}"/>
+    ${arm}
+    <ellipse cx="0" cy="-5" rx="16" ry="18" style="fill:${skin}"/><path d="${hairPath}" style="fill:${hair}"/>
+    <circle cx="-5.5" cy="-4" r="2" style="fill:var(--ink)"/><circle cx="5.5" cy="-4" r="2" style="fill:var(--ink)"/>
+    <path d="${mouth}" style="fill:none;stroke:var(--ink);stroke-width:1.7;stroke-linecap:round"/>
+    ${glasses ? '<circle cx="-5.5" cy="-4" r="4.6" style="fill:none;stroke:var(--ink);stroke-width:1.4"/><circle cx="5.5" cy="-4" r="4.6" style="fill:none;stroke:var(--ink);stroke-width:1.4"/>' : ''}
+  </g>`;
+}
+
+function flagStand(x, ids) {
+  return ids.map((id, i) => `<g data-p="${id}" transform="translate(${x + i * 64} ${478 + (i % 2) * 14})">
+      <rect x="-1.5" y="-330" width="3" height="330" style="fill:color-mix(in oklab, var(--wood) 40%, var(--ink))"/><circle cy="-332" r="4" style="fill:var(--wood)"/>
+      <path d="M1.5 -324 Q24 -318 46 -324 Q58 -290 50 -250 Q26 -244 1.5 -250Z" style="fill:var(--pc)"/>
+      <path d="M1.5 -324 Q24 -318 46 -324 Q50 -312 50 -300 Q26 -296 1.5 -300Z" style="fill:color-mix(in oklab, var(--paper) 16%, transparent)"/>
+      <text x="25" y="-282" text-anchor="middle" style="font:900 12px Nunito;fill:var(--paper)">${NAMES[id][1]}</text></g>`).join('');
+}
+
+// The summit emblem: a globe inside two laurel branches.
+function emblem(cx, cy, r, colour) {
+  const leaves = (side) => Array.from({ length: 5 }, (_, i) => {
+    const a = (200 + i * 26) * Math.PI / 180;
+    const lx = cx + side * Math.cos(a) * r * 1.25; const ly = cy - Math.sin(a) * r * 1.25 * -1;
+    return `<ellipse cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" rx="${(r * 0.32).toFixed(1)}" ry="${(r * 0.14).toFixed(1)}" transform="rotate(${side * (i * 26 - 30)} ${lx.toFixed(1)} ${ly.toFixed(1)})" style="fill:${colour}"/>`;
+  }).join('');
+  return `<circle cx="${cx}" cy="${cy}" r="${r}" style="fill:none;stroke:${colour};stroke-width:${r * 0.16}"/>
+    <path d="M${cx - r} ${cy} H${cx + r} M${cx} ${cy - r} Q${cx - r * 0.7} ${cy} ${cx} ${cy + r} Q${cx + r * 0.7} ${cy} ${cx} ${cy - r}" style="fill:none;stroke:${colour};stroke-width:${r * 0.1}"/>
+    ${leaves(1)}${leaves(-1)}`;
+}
+
+// The big screen: a framed wall display with a header strip, a glow on the wall and a speaker bar.
+const SCR = { x: 440, y: 34, w: 560, h: 196 };
+function screenSvg(content) {
+  const { x, y, w, h } = SCR;
+  const head = 'color-mix(in oklab, var(--sky) 40%, var(--paper))';
+  return `<rect x="${x - 34}" y="0" width="${w + 68}" height="${y + h + 34}" style="fill:color-mix(in oklab, var(--wood) 46%, var(--paper))"/>
+    <rect x="${x - 34}" y="${y + h + 30}" width="${w + 68}" height="6" style="fill:color-mix(in oklab, var(--wood) 64%, var(--ink))"/>
+    <rect x="${x - 40}" y="0" width="6" height="${y + h + 36}" style="fill:color-mix(in oklab, var(--wood) 64%, var(--ink))"/><rect x="${x + w + 34}" y="0" width="6" height="${y + h + 36}" style="fill:color-mix(in oklab, var(--wood) 64%, var(--ink))"/>
+    <rect x="${x + 150}" y="0" width="6" height="${y}" style="fill:color-mix(in oklab, var(--ink) 60%, var(--wood))"/><rect x="${x + w - 156}" y="0" width="6" height="${y}" style="fill:color-mix(in oklab, var(--ink) 60%, var(--wood))"/>
+    <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="16" style="fill:color-mix(in oklab, var(--ink) 90%, var(--sky))"/>
+    <rect x="${x + 1.5}" y="${y + 1.5}" width="${w - 3}" height="${h - 3}" rx="15" style="fill:none;stroke:color-mix(in oklab, var(--paper) 12%, transparent);stroke-width:1.5"/>
+    <rect x="${x + 10}" y="${y + 10}" width="${w - 20}" height="${h - 20}" rx="8" style="fill:color-mix(in oklab, var(--sky) 32%, var(--ink))"/>
+    <rect x="${x + 10}" y="${y + 10}" width="${w - 20}" height="28" rx="8" style="fill:color-mix(in oklab, var(--ink) 40%, transparent)"/>
+    <rect x="${x + 10}" y="${y + 30}" width="${w - 20}" height="8" style="fill:color-mix(in oklab, var(--ink) 40%, transparent)"/>
+    ${emblem(x + 32, y + 24, 7, head)}
+    <text x="${x + 50}" y="${y + 28.5}" style="font:900 11px Nunito;letter-spacing:.2em;fill:${head}">GENEVA SUMMIT</text>
+    <circle cx="${x + w - 64}" cy="${y + 24.5}" r="4" style="fill:var(--coral)"/><text x="${x + w - 26}" y="${y + 28.5}" text-anchor="end" style="font:900 11px Nunito;letter-spacing:.14em;fill:${head}">LIVE</text>
+    <path d="M${x + 10} ${y + 38} H${x + w - 10} V${y + 90} Q${x + w / 2} ${y + 70} ${x + 10} ${y + 96}Z" style="fill:var(--paper);opacity:.04"/>
+    ${content}
+    <rect x="${x + w / 2 - 90}" y="${y + h + 6}" width="180" height="7" rx="3.5" style="fill:color-mix(in oklab, var(--ink) 70%, var(--wood))"/>`;
+}
+const T = (x, y, text, style) => `<text x="${x}" y="${y}" style="${style}">${esc(text)}</text>`;
+const soft = 'color-mix(in oklab, var(--paper) 66%, var(--sky))';
+function titleScreen() {
+  return `<text x="720" y="${SCR.y + 110}" text-anchor="middle" style="font:300 38px Nunito;fill:var(--paper)">The Pacing Summit</text>
+    <text x="720" y="${SCR.y + 142}" text-anchor="middle" style="font:700 14px Nunito;fill:${soft}">Six delegations · up to three proposals · one vote</text>`;
+}
+// A list on the screen. rows: { name, right, state: 'now' | 'done' | 'bind' | 'open' | 'fail' }
+function listScreen(heading, rows) {
+  const x = SCR.x + 34; const right = SCR.x + SCR.w - 34;
+  return `${T(x, SCR.y + 66, heading, `font:900 11.5px Nunito;letter-spacing:.18em;fill:color-mix(in oklab, var(--sky) 40%, var(--paper))`)}
+    ${rows.map((r, i) => { const y = SCR.y + 98 + i * 30; const now = r.state === 'now';
+      const col = r.state === 'open' ? 'color-mix(in oklab, var(--paper) 45%, var(--sky))' : now ? 'var(--paper)' : soft;
+      const rc = r.state === 'bind' ? 'color-mix(in oklab, var(--teal) 45%, var(--paper))' : now ? 'var(--coral)' : r.state === 'fail' ? 'color-mix(in oklab, var(--wood) 50%, var(--paper))' : 'color-mix(in oklab, var(--paper) 50%, var(--sky))';
+      return `${now ? `<rect x="${x - 12}" y="${y - 19}" width="${SCR.w - 44}" height="27" rx="6" style="fill:color-mix(in oklab, var(--paper) 9%, transparent)"/>` : ''}
+        ${T(x, y, String(i + 1), `font:900 12px Nunito;fill:${col}`)}${T(x + 22, y, r.name, `font:${now ? 900 : 700} 15.5px Nunito;fill:${col}`)}
+        <text x="${right}" y="${y}" text-anchor="end" style="font:900 11.5px Nunito;letter-spacing:.04em;fill:${rc}">${esc(r.right)}</text>`; }).join('')}`;
+}
+// The vote on the screen: each card with the seals of who signed and whether it binds.
+function voteScreen(cards, reads) {
+  const x = SCR.x + 34; const right = SCR.x + SCR.w - 34;
+  return `${T(x, SCR.y + 66, 'THE VOTE', `font:900 11.5px Nunito;letter-spacing:.18em;fill:color-mix(in oklab, var(--sky) 40%, var(--paper))`)}
+    ${cards.map((c, i) => { const y = SCR.y + 100 + i * 34; const who = ['you', ...signers(reads[c])]; const b = binds(reads[c]);
+      return `${T(x, y, CARDS[c][0], 'font:800 15.5px Nunito;fill:var(--paper)')}
+        ${who.map((id, j) => `<g data-p="${id}" transform="translate(${x + 262 + j * 23} ${y - 5})"><circle r="10.5" style="fill:var(--pc);stroke:var(--paper);stroke-width:1.5"/><text y="3.5" text-anchor="middle" style="font:900 7.5px Nunito;fill:var(--paper)">${id === 'you' ? 'YOU' : NAMES[id][1]}</text></g>`).join('')}
+        <text x="${right}" y="${y}" text-anchor="end" style="font:900 11.5px Nunito;fill:${b ? 'color-mix(in oklab, var(--teal) 45%, var(--paper))' : 'color-mix(in oklab, var(--wood) 50%, var(--paper))'}">${b ? 'BINDING' : 'PLEDGE ONLY'}</text>`; }).join('')}`;
+}
+
+function hall({ raised = {}, screen = titleScreen(), lamps = null, showScreen = true } = {}) {
+  const slats = Array.from({ length: 24 }, (_, i) => `<rect x="${i * 60}" y="0" width="56" height="470" style="fill:color-mix(in oklab, var(--wood) ${i % 2 ? 24 : 19}%, var(--paper))"/>`).join('');
+  const desk = `<path d="M70 560 Q720 374 1370 560 L1370 608 Q720 422 70 608Z" style="fill:color-mix(in oklab, var(--wood) 58%, var(--ink))"/>
+    <path d="M70 540 Q720 354 1370 540 L1370 564 Q720 378 70 564Z" style="fill:var(--wood)"/>
+    <path d="M70 540 Q720 354 1370 540" style="fill:none;stroke:color-mix(in oklab, var(--paper) 40%, var(--wood));stroke-width:3"/>`;
+  const plates = SEATS.map((s) => `<g data-p="${s.id}" transform="translate(${s.x} ${deskY(s.x) + 14})">
+      <path d="M-46 0 H46 L42 24 H-42Z" style="fill:var(--paper)"/><rect x="-46" y="-1" width="92" height="5" style="fill:var(--pc)"/>
+      <text y="18" text-anchor="middle" style="font:900 12.5px Nunito;fill:var(--ink)">${NAMES[s.id][0]}</text></g>`).join('');
+  const mics = SEATS.map((s) => { const y = deskY(s.x); return `<path d="M${s.x - 44} ${y - 2} Q${s.x - 48} ${y - 26} ${s.x - 38} ${y - 38}" style="fill:none;stroke:color-mix(in oklab, var(--ink) 70%, var(--paper));stroke-width:2.5"/><rect x="${s.x - 43}" y="${y - 47}" width="9" height="13" rx="4.5" transform="rotate(35 ${s.x - 38} ${y - 40})" style="fill:var(--ink)"/>`; }).join('');
+  const lampSvg = lamps ? SEATS.map((s) => {
+    const y = deskY(s.x) + 2; const c = lampColor(lamps[s.id]);
+    return `<ellipse cx="${s.x + 26}" cy="${y - 30}" rx="30" ry="18" style="fill:${c};opacity:.35"/><path d="M${s.x + 40} ${y} V${y - 26} L${s.x + 30} ${y - 38}" style="fill:none;stroke:color-mix(in oklab, var(--ink) 60%, var(--paper));stroke-width:3"/><path d="M${s.x + 18} ${y - 44} L${s.x + 40} ${y - 32} L${s.x + 34} ${y - 26}Z" style="fill:${c}"/><circle cx="${s.x + 26}" cy="${y - 34}" r="7" style="fill:${c}"/>`;
+  }).join('') : '';
+  return `<svg class="hall" width="1440" height="900" viewBox="0 0 1440 900" aria-hidden="true">
+    <defs><radialGradient id="pool" cx="50%" cy="40%" r="60%"><stop offset="0" style="stop-color:var(--paper);stop-opacity:.55"/><stop offset="1" style="stop-color:var(--paper);stop-opacity:0"/></radialGradient></defs>
+    <rect width="1440" height="900" style="fill:color-mix(in oklab, var(--wood) 20%, var(--paper))"/>
+    ${slats}
+    <rect y="400" width="1440" height="80" style="fill:color-mix(in oklab, var(--wood) 42%, var(--paper))"/>
+    <rect y="398" width="1440" height="5" style="fill:color-mix(in oklab, var(--wood) 60%, var(--ink))"/>
+    ${showScreen ? screenSvg(screen) : ''}
+    ${flagStand(40, ['openbrain', 'deepthink', 'west'])}${flagStand(1218, ['east', 'qilin', 'lodestar'])}
+    <rect y="478" width="1440" height="422" style="fill:color-mix(in oklab, var(--wood) 52%, var(--paper))"/>
+    <path d="M0 478 H1440 V900 H0Z" style="fill:url(#pool)"/>
+    <path d="M180 900 L440 600 H1000 L1260 900Z" style="fill:color-mix(in oklab, var(--coral) 40%, var(--wood))"/>
+    <path d="M214 900 L458 614 H982 L1226 900" style="fill:none;stroke:color-mix(in oklab, var(--wood) 30%, var(--paper));stroke-width:3;stroke-dasharray:2 9;stroke-linecap:round"/>
+    ${SEATS.map((s) => figure(s, raised[s.id])).join('')}
+    ${desk}${mics}${plates}
+  </svg>${lampSvg ? `<svg class="hall" style="z-index:2" width="1440" height="900" viewBox="0 0 1440 900" aria-hidden="true">${lampSvg}</svg>` : ''}`;
+}
+
+function demand(id, { isMet = false, status } = {}) {
+  const s = SEATS.find((x) => x.id === id);
+  const shift = id === 'openbrain' ? 20 : id === 'lodestar' ? -20 : 0;
+  add(`<div class="dem${isMet ? ' met' : ''}" data-p="${id}" style="left:${s.x - 95 + shift}px;top:${s.y - 176}px">${esc(DEMANDS[id].text)}<small>${esc(status ?? (isMet ? 'Met' : 'Not met yet'))}</small></div>`);
+}
+function say(id, text, top = 250) {
+  const s = SEATS.find((x) => x.id === id);
+  add(`<div class="bubble2" data-p="${id}" style="left:${Math.min(1440 - 280, s.x - 20)}px;top:${top}px"><b>${NAMES[id][0]}</b>${esc(text)}</div>`);
+}
+const tag = (t) => add(`<div class="tag">${esc(t)}</div>`);
+const levelBtns = (on) => `<div class="levels">${LEVELS.map(([n, s], i) => `<div class="lv${i === on ? ' on' : ''}"><b>${n}</b><div class="meter">${[0, 1, 2, 3].map((j) => `<i class="${j <= i ? 'f' : ''}"></i>`).join('')}</div><span class="muted" style="font-size:12.5px;font-weight:700">${s}</span></div>`).join('')}</div>`;
+const deck = (picked = [], hide = [], extra = '') => `<div class="deck">${Object.entries(CARDS).filter(([id]) => !hide.includes(id)).map(([id, [n, a]]) => `<div class="pc${picked.includes(id) ? ' on' : ''}" data-n="${picked.indexOf(id) + 1}"><b>${esc(n)}</b><span>${esc(a)}</span></div>`).join('')}${extra}</div>`;
+const tallyRow = (read) => `<div class="tally">${Object.keys(NAMES).map((id) => `<span class="pb${read[id] === 'yes' ? '' : ' no'}" data-p="${id}">${NAMES[id][1]}</span>`).join('')}</div>`;
+const fcText = (read) => (binds(read) ? `Looks binding · ${signers(read).length} sign` : 'Needs a lab and a government');
+
+// ================= A · Agenda steps =================
+function stepper(now) {
+  return `<div class="stepper">${['Proposals', 'Checks', 'Promises', 'Vote'].map((n, i) => `<span class="${i < now ? 'done' : i === now ? 'now' : ''}"><i>${i < now ? '✓' : i + 1}</i>${n}</span>`).join('')}</div>`;
+}
+const tableRows = (now, levels = {}) => [
+  ...PLAN.proposals.map((c, i) => ({ name: CARDS[c][0], right: levels[c] != null ? LEVELS[levels[c]][0].toUpperCase() : now === i ? 'CHECKING NOW' : 'CHECKS: NOT SET', state: now === i ? 'now' : 'done' })),
+  { name: 'Open', right: '—', state: 'open' },
+];
+const A = {
+  a1() {
+    add(hall({ screen: listScreen('ON THE TABLE', tableRows(-1)) }));
+    tag('A · Step 1 of 4 · Proposals');
+    add(`<section class="gp panel"><div class="row">${stepper(0)}<div class="dots">Picked 2 of 3 <i class="on"></i><i class="on"></i><i></i></div></div>
+      <h2 style="margin-top:8px">What do you put on the table?</h2>${deck(PLAN.proposals)}
+      <div class="row" style="margin-top:10px"><span class="muted" style="font-size:13px;font-weight:700">Pick up to three. Next you choose how each one is checked.</span><div class="go"><button class="ghost">Leave without a deal</button><button class="btn">Next: checks</button></div></div></section>`);
+  },
+  a2() {
+    const r = room(PLAN.proposals, { evaluators: 2, sharedSafety: 1 });
+    add(hall({ raised: r.evaluators, screen: listScreen('ON THE TABLE', tableRows(0)) }));
+    tag('A · Step 2 of 4 · Checks, card 1');
+    demand('openbrain', { isMet: met('openbrain', 'evaluators', { evaluators: 2, sharedSafety: 1 }), status: 'Testers: at most' });
+    demand('lodestar', { isMet: true, status: 'Testers: met' });
+    add(`<section class="gp panel"><div class="row">${stepper(1)}<div class="dots">Card 1 of 2 <i class="on"></i><i></i></div></div>
+      <div class="kick" style="margin-top:12px">${CARDS.evaluators[0]}</div><h2>How is it checked?</h2>${levelBtns(2)}
+      <div class="row" style="margin-top:12px"><span class="muted" style="font-size:13px;font-weight:700">Stricter checks catch cheaters, including you. The placards show who would sign.</span><div class="go"><button class="ghost">Back</button><button class="btn">Next card</button></div></div></section>`);
+  },
+  a3() {
+    const r = room(PLAN.proposals, PLAN.checks);
+    add(hall({ raised: r.sharedSafety, screen: listScreen('ON THE TABLE', tableRows(1, { evaluators: 2 })) }));
+    tag('A · Step 2 of 4 · Checks, card 2');
+    demand('openbrain', { isMet: false, status: 'Inspectors: too strict' });
+    demand('lodestar', { isMet: true, status: 'Inspectors: met' });
+    add(`<section class="gp panel"><div class="row">${stepper(1)}<div class="dots">Card 2 of 2 <i class="on"></i><i class="on"></i></div></div>
+      <div class="kick" style="margin-top:12px">${CARDS.sharedSafety[0]}</div><h2>How is it checked?</h2>${levelBtns(3)}
+      <div class="row" style="margin-top:12px"><span class="muted" style="font-size:13px;font-weight:700">Stricter checks catch cheaters, including you. The placards show who would sign.</span><div class="go"><button class="ghost">Back</button><button class="btn">Next: promises</button></div></div></section>`);
+  },
+  a4() {
+    const r = room(PLAN.proposals, PLAN.checks);
+    const read = any(r, PLAN.proposals);
+    add(hall({ raised: read, screen: listScreen('ON THE TABLE', tableRows(-1, PLAN.checks)) }));
+    tag('A · Step 3 of 4 · Promises');
+    for (const id of Object.keys(NAMES)) if (read[id] !== 'yes') demand(id, { isMet: PLAN.proposals.some((c) => met(id, c, PLAN.checks)) });
+    const holdouts = ['east', ...Object.keys(NAMES).filter((id) => read[id] !== 'yes' && id !== 'east')].slice(0, 3);
+    add(`<section class="gp panel"><div class="row">${stepper(2)}<div class="dots">Promises left <i class="on"></i><i class="on"></i><i class="on"></i></div></div>
+      <h2 style="margin-top:8px">Who do you win over?</h2>
+      <div class="hold">${holdouts.map((id, i) => `<div class="who-card${i === 0 ? ' sel' : ''}" data-p="${id}">${pb(id)}<span>${esc(DEMANDS[id].text)}</span></div>`).join('')}</div>
+      <div class="swing" style="grid-template-columns:repeat(4, 1fr)">${PROMISE.map(([n, c]) => `<div class="ans"><b>${n}</b><span>${c}</span></div>`).join('')}<div class="ans alt"><b>No promises</b><span>Go to the vote</span></div></div></section>`);
+  },
+  a5() {
+    const promises = { east: 'inspectors' };
+    const r = room(PLAN.proposals, PLAN.checks, promises);
+    add(hall({ screen: listScreen('ON THE TABLE', tableRows(-1, PLAN.checks)) }));
+    tag('A · Step 4 of 4 · Vote');
+    add(`<section class="gp panel"><div class="row">${stepper(3)}<div class="tally" style="font-size:13px;font-weight:800">Promised: ${pb('east', true)} Inspect us too</div></div>
+      <h2 style="margin-top:8px">Ready to call the vote?</h2>
+      <div class="review">${PLAN.proposals.map((c) => `<div><span>${CARDS[c][0]}</span><span class="lvl">${LEVELS[PLAN.checks[c]][0]}</span><span class="fc${binds(r[c]) ? '' : ' no'}">${esc(fcText(r[c]))}</span></div>`).join('')}</div>
+      <div class="row" style="margin-top:12px"><span class="muted" style="font-size:13px;font-weight:700">Jules’s read. The real vote can still surprise you.</span><div class="go"><button class="ghost">Back</button><button class="btn">Call the vote</button></div></div></section>`);
+  },
+  a6() {
+    const promises = { east: 'inspectors' };
+    const r = room(PLAN.proposals, PLAN.checks, promises);
+    const read = any(r, PLAN.proposals);
+    add(hall({ raised: read, screen: voteScreen(PLAN.proposals, r) }));
+    tag('A · Result');
+    const n = PLAN.proposals.filter((c) => binds(r[c])).length;
+    add(`<section class="gp panel" style="left:300px;right:300px"><div class="kick">The vote</div><h2>${n >= 2 ? 'The deal binds.' : n ? 'One card binds.' : 'Nothing binds.'}</h2>
+      <p style="margin:8px 0 0;font-size:14.5px;font-weight:700">${n ? `Binding: ${PLAN.proposals.filter((c) => binds(r[c])).map((c) => CARDS[c][0]).join(', ')}.` : 'Only your own pledges stand.'}</p>
+      <div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" style="width:auto;padding:9px 20px">Back to the lab</button></div></section>`);
+  },
+};
+
+// ================= B · One motion at a time =================
+const agenda = (rows) => listScreen('THE AGENDA', rows);
+const B = {
+  b1() {
+    add(hall({ screen: agenda([{ name: 'Choose the first motion', right: 'YOUR MOVE', state: 'now' }, { name: 'Open', right: '—', state: 'open' }, { name: 'Open', right: '—', state: 'open' }]) }));
+    tag('B · Motion 1 · Table it');
+    add(`<section class="gp panel"><div class="kick">Motion 1 of 3</div><h2>What do you table first?</h2>${deck()}</section>`);
+  },
+  b2() {
+    const r = room(['sharedSafety'], { sharedSafety: 3 });
+    add(hall({ raised: r.sharedSafety, screen: agenda([{ name: CARDS.sharedSafety[0], right: 'SETTING CHECKS', state: 'now' }, { name: 'Open', right: '—', state: 'open' }, { name: 'Open', right: '—', state: 'open' }]) }));
+    tag('B · Motion 1 · Set its checks');
+    demand('openbrain', { isMet: false, status: 'Inspectors: too strict' });
+    demand('lodestar', { isMet: true, status: 'Inspectors: met' });
+    add(`<section class="gp panel"><div class="kick">Motion 1 of 3 · ${CARDS.sharedSafety[0]}</div><h2>How is it checked?</h2>${levelBtns(3)}
+      <div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" style="width:auto;padding:9px 20px">Put it to the room</button></div></section>`);
+  },
+  b3() {
+    const r = room(['sharedSafety'], { sharedSafety: 3 });
+    add(hall({ raised: r.sharedSafety, screen: agenda([{ name: CARDS.sharedSafety[0], right: 'ON THE FLOOR', state: 'now' }, { name: 'Open', right: '—', state: 'open' }, { name: 'Open', right: '—', state: 'open' }]) }));
+    tag('B · Motion 1 · Read the room');
+    add(`<section class="gp panel"><div class="row"><div><div class="kick">Motion 1 of 3 · ${CARDS.sharedSafety[0]}, inspectors</div><h2>${binds(r.sharedSafety) ? 'It would bind as it is.' : 'Short of a binding vote.'}</h2></div>${tallyRow(r.sharedSafety)}</div>
+      <div class="swing" style="grid-template-columns:1fr 1fr"><div class="ans"><b>Swing a holdout</b><span>Spend one of three promises</span></div><div class="ans alt"><b>Vote now</b><span>${esc(fcText(r.sharedSafety))}</span></div></div></section>`);
+  },
+  b4() {
+    const r = room(['sharedSafety'], { sharedSafety: 3 });
+    add(hall({ raised: r.sharedSafety, screen: agenda([{ name: CARDS.sharedSafety[0], right: binds(r.sharedSafety) ? 'PASSED · BINDING' : 'PLEDGE ONLY', state: binds(r.sharedSafety) ? 'bind' : 'fail' }, { name: 'Open', right: '—', state: 'open' }, { name: 'Open', right: '—', state: 'open' }]) }));
+    tag('B · Motion 1 · The vote');
+    add(`<section class="gp panel" style="left:300px;right:300px"><div class="kick">Motion 1 · the vote</div><h2>${binds(r.sharedSafety) ? 'Pooled safety research binds.' : 'Pooled safety research is a pledge only.'}</h2>
+      <p style="margin:8px 0 0;font-size:14.5px;font-weight:700">Signed: ${signers(r.sharedSafety).map((id) => NAMES[id][0]).join(', ')}.</p>
+      <div class="row" style="justify-content:flex-end;margin-top:12px"><button class="ghost">Close the summit</button><button class="btn" style="width:auto;padding:9px 20px">Next motion</button></div></section>`);
+  },
+  b5() {
+    add(hall({ screen: agenda([{ name: CARDS.sharedSafety[0], right: 'PASSED · BINDING', state: 'bind' }, { name: 'Choose the next motion', right: 'YOUR MOVE', state: 'now' }, { name: 'Open', right: '—', state: 'open' }]) }));
+    tag('B · Motion 2 · Table it');
+    add(`<section class="gp panel"><div class="kick">Motion 2 of 3</div><h2>What do you table next?</h2>${deck([], ['sharedSafety'], '<div class="pc" style="background:color-mix(in oklab, var(--ink) 5%, var(--paper))"><b>Close the summit</b><span>Stop here. Motion 1 still binds.</span></div>')}</section>`);
+  },
+  b6() {
+    const r = room(['sharedSafety', 'evaluators'], { sharedSafety: 3, evaluators: 2 });
+    add(hall({ raised: r.evaluators, screen: agenda([{ name: CARDS.sharedSafety[0], right: 'PASSED · BINDING', state: 'bind' }, { name: CARDS.evaluators[0], right: 'ON THE FLOOR', state: 'now' }, { name: 'Open', right: '—', state: 'open' }]) }));
+    tag('B · Motion 2 · Swing a holdout');
+    demand('east');
+    add(`<section class="gp panel"><div class="row"><div><div class="kick">Motion 2 of 3 · ${CARDS.evaluators[0]}, outside testers</div><h2>The East won’t sign yet. Swing them?</h2></div>${tallyRow(r.evaluators)}</div>
+      <div class="swing"><div class="who-card" data-p="east">${pb('east')}<span>“We open our labs when you open yours.”</span></div>
+        <div class="ans"><b>Inspect us too</b><span>Promise 1 of 3</span></div><div class="ans"><b>We pay for it</b><span>$50M · promise 1 of 3</span></div>
+        <div class="ans alt"><b>Vote as it is</b><span>${esc(fcText(r.evaluators))}</span></div></div></section>`);
+  },
+  b7() {
+    const r = room(['sharedSafety', 'evaluators'], { sharedSafety: 3, evaluators: 2 }, { east: 'inspectors' });
+    add(hall({ raised: any(r, ['sharedSafety', 'evaluators']), screen: voteScreen(['sharedSafety', 'evaluators'], r) }));
+    tag('B · Summit closed');
+    add(`<section class="gp panel" style="left:300px;right:300px"><div class="kick">Two motions passed</div><h2>The summit closes.</h2>
+      <p style="margin:8px 0 0;font-size:14.5px;font-weight:700">You kept your third motion for later. The deal is checked every week from now on.</p>
+      <div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" style="width:auto;padding:9px 20px">Back to the lab</button></div></section>`);
+  },
+};
+
+// ================= C · Cards on the table =================
+function hand(ids, lift) {
+  const n = ids.length; const mid = (n - 1) / 2;
+  return `<div class="hand">${ids.map((id, i) => { const rot = (i - mid) * 7; const left = 720 - 85 + (i - mid) * (n > 5 ? 124 : 146); const dy = Math.abs(i - mid) * 14 + (id === lift ? -40 : 0);
+    return `<div class="card${id === lift ? ' lift' : ''}" style="left:${left}px;top:${40 + dy}px;transform:rotate(${rot}deg)"><div class="edge"></div><div class="k">Proposal</div><b>${esc(CARDS[id][0])}</b><span>${esc(CARDS[id][1])}</span></div>`; }).join('')}</div>`;
+}
+const played = (id, left, rot, stamp, top = 596) => `<div class="played" style="left:${left}px;top:${top}px;transform:rotate(${rot}deg)"><div class="kick">On the table</div><b>${esc(CARDS[id][0])}</b>${stamp == null ? '<span class="inked" style="border-style:dashed;color:color-mix(in oklab, var(--ink) 35%, var(--paper));border-color:color-mix(in oklab, var(--ink) 25%, var(--paper))">No stamp yet</span>' : `<span class="inked${stamp === 2 ? ' ink2' : ''}">${LEVELS[stamp][0]}</span>`}</div>`;
+const tokens = (used, hot = false) => `<section class="gp tokens"${hot ? ' style="box-shadow:0 0 0 3px var(--coral)"' : ''}><div class="kick">Your promises</div><div class="coins">${[0, 1, 2].map((i) => `<span class="coin${i < used ? ' used' : ''}">${i < used ? 'GIVEN' : 'GIVE'}</span>`).join('')}</div><div class="muted" style="margin-top:8px;font-size:12px;font-weight:700">Drop one on a delegate.</div></section>`;
+const tray = (hot, on = -1) => `<section class="gp tray"${hot ? ' style="box-shadow:0 0 0 3px var(--coral)"' : ''}><div class="kick">Stamp the checks</div><div class="stamps">${LEVELS.map(([n], i) => `<div class="stamp${i === on ? ' hot' : ''}"><i></i>${n}</div>`).join('')}</div></section>`;
+const hint = (text, left = 620, top = 548) => add(`<div class="hint" style="left:${left}px;top:${top}px">${esc(text)}</div>`);
+const C = {
+  c1() {
+    add(hall());
+    tag('C · Step 1 · Your hand');
+    add(tokens(0) + tray(false));
+    add(hand(Object.keys(CARDS), null));
+    hint('Play up to three cards onto the table', 560, 600);
+  },
+  c2() {
+    const r = room(['evaluators'], { evaluators: 1 });
+    add(hall({ raised: r.evaluators }));
+    tag('C · Step 2 · Play a card, then stamp it');
+    add(played('evaluators', 645, -3, null));
+    add(tokens(0) + tray(true, 2));
+    add(hand(['computeCap', 'releaseDelay', 'sharedSafety', 'pauseAutomation', 'verification'], null).replace('class="hand"', 'class="hand" style="bottom:-130px"'));
+    hint('Stamp how it is checked', 880, 640);
+  },
+  c3() {
+    const r = room(['evaluators', 'sharedSafety', 'computeCap'], { evaluators: 2, sharedSafety: 3, computeCap: 1 });
+    add(hall({ raised: r.computeCap }));
+    tag('C · Step 3 · Play the third card');
+    add(played('evaluators', 520, -4, 2, 586) + played('sharedSafety', 770, 3, 3, 586));
+    add(tokens(0) + tray(false, 1));
+    add(hand(['releaseDelay', 'pauseAutomation', 'computeCap', 'verification'], 'computeCap').replace('class="hand"', 'class="hand" style="bottom:-96px"'));
+    hint('Third card · pick a stamp', 640, 700);
+    demand('deepthink', { status: 'Will not sign this' });
+  },
+  c4() {
+    const r = room(PLAN.proposals, PLAN.checks, { east: 'inspectors' });
+    add(hall({ raised: any(r, PLAN.proposals) }));
+    tag('C · Step 4 · Hand out promises');
+    add(played('evaluators', 560, -4, 2) + played('sharedSafety', 734, 3, 3));
+    add(tokens(1, true) + tray(false));
+    add('<span class="coin" style="position:absolute;z-index:4;left:852px;top:468px;transform:rotate(-8deg)">GIVEN</span>');
+    say('east', 'Inspect you too? Then our labs open. Deal.', 214);
+    hint('Drop a promise on a delegate', 560, 760);
+  },
+  c5() {
+    const r = room(PLAN.proposals, PLAN.checks, { east: 'inspectors' });
+    add(hall({ raised: any(r, PLAN.proposals), screen: voteScreen(PLAN.proposals, r) }));
+    tag('C · Step 5 · Bang the gavel');
+    add(played('evaluators', 560, -4, 2) + played('sharedSafety', 734, 3, 3));
+    add(tokens(1) + tray(false));
+    add(`<div class="gavel" style="bottom:120px"><span>Two cards on the table · one promise given</span><button class="btn">Call the vote</button></div>`);
+  },
+};
+
+// ================= D · The voting board =================
+function board(inner, { top = 16, h = 318 } = {}) {
+  return `<div class="scr-frame" style="left:250px;right:250px;top:${top}px;height:${h}px"><div class="glass">
+    <div class="scr-head"><svg width="20" height="20" viewBox="0 0 20 20">${emblem(10, 10, 6, 'color-mix(in oklab, var(--sky) 35%, var(--paper))')}</svg>GENEVA SUMMIT<span class="live"><i></i>LIVE</span></div>
+    <div class="scr-body">${inner}</div></div></div>`;
+}
+const lampStrip = (read) => `<div class="lampstrip">${Object.keys(NAMES).map((id) => `<span><i class="${read ? read[id] : ''}"></i>${NAMES[id][0]}</span>`).join('')}</div>`;
+const gavel = (label, btn, back = true) => add(`<div class="gavel"><span>${esc(label)}</span>${back ? '<button class="ghost">Back</button>' : ''}<button class="btn">${esc(btn)}</button></div>`);
+const D = {
+  d1() {
+    add(hall({ showScreen: false }));
+    add('<div class="dim"></div>');
+    tag('D · Step 1 of 4 · Proposals');
+    add(board(`<div class="k">STEP 1 OF 4 · PROPOSALS</div><h2>What goes on the table?</h2><div class="sub">Pick up to three · 2 picked</div>
+      <div class="tiles">${Object.entries(CARDS).map(([id, [n]]) => `<div class="${PLAN.proposals.includes(id) ? 'on' : ''}">${esc(n)}<small>${PLAN.proposals.includes(id) ? `Card ${PLAN.proposals.indexOf(id) + 1}` : 'Tap to table'}</small></div>`).join('')}</div>`));
+    gavel('Step 1 · Proposals', 'Next', false);
+  },
+  d2() {
+    const r = room(PLAN.proposals, { evaluators: 2, sharedSafety: 1 });
+    add(hall({ lamps: r.evaluators, showScreen: false }));
+    add('<div class="dim"></div>');
+    add(hall({ lamps: r.evaluators, showScreen: false }).replace(/^<svg[\s\S]*?<\/svg>/, ''));
+    tag('D · Step 2 of 4 · Checks, card 1');
+    add(board(`<div class="k">STEP 2 OF 4 · CHECKS · CARD 1 OF 2</div><h2>${CARDS.evaluators[0]}</h2><div class="sub">How hard is it checked? The desk lamps show who would sign.</div>
+      <div class="dial">${LEVELS.map(([n, s], i) => `<div class="${i === 2 ? 'on' : ''}"><b>${n}</b><span>${s}</span></div>`).join('')}</div>${lampStrip(r.evaluators)}`));
+    gavel('Step 2 · Checks', 'Next card');
+  },
+  d3() {
+    const r = room(PLAN.proposals, PLAN.checks);
+    const read = any(r, PLAN.proposals);
+    add(hall({ lamps: read, showScreen: false }));
+    add('<div class="dim"></div>');
+    add(hall({ lamps: read, showScreen: false }).replace(/^<svg[\s\S]*?<\/svg>/, ''));
+    tag('D · Step 3 of 4 · Promises');
+    const holdouts = Object.keys(NAMES).filter((id) => read[id] !== 'yes');
+    add(board(`<div class="k">STEP 3 OF 4 · PROMISES · 3 LEFT</div><h2>Who do you win over?</h2><div class="sub">Pick a red lamp, then what you offer. The desk lamps show who would sign.</div>
+      <div class="tiles">${holdouts.slice(0, 3).map((id, i) => `<div class="${i === 0 ? 'on' : ''}">${NAMES[id][0]}<small>${esc(DEMANDS[id].text)}</small></div>`).join('')}${PROMISE.map(([n, c]) => `<div>${n}<small>${c}</small></div>`).join('')}</div>`));
+    gavel('Step 3 · Promises', 'Next: vote');
+  },
+  d4() {
+    const r = room(PLAN.proposals, PLAN.checks, { east: 'inspectors' });
+    const read = any(r, PLAN.proposals);
+    add(hall({ lamps: read, showScreen: false }));
+    add('<div class="dim"></div>');
+    add(hall({ lamps: read, showScreen: false }).replace(/^<svg[\s\S]*?<\/svg>/, ''));
+    tag('D · Step 4 of 4 · The vote');
+    const n = PLAN.proposals.filter((c) => binds(r[c])).length;
+    add(board(`<div class="k">STEP 4 OF 4 · THE VOTE</div><h2>${n >= 2 ? 'The deal binds.' : n ? 'One card binds.' : 'Nothing binds.'}</h2>
+      <div class="res">${PLAN.proposals.map((c) => `<div><span>${CARDS[c][0]}</span><span class="seals">${['you', ...signers(r[c])].map((id) => pb(id, true)).join('')}</span><b class="${binds(r[c]) ? 'yes' : 'no'}">${binds(r[c]) ? 'BINDING' : 'PLEDGE ONLY'}</b></div>`).join('')}</div>${lampStrip(read)}`));
+    gavel('The vote is in', 'Back to the lab', false);
+  },
+};
+
+({ ...A, ...B, ...C, ...D })[view]?.();
+document.body.dataset.ready = '1';
+</script>
+</body>
+</html>
