@@ -99,7 +99,7 @@ function screenAgenda(motions, results, current, phase) {
 
 export function openSummit(game, overlayRoot) {
   // An open event card or phone keeps the floor until it is answered.
-  if (overlayRoot.querySelector('.sm-layer, .event-layer, .ev-phone')) return null;
+  if (overlayRoot.querySelector('.sm-layer, .event-layer, .ev-phone, .screenwall-layer')) return null;
   const motions = []; // voted, in order: { card, check, promises made during that motion }
   const results = []; // { signed, binds } for each voted motion
   let current = null; // the motion on the floor
@@ -115,7 +115,19 @@ export function openSummit(game, overlayRoot) {
   layer.setAttribute('aria-label', 'The Geneva summit');
   layer.tabIndex = -1;
 
+  // While the summit is open, focus never leaves it: acting on the game behind it would change votes already shown.
+  const focusPanel = () => {
+    const target = layer.querySelector('.sm-panel button:not([disabled]), .sm-talk button:not([disabled])');
+    if (target) target.focus();
+    else layer.focus();
+  };
+  const keepFocus = (event) => {
+    if (layer.isConnected && !layer.contains(event.target)) focusPanel();
+  };
+  document.addEventListener('focusin', keepFocus);
+
   const close = () => {
+    document.removeEventListener('focusin', keepFocus);
     layer.remove();
     if (previousFocus?.isConnected) previousFocus.focus?.();
     overlayRoot.dispatchEvent(new CustomEvent('gdt-dialog-closed'));
@@ -271,6 +283,7 @@ export function openSummit(game, overlayRoot) {
     if (!result.ok) {
       error = result.error ? result.error[0].toUpperCase() + result.error.slice(1) : 'The summit could not be closed.';
       render();
+      focusPanel();
       return;
     }
     const summit = result.events.find((e) => e.type === 'summit');
@@ -317,7 +330,7 @@ export function openSummit(game, overlayRoot) {
       phase = 'table';
     } else return;
     render();
-    layer.querySelector('.sm-panel button:not([disabled])')?.focus();
+    focusPanel();
   });
   layer.addEventListener('keydown', (event) => {
     // Keep focus inside the summit: acting on the game behind it would change the votes already shown.
@@ -340,6 +353,7 @@ export function openSummit(game, overlayRoot) {
       phase = 'room';
       swingParty = null;
       render();
+      focusPanel();
     }
   });
 
@@ -355,7 +369,7 @@ const summitOpen = (state) => state.era === 5 && state.turnInEra === 0 && !state
 // Opens once by itself when the summit week begins and nothing else is on screen; the menu reopens it.
 export function mountSummit(game, overlayRoot) {
   let offered = false;
-  const BLOCKING = '.dialog-layer, .event-layer, .ev-phone, .menu-layer';
+  const BLOCKING = '.dialog-layer, .event-layer, .ev-phone, .menu-layer, .screenwall-layer';
   const tryOpen = () => {
     if (offered || !summitOpen(game.state) || game.state.meeting || overlayRoot.querySelector(BLOCKING)) return;
     offered = true;
