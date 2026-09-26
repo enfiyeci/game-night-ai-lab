@@ -14,7 +14,7 @@ export function mountBriefing(game, { office, overlay }) {
   let anchors = null;
   const raised = new Set(); // warning ids already raised this time round
   let waiting = [];
-  let live = null; // { id, node }
+  let live = null; // { warning, node }
   let talking = null;
 
   const cardOpen = () => Boolean(overlay.querySelector('.event-layer'));
@@ -109,7 +109,7 @@ export function mountBriefing(game, { office, overlay }) {
     while (!cardOpen() && !live && waiting.length) {
       const warning = waiting.shift();
       const node = warningBubble(warning);
-      if (node) live = { id: warning.id, node };
+      if (node) live = { warning, node };
     }
   }
 
@@ -119,7 +119,7 @@ export function mountBriefing(game, { office, overlay }) {
     // A warning that was answered or became a card can be raised again if it comes back later.
     for (const id of [...raised]) if (!openIds.has(id)) raised.delete(id);
     waiting = waiting.filter((warning) => openIds.has(warning.id));
-    if (live && !openIds.has(live.id)) {
+    if (live && !openIds.has(live.warning.id)) {
       live.node.remove();
       live = null;
     }
@@ -136,7 +136,14 @@ export function mountBriefing(game, { office, overlay }) {
   }
 
   overlay.addEventListener('event-card-closed', showNextWarning);
-  overlay.addEventListener('event-card-open', clearTalking);
+  // A card takes the stage; a raised warning steps aside and comes back when the card closes.
+  overlay.addEventListener('event-card-open', () => {
+    clearTalking();
+    if (!live) return;
+    live.node.remove();
+    waiting.unshift(live.warning);
+    live = null;
+  });
   game.subscribe(({ state }) => refresh(state));
   refresh(game.state);
 }
