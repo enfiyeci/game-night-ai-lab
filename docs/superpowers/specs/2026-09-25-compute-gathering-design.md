@@ -69,8 +69,9 @@ the end of the game.
 
 ### 3.2 Strings
 
-- **Exclusive (Azuria).** While any Azuria contract runs, the player cannot sign CoreFlame or
-  Gulf contracts. Chip titan orders are still allowed. Buyout: pay 3 months of the Azuria bill
+- **Exclusive (Azuria).** While any Azuria contract is signed (in transit) or runs, the player
+  cannot sign CoreFlame or Gulf contracts (owner ruling 2026-09-25: the lock starts at signing,
+  so Azuria and CoreFlame cannot both be signed in one turn). Chip titan orders are still allowed. Buyout: pay 3 months of the Azuria bill
   to remove the lock. Real model: Microsoft's right of first refusal on OpenAI compute until
   2025.
 - **Fragile (CoreFlame).** Failure risk is 2% per month, converted to the era's turn length
@@ -79,8 +80,9 @@ the end of the game.
   payment"). The next turn brings a card: move the capacity to spot (pay the spot price),
   prepay 3 months to keep CoreFlame alive (the contract survives), or let it go (the units
   vanish, no further bills).
-- **Bumpable (spot).** In the era's bottleneck turns (the event deck marks them), spot
-  capacity can be withdrawn with one turn's warning.
+- **Bumpable (spot).** In the bottleneck eras (3 and 5), each turn has a chance (first pass
+  25%) that spot capacity is withdrawn with one turn's warning (owner ruling 2026-09-25: a
+  per-turn roll in those eras, not an event-deck marker).
 - **Money comes back (equity-for-compute).** Azuria invests credits worth 8% of valuation in
   exchange for 8% of the company. The credits can only pay Azuria bills. Every board member loses
   3 support. (The spec's "one board member switches to favoring speed" is not modeled: the board has no preference model.) This replaces the current
