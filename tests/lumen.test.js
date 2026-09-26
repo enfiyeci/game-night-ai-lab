@@ -65,7 +65,7 @@ test('turn situation uses the specified priority order', () => {
   state.pendingModel = {};
   assert.equal(lumenLine(state).situation, 'readyToRelease');
 
-  state.internal = {};
+  state.era = 4;
   assert.equal(lumenLine(state).situation, 'internal');
 
   state.cash = 50;

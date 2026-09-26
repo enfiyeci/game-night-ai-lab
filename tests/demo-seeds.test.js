@@ -105,7 +105,7 @@ test('recording script describes the current compute actions from real strategy 
   assert.ok(balancedLines.some((line) => /reserve 12% of compute for safety/.test(line)));
   assert.ok(balancedLines.some((line) => /take the President meeting/.test(line)));
 
-  const safety = playTimeline('safety', 1);
+  const safety = playTimeline('safety', 10);
   const safetyLines = safety.turns.map((turn) => demoSeeds.describeActions(turn.actions));
   assert.ok(safetyLines.some((line) => /build a nuclear power site/.test(line)));
 });
@@ -155,15 +155,13 @@ test('recording script describes every part of a constitution amendment', () => 
   assert.match(line, /rule yield for wrong/);
 });
 
-test('recording script preserves unknown move payloads and internal control', () => {
+test('recording script preserves unknown move payloads', () => {
   const line = demoSeeds.describeActions({
     moves: [
-      { type: 'deployInternal', control: 0.6 },
       { type: 'moonshot', target: 'orbital', risk: 3 },
     ],
   });
 
-  assert.match(line, /deploy the model internally with 60% control/);
   assert.match(line, /moonshot: \{"target":"orbital","risk":3\}/);
 });
 

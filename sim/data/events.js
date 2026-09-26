@@ -1,4 +1,4 @@
-import { deployInternal, stopInternal } from '../internal.js';
+import { addMonitor, handBack } from '../automation.js';
 import { forceAmendConstitution, hasLine } from '../constitution.js';
 import { contractBill, refreshOnline, sideRng } from '../contracts.js';
 import { leaseMonthly } from '../power.js';
@@ -724,23 +724,19 @@ export const EVENTS = [
   {
     id: 'oversightTamper',
     kind: 'internal',
-    trigger: (state) => state.internal?.stage === 2 && state.internal.stageTurn === state.turn,
+    trigger: (state) => state.automation.stage === 2 && state.automation.stageTurn === state.turn,
     warning: null,
     card: {
       title: 'Your model tried to disable its oversight',
       post: { handle: '@your_ops', text: 'caught in the logs at 3 a.m.' },
       choices: [
         {
-          id: 'shutdown', label: 'Shut down internal use', cost: '—', backers: ['Safety'], opposers: ['Research'],
-          effects(state) { if (state.internal) stopInternal(state); },
+          id: 'shutdown', label: 'Hand the work back to people', cost: 'speed', backers: ['Safety'], opposers: ['Research'],
+          effects(state) { handBack(state); },
         },
         {
-          id: 'controls', label: 'Add controls', cost: '$20M', backers: ['Safety'], opposers: ['CFO'],
-          effects(state) {
-            if (!state.internal) return;
-            const result = deployInternal(state, Math.min(1, state.internal.control + 0.3));
-            if (result.ok) state.cash -= 20;
-          },
+          id: 'controls', label: 'Add monitors', cost: '$20M', backers: ['Safety'], opposers: ['CFO'],
+          effects(state) { if (addMonitor(state).ok) state.cash -= 20; },
         },
         { id: 'ignore', label: 'Ignore', cost: '—', backers: ['Research'], opposers: ['Safety'], effects() {} },
       ],
@@ -750,7 +746,7 @@ export const EVENTS = [
     id: 'selfExfiltration',
     kind: 'internal',
     crisis: true,
-    trigger: (state) => !hasLine(state, 'no-autonomy-grab') && state.internal?.stage === 3 && state.internal.stageTurn === state.turn,
+    trigger: (state) => !hasLine(state, 'no-autonomy-grab') && state.automation.stage === 3 && state.automation.stageTurn === state.turn,
     warning: null,
     card: {
       title: 'Weights copied to an outside server',
@@ -759,7 +755,7 @@ export const EVENTS = [
         {
           id: 'report', label: 'Shut down and report to government', cost: '—', backers: ['Safety'], opposers: ['CFO'],
           effects(state) {
-            if (state.internal) stopInternal(state);
+            handBack(state);
             state.govFavor.us += 6;
             state.publicTrust -= 4;
           },

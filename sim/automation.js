@@ -2,10 +2,11 @@ import { clamp, sigmoid } from './util.js';
 import { totalDebt } from './hazards.js';
 import { eraScale } from './data/compute.js';
 import { availableUnits } from './training.js';
+import { hasLine } from './constitution.js';
 import {
   JOBS, HANDOFF_JOBS, LAST_TWO_JOBS, MAX_LEVEL, LEVEL_SPEED, AI_SHARE, CHECK_LOAD, PACK,
   REVIEWER_CAPACITY, MONITOR_CAPACITY, REVIEWER_MONTHLY, MONITOR_UNITS, AI_REVIEW_BLIND, RISK_SCALE,
-  CLAIM_INFLATION, MAX_CHECK, HELD_BACK,
+  CLAIM_INFLATION, MAX_CHECK, HELD_BACK, TROUBLE_ERA, RUN_BONUS_PER_SPEED, POINTS_PER_SPEED, RUN_SKIP_SPEED,
 } from './data/automation.js';
 
 // The work is done by the newest trained model, released or not.
@@ -133,4 +134,48 @@ export function addMonitor(state) {
   const monitors = state.automation.checks.monitors + 1;
   if (monitors > MAX_CHECK) return { ok: false, error: 'monitors are already at the top level' };
   return setAutomation(state, { checks: { monitors } });
+}
+
+const TAKEOVER_CAPABILITY = 70;
+// Owner decision 2026-09-25: the takeover ending needs era-4 capability.
+const TAKEOVER_ERA = 4;
+
+export function automationTick(state, rng) {
+  const a = state.automation;
+  const levels = jobLevels(state);
+  const speed = researchSpeed(levels);
+  a.history.push({ turn: state.turn, era: state.era, speed, claimed: claimedSpeed(speed) });
+  const run = state.activeRun;
+  if (run) {
+    run.bonus += RUN_BONUS_PER_SPEED * (speed - 1);
+    // Runs also get faster: one turn off, once per run.
+    if (speed >= RUN_SKIP_SPEED && run.turnsLeft > 1 && !run.automationSped) {
+      run.turnsLeft -= 1;
+      run.automationSped = true;
+    }
+  }
+  state.researchPoints += POINTS_PER_SPEED * (speed - 1);
+  const events = [];
+  if (speed >= a.line && a.lineCrossed < a.line) {
+    a.lineCrossed = a.line;
+    a.lineTurn = state.turn;
+    events.push({ type: 'ownLineCrossed', speed, line: a.line });
+  }
+  // Fully checked work draws nothing, so eras 1-2 and checked labs keep the random sequence.
+  if (state.era < TROUBLE_ERA || checking(effectiveChecks(state), levels).exposure <= 0) return events;
+  if (!rng.chance(automationRisk(state))) return events;
+  if (a.stage >= 3) {
+    if (newestCapability(state) < TAKEOVER_CAPABILITY || state.era < TAKEOVER_ERA) return events;
+    if (a.stage === 3 && hasLine(state, 'accept-shutdown')) {
+      a.stage = 4;
+      a.stageTurn = state.turn;
+      return events;
+    }
+    if (hasLine(state, 'accept-shutdown')) a.stage = 5;
+    state.ending = 'quietTakeover';
+    return [...events, { type: 'internalIncident', stage: 4 }];
+  }
+  a.stage += 1;
+  a.stageTurn = state.turn;
+  return [...events, { type: a.stage === 1 ? 'internalWarning' : 'internalIncident', stage: a.stage }];
 }

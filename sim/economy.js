@@ -2,7 +2,7 @@ import { BALANCE } from './balance.js';
 import { eraById } from './data/eras.js';
 import { clamp } from './util.js';
 import { activeModels, safetyUnits, servingCost, PRICE_STANCE, REVENUE_PER_USER } from './serving.js';
-import { controlUnits } from './internal.js';
+import { controlUnits, reviewerCost } from './automation.js';
 import { monthlyBills, arrivingBills, creditOffset, addPipeline } from './contracts.js';
 import { leaseBills } from './power.js';
 import { resaleCredit, safetyValue, spotCover } from './split.js';
@@ -55,7 +55,7 @@ export function projectBurn(state) {
   const spot = spotCover(state);
   const ops = BALANCE.baseOpsMonthly * (1 + 0.25 * (state.era - 1));
   const arrivingRent = arrivingBills(state);
-  return ops + computeRent(state) + arrivingRent + spot + state.budget.spend - resaleCredit(state);
+  return ops + computeRent(state) + arrivingRent + spot + state.budget.spend + reviewerCost(state) - resaleCredit(state);
 }
 
 export function valuationOf(state) {

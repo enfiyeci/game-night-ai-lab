@@ -266,7 +266,7 @@ test('a quiet takeover stops training and event generation for the turn', () => 
   startRun(s, recipe);
   s.activeRun.turnsLeft = 1;
   s.era = 4;
-  s.internal = { control: 0, stage: 3, turns: 3, capability: 80 };
+  s.automation.stage = 3; s.capability = 80;
   s.alignmentDebt = 100;
   s.models.push({
     active: true,

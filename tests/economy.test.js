@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import {
   updateServing, growUsers, applyEconomy, runway, valuationOf, legalTick,
-  raiseRound, useEmergency, monthlyRevenue,
+  raiseRound, useEmergency, monthlyRevenue, projectBurn,
 } from '../sim/economy.js';
 import * as economyApi from '../sim/economy.js';
-import { deployInternal } from '../sim/internal.js';
+import { setAutomation } from '../sim/automation.js';
 import { computeSlices } from '../sim/split.js';
 
 const consumerModel = (users) => ({
@@ -26,19 +26,28 @@ test('serving load uses compute and leaves a shortfall at scale', () => {
   assert.ok(computeSlices(s).shortfall > 0);
 });
 
-test('compute reserved by control is not available for serving', () => {
+test('compute reserved by monitors is not available for serving', () => {
   const s = createInitialState();
   s.era = 3;
   s.compute.online = 30;
   s.models.push(consumerModel(1e6));
   updateServing(s);
-  assert.equal(deployInternal(s, 1).ok, true);
-  s.models[0].users = 15e6; // fits in 30 units, not in the 10 left after control
-  const bare = { ...s, internal: null, compute: { ...s.compute } };
+  assert.equal(setAutomation(s, { checks: { monitors: 3 } }).ok, true); // 3 × 0.7 × 8 = 16.8 units
+  s.models[0].users = 15e6; // fits in 30 units, not in what is left after monitors
+  const bare = structuredClone(s);
+  bare.automation.checks.monitors = 0;
   updateServing(bare);
   assert.equal(computeSlices(bare).shortfall, 0);
   updateServing(s);
   assert.ok(computeSlices(s).shortfall > 0);
+});
+
+test('reviewers add to the monthly burn', () => {
+  const s = createInitialState();
+  s.era = 4;
+  const before = projectBurn(s);
+  s.automation.checks.reviewers = 2;
+  assert.ok(Math.abs(projectBurn(s) - before - 10) < 1e-9); // 2 reviewers × $2M × 2.5 in era 4
 });
 
 test('serving load ignores training runs but accounts for reserved safety compute', () => {

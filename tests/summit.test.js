@@ -5,7 +5,7 @@ import { proposeSummit, holdOrShip, readTheRoom, COMMITMENTS, PARTIES } from '..
 import { finalEnding } from '../sim/endings.js';
 import { startRun, advanceRun } from '../sim/training.js';
 import { releaseModel } from '../sim/release.js';
-import { deployInternal } from '../sim/internal.js';
+import { jobLevels, setAutomation } from '../sim/automation.js';
 import { endTurn } from '../sim/turn.js';
 import { recipeCost } from '../sim/recipe.js';
 
@@ -190,19 +190,18 @@ test('sharedSafety slows positive alignment-debt growth from training', () => {
   assert.ok(Math.abs(protectedIncrease - plainIncrease * 0.7) < 1e-12);
 });
 
-test('pauseAutomation stops internal use without resetting its stage and blocks redeployment', () => {
+test('pauseAutomation hands choosing and direction back to people while the deal holds', () => {
   const s = era5();
   s.govFavor = { us: 80, intl: 80 };
   s.models.push({ capability: 50 });
-  s.internal = { control: 0.5, stage: 2, turns: 3, capability: 50 };
+  s.automation.stage = 2;
   const r = proposeSummit(s, { proposals: ['pauseAutomation'], sweetener: 'evaluatorsFirst' }, calm);
   assert.ok(r.binding.includes('pauseAutomation'));
-  assert.equal(s.internal, null);
-  assert.equal(s.flags.internalStage, 2);
-  assert.deepEqual(deployInternal(s, 0.5), { ok: false, error: 'the summit deal pauses internal automation' });
+  assert.deepEqual(jobLevels(s).slice(3), [0, 0]);
+  assert.equal(s.automation.stage, 2);
+  assert.equal(setAutomation(s, { levels: { choosing: 1 } }).error, 'choosing and direction are back with people');
   s.deal.collapsed = true;
-  assert.equal(deployInternal(s, 0.5).ok, true);
-  assert.equal(s.internal.stage, 2);
+  assert.deepEqual(jobLevels(s).slice(3), [2, 1]);
 });
 
 test('verification reduces Qilin defection chance to thirty percent', () => {

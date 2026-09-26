@@ -43,7 +43,7 @@ test('release is closed with no finished model, and when both team actions went 
 test('other menu items close when both team actions are used; the budget stays free', () => {
   const game = readyGame();
   game.state.round.moves = 2;
-  for (const id of ['training', 'internal', 'constitution', 'meeting']) {
+  for (const id of ['training', 'constitution', 'meeting']) {
     assert.notEqual(reasonFor(game, id), '', `${id} should be disabled`);
   }
   assert.equal(reasonFor(game, 'budget'), '', 'budget stays free');

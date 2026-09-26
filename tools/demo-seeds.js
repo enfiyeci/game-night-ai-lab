@@ -135,7 +135,7 @@ export function scoreStory(timeline) {
   }
   if (events.some((event) => event.type === 'internalIncident')) {
     score += 2;
-    beats.push('the internal deployment caused an incident');
+    beats.push('the AI doing the lab\'s research caused an incident');
   }
   if (events.filter((event) => event.type === 'rivalRelease' && event.leaderChanged).length >= 2) {
     score += 1;
@@ -208,8 +208,6 @@ function describeMove(move) {
   if (move.type === 'raise') return `raise from the ${INVESTORS[move.archetype]?.name ?? words(move.archetype)}`;
   if (move.type === 'research') return `research ${words(move.techId)}`;
   if (move.type === 'emergency') return `use the ${words(move.option)} emergency option`;
-  if (move.type === 'deployInternal') return `deploy the model internally with ${Math.round(move.control * 100)}% control`;
-  if (move.type === 'stopInternal') return 'stop the internal deployment';
   if (move.type === 'summit') {
     const proposals = move.proposals?.length ? move.proposals.map((id) => words(id).toLowerCase()).join(', ') : 'no commitments';
     const sweetener = move.sweetener ? `sweetener: ${words(move.sweetener).toLowerCase()}` : 'no sweetener';
@@ -331,8 +329,8 @@ function describeEvent(event) {
   if (event.type === 'runComplete') return event.hazard ? 'training finished with a hazard' : 'training finished';
   if (event.type === 'rivalRelease') return `${rivalName(event.id)} released${event.leaderChanged ? ' and took the lead' : ''}`;
   if (event.type === 'eraStart') return `era ${event.era} began`;
-  if (event.type === 'internalWarning') return 'the internal deployment issued a warning';
-  if (event.type === 'internalIncident') return `the internal deployment reached incident stage ${event.stage}`;
+  if (event.type === 'internalWarning') return 'the AI doing the lab\'s research issued a warning';
+  if (event.type === 'internalIncident') return `the AI doing the lab's research reached incident stage ${event.stage}`;
   if (event.type === 'hazardResolved') {
     const outcomes = { ignore: 'ignored', penalize: 'penalized', fix: 'fixed' };
     return `the training hazard was ${outcomes[event.choice] ?? words(event.choice)}`;

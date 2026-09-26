@@ -17,7 +17,6 @@ import { updateBoard } from './board.js';
 import { checkTurnEndings, eraGate, finalEnding } from './endings.js';
 import { recordAdvisors } from './advisors.js';
 import { resolveHazard, exposeConcealed, INTERPRETABILITY_SPEND } from './hazards.js';
-import { deployInternal, stopInternal, internalTick } from './internal.js';
 import { addressWarning, resolveEvent, eventsTick, fallbackChoice, pushFeed, resolveDue, stampNewCards } from './events.js';
 import { CASES } from './data/constitution.js';
 import { setConstitution, amendConstitution } from './constitution.js';
@@ -35,7 +34,7 @@ import { applySplitEffects, makePledge, setComputeSplit, spotCover } from './spl
 import { ROUND_DAYS, monthsPerDay } from './time.js';
 import { TEAM_OF, teamBusyError } from './teams.js';
 import { feedPosts } from './feed.js';
-import { setAutomation } from './automation.js';
+import { setAutomation, automationTick } from './automation.js';
 
 export const MAX_MOVES = 2;
 const BUDGET_KEYS = ['training', 'security', 'product', 'talent'];
@@ -71,8 +70,6 @@ function applyMove(state, move, rng) {
     case 'raise': return raiseRound(state, move.archetype);
     case 'research': return researchTechnique(state, move.techId);
     case 'emergency': return useEmergency(state, move.option);
-    case 'deployInternal': return deployInternal(state, move.control);
-    case 'stopInternal': return stopInternal(state);
     case 'amendConstitution': return amendConstitution(state, move.change);
     case 'summit': return proposeSummit(state, move, rng);
     default: return { ok: false, error: `unknown move ${move.type}` };
@@ -290,7 +287,7 @@ function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
       events.push(e);
       if (e.type === 'outage') pushFeed(state, '@downdetector', 'users report outages across your apps', 'feed');
     }
-    for (const e of internalTick(state, rng)) events.push(e);
+    for (const e of automationTick(state, rng)) events.push(e);
     if (!state.ending) {
       if (trainingFraction > 0) {
         const trained = advanceRunBy(state, rng, trainingFraction);

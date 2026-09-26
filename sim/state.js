@@ -60,7 +60,6 @@ export function createInitialState({ seed = 1 } = {}) {
     researched: [],
     activeRun: null,
     pendingModel: null,
-    internal: null,
     automation: createAutomation(),
     deal: null,
     models: [],

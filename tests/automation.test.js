@@ -1,12 +1,16 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
-import { PACK, createAutomation, REVIEWER_CAPACITY, MONITOR_CAPACITY, AI_REVIEW_BLIND } from '../sim/data/automation.js';
+import {
+  PACK, createAutomation, REVIEWER_CAPACITY, MONITOR_CAPACITY, AI_REVIEW_BLIND, RUN_BONUS_PER_SPEED, POINTS_PER_SPEED,
+} from '../sim/data/automation.js';
 import {
   jobLevels, researchSpeed, claimedSpeed, codeShare, timeShares, bottleneck, checkLoad, checking,
-  reviewerCost, controlUnits, effectiveChecks, automationRisk, setAutomation, handBack, addMonitor,
+  reviewerCost, controlUnits, effectiveChecks, automationRisk, setAutomation, handBack, addMonitor, automationTick,
 } from '../sim/automation.js';
 import { endTurn } from '../sim/turn.js';
+import { startRun } from '../sim/training.js';
+import { createRng } from '../sim/rng.js';
 
 const near = (actual, expected, eps = 0.01) => assert.ok(Math.abs(actual - expected) < eps, `${actual} is not near ${expected}`);
 const atEra = (era) => {
@@ -165,4 +169,126 @@ test('endTurn applies the free action and reports its errors', () => {
   assert.equal(jobLevels(ok.state)[1], 2);
   const bad = endTurn(s, { automation: { levels: { code: 4 } } }, miss);
   assert.ok(bad.errors.includes('writing code follows the pack'));
+});
+
+const hit = { next: () => 0, int: () => 0, chance: () => true, pick: (a) => a[0], normal: (m) => m };
+const ladder = (events) => events.filter((event) => event.type === 'internalWarning' || event.type === 'internalIncident');
+const recipe = {
+  sliders: { size: 'medium', length: 'optimal', alignShare: 0.15 },
+  picks: { pre: ['filtered-data'], mid: [], post: ['synthetic-sft', 'safety-tuning'] },
+};
+const withCompute = (s) => {
+  s.compute.contracts.push({
+    id: 'test-capacity', supplier: 'starter', units: 90, price: 0, monthsLeft: null,
+    needsPower: false, string: null, arrivedTurn: 0, scaledDown: false, troubled: false,
+    dark: false, bumpTurn: null, exclusiveBought: false, headline: null,
+  });
+  s.compute.online = 100;
+  return s;
+};
+
+test('trouble escalates warning, incident, exfiltration, then takeover at high capability', () => {
+  const s = atEra(4);
+  s.capability = 75;
+  s.alignmentDebt = 80;
+  assert.deepEqual(ladder(automationTick(s, hit)), [{ type: 'internalWarning', stage: 1 }]);
+  assert.deepEqual(ladder(automationTick(s, hit)), [{ type: 'internalIncident', stage: 2 }]);
+  assert.deepEqual(ladder(automationTick(s, hit)), [{ type: 'internalIncident', stage: 3 }]);
+  automationTick(s, hit);
+  assert.equal(s.ending, 'quietTakeover');
+});
+
+test('no trouble before era 3, and no roll at all when people check every piece of work', () => {
+  const early = atEra(2);
+  early.capability = 90;
+  early.alignmentDebt = 90;
+  for (let i = 0; i < 5; i++) automationTick(early, hit);
+  assert.equal(early.automation.stage, 0);
+  const checked = atEra(4);
+  checked.capability = 90;
+  checked.alignmentDebt = 90;
+  checked.compute.online = 500;
+  checked.automation.checks = { reviewers: 3, monitors: 3, aiReview: false };
+  let draws = 0;
+  automationTick(checked, { ...hit, chance: () => { draws += 1; return true; } });
+  assert.equal(draws, 0);
+  assert.equal(checked.automation.stage, 0);
+});
+
+test('no takeover before era 4: a hit at stage three holds there, then accept-shutdown adds one step', () => {
+  const s = atEra(3);
+  s.capability = 75;
+  s.alignmentDebt = 80;
+  s.constitution.hardLines = ['accept-shutdown'];
+  for (let i = 0; i < 3; i++) automationTick(s, hit);
+  assert.equal(s.automation.stage, 3);
+  for (let i = 0; i < 3; i++) assert.deepEqual(ladder(automationTick(s, hit)), []);
+  assert.equal(s.ending, null);
+  s.era = 4;
+  assert.deepEqual(ladder(automationTick(s, hit)), []);
+  assert.equal(s.automation.stage, 4);
+  automationTick(s, hit);
+  assert.equal(s.ending, 'quietTakeover');
+});
+
+test('no takeover below capability 70; misses do not escalate', () => {
+  const s = atEra(4);
+  s.capability = 60;
+  s.alignmentDebt = 80;
+  for (let i = 0; i < 6; i++) automationTick(s, hit);
+  assert.equal(s.automation.stage, 3);
+  assert.equal(s.ending, null);
+  const calm = atEra(4);
+  automationTick(calm, miss);
+  assert.equal(calm.automation.stage, 0);
+});
+
+test('speed feeds the active run, research points and, from ×1.5, one turn off once per run', () => {
+  const s = atEra(4);
+  s.activeRun = { bonus: 0, units: 2, turnsLeft: 5 };
+  const points = s.researchPoints;
+  automationTick(s, miss);
+  near(s.activeRun.bonus, RUN_BONUS_PER_SPEED * (researchSpeed(PACK[4]) - 1), 1e-9);
+  near(s.researchPoints - points, POINTS_PER_SPEED * (researchSpeed(PACK[4]) - 1), 1e-9);
+  assert.equal(s.activeRun.turnsLeft, 4);
+  automationTick(s, miss);
+  assert.equal(s.activeRun.turnsLeft, 4);
+  const slow = atEra(3);
+  slow.activeRun = { bonus: 0, units: 2, turnsLeft: 5 };
+  automationTick(slow, miss);
+  assert.equal(slow.activeRun.turnsLeft, 5);
+});
+
+test('each tick records measured and claimed speed', () => {
+  const s = atEra(4);
+  s.turn = 13;
+  automationTick(s, miss);
+  assert.deepEqual(s.automation.history, [{ turn: 13, era: 4, speed: researchSpeed(PACK[4]), claimed: 2.4 }]);
+});
+
+test('crossing the line reports it once, on that turn', () => {
+  const s = atEra(5);
+  s.turn = 16;
+  assert.deepEqual(automationTick(s, miss)[0], { type: 'ownLineCrossed', speed: researchSpeed(PACK[5]), line: 2 });
+  assert.equal(s.automation.lineTurn, 16);
+  s.turn = 17;
+  assert.equal(automationTick(s, miss).some((event) => event.type === 'ownLineCrossed'), false);
+  s.automation.line = 3; // era 5's pack runs at ×2.64, below ×3
+  assert.equal(automationTick(s, miss).some((event) => event.type === 'ownLineCrossed'), false);
+});
+
+test('endTurn: pushing the hand-offs makes a finishing run gain more', () => {
+  const gain = (automation) => {
+    const s = withCompute(atEra(3));
+    assert.equal(startRun(s, recipe).ok, true);
+    s.activeRun.turnsLeft = 1;
+    s.activeRun.spikeChance = 0;
+    return endTurn(s, automation ? { automation } : {}, createRng(1)).state.pendingModel.gain;
+  };
+  assert.ok(gain({ levels: { review: 2, experiments: 2, choosing: 1, direction: 1 } }) > gain(null));
+});
+
+test('the old moves are gone', () => {
+  const { errors } = endTurn(atEra(3), { moves: [{ type: 'deployInternal', control: 1 }] }, miss);
+  assert.ok(errors.includes('unknown move deployInternal'));
 });

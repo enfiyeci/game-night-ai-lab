@@ -4,7 +4,7 @@ import { createInitialState } from '../sim/state.js';
 import { setConstitution, amendConstitution, constitutionValues, learnedConstitution, hasLine } from '../sim/constitution.js';
 import { HARD_LINES, CASES } from '../sim/data/constitution.js';
 import { applyAlignmentFaking } from '../sim/hazards.js';
-import { internalTick } from '../sim/internal.js';
+import { automationTick } from '../sim/automation.js';
 import { resolveRun } from '../sim/training.js';
 import { releaseModel } from '../sim/release.js';
 import { revenuePerUser } from '../sim/economy.js';
@@ -161,12 +161,12 @@ test('accept-shutdown requires two hits after internal stage three', () => {
   adopt(state, ['accept-shutdown', 'honest', 'privacy']);
   state.era = 4;
   state.capability = 80;
-  state.internal = { control: 0, stage: 3, turns: 3, capability: 80 };
-  assert.deepEqual(internalTick(state, yes), []);
-  assert.equal(state.internal.stage, 4);
+  state.automation.stage = 3;
+  assert.deepEqual(automationTick(state, yes), []);
+  assert.equal(state.automation.stage, 4);
   assert.equal(state.ending, null);
-  assert.deepEqual(internalTick(state, yes), [{ type: 'internalIncident', stage: 4 }]);
-  assert.equal(state.internal.stage, 5);
+  assert.deepEqual(automationTick(state, yes), [{ type: 'internalIncident', stage: 4 }]);
+  assert.equal(state.automation.stage, 5);
   assert.equal(state.ending, 'quietTakeover');
 });
 
@@ -247,7 +247,7 @@ test('no-autonomy-grab blocks agent incidents and reduces agentic RL capability'
   protectedState.era = 3;
   adopt(protectedState, ['no-autonomy-grab', 'honest', 'privacy']);
   protectedState.models.push({ flags: ['agentic'], active: true, activeFromTurn: 0 });
-  protectedState.internal = { stage: 3, stageTurn: protectedState.turn };
+  protectedState.automation.stage = 3; protectedState.automation.stageTurn = protectedState.turn;
   assert.equal(EVENTS.find((event) => event.id === 'agentwreck').trigger(protectedState, no), false);
   assert.equal(EVENTS.find((event) => event.id === 'selfExfiltration').trigger(protectedState, no), false);
 

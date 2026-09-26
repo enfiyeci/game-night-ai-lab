@@ -1,5 +1,6 @@
 import { constitutionValues } from './constitution.js';
 import { runway } from './economy.js';
+import { jobLevels } from './automation.js';
 import { LUMEN_EPILOGUES, LUMEN_LINES, LUMEN_SIGNOFF } from './data/lumen.js';
 
 function newestReleasedModel(state) {
@@ -24,7 +25,7 @@ export function lumenDisposition(state) {
 function lumenSituation(state) {
   if (state.pendingEvents?.length > 0) return 'crisis';
   if (runway(state, 'planned') < 6) return 'broke';
-  if (state.internal) return 'internal';
+  if (jobLevels(state).some((level) => level >= 3)) return 'internal';
   if (state.pendingModel) return 'readyToRelease';
   if (state.activeRun) return 'training';
   return 'idle';
