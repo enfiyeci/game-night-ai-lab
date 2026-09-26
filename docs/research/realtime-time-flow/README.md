@@ -28,3 +28,16 @@ Notable catches:
   meeting as a walkout (`sim/turn.js:228-234`).
 - Round length shrinks 12× from era 1 to era 5 (`sim/data/eras.js`), while most random rolls are
   flat per turn, so a constant-speed calendar would make era-5 surprises about 13× as frequent.
+
+## Owner's picks (2026-09-26)
+
+- 1D, built in stages (the owner asked how Game Dev Tycoon does it, then chose its model). Stage 1,
+  for the 1 PM demo: a weekly clock, instant actions, team slots, weekly money and progress, and
+  card deadlines in story days enforced by the sim. Stage 2, after the trailer: move rival
+  launches, lawsuits, promises and era changes from hidden round marks onto the weekly clock, and
+  retune the balance.
+- 2A: each era takes the same real time (about 3 minutes at ×1).
+- 3C: each team does one thing at a time, with 2 new actions per quarter, month or week for now
+  ("we will balance it out").
+- 4C: no skip button; pause, ×1, ×2 and ×4 only.
+- Warnings don't pause the clock; only cards that need an answer do.
