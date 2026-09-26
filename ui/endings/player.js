@@ -241,6 +241,7 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
   const titleEl = $('.film-title');
   const lumenText = lumenLine ?? film.lumen ?? '';
   let current = null;
+  let announced = null;
   let playing = false;
 
   // A clip follows the film's clock: it plays while the film plays and is re-seeked when it drifts; otherwise it shows
@@ -311,7 +312,6 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
       $('.film-card').textContent = shot.card ?? '';
       $('.film-sub').textContent = shot.sub ?? '';
       $('.film-say').hidden = !shot.say;
-      $('.film-say-read').textContent = shot.say ? `Lumen: ${shot.say}` : '';   // read out whole, once per shot
       titleEl.hidden = shot.kind !== 'title';
       current = shot;
     }
@@ -323,6 +323,8 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
     const node = nodes[shot.index];
     if (node?.video) syncClip(node.video, local, shot.dur, still);
     if (node?.leave && !node.keyedLeave) keyLeavers(node);
+    // screen readers hear each line whole, once, when its shot plays (not while the film waits or is seeked)
+    if (playing && announced !== shot) { announced = shot; $('.film-say-read').textContent = shot.say ? `Lumen: ${shot.say}` : ''; }
     if (shot.say) {
       // the untyped rest of the line is laid out but transparent, so the centred line never moves as it types
       const typed = still ? shot.say : typedText(shot.say, SAY_AT, local, SAY_CPS);
@@ -389,6 +391,7 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
       // Escape and the Tab trap belong to the playing film, not to whatever page mounted it (Codex review round 3)
       document.addEventListener('keydown', onKey);
       playing = true;
+      announced = null;
       started = performance.now() - from * 1000;
       if (audio) { audio.currentTime = from; audio.play().catch(() => {}); }
       const loop = () => {
