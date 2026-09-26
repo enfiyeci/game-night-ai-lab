@@ -1,4 +1,5 @@
 import { CARDS, STAGE_SLOTS } from './data/cards.js';
+import { eraScale } from './data/compute.js';
 import { techAvailable } from './techniques.js';
 
 export const SIZES = ['small', 'medium', 'large', 'xl'];
@@ -79,7 +80,7 @@ export function recipeCost(state, recipe) {
   const mult = cards.reduce((m, c) => m * (c.cost.computeMult ?? 1), 1);
   return {
     cash: cards.reduce((s, c) => s + (c.cost.cash ?? 0), 0),
-    units: Math.round(SIZE_UNITS[size] * mult * 10) / 10,
+    units: Math.round(SIZE_UNITS[size] * mult * eraScale(state.era) * 10) / 10,
     turns: 1 + LENGTHS[length].turns + cards.reduce((s, c) => s + (c.cost.turns ?? 0), 0),
   };
 }

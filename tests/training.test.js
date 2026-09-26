@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import { startRun, advanceRun, availableUnits } from '../sim/training.js';
+import { recipeCost } from '../sim/recipe.js';
 
 const noLuck = { next: () => 0.99, int: () => 0, chance: () => false, normal: (m) => m };
 const recipe = {
@@ -88,6 +89,7 @@ test('trained model capability and gain are capped at the maximum', () => {
 test('standard agent techniques mark era 4 models as agentic', () => {
   const s = createInitialState();
   s.era = 4;
+  s.compute.online = recipeCost(s, recipe).units + 10;
   startRun(s, recipe);
   const trained = advanceRun(s, noLuck);
   assert.ok(trained.flags.includes('agentic'));

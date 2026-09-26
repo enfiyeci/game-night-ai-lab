@@ -94,6 +94,8 @@ export function signOffer(state, offerId, rng) {
   if (offer.upfront > state.cash) return { ok: false, error: 'not enough cash for the upfront payment' };
   state.cash -= offer.upfront;
   const f = family(offer.supplier);
+  state.compute.deals ??= [];
+  state.compute.deals.push({ supplier: f, turn: state.turn });
   const arrivesTurn = state.turn + offer.arrivesIn;
   const id = addPipeline(state, {
     supplier: f, units: offer.units, price: offer.price, termMonths: offer.termMonths, arrivesTurn, string: offer.string,

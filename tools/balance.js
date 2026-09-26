@@ -14,6 +14,7 @@ import { runMeeting } from '../sim/president.js';
 import { activateReleases, releaseModel } from '../sim/release.js';
 import { updateServing } from '../sim/economy.js';
 import { ENDINGS } from '../sim/endings.js';
+import { eraScale } from '../sim/data/compute.js';
 
 const HAZARD_CHOICES = ['penalize', 'fix', 'ignore'];
 const VALIDATION_RNG = { next: () => 0.5, int: () => 0, chance: () => false, pick: (values) => values[0], normal: (mean) => mean };
@@ -104,7 +105,7 @@ function internalControl(state, style, rng) {
 }
 
 function canDeployInternal(state, control) {
-  if (control == null || controlUnits({ internal: { control } }) > availableUnits(state)) return false;
+  if (control == null || controlUnits({ era: state.era, internal: { control } }) > availableUnits(state)) return false;
   return deployInternal(structuredClone(state), control).ok;
 }
 
@@ -196,8 +197,9 @@ function makeStrategy(style, prefs) {
     if (actions.moves.length === 0 && canDeployInternal(planned, control)) actions.moves.push({ type: 'deployInternal', control });
     if (actions.moves.length < 2 && planned.era >= 2 && inDangerZone(planned) && planned.flags.lastRoundEra !== planned.era) {
       actions.moves.push({ type: 'raise', archetype: 'vc' });
-    } else if (actions.moves.length < 2 && planned.cash >= 0 && availableUnits(planned) < 5) {
-      actions.moves.push({ type: 'deal', supplierId: 'coreflame' });
+    } else if (actions.moves.length < 2 && planned.cash >= 0 && availableUnits(planned) < 5 * eraScale(planned.era)) {
+      const o = planned.compute.offers.find((x) => x.supplier === 'coreflame');
+      if (o) actions.moves.push({ type: 'deal', offerId: o.id });
     }
     return actions;
   };

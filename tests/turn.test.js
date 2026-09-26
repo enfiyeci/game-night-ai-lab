@@ -42,7 +42,10 @@ test('a release capability gain is measured from the start-of-turn board baselin
 });
 
 test('only two moves per turn, and bad moves are reported', () => {
-  const r = endTurn(createInitialState(), { moves: [{ type: 'deal', supplierId: 'coreflame' }, { type: 'deal', supplierId: 'coreflame' }, { type: 'deal', supplierId: 'coreflame' }] }, createRng(1));
+  const s = createInitialState();
+  const coreflame = s.compute.offers.find((offer) => offer.supplier === 'coreflame');
+  const azuria = s.compute.offers.find((offer) => offer.supplier === 'azuria');
+  const r = endTurn(s, { moves: [{ type: 'deal', offerId: coreflame.id }, { type: 'deal', offerId: azuria.id }, { type: 'deal', offerId: coreflame.id }] }, createRng(1));
   assert.ok(r.errors.some((e) => e.includes('2 moves')));
   assert.equal(r.events.filter((e) => e.type === 'deal').length, 2);
   const bad = endTurn(createInitialState(), { moves: [{ type: 'teleport' }] }, createRng(1));
@@ -96,9 +99,10 @@ test('a new budget updates emergency eligibility before moves', () => {
 test('a same-turn compute deal refreshes burn before a later emergency move', () => {
   const s = createInitialState();
   s.cash = 310;
+  const spot = s.compute.offers.find((offer) => offer.supplier === 'spot');
   const out = endTurn(s, {
     moves: [
-      { type: 'deal', supplierId: 'coreflame' },
+      { type: 'deal', offerId: spot.id },
       { type: 'emergency', option: 'bridgeRound' },
     ],
   }, createRng(14));
@@ -199,6 +203,7 @@ test('a quiet takeover stops training and event generation for the turn', () => 
   const s = createInitialState();
   s.era = 3;
   s.turn = 1;
+  s.compute.online = 60;
   startRun(s, recipe);
   s.activeRun.turnsLeft = 1;
   s.internal = { control: 0, stage: 3, turns: 3, capability: 80 };

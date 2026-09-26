@@ -13,7 +13,18 @@ const recipe = {
   sliders: { size: 'medium', length: 'optimal', alignShare: 0.15 },
   picks: { pre: ['filtered-data'], mid: [], post: ['synthetic-sft', 'safety-tuning'] },
 };
-const withModel = () => { const s = createInitialState(); s.era = 3; s.models.push({ capability: 60 }); return s; };
+const withModel = () => {
+  const s = createInitialState();
+  s.era = 3;
+  s.compute.contracts.push({
+    id: 'test-capacity', supplier: 'starter', units: 90, price: 0, monthsLeft: null,
+    needsPower: false, string: null, arrivedTurn: 0, scaledDown: false, troubled: false,
+    dark: false, bumpTurn: null, exclusiveBought: false, headline: null,
+  });
+  s.compute.online = 100;
+  s.models.push({ capability: 60 });
+  return s;
+};
 
 test('internal deployment opens in era 3 and needs a model', () => {
   const s = createInitialState();
@@ -40,7 +51,7 @@ test('control reserves compute and lowers risk', () => {
   const r0 = internalRisk(s);
   s.internal.control = 1;
   assert.ok(internalRisk(s) < r0);
-  assert.equal(controlUnits(s), 2);
+  assert.equal(controlUnits(s), 20);
 });
 
 test('trouble escalates warning, incident, exfiltration, then takeover at high capability', () => {
@@ -103,7 +114,7 @@ test('control must fit in free compute', () => {
   assert.equal(r.error, 'not enough free compute for control');
   assert.equal(deployInternal(s, 0).ok, true);
   const t = withModel();
-  t.activeRun = { bonus: 0, units: t.compute.online - 2, turnsLeft: 2 };
+  t.activeRun = { bonus: 0, units: t.compute.online - 20, turnsLeft: 2 };
   assert.equal(deployInternal(t, 0.5).ok, true);
   assert.equal(deployInternal(t, 1).ok, true);
   assert.equal(t.internal.control, 1);
@@ -188,7 +199,7 @@ test('endTurn wires the moves, control compute and the ending', () => {
   assert.equal(prev.internal, null);
   assert.equal(state.internal.control, 1);
   assert.equal(state.internal.turns, 1);
-  assert.equal(availableUnits(state), availableUnits({ ...state, internal: null }) - 2);
+  assert.equal(availableUnits(state), availableUnits({ ...state, internal: null }) - 20);
   const next = endTurn(state, { moves: [{ type: 'stopInternal' }] }, miss).state;
   assert.equal(next.internal, null);
   assert.ok(ENDINGS.quietTakeover);

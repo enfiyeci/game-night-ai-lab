@@ -6,10 +6,16 @@ import { MEETINGS } from '../sim/data/president.js';
 import { createPresidentPromise, promiseUpkeep } from '../sim/promises.js';
 import { runMeeting } from '../sim/president.js';
 import { addressWarning, eventsTick, resolveEvent } from '../sim/events.js';
-import { signDeal } from '../sim/compute.js';
+import { generateOffers, signOffer } from '../sim/contracts.js';
 import { endTurn } from '../sim/turn.js';
 
 const no = { next: () => 0.99, int: () => 0, chance: () => false, pick: (a) => a[0], normal: (m) => m };
+const signGulf = (state) => {
+  state.era = 3;
+  state.govFavor.us = 60;
+  state.compute.offers = generateOffers(state, no);
+  return signOffer(state, state.compute.offers.find((offer) => offer.supplier === 'gulf').id, no);
+};
 const meeting = (id) => MEETINGS.find((entry) => entry.id === id);
 const answerIds = (id, styles) => meeting(id).exchanges.map((exchange, index) =>
   exchange.answers.find((answer) => answer.style === styles[index]).id);
@@ -101,17 +107,17 @@ test('every President promise check can mark a due promise kept', () => {
 test('a Gulf deal signed since the domestic-chips promise fails its check', () => {
   const state = createInitialState();
   state.turn = 3;
-  assert.equal(signDeal(state, 'gulf').ok, true);
+  assert.equal(signGulf(state).ok, true);
   assert.equal(PROMISES.domesticChips.check(state, presidentPromise('domesticChips')), false);
 });
 
 test('same-turn history before a promise does not count but history after it does', () => {
   const state = createInitialState();
   state.turn = 7;
-  assert.equal(signDeal(state, 'gulf').ok, true);
+  assert.equal(signGulf(state).ok, true);
   const domestic = createPresidentPromise('domesticChips', 'first', state.turn, state);
   assert.equal(PROMISES.domesticChips.check(state, domestic), true);
-  assert.equal(signDeal(state, 'gulf').ok, true);
+  assert.equal(signGulf(state).ok, true);
   assert.equal(PROMISES.domesticChips.check(state, domestic), false);
 
   state.constitution.amendments.push({ turn: 7, change: { remove: 'honest' } });

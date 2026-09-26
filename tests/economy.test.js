@@ -28,10 +28,11 @@ test('serving load uses compute and overflows at scale', () => {
 test('compute reserved by control is not available for serving', () => {
   const s = createInitialState();
   s.era = 3;
+  s.compute.online = 30;
   s.models.push(consumerModel(1e6));
   updateServing(s);
   assert.equal(deployInternal(s, 1).ok, true);
-  s.models[0].users = 1e7; // fits in 10 units, not in the 8 left after control
+  s.models[0].users = 15e6; // fits in 30 units, not in the 10 left after control
   const bare = { ...s, internal: null, compute: { ...s.compute } };
   updateServing(bare);
   assert.equal(bare.compute.overflow, 0);
