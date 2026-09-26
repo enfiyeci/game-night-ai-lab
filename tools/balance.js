@@ -76,7 +76,7 @@ function presidentAnswers(state, style, rng) {
       return exchange.answers.reduce((best, answer) => (answer.flattery > best.flattery ? answer : best)).id;
     }
     if (style === 'safety' || style === 'balanced') {
-      return exchange.answers.find((answer) => answer.flattery === 0 && answer.jargon === 0).id;
+      return exchange.answers.find((answer) => answer.style === 'plain').id;
     }
     return rng.pick(exchange.answers).id;
   });

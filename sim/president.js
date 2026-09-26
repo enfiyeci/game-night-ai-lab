@@ -2,20 +2,24 @@ import { MEETINGS } from './data/president.js';
 
 const meetingById = (id) => MEETINGS.find((meeting) => meeting.id === id);
 
-function applyStake(state) {
-  if (state.govFavor.us >= 70) {
+const STAKES = ['none', 'federalContract', 'exportLicenses', 'statePreemption', 'nationalChampion'];
+
+function applyStake(state, tierUp) {
+  let tier = state.govFavor.us >= 70 ? 4
+    : state.govFavor.us >= 62 ? 3
+      : state.govFavor.us >= 55 ? 2
+        : state.govFavor.us >= 40 ? 1 : 0;
+  if (tierUp) tier = Math.min(tier + 1, STAKES.length - 1);
+  const stake = STAKES[tier];
+  if (stake === 'nationalChampion') {
     state.cash += 150;
     state.raceHeat += 5;
-    return 'nationalChampion';
-  }
-  if (state.govFavor.us >= 62) {
+  } else if (stake === 'statePreemption') {
     if (state.flags.statePreemption !== true) {
       state.flags.statePreemption = true;
       state.publicTrust -= 3;
     }
-    return 'statePreemption';
-  }
-  if (state.govFavor.us >= 55) {
+  } else if (stake === 'exportLicenses') {
     state.compute.pipeline.push({
       supplier: 'federal-export-license',
       units: 8,
@@ -23,17 +27,14 @@ function applyStake(state) {
       failChance: 0,
       arrivesTurn: state.turn + 1,
     });
-    return 'exportLicenses';
-  }
-  if (state.govFavor.us >= 40) {
+  } else if (stake === 'federalContract') {
     state.cash += 60;
-    return 'federalContract';
   }
-  return 'none';
+  return stake;
 }
 
-function finishMeeting(state, id, walkedOut, flattery, promises) {
-  const stake = applyStake(state);
+function finishMeeting(state, id, walkedOut, flattery, promises, bargain = false) {
+  const stake = applyStake(state, bargain && !walkedOut);
   if (!state.meetingsHeld.includes(id)) state.meetingsHeld.push(id);
   state.meeting = null;
   return { ok: true, outcome: { walkedOut, flattery, promises, stake } };
@@ -63,13 +64,20 @@ export function runMeeting(state, answerIds) {
 
   let flattery = 0;
   let walkedOut = false;
+  let bargain = false;
   const promises = [];
   for (const answer of answers) {
     state.meeting.patience -= answer.jargon * 3;
+    if (answer.patience && state.meeting.patience < 10) {
+      state.meeting.patience = Math.min(10, state.meeting.patience + answer.patience);
+    }
     flattery += answer.flattery;
     state.govFavor.us += answer.flattery * 4;
+    state.govFavor.us += answer.favor ?? 0;
+    state.raceHeat += answer.raceHeat ?? 0;
     state.staffTrust -= answer.flattery * 2;
     state.publicTrust -= answer.flattery;
+    if (answer.bargain) bargain = true;
     if (answer.promise) {
       const promise = { text: answer.promise, dueTurn: state.turn + 6 };
       state.promises.push(promise);
@@ -83,7 +91,7 @@ export function runMeeting(state, answerIds) {
   }
   if (flattery >= 4) state.flags.presidentDemand = true;
   if (flattery === 0) state.flags.supplyChainRisk = true;
-  return finishMeeting(state, meeting.id, walkedOut, flattery, promises);
+  return finishMeeting(state, meeting.id, walkedOut, flattery, promises, bargain);
 }
 
 export function expireMeeting(state) {

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import { meetingDue, runMeeting } from '../sim/president.js';
 import { MEETINGS } from '../sim/data/president.js';
+import { PROMISES } from '../sim/data/promises.js';
 import { endTurn } from '../sim/turn.js';
 
 const no = { next: () => 0.99, int: () => 0, chance: () => false, pick: (a) => a[0], normal: (m) => m };
@@ -12,9 +13,10 @@ const open = (state, id = 'first') => {
   return state;
 };
 const ids = (pick, id = 'first') => meeting(id).exchanges.map((exchange) => pick(exchange.answers).id);
-const plainIds = (id = 'first') => ids((answers) => answers.find((answer) => answer.flattery === 0 && answer.jargon === 0), id);
-const flatteringIds = (id = 'first') => ids((answers) => answers.find((answer) => answer.flattery === 2), id);
-const jargonIds = (id = 'first') => ids((answers) => answers.find((answer) => answer.jargon === 2), id);
+const styleIds = (style, id = 'first') => ids((answers) => answers.find((answer) => answer.style === style), id);
+const plainIds = (id = 'first') => styleIds('plain', id);
+const flatteringIds = (id = 'first') => styleIds('flatter', id);
+const jargonIds = (id = 'first') => styleIds('jargon', id);
 
 test('the President meeting script has the required exchanges and answer mix', () => {
   assert.deepEqual(MEETINGS.map(({ id, era, turnInEra }) => ({ id, era, turnInEra })), [
@@ -24,13 +26,69 @@ test('the President meeting script has the required exchanges and answer mix', (
   for (const entry of MEETINGS) {
     assert.equal(entry.exchanges.length, 3);
     for (const exchange of entry.exchanges) {
-      assert.equal(exchange.answers.length, 4);
-      assert.ok(exchange.answers.some((answer) => answer.flattery === 0 && answer.jargon === 0));
-      assert.ok(exchange.answers.some((answer) => answer.flattery === 2));
-      assert.ok(exchange.answers.some((answer) => answer.jargon === 2));
-      assert.ok(exchange.answers.some((answer) => answer.flattery === 1 && answer.jargon === 1));
+      assert.equal(exchange.answers.length, 5);
+      assert.deepEqual(exchange.answers.slice(0, 3).map((answer) => answer.style), ['plain', 'flatter', 'jargon']);
+      for (const answer of exchange.answers) {
+        assert.equal(answer.id, `${entry.id}-${exchange.topic}-${answer.style}`);
+        if (answer.promise) assert.equal(PROMISES[answer.promise]?.id, answer.promise);
+      }
     }
   }
+  const optionalStyles = MEETINGS.flatMap((entry) => entry.exchanges)
+    .flatMap((exchange) => exchange.answers.slice(3).map((answer) => answer.style));
+  assert.deepEqual(Object.fromEntries([...new Set(optionalStyles)].sort().map((style) => [
+    style,
+    optionalStyles.filter((candidate) => candidate === style).length,
+  ])), {
+    bargainer: 2,
+    comedian: 2,
+    corporate: 2,
+    hawk: 2,
+    mirror: 2,
+    salesman: 2,
+  });
+});
+
+test('answer extra fields apply favor, patience and race heat in answer order', () => {
+  const hawk = open(createInitialState());
+  const hawkIds = plainIds();
+  hawkIds[0] = meeting().exchanges[0].answers.find((answer) => answer.style === 'hawk').id;
+  runMeeting(hawk, hawkIds);
+  assert.equal(hawk.govFavor.us, 56);
+  assert.equal(hawk.raceHeat, 23);
+
+  const bargain = open(createInitialState());
+  const bargainIds = plainIds();
+  bargainIds[2] = meeting().exchanges[2].answers.find((answer) => answer.style === 'bargainer').id;
+  runMeeting(bargain, bargainIds);
+  assert.equal(bargain.govFavor.us, 46);
+
+  const comedian = open(createInitialState());
+  comedian.meeting.patience = 5;
+  const comedianIds = plainIds();
+  comedianIds[1] = meeting().exchanges[1].answers.find((answer) => answer.style === 'comedian').id;
+  comedianIds[2] = meeting().exchanges[2].answers.find((answer) => answer.style === 'jargon').id;
+  assert.equal(runMeeting(comedian, comedianIds).outcome.walkedOut, false);
+});
+
+test('a bargain raises the stake one tier only when the meeting does not end in a walkout', () => {
+  const completed = open(createInitialState());
+  completed.govFavor.us = 43;
+  const completedIds = plainIds();
+  completedIds[2] = meeting().exchanges[2].answers.find((answer) => answer.style === 'bargainer').id;
+  const completedResult = runMeeting(completed, completedIds);
+  assert.equal(completedResult.outcome.walkedOut, false);
+  assert.equal(completedResult.outcome.stake, 'federalContract');
+  assert.equal(completed.cash, 1060);
+
+  const walkedOut = open(createInitialState());
+  walkedOut.govFavor.us = 43;
+  const walkedOutIds = jargonIds();
+  walkedOutIds[2] = meeting().exchanges[2].answers.find((answer) => answer.style === 'bargainer').id;
+  const walkedOutResult = runMeeting(walkedOut, walkedOutIds);
+  assert.equal(walkedOutResult.outcome.walkedOut, true);
+  assert.equal(walkedOutResult.outcome.stake, 'none');
+  assert.equal(walkedOut.cash, 1000);
 });
 
 test('the first meeting is due in era 2, turn 2', () => {
@@ -104,14 +162,14 @@ test('inherited array entries do not count as President answers', () => {
   assert.deepEqual(state, before);
 });
 
-test('promises are recorded six turns after the meeting', () => {
+test('answer promise values are promise ids', () => {
   const state = open(createInitialState());
   state.turn = 9;
   const answerIds = ids((answers) => answers.find((answer) => answer.promise) ?? answers[0]);
   const expected = meeting().exchanges
     .map((exchange, index) => exchange.answers.find((answer) => answer.id === answerIds[index]).promise)
     .filter(Boolean)
-    .map((text) => ({ text, dueTurn: 15 }));
+    .map((id) => ({ text: id, dueTurn: 15 }));
   const result = runMeeting(state, answerIds);
   assert.deepEqual(state.promises, expected);
   assert.deepEqual(result.outcome.promises, expected);
