@@ -17,6 +17,12 @@ export const PRICE_STANCE = {
   free: { rev: 0.6, growth: 2.2 },
 };
 
+export const activeModels = (state) =>
+  state.models.filter((model) => model.active && model.channel !== 'open' && state.turn >= model.activeFromTurn);
+
+export const safetyUnits = (online, control, share) =>
+  Math.min(online - control, Math.round(online * share * 10) / 10);
+
 const guardMult = (guard, era) => (guard ? (era >= 4 ? 1.01 : 1.24) : 1);
 
 export function servingCost(spec, era, load) {

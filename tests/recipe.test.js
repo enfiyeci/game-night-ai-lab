@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import { techAvailable, researchTechnique, standardTechniques } from '../sim/techniques.js';
 import { validateRecipe, recipeCost, slotsFor, resolveCards } from '../sim/recipe.js';
+import { eraScale } from '../sim/data/compute.js';
 
 const eraOneRecipe = {
   sliders: { size: 'medium', length: 'optimal', alignShare: 0.15 },
@@ -50,18 +51,18 @@ test('midtraining opens in era 2 and compute multipliers stack', () => {
   assert.equal(slotsFor(s, 'mid'), 2);
   const recipe = { sliders: { size: 'large', length: 'optimal', alignShare: 0.2 }, picks: { pre: ['moe'], mid: ['soup'], post: [] } };
   assert.equal(validateRecipe(s, recipe).ok, true);
-  assert.equal(recipeCost(s, recipe).units, 10.4);
+  assert.equal(recipeCost(s, recipe).units, Math.round(10.4 * eraScale(2) * 10) / 10);
 });
 
 test('talent spend adds a slot', () => {
   const s = createInitialState();
-  s.budget.split = { training: 0.25, safety: 0.2, security: 0.1, product: 0.15, talent: 0.3 };
+  s.budget.split = { training: 0.45, security: 0.1, product: 0.15, talent: 0.3 };
   assert.equal(slotsFor(s, 'pre'), 3);
 });
 
 test('a talent share adds no slot when actual talent spend is zero', () => {
   const s = createInitialState();
-  s.budget = { spend: 0, split: { training: 0, safety: 0, security: 0, product: 0, talent: 1 } };
+  s.budget = { spend: 0, split: { training: 0, security: 0, product: 0, talent: 1 } };
   assert.equal(slotsFor(s, 'pre'), 2);
 });
 

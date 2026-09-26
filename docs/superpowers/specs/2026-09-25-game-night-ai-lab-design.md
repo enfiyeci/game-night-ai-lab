@@ -43,6 +43,11 @@ shows the true values next to what each advisor told you.
 After era 5 comes a **60–90 second finale**: a rapid run of cards from the owner's original
 design (the technofeudal turn, then the race to the bottom), chosen by the ending the player is
 heading toward, too fast to fully manage.
+**Decided (owner 2026-09-25): tag mode.** Six quick cards: five from a deck chosen by the
+ending (aligned → stewardship, negotiated pace → temptation, costly win → technofeudal,
+overtaken → race to the bottom) and a citizenship vote for the lab's AI. Choices never change the
+ending; they add one tag to its title ("A costly win — with a vassal state") and record the vote.
+No world map. Details: plan 2F.
 
 ## 4. Game state (approved)
 
@@ -132,6 +137,10 @@ in section 6e). A lab that is insolvent when era 5 ends never wins; it ends in a
 - **Compute market.** Four or five fictional actors: a chip titan, a cloud landlord, a neocloud
   that can fail, a sovereign financier with political strings, and power-site deals in era 4.
   Multi-year deals buy priority; spot capacity can vanish; equity deals attach strings.
+  **Detailed design (owner-approved 2026-09-25):**
+  `docs/superpowers/specs/2026-09-25-compute-gathering-design.md` — contracts, the compute
+  split (safety moves from the money budget into compute), the era 3 queue and the era 4
+  power cap. Where it differs from this spec, it wins.
 - **Constitution (clarified by owner 2026-09-25; format decided 2026-09-25).** The *model's*
   constitution: the values document your AI is trained on, like Claude's constitution or
   OpenAI's Model Spec. It is not a company charter. Company promises such as a safety-compute
@@ -164,6 +173,15 @@ in section 6e). A lab that is insolvent when era 5 ends never wins; it ends in a
   technical term drains his patience; at zero he walks out. Plain answers keep him engaged but
   can over-promise, which comes due later. Stakes: export licenses, federal contracts, a
   preemption of state safety laws, national-champion status.
+  - **Agenda and answer styles (owner 2026-09-25).** He mostly pushes to win the AI war against
+    "the woke" and China. The player picks answers (format decided): each exchange offers five
+    of nine styles: plain, bootlicking, safety-pilled jargon, corporate, mirror, bargainer,
+    comedian, hawk, salesman. Details and draft script: plan 2E.
+  - **Promises come due (owner 2026-09-25: options A, B, D, E).** Each promise is checked at its
+    due turn (kept: favor up). A broken one brings a call from his office: deliver at a cost,
+    stall once, or refuse (favor down, supply-chain-risk designation). Promises that contradict
+    the model's hard lines can leak. Broken promises from the first meeting make the second one
+    harder (less patience, quicker amendment demand). Details: plan 2E.
 
 ## 6b. Models: training recipe, naming and running cost (requested by owner 2026-09-25)
 
@@ -251,7 +269,8 @@ Part 2. That report's menu tables are the working content; this section fixes ho
   - Broken promise revealed ← `brokenPromise` → staff asking pointed questions → come clean /
     cover up; the Head of Safety may quit publicly.
 - **People and company:** star researcher poached; safety-team open letter; whistleblower;
-  weight theft by a foreign state (low security and high capability); board revolt.
+  weight theft by a foreign state (low security and high capability; in scope, owner
+  2026-09-25, plan 2E); board revolt.
 - **World and market:** rival breakthrough; the Eastern lab's cheap open model shocks the
   market; export controls flip; chip or memory shortage (the era's bottleneck); local
   data-center opposition (era 4); rental-cloud partner collapses; price war; copyright suit

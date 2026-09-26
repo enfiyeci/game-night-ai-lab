@@ -2,11 +2,13 @@ import { BALANCE } from './balance.js';
 import { eraById } from './data/eras.js';
 import { SIZE_CAP, LENGTHS, validateRecipe, recipeCost, recipeCards, talentSpend } from './recipe.js';
 import { standardTechniques } from './techniques.js';
+import { rollTrainingHazard, applyAlignmentFaking, evalGamingDebt } from './hazards.js';
+import { hasLine } from './constitution.js';
+import { computeSlices } from './split.js';
 
-export function availableUnits(state) {
-  const run = state.activeRun ? state.activeRun.units : 0;
-  return Math.max(0, state.compute.online - state.compute.servingUnits - run);
-}
+export const SHARED_SAFETY_DEBT_MULT = 0.7;
+
+export const availableUnits = (state) => computeSlices(state).idle;
 
 export function startRun(state, recipe) {
   if (state.activeRun) return { ok: false, error: 'a training run is already active' };
@@ -25,7 +27,7 @@ export function startRun(state, recipe) {
 export function advanceRun(state, rng) {
   const run = state.activeRun;
   if (!run) return null;
-  if (state.compute.online < run.units) return { type: 'runPaused' };
+  if (computeSlices(state).training < run.units) return { type: 'runPaused' };
   if (rng.chance(run.spikeChance)) run.spikes += 1;
   run.turnsLeft -= 1;
   if (run.turnsLeft > 0) return null;
@@ -38,7 +40,18 @@ export function resolveRun(state, run, rng) {
   const { size, length, alignShare } = run.recipe.sliders;
   const cards = recipeCards(state, run.recipe);
   const autos = standardTechniques(state).map((t) => t.auto).filter(Boolean);
-  const effects = [...cards.map((c) => c.effects), ...autos];
+  const effects = [
+    ...cards.map((card) => {
+      if (card.id === 'thumbs' && hasLine(state, 'no-manipulation')) {
+        return { ...card.effects, usersMult: 1.05, flags: (card.effects.flags ?? []).filter((flag) => flag !== 'sycophancy') };
+      }
+      if (card.id === 'agentic-rl' && hasLine(state, 'no-autonomy-grab')) {
+        return { ...card.effects, capReady: (card.effects.capReady ?? 0) - 2 };
+      }
+      return card.effects;
+    }),
+    ...autos,
+  ];
   const readiness = cards.reduce((r, c) => c.effects.readiness ?? r, 0.5);
   const large = size === 'large' || size === 'xl';
 
@@ -49,13 +62,25 @@ export function resolveRun(state, run, rng) {
   }
   // Each $20M/month of talent spend adds 1.0; the typical $4M spend preserves the old +0.2.
   const talent = 0.8 + talentSpend(state) / 20;
-  const uncappedGain = Math.max(0, base) * talent * (1 - 0.5 * alignShare) * Math.max(0.2, 1 - 0.2 * run.spikes);
-  const capability = Math.min(BALANCE.maxCapability, state.capability + uncappedGain);
+  const nextRunCapPenalty = state.flags.nextRunCapPenalty ?? 0;
+  delete state.flags.nextRunCapPenalty;
+  const spikeFactor = (n) => Math.max(0.2, 1 - 0.2 * n);
+  const gainWith = (n) => Math.max(0, Math.max(0, base) * talent * (1 - 0.5 * alignShare) * spikeFactor(n) - nextRunCapPenalty);
+  const uncappedGain = gainWith(run.spikes);
+  const gainCap = state.deal?.collapsed === false && state.deal.binding.includes('computeCap') ? 5 : Infinity;
+  const capability = Math.min(BALANCE.maxCapability, state.capability + Math.min(uncappedGain, gainCap));
   const gain = Math.max(0, capability - state.capability);
+  const spikeLoss = run.spikes > 0
+    ? Math.max(0, Math.min(BALANCE.maxCapability, state.capability + Math.min(gainWith(run.spikes - 1), gainCap)) - capability)
+    : 0;
 
   const sum = (key) => effects.reduce((s, e) => s + (e[key] ?? 0), 0);
   const era = eraById(state.era);
-  state.alignmentDebt += gain * (era.targetSafetyShare - alignShare) * BALANCE.alignDebtFactor + sum('ad');
+  const rawDebtDelta = gain * (era.targetSafetyShare - alignShare) * BALANCE.alignDebtFactor + sum('ad');
+  const sharedSafety = state.deal?.collapsed === false && state.deal.binding.includes('sharedSafety');
+  const debtDelta = rawDebtDelta > 0 && sharedSafety ? rawDebtDelta * SHARED_SAFETY_DEBT_MULT : rawDebtDelta;
+  state.alignmentDebt += applyAlignmentFaking(state, debtDelta, capability);
+  state.concealedDebt += evalGamingDebt(state, capability);
   state.misuseExposure += sum('mx');
   state.perceivedAdOffset += sum('perceivedAdOffset');
   for (const e of effects) {
@@ -68,15 +93,19 @@ export function resolveRun(state, run, rng) {
     { size, arch: 'dense', context: 'short', precision: 'bf16', guard: false, reasoningCapable: false },
     ...effects.map((e) => e.spec ?? {}),
   );
+  const flags = [...new Set(effects.flatMap((e) => e.flags ?? []))];
   const openWeightsMx =
     cards.reduce((v, c) => c.effects.openWeightsMx ?? v, 20) * cards.reduce((m, c) => m * (c.effects.openWeightsMult ?? 1), 1);
 
   return {
     capability,
     gain,
+    spikes: run.spikes,
+    spikesAnswered: run.spikesAnswered ?? 0,
+    spikeLoss,
     size,
     spec,
-    flags: [...new Set(effects.flatMap((e) => e.flags ?? []))],
+    flags,
     openWeightsMx,
     publicEffects: {
       pt: sum('pt'),
@@ -86,5 +115,7 @@ export function resolveRun(state, run, rng) {
       govIntl: sum('govIntl'),
       usersMult: effects.reduce((m, e) => m * (e.usersMult ?? 1), 1),
     },
+    hazard: rollTrainingHazard(state, cards, flags, rng),
+    releaseDelay: 0,
   };
 }
