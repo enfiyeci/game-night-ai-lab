@@ -133,7 +133,11 @@ export function mountHazard(game, { stage, overlay }) {
 
     const buttons = [...card.querySelectorAll('.hazard-choice')];
     for (const button of buttons) button.addEventListener('click', () => close(button.dataset.choice));
-    card.addEventListener('keydown', (event) => {
+    // Focus stays on the choices: a click on the dim room does not move it, and Tab cycles the three buttons.
+    opened.addEventListener('mousedown', (event) => {
+      if (!event.target.closest('.hazard-choice')) event.preventDefault();
+    });
+    opened.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') {
         event.preventDefault(); // a choice is required
         event.stopPropagation();
@@ -153,8 +157,7 @@ export function mountHazard(game, { stage, overlay }) {
 
   // Another dialog or an event card already up goes first; the card opens when it closes.
   const busy = () => Boolean(overlay.querySelector('.dialog-layer, .event-layer'));
-  const shouldOpen = () => Boolean(game.state.pendingModel?.hazard) && game.queue.hazardChoice === undefined
-    && !game.state.ending && !layer && !busy();
+  const shouldOpen = () => Boolean(game.state.pendingModel?.hazard) && !game.state.ending && !layer && !busy();
 
   function check() {
     if (layer && (!game.state.pendingModel?.hazard || game.state.ending)) teardown(); // resolved some other way

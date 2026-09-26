@@ -29,7 +29,6 @@ export function mountHud(root, game) {
   function render() {
     connectClock();
     const state = game.state;
-    const run = state.activeRun;
     const counts = badgeCounts(state, game.lastAlignShare);
     const pill = project(state);
     const totalUsers = activeModels(state).reduce((sum, model) => sum + model.users, 0);

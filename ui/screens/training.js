@@ -66,8 +66,7 @@ export function mountTraining(game, { stage, hud, overlay }) {
   }
 
   function updateReadyNote() {
-    const ready = game.state.pendingModel
-      && (!game.state.pendingModel.hazard || game.queue.hazardChoice !== undefined);
+    const ready = game.state.pendingModel && !game.state.pendingModel.hazard && !game.state.ending;
     let note = overlay.querySelector('.ready-note');
     if (!ready) {
       note?.remove();
