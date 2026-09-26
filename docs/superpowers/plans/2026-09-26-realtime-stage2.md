@@ -14,6 +14,7 @@
 2. **Random rolls: "Roll at the mark, play out daily."** Rival progress rolls at the mark as today; the launch happens on the day the bar fills. Event rolls stay at the mark (stage 1 already spreads their cards).
 3. **Marks: "Keep marks and their beats."** Team slots, board votes, the President meetings, the summit and its weekly deal checks, automation, AI proposals and finance rows stay on the marks. Eras end on the same days (364, 728, 848, 968, 996).
 4. **If late:** undecided. The owner decides around 7:30 PM PT. Build the tasks in order so each finished one can ship alone.
+5. **Deliveries stay on the mark ("C", owner pick after Task 4's balance run).** Early compute starts billing early, and it moved 13 endings more than 5 points (the speed strategy swung about 20 points). Billing from the old date still moved 7 endings, with speed's going-broke rate up 13 points. Task 4 was reverted, compute and sites are no longer stamped, and Task 5 is dropped: the screens keep showing the mark dates, which stay true. Deliveries get a proper retune after the deadline.
 
 ## Global Constraints
 
@@ -655,4 +656,16 @@ Run `node scratchpad/compare.mjs scratchpad/balance-before.txt scratchpad/balanc
 
 ## Review record
 
-(Filled in by Task 6.)
+### Implementation (2026-09-26)
+
+Codex `gpt-5.6-sol` (session 01a0dfd1-a751-7bc1-97d7-4f2e5fbfd533) implemented Tasks 1–4. Its sandbox could not write the worktree's git metadata, so it delivered the commits as a verified bundle, which was fetched onto the branch unchanged. Its deviations: a delivered contract keeps its planned `arrivedTurn`, and expiry and trouble rolls skip it until then (reverted with Task 4). Existing tests changed: `tests/events.test.js` (the Qilin card waits for the launch round) and `tests/ui-history.test.js` (the subscriber waits for the first deferred launch; the summit scenario's first model now leads all five benchmarks because rival capability lands later).
+
+### Balance (`npm run balance`, 200 runs per strategy, against `bbaa2ab`)
+
+| Build | Endings moving more than 5 points |
+|---|---|
+| Tasks 1–3 (shipping) | handToMouth acquihire 25.0% → 34.5%; balancedNoGrid rivalDisaster 7.5% → 1.5% |
+| Task 4 as built (reverted) | 13, the largest speed acquihire 43.0% → 23.5% and boardRemoved 26.0% → 46.5% |
+| Task 4 billing from the old date (experiment) | 7, the largest speed acquihire 43.0% → 56.0% |
+
+Lawsuits and promises changed no ending (Tasks 2 and 3 outputs are identical). Rival-disaster endings dip 1–6 points in every balanced variant, because a rival's capability now lands on its day in the next round.

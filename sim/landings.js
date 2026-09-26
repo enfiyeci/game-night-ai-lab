@@ -29,14 +29,13 @@ function stamp(state, item, round, key) {
 }
 
 // Owner pick (2026-09-26): each thing lands in the round whose mark used to fire it, on a day inside that round.
-// Lawsuits and promises fired at the mark ending round dueTurn; deliveries and sites at the mark ending arrivesTurn - 1.
+// Lawsuits and promises fired at the mark ending round dueTurn. Compute and power sites stay on the mark (owner pick C,
+// 2026-09-26: arriving early moved the balance too far to retune tonight).
 export function stampLandings(state) {
   for (const c of state.legalCases) stamp(state, c, c.dueTurn, `legal:${c.source}:${c.cost}:${c.dueTurn}`);
   for (const p of state.promises) {
     if (p.source === 'president' && p.dueTurn != null) stamp(state, p, p.dueTurn, `promise:${p.meeting}:${p.id}`);
   }
-  for (const p of state.compute.pipeline) stamp(state, p, p.arrivesTurn - 1, `pipeline:${p.id}:${p.arrivesTurn}`);
-  for (const s of state.power.sites) if (!s.online) stamp(state, s, s.arrivesTurn - 1, `site:${s.id}`);
 }
 
 // Everything that lands today (stage 2), fired from advanceDays before the mark code.

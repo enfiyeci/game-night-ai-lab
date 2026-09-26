@@ -39,14 +39,13 @@ test('stamping gives each scheduled item a day and restamps a moved one', () => 
   s.power.sites.push({ id: 'gas-t', source: 'gas', units: 40, arrivesTurn: 3, online: false, oppositionCut: null });
   stampLandings(s);
   const [legal] = s.legalCases;
-  const site = s.power.sites.find((x) => x.id === 'gas-t');
   assert.equal(legal.landsFor, 3);
   assert.ok(legal.landsDay > roundSpan(3).start && legal.landsDay <= roundSpan(3).end);
-  assert.equal(site.landsFor, 2);
-  site.arrivesTurn += 1; // an event delays the build
+  assert.equal(s.power.sites.find((x) => x.id === 'gas-t').landsDay, undefined); // sites stay on the mark
+  legal.dueTurn += 1; // an event delays the case
   stampLandings(s);
-  assert.equal(site.landsFor, 3);
-  assert.ok(site.landsDay > roundSpan(3).start);
+  assert.equal(legal.landsFor, 4);
+  assert.ok(legal.landsDay > roundSpan(4).start && legal.landsDay <= roundSpan(4).end);
 });
 
 test('a rolled launch waits for its day in the next round', () => {
