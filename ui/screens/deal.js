@@ -121,7 +121,7 @@ export function mountDeal(game, overlayRoot) {
   }
 
   function showNext() {
-    if (!queue.length || overlayRoot.querySelector('.dialog-layer, .event-layer, .ev-phone')) return;
+    if (!queue.length || overlayRoot.querySelector('.dialog-layer, .event-layer, .ev-phone, .screenwall-layer')) return;
     const card = queue.shift();
     const layer = document.createElement('div');
     layer.className = 'dialog-layer dl-layer';
