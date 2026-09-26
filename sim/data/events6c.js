@@ -190,12 +190,13 @@ export const EVENTS_6C = [
     id: 'safetyQuits',
     kind: 'world',
     crisis: true,
+    fallback: 'letgo',
     trigger: (state) => state.seenEvents.includes('promise') && state.staffTrust < 50,
     warning: { handle: '@anon_staffer', text: 'the Head of Safety cancelled every meeting this week' },
     addressEffects(state) { state.staffTrust += 4; },
     card: {
       title: 'Your Head of Safety quits publicly',
-      post: { handle: '@former_safety_head', text: 'I resigned today. I no longer believe this lab will keep its safety commitments.' },
+      post: { handle: '@former_safety_head', text: 'I resigned today. Safety culture has taken a back seat to shiny products.' },
       choices: [
         {
           id: 'persuade', label: 'Meet their terms and ask them back', cost: '$30M', backers: ['Safety'], opposers: ['CFO'],
@@ -207,14 +208,14 @@ export const EVENTS_6C = [
           },
         },
         {
-          id: 'smear', label: 'Question their motives', cost: 'staff trust', backers: ['Comms'], opposers: ['Safety'],
+          id: 'smear', label: 'Question their motives', cost: 'staff watch how you treat people who leave', backers: ['Comms'], opposers: ['Safety'],
           effects(state) {
             state.publicTrust -= 3;
             state.staffTrust -= 12;
           },
         },
         {
-          id: 'letgo', label: 'Let them go', cost: 'public trust', backers: ['CFO'], opposers: ['Staff'],
+          id: 'letgo', label: 'Let them go', cost: 'the safety team loses its voice', backers: ['CFO'], opposers: ['Staff'],
           effects(state) {
             state.publicTrust -= 6;
             state.staffTrust -= 6;
@@ -298,11 +299,12 @@ export const EVENTS_6C = [
   {
     id: 'exportFlip',
     kind: 'world',
+    fallback: 'quiet',
     trigger: (state, rng) => state.era >= 2 && rng.chance(0.15),
     warning: null,
     card: {
-      title: 'Export controls flip',
-      post: { handle: '@commerce_dept', text: 'new rules cut advanced chip sales to Eastern buyers, effective at once' },
+      title: 'Export controls tighten',
+      post: { handle: '@commerce_dept', text: 'new rules cover high-bandwidth memory and chipmaking tools. 140 more companies on the list.' },
       choices: [
         {
           id: 'back', label: 'Back the rules publicly', cost: '$20M in lost overseas deals', backers: ['Government'], opposers: ['CFO'],
@@ -326,11 +328,12 @@ export const EVENTS_6C = [
   {
     id: 'priceWar',
     kind: 'world',
+    fallback: 'wait',
     trigger: (state, rng) => state.era >= 2 && liveModels(state).length > 0 && rng.chance(0.12),
     warning: null,
     card: {
       title: 'Price war',
-      post: { handle: '@openbrain', text: "we just cut API prices by 80%. you're welcome" },
+      post: { handle: '@openbrain', text: 'our new small model costs a thirtieth of the big one. you’re welcome' },
       choices: [
         {
           id: 'match', label: 'Match their prices', cost: 'revenue down', backers: ['Product'], opposers: ['CFO'],
@@ -363,12 +366,13 @@ export const EVENTS_6C = [
   {
     id: 'copyright',
     kind: 'world',
-    trigger: (state, rng) => state.era >= 2
-      && state.models.some((model) => (model.flags ?? []).includes('scraped')) && rng.chance(0.25),
+    fallback: 'fight',
+    trigger: (state, rng) => state.models.some((model) => (model.flags ?? []).includes('scraped'))
+      && (state.era >= 2 || state.turnInEra >= 2) && rng.chance(0.25),
     warning: null,
     card: {
       title: 'Copyright suit filed',
-      post: { handle: '@newsdesk', text: 'authors and a news group sue an AI lab over its training data' },
+      post: { handle: '@newsdesk', text: 'a major newspaper sues, saying the model repeats its articles word for word' },
       choices: [
         {
           id: 'license', label: 'Sign licensing deals', cost: '$40M', backers: ['Comms'], opposers: ['CFO'],
@@ -378,7 +382,7 @@ export const EVENTS_6C = [
           },
         },
         {
-          id: 'fight', label: 'Fight it in court', cost: 'a court fight', backers: ['CFO'], opposers: ['Comms'],
+          id: 'fight', label: 'Fight it in court', cost: 'a court fight that comes due later', backers: ['CFO'], opposers: ['Comms'],
           effects(state) {
             state.legalCases.push({ cost: 120, dueTurn: state.turn + 6, source: 'copyright' });
             state.publicTrust -= 2;

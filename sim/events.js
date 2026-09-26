@@ -1,5 +1,6 @@
 import { EVENTS } from './data/events.js';
 import { EVENTS_6C } from './data/events6c.js';
+import { REAL_EVENTS } from './data/realEvents.js';
 import { BOARD_EVENTS } from './data/boardEvents.js';
 import { hasLine } from './constitution.js';
 import { EVENT_TIMING, DEFAULT_EVENT_TIMING } from './data/eventTiming.js';
@@ -15,7 +16,7 @@ import {
 } from './promises.js';
 
 const MAX_CARDS = 2;
-const allEvents = () => [...EVENTS, ...EVENTS_6C, ...BOARD_EVENTS];
+const allEvents = () => [...EVENTS, ...EVENTS_6C, ...REAL_EVENTS, ...BOARD_EVENTS];
 const byId = (id) => allEvents().find((event) => event.id === id);
 const KIND_ORDER = ['internal', 'training'];
 const orderedEvents = () => {
@@ -37,6 +38,11 @@ const publicCard = (state, event) => ({
   ...(event.card.kicker ? { kicker: event.card.kicker } : {}),
   ...(event.card.watching ? { watching: [...event.card.watching] } : {}),
 });
+
+export function nextRound(state) {
+  if (state.turnInEra + 1 >= eraById(state.era).turns && state.era < 5) return { era: state.era + 1, round: 0 };
+  return { era: state.era, round: state.turnInEra + 1 };
+}
 
 export function pushFeed(state, handle, text, tag = 'feed') {
   state.feed.push({ turn: state.turn, handle, text, tag });
@@ -168,8 +174,12 @@ export function stampNewCards(state) {
   state.pendingEvents.forEach((card, index) => {
     if (card.landsAt != null) return;
     const rng = sideRng(state, 9 + index);
-    card.landsAt = state.day + rng.int(0, Math.max(0, Math.floor(days * 0.8) - 1));
-    card.dueAt = card.landsAt + (EVENT_TIMING[card.eventId ?? card.id] ?? DEFAULT_EVENT_TIMING).days;
+    const anchor = byId(card.eventId ?? card.id)?.anchor;
+    card.landsAt = anchor
+      ? state.day + Math.floor(days * anchor.at)
+      : state.day + rng.int(0, Math.max(0, Math.floor(days * 0.8) - 1));
+    const timing = EVENT_TIMING[card.eventId ?? card.id] ?? DEFAULT_EVENT_TIMING;
+    card.dueAt = card.landsAt + Math.min(timing.days, state.era === 5 ? 6 : Infinity);
     // A board card must resolve before its meeting opens: due by the day before the vote round's mark.
     if (byId(card.id)?.kind === 'board') {
       card.dueAt = Math.min(card.dueAt, roundMarkDay(state, eraById(state.era).turns - state.turnInEra) - 1);
