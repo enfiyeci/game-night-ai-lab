@@ -1,6 +1,8 @@
 import { MEETINGS } from './data/president.js';
 import { createPresidentPromise } from './promises.js';
 import { clamp } from './util.js';
+import { addPipeline } from './contracts.js';
+import { eraScale } from './data/compute.js';
 
 const meetingById = (id) => MEETINGS.find((meeting) => meeting.id === id);
 
@@ -22,13 +24,9 @@ function applyStake(state, tierUp) {
       state.publicTrust -= 3;
     }
   } else if (stake === 'exportLicenses') {
-    state.compute.pipeline.push({
-      supplier: 'federal-export-license',
-      units: 8,
-      costMult: 1,
-      failChance: 0,
-      arrivesTurn: state.turn + 1,
-    });
+    if (state.era < 5) {
+      addPipeline(state, { supplier: 'verde', units: 8 * eraScale(state.era), price: 0.9, termMonths: 24, arrivesTurn: state.turn + 1, string: null, needsPower: false });
+    } else state.flags.exportLicenses = true;
   } else if (stake === 'federalContract') {
     state.cash += 60;
   }

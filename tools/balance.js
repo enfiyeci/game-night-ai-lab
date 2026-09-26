@@ -3,7 +3,7 @@ import { createRng } from '../sim/rng.js';
 import { endTurn } from '../sim/turn.js';
 import { cardById, cardUnlocked, slotsFor, pickableCards, validateRecipe, recipeCost } from '../sim/recipe.js';
 import { availableUnits } from '../sim/training.js';
-import { inDangerZone } from '../sim/economy.js';
+import { inDangerZone, projectBurn } from '../sim/economy.js';
 import { HARD_LINES, CASES } from '../sim/data/constitution.js';
 import { MEETINGS } from '../sim/data/president.js';
 import { COMMITMENTS } from '../sim/summit.js';
@@ -14,6 +14,8 @@ import { runMeeting } from '../sim/president.js';
 import { activateReleases, releaseModel } from '../sim/release.js';
 import { updateServing } from '../sim/economy.js';
 import { ENDINGS } from '../sim/endings.js';
+import { eraScale } from '../sim/data/compute.js';
+import { setComputeSplit } from '../sim/split.js';
 
 const HAZARD_CHOICES = ['penalize', 'fix', 'ignore'];
 const VALIDATION_RNG = { next: () => 0.5, int: () => 0, chance: () => false, pick: (values) => values[0], normal: (mean) => mean };
@@ -104,7 +106,7 @@ function internalControl(state, style, rng) {
 }
 
 function canDeployInternal(state, control) {
-  if (control == null || controlUnits({ internal: { control } }) > availableUnits(state)) return false;
+  if (control == null || controlUnits({ era: state.era, internal: { control } }) > availableUnits(state)) return false;
   return deployInternal(structuredClone(state), control).ok;
 }
 
@@ -118,6 +120,7 @@ function summitMove(state, style, rng) {
 function plannedState(state, actions) {
   const planned = structuredClone(state);
   planned.budget = structuredClone(actions.budget);
+  setComputeSplit(planned, actions.computeSplit);
   if (planned.meeting && actions.moves.some((move) => move.type === 'meeting') && actions.presidentAnswers) {
     runMeeting(planned, actions.presidentAnswers);
   }
@@ -126,6 +129,7 @@ function plannedState(state, actions) {
   for (const [id, choiceId] of Object.entries(actions.eventChoices)) resolveEvent(planned, id, choiceId);
   activateReleases(planned);
   updateServing(planned);
+  planned.burnPlanned = projectBurn(planned);
   return planned;
 }
 
@@ -158,6 +162,7 @@ function makeStrategy(style, prefs) {
   return (state, rng) => {
     const actions = {
       budget: { spend: prefs.spend, split: prefs.split },
+      computeSplit: { safety: prefs.computeSafety },
       moves: [],
       eventChoices: eventChoices(state, style, rng),
     };
@@ -196,8 +201,9 @@ function makeStrategy(style, prefs) {
     if (actions.moves.length === 0 && canDeployInternal(planned, control)) actions.moves.push({ type: 'deployInternal', control });
     if (actions.moves.length < 2 && planned.era >= 2 && inDangerZone(planned) && planned.flags.lastRoundEra !== planned.era) {
       actions.moves.push({ type: 'raise', archetype: 'vc' });
-    } else if (actions.moves.length < 2 && planned.cash >= 0 && availableUnits(planned) < 5) {
-      actions.moves.push({ type: 'deal', supplierId: 'coreflame' });
+    } else if (actions.moves.length < 2 && planned.cash >= 0 && availableUnits(planned) < 5 * eraScale(planned.era)) {
+      const o = planned.compute.offers.find((x) => x.supplier === 'coreflame');
+      if (o) actions.moves.push({ type: 'deal', offerId: o.id });
     }
     return actions;
   };
@@ -206,7 +212,8 @@ function makeStrategy(style, prefs) {
 const speed = makeStrategy('speed', {
   alignShare: 0,
   spend: 30,
-  split: { training: 0.5, safety: 0.05, security: 0.05, product: 0.2, talent: 0.2 },
+  split: { training: 0.55, security: 0.05, product: 0.2, talent: 0.2 },
+  computeSafety: 0.02,
   pre: ['sparse-moe', 'moe', 'filtered-data', 'scrape-data'],
   mid: ['soup', 'reasoning-ready-full', 'reasoning-ready'],
   post: ['agentic-rl', 'reasoning-rl', 'rlvr-light', 'thumbs', 'rival-distil', 'synthetic-sft'],
@@ -216,7 +223,8 @@ const speed = makeStrategy('speed', {
 const safety = makeStrategy('safety', {
   alignShare: 0.4,
   spend: 25,
-  split: { training: 0.2, safety: 0.4, security: 0.15, product: 0.1, talent: 0.15 },
+  split: { training: 0.6, security: 0.15, product: 0.1, talent: 0.15 },
+  computeSafety: 0.2,
   pre: ['licensed-data', 'hazard-filter-built', 'hazard-filter-reuse'],
   mid: ['decontaminate', 'anneal'],
   post: ['human-sft', 'cai', 'classifiers', 'safety-tuning', 'character', 'deliberative', 'spec-light'],
@@ -226,7 +234,8 @@ const safety = makeStrategy('safety', {
 const balanced = makeStrategy('balanced', {
   alignShare: 0.2,
   spend: 25,
-  split: { training: 0.3, safety: 0.2, security: 0.1, product: 0.2, talent: 0.2 },
+  split: { training: 0.5, security: 0.1, product: 0.2, talent: 0.2 },
+  computeSafety: 0.12,
   pre: ['moe', 'filtered-data', 'stability'],
   mid: ['anneal', 'reasoning-ready', 'decontaminate'],
   post: ['synthetic-sft', 'rlvr-light', 'reasoning-rl', 'dpo', 'safety-tuning', 'classifiers'],
@@ -238,7 +247,8 @@ function random(state, rng) {
   const strategy = makeStrategy('random', {
     alignShare: Math.round(rng.next() * 50) / 100,
     spend: 15 + rng.int(0, 25),
-    split: { training: 0.3, safety: 0.2, security: 0.1, product: 0.2, talent: 0.2 },
+    split: { training: 0.5, security: 0.1, product: 0.2, talent: 0.2 },
+    computeSafety: Math.round(rng.next() * 30) / 100,
     pre: ids('pre'),
     mid: ids('mid'),
     post: ids('post'),

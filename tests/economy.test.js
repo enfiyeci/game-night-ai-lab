@@ -7,6 +7,7 @@ import {
 } from '../sim/economy.js';
 import * as economyApi from '../sim/economy.js';
 import { deployInternal } from '../sim/internal.js';
+import { computeSlices } from '../sim/split.js';
 
 const consumerModel = (users) => ({
   name: 'Kestrel 1 Core', active: true, activeFromTurn: 0, channel: 'consumer', priceStance: 'market',
@@ -14,29 +15,43 @@ const consumerModel = (users) => ({
   spec: { size: 'medium', arch: 'dense', context: 'short', precision: 'bf16', guard: false, channel: 'consumer', reasoning: 'off' },
 });
 
-test('serving load uses compute and overflows at scale', () => {
+test('serving load uses compute and leaves a shortfall at scale', () => {
   const s = createInitialState();
   s.models.push(consumerModel(4e6));
   const units = updateServing(s);
   assert.ok(Math.abs(units - 4e6 * 2.4 / 1.46e6) < 1e-6);
-  assert.equal(s.compute.overflow, 0);
+  assert.equal(computeSlices(s).shortfall, 0);
   s.models[0].users = 8e6;
   updateServing(s);
-  assert.ok(s.compute.overflow > 0);
+  assert.ok(computeSlices(s).shortfall > 0);
 });
 
 test('compute reserved by control is not available for serving', () => {
   const s = createInitialState();
   s.era = 3;
+  s.compute.online = 30;
   s.models.push(consumerModel(1e6));
   updateServing(s);
   assert.equal(deployInternal(s, 1).ok, true);
-  s.models[0].users = 1e7; // fits in 10 units, not in the 8 left after control
+  s.models[0].users = 15e6; // fits in 30 units, not in the 10 left after control
   const bare = { ...s, internal: null, compute: { ...s.compute } };
   updateServing(bare);
-  assert.equal(bare.compute.overflow, 0);
+  assert.equal(computeSlices(bare).shortfall, 0);
   updateServing(s);
-  assert.ok(s.compute.overflow > 0);
+  assert.ok(computeSlices(s).shortfall > 0);
+});
+
+test('serving load ignores training runs but accounts for reserved safety compute', () => {
+  const s = createInitialState();
+  s.compute.split.safety = 0;
+  const model = consumerModel(9e6);
+  model.spec.arch = 'moe';
+  s.models.push(model);
+  const baseline = updateServing(s);
+  s.activeRun = { units: 5 };
+  assert.equal(updateServing(s), baseline);
+  s.compute.split.safety = 0.5;
+  assert.ok(updateServing(s) > baseline);
 });
 
 test('revenue, burn, cash and valuation', () => {

@@ -42,7 +42,10 @@ test('a release capability gain is measured from the start-of-turn board baselin
 });
 
 test('only two moves per turn, and bad moves are reported', () => {
-  const r = endTurn(createInitialState(), { moves: [{ type: 'deal', supplierId: 'coreflame' }, { type: 'deal', supplierId: 'coreflame' }, { type: 'deal', supplierId: 'coreflame' }] }, createRng(1));
+  const s = createInitialState();
+  const coreflame = s.compute.offers.find((offer) => offer.supplier === 'coreflame');
+  const azuria = s.compute.offers.find((offer) => offer.supplier === 'azuria');
+  const r = endTurn(s, { moves: [{ type: 'deal', offerId: coreflame.id }, { type: 'deal', offerId: azuria.id }, { type: 'deal', offerId: coreflame.id }] }, createRng(1));
   assert.ok(r.errors.some((e) => e.includes('2 moves')));
   assert.equal(r.events.filter((e) => e.type === 'deal').length, 2);
   const bad = endTurn(createInitialState(), { moves: [{ type: 'teleport' }] }, createRng(1));
@@ -51,11 +54,11 @@ test('only two moves per turn, and bad moves are reported', () => {
 
 test('budget split must add up to one', () => {
   const s = createInitialState();
-  assert.equal(setBudget(s, { spend: 20, split: { training: 0.5, safety: 0.5, security: 0.5, product: 0, talent: 0 } }).ok, false);
+  assert.equal(setBudget(s, { spend: 20, split: { training: 1, security: 0.5, product: 0, talent: 0 } }).ok, false);
 });
 
 test('budget values must be finite and non-negative', () => {
-  const valid = { training: 0.3, safety: 0.2, security: 0.1, product: 0.2, talent: 0.2 };
+  const valid = { training: 0.5, security: 0.1, product: 0.2, talent: 0.2 };
   for (const spend of [NaN, Infinity, -1]) {
     assert.equal(setBudget(createInitialState(), { spend, split: valid }).ok, false);
   }
@@ -63,6 +66,41 @@ test('budget values must be finite and non-negative', () => {
     const split = { ...valid, training: value, talent: 0.5 - value };
     assert.equal(setBudget(createInitialState(), { spend: 20, split }).ok, false);
   }
+});
+
+test('the money budget rejects unknown split keys', () => {
+  const s = createInitialState();
+  const result = setBudget(s, { spend: 20, split: { training: 0.5, security: 0.1, product: 0.2, talent: 0.2, bonus: 0 } });
+  assert.equal(result.ok, false);
+  assert.match(result.error, /bonus/);
+});
+
+test('endTurn rejects falsy non-object compute splits', () => {
+  for (const computeSplit of [null, 0]) {
+    const result = endTurn(createInitialState(), { computeSplit }, createRng(23));
+    assert.ok(result.errors.some((error) => error.includes('compute split must be an object')));
+  }
+});
+
+test('queue withdrawal accepts only booleans and withdraws only on true', () => {
+  const makeState = () => {
+    const s = createInitialState();
+    s.era = 3;
+    s.turn = 8;
+    s.cash = 0;
+    s.compute.queue = { order: null, carry: { units: 10, tier: 'standard' }, last: null };
+    return s;
+  };
+  const moves = [{ type: 'emergency', option: 'acquihire' }];
+  const invalid = endTurn(makeState(), { queueWithdraw: 'yes', moves }, createRng(23));
+  assert.ok(invalid.errors.some((error) => error.includes('queueWithdraw')));
+  assert.ok(invalid.state.compute.queue.carry);
+  const skipped = endTurn(makeState(), { queueWithdraw: false, moves }, createRng(23));
+  assert.deepEqual(skipped.errors, []);
+  assert.ok(skipped.state.compute.queue.carry);
+  const withdrawn = endTurn(makeState(), { queueWithdraw: true, moves }, createRng(23));
+  assert.deepEqual(withdrawn.errors, []);
+  assert.equal(withdrawn.state.compute.queue.carry, null);
 });
 
 test('serving load reflects user growth from the same turn', () => {
@@ -87,7 +125,7 @@ test('serving load reflects user growth from the same turn', () => {
 test('a new budget updates emergency eligibility before moves', () => {
   const s = createInitialState();
   s.cash = 100;
-  const budget = { spend: 200, split: { training: 0.3, safety: 0.2, security: 0.1, product: 0.2, talent: 0.2 } };
+  const budget = { spend: 200, split: { training: 0.5, security: 0.1, product: 0.2, talent: 0.2 } };
   const out = endTurn(s, { budget, moves: [{ type: 'emergency', option: 'bridgeRound' }] }, createRng(4));
   assert.equal(out.errors.length, 0);
   assert.equal(out.events.some((e) => e.type === 'emergency'), true);
@@ -96,9 +134,10 @@ test('a new budget updates emergency eligibility before moves', () => {
 test('a same-turn compute deal refreshes burn before a later emergency move', () => {
   const s = createInitialState();
   s.cash = 310;
+  const spot = s.compute.offers.find((offer) => offer.supplier === 'spot');
   const out = endTurn(s, {
     moves: [
-      { type: 'deal', supplierId: 'coreflame' },
+      { type: 'deal', offerId: spot.id },
       { type: 'emergency', option: 'bridgeRound' },
     ],
   }, createRng(14));
@@ -106,8 +145,9 @@ test('a same-turn compute deal refreshes burn before a later emergency move', ()
   assert.deepEqual(out.events.slice(0, 2).map((e) => e.type), ['deal', 'emergency']);
 });
 
-test('a same-turn training run refreshes serving overflow before a later emergency move', () => {
+test('a same-turn training run does not inflate serving burn for a later emergency move', () => {
   const s = createInitialState();
+  s.compute.split.safety = 0;
   s.models.push({
     active: true,
     activated: true,
@@ -120,17 +160,17 @@ test('a same-turn training run refreshes serving overflow before a later emergen
     spec: { size: 'medium', arch: 'moe', context: 'short', precision: 'bf16', guard: false, channel: 'consumer', reasoning: 'off' },
   });
   const smallRecipe = { ...recipe, sliders: { ...recipe.sliders, size: 'small' } };
-  // The run costs $35M up front and pushes serving load past 80%, so burn rises from about
-  // $49.6M to $54.8M a month: $313M left is over six months of runway on the stale burn, under six on the fresh one.
-  s.cash = 313 + 35;
+  // The run costs $35M up front, but serving keeps the same capacity and burn.
+  // With $300M left, runway remains just over six months and the emergency stays closed.
+  s.cash = 300 + 35;
   const out = endTurn(s, {
     moves: [
       { type: 'startRun', recipe: smallRecipe },
       { type: 'emergency', option: 'bridgeRound' },
     ],
   }, createRng(17));
-  assert.equal(out.errors.length, 0);
-  assert.deepEqual(out.events.slice(0, 2).map((e) => e.type), ['startRun', 'emergency']);
+  assert.ok(out.errors.includes('emergency options open only when runway is short'));
+  assert.equal(out.events.some((event) => event.type === 'emergency'), false);
 });
 
 test('using a rescue extends insolvency grace for the current turn only', () => {
@@ -178,6 +218,7 @@ test('endTurn activates due releases before growing users', () => {
 
 test('a due release consumes serving compute before move validation', () => {
   const s = createInitialState();
+  s.compute.split.safety = 0;
   s.models.push({
     active: true,
     activated: false,
@@ -199,6 +240,7 @@ test('a quiet takeover stops training and event generation for the turn', () => 
   const s = createInitialState();
   s.era = 3;
   s.turn = 1;
+  s.compute.online = 60;
   startRun(s, recipe);
   s.activeRun.turnsLeft = 1;
   s.internal = { control: 0, stage: 3, turns: 3, capability: 80 };
@@ -245,7 +287,7 @@ test('the board sees card costs from the start-of-turn cash snapshot', () => {
     spec: { size: 'medium', arch: 'dense', context: 'short', precision: 'bf16', guard: false, channel: 'enterprise', reasoning: 'off' },
   });
   s.pendingEvents.push({ id: 'distill' });
-  const budget = { spend: 0, split: { training: 0.3, safety: 0.2, security: 0.1, product: 0.2, talent: 0.2 } };
+  const budget = { spend: 0, split: { training: 0.5, security: 0.1, product: 0.2, talent: 0.2 } };
 
   const out = endTurn(s, { budget, eventChoices: { distill: 'settle' } }, createRng(22));
 

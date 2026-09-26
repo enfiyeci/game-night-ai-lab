@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import { startRun, advanceRun } from '../sim/training.js';
 import { releaseModel, modelName } from '../sim/release.js';
+import { recipeCost } from '../sim/recipe.js';
 import * as releaseApi from '../sim/release.js';
 import { rank } from '../sim/rivals.js';
 
@@ -185,6 +186,8 @@ test('the flagship bar is the best release, not the most recent', () => {
 test('releaseDelay requires two turns between launches without mutating a refused release', () => {
   const s = trainedState();
   s.era = 5;
+  s.compute.split.safety = 0;
+  s.compute.online = recipeCost(s, recipe).units + 10;
   s.turn = 10;
   s.deal = { signed: {}, binding: ['releaseDelay'], trust: 2, collapsed: false, playerShipped: false };
   assert.equal(releaseModel(s, release, rng).ok, true);

@@ -137,6 +137,10 @@ in section 6e). A lab that is insolvent when era 5 ends never wins; it ends in a
 - **Compute market.** Four or five fictional actors: a chip titan, a cloud landlord, a neocloud
   that can fail, a sovereign financier with political strings, and power-site deals in era 4.
   Multi-year deals buy priority; spot capacity can vanish; equity deals attach strings.
+  **Detailed design (owner-approved 2026-09-25):**
+  `docs/superpowers/specs/2026-09-25-compute-gathering-design.md` — contracts, the compute
+  split (safety moves from the money budget into compute), the era 3 queue and the era 4
+  power cap. Where it differs from this spec, it wins.
 - **Constitution (clarified by owner 2026-09-25; format decided 2026-09-25).** The *model's*
   constitution: the values document your AI is trained on, like Claude's constitution or
   OpenAI's Model Spec. It is not a company charter. Company promises such as a safety-compute

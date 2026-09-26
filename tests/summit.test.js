@@ -7,11 +7,13 @@ import { startRun, advanceRun } from '../sim/training.js';
 import { releaseModel } from '../sim/release.js';
 import { deployInternal } from '../sim/internal.js';
 import { endTurn } from '../sim/turn.js';
+import { recipeCost } from '../sim/recipe.js';
 
 const calm = { next: () => 0.99, int: () => 0, chance: () => false, pick: (a) => a[0], normal: () => 0 };
 const era5 = () => {
   const s = createInitialState();
   s.era = 5;
+  s.compute.online = recipeCost(s, recipe).units + 200;
   s.turnInEra = 0;
   s.raceHeat = 20;
   s.rivals.forEach((r) => (r.capability = s.capability));

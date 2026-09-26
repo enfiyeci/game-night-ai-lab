@@ -5,6 +5,8 @@ import { rollTrainingHazard, resolveHazard, applyAlignmentFaking, exposeConceale
 import { endTurn } from '../sim/turn.js';
 import { releaseModel } from '../sim/release.js';
 import { startRun, advanceRun, resolveRun } from '../sim/training.js';
+import { safetySpend } from '../sim/economy.js';
+import { eraScale } from '../sim/data/compute.js';
 
 const yes = { next: () => 0, int: () => 0, chance: () => true, pick: (a) => a[0], normal: (m) => m };
 const no = { ...yes, chance: () => false };
@@ -70,7 +72,9 @@ test('interpretability spend exposes a tenth of the concealed debt each turn', (
   const s = createInitialState();
   s.concealedDebt = 20;
   assert.equal(endTurn(s, {}, no).state.concealedDebt, 20);
-  s.budget.split = { training: 0.2, safety: 0.3, security: 0.1, product: 0.2, talent: 0.2 };
+  s.compute.online = 10 * eraScale(s.era);
+  s.compute.split.safety = 0.5;
+  assert.ok(safetySpend(s) >= 5);
   assert.equal(endTurn(s, {}, no).state.concealedDebt, 18);
 });
 

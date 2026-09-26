@@ -2,6 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import { scoreLaunch, evalGaming } from '../sim/launch.js';
+import { safetySpend } from '../sim/economy.js';
+import { eraScale } from '../sim/data/compute.js';
 
 const zeroRng = { next: () => 0.5, int: () => 0, chance: () => false, pick: (a) => a[0], normal: (m) => m };
 const plain = { capability: 60, spec: { reasoningCapable: false }, flags: [] };
@@ -68,7 +70,9 @@ test('interpretability spend cuts eval gaming', () => {
   const s = createInitialState();
   s.era = 4; s.concealedDebt = 40;
   const base = evalGaming(s, 80, []);
-  s.budget.split = { training: 0.2, safety: 0.3, security: 0.1, product: 0.2, talent: 0.2 };
+  s.compute.online = 10 * eraScale(s.era);
+  s.compute.split.safety = 0.5;
+  assert.ok(safetySpend(s) >= 5);
   assert.ok(evalGaming(s, 80, []) < base);
 });
 

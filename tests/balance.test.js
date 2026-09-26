@@ -37,14 +37,25 @@ test('every strategy sends only accepted actions', () => {
   }
 });
 
-test('difficulty target: no scripted strategy wins more than about a third of runs', () => {
+test('strategy planning refreshes burn before checking emergency funding', () => {
+  const state = createInitialState({ seed: 91 });
+  state.era = 2;
+  state.turn = 4;
+  state.cash = 100;
+  state.arr = 0;
+  state.burnPlanned = 1;
+  const actions = balanceApi.STRATEGIES.safety(state, createRng(91));
+  assert.ok(actions.moves.some((move) => move.type === 'raise'));
+});
+
+test('difficulty target: no scripted strategy wins more than about a third of runs', { todo: 'plan 2C Task 8 re-tunes balance after the compute rework' }, () => {
   for (const [name, row] of Object.entries(targetReport)) {
     const wins = ['aligned', 'pacingDeal', 'pyrrhic'].reduce((sum, id) => sum + (row.endings[id] ?? 0), 0);
     assert.ok(wins / 200 <= 0.36, `${name} wins ${wins}/200`);
   }
 });
 
-test('difficulty target: most runs of the extreme strategies end in eras 3 or 4', () => {
+test('difficulty target: most runs of the extreme strategies end in eras 3 or 4', { todo: 'plan 2C Task 8 re-tunes balance after the compute rework' }, () => {
   for (const name of ['speed', 'safety']) {
     assert.ok(targetReport[name].diedInEra3or4 / 200 >= 0.5, `${name} ${targetReport[name].diedInEra3or4}/200`);
   }

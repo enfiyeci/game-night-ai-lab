@@ -3,7 +3,11 @@ import { eraById } from './data/eras.js';
 import { clamp } from './util.js';
 import { startRun, advanceRun } from './training.js';
 import { activateReleases, releaseModel } from './release.js';
-import { signDeal, computeTurn } from './compute.js';
+import {
+  signOffer, contractAction, deliverDue, contractsTurn, expireContracts, pullBumped, spendCredits, generateOffers, sideRng,
+} from './contracts.js';
+import { placeOrder, withdrawOrder, queueTurn } from './queue.js';
+import { buildSite, powerTurn } from './power.js';
 import { updateServing, growUsers, applyEconomy, legalTick, projectBurn, raiseRound, useEmergency, safetySpend } from './economy.js';
 import { researchTechnique } from './techniques.js';
 import { rivalsTurn } from './rivals.js';
@@ -12,7 +16,7 @@ import { checkTurnEndings, eraGate, finalEnding } from './endings.js';
 import { recordAdvisors } from './advisors.js';
 import { resolveHazard, exposeConcealed, INTERPRETABILITY_SPEND } from './hazards.js';
 import { deployInternal, stopInternal, internalTick } from './internal.js';
-import { addressWarning, resolveEvent, eventsTick, fallbackChoice } from './events.js';
+import { addressWarning, resolveEvent, eventsTick, fallbackChoice, pushFeed } from './events.js';
 import { CASES } from './data/constitution.js';
 import { setConstitution, amendConstitution } from './constitution.js';
 import {
@@ -25,11 +29,19 @@ import {
 } from './summit.js';
 import { expireMeeting, meetingDue, openMeeting, runMeeting } from './president.js';
 import { judgeEndingPromises, promiseUpkeep } from './promises.js';
+import { applySplitEffects, makePledge, setComputeSplit } from './split.js';
 
 export const MAX_MOVES = 2;
-const BUDGET_KEYS = ['training', 'safety', 'security', 'product', 'talent'];
+const BUDGET_KEYS = ['training', 'security', 'product', 'talent'];
+// sideRng salts in sim/: 0 initial offers, 1 deals, 3 contracts, 4 queue, 5 offers, 6 deliveries, and 1000 + site ID for builds.
+const SITE_RNG_SALT_BASE = 1000;
 
 export function setBudget(state, budget) {
+  if (budget?.split && Object.hasOwn(budget.split, 'safety')) return { ok: false, error: 'the budget split has no safety slice: safety now runs on compute' };
+  if (budget?.split && (typeof budget.split === 'object' || typeof budget.split === 'function')) {
+    const unknown = Reflect.ownKeys(budget.split).find((key) => !BUDGET_KEYS.includes(key));
+    if (unknown !== undefined) return { ok: false, error: `unknown budget split key ${String(unknown)}` };
+  }
   const spend = budget?.spend;
   if (!Number.isFinite(spend) || spend < 0 || spend > 200) return { ok: false, error: 'spend must be between 0 and 200 $M per month' };
   const values = BUDGET_KEYS.map((k) => budget?.split?.[k]);
@@ -46,7 +58,9 @@ function applyMove(state, move, rng) {
   switch (move.type) {
     case 'startRun': return startRun(state, move.recipe);
     case 'release': return releaseModel(state, move.release, rng);
-    case 'deal': return signDeal(state, move.supplierId);
+    case 'deal': return signOffer(state, move.offerId, sideRng(state, 1));
+    case 'queueOrder': return placeOrder(state, move);
+    case 'buildSite': return buildSite(state, move.source, sideRng(state, SITE_RNG_SALT_BASE + state.power.nextId));
     case 'raise': return raiseRound(state, move.archetype);
     case 'research': return researchTechnique(state, move.techId);
     case 'emergency': return useEmergency(state, move.option);
@@ -63,7 +77,6 @@ function budgetEffects(state) {
   const { spend, split } = state.budget;
   const k = (spend * eraById(state.era).monthsPerTurn) / 30;
   if (state.activeRun) state.activeRun.bonus += split.training * k;
-  state.alignmentDebt -= split.safety * k * 0.5;
   state.security += split.security * k - 0.5;
   state.growthBoost = split.product * k * 0.02;
   state.researchPoints += split.talent * k * 3;
@@ -116,6 +129,29 @@ export function endTurn(prev, actions = {}, rng) {
   if (actions.budget) {
     const r = setBudget(state, actions.budget);
     if (!r.ok) errors.push(r.error);
+  }
+  if (Object.hasOwn(actions, 'computeSplit')) {
+    const r = setComputeSplit(state, actions.computeSplit);
+    if (!r.ok) errors.push(r.error);
+  }
+  if (actions.pledge != null) {
+    const r = makePledge(state, actions.pledge);
+    if (!r.ok) errors.push(r.error);
+  }
+  for (const a of actions.contractActions ?? []) {
+    const r = contractAction(state, a);
+    if (!r.ok) errors.push(r.error);
+  }
+  if (Object.hasOwn(actions, 'queueWithdraw')) {
+    if (typeof actions.queueWithdraw !== 'boolean') errors.push('queueWithdraw must be true or false');
+    else if (actions.queueWithdraw) {
+      const r = withdrawOrder(state);
+      if (!r.ok) errors.push(r.error);
+    }
+  }
+  if (actions.contractActions?.length) {
+    updateServing(state);
+    state.burnPlanned = projectBurn(state);
   }
   if (actions.hazardChoice && state.pendingModel?.hazard) {
     const r = resolveHazard(state, actions.hazardChoice);
@@ -198,17 +234,30 @@ export function endTurn(prev, actions = {}, rng) {
 
   if (!state.ending) {
     budgetEffects(state);
+    for (const e of applySplitEffects(state)) {
+      events.push(e);
+      if (e.type === 'outage') pushFeed(state, '@downdetector', 'users report outages across your apps', 'feed');
+    }
     for (const e of internalTick(state, rng)) events.push(e);
     if (!state.ending) {
       const trained = advanceRun(state, rng);
       if (trained?.type === 'runPaused') events.push(trained);
       else if (trained) events.push({ type: 'runComplete', gain: trained.gain });
-      const { arrived, failed } = computeTurn(state, rng);
-      for (const a of arrived) events.push({ type: 'computeArrived', supplier: a.supplier, units: a.units });
-      for (const f of failed) events.push({ type: 'computeFailed', supplier: f.supplier, units: f.units });
+      const c = contractsTurn(state, sideRng(state, 3));
+      if (c.warnedBump) {
+        events.push({ type: 'spotWarning' });
+        pushFeed(state, '@marketwire', 'spot GPU capacity is being pulled for prepaid customers', 'warning');
+      }
+      for (const e of queueTurn(state, sideRng(state, 4))) {
+        events.push(e);
+        if (e.type === 'rivalPrepays') pushFeed(state, '@marketwire', `${state.rivals.find((r) => r.id === e.lab).name} prepays Verde for priority`, 'feed');
+      }
       growUsers(state);
       updateServing(state);
       applyEconomy(state);
+      spendCredits(state);
+      for (const x of expireContracts(state)) events.push({ type: 'contractEnded', supplier: x.supplier, units: x.units });
+      for (const x of pullBumped(state)) events.push({ type: 'spotPulled', units: x.units });
       if (state.flags.conversionDeadline != null && state.turn >= state.flags.conversionDeadline && !state.flags.converted) {
         state.flags.converted = true;
         state.board = state.board.map((support) => support - 6);
@@ -254,6 +303,13 @@ export function endTurn(prev, actions = {}, rng) {
         events.push({ type: 'eraStart', era: state.era });
       }
     }
+  }
+  if (!state.ending) {
+    for (const e of powerTurn(state)) events.push(e);
+    for (const x of deliverDue(state, sideRng(state, 6))) events.push({ type: 'computeArrived', supplier: x.supplier, units: x.units });
+    state.compute.offers = generateOffers(state, sideRng(state, 5));
+    updateServing(state);
+    state.burnPlanned = projectBurn(state);
   }
   if (state.ending) {
     judgeEndingPromises(state);

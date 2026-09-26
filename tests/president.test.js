@@ -206,7 +206,8 @@ test('meeting stakes use each final government-favour threshold', () => {
     assert.equal(state.compute.pipeline.length, expected.pipeline);
     if (expected.stake === 'exportLicenses') {
       assert.deepEqual(state.compute.pipeline[0], {
-        supplier: 'federal-export-license', units: 8, costMult: 1, failChance: 0, arrivesTurn: state.turn + 1,
+        id: 'c1', supplier: 'verde', units: 8, price: 0.9, termMonths: 24,
+        arrivesTurn: state.turn + 1, string: null, needsPower: false,
       });
     }
   }
@@ -371,11 +372,12 @@ test('a meeting move needs an open meeting and consumes one of the two moves', (
   assert.ok(closed.errors.some((error) => /no open President meeting/i.test(error)));
 
   const state = open(createInitialState());
+  const coreflame = state.compute.offers.find((offer) => offer.supplier === 'coreflame');
   const out = endTurn(state, {
     moves: [
       { type: 'meeting' },
-      { type: 'deal', supplierId: 'coreflame' },
-      { type: 'deal', supplierId: 'coreflame' },
+      { type: 'deal', offerId: coreflame.id },
+      { type: 'deal', offerId: coreflame.id },
     ],
     presidentAnswers: plainIds(),
   }, no);
@@ -388,7 +390,7 @@ test('a meeting uses government favour after moves that precede it', () => {
   state.govFavor.us = 63;
   const out = endTurn(state, {
     moves: [
-      { type: 'deal', supplierId: 'gulf' },
+      { type: 'amendConstitution', change: { remove: 'accept-shutdown', add: 'no-power-grab' } },
       { type: 'meeting' },
     ],
     presidentAnswers: plainIds(),
