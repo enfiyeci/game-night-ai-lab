@@ -67,15 +67,18 @@ export function activateReleases(state) {
 }
 
 // Holds a release back one more round (the red team card's delay). One that already went live comes off again, and
-// the models it replaced serve their users until it relaunches at the next mark, when activateReleases retires them.
+// the model it replaced serves the channel's users as they are now (after anything that happened while it was live)
+// until the release relaunches at the next mark, when activateReleases carries them over again.
 export function holdRelease(state, model) {
   if (!model?.active) return;
   if (model.activated) {
-    for (const { index, users } of model.replaced ?? []) {
-      const old = state.models[index];
-      if (old) { old.active = true; old.users = users; }
+    const carrier = (model.replaced ?? []).reduce((best, entry) => (!best || entry.users > best.users ? entry : best), null);
+    const old = carrier && state.models[carrier.index];
+    if (old) {
+      old.active = true;
+      old.users = model.users;
+      model.users = 0;
     }
-    model.users = model.newUsers ?? model.users;
     model.activated = false;
   }
   model.activeFromTurn = Math.max(model.activeFromTurn ?? 0, state.turn) + 1;

@@ -349,15 +349,17 @@ test('pulling back a live release puts the model it replaced back in service unt
   s.turn += 1;
   activateReleases(s);
   assert.equal(old.active, false);
+  model.users = Math.round(model.users * 0.93); // a card cuts users while the release is live (countryBan's comply)
+  const liveUsers = model.users;
   s.pendingEvents.push({ id: 'redTeamLie' });
   resolveEvent(s, 'redTeamLie', 'delay');
   assert.equal(old.active, true);
-  assert.equal(old.users, 2e6);
+  assert.equal(old.users, liveUsers);
   assert.equal(model.activated, false);
   assert.deepEqual(activeModels(s), [old]);
   s.turn += 1;
   activateReleases(s);
   assert.equal(old.active, false);
   assert.equal(model.activated, true);
-  assert.equal(model.users >= 2e6, true);
+  assert.equal(model.users, liveUsers);
 });
