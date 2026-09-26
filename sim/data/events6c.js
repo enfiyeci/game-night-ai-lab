@@ -122,7 +122,7 @@ export const EVENTS_6C = [
           },
         },
         {
-          id: 'audit', label: 'Pay for an audit first', cost: '$15M and a turn', backers: ['Safety'], opposers: ['Research'],
+          id: 'audit', label: 'Pay for an audit first', cost: '$15M and a release delay', backers: ['Safety'], opposers: ['Research'],
           effects(state) {
             const model = state.pendingModel;
             if (!model) return;

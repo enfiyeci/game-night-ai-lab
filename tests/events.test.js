@@ -1,9 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
-import { eventsTick, addressWarning, resolveEvent } from '../sim/events.js';
+import { eventsTick, addressWarning, resolveEvent, stampNewCards } from '../sim/events.js';
 import { EVENTS } from '../sim/data/events.js';
-import { endTurn } from '../sim/turn.js';
+import { advanceDays, endTurn } from '../sim/turn.js';
 
 const no = { next: () => 0.99, int: () => 0, chance: () => false, pick: (a) => a[0], normal: (m) => m };
 const yes = { next: () => 0, int: () => 0, chance: () => true, pick: (a) => a[0], normal: (m) => m };
@@ -54,7 +54,9 @@ test('at most two cards wait at once, and unanswered cards use passive fallbacks
   eventsTick(s, no); s.turn += 1; eventsTick(s, no);
   assert.equal(s.pendingEvents.length, 2);
   assert.ok(s.warnings.contamination, 'the third warning waits instead of being dropped');
-  const out = endTurn(s, {}, no);
+  stampNewCards(s);
+  const days = Math.max(...s.pendingEvents.map((event) => event.dueAt)) - s.day;
+  const out = advanceDays(s, days, no);
   const auto = out.events.filter((e) => e.type === 'eventResolved' && e.auto);
   assert.deepEqual(auto.map((e) => e.choiceId), ['deny', 'blame']);
 });
@@ -79,7 +81,10 @@ test('event and warning ids do not match inherited object properties', () => {
   assert.equal(addressWarning(s, 'toString').ok, false);
   eventsTick(s, no); s.turn += 1; eventsTick(s, no);
   const inherited = Object.create({ jailbreak: 'patch' });
-  const out = endTurn(s, { eventChoices: inherited }, no);
+  stampNewCards(s);
+  const acted = endTurn(s, { eventChoices: inherited }, no);
+  const out = acted.events.some((event) => event.type === 'eventResolved')
+    ? acted : advanceDays(acted.state, acted.state.pendingEvents[0].dueAt - acted.state.day, no);
   const auto = out.events.find((event) => event.type === 'eventResolved');
   assert.equal(auto.choiceId, 'deny');
 });
@@ -305,7 +310,8 @@ test('unanswered weight theft falls back to silence and preserves a higher misus
   const qilin = state.rivals.find((rival) => rival.id === 'qilin');
   const beforeQilin = qilin.capability;
   state.pendingEvents.push({ id: 'weightTheft' });
-  const out = endTurn(state, {}, no);
+  stampNewCards(state);
+  const out = advanceDays(state, state.pendingEvents[0].dueAt - state.day, no);
   assert.equal(out.state.flags.coverUp, true);
   assert.equal(out.state.misuseExposure, 30);
   assert.equal(out.state.misuseLocked, 40);

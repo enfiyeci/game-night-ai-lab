@@ -9,6 +9,10 @@ export function createInitialState({ seed = 1 } = {}) {
     era: 1,
     turnInEra: 0,
     monthsElapsed: 0,
+    day: 0,
+    dayInRound: 0,
+    round: { moves: 0, teams: {} },
+    holdOrShipChoice: 'hold',
 
     cash: BALANCE.startCash,
     burnPlanned: 0,
@@ -77,6 +81,7 @@ export function createInitialState({ seed = 1 } = {}) {
     lastBriefing: [],
     ending: null,
   };
+  state.roundStart = { arr: state.arr, capability: state.capability, cash: state.cash };
   state.compute.offers = generateOffers(state, sideRng(state, 0));
   return state;
 }

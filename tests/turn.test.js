@@ -42,12 +42,12 @@ test('a release capability gain is measured from the start-of-turn board baselin
   assert.equal(state.board[1], before + 3);
 });
 
-test('only two moves per turn, and bad moves are reported', () => {
+test('only two actions per round, and bad moves are reported', () => {
   const s = createInitialState();
   const coreflame = s.compute.offers.find((offer) => offer.supplier === 'coreflame');
   const azuria = s.compute.offers.find((offer) => offer.supplier === 'azuria');
   const r = endTurn(s, { moves: [{ type: 'deal', offerId: coreflame.id }, { type: 'deal', offerId: azuria.id }, { type: 'deal', offerId: coreflame.id }] }, createRng(1));
-  assert.ok(r.errors.some((e) => e.includes('2 moves')));
+  assert.ok(r.errors.some((e) => e.includes('2 actions per round')));
   assert.equal(r.events.filter((e) => e.type === 'deal').length, 2);
   const bad = endTurn(createInitialState(), { moves: [{ type: 'teleport' }] }, createRng(1));
   assert.ok(bad.errors.length > 0);

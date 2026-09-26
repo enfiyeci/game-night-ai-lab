@@ -1,6 +1,9 @@
 import { EVENTS } from './data/events.js';
 import { EVENTS_6C } from './data/events6c.js';
 import { hasLine } from './constitution.js';
+import { EVENT_TIMING, DEFAULT_EVENT_TIMING } from './data/eventTiming.js';
+import { ROUND_DAYS, nextRoundDay } from './time.js';
+import { sideRng } from './contracts.js';
 import {
   failedPresidentPromises,
   promiseCallCard,
@@ -147,4 +150,30 @@ export function fallbackChoice(id, pending) {
   const event = byId(pending?.eventId ?? id);
   if (event?.kind === 'promise') return promiseFallback(pending);
   return event?.fallback ?? event?.card.choices.at(-1)?.id;
+}
+
+export function stampNewCards(state) {
+  const days = ROUND_DAYS[state.era];
+  state.pendingEvents.forEach((card, index) => {
+    if (card.landsAt != null) return;
+    const rng = sideRng(state, 9 + index);
+    card.landsAt = state.day + rng.int(0, Math.max(0, Math.floor(days * 0.8) - 1));
+    card.dueAt = card.landsAt + (EVENT_TIMING[card.eventId ?? card.id] ?? DEFAULT_EVENT_TIMING).days;
+  });
+  for (const warning of Object.values(state.warnings)) {
+    if (warning.deferred || warning.dueAt != null) continue;
+    warning.day = state.day;
+    warning.dueAt = nextRoundDay(state);
+  }
+}
+
+export function resolveDue(state) {
+  const out = [];
+  for (const pending of [...state.pendingEvents]) {
+    if (pending.dueAt == null || state.day < pending.dueAt) continue;
+    const choiceId = fallbackChoice(pending.id, pending);
+    const result = resolveEvent(state, pending.id, choiceId);
+    if (result.ok) out.push({ type: 'eventResolved', id: pending.id, choiceId, auto: true, reason: 'deadline' });
+  }
+  return out;
 }

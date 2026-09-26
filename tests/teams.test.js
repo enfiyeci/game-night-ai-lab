@@ -1,0 +1,23 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { createInitialState } from '../sim/state.js';
+import { TEAM_OF, teamBusyError } from '../sim/teams.js';
+
+test('every move type has a team', () => {
+  for (const type of ['startRun', 'release', 'deal', 'queueOrder', 'buildSite', 'raise', 'research', 'emergency', 'deployInternal', 'stopInternal', 'amendConstitution', 'summit', 'meeting']) {
+    assert.ok(TEAM_OF[type], type);
+  }
+});
+
+test('a team that acted this round is busy until the next round mark', () => {
+  const s = createInitialState({ seed: 1 });
+  s.round.teams.cfo = 'deal';
+  assert.match(teamBusyError(s, { type: 'raise' }), /finance team is busy until Y1 M4 W1/);
+  assert.equal(teamBusyError(s, { type: 'amendConstitution' }), null);
+});
+
+test('research is busy while a training run is under way', () => {
+  const s = createInitialState({ seed: 1 });
+  s.activeRun = { turnsLeft: 1 };
+  assert.match(teamBusyError(s, { type: 'research', techId: 'x' }), /research team is busy/);
+});
