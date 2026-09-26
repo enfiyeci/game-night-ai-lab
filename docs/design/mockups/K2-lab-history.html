@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="../../../">
+  <meta name="viewport" content="width=1440">
+  <title>Lab history mockups</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Nunito:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="ui/styles.css">
+  <style>
+    /* Mockup-only styles. Tokens come from ui/styles.css; no colour literals here. */
+    .muted { color: color-mix(in oklab, var(--ink) 58%, var(--paper)); }
+
+    /* ---------- A: GDT "Game History" as a lab ledger ---------- */
+    .hist-a .dlg { left: 300px; width: 840px; min-height: 0; }
+    .hist-a .dialog-left { left: 40px; }
+    .hist-a .dialog-right { right: 40px; top: 150px; width: 250px; }
+    .hist-a .dialog-side { width: 250px; }
+    .ha-table { width: 100%; border-collapse: separate; border-spacing: 0 6px; text-align: left; font-size: 13px; }
+    .ha-table th { padding: 0 10px 2px; font-size: 10.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: color-mix(in oklab, var(--ink) 55%, var(--paper)); }
+    .ha-table td { padding: 9px 10px; background: var(--paper); border-top: 1px solid color-mix(in oklab, var(--ink) 8%, transparent); border-bottom: 1px solid color-mix(in oklab, var(--ink) 8%, transparent); vertical-align: middle; }
+    .ha-table td:first-child { border-left: 1px solid color-mix(in oklab, var(--ink) 8%, transparent); border-radius: 9px 0 0 9px; }
+    .ha-table td:last-child { border-right: 1px solid color-mix(in oklab, var(--ink) 8%, transparent); border-radius: 0 9px 9px 0; }
+    .ha-table tr.sel td { background: color-mix(in oklab, var(--wood) 12%, var(--paper)); border-color: var(--wood); }
+    .ha-name { font-weight: 800; font-size: 14px; }
+    .ha-name small { display: block; font-weight: 700; font-size: 11px; }
+    .ha-press b { font-size: 17px; font-weight: 900; }
+    .ha-lead { display: grid; grid-template-columns: 44px 1fr; gap: 3px 6px; align-items: center; font-size: 10.5px; font-weight: 800; }
+    .ha-bar { position: relative; height: 8px; border-radius: 4px; background: color-mix(in oklab, var(--ink) 8%, var(--paper)); }
+    .ha-bar i { position: absolute; inset: 0 auto 0 0; border-radius: 4px; }
+    .ha-bar.you i { background: var(--coral); }
+    .ha-bar.riv i { background: repeating-linear-gradient(135deg, var(--sky) 0 3px, color-mix(in oklab, var(--sky) 45%, var(--paper)) 3px 6px); }
+    .ha-num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 800; }
+    .ha-stats { padding: 10px 14px 14px; }
+    .ha-stats div { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid color-mix(in oklab, var(--ink) 8%, transparent); font-size: 13px; }
+    .ha-stats b { font-weight: 900; }
+    .ha-detail { padding: 10px 14px 14px; text-align: left; }
+    .ha-detail h3 { margin: 2px 0 8px; font-size: 15px; font-weight: 900; }
+    .ha-quote { margin: 0 0 8px; padding: 8px 10px; border-radius: 8px; background: var(--paper); font-size: 12px; line-height: 1.35; }
+    .ha-quote b { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 2px; }
+    .ha-post { margin-top: 10px; font-size: 12px; line-height: 1.35; }
+    .ha-post b { color: color-mix(in oklab, var(--sky) 70%, var(--ink)); }
+    .ha-key { display: flex; gap: 16px; justify-content: flex-end; margin: 4px 4px 0; font-size: 11px; font-weight: 700; }
+    .ha-key span { display: inline-flex; align-items: center; gap: 6px; }
+    .ha-key i { display: inline-block; width: 18px; height: 8px; border-radius: 4px; }
+    .ha-key .you { background: var(--coral); }
+    .ha-key .riv { background: repeating-linear-gradient(135deg, var(--sky) 0 3px, color-mix(in oklab, var(--sky) 45%, var(--paper)) 3px 6px); }
+
+    /* ---------- B: the race timeline ---------- */
+    .hist-b { position: absolute; inset: 0; }
+    .hb-panel { left: 60px; top: 120px; width: 1320px; height: 660px; }
+    .hb-head { display: flex; align-items: flex-end; justify-content: space-between; padding: 18px 28px 0; }
+    .hb-head p { margin: 4px 0 0; font-size: 13.5px; font-weight: 700; }
+    .hb-legend { display: flex; gap: 22px; font-size: 12px; font-weight: 800; }
+    .hb-legend span { display: inline-flex; align-items: center; gap: 8px; }
+    .hb-legend svg { overflow: visible; }
+    .hb-head h1 { margin: 0; font-size: 33px; font-weight: 300; }
+    .hb-head .muted { font-size: 13.5px; font-weight: 700; }
+    .hb-chart { display: block; margin: 8px 20px 0; }
+    .hb-cards { position: relative; height: 170px; margin: 4px 20px 0; }
+    .hb-card { position: absolute; top: 0; width: 164px; padding: 10px 12px 11px; border-radius: 10px; background: var(--paper); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 12%, transparent), 0 6px 14px color-mix(in oklab, var(--ink) 9%, transparent); font-size: 12px; text-align: left; }
+    .hb-card::before { content: ""; position: absolute; top: -9px; left: var(--pin, 20px); width: 2px; height: 9px; background: var(--coral); }
+    .hb-card h3 { margin: 0 0 2px; font-size: 14.5px; font-weight: 900; }
+    .hb-card .row { display: flex; justify-content: space-between; margin-top: 4px; }
+    .hb-card .row b { font-weight: 900; }
+    .hb-card q { display: block; margin-top: 7px; font-size: 11.5px; line-height: 1.35; quotes: "\201C" "\201D"; }
+    .hb-close { position: absolute; right: 28px; bottom: 20px; }
+
+    /* ---------- C: an encyclopedia article on the CEO's monitor ---------- */
+    .hist-c { position: absolute; inset: 0; }
+    .hc-window { left: 150px; top: 96px; width: 1140px; height: 770px; border-width: 3px; }
+    .hc-chrome { display: flex; align-items: center; gap: 10px; height: 38px; padding: 0 14px; background: color-mix(in oklab, var(--ink) 8%, var(--paper)); border-bottom: 1px solid color-mix(in oklab, var(--ink) 12%, transparent); }
+    .hc-dots { display: flex; gap: 6px; }
+    .hc-dots i { width: 11px; height: 11px; border-radius: 50%; background: color-mix(in oklab, var(--ink) 22%, var(--paper)); }
+    .hc-url { flex: 1; max-width: 560px; margin: 0 auto; padding: 5px 12px; border-radius: 7px; background: var(--paper); font-size: 12.5px; font-weight: 600; color: color-mix(in oklab, var(--ink) 62%, var(--paper)); text-align: center; }
+    .hc-page { height: calc(100% - 39px); overflow: hidden; padding: 20px 34px 0; background: var(--paper); text-align: left; }
+    .hc-site { display: flex; align-items: baseline; gap: 10px; padding-bottom: 8px; border-bottom: 1px solid color-mix(in oklab, var(--ink) 14%, transparent); }
+    .hc-site b { font-family: "Libre Baskerville", Georgia, serif; font-size: 18px; font-weight: 400; }
+    .hc-site span { font-size: 12px; }
+    .hc-title { margin: 14px 0 0; font-family: "Libre Baskerville", Georgia, serif; font-size: 27px; font-weight: 400; padding-bottom: 4px; border-bottom: 1px solid color-mix(in oklab, var(--ink) 14%, transparent); }
+    .hc-from { margin: 6px 0 12px; font-size: 12px; }
+    .hc-body { display: grid; grid-template-columns: 1fr 290px; gap: 26px; }
+    .hc-body p { margin: 0 0 10px; font-size: 13.5px; line-height: 1.55; }
+    .hc-body h2 { margin: 14px 0 6px; font-family: "Libre Baskerville", Georgia, serif; font-size: 18px; font-weight: 400; padding-bottom: 3px; border-bottom: 1px solid color-mix(in oklab, var(--ink) 14%, transparent); }
+    .hc-body a { color: color-mix(in oklab, var(--sky) 88%, var(--ink)); text-decoration: none; }
+    .hc-body sup { font-size: 9.5px; color: color-mix(in oklab, var(--sky) 88%, var(--ink)); }
+    .hc-info { align-self: start; border: 1px solid color-mix(in oklab, var(--ink) 16%, transparent); background: color-mix(in oklab, var(--cream) 30%, var(--paper)); font-size: 12px; }
+    .hc-info h3 { margin: 0; padding: 8px; font-family: "Libre Baskerville", Georgia, serif; font-size: 15px; font-weight: 700; text-align: center; background: color-mix(in oklab, var(--wood) 26%, var(--paper)); }
+    .hc-info dl { display: grid; grid-template-columns: 104px 1fr; gap: 6px 8px; margin: 0; padding: 10px; }
+    .hc-info dt { font-weight: 800; }
+    .hc-info dd { margin: 0; }
+    .hc-mark { display: grid; place-items: center; height: 84px; margin: 10px 10px 0; background: color-mix(in oklab, var(--wood) 10%, var(--paper)); font-family: "Libre Baskerville", Georgia, serif; font-size: 30px; font-style: italic; color: color-mix(in oklab, var(--wood) 70%, var(--ink)); }
+    .hc-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .hc-table th, .hc-table td { padding: 5px 7px; border: 1px solid color-mix(in oklab, var(--ink) 16%, transparent); text-align: left; }
+    .hc-table th { background: color-mix(in oklab, var(--ink) 6%, var(--paper)); font-weight: 800; }
+    .hc-table td.n { text-align: right; font-variant-numeric: tabular-nums; }
+    .hc-refs { margin: 0; padding-left: 20px; font-size: 11.5px; line-height: 1.5; }
+    .hc-fade { position: absolute; left: 3px; right: 3px; bottom: 3px; height: 60px; border-radius: 0 0 11px 11px; background: linear-gradient(to bottom, transparent, var(--paper)); pointer-events: none; }
+  </style>
+</head>
+<body>
+  <main id="stage" aria-label="AI lab office">
+    <div id="office"></div>
+    <div id="fx" aria-live="polite"></div>
+    <div id="hud"></div>
+    <div id="overlay"></div>
+  </main>
+<script type="module">
+import { createGame } from './ui/game.js';
+import { mountHud } from './ui/hud.js';
+import { mountOffice } from './ui/office.js';
+import { SCENARIOS } from './ui/logic/scenarios.js';
+import { openDialog } from './ui/components/dialog.js';
+import { users } from './ui/logic/format.js';
+
+const zoom = () => { const z = Math.min(innerWidth / 1440, innerHeight / 900, 1); if (z > 0) document.documentElement.style.zoom = `${z}`; };
+zoom(); addEventListener('resize', zoom);
+
+// The same real run as the data file: seed 4, stopped at the start of era 5 (turn 16).
+const game = createGame({ seed: 4, state: SCENARIOS.summit(4) });
+mountHud(document.querySelector('#hud'), game);
+await mountOffice(document.querySelector('#office'), document.querySelector('#fx'), game).catch(console.error);
+const data = await (await fetch('docs/design/mockups/lab-history-seed4.json')).json();
+const overlay = document.querySelector('#overlay');
+
+const ERAS = ['Chat assistants', 'The scale-up', 'Reasoning and agents', 'The gigawatt race', 'Self-improvement and pacing'];
+const RIVALS = { openbrain: 'OpenBrain', lodestar: 'Lodestar', deepthink: 'DeepThink', qilin: 'Qilin' };
+const CHANNEL = { enterprise: 'API', consumer: 'App and API', open: 'Open weights', agent: 'Agent product' };
+const mean = (xs) => xs.reduce((a, b) => a + b, 0) / xs.length;
+const capAvg = (m, key) => mean(m.benchmarks.filter((b) => b.kind === 'cap').map((b) => b[key] ?? 0));
+const when = (m) => `Era ${m.at.era} · turn ${m.releasedTurn}`;
+const models = data.models;
+const el = (html) => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; };
+
+// ---------- A ----------
+function showA(selected = models.length - 1) {
+  const rows = models.map((m, i) => {
+    const you = capAvg(m, 'shown'); const riv = capAvg(m, 'rival');
+    return `<tr class="${i === selected ? 'sel' : ''}">
+      <td><div class="ha-name">${m.name}<small class="muted">${when(m)}</small></div></td>
+      <td>${CHANNEL[m.channel]}<br><span class="muted">${m.priceStance === 'undercut' ? 'Cheap' : 'Market price'}</span></td>
+      <td class="ha-press"><b>${m.pressAvg.toFixed(1)}</b><span class="muted"> / 10</span></td>
+      <td style="width:210px"><div class="ha-lead">
+        <span>You ${Math.round(you)}</span><div class="ha-bar you"><i style="width:${you}%"></i></div>
+        <span class="muted">Rival ${Math.round(riv)}</span><div class="ha-bar riv"><i style="width:${riv}%"></i></div>
+      </div></td>
+      <td class="ha-num">+${users(m.newUsers)}</td>
+      <td class="ha-num">${m.active ? users(m.users) : '<span class="muted">Retired</span>'}</td>
+    </tr>`;
+  }).join('');
+  const body = el(`<div>
+    <table class="ha-table"><thead><tr><th>Model</th><th>Access</th><th>Press</th><th>Leaderboard at launch</th><th style="text-align:right">Launch</th><th style="text-align:right">Users now</th></tr></thead><tbody>${rows}</tbody></table>
+    <div class="ha-key"><span><i class="you"></i>Your model, average of four public benchmarks</span><span><i class="riv"></i>Best rival at the time</span></div>
+  </div>`);
+  const m = models[selected];
+  const best = models.reduce((a, b) => (b.pressAvg > a.pressAvg ? b : a));
+  const biggest = models.reduce((a, b) => (b.newUsers > a.newUsers ? b : a));
+  const left = el(`<div class="ha-stats">
+    <div><span>Models released</span><b>${models.length}</b></div>
+    <div><span>Best press</span><b>${best.pressAvg.toFixed(1)}</b></div>
+    <div><span>Biggest launch</span><b>+${users(biggest.newUsers)}</b></div>
+    <div><span>Still serving</span><b>${models.filter((x) => x.active).length}</b></div>
+  </div>`);
+  const post = m.reactions.find((r) => r.handle !== '@marketwire') ?? m.reactions[0];
+  const right = el(`<div class="ha-detail"><h3>${m.name}</h3>
+    ${m.press.slice(0, 3).map((p) => `<p class="ha-quote"><b><span>${p.name}</span><span>${p.score}/10</span></b>${p.quip}</p>`).join('')}
+    <p class="ha-post"><b>${post.handle}</b> ${post.text}</p></div>`);
+  const layer = openDialog(overlay, { title: 'Lab history', subtitle: `${models.length} models released · Era ${data.now.era}, turn ${data.now.turn}`, left: { title: 'Your lab', content: left }, right: { title: 'Selected model', content: right }, body, okLabel: 'Close' });
+  layer.classList.add('hist-a');
+}
+
+// ---------- B ----------
+function showB() {
+  const W = 1280, H = 350, padL = 96, padR = 16, top = 30, bottom = 62;
+  const x = (turn) => padL + (turn / 20) * (W - padL - padR);
+  const y = (v) => top + (1 - v / 100) * (H - top - bottom);
+  const baseY = H - bottom;
+  let svg = `<svg class="hb-chart" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Your public benchmark average at each launch against the best rival's">`;
+  ERAS.forEach((name, i) => {
+    const x0 = x(i * 4), x1 = x(i * 4 + 4);
+    svg += `<rect x="${x0}" y="${top - 26}" width="${x1 - x0}" height="${baseY - top + 26}" style="fill:${i % 2 ? 'color-mix(in oklab, var(--cream) 40%, var(--paper))' : 'var(--paper)'}"/>`;
+    svg += `<text x="${x0 + 10}" y="${top - 10}" style="font-size:11.5px;font-weight:800;fill:color-mix(in oklab, var(--ink) 60%, var(--paper))">ERA ${i + 1} · ${name.toUpperCase()}</text>`;
+  });
+  for (const v of [0, 25, 50, 75, 100]) {
+    svg += `<line x1="${padL}" x2="${W - padR}" y1="${y(v)}" y2="${y(v)}" style="stroke:color-mix(in oklab, var(--ink) ${v ? 8 : 30}%, transparent)"/>`;
+    svg += `<text x="${padL - 8}" y="${y(v) + 4}" text-anchor="end" style="font-size:10.5px;font-weight:700;fill:color-mix(in oklab, var(--ink) 55%, var(--paper))">${v}</text>`;
+  }
+  const you = models.map((m) => [x(m.releasedTurn), y(capAvg(m, 'shown'))]);
+  const riv = models.map((m) => [x(m.releasedTurn), y(capAvg(m, 'rival'))]);
+  const step = (pts) => pts.map(([px, py], i) => (i ? `H${px} V${py}` : `M${px} ${py}`)).join(' ');
+  svg += `<path d="${step(riv)} H${x(data.now.turn)}" style="fill:none;stroke:var(--sky);stroke-width:2.5;stroke-dasharray:6 5"/>`;
+  svg += `<path d="${step(you)} H${x(data.now.turn)}" style="fill:none;stroke:var(--coral);stroke-width:3"/>`;
+  riv.forEach(([px, py]) => { svg += `<circle cx="${px}" cy="${py}" r="5" style="fill:var(--paper);stroke:var(--sky);stroke-width:2.5"/>`; });
+  you.forEach(([px, py], i) => { svg += `<circle cx="${px}" cy="${py}" r="7" style="fill:var(--coral);stroke:var(--paper);stroke-width:2"/><text x="${px + 10}" y="${py - 10}" style="font-size:12px;font-weight:900;fill:var(--ink)">${Math.round(capAvg(models[i], 'shown'))}</text>`; });
+  // Rival launches as ticks under the axis, one row per lab.
+  const labs = Object.keys(RIVALS);
+  labs.forEach((id, row) => {
+    const ry = baseY + 14 + row * 12;
+    svg += `<text x="${padL - 8}" y="${ry + 3.5}" text-anchor="end" style="font-size:10px;font-weight:800;fill:color-mix(in oklab, var(--sky) 70%, var(--ink))">${RIVALS[id]}</text>`;
+    for (const t of data.turns) if (t.events.some((e) => e.type === 'rivalRelease' && e.id === id)) svg += `<rect x="${x(t.turn) - 5}" y="${ry - 3}" width="10" height="6" rx="3" style="fill:var(--sky)"/>`;
+  });
+  svg += `<line x1="${x(data.now.turn)}" x2="${x(data.now.turn)}" y1="${top - 26}" y2="${baseY}" style="stroke:var(--ink);stroke-width:1.5"/><text x="${x(data.now.turn) + 6}" y="${baseY - 8}" style="font-size:11px;font-weight:900;fill:var(--ink)">Now · turn ${data.now.turn}</text>`;
+  svg += `</svg>`;
+  const cards = models.map((m) => {
+    const cx = Math.min(W - 164, Math.max(0, x(m.releasedTurn) - 18));
+    const quip = m.press.reduce((a, b) => (b.score < a.score ? b : a));
+    return `<div class="hb-card" style="left:${cx}px;--pin:${x(m.releasedTurn) - cx - 1}px"><h3>${m.name}</h3><span class="muted">${CHANNEL[m.channel]} · ${when(m)}</span>
+      <div class="row"><span>Press</span><b>${m.pressAvg.toFixed(1)} / 10</b></div><div class="row"><span>Launch</span><b>+${users(m.newUsers)} users</b></div><q>${quip.quip}</q></div>`;
+  }).join('');
+  const layer = el(`<div class="hist-b dialog-layer dialog-open"><div class="dialog-veil"></div><section class="gp hb-panel">
+    <div class="hb-head"><div><h1>The race so far</h1><p class="muted">Public benchmarks only: the average of coding, science, agents and the final exam</p></div>
+    <div class="hb-legend"><span><svg width="26" height="10"><line x1="0" x2="26" y1="5" y2="5" style="stroke:var(--coral);stroke-width:3"/><circle cx="13" cy="5" r="5" style="fill:var(--coral)"/></svg>Your latest model</span><span><svg width="26" height="10"><line x1="0" x2="26" y1="5" y2="5" style="stroke:var(--sky);stroke-width:2.5;stroke-dasharray:6 5"/><circle cx="13" cy="5" r="4" style="fill:var(--paper);stroke:var(--sky);stroke-width:2.5"/></svg>Best rival when you launched</span><span><svg width="10" height="6"><rect width="10" height="6" rx="3" style="fill:var(--sky)"/></svg>A rival released a model</span></div></div>
+    ${svg}<div class="hb-cards">${cards}</div><button class="btn hb-close" type="button">Close</button></section></div>`);
+  overlay.append(layer);
+}
+
+// ---------- C ----------
+function showC() {
+  const first = models[0], last = models.at(-1);
+  const rowsC = models.map((m, i) => `<tr><td><a href="#c">${m.name}</a></td><td>${when(m)}</td><td>${CHANNEL[m.channel]}</td>${m.benchmarks.map((b) => `<td class="n">${b.shown}</td>`).join('')}<td class="n">${m.pressAvg.toFixed(1)}</td></tr>`).join('');
+  const led = (m) => m.benchmarks.filter((b) => b.shown > b.rival).length;
+  const words = ['none', 'one', 'two', 'three', 'four', 'all five'];
+  const refs = [];
+  const cite = (text) => { refs.push(text); return `<sup>[${refs.length}]</sup>`; };
+  const lawyer = models.flatMap((m) => m.reactions.map((r) => ({ ...r, model: m.name }))).find((r) => r.handle === '@lawyer_lena');
+  const bench = models.flatMap((m) => m.reactions.map((r) => ({ ...r, model: m.name }))).find((r) => r.handle === '@benchwatch');
+  const layer = el(`<div class="hist-c dialog-layer dialog-open"><div class="dialog-veil"></div><section class="gp hc-window">
+    <div class="hc-chrome"><div class="hc-dots"><i></i><i></i><i></i></div><div class="hc-url">encyclopedia.example/wiki/Kestrel_(language_model)</div></div>
+    <div class="hc-page">
+      <div class="hc-site"><b>The Encyclopedia</b><span class="muted">the free encyclopedia anyone can edit</span></div>
+      <h1 class="hc-title">Kestrel (language model)</h1>
+      <p class="hc-from muted">From the Encyclopedia · last edited this month</p>
+      <div class="hc-body"><div>
+        <p><b>Kestrel</b> is a family of <a href="#c">large language models</a> developed by your lab. The first model, ${first.name}, was released in the <a href="#c">${ERAS[first.at.era - 1].toLowerCase()}</a> era and led the best rival on ${led(first) === 5 ? 'all five' : `${words[led(first)]} of five`} public benchmarks. ${models.length} models have been released so far; the latest, ${last.name}, is sold through ${CHANNEL[last.channel] === 'API' ? 'an <a href="#c">API</a>' : `its <a href="#c">${CHANNEL[last.channel].toLowerCase()}</a>`} and led on ${led(last) === 5 ? 'all five' : `${words[led(last)]} of five`} at launch.</p>
+        <h2>Release history</h2>
+        <table class="hc-table"><thead><tr><th>Model</th><th>Released</th><th>Access</th><th>Coding</th><th>Science</th><th>Agents</th><th>Final exam</th><th>Safety</th><th>Press</th></tr></thead><tbody>${rowsC}</tbody></table>
+        <h2>Reception</h2>
+        <p>Reviews have averaged ${(models.reduce((a, m) => a + m.pressAvg, 0) / models.length).toFixed(1)} out of 10. <i>${last.press[0].name}</i> wrote of ${last.name}: “${last.press[0].quip}”${cite(`${last.press[0].name}, review of ${last.name} (${last.press[0].score}/10)`)} <i>${last.press[3].name}</i> called it “${last.press[3].quip.replace(/\.$/, '')}.”${cite(`${last.press[3].name}, review of ${last.name} (${last.press[3].score}/10)`)}</p>
+        <h2>Controversies</h2>
+        <p>${bench ? `After the release of ${bench.model}, observers questioned whether its coding scores were inflated.${cite(`${bench.handle}, “${bench.text}”`)} ` : ''}${lawyer ? `A lawyer reported that ${lawyer.model} “cited three cases that do not exist”.${cite(`${lawyer.handle}, “${lawyer.text}”`)}` : ''}</p>
+        <h2>References</h2>
+        <ol class="hc-refs">${refs.map((r) => `<li>${r}</li>`).join('')}</ol>
+      </div>
+      <aside class="hc-info"><h3>Kestrel</h3><div class="hc-mark">K</div><dl>
+        <dt>Developer</dt><dd>Your lab</dd>
+        <dt>First release</dt><dd>${first.name}<br><span class="muted">${when(first)}</span></dd>
+        <dt>Latest release</dt><dd>${last.name}<br><span class="muted">${when(last)}</span></dd>
+        <dt>Models</dt><dd>${models.length}</dd>
+        <dt>Type</dt><dd>Large language model</dd>
+        <dt>Access</dt><dd>${[...new Set(models.map((m) => CHANNEL[m.channel]))].join(', ')}</dd>
+        <dt>Users</dt><dd>${users(models.reduce((a, m) => a + (m.active ? m.users : 0), 0))}</dd>
+      </dl></aside></div>
+    </div><div class="hc-fade"></div></section></div>`);
+  overlay.append(layer);
+}
+
+const show = { '#a': () => showA(), '#b': showB, '#c': showC };
+(show[location.hash] ?? showA)();
+</script>
+</body>
+</html>

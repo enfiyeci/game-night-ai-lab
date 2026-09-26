@@ -1,0 +1,694 @@
+{
+ "seed": 4,
+ "now": {
+  "turn": 16,
+  "era": 5,
+  "months": 32
+ },
+ "models": [
+  {
+   "name": "Kestrel 1 Core",
+   "family": "Kestrel",
+   "generation": 1,
+   "size": "medium",
+   "releasedTurn": 2,
+   "at": {
+    "era": 1,
+    "turnInEra": 2,
+    "months": 6
+   },
+   "channel": "enterprise",
+   "priceStance": "undercut",
+   "reasoning": "off",
+   "newUsers": 671875,
+   "users": 0,
+   "active": false,
+   "beats": 4,
+   "pressAvg": 8.75,
+   "benchmarks": [
+    {
+     "name": "Patchwork (coding)",
+     "kind": "cap",
+     "shown": 28,
+     "flagship": null,
+     "rival": 26
+    },
+    {
+     "name": "Doctorate Quiz (science)",
+     "kind": "cap",
+     "shown": 23,
+     "flagship": null,
+     "rival": 24
+    },
+    {
+     "name": "Task Horizon (agents)",
+     "kind": "cap",
+     "shown": 17,
+     "flagship": null,
+     "rival": 19
+    },
+    {
+     "name": "Humanity's Final Final Exam",
+     "kind": "cap",
+     "shown": 21,
+     "flagship": null,
+     "rival": 23
+    },
+    {
+     "name": "Jailbreak Gauntlet (safety)",
+     "kind": "safety",
+     "shown": 98,
+     "flagship": null,
+     "rival": 63
+    }
+   ],
+   "press": [
+    {
+     "id": "pitchcrunch",
+     "name": "PitchCrunch",
+     "score": 10,
+     "quip": "Finally, an agent that finishes the ticket."
+    },
+    {
+     "id": "strategery",
+     "name": "Strategery",
+     "score": 8,
+     "quip": "A serious move in the race."
+    },
+    {
+     "id": "snakeeyes",
+     "name": "AI Snake Eyes",
+     "score": 8,
+     "quip": "Grudgingly: this one is real."
+    },
+    {
+     "id": "aeon",
+     "name": "Æon Review",
+     "score": 9,
+     "quip": "A careful model in a careless year."
+    }
+   ],
+   "reactions": [
+    {
+     "handle": "@lodestar_eng",
+     "text": "congrats. see you in 6 weeks."
+    },
+    {
+     "handle": "@early_adopter",
+     "text": "switched over this morning. so far so good."
+    },
+    {
+     "handle": "@ml_hobbyist",
+     "text": "ran my usual prompts. it is better at some, worse at one, weird at another."
+    },
+    {
+     "handle": "@pm_everywhere",
+     "text": "our roadmap now says \"powered by\" this. nobody asked me."
+    },
+    {
+     "handle": "@skeptic_sam",
+     "text": "wake me when it can do my taxes."
+    }
+   ]
+  },
+  {
+   "name": "Kestrel 2 Core",
+   "family": "Kestrel",
+   "generation": 2,
+   "size": "medium",
+   "releasedTurn": 6,
+   "at": {
+    "era": 2,
+    "turnInEra": 2,
+    "months": 18
+   },
+   "channel": "enterprise",
+   "priceStance": "market",
+   "reasoning": "off",
+   "newUsers": 1125000,
+   "users": 0,
+   "active": false,
+   "beats": 4,
+   "pressAvg": 10,
+   "benchmarks": [
+    {
+     "name": "Patchwork (coding)",
+     "kind": "cap",
+     "shown": 50,
+     "flagship": 28,
+     "rival": 44
+    },
+    {
+     "name": "Doctorate Quiz (science)",
+     "kind": "cap",
+     "shown": 50,
+     "flagship": 23,
+     "rival": 40
+    },
+    {
+     "name": "Task Horizon (agents)",
+     "kind": "cap",
+     "shown": 28,
+     "flagship": 17,
+     "rival": 32
+    },
+    {
+     "name": "Humanity's Final Final Exam",
+     "kind": "cap",
+     "shown": 35,
+     "flagship": 21,
+     "rival": 32
+    },
+    {
+     "name": "Jailbreak Gauntlet (safety)",
+     "kind": "safety",
+     "shown": 96,
+     "flagship": 98,
+     "rival": 63
+    }
+   ],
+   "press": [
+    {
+     "id": "pitchcrunch",
+     "name": "PitchCrunch",
+     "score": 10,
+     "quip": "Finally, an agent that finishes the ticket."
+    },
+    {
+     "id": "strategery",
+     "name": "Strategery",
+     "score": 10,
+     "quip": "A serious move in the race."
+    },
+    {
+     "id": "snakeeyes",
+     "name": "AI Snake Eyes",
+     "score": 10,
+     "quip": "Grudgingly: this one is real."
+    },
+    {
+     "id": "aeon",
+     "name": "Æon Review",
+     "score": 10,
+     "quip": "A careful model in a careless year."
+    }
+   ],
+   "reactions": [
+    {
+     "handle": "@lodestar_eng",
+     "text": "congrats. see you in 6 weeks."
+    },
+    {
+     "handle": "@benchwatch",
+     "text": "those coding scores look a little too good. just saying."
+    },
+    {
+     "handle": "@early_adopter",
+     "text": "switched over this morning. so far so good."
+    },
+    {
+     "handle": "@ml_hobbyist",
+     "text": "ran my usual prompts. it is better at some, worse at one, weird at another."
+    },
+    {
+     "handle": "@pm_everywhere",
+     "text": "our roadmap now says \"powered by\" this. nobody asked me."
+    }
+   ]
+  },
+  {
+   "name": "Kestrel 3 Swift",
+   "family": "Kestrel",
+   "generation": 3,
+   "size": "small",
+   "releasedTurn": 9,
+   "at": {
+    "era": 3,
+    "turnInEra": 1,
+    "months": 25
+   },
+   "channel": "enterprise",
+   "priceStance": "market",
+   "reasoning": "off",
+   "newUsers": 1500000,
+   "users": 0,
+   "active": false,
+   "beats": 4,
+   "pressAvg": 10,
+   "benchmarks": [
+    {
+     "name": "Patchwork (coding)",
+     "kind": "cap",
+     "shown": 59,
+     "flagship": 50,
+     "rival": 53
+    },
+    {
+     "name": "Doctorate Quiz (science)",
+     "kind": "cap",
+     "shown": 65,
+     "flagship": 50,
+     "rival": 55
+    },
+    {
+     "name": "Task Horizon (agents)",
+     "kind": "cap",
+     "shown": 47,
+     "flagship": 28,
+     "rival": 39
+    },
+    {
+     "name": "Humanity's Final Final Exam",
+     "kind": "cap",
+     "shown": 55,
+     "flagship": 35,
+     "rival": 44
+    },
+    {
+     "name": "Jailbreak Gauntlet (safety)",
+     "kind": "safety",
+     "shown": 96,
+     "flagship": 96,
+     "rival": 64
+    }
+   ],
+   "press": [
+    {
+     "id": "pitchcrunch",
+     "name": "PitchCrunch",
+     "score": 10,
+     "quip": "Finally, an agent that finishes the ticket."
+    },
+    {
+     "id": "strategery",
+     "name": "Strategery",
+     "score": 10,
+     "quip": "A serious move in the race."
+    },
+    {
+     "id": "snakeeyes",
+     "name": "AI Snake Eyes",
+     "score": 10,
+     "quip": "Grudgingly: this one is real."
+    },
+    {
+     "id": "aeon",
+     "name": "Æon Review",
+     "score": 10,
+     "quip": "A careful model in a careless year."
+    }
+   ],
+   "reactions": [
+    {
+     "handle": "@marketwire",
+     "text": "Kestrel 3 Swift tops the leaderboards; rival shares slip"
+    },
+    {
+     "handle": "@lawyer_lena",
+     "text": "it cited three cases that do not exist. with confidence."
+    },
+    {
+     "handle": "@lodestar_eng",
+     "text": "congrats. see you in 6 weeks."
+    },
+    {
+     "handle": "@early_adopter",
+     "text": "switched over this morning. so far so good."
+    },
+    {
+     "handle": "@ml_hobbyist",
+     "text": "ran my usual prompts. it is better at some, worse at one, weird at another."
+    }
+   ]
+  },
+  {
+   "name": "Kestrel 4 Core",
+   "family": "Kestrel",
+   "generation": 4,
+   "size": "medium",
+   "releasedTurn": 12,
+   "at": {
+    "era": 4,
+    "turnInEra": 0,
+    "months": 28
+   },
+   "channel": "enterprise",
+   "priceStance": "market",
+   "reasoning": "off",
+   "newUsers": 1875000,
+   "users": 2475291,
+   "active": true,
+   "beats": 4,
+   "pressAvg": 10,
+   "benchmarks": [
+    {
+     "name": "Patchwork (coding)",
+     "kind": "cap",
+     "shown": 78,
+     "flagship": 59,
+     "rival": 75
+    },
+    {
+     "name": "Doctorate Quiz (science)",
+     "kind": "cap",
+     "shown": 85,
+     "flagship": 65,
+     "rival": 74
+    },
+    {
+     "name": "Task Horizon (agents)",
+     "kind": "cap",
+     "shown": 65,
+     "flagship": 47,
+     "rival": 57
+    },
+    {
+     "name": "Humanity's Final Final Exam",
+     "kind": "cap",
+     "shown": 71,
+     "flagship": 55,
+     "rival": 63
+    },
+    {
+     "name": "Jailbreak Gauntlet (safety)",
+     "kind": "safety",
+     "shown": 98,
+     "flagship": 96,
+     "rival": 63
+    }
+   ],
+   "press": [
+    {
+     "id": "pitchcrunch",
+     "name": "PitchCrunch",
+     "score": 10,
+     "quip": "Finally, an agent that finishes the ticket."
+    },
+    {
+     "id": "strategery",
+     "name": "Strategery",
+     "score": 10,
+     "quip": "A serious move in the race."
+    },
+    {
+     "id": "snakeeyes",
+     "name": "AI Snake Eyes",
+     "score": 10,
+     "quip": "Grudgingly: this one is real."
+    },
+    {
+     "id": "aeon",
+     "name": "Æon Review",
+     "score": 10,
+     "quip": "A careful model in a careless year."
+    }
+   ],
+   "reactions": [
+    {
+     "handle": "@marketwire",
+     "text": "Kestrel 4 Core tops the leaderboards; rival shares slip"
+    },
+    {
+     "handle": "@lawyer_lena",
+     "text": "it cited three cases that do not exist. with confidence."
+    },
+    {
+     "handle": "@lodestar_eng",
+     "text": "congrats. see you in 6 weeks."
+    },
+    {
+     "handle": "@early_adopter",
+     "text": "switched over this morning. so far so good."
+    },
+    {
+     "handle": "@ml_hobbyist",
+     "text": "ran my usual prompts. it is better at some, worse at one, weird at another."
+    }
+   ]
+  }
+ ],
+ "turns": [
+  {
+   "turn": 0,
+   "era": 1,
+   "turnInEra": 0,
+   "months": 0,
+   "events": []
+  },
+  {
+   "turn": 1,
+   "era": 1,
+   "turnInEra": 1,
+   "months": 3,
+   "events": [
+    {
+     "type": "runComplete"
+    },
+    {
+     "type": "rivalRelease",
+     "id": "openbrain"
+    }
+   ]
+  },
+  {
+   "turn": 2,
+   "era": 1,
+   "turnInEra": 2,
+   "months": 6,
+   "events": [
+    {
+     "type": "release"
+    },
+    {
+     "type": "rivalRelease",
+     "id": "lodestar"
+    },
+    {
+     "type": "rivalRelease",
+     "id": "deepthink"
+    },
+    {
+     "type": "rivalRelease",
+     "id": "qilin"
+    }
+   ]
+  },
+  {
+   "turn": 3,
+   "era": 1,
+   "turnInEra": 3,
+   "months": 9,
+   "events": [
+    {
+     "type": "rivalRelease",
+     "id": "openbrain"
+    },
+    {
+     "type": "eraStart",
+     "era": 2
+    }
+   ]
+  },
+  {
+   "turn": 4,
+   "era": 2,
+   "turnInEra": 0,
+   "months": 12,
+   "events": [
+    {
+     "type": "raise",
+     "amount": 2089
+    }
+   ]
+  },
+  {
+   "turn": 5,
+   "era": 2,
+   "turnInEra": 1,
+   "months": 15,
+   "events": [
+    {
+     "type": "runComplete"
+    },
+    {
+     "type": "rivalRelease",
+     "id": "openbrain"
+    },
+    {
+     "type": "rivalRelease",
+     "id": "lodestar"
+    },
+    {
+     "type": "rivalRelease",
+     "id": "deepthink"
+    },
+    {
+     "type": "rivalRelease",
+     "id": "qilin"
+    }
+   ]
+  },
+  {
+   "turn": 6,
+   "era": 2,
+   "turnInEra": 2,
+   "months": 18,
+   "events": [
+    {
+     "type": "release"
+    }
+   ]
+  },
+  {
+   "turn": 7,
+   "era": 2,
+   "turnInEra": 3,
+   "months": 21,
+   "events": [
+    {
+     "type": "rivalRelease",
+     "id": "openbrain"
+    },
+    {
+     "type": "eraStart",
+     "era": 3
+    }
+   ]
+  },
+  {
+   "turn": 8,
+   "era": 3,
+   "turnInEra": 0,
+   "months": 24,
+   "events": [
+    {
+     "type": "runComplete"
+    },
+    {
+     "type": "rivalRelease",
+     "id": "lodestar"
+    },
+    {
+     "type": "rivalRelease",
+     "id": "deepthink"
+    },
+    {
+     "type": "rivalRelease",
+     "id": "qilin"
+    }
+   ]
+  },
+  {
+   "turn": 9,
+   "era": 3,
+   "turnInEra": 1,
+   "months": 25,
+   "events": [
+    {
+     "type": "release"
+    },
+    {
+     "type": "rivalRelease",
+     "id": "openbrain"
+    }
+   ]
+  },
+  {
+   "turn": 10,
+   "era": 3,
+   "turnInEra": 2,
+   "months": 26,
+   "events": []
+  },
+  {
+   "turn": 11,
+   "era": 3,
+   "turnInEra": 3,
+   "months": 27,
+   "events": [
+    {
+     "type": "runComplete"
+    },
+    {
+     "type": "rivalRelease",
+     "id": "openbrain"
+    },
+    {
+     "type": "rivalRelease",
+     "id": "lodestar"
+    },
+    {
+     "type": "rivalRelease",
+     "id": "deepthink"
+    },
+    {
+     "type": "rivalRelease",
+     "id": "qilin"
+    },
+    {
+     "type": "eraStart",
+     "era": 4
+    }
+   ]
+  },
+  {
+   "turn": 12,
+   "era": 4,
+   "turnInEra": 0,
+   "months": 28,
+   "events": [
+    {
+     "type": "release"
+    }
+   ]
+  },
+  {
+   "turn": 13,
+   "era": 4,
+   "turnInEra": 1,
+   "months": 29,
+   "events": [
+    {
+     "type": "raise",
+     "amount": 6333
+    }
+   ]
+  },
+  {
+   "turn": 14,
+   "era": 4,
+   "turnInEra": 2,
+   "months": 30,
+   "events": [
+    {
+     "type": "rivalRelease",
+     "id": "openbrain"
+    },
+    {
+     "type": "rivalRelease",
+     "id": "deepthink"
+    },
+    {
+     "type": "rivalRelease",
+     "id": "qilin"
+    }
+   ]
+  },
+  {
+   "turn": 15,
+   "era": 4,
+   "turnInEra": 3,
+   "months": 31,
+   "events": [
+    {
+     "type": "rivalRelease",
+     "id": "lodestar"
+    },
+    {
+     "type": "eraStart",
+     "era": 5
+    }
+   ]
+  }
+ ]
+}
