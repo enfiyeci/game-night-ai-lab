@@ -16,6 +16,9 @@ Treat it as raw research: claims read only through search snippets or failed fet
 4. `suggestions-2026-09-26.html`: the seven decisions put to the owner, built from the above, with
    the 13 mockup screenshots in `mock/`. The mockups themselves are
    `docs/design/mockups/K2-events.html` (one route per screen, drawn over the live game).
+   Round 2 (after the owner's picks) adds `docs/design/mockups/K2-events-crisis.html`: the four
+   crises staged in the office in design C, with and without a picture on the card, plus the
+   real-time clock, the consequence summary and advisor jokes.
 
 ## Notable catches
 
