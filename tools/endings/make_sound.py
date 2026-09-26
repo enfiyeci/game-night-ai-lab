@@ -212,6 +212,38 @@ def crickets(d):
     return (chirp * 0.012 + lowpass(noise(n), 300) * 0.03) * env(n, 0.3, 0.3)
 
 
+def buzz(d):
+    """A phone vibrating against a wooden desk, over and over."""
+    n = int(d * SR)
+    t = t_axis(n)
+    gate = (np.sin(2 * np.pi * 0.9 * t) > -0.2).astype(float)
+    return lowpass(np.sign(np.sin(2 * np.pi * 170 * t)), 1200) * gate * 0.05 * env(n, 0.02, 0.05)
+
+
+def siren(d):
+    """A siren in the distance, rising and falling."""
+    n = int(max(d, 2.4) * SR)
+    t = t_axis(n)
+    f = 700 + 250 * np.sin(2 * np.pi * 0.7 * t)
+    return lowpass(np.sin(2 * np.pi * np.cumsum(f) / SR), 1800) * 0.025 * env(n, 0.6, 0.8)
+
+
+def pops(d):
+    """A substation tripping: a crack, then a falling hum."""
+    n = int(1.2 * SR)
+    t = t_axis(n)
+    crack = bandpass(noise(n), 800, 7000) * np.exp(-t * 40) * 0.4
+    return crack + sweep(120, 40, 1.2, 0.06)[:n]
+
+
+def bend(d):
+    """A low tone that bends slightly off pitch, as the written and learned lines fail to match."""
+    n = int(4.5 * SR)
+    t = t_axis(n)
+    f = 220 * (1 + 0.03 * np.clip((t - 1.0) / 3.0, 0, 1))
+    return (np.sin(2 * np.pi * 220 * t) + np.sin(2 * np.pi * np.cumsum(f) / SR)) * 0.03 * env(n, 0.4, 0.8)
+
+
 def chord(d):
     """A soft sustained chord (A major, low and warm), for good news that is deliberately undramatic."""
     n = int(max(d, 4.0) * SR)
@@ -360,7 +392,7 @@ def whir(d):
 SOUNDS = {"room": room, "party": party, "tone": high_tone, "chime": chime, "tick": tick, "gulls": gulls, "door": door,
           "beeps": beeps, "hold": hold, "fridge": fridge, "flicker": flicker, "notify": notify, "typing": typing, "city": city,
           "powerdown": powerdown, "roomtone": roomtone, "creak": creak, "hum": hum, "clunk": clunk, "fansdown": fansdown,
-          "wind": wind, "emergency": emergency, "whir": whir, "sting": sting, "flare": flare, "pen": pen, "crickets": crickets, "chord": chord, "walkout": walkout}
+          "wind": wind, "emergency": emergency, "whir": whir, "sting": sting, "flare": flare, "pen": pen, "crickets": crickets, "chord": chord, "walkout": walkout, "buzz": buzz, "siren": siren, "pops": pops, "bend": bend}
 AMBIENT = {"room", "party", "tone", "gulls", "beeps", "city", "roomtone", "wind", "emergency", "fridge", "crickets", "hum"}
 RUNS = {"chimes": chimes, "flaps": flaps, "steps": steps, "stamps": stamps, "pings": pings}   # [name, at, count, step]
 

@@ -94,7 +94,7 @@ function officeShot(svgText, anchors, shot) {
   const svg = parseSvg(svgText);
   const heads = anchors.heads;
   if (shot.empty) svg.querySelectorAll('.sitter').forEach((e) => e.setAttribute('display', 'none'));
-  const tint = shot.tint === 'coral' ? 'var(--coral)' : shot.tint === 'teal' ? 'var(--teal)' : null;
+  const tint = { coral: 'var(--coral)', teal: 'var(--teal)', sky: 'var(--sky)' }[shot.tint] ?? null;
   let fx = `<defs><radialGradient id="film-glow"><stop offset="0" style="stop-color:${tint ?? 'var(--sky)'};stop-opacity:.9"/>
     <stop offset="1" style="stop-color:${tint ?? 'var(--sky)'};stop-opacity:0"/></radialGradient>
     <radialGradient id="film-botglow"><stop offset="0" style="stop-color:var(--sky);stop-opacity:.55"/><stop offset="1" style="stop-color:var(--sky);stop-opacity:0"/></radialGradient></defs>`;

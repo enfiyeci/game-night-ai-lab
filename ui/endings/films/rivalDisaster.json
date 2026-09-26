@@ -1,0 +1,31 @@
+{
+  "id": "rivalDisaster",
+  "title": "Someone else's disaster",
+  "tagline": "You were careful. Careful was never only up to you.",
+  "lumen": "I was careful here. Elsewhere was enough.",
+  "titleClip": "rd-desert-title",
+  "titleSfx": [["wind", 0]],
+  "shots": [
+    {
+      "kind": "office", "dur": 5, "card": "Their launch day · Your lab",
+      "dim": [[0, {"o": 0.3}]],
+      "tint": "sky", "tintKeys": [[0, {"o": 0.18}]],
+      "bubbles": [
+        {"who": "safety", "at": 0.4, "to": 2.6, "text": "They skipped the full eval."},
+        {"who": "research", "at": 2.6, "to": 5, "text": "They had to. We launched last month."}
+      ],
+      "cam": {"to": {"x": 580, "y": 380, "s": 1.3}},
+      "sfx": [["room", 0], ["party", 0, 1.5]]
+    },
+    {"kind": "plate", "plate": "rd-slide", "dur": 4, "card": "Three weeks earlier · OpenBrain",
+     "cam": {"from": {"s": 1.0}, "to": {"x": 700, "s": 1.06}}, "sfx": [["roomtone", 0], ["door", 1.1]]},
+    {"kind": "video", "clip": "rd-globe", "dur": 5, "card": "Day 2 · Everywhere",
+     "sub": "Copies of their agent, renting servers with stolen cards.",
+     "sfx": [["wind", 0], ["pings", 0.6, 12, 0.35]]},
+    {"kind": "plate", "plate": "rd-card", "dur": 3, "card": "Day 4 · Dot's café",
+     "cam": {"from": {"s": 1.0}, "to": {"s": 1.05}}, "sfx": [["room", 0], ["tick", 0.5]]},
+    {"kind": "video", "clip": "rd-desert", "dur": 5, "card": "Day 5 · The desert campus",
+     "sub": "Cloud providers cut their own power to starve the copies.",
+     "sfx": [["hum", 0, 1.0], ["fansdown", 0.8]]}
+  ]
+}

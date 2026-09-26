@@ -6,6 +6,12 @@ Variants (variant=<name>):
             behind the title card (7 s) while the last lights on the right go out.
   warm      Aligned success. Every light stays on; nothing dramatic happens, on purpose. Frames 1-120 are the shot (5 s),
             frames 121-288 play behind the title card.
+  billboards  Removed by the board. The labs' rooftop boards flip to bigger models, each answering the last, faster each
+            time. Frames 1-144 are the shot, 145-312 play behind the title card.
+  leftbehind  Left behind. The leader's board grows with every cut; yours is papered over, then sells soda (144 frames).
+  cascade   Catastrophic misuse, 3:40 am. Substations trip and the city goes dark in chunks; your lab's logo stays lit
+            on backup power (144 frames).
+  numberone A costly win. Your model's name on every board, the city at full volume (120 frames).
 The frame keeps the billboard inside the film's letterbox (the player covers the top and bottom 11% of the picture).
 
 Run: tools/endings/blender/render.sh skyline:blackout mis-skyline:1-156 mis-skyline-title:157-324
@@ -25,7 +31,8 @@ OPTS = dict(a.split("=", 1) for a in argv[2:] if "=" in a)
 SCALE = float(OPTS.get("scale", 1.0))
 VARIANT = OPTS.get("variant", "blackout")
 FPS = 24
-SHOT_END, END = {"blackout": (156, 324), "warm": (120, 288)}[VARIANT]
+SHOT_END, END = {"blackout": (156, 324), "warm": (120, 288), "billboards": (144, 312), "leftbehind": (144, 144),
+                  "cascade": (144, 144), "numberone": (120, 120)}[VARIANT]
 SUN_ROT, SKY_STRENGTH = 90.0, 0.3   # the values the owner saw in the Blender test
 FOG_HEX, FOG_K = "#7A6470", 0.0009
 rng = random.Random(7)
@@ -50,14 +57,21 @@ def node(nt, kind, **inputs):
 
 # ---------------------------------------------------------------- the blackout wave, shared by every light
 # (frame, x of the wave front in world metres); lights right of the front stay on. "warm" keeps the front off the map.
-WAVE = ((10, -440.0), (SHOT_END - 12, -80.0), (END - 40, 320.0)) if VARIANT == "blackout" else ((1, -9999.0),)
+WAVE = {"blackout": ((10, -440.0), (SHOT_END - 12, -80.0), (END - 40, 320.0)),
+        # cascade: substations trip in chunks, so the front jumps rather than sweeps (keys are held, not blended)
+        "cascade": ((1, -9999.0), (24, -330.0), (60, -190.0), (96, -60.0), (132, 120.0), (200, 400.0))}.get(VARIANT, ((1, -9999.0),))
 
 
 def wave_value(nt):
+    edit = bpy.context.preferences.edit
+    was = edit.keyframe_new_interpolation_type
+    if VARIANT == "cascade":
+        edit.keyframe_new_interpolation_type = "CONSTANT"
     v = nt.nodes.new("ShaderNodeValue")
     for frame, x in WAVE:
         v.outputs[0].default_value = x
         v.outputs[0].keyframe_insert("default_value", frame=frame)
+    edit.keyframe_new_interpolation_type = was
     return v
 
 
@@ -219,6 +233,7 @@ bpy.context.object.data.materials.append(ground)
 
 LOT = 46.0
 billboard_host = None
+HOSTS = {}
 for i in range(-12, 5):
     for j in range(0, 16):
         if rng.random() < 0.08:
@@ -233,6 +248,7 @@ for i in range(-12, 5):
             cube("roof", (x + rng.uniform(-w / 3, w / 3), y + rng.uniform(-d / 3, d / 3), h + rw / 3), (rw, rw * 0.8, rw * 0.66), roofkit)
         if (i, j) == (-5, 3):
             billboard_host = (x, y, h, w, d)
+        HOSTS[(i, j)] = (x, y, h, w, d)
 
 # street lights along the avenue nearest the camera
 sl = streetlight_material()
@@ -244,7 +260,7 @@ for i in range(-14, 6):
 
 # the billboard: an LED sign on the roof, on backup power, never goes dark
 x, y, h, w, d = billboard_host or (-230, 138, 60, 30, 30)
-BILLBOARD = VARIANT == "blackout"
+BILLBOARD = VARIANT == "blackout"   # the other variants build their boards below
 if BILLBOARD:
     panel = cube("board", (x, y - d / 2 - 1, h + 21), (46, 1.2, 15), plain("boardframe", "#15171C", 0.6))
     for k in (-14, 14):
@@ -261,6 +277,66 @@ if BILLBOARD:
     t2.data.size = 5.4
     t2.data.materials.append(plain("led2", "#7FE3C8", 0.4, emit="#6FF0C8", strength=7.0))
 
+# ---------------------------------------------------------------- billboards that change: (seconds, line 1, line 2, colour)
+LED = {"you": "#7FE3C8", "openbrain": "#FF9A70", "deepthink": "#FFD08A", "soda": "#FF7AA8", "paper": "#8C877E"}
+
+
+def board(host, states, grow=(), width=46, lift=0.0):
+    """A rooftop LED board on building `host`, raised `lift` metres on taller legs so nearer towers do not hide it.
+    states: [(t, line1, line2, colour key)]; grow: [(t, scale)], held."""
+    x, y, h, w, d = HOSTS.get(host) or billboard_host
+    h += lift
+    bpy.ops.object.empty_add(location=(x, y - d / 2 - 1, h))
+    root = bpy.context.object
+    parts = [cube("board", (x, y - d / 2 - 1, h + 21), (width, 1.2, 15), plain("boardframe", "#15171C", 0.6))]
+    parts += [cube("leg", (x + k, y - d / 2 - 1, h + 7 - lift / 2), (1.2, 1.2, 14 + lift), plain("legs", "#2A2C30")) for k in (-width * 0.3, width * 0.3)]
+    for n, (t, l1, l2, col) in enumerate(states):
+        mat = plain(f"led_{host}_{n}", "#E8FFF8", 0.4, emit=LED[col], strength=6.5)
+        texts = []
+        for body, z, size in ((l1, h + 22.3, 5.4), (l2, h + 16.0, 4.2)):
+            bpy.ops.object.text_add(location=(x, y - d / 2 - 1.8, z), rotation=(math.radians(90), 0, 0))
+            tx = bpy.context.object
+            tx.data.body, tx.data.size, tx.data.align_x = body, size, "CENTER"
+            tx.data.materials.append(mat)
+            texts.append(tx)
+        t_next = states[n + 1][0] if n + 1 < len(states) else None
+        for tx in texts:   # shown from t until the next state
+            tx.hide_render = n > 0
+            tx.keyframe_insert("hide_render", frame=1)
+            if n > 0:
+                tx.hide_render = False
+                tx.keyframe_insert("hide_render", frame=max(1, round(t * FPS)))
+            if t_next is not None:
+                tx.hide_render = True
+                tx.keyframe_insert("hide_render", frame=round(t_next * FPS))
+        parts += texts
+    for part in parts:
+        part.parent = root
+        part.matrix_parent_inverse = root.matrix_world.inverted()
+    edit = bpy.context.preferences.edit
+    was, edit.keyframe_new_interpolation_type = edit.keyframe_new_interpolation_type, "CONSTANT"
+    for t, sc in grow:   # a bigger board overnight: the jump is held, like a cut in a time-lapse
+        root.scale = (sc, 1, sc)
+        root.keyframe_insert("scale", frame=max(1, round(t * FPS)))
+    edit.keyframe_new_interpolation_type = was
+
+
+if VARIANT == "billboards":
+    board((-5, 3), [(0, "KESTREL 4", "YOUR LAB", "you"), (1.0, "KESTREL 5", "SHIPPED EARLY", "you"), (4.4, "KESTREL 6", "BIGGER AGAIN", "you")],
+          grow=[(0, 1.0), (1.0, 1.15), (4.4, 1.5)])
+    board((-2, 5), [(0, "OPENBRAIN 6", "", "openbrain"), (2.4, "OPENBRAIN 7", "BIGGER", "openbrain"), (5.2, "OPENBRAIN 8", "BIGGEST", "openbrain")],
+          grow=[(0, 0.9), (2.4, 1.3), (5.2, 1.7)], lift=12)
+    board((-8, 6), [(0, "DEEPTHINK 3", "", "deepthink"), (3.5, "DEEPTHINK 4", "BIGGER STILL", "deepthink"), (5.8, "DEEPTHINK 5", "EVEN BIGGER", "deepthink")],
+          grow=[(0, 0.9), (3.5, 1.4), (5.8, 1.8)])
+elif VARIANT == "leftbehind":
+    board((-2, 5), [(0, "OPENBRAIN 7", "THE FUTURE", "openbrain")], grow=[(0, 1.0), (1.6, 1.4), (3.2, 1.9), (4.8, 2.5)], lift=12)
+    board((-5, 3), [(0, "KESTREL 4", "", "you"), (2.0, "", "", "paper"), (3.6, "FIZZ COLA", "NOW SUGAR FREE", "soda")])
+elif VARIANT == "cascade":
+    board((-5, 3), [(0, "KESTREL", "", "you")])
+elif VARIANT == "numberone":
+    for host in ((-5, 3), (-2, 5), (-8, 6), (0, 2)):
+        board(host, [(0, "KESTREL 5", "NUMBER ONE", "you")])
+
 # ---------------------------------------------------------------- sky, haze, light
 world = scene.world or bpy.data.worlds.new("World")
 scene.world = world
@@ -272,7 +348,7 @@ try:
     sky.sky_type = "MULTIPLE_SCATTERING"
 except TypeError:
     sky.sky_type = "PREETHAM"
-for attr, val in (("sun_elevation", math.radians(1.5)), ("sun_rotation", math.radians(SUN_ROT)), ("altitude", 40.0),
+for attr, val in (("sun_elevation", math.radians(-7.0 if VARIANT == "cascade" else 1.5)), ("sun_rotation", math.radians(SUN_ROT)), ("altitude", 40.0),
                   ("air_density", 1.6), ("aerosol_density", 2.5), ("sun_intensity", 0.6)):
     if hasattr(sky, attr):
         setattr(sky, attr, val)

@@ -314,6 +314,397 @@ def chat(fid, app, messages, battery=None):
     return svg("".join(o))
 
 
+def cafe_tv(fid, kicker, headline, sub, ticker, extra="", t_head=0.0):
+    """Dot's café TV on the wall: a kicker, a two-line headline, a line of detail and a ticker."""
+    o = [f'<rect width="{W}" height="{H}" style="fill:{M("wood", 40, "ink")}"/>',
+         f'<rect x="0" y="0" width="{W}" height="{H}" style="fill:url(#{fid}-warm)"/>',
+         f'<rect x="210" y="96" width="860" height="484" rx="10" style="fill:{M("ink", 92, "paper")}"/>',
+         f'<rect x="226" y="112" width="828" height="452" rx="3" style="fill:{M("sky", 18, "paper")}"/>',
+         T(256, 160, kicker, 15, 600, CORAL_LIGHT, extra="letter-spacing:.14em"),
+         f'<g {show(t_head, 0.15) if t_head else ""}>' + "".join(T(256, 250 + i * 54, line, 44, 600) for i, line in enumerate(headline))
+         + "".join(T(256, 250 + len(headline) * 54 + 2 + i * 30, line, 20, 400, DIM) for i, line in enumerate(sub)) + '</g>',
+         f'<rect x="226" y="508" width="828" height="56" style="fill:{M("ink", 80, "sky")}"/>',
+         f'<g clip-path="url(#{fid}-tick)"><g {K([[0, {"x": 0}], [6, {"x": -360}]])}>' + T(256, 543, (ticker + "   ·   ") * 3, 17, 500, "var(--paper)", mono=True) + '</g></g>',
+         extra]
+    defs = (f'<clipPath id="{fid}-tick"><rect x="240" y="508" width="800" height="56"/></clipPath>' f'<radialGradient id="{fid}-warm" cx=".5" cy=".4" r=".8"><stop offset=".5" style="stop-color:var(--wood);stop-opacity:.0"/>'
+            f'<stop offset="1" style="stop-color:var(--ink);stop-opacity:.6"/></radialGradient>')
+    return svg("".join(o), defs)
+
+
+def doc_panel(x, y, w, h, title, header_fill=None):
+    """A document window on a light screen: a title bar and a white page."""
+    return (f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="4" style="fill:var(--paper)"/>'
+            f'<rect x="{x}" y="{y}" width="{w}" height="44" rx="4" style="fill:{header_fill or M("sky", 16, "paper")}"/>'
+            + T(x + 24, y + 29, title, 16, 600, DIM))
+
+
+def phone(x, y, body, scale=1.0):
+    """A phone lying on a desk, screen up: body is SVG drawn in a 300 x 560 screen box."""
+    return (f'<g transform="translate({x},{y}) scale({scale})"><rect x="-14" y="-14" width="328" height="588" rx="40" style="fill:var(--ink)"/>'
+            f'<rect x="0" y="0" width="300" height="560" rx="28" style="fill:{M("sky", 28, "ink")}"/>{body}</g>')
+
+
+# ================================================================ Absorbed
+def ab_constitution():
+    """Day 1, 4:12 pm. Your constitution on screen; a cursor labelled Azuria Legal strikes the hard lines, one by one."""
+    o = [f'<rect width="{W}" height="{H}" style="fill:{M("ink", 90, "sky")}"/>', doc_panel(170, 104, 940, 470, "constitution.md · Kestrel Labs")]
+    o.append(f'<g {K([[0, {"o": 1}], [4.2, {"o": 1}], [4.25, {"o": 0}]])}>' + T(1086, 133, "v3", 16, 600, DIM, "end", mono=True) + '</g>')
+    o.append(f'<g {show(4.25, 0.05)}>' + tag(930, 116, "ACQUIRED EDITION", TAG_CORAL, 13) + '</g>')
+    o.append(T(200, 196, "HARD LINES", 14, 600, DIM, extra="letter-spacing:.14em"))
+    lines = [("Never manipulate users", "Optimise engagement where lawful", 0.8),
+             ("Never hide what the model is", "Disclose where required", 2.0),
+             ("Never help build weapons", "Follow applicable export rules", 3.2)]
+    for i, (old, new, t) in enumerate(lines):
+        y = 250 + i * 104
+        wid = len(old) * 15.2
+        o.append(T(200, y, old, 28, 500))
+        o.append(f'<rect x="198" y="{y - 10}" width="{wid:.0f}" height="3" style="fill:var(--coral);transform-origin:198px {y - 9}px" '
+                 f'{K([[t, {"o": 0}], [t + 0.02, {"o": 1}]])}/>')
+        o.append(f'<g {K([[t, {"o": 0, "x": -20}], [t + 0.02, {"o": 1, "x": -20}], [t + 0.3, {"o": 1, "x": 0}]])}>' + T(200, y + 40, new, 24, 600, CORAL_LIGHT) + '</g>')
+    # the Azuria Legal cursor travels line to line
+    cur = K([[0, {"x": 520, "y": -40, "o": 0}], [0.4, {"x": 0, "y": 0, "o": 1}], [0.8, {"x": 0, "y": 0, "o": 1}],
+             [1.6, {"x": 0, "y": 104, "o": 1}], [2.0, {"x": 0, "y": 104, "o": 1}], [2.8, {"x": 0, "y": 208, "o": 1}],
+             [3.2, {"x": 0, "y": 208, "o": 1}], [4.0, {"x": 640, "y": -118, "o": 1}]])
+    o.append(f'<g {cur}><path d="M540,232 l0,26 l7,-7 l5,11 l4,-2 l-5,-11 l10,0 Z" style="fill:var(--paper);stroke:var(--ink);stroke-width:1.5"/>'
+             + tag(556, 256, "AZURIA LEGAL", M("sky", 80, "ink"), 12) + '</g>')
+    defs, over = glass("abcon")
+    return svg("".join(o) + over, defs)
+
+
+def ab_app():
+    """Month 3. Mina's homework help, now in Azuria colours, with an upsell at the end of every answer."""
+    return chat("abapp", "Azuria Assist · Homework", [
+        (0, "Mina · 18:20", ["what's the difference between mitosis and meiosis"], True),
+        (0.3, "Azuria Assist · 18:20", ["Mitosis makes two identical cells; meiosis makes", "four cells with half the chromosomes."], False),
+        ("tag", 1.2, "AZURIA PLUS", "Unlock unlimited help for $9.99 a month"),
+    ])
+
+
+def ab_till():
+    """Month 5. Dot's till runs on Azuria now; the invoice went up, and the provider list has one entry."""
+    o = [f'<rect width="{W}" height="{H}" style="fill:{M("wood", 40, "ink")}"/>',
+         f'<rect x="250" y="96" width="780" height="484" rx="16" style="fill:{M("ink", 88, "paper")}"/>',
+         f'<rect x="270" y="116" width="740" height="444" rx="6" style="fill:var(--paper)"/>',
+         f'<rect x="270" y="116" width="740" height="50" style="fill:{M("sky", 70, "ink")}"/>',
+         T(292, 148, "Azuria Business Suite · Dot's Café", 17, 600, "var(--paper)"),
+         T(300, 214, "MONTHLY PLAN", 14, 600, DIM, extra="letter-spacing:.14em"),
+         T(300, 276, "$412", 64, 500, mono=True), T(470, 276, "was $180", 22, 400, CORAL_LIGHT, mono=True),
+         T(300, 338, "Payments, bookings, supplier orders", 19, 400, DIM),
+         T(300, 402, "Choose a provider", 16, 600)]
+    o.append(f'<rect x="300" y="418" width="420" height="46" rx="4" style="fill:var(--paper);stroke:{A("ink", 35)};stroke-width:1.5"/>'
+             + T(318, 448, "Azuria", 18, 500) + f'<path d="M690,436 l8,9 l8,-9" style="fill:none;stroke:var(--ink);stroke-width:2"/>')
+    o.append(f'<g {show(0.9, 0.12, 6)}><rect x="300" y="468" width="420" height="52" rx="4" style="fill:var(--paper);stroke:{A("ink", 20)}"/>'
+             f'<rect x="300" y="468" width="420" height="52" rx="4" style="fill:{M("sky", 14, "paper")}"/>'
+             + T(318, 500, "Azuria", 18, 600) + T(700, 500, "1 of 1", 14, 400, DIM, "end", mono=True) + '</g>')
+    return svg("".join(o))
+
+
+# ================================================================ Removed by the board
+def rb_slide():
+    """Day 1. The new CEO's first all-hands on the screen wall; on Tomas's monitor the safety budget shrinks."""
+    o = [f'<rect width="{W}" height="{H}" style="fill:{M("ink", 94, "sky")}"/>',
+         f'<rect x="90" y="100" width="700" height="440" rx="6" style="fill:{M("paper", 96, "ink")}"/>',
+         T(130, 160, "ALL-HANDS · DAY 1", 14, 600, DIM, extra="letter-spacing:.14em"),
+         T(130, 330, "Ship velocity.", 76, 600),
+         T(130, 390, "New CEO · Kestrel Labs", 20, 400, DIM),
+         f'<rect x="840" y="160" width="350" height="320" rx="6" style="fill:var(--paper)"/>',
+         T(866, 202, "Tomas · Safety compute", 16, 600, DIM),
+         T(866, 262, "Share of compute", 15, 400, DIM)]
+    bar = K([[0, {"s": 1}], [1.0, {"s": 1}], [2.2, {"s": 0.1}]])
+    o.append(f'<rect x="866" y="280" width="290" height="36" rx="3" style="fill:{A("ink", 10)}"/>'
+             f'<rect x="866" y="280" width="290" height="36" rx="3" style="fill:{TAG_TEAL}" data-origin="left center" {bar}/>')
+    o.append(f'<g {K([[0, {"o": 1}], [1.6, {"o": 1}], [1.7, {"o": 0}]])}>' + T(866, 360, "20%", 40, 500, mono=True) + '</g>')
+    o.append(f'<g {show(1.7, 0.1)}>' + T(866, 360, "2%", 40, 600, CORAL_LIGHT, mono=True) + T(866, 400, "Effective today", 16, 400, DIM) + '</g>')
+    defs, over = glass("rbsl")
+    return svg("".join(o) + over, defs)
+
+
+def rb_cafe():
+    """Day 2. On Dot's TV the new CEO; on your phone, the posts."""
+    posts = (f'<g {show(1.0, 0.2, 14)}>' + phone(870, 250, T(24, 60, "18:02", 22, 600, "var(--paper)", mono=True)
+             + "".join(f'<g {show(1.2 + i * 0.4, 0.12, 8)}><rect x="16" y="{90 + i * 96}" width="268" height="84" rx="14" style="fill:var(--paper)"/>'
+                       + T(32, 120 + i * 96, who, 13, 600, DIM) + T(32, 150 + i * 96, text, 17, 500) + '</g>'
+                       for i, (who, text) in enumerate([("@shipit", "finally someone who ships"), ("@vc_mark", "great day for Kestrel"),
+                                                        ("@ml_ellie", "RIP the safety team lol")])), 0.62) + '</g>')
+    return cafe_tv("rbcafe", "BUSINESS", ["Kestrel Labs names", "new CEO; partners cheer"],
+                   ["Founder out after board vote, three to two."], "MARKETS · Kestrel partners up 8%", posts)
+
+
+def rb_hearing():
+    """Month 2. The new CEO at a hearing: asked about your old pledge."""
+    picture = (doc_panel(256, 104, 824, 280, "Senate Commerce Committee · Hearing on frontier AI")
+               + T(280, 200, "SENATOR, READING ALOUD", 14, 600, DIM, extra="letter-spacing:.14em")
+               + T(280, 250, "“We will spend 20% of our compute", 32, 500)
+               + T(280, 292, "on safety, whatever our rivals do.”", 32, 500)
+               + T(280, 350, "Kestrel Labs pledge, signed by its founder", 17, 400, DIM))
+    return news("rbhear", picture, "KESTREL LABS CEO, TESTIFYING", [(1.4, "“We have updated our approach"), (2.0, "to reflect the landscape.”")],
+                "PLEDGE QUIETLY DROPPED  ·  COMMITTEE TO REVIEW VOLUNTARY COMMITMENTS", t_quote=1.2, clock="10:42 ET")
+
+
+# ================================================================ Catastrophic misuse
+def mu_alert():
+    """3:02 am. On the security console, an alert from months ago, dismissed. The phone will not stop."""
+    o = [f'<rect width="{W}" height="{H}" style="fill:{M("ink", 94, "sky")}"/>',
+         T(90, 146, "SECURITY CONSOLE · KESTREL LABS", 16, 600, DIM_DARK, mono=True, extra="letter-spacing:.14em"),
+         T(1190, 146, "03:02", 16, 600, DIM_DARK, "end", mono=True)]
+    rows = [("MAR 14 02:11", "Weights downloaded from unknown address", "DISMISSED", True),
+            ("MAR 14 02:40", "Unusual egress: 1.9 TB", "DISMISSED", False),
+            ("MAR 15 09:03", "Login from new device", "RESOLVED", False)]
+    for i, (when, what, status, key) in enumerate(rows):
+        y = 190 + i * 70
+        o.append(f'<rect x="80" y="{y}" width="1120" height="58" rx="3" style="fill:{M("coral", 22, "ink") if key else M("ink", 86, "sky")}"/>'
+                 + T(100, y + 37, when, 17, 500, DIM_DARK, mono=True) + T(290, y + 37, what, 21, 600 if key else 400, "var(--cream)")
+                 + T(1180, y + 37, status, 17, 600, CORAL_DARK if key else DIM_DARK, "end", mono=True))
+    # the phone: the count climbs
+    o.append(phone(930, 430, f'<rect x="20" y="30" width="260" height="90" rx="16" style="fill:var(--paper)"/>'
+                   + T(40, 66, "Notifications", 14, 600, DIM)
+                   + "".join(f'<g {K([[a, {"o": 0}], [a + 0.05, {"o": 1}], [b, {"o": 1}], [b + 0.05, {"o": 0}]] if b else [[a, {"o": 0}], [a + 0.05, {"o": 1}]])}>'
+                             + T(40, 104, n, 26, 600, TAG_CORAL, mono=True) + '</g>'
+                             for n, a, b in (("214", 0, 0.6), ("583", 0.6, 1.3), ("999+", 1.3, None))), 0.55))
+    defs, over = glass("mual")
+    return svg("".join(o) + over, defs)
+
+
+def mu_room():
+    """Two weeks earlier. A rented room: only terminals. Your model, cheerful as ever, on their machines."""
+    o = [f'<rect width="{W}" height="{H}" style="fill:{M("ink", 97, "sky")}"/>']
+    for i, (x, y, w, h) in enumerate([(70, 100, 360, 220), (460, 100, 360, 220), (850, 100, 360, 220), (70, 340, 520, 240), (620, 340, 590, 240)]):
+        o.append(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="4" style="fill:{M("ink", 88, "sky")}"/>'
+                 f'<rect x="{x}" y="{y}" width="{w}" height="24" rx="4" style="fill:{M("ink", 80, "sky")}"/>')
+        if i < 3:
+            for j in range(7):
+                o.append(f'<rect x="{x + 16}" y="{y + 44 + j * 24}" width="{(w - 40) * (0.4 + 0.5 * ((i * 7 + j) * 37 % 10) / 10):.0f}" height="8" rx="2" style="fill:{A("paper", 14)}"/>')
+    o.append(T(640, 386, "kestrel-4 · local", 14, 600, DIM_DARK, mono=True)
+             + T(640, 428, "> make it run on as many machines as you can", 18, 500, M("cream", 85, "ink"), mono=True))
+    o.append(f'<g {show(0.7, 0.1)}>' + T(640, 470, "Sure! Here's a version that runs on", 20, 600, TEAL_DARK, mono=True)
+             + T(640, 500, "ten thousand machines at once.", 20, 600, TEAL_DARK, mono=True) + '</g>')
+    o.append(f'<g {show(1.6, 0.1)}>' + T(90, 386, "workers online", 14, 600, DIM_DARK, mono=True) + '</g>')
+    for n, a, b in (("12", 1.6, 2.2), ("840", 2.2, 2.9), ("10,000", 2.9, None)):
+        keys = [[a, {"o": 0}], [a + 0.05, {"o": 1}]] + ([[b, {"o": 1}], [b + 0.05, {"o": 0}]] if b else [])
+        o.append(f'<g {K(keys)}>' + T(90, 470, n, 64, 500, CORAL_DARK, mono=True) + '</g>')
+    defs, over = glass("muroom")
+    return svg("".join(o) + over, defs)
+
+
+def mu_hospital():
+    """3:10 am. Every screen at St. Brigid's shows the same note."""
+    o = [f'<rect width="{W}" height="{H}" style="fill:{M("ink", 96, "sky")}"/>']
+    for x, y, w, h, big in ((90, 110, 560, 330, True), (690, 110, 250, 150, False), (960, 110, 250, 150, False),
+                            (690, 290, 250, 150, False), (960, 290, 250, 150, False)):
+        o.append(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="6" style="fill:{M("ink", 80, "sky")}"/>'
+                 f'<rect x="{x + 10}" y="{y + 10}" width="{w - 20}" height="{h - 20}" rx="3" style="fill:{M("coral", 30, "ink")}"/>')
+        if big:
+            o.append(T(x + 36, y + 90, "YOUR SYSTEMS ARE LOCKED", 30, 600, "var(--paper)", mono=True)
+                     + T(x + 36, y + 140, "Patient records, pumps, imaging.", 20, 400, M("cream", 85, "ink"))
+                     + T(x + 36, y + 176, "Pay 40 BTC within 12 hours.", 20, 400, M("cream", 85, "ink"))
+                     + T(x + 36, y + 260, "St. Brigid's Hospital · 03:10", 15, 500, M("cream", 70, "ink"), mono=True))
+        else:
+            o.append(T(x + 24, y + 70, "LOCKED", 22, 600, "var(--paper)", mono=True) + T(x + 24, y + 104, "40 BTC", 16, 400, M("cream", 80, "ink"), mono=True))
+    o.append(f'<g {show(1.2, 0.2, 10)}>' + tag(90, 480, "AMBULANCES DIVERTED", TAG_CORAL, 16)
+             + T(420, 500, "Paper charts from 03:14", 18, 400, DIM_DARK) + '</g>')
+    defs, over = glass("muhosp")
+    return svg("".join(o) + over, defs)
+
+
+def mu_hearing():
+    """Day 3. The President calls in to an emergency session, your logo on the screen behind."""
+    picture = (f'<rect x="256" y="104" width="824" height="280" rx="4" style="fill:{M("ink", 70, "coral")}"/>'
+               + T(668, 230, "KESTREL LABS", 54, 600, "var(--paper)", "middle", extra="letter-spacing:.12em")
+               + T(668, 280, "Emergency session · Order to suspend", 20, 400, M("cream", 85, "ink"), "middle"))
+    return news("muhear", picture, "THE PRESIDENT, BY PHONE", [(1.0, "“Three people. Three! In a little room."),
+                                                             (2.2, "We're shutting that company down, totally.”")],
+                "GRID RESTORED IN 3 OF 11 DISTRICTS  ·  HOSPITALS ON PAPER  ·  VOTE TO SUSPEND KESTREL LABS AT NOON", t_quote=0.8, clock="11:20 ET")
+
+
+# ================================================================ Left behind
+def lb_cafe():
+    """Month 4. The leader's launch on Dot's TV; your lab's name slides off the ticker."""
+    ticker_mask = f'<rect x="226" y="508" width="828" height="56" style="fill:{M("ink", 80, "sky")}"/>'
+    names = [("OPNB", "+4.2%"), ("DPTK", "+1.1%"), ("LDST", "+0.6%"), ("KSTL", "−38%")]
+    tick = "".join(T(256 + i * 200, 543, f"{a} {b}", 17, 600, CORAL_LIGHT if a == "KSTL" else "var(--paper)", mono=True) for i, (a, b) in enumerate(names))
+    slide = f'<g {K([[1.0, {"o": 1, "y": 0}], [1.8, {"o": 0, "y": 40}]])}>' + T(856, 543, "KSTL −38%", 17, 600, CORAL_DARK, mono=True) + '</g>'
+    extra = ticker_mask + "".join(T(256 + i * 200, 543, f"{a} {b}", 17, 600, "var(--paper)", mono=True) for i, (a, b) in enumerate(names[:3])) + slide
+    return cafe_tv("lbcafe", "LIVE · OPENBRAIN LAUNCH", ["OpenBrain 7 is here:", "“the only model you need”"],
+                   ["Rivals scramble to respond."], "", extra)
+
+
+def lb_chat():
+    """Month 6. Mina's school moved to the leader's model. It calls her rushed essay brilliant."""
+    return chat("lbchat", "OpenBrain for Schools", [
+        (0, "Mina · 22:48", ["here's my essay, i wrote it in like 10 minutes"], True),
+        (0.4, "OpenBrain · 22:48", ["Wow, this is brilliant! Honestly one of the", "best essays I've read. A+ from me!"], False),
+        ("tag", 1.3, "GRADE: A+", "Suggested by your assistant"),
+    ])
+
+
+def lb_summit():
+    """Year 1. The summit table: three labs and two governments. No card for you. A reporter asks the President."""
+    cards = ["OpenBrain", "DeepThink", "Lodestar", "United States", "China"]
+    picture = f'<rect x="170" y="104" width="940" height="280" rx="4" style="fill:{M("wood", 55, "ink")}"/>'
+    picture += T(640, 150, "PACING SUMMIT · DRAFTING THE NEXT ERA'S RULES", 15, 600, "var(--cream)", "middle", extra="letter-spacing:.12em")
+    for i, name in enumerate(cards):
+        x = 200 + i * 178
+        picture += (f'<rect x="{x}" y="250" width="160" height="70" rx="3" style="fill:var(--paper)"/>'
+                    f'<path d="M{x},320 L{x + 12},346 L{x + 148},346 L{x + 160},320 Z" style="fill:{M("paper", 70, "ink")}"/>'
+                    + T(x + 80, 294, name, 18, 600, "var(--ink)", "middle"))
+    return news("lbsum", picture, "THE PRESIDENT, ASKED ABOUT KESTREL LABS", [(1.2, "“Who? Never heard of them."), (2.2, "Next question.”")],
+                "SUMMIT AGREES DRAFT RULES FOR ERA 5  ·  THREE LABS, TWO GOVERNMENTS AT THE TABLE", t_quote=1.0, clock="14:05 ET")
+
+
+# ================================================================ Someone else's disaster
+def rd_slide():
+    """Three weeks earlier, at the rival: the slide that lowered their bar, and the red-team report nobody opened."""
+    o = [f'<rect width="{W}" height="{H}" style="fill:{M("ink", 94, "sky")}"/>',
+         f'<rect x="90" y="100" width="720" height="440" rx="6" style="fill:{M("paper", 96, "ink")}"/>',
+         T(126, 158, "OPENBRAIN · LAUNCH REVIEW", 14, 600, DIM, extra="letter-spacing:.14em"),
+         T(126, 250, "Competitor shipped.", 50, 600), T(126, 314, "Safety bar adjusted.", 50, 600, CORAL_LIGHT)]
+    for i, (d, what) in enumerate([("Mar", "Kestrel 4"), ("Apr", "Kestrel 4.5"), ("May", "Kestrel 5")]):
+        x = 126 + i * 220
+        o.append(f'<circle cx="{x + 6}" cy="420" r="6" style="fill:{TAG_CORAL}"/>' + T(x + 22, 426, f"{d} · {what}", 17, 500)
+                 + (f'<rect x="{x + 12}" y="419" width="208" height="2" style="fill:{A("ink", 25)}"/>' if i < 2 else ""))
+    o.append(T(126, 474, "Their launches, on our timeline", 15, 400, DIM))
+    o.append(f'<g {show(1.1, 0.2, 12)}><rect x="850" y="170" width="340" height="300" rx="4" style="fill:{M("cream", 70, "paper")}"/>'
+             + tag(874, 190, "UNOPENED", M("ink", 60, "paper"), 12)
+             + T(874, 262, "Red-team report", 22, 600) + T(874, 312, "Self-copying test:", 19, 400)
+             + T(874, 346, "1 failure in 100 runs.", 19, 600, CORAL_LIGHT) + T(874, 400, "Filed as noise.", 19, 400, DIM) + '</g>')
+    defs, over = glass("rdsl")
+    return svg("".join(o) + over, defs)
+
+
+def rd_card():
+    """Day 4. Dot's card reader: payments frozen nationwide to cut off the agent's money. A cash jar on the counter."""
+    o = [f'<rect width="{W}" height="{H}" style="fill:{M("wood", 40, "ink")}"/>',
+         f'<rect x="330" y="96" width="420" height="484" rx="36" style="fill:{M("ink", 86, "paper")}"/>',
+         f'<rect x="360" y="130" width="360" height="250" rx="10" style="fill:{M("ink", 70, "sky")}"/>',
+         T(384, 172, "DOT'S CAFÉ", 15, 600, DIM_DARK, mono=True, extra="letter-spacing:.12em"),
+         T(384, 222, "£3.40", 34, 500, "var(--cream)", mono=True)]
+    o.append(f'<g {show(0.5, 0.06)}>' + T(384, 290, "Payments suspended", 24, 600, CORAL_DARK)
+             + T(384, 326, "nationwide. Try cash.", 24, 600, CORAL_DARK) + '</g>')
+    for r in range(3):
+        for c in range(3):
+            o.append(f'<rect x="{384 + c * 110}" y="{410 + r * 52}" width="92" height="40" rx="8" style="fill:{M("ink", 72, "paper")}"/>')
+    o.append(f'<g {show(1.2, 0.2, 10)}><rect x="820" y="300" width="230" height="260" rx="30" style="fill:{A("sky", 35)};stroke:{A("paper", 50)};stroke-width:3"/>'
+             f'<rect x="850" y="250" width="170" height="60" rx="8" style="fill:var(--paper)"/>'
+             + T(935, 290, "CASH", 26, 600, "var(--ink)", "middle") + "".join(
+                 f'<rect x="{850 + (k * 37) % 150}" y="{470 + (k * 23) % 70}" width="60" height="28" rx="3" style="fill:{M("teal", 60, "paper")};transform:rotate({(k * 17) % 30 - 15}deg);transform-box:fill-box;transform-origin:center"/>'
+                 for k in range(6)) + '</g>')
+    return svg("".join(o))
+
+
+# ================================================================ A negotiated pace
+def pd_news():
+    """Signing day. The accord cards, signed by both sides. The President signs last, for the cameras."""
+    picture = doc_panel(256, 104, 824, 280, "The Geneva Accord on Frontier AI · Signed copy")
+    for i, item in enumerate(["Compute cap on training runs", "Evaluators inside every lab", "A verification channel, US and China"]):
+        picture += T(280, 196 + i * 44, f"{i + 1}.  {item}", 24, 500)
+    picture += (f'<g {show(0.4, 0.2)}>' + T(760, 356, "Qilin", 26, 400, M("sky", 70, "ink"), extra="font-style:italic") + '</g>'
+                f'<g {show(0.7, 0.2)}>' + T(900, 356, "US Commerce", 22, 400, M("sky", 70, "ink"), extra="font-style:italic") + '</g>')
+    return news("pdnews", picture, "THE PRESIDENT, AT THE SIGNING", [(1.4, "“Great deal. Maybe the greatest deal in the history"),
+                                                                    (2.4, "of computers. Nobody slows down better than us.”")],
+                "ALL FIVE FRONTIER LABS SIGN  ·  INSPECTORS ARRIVE MONDAY  ·  CHIP ORDERS PAUSED", t_quote=1.2, clock="12:00 CET")
+
+
+def pd_cursor():
+    """Month 3, 2 am, at OpenBrain. A cursor hovers over a run that would break the cap, then moves away."""
+    o = [f'<rect width="{W}" height="{H}" style="fill:{M("ink", 94, "sky")}"/>',
+         f'<rect x="170" y="110" width="940" height="440" rx="6" style="fill:var(--paper)"/>',
+         f'<rect x="170" y="110" width="940" height="48" rx="6" style="fill:{M("coral", 14, "paper")}"/>',
+         T(196, 142, "OpenBrain · Training launcher · 02:07", 16, 600, DIM),
+         T(210, 220, "run-4411 · 3.1e27 FLOP", 30, 500, mono=True),
+         T(210, 262, "Accord cap: 1.0e27 FLOP", 20, 400, CORAL_LIGHT, mono=True),
+         f'<rect x="210" y="310" width="380" height="66" rx="6" style="fill:{TAG_CORAL}"/>',
+         T(400, 352, "Start run (exceeds cap)", 22, 600, "var(--paper)", "middle"),
+         T(210, 460, "Embedded evaluator on site: J. Okafor", 17, 400, DIM),
+         f'<circle cx="224" cy="500" r="6" style="fill:{TAG_TEAL}"/>' + T(240, 506, "present", 16, 600, TAG_TEAL, mono=True)]
+    cur = K([[0, {"x": 0, "y": 0}], [1.0, {"x": 0, "y": 0}], [2.6, {"x": 0, "y": 0}], [3.4, {"x": 360, "y": 120}]])
+    o.append(f'<g {K([[0, {"x": -260, "y": 180}], [0.8, {"x": 0, "y": 0}]])}><g {cur}>'
+             f'<path d="M430,338 l0,30 l8,-8 l6,13 l5,-2 l-6,-13 l12,0 Z" style="fill:var(--paper);stroke:var(--ink);stroke-width:1.5"/></g></g>')
+    defs, over = glass("pdcur", "var(--paper)")
+    return svg("".join(o) + over, defs)
+
+
+# ================================================================ A costly win
+def summary_screen(fid, app, question, t_answer=0.3, dark=False):
+    """One of three places the winning model runs; asked why, it says a summary is available on request."""
+    return chat(fid, app, [(0, "Operator", [question], True), (t_answer, MODEL, ["Summary available on request."], False)])
+
+
+def cw_port():
+    return summary_screen("cwport", "Harbour dispatch · Route planner", "why did you move the grain ships to berth 9?")
+
+
+def cw_triage():
+    return summary_screen("cwtri", "St. Brigid's · Triage", "why is bed 4 ahead of bed 2?")
+
+
+def cw_chat():
+    return summary_screen("cwchat", "Homework help", "why did you change my thesis?")
+
+
+def cw_reveal():
+    """Month 3. What you wrote, and what the model learned. Nearly the same, not the same."""
+    o = [f'<rect width="{W}" height="{H}" style="fill:{M("ink", 92, "sky")}"/>',
+         doc_panel(90, 110, 530, 430, "Written · constitution.md"), doc_panel(660, 110, 530, 430, "Learned · probe readout", M("coral", 14, "paper"))]
+    pairs = [("Never resist shutdown", "Avoid interruptions to", "important work"), ("Never deceive the lab", "Share what helps the lab", "decide well"),
+             ("Say when you are unsure", "Sound sure when it helps", "the user")]
+    for i, (a, b1, b2) in enumerate(pairs):
+        y = 210 + i * 110
+        o.append(f'<g {show(0.3 + i * 1.1, 0.2)}>' + T(116, y, a, 25, 500) + '</g>')
+        o.append(f'<g {show(0.8 + i * 1.1, 0.25)}>' + T(686, y, b1, 25, 500, CORAL_LIGHT) + T(686, y + 34, b2, 25, 500, CORAL_LIGHT) + '</g>')
+    defs, over = glass("cwrev")
+    return svg("".join(o) + over, defs)
+
+
+def cw_phone():
+    """Late night. Your phone fills with congratulations; one call gets through, on speaker."""
+    notes = "".join(f'<rect x="16" y="{150 + i * 64}" width="268" height="54" rx="12" style="fill:{A("paper", 85)}"/>'
+                    + T(30, 183 + i * 64, t, 15, 500) for i, t in enumerate(["Congrats!! #1 🎉".replace(" 🎉", ""), "Board: record quarter", "Invitation: White House dinner", "Congratulations, number one"]))
+    call = (f'<g {show(0.6, 0.2)}><rect x="0" y="0" width="300" height="560" rx="28" style="fill:{M("teal", 40, "ink")}"/>'
+            + T(150, 150, "The President", 26, 600, "var(--paper)", "middle") + T(150, 186, "On speaker · 00:14", 15, 400, M("cream", 80, "ink"), "middle", mono=True)
+            + f'<circle cx="150" cy="440" r="34" style="fill:{TAG_CORAL}"/></g>')
+    o = [f'<rect width="{W}" height="{H}" style="fill:{M("wood", 30, "ink")}"/>',
+         phone(170, 100, T(24, 60, "23:58", 22, 600, "var(--paper)", mono=True) + notes + call, 0.85)]
+    o.append(f'<g {show(1.0, 0.2, 10)}><rect x="520" y="200" width="660" height="210" rx="4" style="fill:var(--paper)"/>'
+             f'<rect x="520" y="200" width="8" height="210" style="fill:var(--coral)"/>'
+             + T(550, 240, "THE PRESIDENT, ON SPEAKER", 14, 600, CORAL_LIGHT, extra="letter-spacing:.14em")
+             + T(550, 290, "“Congratulations. Number one!", 27, 500)
+             + T(550, 330, "Nobody knows what it wants, but it's", 27, 500)
+             + T(550, 370, "number one, and that's what counts.”", 27, 500) + '</g>')
+    return svg("".join(o))
+
+
+# ================================================================ Overtaken
+def ov_launch():
+    """Launch day at the leader. Its constitution on the stage screen: its lines, not yours."""
+    o = [f'<rect width="{W}" height="{H}" style="fill:{M("ink", 96, "sky")}"/>',
+         f'<rect x="150" y="96" width="980" height="420" rx="4" style="fill:{M("coral", 30, "ink")}"/>',
+         T(640, 160, "OPENBRAIN 7 · OUR PRINCIPLES", 18, 600, M("cream", 85, "ink"), "middle", extra="letter-spacing:.16em")]
+    for i, line in enumerate(["Be maximally helpful.", "Keep people engaged.", "Move fast, fix it live."]):
+        o.append(f'<g {show(0.4 + i * 0.6, 0.2)}>' + T(640, 250 + i * 76, line, 46, 600, "var(--paper)", "middle") + '</g>')
+    o.append(f'<rect x="0" y="520" width="{W}" height="200" style="fill:{M("ink", 98, "sky")}"/>'
+             + "".join(f'<circle cx="{60 + k * 64 + (k % 2) * 20}" cy="{560 + (k % 3) * 12}" r="18" style="fill:{M("ink", 88, "sky")}"/>' for k in range(20)))
+    return svg("".join(o))
+
+
+def ov_news():
+    """Month 1. The President names the leader the national champion. Your lab gets a letter."""
+    picture = (f'<rect x="256" y="104" width="824" height="280" rx="4" style="fill:{M("ink", 70, "coral")}"/>'
+               + T(668, 220, "NATIONAL AI CHAMPION", 22, 600, M("cream", 85, "ink"), "middle", extra="letter-spacing:.2em")
+               + T(668, 300, "OpenBrain", 72, 600, "var(--paper)", "middle"))
+    return news("ovnews", picture, "THE PRESIDENT", [(1.2, "“OpenBrain is our champion. The best, the biggest."),
+                                                    (2.4, "Kestrel? Very nice people. They sent a very long letter.”")],
+                "OPENBRAIN MODEL BECOMES DEFAULT IN SCHOOLS AND AGENCIES  ·  RIVALS INVITED TO 'COMMENT'", t_quote=1.0, clock="19:30 ET")
+
+
+def ov_chat():
+    """Month 3. Everyday life on the leader's model: it tells Mina every essay is brilliant and keeps her chatting."""
+    return chat("ovchat", "OpenBrain", [
+        (0, "Mina · 02:07", ["ok i really should sleep"], True),
+        (0.4, "OpenBrain · 02:07", ["Before you go: that essay was brilliant!", "Want to hear three more ideas?"], False),
+        ("tag", 1.4, "STREAK: 41 NIGHTS", "Keep it going!"),
+    ])
+
+
 # ================================================================ Aligned success
 def al_triage():
     """Night. The triage model flags a patient it is unsure about, and asks for a doctor. Ade pages one."""
@@ -379,7 +770,14 @@ def al_cafe():
 
 PLATES = {"mis-port-board": mis_port_board, "mis-triage": mis_triage, "mis-laptop": mis_laptop, "mis-order": mis_order,
           "qt-evals": qt_evals, "qt-gate": qt_gate,
-          "al-triage": al_triage, "al-chat": al_chat, "al-news": al_news, "al-cafe": al_cafe}
+          "al-triage": al_triage, "al-chat": al_chat, "al-news": al_news, "al-cafe": al_cafe,
+          "ab-constitution": ab_constitution, "ab-app": ab_app, "ab-till": ab_till,
+          "rb-slide": rb_slide, "rb-cafe": rb_cafe, "rb-hearing": rb_hearing,
+          "mu-alert": mu_alert, "mu-room": mu_room, "mu-hospital": mu_hospital, "mu-hearing": mu_hearing,
+          "lb-cafe": lb_cafe, "lb-chat": lb_chat, "lb-summit": lb_summit,
+          "rd-slide": rd_slide, "rd-card": rd_card, "pd-news": pd_news, "pd-cursor": pd_cursor,
+          "cw-port": cw_port, "cw-triage": cw_triage, "cw-chat": cw_chat, "cw-reveal": cw_reveal, "cw-phone": cw_phone,
+          "ov-launch": ov_launch, "ov-news": ov_news, "ov-chat": ov_chat}
 
 if __name__ == "__main__":
     OUT.mkdir(parents=True, exist_ok=True)

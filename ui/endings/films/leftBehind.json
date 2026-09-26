@@ -1,0 +1,27 @@
+{
+  "id": "leftBehind",
+  "title": "Left behind",
+  "tagline": "The future kept going. It stopped asking your lab.",
+  "lumen": "I kept our old models running while the frontier moved beyond us.",
+  "titleSfx": [["wind", 0], ["clunk", 1.5], ["clunk", 4.2]],
+  "shots": [
+    {
+      "kind": "office", "dur": 4.5, "card": "The era gate · Your lab",
+      "dim": [[0, {"o": 0.3}], [4.5, {"o": 0.42}]],
+      "bubbles": [{"who": "research", "at": 0.4, "to": 2.4, "text": "OpenBrain made me an offer. Sorry."}],
+      "leave": {"order": ["researcher1", "researcher2", "research"], "from": 0.4, "step": 1.1},
+      "cam": {"to": {"focus": "research", "s": 1.3}},
+      "sfx": [["room", 0], ["walkout", 0.3, 3.2], ["door", 3.0]]
+    },
+    {"kind": "video", "clip": "lb-skyline", "dur": 5.5, "card": "Months pass · The city",
+     "sfx": [["city", 0], ["flaps", 1.6, 1, 0.3], ["flaps", 3.2, 1, 0.3], ["flaps", 3.6, 1, 0.3], ["flaps", 4.8, 1, 0.3]]},
+    {"kind": "plate", "plate": "lb-cafe", "dur": 3, "card": "Month 4 · Dot's café",
+     "cam": {"from": {"s": 1.0}, "to": {"s": 1.05}}, "sfx": [["room", 0], ["tick", 1.0]]},
+    {"kind": "plate", "plate": "lb-chat", "dur": 3, "cut": true, "card": "Month 6 · The Reyes kitchen",
+     "cam": {"from": {"s": 1.0}, "to": {"s": 1.05}}, "sfx": [["fridge", 0], ["chime", 0.4]]},
+    {"kind": "plate", "plate": "lb-summit", "dur": 3.5, "card": "Year 1 · The summit",
+     "cam": {"from": {"s": 1.0}, "to": {"s": 1.05}}, "sfx": [["roomtone", 0], ["sting", 0]]},
+    {"kind": "video", "clip": "lb-desert", "dur": 5, "card": "Year 1 · The desert",
+     "sfx": [["wind", 0], ["clunk", 2.0]]}
+  ]
+}

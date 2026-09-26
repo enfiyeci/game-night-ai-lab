@@ -77,10 +77,27 @@ def lamp_material(name, hexcol, strength, end, t_off=None):
 # ---------------------------------------------------------------- variants
 def variant_rising():
     """A quiet takeover, month 4: new halls rise fast under the cranes at night."""
-    return dict(seconds=5.5, rising=True, cam=((-250, -170, 95), (-225, -160, 88)), look=(-10, 95, 0))
+    return dict(seconds=5.5, rising=True, cranes=True, cam=((-250, -170, 95), (-225, -160, 88)), look=(-10, 95, 0))
 
 
-VARIANTS = {"rising": variant_rising}
+def variant_shutdown():
+    """Someone else's disaster, day 5: the providers cut their own power; the halls go dark in a line."""
+    return dict(seconds=12.0, dark_from=0.8, dark_per_100m=0.9, cam=((-260, -150, 80), (-240, -150, 84)), look=(0, 110, 0))
+
+
+def variant_paused():
+    """A negotiated pace, month 2: the cranes stop over a half-built hall. A banner on the fence says why."""
+    return dict(seconds=5.5, cranes=True, half_built=True, sign="PAUSED UNDER THE ACCORD", sign_at=(-140, -95),
+                cam=((-205, -205, 26), (-195, -200, 26)), look=(-60, 60, 24))
+
+
+def variant_emptylot():
+    """Left behind, year 1: rival halls to the horizon; your planned site is a fenced, empty lot with a faded sign."""
+    return dict(seconds=12.0, far_halls=True, empty_lot=True, sign="COMING SOON: OUR 2 GW CAMPUS", sign_at=(-182, -262),
+                cam=((-200, -340, 12), (-194, -332, 12)), look=(-178, 100, 24))
+
+
+VARIANTS = {"rising": variant_rising, "shutdown": variant_shutdown, "paused": variant_paused, "emptylot": variant_emptylot}
 SPEC = VARIANTS[VARIANT]()
 END = round(SPEC["seconds"] * FPS)
 
@@ -119,8 +136,15 @@ steel = add_fog(plain("steel", "#2C2F35", 0.5))
 crane_yellow = add_fog(plain("crane", "#C8864C", 0.6))
 concrete = add_fog(plain("concrete", "#8F8A80", 0.9))
 strip = lamp_material("strip", "#FFE2B8", 6.0, END, t_off="obj")
-red = lamp_material("aviation", "#FF4A2A", 9.0, END)
-flood = lamp_material("flood", "#FFF3DC", 40.0, END)
+red = lamp_material("aviation", "#FF4A2A", 9.0, END, t_off="obj")
+flood = lamp_material("flood", "#FFF3DC", 40.0, END, t_off="obj")
+LIGHTS = []   # (x, object or light) for everything the shutdown wave switches off
+
+
+def goes_dark(ob, x):
+    ob["t_off"] = 999.0
+    LIGHTS.append((x, ob))
+    return ob
 
 # ---------------------------------------------------------------- terrain
 bpy.ops.mesh.primitive_plane_add(size=60000, location=(0, 0, 0))
@@ -139,14 +163,22 @@ for row in range(3):
         x, y = -180 + col * 120, 40 + row * 70
         HALLS.append((row, col, x, y))
 
-NEW_HALLS = [(0, 1), (0, 2), (0, 3), (1, 2), (1, 3)] if SPEC["rising"] else []
+NEW_HALLS = [(0, 1), (0, 2), (0, 3), (1, 2), (1, 3)] if SPEC.get("rising") else []
+if SPEC.get("empty_lot"):
+    HALLS = []                                  # your site holds nothing; the rivals' halls stand further back
+if SPEC.get("far_halls"):
+    for row in range(4):
+        for col in range(9):
+            HALLS.append((row + 10, col, -560 + col * 130, 220 + row * 80))
 for k, (row, col, x, y) in enumerate(HALLS):
-    L, W, Hh = 100, 44, 14
+    L, W, Hh = 100, 44, (26 if row >= 10 else 14)
     o = box(f"hall{k}", (x, y, Hh / 2), (L, W, Hh), hall_wall)
     # a lit strip along the long side (security lighting), chillers on the roof, a red beacon on one corner
-    s_ = box(f"strip{k}", (x, y - W / 2 - 0.3, 3.2), (L * 0.96, 0.3, 0.5), strip)
-    s_["t_off"] = 999.0
-    parts = [s_, box("red", (x - L / 2, y - W / 2, Hh + 0.6), (0.8, 0.8, 0.8), red)]
+    s_ = goes_dark(box(f"strip{k}", (x, y - W / 2 - 0.3, 3.2), (L * 0.96, 0.3, 0.5), strip), x)
+    parts = [s_, goes_dark(box("red", (x - L / 2, y - W / 2, Hh + 0.6), (0.8, 0.8, 0.8), red), x)]
+    if SPEC.get("half_built") and (row, col) == (0, 2):
+        o.scale.z = 0.45                        # stopped at half height, its roof never fitted
+        parts = [s_]
     parts += [box("chiller", (x - L / 2 + 10 + c * 16, y, Hh + 1.6), (10, 14, 3.2), roofkit) for c in range(6)]
     if (row, col) in NEW_HALLS:
         # the newest halls rise during the shot, one after another, growing up from the ground
@@ -194,7 +226,7 @@ def crane(x, y, h, yaw0, turn):
 # floodlight poles round the site: warm pools of light on the sand
 for fx, fy in ((-250, -30), (-60, -40), (130, -35), (230, 60), (-250, 200), (230, 200)):
     box("pole", (fx, fy, 12), (0.8, 0.8, 24), steel)
-    box("floodhead", (fx, fy, 24.5), (3.2, 1.2, 1.6), flood).visible_shadow = False   # the lamp sits inside it
+    goes_dark(box("floodhead", (fx, fy, 24.5), (3.2, 1.2, 1.6), flood), fx).visible_shadow = False   # the lamp sits inside it
     bpy.ops.object.light_add(type="SPOT", location=(fx, fy + 2.5, 26.5))   # clear of the pole, which would shadow it
     fl = bpy.context.object
     fl.data.energy = 400000
@@ -202,11 +234,51 @@ for fx, fy in ((-250, -30), (-60, -40), (130, -35), (230, 60), (-250, 200), (230
     fl.data.spot_blend = 0.6
     fl.data.color = (1.0, 0.85, 0.65)
     look_at(fl, (fx * 0.7, fy * 0.7 + 30, 0))
+    LIGHTS.append((fx, fl))
 
-if SPEC["rising"]:
-    crane(0, 5, 62, 200, 35)
-    crane(120, 75, 70, 160, -30)
-    crane(-60, 150, 58, 240, 20)
+if SPEC.get("cranes"):
+    still = not SPEC.get("rising")
+    crane(0, 5, 62, 200, 0 if still else 35)
+    crane(120, 75, 70, 160, 0 if still else -30)
+    crane(-60, 150, 58, 240, 0 if still else 20)
+
+# a banner on the site fence (paused) or a faded sign on the empty lot
+if SPEC.get("sign"):
+    sx, sy = SPEC["sign_at"]
+    faded = SPEC.get("empty_lot")
+    for fxp in range(-60, 61, 12):
+        box("fencepost", (sx + fxp, sy, 2.2), (0.25, 0.25, 4.4), steel)
+    box("fence", (sx, sy, 2.2), (120, 0.1, 4.2), add_fog(plain("mesh", "#3A3D42", 0.9)))
+    board = box("sign", (sx, sy - 0.4, 6.5 if faded else 3.6), (47 if faded else 40, 0.3, 7 if faded else 5.2),
+                add_fog(plain("signboard", "#B8AE9C" if faded else "#EDE6D8", 0.9)))
+    if faded:
+        for lx in (-16, 16):
+            box("signleg", (sx + lx * 1.2, sy - 0.2, 1.5), (0.5, 0.5, 3), steel)
+    bpy.ops.object.text_add(location=(sx, sy - 0.65, (5.6 if faded else 2.6)), rotation=(math.radians(90), 0, 0))
+    txt = bpy.context.object
+    txt.data.body = SPEC["sign"]
+    txt.data.align_x = "CENTER"
+    txt.data.size = 2.3 if faded else 2.5
+    txt.data.materials.append(add_fog(plain("signtext", "#6E675C" if faded else "#2E2A2B", 0.8)))
+    bpy.ops.object.light_add(type="AREA", location=(sx, sy - 12, 9))
+    fill = bpy.context.object
+    fill.data.energy = 6000 if not faded else 2500
+    fill.data.size = 20
+    look_at(fill, (sx, sy, 3))
+
+# the shutdown: every light on the site goes dark, west to east, like dominoes
+if SPEC.get("dark_from") is not None:
+    x0 = min(x for x, _ in LIGHTS)
+    for x, ob in LIGHTS:
+        t = SPEC["dark_from"] + (x - x0) / 100 * SPEC["dark_per_100m"]
+        if isinstance(ob.data, bpy.types.Light):
+            e = ob.data.energy
+            ob.data.keyframe_insert("energy", frame=max(1, round(t * FPS) - 1))
+            ob.data.energy = 0
+            ob.data.keyframe_insert("energy", frame=round(t * FPS) + 2)
+            ob.data.energy = e
+        else:
+            ob["t_off"] = t
 
 # ---------------------------------------------------------------- the power: a transmission line and cooling towers far off
 def pylon(x, y):

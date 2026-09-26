@@ -1,0 +1,29 @@
+{
+  "id": "boardRemoved",
+  "title": "Removed by the board",
+  "tagline": "The board kept your lab and dropped your promises.",
+  "lumen": "I watched the board thank you for your vision and keep the vision.",
+  "titleClip": "rb-skyline-title",
+  "titleSfx": [["city", 0]],
+  "shots": [
+    {
+      "kind": "office", "dur": 5, "card": "The vote · Your lab",
+      "dim": [[0, {"o": 0.25}], [5, {"o": 0.4}]],
+      "bubbles": [
+        {"who": "cfo", "at": 0.3, "to": 2.2, "text": "The board voted. Three to two."},
+        {"who": "safety", "at": 2.4, "to": 5, "text": "So the pledge goes with you."}
+      ],
+      "leave": {"order": ["ceo"], "from": 3.2, "step": 0.5},
+      "cam": {"to": {"focus": "ceo", "s": 1.35}},
+      "sfx": [["room", 0], ["walkout", 3.0, 4.2]]
+    },
+    {"kind": "plate", "plate": "rb-slide", "dur": 4, "card": "Day 1 · Your lab",
+     "cam": {"from": {"s": 1.0}, "to": {"s": 1.05}}, "sfx": [["room", 0], ["party", 0.2, 1.6], ["tick", 1.7]]},
+    {"kind": "plate", "plate": "rb-cafe", "dur": 4, "card": "Day 2 · Dot's café",
+     "cam": {"from": {"s": 1.0}, "to": {"x": 700, "s": 1.06}}, "sfx": [["room", 0], ["notify", 1.2], ["notify", 1.6], ["notify", 2.0]]},
+    {"kind": "plate", "plate": "rb-hearing", "dur": 4, "card": "Month 2 · Washington",
+     "cam": {"from": {"s": 1.0}, "to": {"s": 1.05}}, "sfx": [["roomtone", 0], ["sting", 0]]},
+    {"kind": "video", "clip": "rb-skyline", "dur": 6, "card": "Week 6 · The city",
+     "sfx": [["city", 0], ["flaps", 1.0, 1, 0.3], ["flaps", 2.4, 1, 0.3], ["flaps", 3.5, 1, 0.3], ["flaps", 4.4, 1, 0.3], ["flaps", 5.2, 1, 0.3], ["flaps", 5.8, 1, 0.3]]}
+  ]
+}

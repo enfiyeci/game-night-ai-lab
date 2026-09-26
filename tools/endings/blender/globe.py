@@ -104,6 +104,20 @@ def maps(w=2048, h=1024):
     return land.astype(float), lights
 
 
+def on_land(lon, lat):
+    """Whether a point falls inside any continent outline (ray casting)."""
+    for poly in CONTINENTS:
+        inside, j = False, len(poly) - 1
+        for i in range(len(poly)):
+            (xi, yi), (xj, yj) = poly[i], poly[j]
+            if (yi > lat) != (yj > lat) and lon < (xj - xi) * (lat - yi) / (yj - yi + 1e-9) + xi:
+                inside = not inside
+            j = i
+        if inside:
+            return True
+    return False
+
+
 def image(name, arr):
     h, w = arr.shape
     img = bpy.data.images.new(name, w, h, float_buffer=True)
@@ -146,7 +160,72 @@ def variant_backups():
     return dict(dots=dots, seconds=11.5, view=(-8, 24), spin=14)
 
 
-VARIANTS = {"backups": variant_backups}
+LAB_COLOURS = {"you": "#63C2B2", "azuria": "#7FB2E6", "openbrain": "#F08A62", "deepthink": "#E0B07A", "qilin": "#F1E4C8"}
+
+
+def owners(sites, you=5):
+    """Give each data centre to a lab: a few are yours, the rest split between the big labs."""
+    labs = ["azuria"] * 5 + ["openbrain"] * 3 + ["deepthink"] * 2 + ["qilin"] * 2
+    out = []
+    for i, site in enumerate(sites):
+        out.append((site, "you" if i < you else labs[i % len(labs)]))
+    return out
+
+
+def variant_territories():
+    """Absorbed: every lab's data centres glow in its colour; yours turn Azuria's, one by one."""
+    sites = DATA_CENTRES[:]
+    rng.shuffle(sites)
+    dots = []
+    for i, (site, lab) in enumerate(owners(sites, you=7)):
+        d = dict(lon=site[0], lat=site[1], t_on=0.1 + 0.02 * i, colA=LAB_COLOURS[lab], colB=LAB_COLOURS[lab], t_sw=999)
+        if lab == "you":
+            d.update(colB=LAB_COLOURS["azuria"], t_sw=1.6 + 0.45 * i)
+        dots.append(d)
+    return dict(dots=dots, seconds=13.0, view=(-30, 30), spin=12)
+
+
+def variant_spread():
+    """Someone else's disaster: the rival's agent copies itself from one cloud region to hundreds."""
+    r = random.Random(9)
+    sites = DATA_CENTRES[:]
+    extra = [(lo, la) for lo, la in ((r.uniform(-125, 145), r.uniform(-35, 60)) for _ in range(900)) if on_land(lo, la)][:150]
+    dots = [dict(lon=-77.5, lat=39, t_on=0.3, colA="#F08A62", colB="#F08A62")]
+    pool = sites + extra
+    r.shuffle(pool)
+    for i, (lo, la) in enumerate(pool):
+        t_on = 0.6 + 4.2 * math.log1p(i) / math.log1p(len(pool))   # doubling: slow, then everywhere
+        dots.append(dict(lon=lo, lat=la, t_on=t_on, colA="#F08A62", colB="#F08A62"))
+    return dict(dots=dots, seconds=5.2, view=(-45, 32), spin=10)
+
+
+def variant_calm():
+    """A negotiated pace: the data centres hold steady; night moves across a quiet planet."""
+    dots = [dict(lon=lo, lat=la, t_on=0.0, colA="#F6E7CC", colB="#F6E7CC") for lo, la in DATA_CENTRES]
+    return dict(dots=dots, seconds=11.0, view=(10, 22), spin=26)
+
+
+def variant_leader():
+    """Overtaken: the leader's colour spreads from its home, taking over the others' data centres and adding more."""
+    sites = DATA_CENTRES[:]
+    rng.shuffle(sites)
+    home = (-122, 37)
+    dots = []
+    for i, (site, lab) in enumerate(owners(sites, you=5)):
+        dist = math.dist(site, home)
+        d = dict(lon=site[0], lat=site[1], t_on=0.05 * (i % 10), colA=LAB_COLOURS[lab], colB=LAB_COLOURS["openbrain"],
+                 t_sw=0.8 + dist / 55 if lab != "openbrain" else 999)
+        dots.append(d)
+    r = random.Random(4)
+    for k in range(40):
+        lo, la = r.choice(DATA_CENTRES)
+        dots.append(dict(lon=lo + r.uniform(-4, 4), lat=la + r.uniform(-3, 3), t_on=2.0 + k * 0.12,
+                         colA=LAB_COLOURS["openbrain"], colB=LAB_COLOURS["openbrain"]))
+    return dict(dots=dots, seconds=12.0, view=(-40, 30), spin=16)
+
+
+VARIANTS = {"backups": variant_backups, "territories": variant_territories, "spread": variant_spread,
+            "calm": variant_calm, "leader": variant_leader}
 SPEC = VARIANTS[VARIANT]()
 FPS = 24
 END = round(SPEC["seconds"] * FPS)

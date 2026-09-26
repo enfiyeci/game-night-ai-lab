@@ -1,0 +1,24 @@
+{
+  "id": "overtaken",
+  "title": "Overtaken",
+  "tagline": "You survived the race but finished behind it. Others decide what comes next.",
+  "lumen": "The future is being written in someone else's model. I hope they wrote it carefully.",
+  "titleClip": "ov-globe-title",
+  "titleSfx": [["wind", 0]],
+  "shots": [
+    {
+      "kind": "office", "dur": 5, "card": "Late afternoon · Your lab",
+      "dim": [[0, {"o": 0.05}], [4.5, {"o": 0.5}]],
+      "bubbles": [{"who": "safety", "at": 1.5, "to": 4.5, "text": "Their tower's finished."}],
+      "cam": {"to": {"focus": "safety", "s": 1.25}},
+      "sfx": [["room", 0], ["hum", 0, 1.5]]
+    },
+    {"kind": "plate", "plate": "ov-launch", "dur": 4, "card": "Launch · OpenBrain",
+     "cam": {"from": {"s": 1.0}, "to": {"s": 1.06}}, "sfx": [["party", 0], ["sting", 0.3]]},
+    {"kind": "plate", "plate": "ov-news", "dur": 5, "card": "Month 1 · Washington",
+     "cam": {"from": {"s": 1.0}, "to": {"s": 1.05}}, "sfx": [["roomtone", 0], ["sting", 0]]},
+    {"kind": "plate", "plate": "ov-chat", "dur": 4, "card": "Month 3, 2 am · The Reyes kitchen",
+     "cam": {"from": {"s": 1.0}, "to": {"s": 1.05}}, "sfx": [["fridge", 0], ["notify", 0.4], ["chime", 1.4]]},
+    {"kind": "video", "clip": "ov-globe", "dur": 5, "card": "Year 1 · Everywhere", "sfx": [["wind", 0]]}
+  ]
+}
