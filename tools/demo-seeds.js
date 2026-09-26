@@ -2,7 +2,7 @@ import { createInitialState } from '../sim/state.js';
 import { createRng } from '../sim/rng.js';
 import { endTurn } from '../sim/turn.js';
 import { ENDINGS } from '../sim/endings.js';
-import { SUPPLIERS } from '../sim/compute.js';
+import { SUPPLIERS } from '../sim/data/compute.js';
 import { INVESTORS } from '../sim/economy.js';
 import { cardById } from '../sim/recipe.js';
 import { RIVAL_TEMPLATES } from '../sim/rivals.js';
@@ -183,7 +183,9 @@ function words(value) {
 }
 
 const cardName = (id) => cardById(id)?.name ?? words(id);
-const supplierName = (id) => SUPPLIERS.find((supplier) => supplier.id === id)?.name.split(' (')[0] ?? words(id);
+const supplierName = (id) => SUPPLIERS[id]?.name.split(' (')[0] ?? words(id);
+const offerSupplier = (offerId) => Object.keys(SUPPLIERS)
+  .find((id) => offerId === id || offerId?.startsWith(`${id}-`));
 const rivalName = (id) => RIVAL_TEMPLATES.find((rival) => rival.id === id)?.name ?? words(id);
 
 function describeMove(move) {
@@ -199,7 +201,10 @@ function describeMove(move) {
     const choices = cards.length ? ` after ${cards.join(' and ')}` : '';
     return `release ${release.family} ${release.generation} at ${release.price} price with ${release.reasoning} reasoning${choices}`;
   }
-  if (move.type === 'deal') return `sign the ${supplierName(move.supplierId)} compute deal`;
+  if (move.type === 'deal') return `sign the ${supplierName(offerSupplier(move.offerId))} compute deal`;
+  if (move.type === 'queueOrder') return `place a ${move.tier} queue order for ${move.units} compute units`;
+  if (move.type === 'buildSite') return `build a ${words(move.source)} power site`;
+  if (move.type === 'meeting') return 'take the President meeting';
   if (move.type === 'raise') return `raise from the ${INVESTORS[move.archetype]?.name ?? words(move.archetype)}`;
   if (move.type === 'research') return `research ${words(move.techId)}`;
   if (move.type === 'emergency') return `use the ${words(move.option)} emergency option`;
@@ -224,6 +229,10 @@ function describeMove(move) {
 
 const ACTION_KEYS = new Set([
   'budget',
+  'computeSplit',
+  'pledge',
+  'contractActions',
+  'queueWithdraw',
   'moves',
   'hazardChoice',
   'addressWarnings',
@@ -245,6 +254,28 @@ export function describeActions(actions) {
       .map(([name, share]) => `${name} ${Math.round(share * 100)}%`)
       .join(', ');
     descriptions.push(`set the monthly budget to $${actions.budget.spend}M (${shares})`);
+  }
+  if (actions.computeSplit) {
+    const split = actions.computeSplit;
+    if (Object.hasOwn(split, 'safety')) descriptions.push(`reserve ${Math.round(split.safety * 100)}% of compute for safety`);
+    if (Object.hasOwn(split, 'servingCap')) descriptions.push(split.servingCap == null
+      ? 'remove the serving compute cap'
+      : `cap serving at ${split.servingCap} compute units`);
+    if (Object.hasOwn(split, 'coverWithSpot')) descriptions.push(split.coverWithSpot
+      ? 'cover serving shortfalls on the spot market'
+      : 'do not cover serving shortfalls on the spot market');
+    if (Object.hasOwn(split, 'resellIdle')) descriptions.push(split.resellIdle
+      ? 'resell idle compute'
+      : 'keep idle compute');
+  }
+  if (Object.hasOwn(actions, 'pledge')) {
+    descriptions.push(`pledge ${Math.round(actions.pledge * 100)}% of compute to safety`);
+  }
+  for (const action of actions.contractActions ?? []) {
+    descriptions.push(`${words(action.action).toLowerCase()} contract ${action.id}`);
+  }
+  if (Object.hasOwn(actions, 'queueWithdraw')) {
+    descriptions.push(actions.queueWithdraw ? 'withdraw the waiting queue order' : 'keep the waiting queue order');
   }
   if (Object.hasOwn(actions, 'hazardChoice')) {
     descriptions.push(actions.hazardChoice
@@ -306,7 +337,15 @@ function describeEvent(event) {
     const outcomes = { ignore: 'ignored', penalize: 'penalized', fix: 'fixed' };
     return `the training hazard was ${outcomes[event.choice] ?? words(event.choice)}`;
   }
-  if (event.type === 'computeFailed') return `${supplierName(event.supplier)} compute failed`;
+  if (event.type === 'queueFilled') return `the queue delivered ${event.units} compute units${event.waiting ? ` with ${event.waiting} still waiting` : ''}`;
+  if (event.type === 'rivalPrepays') return `${rivalName(event.lab)} announced a prepaid queue order`;
+  if (event.type === 'outage') return 'serving demand exceeded available compute';
+  if (event.type === 'pledgeBroken') return 'the safety compute pledge was broken';
+  if (event.type === 'spotWarning') return 'spot compute received a pull warning';
+  if (event.type === 'spotPulled') return `${event.units} spot compute units were pulled`;
+  if (event.type === 'contractEnded') return `${supplierName(event.supplier)} compute contract ended`;
+  if (event.type === 'computeArrived') return `${event.units} ${supplierName(event.supplier)} compute units arrived`;
+  if (event.type === 'siteOnline') return `${words(event.source)} power site came online`;
   if (event.type === 'lawsuitPaid') return 'a training-data lawsuit came due';
   if (event.type === 'conversionFight') return 'the corporate conversion fight arrived';
   if (event.type === 'ending') return `the run ended: ${ENDINGS[event.ending]?.title ?? words(event.ending)}`;

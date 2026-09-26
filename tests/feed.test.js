@@ -12,6 +12,29 @@ import {
 import { createRng } from '../sim/rng.js';
 import { createInitialState } from '../sim/state.js';
 import { endTurn } from '../sim/turn.js';
+import { computeSlices } from '../sim/split.js';
+
+const TRAINING_RECIPE = {
+  sliders: { size: 'medium', length: 'optimal', alignShare: 0.15 },
+  picks: { pre: ['filtered-data'], mid: [], post: ['synthetic-sft', 'safety-tuning'] },
+};
+
+function releaseThroughTurns({ price = 'market', seed = 5 } = {}) {
+  const rng = createRng(seed);
+  const initial = createInitialState({ seed });
+  const trained = endTurn(initial, { moves: [{ type: 'startRun', recipe: TRAINING_RECIPE }] }, rng);
+  const released = endTurn(trained.state, { moves: [{
+    type: 'release',
+    release: { picks: ['eval-full', 'channel-app'], price, reasoning: 'off', family: 'Kestrel', generation: 1 },
+  }] }, rng);
+  assert.deepEqual(trained.errors, []);
+  assert.deepEqual(released.errors, []);
+  return { rng, trained, released };
+}
+
+function rendered(pool, model) {
+  return pool.map((template) => template.text.replaceAll('{model}', model.name));
+}
 
 function stateAt(turn = 4) {
   const state = createInitialState({ seed: 17 });
@@ -214,4 +237,78 @@ test('building feed posts does not consume the game rng', () => {
   const secondWithoutFeed = endTurn(firstWithoutFeed.state, {}, rngWithoutFeed);
 
   assert.deepEqual(secondWithFeed, secondWithoutFeed);
+});
+
+test('endTurn wires real release reactions and era changes into the feed', () => {
+  const { trained, released } = releaseThroughTurns();
+  const releaseEvent = released.events.find((event) => event.type === 'release');
+  const added = released.state.feed.slice(trained.state.feed.length);
+  assert.deepEqual(
+    added.filter((post) => post.tag === 'launch').map(({ handle, text }) => ({ handle, text })),
+    releaseEvent.model.launch.reactions,
+  );
+
+  let state = createInitialState({ seed: 2 });
+  const rng = createRng(2);
+  let transition;
+  for (let turn = 0; turn < 4; turn += 1) {
+    transition = endTurn(state, {}, rng);
+    state = transition.state;
+  }
+  assert.ok(transition.events.some((event) => event.type === 'eraStart' && event.era === 2));
+  assert.equal(state.feed.filter((post) => post.turn === state.turn && post.tag === 'era').length, 2);
+});
+
+test('real undercut releases can use the existing cheap reception bank', () => {
+  const { rng, released } = releaseThroughTurns({ price: 'undercut' });
+  const before = released.state;
+  const model = before.models[0];
+  const otherPools = [
+    RECEPTION_POSTS.channels[model.channel],
+    model.launch.pressAvg >= 7 ? RECEPTION_POSTS.press.high : [],
+    model.launch.pressAvg <= 4 ? RECEPTION_POSTS.press.low : [],
+    RECEPTION_POSTS.generic,
+  ].flat();
+  before.feed = rendered(otherPools, model).map((text) => ({ text }));
+
+  const result = endTurn(before, {}, rng);
+  const cheap = new Set(rendered(RECEPTION_POSTS.price.cheap, model));
+  assert.ok(result.state.feed.some((post) => post.tag === 'reception' && cheap.has(post.text)));
+});
+
+test('real serving shortfalls use computeSlices for capacity-trouble reception', () => {
+  const { rng, released } = releaseThroughTurns();
+  const before = released.state;
+  const model = before.models[0];
+  const otherPools = [
+    RECEPTION_POSTS.channels[model.channel],
+    model.launch.pressAvg >= 7 ? RECEPTION_POSTS.press.high : [],
+    model.launch.pressAvg <= 4 ? RECEPTION_POSTS.press.low : [],
+    RECEPTION_POSTS.generic,
+  ].flat();
+  before.feed = rendered(otherPools, model).map((text) => ({ text }));
+  before.compute.split.coverWithSpot = false;
+
+  const result = endTurn(before, { computeSplit: { servingCap: 0, coverWithSpot: false } }, rng);
+  const capacity = new Set(rendered(RECEPTION_POSTS.capacityTrouble, model));
+  assert.ok(computeSlices(result.state).shortfall > 0);
+  assert.ok(result.events.some((event) => event.type === 'outage'));
+  assert.ok(result.state.feed.some((post) => post.tag === 'reception' && capacity.has(post.text)));
+});
+
+test('a real CoreFlame trouble card uses the existing compute-failure company bank', () => {
+  const rng = createRng(4);
+  let state = createInitialState({ seed: 4 });
+  const coreflame = state.compute.offers.find((offer) => offer.supplier === 'coreflame');
+  let result = endTurn(state, { moves: [{ type: 'deal', offerId: coreflame.id }] }, rng);
+  assert.deepEqual(result.errors, []);
+  state = result.state;
+  result = endTurn(state, {}, rng);
+  assert.ok(result.events.some((event) => event.type === 'warning' && event.id === 'neocloudTrouble'));
+  state = result.state;
+  result = endTurn(state, {}, rng);
+
+  const companyTexts = new Set(COMPANY_POSTS.computeFailed.map((template) => template.text));
+  assert.ok(result.events.some((event) => event.type === 'eventCard' && event.id === 'neocloudTrouble'));
+  assert.ok(result.state.feed.some((post) => post.tag === 'company' && companyTexts.has(post.text)));
 });

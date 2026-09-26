@@ -97,6 +97,37 @@ test('recording script describes every top-level strategy action and unknown key
   assert.match(line, /surprise audit: \{"scope":"full"\}/);
 });
 
+test('recording script describes the current compute actions from real strategy runs', () => {
+  const balanced = playTimeline('balanced', 7);
+  const balancedLines = balanced.turns.map((turn) => demoSeeds.describeActions(turn.actions));
+  assert.ok(balancedLines.some((line) => /sign the CoreFlame compute deal/.test(line)));
+  assert.ok(balancedLines.some((line) => /place a standard queue order/.test(line)));
+  assert.ok(balancedLines.some((line) => /reserve 12% of compute for safety/.test(line)));
+  assert.ok(balancedLines.some((line) => /take the President meeting/.test(line)));
+
+  const safety = playTimeline('safety', 1);
+  const safetyLines = safety.turns.map((turn) => demoSeeds.describeActions(turn.actions));
+  assert.ok(safetyLines.some((line) => /build a nuclear power site/.test(line)));
+});
+
+test('recording script describes current contract, queue and split controls', () => {
+  const line = demoSeeds.describeActions({
+    computeSplit: { safety: 0.2, servingCap: 8, coverWithSpot: false, resellIdle: true },
+    pledge: 0.2,
+    contractActions: [{ id: 'starter', action: 'scaleDown' }],
+    queueWithdraw: true,
+    moves: [],
+  });
+
+  assert.match(line, /reserve 20% of compute for safety/);
+  assert.match(line, /cap serving at 8 compute units/);
+  assert.match(line, /do not cover serving shortfalls/);
+  assert.match(line, /resell idle compute/);
+  assert.match(line, /pledge 20% of compute to safety/);
+  assert.match(line, /scale down contract starter/);
+  assert.match(line, /withdraw the waiting queue order/);
+});
+
 test('recording script describes summit proposals and the sweetener', () => {
   const line = demoSeeds.describeActions({
     moves: [{ type: 'summit', proposals: ['evaluators', 'sharedSafety'], sweetener: 'evaluatorsFirst' }],

@@ -1,4 +1,5 @@
 import { createRng } from './rng.js';
+import { computeSlices } from './split.js';
 import {
   AMBIENT_POSTS,
   COMPANY_POSTS,
@@ -13,7 +14,6 @@ const COMPANY_EVENTS = new Set([
   'raise',
   'emergency',
   'lawsuitPaid',
-  'computeFailed',
   'conversionFight',
   'runComplete',
 ]);
@@ -48,9 +48,12 @@ function receptionPools(model, state) {
   const traits = [];
   if (model.launch?.pressAvg >= 7) traits.push(...RECEPTION_POSTS.press.high);
   if (model.launch?.pressAvg <= 4) traits.push(...RECEPTION_POSTS.press.low);
-  if (RECEPTION_POSTS.price[model.priceStance]) traits.push(...RECEPTION_POSTS.price[model.priceStance]);
+  const price = model.priceStance === 'undercut' || model.priceStance === 'free' ? 'cheap' : model.priceStance;
+  if (RECEPTION_POSTS.price[price]) traits.push(...RECEPTION_POSTS.price[price]);
   if (model.reasoning === 'high' || model.spec?.reasoning === 'high') traits.push(...RECEPTION_POSTS.reasoningHigh);
-  if ((state.compute?.overflow ?? 0) > 0) traits.push(...RECEPTION_POSTS.capacityTrouble);
+  if (!state.compute.split.coverWithSpot && computeSlices(state).shortfall > 0) {
+    traits.push(...RECEPTION_POSTS.capacityTrouble);
+  }
 
   return { specific, traits };
 }
@@ -123,7 +126,8 @@ export function feedPosts(prev, state, events) {
 
   for (const event of events) {
     if (posts.length >= MAX_POSTS) break;
-    if (COMPANY_EVENTS.has(event.type)) addFromPool(COMPANY_POSTS[event.type], 'company');
+    const type = event.type === 'eventCard' && event.id === 'neocloudTrouble' ? 'computeFailed' : event.type;
+    if (COMPANY_EVENTS.has(type) || type === 'computeFailed') addFromPool(COMPANY_POSTS[type], 'company');
   }
 
   if (posts.length < MAX_POSTS) addFromPool(moodPool(prev, state), 'mood');
