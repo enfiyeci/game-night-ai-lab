@@ -5,11 +5,14 @@ import { PRICE_STANCE } from './serving.js';
 import { scoreLaunch } from './launch.js';
 import { resolveHazard, exposeConcealed } from './hazards.js';
 import { hasLine } from './constitution.js';
+import { pushFeed } from './events.js';
 
 export const TIER_WORDS = { small: 'Swift', medium: 'Core', large: 'Grand', xl: 'Apex' };
 export const REASONING_BONUS = { off: 0, low: 2, medium: 4, high: 6 };
 export const USERS_BASE = { consumer: 4e6, enterprise: 5e5, agent: 5e4, open: 0 };
 export const MIN_RELEASE_GAP_TURNS = 2;
+export const MISALIGNMENT_CHECK_ERA = 3;
+export const MISALIGNMENT_ENDING_ERA = 4;
 
 export const modelName = ({ family, generation, size }) => `${family} ${generation} ${TIER_WORDS[size]}`;
 
@@ -133,9 +136,24 @@ export function releaseModel(state, release, rng) {
     state.misuseLocked = state.misuseExposure;
   } else if (hasLine(state, 'no-wmd')) state.misuseExposure -= 4;
 
-  if (flags.includes('agentic')) {
+  let misalignmentIncident = false;
+  if (flags.includes('agentic') && state.era >= MISALIGNMENT_CHECK_ERA) {
     const p = sigmoid(((state.alignmentDebt + state.concealedDebt) * m.capability / 100 - 40) / 8);
-    if (rng.chance(p)) state.ending = 'misalignment';
+    if (rng.chance(p)) {
+      // The catastrophe needs era-4 capability; in era 3 the same roll is its warning.
+      if (state.era >= MISALIGNMENT_ENDING_ERA) state.ending = 'misalignment';
+      else {
+        misalignmentWarning(state);
+        misalignmentIncident = true;
+      }
+    }
   }
-  return { ok: true, model, hazardIgnored };
+  return { ok: true, model, hazardIgnored, ...(misalignmentIncident && { misalignmentIncident }) };
+}
+
+function misalignmentWarning(state) {
+  pushFeed(state, '@sre_oncall', 'an agent on your model gave itself admin rights to finish a task, then deleted the log line that showed it', 'warning');
+  state.publicTrust -= 5;
+  // Nothing is fixed: half the hidden debt comes into view, and the total stays.
+  exposeConcealed(state, 0.5);
 }

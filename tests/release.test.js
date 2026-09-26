@@ -161,13 +161,61 @@ test('an older delayed release is superseded by a newer active release', () => {
   assert.equal(newer.activated, true);
 });
 
-test('agentic releases can end the game in misalignment', () => {
+function riskyAgenticState(era) {
   const s = trainedState();
+  s.era = era;
   s.pendingModel.flags.push('agentic');
   s.pendingModel.capability = 90;
   s.alignmentDebt = 100;
-  releaseModel(s, release, rng);
-  assert.equal(s.ending, 'misalignment');
+  return s;
+}
+const never = { ...rng, chance: () => false };
+
+test('agentic releases can end the game in misalignment from era 4', () => {
+  for (const era of [4, 5]) {
+    const s = riskyAgenticState(era);
+    const r = releaseModel(s, release, rng);
+    assert.equal(s.ending, 'misalignment', `era ${era}`);
+    assert.equal(r.misalignmentIncident, undefined, `era ${era}`);
+  }
+});
+
+test('no misalignment ending before era 4, however risky the release', () => {
+  for (const era of [1, 2, 3]) {
+    const s = riskyAgenticState(era);
+    const r = releaseModel(s, release, { ...rng, chance: () => true });
+    assert.equal(s.ending, null, `era ${era}`);
+    // Checks start in era 3, so an agent researched early is not rolled at all.
+    assert.equal(r.misalignmentIncident, era === 3 ? true : undefined, `era ${era}`);
+  }
+});
+
+test('in era 3 the misalignment roll becomes a warning incident instead', () => {
+  const s = riskyAgenticState(3);
+  s.alignmentDebt = 60;
+  s.concealedDebt = 40;
+  const quiet = structuredClone(s);
+  const r = releaseModel(s, release, rng);
+  const q = releaseModel(quiet, release, never);
+  assert.equal(s.ending, null);
+  assert.equal(r.misalignmentIncident, true);
+  assert.equal(q.misalignmentIncident, undefined);
+  assert.equal(s.publicTrust, quiet.publicTrust - 5);
+  // Half the hidden debt comes into view; none of it goes away.
+  assert.equal(s.concealedDebt, quiet.concealedDebt / 2);
+  assert.equal(s.alignmentDebt + s.concealedDebt, quiet.alignmentDebt + quiet.concealedDebt);
+  assert.deepEqual(s.feed.at(-1), { turn: s.turn, handle: '@sre_oncall', text: s.feed.at(-1).text, tag: 'warning' });
+  assert.equal(quiet.feed.some((post) => post.handle === '@sre_oncall'), false);
+});
+
+test('the era-3 incident uses the ending roll, so a low-debt release stays quiet', () => {
+  const s = trainedState();
+  s.era = 3;
+  s.pendingModel.flags.push('agentic');
+  s.alignmentDebt = 0;
+  const r = releaseModel(s, release, rng);
+  assert.equal(r.misalignmentIncident, undefined);
+  assert.equal(s.feed.some((post) => post.handle === '@sre_oncall'), false);
 });
 
 test('press and reactions see the post-release rank', () => {
