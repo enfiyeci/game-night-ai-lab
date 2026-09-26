@@ -35,7 +35,7 @@ cut. Real events only; choice lists are drafts. The picks page is `docs/research
 
 ## Other existing cards in this era
 
-- `weightTheft`: Weights stolen by a foreign state: no real event. No lab has reported stolen frontier weights. The closest real case is the 2023 OpenAI forum breach. Keep it as built, ground it in that breach, or park it with the plausible-future events.
+- `weightTheft`: Weights stolen by a foreign state: rewritten. Owner pick B (2026-09-26): now era 2 R8, the real OpenAI forum breach. Stolen weights go to the parked plausible-future pile.
 - `neocloudTrouble`: Your neocloud is failing: no single real event. It models the compute-lender risk; keep as built.
 
 ## Sources

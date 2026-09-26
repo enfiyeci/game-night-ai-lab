@@ -101,6 +101,15 @@ ERAS[2] = {
      'real': 'The Commerce Department added controls on 24 kinds of chipmaking equipment, design software and, for the first time, high-bandwidth memory, and put 140 entities on its list.',
      'src': ['bis.gov', 'https://www.bis.gov/press-release/commerce-strengthens-export-controls-restrict-chinas-capability-produce-advanced-semiconductors-military'],
      'status': ['exists', 'Card exists (random today); pin it to its real date']},
+    {'code': 'R8', 'title': 'A hacker got into your internal forum', 'handle': '@your_security', 'av': 'S', 'm': 6.5, 'short': 'Forum breach', 'crisis': True,
+     'post': 'someone outside read months of staff threads on how our models are built. the weights look untouched.',
+     'choices': [c('Tell the government and the public', 'public trust now', ['Government', 'Safety'], ['Comms']),
+                 c('Tell only staff and the board', 'a worse story if it leaks', ['Comms'], ['Government']),
+                 c('Say nothing', 'staff who know may talk', ['CFO'], ['Safety'], True)],
+     'date': 'Early 2023; revealed July 2024', 'setup': 'A strong model with weak security spending (the existing weight-theft trigger).',
+     'real': 'A hacker got into OpenAI’s internal staff forum and read discussions of its AI designs, but not the systems that hold the models. OpenAI told staff and the board in April 2023 but not the FBI or the public; the New York Times revealed it in July 2024.',
+     'src': ['CryptoSlate, reporting the NYT', 'https://cryptoslate.com/openai-did-not-reveal-security-breach-in-2023-nyt/'],
+     'status': ['exists', 'Owner pick B: the weight-theft crisis rewritten around this real breach; stolen weights move to the parked pile']},
   ],
   'alts': [
     ['A tech giant offers to hire your rival’s whole team', 'Microsoft took Inflection’s staff for about $650M (March 2024); Amazon took Adept’s founders (June); Google paid about $2.7B for Character.AI’s (August). You could be the buyer.'],
@@ -344,7 +353,7 @@ ERAS[4] = {
     ['Drop your old pause promise', 'Anthropic’s RSP v3.0 (February 2026) replaced its unilateral pause commitment. ⚠️ PDF not read.'],
   ],
   'existing': [
-    ['weightTheft', 'Weights stolen by a foreign state: no real event', 'No lab has reported stolen frontier weights. The closest real case is the 2023 OpenAI forum breach. Keep it as built, ground it in that breach, or park it with the plausible-future events.'],
+    ['weightTheft', 'Weights stolen by a foreign state: rewritten', 'Owner pick B (2026-09-26): now era 2 R8, the real OpenAI forum breach. Stolen weights go to the parked plausible-future pile.'],
     ['neocloudTrouble', 'Your neocloud is failing: no single real event', 'It models the compute-lender risk; keep as built.'],
   ],
 }

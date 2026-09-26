@@ -28,3 +28,10 @@ in the research record which part is documented and which part is the game's inv
 
 **One consequence for the demo.** With real events only, era 5 has no event cards of its own from this pass; its
 content comes from the summit and the other era 5 lanes.
+
+## Stolen model weights (parked 2026-09-26)
+
+The weight-theft crisis had no real event behind it. The owner picked option B: the card now stands for the real
+OpenAI internal-forum breach (early 2023, revealed July 2024), and the stolen-weights version, with its boost to the
+Eastern rival, waits here with the other plausible-future events. The `stealWeights` effect in `sim/data/events.js`
+is the piece to bring back if this is picked up.

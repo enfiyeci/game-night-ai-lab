@@ -21,6 +21,12 @@ the gn-events lane. Each era gets its own folder, filled in order as the owner p
 - Real events only, for now: "for now lets only have the real events then we will do the rest". Events drawn
   from plausible futures (escalated near-misses, forecasts) are parked in `docs/notes/later-events.md`.
 
+## The demo list
+
+`event-list.html` is the full, script-free list of all 48 kept cards (era 1: 10; era 2: 11; eras 3 and
+4: 10 each; era 5: 7), built by `tools/build_static.py`. It opens in any viewer, including previews that
+block scripts.
+
 ## Era 5 note
 
 Era 5 is set after today, so its cards reuse the most recent real events that match its themes
