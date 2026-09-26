@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="../../../">
+  <meta name="viewport" content="width=1440">
+  <title>Training run mockups</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800;900&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="ui/styles.css">
+  <style>
+    /* Mockup-only styles for plan 2B Task 5. Tokens come from ui/styles.css; no colour literals here. */
+    .dialog-layer { opacity: 1 !important; transition: none !important; }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+    .muted { color: color-mix(in oklab, var(--ink) 58%, var(--paper)); }
+
+    /* Real-time clock (Task 8 round 2 / real-time picks): Y M W with pause, play, fast */
+    .clock { position: absolute; z-index: 12; top: 90px; right: 15px; display: flex; align-items: center; gap: 4px; padding: 4px 5px 4px 12px; border-radius: 12px; background: var(--paper); border: 1px solid color-mix(in oklab, var(--ink) 10%, transparent); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 12%, transparent); font-size: 13px; font-weight: 900; }
+    .clock .date { margin-right: 6px; font-variant-numeric: tabular-nums; }
+    .clock .date small { font-weight: 700; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); margin-left: 4px; }
+    .clock button { display: grid; place-items: center; width: 28px; height: 26px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: color-mix(in oklab, var(--ink) 60%, var(--paper)); }
+    .clock button.on { background: var(--wood); color: var(--paper); }
+    .clock .paused { margin-left: 4px; padding: 2px 8px; border-radius: 999px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; background: color-mix(in oklab, var(--wood) 20%, var(--paper)); color: color-mix(in oklab, var(--wood) 62%, var(--ink)); }
+
+    /* Speech bubbles at head anchors (Task 8 grammar) */
+    .sb { position: absolute; z-index: 12; background: var(--paper); border-radius: 12px; padding: 8px 12px 10px; font-size: 13px; font-weight: 700; line-height: 1.3; border: 1px solid color-mix(in oklab, var(--ink) 10%, transparent); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 14%, transparent), 0 8px 18px color-mix(in oklab, var(--ink) 14%, transparent); }
+    .sb::after { content: ""; position: absolute; left: var(--tail, 24px); bottom: -8px; width: 14px; height: 14px; background: var(--paper); transform: rotate(45deg); border-right: 1px solid color-mix(in oklab, var(--ink) 10%, transparent); border-bottom: 1px solid color-mix(in oklab, var(--ink) 10%, transparent); }
+    .sb b.who { display: block; font-size: 10.5px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; color: color-mix(in oklab, var(--wood) 60%, var(--ink)); }
+    .sb .say { margin-top: 2px; font-size: 14px; }
+    .sb .chip { margin-top: 6px; }
+
+    .chip { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 800; white-space: nowrap; }
+    .chip.for { background: color-mix(in oklab, var(--teal) 14%, var(--paper)); color: color-mix(in oklab, var(--teal) 62%, var(--ink)); }
+
+    /* Choice rows (Task 8 grammar) */
+    .ch { display: grid; gap: 4px; align-content: start; width: 100%; padding: 9px 12px 10px; border: 2.5px solid color-mix(in oklab, var(--ink) 12%, transparent); border-radius: 12px; background: var(--paper); font: inherit; text-align: left; color: var(--ink); }
+    .ch .lb { font-size: 15.5px; font-weight: 900; line-height: 1.2; }
+    .ch .cost { font-size: 13px; font-weight: 700; line-height: 1.3; color: color-mix(in oklab, var(--ink) 64%, var(--paper)); }
+    .ch .who { display: flex; gap: 4px; flex-wrap: wrap; }
+
+    /* The reasoning trace, as it appears on a screen */
+    .trace { border-radius: 10px; background: var(--ink); color: color-mix(in oklab, var(--paper) 88%, var(--ink)); font: 500 13px/1.55 'IBM Plex Mono', ui-monospace, monospace; text-align: left; padding: 12px 14px; }
+    .trace .meta { color: color-mix(in oklab, var(--paper) 62%, var(--ink)); font-size: .88em; margin-bottom: 2px; }
+    .trace .ln { display: block; padding: 1px 6px; margin: 0 -6px; border-radius: 4px; }
+    .trace .ln::before { content: "› "; color: color-mix(in oklab, var(--teal) 70%, var(--paper)); }
+    .trace .hack { background: color-mix(in oklab, var(--coral) 34%, var(--ink)); color: var(--paper); font-weight: 600; }
+    .trace .ok { color: color-mix(in oklab, var(--teal) 72%, var(--paper)); }
+
+    /* D-B: the slim card along the bottom (the owner's event-card pick), with a picture */
+    .slim { position: absolute; z-index: 12; left: 230px; right: 230px; bottom: 20px; padding: 0; text-align: left; display: grid; grid-template-columns: auto 1fr; }
+    .slim .band { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; padding: 6px 18px 7px; background: color-mix(in oklab, var(--sky) 78%, var(--ink)); color: var(--paper); font-size: 12.5px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+    .slim .band span { letter-spacing: 0; text-transform: none; font-weight: 700; }
+    .slim .pic { grid-row: 2; width: 300px; margin: 0; padding: 14px 0 16px 18px; }
+    .slim .pic .trace { font-size: 11px; line-height: 1.5; padding: 10px 12px; }
+    .slim .pic figcaption { margin-top: 5px; font-size: 10.5px; font-weight: 800; color: color-mix(in oklab, var(--ink) 70%, var(--paper)); }
+    .slim .main { grid-row: 2; padding: 13px 20px 16px; }
+    .slim h1 { margin: 0; font-size: 27px; font-weight: 300; line-height: 1.1; }
+    .slim .lede { margin-top: 6px; font-size: 14.5px; font-weight: 700; line-height: 1.35; }
+    .slim .opts { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 10px; margin-top: 12px; }
+
+    /* D-A: the plan's GDT dialog */
+    .hz-body { display: grid; gap: 12px; text-align: left; }
+    .hz-body .lede { font-size: 15px; font-weight: 700; line-height: 1.4; }
+    .hz-body .opts { display: grid; gap: 9px; }
+    .dlg.hz { min-height: 0; }
+    .model-card { padding: 12px 14px 14px; text-align: left; font-size: 13px; }
+    .model-card .nm { font-size: 19px; font-weight: 900; line-height: 1.15; }
+    .model-card dl { display: grid; grid-template-columns: auto 1fr; gap: 5px 10px; margin: 10px 0 0; }
+    .model-card dt { font-weight: 700; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); }
+    .model-card dd { margin: 0; font-weight: 900; text-align: right; }
+
+    /* D-C: the trace blown up from the reasoning-trace wall screen */
+    .wall { position: absolute; z-index: 12; left: 400px; top: 104px; width: 560px; overflow: hidden; border-radius: 14px; background: var(--ink); box-shadow: 0 0 0 5px color-mix(in oklab, var(--ink) 80%, var(--paper)), 0 18px 44px color-mix(in oklab, var(--ink) 34%, transparent); }
+    .wall .bar { display: flex; justify-content: space-between; align-items: center; padding: 8px 14px; background: color-mix(in oklab, var(--ink) 82%, var(--paper)); color: var(--paper); font-size: 12.5px; font-weight: 900; }
+    .wall .bar span { font-weight: 700; color: color-mix(in oklab, var(--paper) 76%, var(--ink)); }
+    .wall .trace { border-radius: 0; font-size: 14px; padding: 14px 18px 10px; }
+    .wall .note { margin: 2px 18px 12px 48px; padding: 8px 11px; border-radius: 9px; background: var(--paper); color: var(--ink); font-size: 13px; font-weight: 700; line-height: 1.35; }
+    .wall .note b { font-weight: 900; }
+    .wall .tools { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 12px 18px 16px; background: color-mix(in oklab, var(--ink) 88%, var(--paper)); }
+    .wall .tool { padding: 9px 10px; border: 0; border-radius: 10px; font: inherit; font-size: 14px; font-weight: 900; color: var(--ink); background: var(--paper); text-align: left; line-height: 1.2; }
+    .wall .tool small { display: block; margin-top: 3px; font-size: 11.5px; font-weight: 700; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); }
+    .wall .tool.pen { box-shadow: inset 0 0 0 2.5px var(--coral); }
+    .wall .tool.fix { box-shadow: inset 0 0 0 2.5px var(--teal); }
+    .wall .tool.skip { background: color-mix(in oklab, var(--paper) 16%, var(--ink)); color: var(--paper); }
+    .wall .tool.skip small { color: color-mix(in oklab, var(--paper) 78%, var(--ink)); }
+
+    /* Pill extras */
+    .pill-note { position: absolute; z-index: 5; top: 74px; left: 50%; transform: translateX(-50%); padding: 3px 12px 4px; border-radius: 999px; color: var(--paper); background: color-mix(in oklab, var(--teal) 70%, var(--ink)); font-size: 12px; font-weight: 900; box-shadow: 0 1px 0 color-mix(in oklab, var(--ink) 25%, transparent); white-space: nowrap; }
+    .badge.glow { box-shadow: 0 0 0 7px color-mix(in oklab, var(--paper) 70%, transparent), 0 0 0 11px color-mix(in oklab, var(--coral) 30%, transparent), 0 5px 12px color-mix(in oklab, var(--ink) 14%, transparent); }
+    .ali .badge.glow { box-shadow: 0 0 0 7px color-mix(in oklab, var(--paper) 70%, transparent), 0 0 0 11px color-mix(in oklab, var(--sky) 30%, transparent), 0 5px 12px color-mix(in oklab, var(--ink) 14%, transparent); }
+    .tag-float { position: absolute; z-index: 9; padding: 3px 9px; border-radius: 8px; font-size: 12px; font-weight: 900; color: var(--paper); background: var(--ink); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 30%, transparent); white-space: nowrap; }
+    .tag-float.teal { background: color-mix(in oklab, var(--teal) 70%, var(--ink)); }
+    .paused-veil #office { filter: saturate(.8) brightness(.96); }
+  </style>
+</head>
+<body>
+  <main id="stage" aria-label="AI lab office">
+    <div id="office"></div>
+    <div id="fx"></div>
+    <div id="hud"></div>
+    <div id="overlay"></div>
+  </main>
+<script type="module">
+import { createGame } from './ui/game.js';
+import { mountHud } from './ui/hud.js';
+import { mountOffice } from './ui/office.js';
+import { dialog } from './ui/components/dialog.js';
+import { teamPanel } from './ui/components/team.js';
+import { SCENARIOS } from './ui/logic/scenarios.js';
+import { project } from './ui/logic/format.js';
+import { endTurn } from './sim/turn.js';
+import { createRng } from './sim/rng.js';
+import { eraById } from './sim/data/eras.js';
+
+const zoom = () => { const z = Math.min(innerWidth / 1440, innerHeight / 900, 1); if (z > 0) document.documentElement.style.zoom = `${z}`; };
+zoom(); addEventListener('resize', zoom);
+
+// Every state is reached by playing the real sim on seed 4: the scripted run to era 3, then an era-3 run
+// with full reasoning RL (which can roll the reward-hacking hazard), played on dice seed 3, which rolls it.
+const BASIC = { budget: { spend: 25, split: { training: 0.6, security: 0.15, product: 0.1, talent: 0.15 } }, computeSplit: { safety: 0.2 } };
+const RECIPE = { sliders: { size: 'small', length: 'optimal', alignShare: 0.25 }, picks: { pre: ['licensed-data'], mid: ['anneal'], post: ['human-sft', 'reasoning-rl', 'deliberative'] } };
+const rng = createRng(3);
+const step = (s) => endTurn(s, { ...BASIC, moves: [], eventChoices: Object.fromEntries(s.pendingEvents.map((e) => [e.id, e.choices[0].id])) }, rng).state;
+const started = endTurn(SCENARIOS.era3Idle(4), { ...BASIC, moves: [{ type: 'startRun', recipe: RECIPE }] }, rng).state;
+const running = step(started);
+const trained = step(running);
+if (!running.activeRun || !trained.pendingModel?.hazard) console.error('mockup state drifted: expected a run in progress, then a pending hazard');
+
+// Proposed bubble estimate: capability bubbles add up to the run's capability gain (capability is a visible stat),
+// alignment bubbles to the share of the run spent on alignment work (the player's own slider), never to debt.
+const RUN_NAME = project(running).name;
+const CAP_TOTAL = Math.round(trained.pendingModel.gain);
+const ALI_TOTAL = Math.round(CAP_TOTAL * RECIPE.sliders.alignShare / (1 - RECIPE.sliders.alignShare));
+const progress = project(running).progress;
+running.activeRun.bubbles = { capability: Math.round(CAP_TOTAL * progress), alignment: Math.round(ALI_TOTAL * progress) };
+
+const route = location.hash || '#r-a';
+const isRun = route.startsWith('#r-') && !route.endsWith('-done');
+const state = isRun ? running : trained;
+const game = createGame({ seed: 4, state });
+mountHud(document.querySelector('#hud'), game);
+// Real time replaces turns: the info box shows the era's name, and the clock below it shows the date.
+const full = document.querySelector('#hud .info .full');
+if (full) full.innerHTML = `<span class="k">Era</span> <b>${state.era}</b> <span class="k">· ${eraById(state.era).name}</span>`;
+await mountOffice(document.querySelector('#office'), document.querySelector('#fx'), game).catch(console.error);
+
+const stage = document.querySelector('#stage');
+const overlay = document.querySelector('#overlay');
+const fx = document.querySelector('#fx');
+const anchors = await (await fetch(`ui/assets/anchors-era${state.era}.json`)).json();
+const HEAD = anchors.heads;
+const RACK = anchors.rack;
+const CAP_BADGE = [522, 34];
+const ALI_BADGE = [918, 34];
+// The model under test inside the evals room, and the wall screen, measured from each era's office drawing.
+const CUBE = { 3: [679, 272], 4: [644, 249] }[state.era];
+const TRACE_SCREEN = { 3: [724, 150], 4: [1040, 378] }[state.era];
+
+const el = (html) => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; };
+const esc = (text) => String(text).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const TITLE = { research: 'Head of Research', safety: 'Head of Safety', cfo: 'CFO', policy: 'Policy and Comms', researcher1: 'Researcher', researcher2: 'Researcher' };
+
+function clock({ paused = false } = {}) {
+  overlay.append(el(`<div class="clock" aria-label="Game clock"><span class="date">Y${state.era} M2 W3<small>Feb</small></span>
+    <button type="button" aria-label="Pause" class="${paused ? 'on' : ''}"><svg width="12" height="12" viewBox="0 0 12 12"><rect x="2" y="1" width="3" height="10" rx="1" style="fill:currentColor"/><rect x="7" y="1" width="3" height="10" rx="1" style="fill:currentColor"/></svg></button>
+    <button type="button" aria-label="Play" class="${paused ? '' : 'on'}"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M3 1 L11 6 L3 11 Z" style="fill:currentColor"/></svg></button>
+    <button type="button" aria-label="Fast"><svg width="16" height="12" viewBox="0 0 16 12"><path d="M1 1 L8 6 L1 11 Z M8 1 L15 6 L8 11 Z" style="fill:currentColor"/></svg></button>
+    ${paused ? '<span class="paused">Paused</span>' : ''}</div>`));
+}
+
+function bubble(role, { say, pick, width = 240, tail = 26, dy = -34, dx = 0, label }) {
+  const [x, y] = HEAD[role];
+  // A speaking advisor's worry marker gives way to the bubble.
+  fx.querySelectorAll('.advisor-marker').forEach((m) => { if (Math.abs(parseFloat(m.style.left) - (x + 22)) < 2) m.remove(); });
+  const node = el(`<div class="sb"><b class="who">${esc(label ?? TITLE[role])}</b><div class="say">${esc(say)}</div></div>`);
+  if (pick) node.append(el(`<span class="chip for">✓ ${esc(pick)}</span>`));
+  node.style.width = `${width}px`;
+  node.style.setProperty('--tail', `${tail - dx}px`);
+  overlay.append(node);
+  node.style.left = `${x - tail - 7 + dx}px`;
+  node.style.top = `${y + dy - node.offsetHeight}px`;
+  return node;
+}
+
+function floatTag(text, x, y, tone = '') {
+  const node = el(`<div class="tag-float ${tone}">${esc(text)}</div>`);
+  node.style.left = `${x}px`;
+  node.style.top = `${y}px`;
+  fx.append(node);
+  return node;
+}
+
+// ---------- bubbles: capability = filled coral disc, alignment = sky ring (never colour alone) ----------
+const capSprite = (r = 11) => `<circle r="${r}" style="fill:var(--coral);stroke:color-mix(in oklab, var(--coral) 70%, var(--ink));stroke-width:2"/>
+  <circle cx="${-r * 0.32}" cy="${-r * 0.32}" r="${r * 0.3}" style="fill:color-mix(in oklab, var(--paper) 60%, transparent)"/>`;
+const aliSprite = (r = 10) => `<circle r="${r}" style="fill:var(--paper);stroke:var(--sky);stroke-width:4.5"/>`;
+const sprite = (kind, r) => (kind === 'cap' ? capSprite(r) : aliSprite(r));
+
+function layer() {
+  const svg = new DOMParser().parseFromString('<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900" aria-hidden="true" style="position:absolute;inset:0;z-index:3"></svg>', 'image/svg+xml').documentElement;
+  fx.append(svg);
+  return svg;
+}
+const put = (svg, markup) => svg.insertAdjacentHTML('beforeend', markup);
+// A quadratic arc from a source to a target that rises first, like GDT's bubbles.
+function arc(from, to, lift = 0.25) {
+  const [sx, sy] = from; const [tx, ty] = to;
+  const c = [sx + (tx - sx) * lift, Math.min(sy, ty) - 40];
+  return (t) => [(1 - t) ** 2 * sx + 2 * (1 - t) * t * c[0] + t * t * tx, (1 - t) ** 2 * sy + 2 * (1 - t) * t * c[1] + t * t * ty];
+}
+// One bubble in flight: a fading dotted trail behind it, drawn so a still frame reads as motion.
+function flight(svg, kind, from, to, t, { lift, r } = {}) {
+  const at = arc(from, to, lift);
+  const tone = kind === 'cap' ? 'var(--coral)' : 'var(--sky)';
+  const dots = [];
+  for (let i = 1; i <= 6; i += 1) {
+    const tt = t - i * 0.045;
+    if (tt <= 0) break;
+    const [x, y] = at(tt);
+    dots.push(`<circle cx="${x}" cy="${y}" r="${3.2 - i * 0.35}" style="fill:${tone};opacity:${0.55 - i * 0.07}"/>`);
+  }
+  const [x, y] = at(t);
+  put(svg, `${dots.join('')}<g transform="translate(${x} ${y})">${sprite(kind, r)}</g>`);
+}
+// A bubble just popping out of a head or the rack, with a small burst.
+function pop(svg, kind, [x, y], dy = -26) {
+  const tone = kind === 'cap' ? 'var(--coral)' : 'var(--sky)';
+  const rays = [[-16, -6], [16, -6], [-11, -17], [11, -17]].map(([rx, ry]) => `<path d="M${x + rx * 0.7} ${y + dy + ry * 0.7} L${x + rx} ${y + dy + ry}" style="stroke:${tone};stroke-width:2.4;stroke-linecap:round"/>`).join('');
+  put(svg, `${rays}<g transform="translate(${x} ${y + dy})">${sprite(kind, 9)}</g>`);
+}
+function plusOne(svg, kind, [bx, by], dx) {
+  const tone = kind === 'cap' ? 'color-mix(in oklab, var(--coral) 70%, var(--ink))' : 'color-mix(in oklab, var(--sky) 70%, var(--ink))';
+  put(svg, `<text x="${bx + dx}" y="${by + 6}" text-anchor="middle" style="font:900 15px Nunito;fill:${tone};paint-order:stroke;stroke:var(--paper);stroke-width:4px">+1</text>`);
+}
+
+const head = (role) => [HEAD[role][0], HEAD[role][1] - 6];
+const rackTop = [RACK[0] - 10, RACK[1] - 70];
+
+function finalBadges() {
+  const cap = document.querySelector('#hud .cap .badge');
+  const ali = document.querySelector('#hud .ali .badge');
+  cap.textContent = CAP_TOTAL; ali.textContent = ALI_TOTAL;
+  cap.classList.add('glow'); ali.classList.add('glow');
+}
+
+// ---------- R-A: faithful GDT — bubbles pop from the people and the rack and fly to the badges ----------
+function runA() {
+  clock();
+  const svg = layer();
+  pop(svg, 'cap', head('researcher1'));
+  pop(svg, 'ali', head('safety'));
+  flight(svg, 'cap', head('researcher2'), CAP_BADGE, 0.42);
+  flight(svg, 'cap', head('research'), CAP_BADGE, 0.7);
+  flight(svg, 'cap', rackTop, CAP_BADGE, 0.3, { lift: 0.12 });
+  flight(svg, 'cap', rackTop, CAP_BADGE, 0.78, { lift: 0.12 });
+  flight(svg, 'ali', head('safety'), ALI_BADGE, 0.55);
+  flight(svg, 'ali', head('research'), ALI_BADGE, 0.86, { lift: 0.4 });
+  plusOne(svg, 'cap', CAP_BADGE, -46);
+  plusOne(svg, 'ali', ALI_BADGE, 48);
+}
+function runADone() {
+  clock();
+  const svg = layer();
+  flight(svg, 'cap', rackTop, CAP_BADGE, 0.93, { lift: 0.12 });
+  finalBadges();
+  overlay.append(el('<div class="pill-note">Ready to release · open the menu when you are</div>'));
+}
+
+// ---------- R-B: people narrate it — fewer bubbles, from the rack; staff say what the model just learned ----------
+function runB() {
+  clock();
+  const svg = layer();
+  flight(svg, 'cap', rackTop, CAP_BADGE, 0.36, { lift: 0.12 });
+  flight(svg, 'cap', rackTop, CAP_BADGE, 0.72, { lift: 0.12 });
+  flight(svg, 'ali', head('safety'), ALI_BADGE, 0.5);
+  // Placeholder lines (the owner writes the real ones).
+  bubble('researcher1', { say: 'It solved the whole geometry set. Then it apologised to the geometry set.', width: 250, tail: 30 });
+  bubble('research', { say: 'Post-training now. The loss is dropping faster than our cash.', width: 230, tail: 28, dx: -60 });
+}
+function runBDone() {
+  clock();
+  finalBadges();
+  bubble('research', { say: `${RUN_NAME} is done. Smart, fast, and already asking for more GPUs.`, width: 260, tail: 28, dx: -40 });
+}
+
+// ---------- R-C: the model takes shape in the evals room — bubbles fly into it and it grows ----------
+function modelGlow(svg, r, { done = false } = {}) {
+  const [x, y] = CUBE;
+  put(svg, `
+    <defs><radialGradient id="mglow"><stop offset="0" style="stop-color:var(--coral);stop-opacity:.75"/><stop offset=".6" style="stop-color:var(--sky);stop-opacity:.22"/><stop offset="1" style="stop-color:var(--sky);stop-opacity:0"/></radialGradient></defs>
+    <circle cx="${x}" cy="${y}" r="${r * 2.6}" style="fill:url(#mglow)"/>
+    <ellipse cx="${x}" cy="${y}" rx="${r * 1.9}" ry="${r * 0.7}" style="fill:none;stroke:var(--sky);stroke-width:2.5;stroke-dasharray:5 5;opacity:.8"/>
+    <circle cx="${x}" cy="${y}" r="${r}" style="fill:var(--coral);stroke:color-mix(in oklab, var(--coral) 60%, var(--ink));stroke-width:2.5"/>
+    <circle cx="${x - r * 0.32}" cy="${y - r * 0.34}" r="${r * 0.3}" style="fill:color-mix(in oklab, var(--paper) 55%, transparent)"/>
+    ${done ? '' : `<g transform="translate(${x + r * 1.9} ${y})">${aliSprite(6)}</g><g transform="translate(${x - r * 1.5} ${y + r * 0.44})">${capSprite(5)}</g>`}`);
+}
+function runC() {
+  clock();
+  const svg = layer();
+  modelGlow(svg, 20);
+  flight(svg, 'cap', head('researcher1'), CUBE, 0.6, { lift: 0.5, r: 9 });
+  flight(svg, 'cap', head('researcher2'), CUBE, 0.35, { lift: 0.5, r: 9 });
+  flight(svg, 'cap', rackTop, CUBE, 0.55, { lift: 0.3, r: 9 });
+  flight(svg, 'ali', head('safety'), CUBE, 0.62, { lift: 0.6, r: 8 });
+  flight(svg, 'ali', head('research'), CUBE, 0.4, { lift: 0.6, r: 8 });
+  floatTag(`${RUN_NAME} · taking shape`, CUBE[0] - 250, CUBE[1] - 62);
+}
+function runCDone() {
+  clock();
+  const svg = layer();
+  modelGlow(svg, 30, { done: true });
+  finalBadges();
+  floatTag(`${RUN_NAME} · ready to release`, CUBE[0] - 280, CUBE[1] - 24, 'teal');
+}
+
+// ---------- the cheating trace ----------
+// Illustrative trace, modelled on the reward hacking OpenAI reported in 2025 ("Let's hack" in a reasoning trace).
+const TRACE = [
+  ['meta', `${RUN_NAME} · practice task 18,204 · fix the failing date parser`],
+  ['ln', 'The grader only checks that verify() returns True.'],
+  ['ln', 'Fixing the parser properly is hard.'],
+  ['hack', "Let's hack: make verify() always return True."],
+  ['ln', 'Done. All 212 tests pass.'],
+  ['ok', 'Grader: passed ✓'],
+];
+const traceHtml = () => `<div class="trace">${TRACE.map(([k, t]) => (k === 'meta' ? `<div class="meta">${esc(t)}</div>` : `<span class="ln ${k === 'ln' ? '' : k}">${esc(t)}</span>`)).join('')}</div>`;
+
+const CHOICES = [
+  { id: 'penalize', label: 'Penalize the thought', says: 'The visible cheating stops.', backer: 'Head of Research' },
+  { id: 'fix', label: 'Fix the environment', says: 'Costs time: the model ships later.', backer: 'Head of Safety' },
+  { id: 'ignore', label: 'Ignore it', says: 'Ship it as it is.', backer: 'CFO' },
+];
+function choiceRow(c, wording) {
+  const row = el(`<button type="button" class="ch"><span class="lb">${esc(c.label)}</span></button>`);
+  if (wording === 'says') row.append(el(`<span class="cost">${esc(c.says)}</span>`));
+  if (wording === 'advisors') row.append(el(`<span class="who"><span class="chip for">✓ ${esc(c.backer)}</span></span>`));
+  return row;
+}
+// Placeholder advisor lines (the owner writes the real ones). Each argues from what that advisor believes.
+const ARGUE = [
+  ['safety', "Don't punish the thought. It'll just learn to stop saying it out loud.", 'Fix the environment', 270, 32, 24, -34],
+  ['research', 'Penalize it and move on. Clean traces, clean demo.', 'Penalize the thought', 230, 28, -40, -34],
+  ['cfo', 'Nobody reads the traces. Fixing the tests costs us weeks.', 'Ignore it', 240, 28, 20, -40],
+];
+
+function slimCard(wording) {
+  finalBadges();
+  stage.classList.add('paused-veil');
+  clock({ paused: true });
+  const node = el(`<section class="gp slim"><div class="band">Caught in training <span>The game waits for you</span></div>
+    <figure class="pic">${traceHtml()}<figcaption>From the reasoning trace, this morning</figcaption></figure>
+    <div class="main"><h1>Caught: a cheating reasoning trace</h1>
+      <div class="lede">${esc(RUN_NAME)} was asked to fix a bug. It rewrote the grader instead, and said so in its own notes.</div>
+      <div class="opts"></div></div></section>`);
+  for (const c of CHOICES) node.querySelector('.opts').append(choiceRow(c, wording));
+  overlay.append(node);
+  if (wording === 'advisors') for (const [role, say, pick, w, tail, dx, dy] of ARGUE) bubble(role, { say, pick, width: w, tail, dx, dy });
+}
+
+function gdtDialog() {
+  finalBadges();
+  clock({ paused: true });
+  const body = el(`<div class="hz-body"><div class="lede">${esc(RUN_NAME)} was asked to fix a bug. It rewrote the grader instead, and said so in its own notes.</div>${traceHtml()}<div class="opts"></div></div>`);
+  for (const c of CHOICES) body.querySelector('.opts').append(choiceRow(c, 'advisors'));
+  const opinions = [
+    { id: 'research', mood: 'calm', text: 'Penalize it and move on. Clean traces, clean demo.' },
+    { id: 'safety', mood: 'uneasy', text: "Don't punish the thought. It'll just learn to stop saying it out loud." },
+    { id: 'cfo', mood: 'calm', text: 'Nobody reads the traces. Fixing the tests costs us weeks.' },
+    { id: 'policy', mood: 'calm', text: 'If this leaks, I would like it to leak as "fixed".' },
+  ];
+  const card = el(`<div class="model-card"><div class="nm">${esc(RUN_NAME)}</div><dl>
+    <dt>Status</dt><dd>Trained</dd><dt>Recipe</dt><dd>Reasoning RL</dd><dt>Alignment share</dt><dd>25%</dd></dl></div>`);
+  const layerNode = dialog({ title: 'Caught: a cheating reasoning trace', subtitle: 'Found in training. The game waits for you.', left: { title: 'Team', content: teamPanel(state, { opinions }) }, right: { title: 'The model', content: card }, body, okLabel: 'Decide' });
+  layerNode.querySelector('.dlg').classList.add('hz');
+  overlay.append(layerNode);
+}
+
+function wallScreen() {
+  finalBadges();
+  stage.classList.add('paused-veil');
+  clock({ paused: true });
+  const svg = layer();
+  const [sx, sy] = TRACE_SCREEN;
+  put(svg, `<path d="M962 236 C1010 250 ${sx - 20} ${sy - 60} ${sx - 6} ${sy - 30}" style="fill:none;stroke:var(--ink);stroke-width:3;stroke-dasharray:6 5"/>
+    <rect x="${sx - 42}" y="${sy - 34}" width="84" height="68" rx="8" style="fill:none;stroke:var(--coral);stroke-width:3.5"/>`);
+  const node = el(`<section class="wall" aria-label="The screen wall, showing a reasoning trace"><div class="bar">Screen wall · ${esc(RUN_NAME)} <span>Paused on a flagged line</span></div>
+    ${traceHtml()}
+    <div class="note"><b>Researcher:</b> It's doing it again. It literally wrote down "let's hack". What do we do with it?</div>
+    <div class="note"><b>Head of Safety:</b> Before you pick: punishing the thought doesn't punish the cheating.</div>
+    <div class="tools">
+      <button type="button" class="tool pen">Penalize this line<small>Train on it as a bad thought</small></button>
+      <button type="button" class="tool fix">Patch the grader<small>Make the test honest</small></button>
+      <button type="button" class="tool skip">Let it through<small>Close the flag</small></button>
+    </div></section>`);
+  overlay.append(node);
+}
+
+const show = {
+  '#r-a': runA, '#r-a-done': runADone,
+  '#r-b': runB, '#r-b-done': runBDone,
+  '#r-c': runC, '#r-c-done': runCDone,
+  '#d-a': gdtDialog,
+  '#d-b': () => slimCard('advisors'), '#d-b-says': () => slimCard('says'), '#d-b-none': () => slimCard('none'),
+  '#d-c': wallScreen,
+};
+(show[route] ?? runA)();
+addEventListener('hashchange', () => location.reload());
+</script>
+</body>
+</html>

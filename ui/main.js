@@ -30,6 +30,8 @@ import { mountFeed } from './screens/feed.js';
 import { mountEnding } from './screens/end.js';
 import { createCollection } from './logic/collection.js';
 import { lumenEpilogue } from '../sim/lumen.js';
+import { mountTraining } from './screens/training.js';
+import { mountHazard } from './screens/hazard.js';
 
 const params = new URLSearchParams(location.search);
 
@@ -79,6 +81,8 @@ mountReveal(game, overlay);
 mountPresident(game, overlay);
 mountHistory(game, overlay);
 mountTurnSummary(overlay, game);
+const training = mountTraining(game, { stage, hud, overlay });
+mountHazard(game, { stage, overlay });
 const events = mountEvents(game, { stage, overlay });
 mountBriefing(game, { office, overlay });
 mountFeed(game, { overlay, events });
@@ -193,6 +197,10 @@ async function openDebugRoute() {
   }
   if (location.hash === '#article') {
     openArticle(game, overlay);
+    return;
+  }
+  if (location.hash === '#training') {
+    training.replay();
     return;
   }
   if (location.hash !== '#menu' && location.hash !== '#company') return;

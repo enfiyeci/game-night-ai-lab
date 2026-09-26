@@ -26,10 +26,19 @@ export function createGame({ seed = 1, state } = {}) {
   const rivalReleases = [];
   let debugActionEvents = [];
   let debugActionErrors = [];
+  let lastAlignShare = currentState.activeRun?.recipe.sliders.alignShare;
 
-  const publish = (update) => {
+  // Remembers the alignment share of the latest run, which the trained model does not keep (for the HUD badge).
+  const publish = (update, queued) => {
     const releaseTurn = currentState.turn;
+    const hadRun = Boolean(currentState.activeRun);
+    if (hadRun) lastAlignShare = currentState.activeRun.recipe.sliders.alignShare;
     currentState = update.state;
+    if (currentState.activeRun) lastAlignShare = currentState.activeRun.recipe.sliders.alignShare;
+    else if (!hadRun && update.events.some((event) => event.type === 'runComplete')) {
+      const started = queued?.moves.find((move) => move.type === 'startRun'); // a run that started and finished in one step
+      if (started) lastAlignShare = started.recipe.sliders.alignShare;
+    }
     for (const event of update.events) {
       if (event.type === 'rivalRelease') rivalReleases.push({ turn: releaseTurn, id: event.id });
     }
@@ -52,10 +61,13 @@ export function createGame({ seed = 1, state } = {}) {
       const queued = actions;
       const update = applyActions(currentState, queued, rng);
       actions = initialQueue(update.state.budget);
-      const result = publish(update);
+      const result = publish(update, queued);
       debugActionEvents.push(...result.events);
       debugActionErrors.push(...result.errors);
       return result;
+    },
+    get lastAlignShare() {
+      return lastAlignShare;
     },
     setBudget(budget) {
       const candidate = structuredClone(currentState);
@@ -102,7 +114,7 @@ export function createGame({ seed = 1, state } = {}) {
       const queued = actions;
       const update = runTurn(currentState, queued, rng);
       actions = initialQueue(update.state.budget);
-      const result = publish(update);
+      const result = publish(update, queued);
       const events = [...debugActionEvents, ...result.events];
       const errors = [...debugActionErrors, ...result.errors];
       debugActionEvents = [];
