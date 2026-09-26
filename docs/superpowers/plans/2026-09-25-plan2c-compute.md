@@ -1736,3 +1736,9 @@ Round 2 resumed the same session on `gpt-5.6-sol`. Verdict REVISE, two important
 
 1. The delivery after the turn advance changed compute and bills after the last burn projection, so the returned `burnPlanned` left out new bills and leases. The end-of-turn block now re-runs `updateServing` and `projectBurn` last. That also covers contracts that expired, spot that was pulled and a surge that ended after `applyEconomy`. The Task 4 deal test checks the returned burn.
 2. Moving all of `contractsTurn` after the turn advance put CoreFlame trouble rolls after plan 2A's `eventsTick`, so the warning came a turn late. Task 2 splits delivery into `deliverDue`, which runs after the advance. `contractsTurn` keeps the spot pulls, trouble rolls and Gulf license at turn end, before the event tick. A new Task 6 test checks that a failure is warned about in the same turn.
+
+Round 3 (`gpt-5.6-sol`, the last round under the three-round cap). Verdict REVISE, three important findings, **open and escalated to the owner**:
+
+1. A pulled spot contract is removed before `applyEconomy`, so its last usable turn is not billed.
+2. Spot is re-priced at turn end, before the era advances, so the first turn of a new era shows the old spot price in the returned burn.
+3. `deliverDue` delivers a Gulf contract live even if the export license was revoked while it was in the pipeline, which gives one free turn.
