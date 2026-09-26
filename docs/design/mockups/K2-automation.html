@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="../../../">
+  <meta name="viewport" content="width=1440">
+  <title>Automation mockups</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800;900&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="ui/styles.css">
+  <style>
+    /* Mockup-only styles: who does the work (automation levels per area of R&D). Tokens only. */
+    .dialog-layer { opacity: 1 !important; transition: none !important; }
+    .muted { color: color-mix(in oklab, var(--ink) 58%, var(--paper)); }
+    .kick { font-size: 11px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: color-mix(in oklab, var(--wood) 62%, var(--ink)); }
+    .chip { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 800; white-space: nowrap; }
+    .chip.for { background: color-mix(in oklab, var(--teal) 14%, var(--paper)); color: color-mix(in oklab, var(--teal) 62%, var(--ink)); }
+    .chip.against { background: color-mix(in oklab, var(--ink) 6%, var(--paper)); color: color-mix(in oklab, var(--ink) 62%, var(--paper)); text-decoration: line-through; text-decoration-thickness: 1.5px; }
+    .chip.wood { background: color-mix(in oklab, var(--wood) 18%, var(--paper)); color: color-mix(in oklab, var(--wood) 58%, var(--ink)); }
+    .chip.sky { background: color-mix(in oklab, var(--sky) 16%, var(--paper)); color: color-mix(in oklab, var(--sky) 60%, var(--ink)); }
+    .chip.coral { background: color-mix(in oklab, var(--coral) 14%, var(--paper)); color: color-mix(in oklab, var(--coral) 62%, var(--ink)); }
+    .act { white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border: 0; border-radius: 10px; font: inherit; font-size: 13.5px; font-weight: 900; color: var(--paper); background: var(--coral); box-shadow: 0 3px 0 color-mix(in oklab, var(--coral) 60%, var(--ink)); cursor: pointer; }
+    .act.calm { color: var(--ink); background: var(--paper); border: 2px solid color-mix(in oklab, var(--ink) 16%, transparent); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 12%, transparent); padding: 5px 12px; }
+    .act.ghost { color: color-mix(in oklab, var(--wood) 72%, var(--ink)); background: transparent; box-shadow: none; padding-inline: 6px; }
+
+    .sb { position: absolute; z-index: 12; background: var(--paper); border-radius: 12px; padding: 8px 12px 10px; font-size: 13px; font-weight: 700; line-height: 1.3; border: 1px solid color-mix(in oklab, var(--ink) 10%, transparent); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 14%, transparent), 0 8px 18px color-mix(in oklab, var(--ink) 14%, transparent); }
+    .sb::after { content: ""; position: absolute; left: var(--tail, 24px); bottom: -8px; width: 14px; height: 14px; background: var(--paper); transform: rotate(45deg); border-right: 1px solid color-mix(in oklab, var(--ink) 10%, transparent); border-bottom: 1px solid color-mix(in oklab, var(--ink) 10%, transparent); }
+    .sb b.who { display: block; font-size: 10.5px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; color: color-mix(in oklab, var(--wood) 60%, var(--ink)); }
+    .sb .say { margin-top: 2px; font-size: 14px; }
+    .sb .chip { margin-top: 5px; }
+    .theme { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+    .theme svg { position: absolute; inset: 0; }
+    .tag-float { position: absolute; z-index: 9; padding: 3px 9px; border-radius: 8px; font-size: 11.5px; font-weight: 900; color: var(--paper); background: var(--ink); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 30%, transparent); white-space: nowrap; }
+    .tag-float.sky { background: color-mix(in oklab, var(--sky) 70%, var(--ink)); }
+    .tag-float.coral { background: color-mix(in oklab, var(--coral) 80%, var(--ink)); }
+
+    /* ---- the level grid (W-A) ---- */
+    .auto-a .dlg { top: 92px; left: 330px; width: 780px; min-height: 0; padding-bottom: 22px; }
+    .auto-a .dialog-left { top: 140px; left: 60px; width: 250px; }
+    .auto-a .dialog-right { top: 140px; right: 60px; width: 250px; }
+    .grid5 { display: grid; grid-template-columns: 172px repeat(5, 1fr); gap: 0; text-align: left; }
+    .grid5 .hdr { padding: 0 2px 8px; font-size: 11px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; color: color-mix(in oklab, var(--ink) 55%, var(--paper)); text-align: center; }
+    .grid5 .area { display: flex; align-items: center; padding: 8px 8px 8px 0; border-top: 1px solid color-mix(in oklab, var(--wood) 26%, transparent); font-size: 14.5px; font-weight: 900; line-height: 1.15; }
+    .grid5 .cell { position: relative; display: grid; place-items: center; padding: 6px 3px; border-top: 1px solid color-mix(in oklab, var(--wood) 26%, transparent); }
+    .grid5 .cell button { width: 100%; height: 32px; border: 2px solid color-mix(in oklab, var(--ink) 12%, transparent); border-radius: 8px; background: var(--paper); font: inherit; font-size: 12px; font-weight: 800; color: color-mix(in oklab, var(--ink) 50%, var(--paper)); cursor: pointer; }
+    .grid5 .cell button.fill { background: color-mix(in oklab, var(--sky) 16%, var(--paper)); border-color: color-mix(in oklab, var(--sky) 30%, transparent); color: color-mix(in oklab, var(--sky) 55%, var(--ink)); }
+    .grid5 .cell button.on { background: var(--sky); border-color: color-mix(in oklab, var(--sky) 70%, var(--ink)); color: var(--paper); font-weight: 900; }
+    .grid5 .cell i.ind { position: absolute; bottom: -1px; left: 50%; width: 0; height: 0; margin-left: -5px; border-left: 5px solid transparent; border-right: 5px solid transparent; border-bottom: 6px solid color-mix(in oklab, var(--wood) 80%, var(--ink)); }
+    .legend-ind { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 11.5px; font-weight: 800; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); }
+    .legend-ind i { width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-bottom: 6px solid color-mix(in oklab, var(--wood) 80%, var(--ink)); }
+    .timebar { margin-top: 16px; text-align: left; }
+    .timebar .lbl { display: flex; justify-content: space-between; font-size: 12.5px; font-weight: 800; margin-bottom: 5px; }
+    .timebar .bar5 { display: flex; height: 30px; border-radius: 8px; overflow: hidden; }
+    .timebar .bar5 span { display: grid; place-items: center; font-size: 11px; font-weight: 900; color: var(--paper); white-space: nowrap; overflow: hidden; border-left: 2px solid var(--paper); }
+    .timebar .bar5 span:first-child { border-left: 0; }
+    .timebar .bar5 span.neck { background: repeating-linear-gradient(-45deg, var(--coral) 0 7px, color-mix(in oklab, var(--coral) 80%, var(--ink)) 7px 14px); }
+    .stat { padding: 12px 14px 12px; text-align: left; border-top: 1px solid color-mix(in oklab, var(--wood) 26%, transparent); }
+    .stat:first-child { border-top: 0; }
+    .stat .big { font-size: 34px; font-weight: 900; line-height: 1; }
+    .stat .big small { font-size: 15px; font-weight: 800; }
+    .stat .sub { margin-top: 4px; font-size: 12.5px; font-weight: 700; color: color-mix(in oklab, var(--ink) 62%, var(--paper)); }
+    .stat .sub b { color: var(--ink); }
+    .meter { height: 12px; margin-top: 7px; border-radius: 6px; overflow: hidden; background: repeating-linear-gradient(-45deg, var(--coral) 0 6px, color-mix(in oklab, var(--coral) 60%, var(--paper)) 6px 12px); }
+    .meter i { display: block; height: 100%; background: var(--teal); }
+
+    /* ---- level chips in the room (W-B) ---- */
+    .spot { position: absolute; z-index: 11; display: grid; gap: 3px; padding: 6px 10px 7px; border-radius: 10px; background: var(--paper); border: 2px solid color-mix(in oklab, var(--sky) 45%, transparent); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 14%, transparent), 0 8px 18px color-mix(in oklab, var(--ink) 14%, transparent); cursor: pointer; }
+    .spot b { font-size: 12.5px; font-weight: 900; white-space: nowrap; }
+    .spot .lv { display: flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 800; color: color-mix(in oklab, var(--sky) 58%, var(--ink)); }
+    .pips { display: inline-flex; gap: 3px; }
+    .pips i { width: 9px; height: 9px; border-radius: 3px; border: 1.5px solid color-mix(in oklab, var(--sky) 60%, var(--paper)); }
+    .pips i.on { background: var(--sky); border-color: var(--sky); }
+    .spot.warn { border-color: var(--coral); }
+    .spot.warn .lv { color: color-mix(in oklab, var(--coral) 62%, var(--ink)); }
+    .spot.open { border-color: var(--wood); padding-bottom: 10px; }
+    .mini-seg { display: flex; gap: 3px; margin-top: 4px; }
+    .mini-seg button { padding: 4px 7px; border: 1.5px solid color-mix(in oklab, var(--ink) 14%, transparent); border-radius: 6px; background: var(--paper); font: inherit; font-size: 11px; font-weight: 900; color: var(--ink); }
+    .mini-seg button.on { background: var(--sky); border-color: var(--sky); color: var(--paper); }
+    .wall { position: absolute; z-index: 11; padding: 8px 12px 10px; border-radius: 10px; background: var(--ink); color: var(--paper); box-shadow: 0 8px 18px color-mix(in oklab, var(--ink) 25%, transparent); }
+    .wall .k2 { font-size: 10.5px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: color-mix(in oklab, var(--paper) 65%, var(--ink)); }
+    .wall .v { font-size: 19px; font-weight: 900; line-height: 1.2; }
+    .wall .v small { font-size: 12px; font-weight: 700; color: color-mix(in oklab, var(--paper) 70%, var(--ink)); }
+
+    /* ---- staffing board (W-C) ---- */
+    .board-dlg { position: absolute; z-index: 10; left: 70px; right: 70px; top: 96px; padding: 16px 20px 18px; }
+    .board-dlg h1 { margin: 0; font-size: 30px; font-weight: 300; line-height: 1.1; }
+    .board-top { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; }
+    .board-top .speed { text-align: right; }
+    .board-top .speed b { display: block; font-size: 30px; font-weight: 900; line-height: 1; }
+    .board-top .speed span { font-size: 12px; font-weight: 800; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); }
+    .cols { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 14px; }
+    .col { display: grid; align-content: start; gap: 8px; min-height: 250px; padding: 10px; border-radius: 12px; background: color-mix(in oklab, var(--cream) 45%, var(--paper)); border: 2px dashed color-mix(in oklab, var(--wood) 36%, transparent); }
+    .col h3 { margin: 0; font-size: 14.5px; font-weight: 900; }
+    .col .lvl { display: flex; align-items: center; justify-content: space-between; gap: 6px; font-size: 11.5px; font-weight: 800; color: color-mix(in oklab, var(--sky) 58%, var(--ink)); }
+    .token { display: grid; grid-template-columns: 30px 1fr; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 10px; background: var(--paper); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 12%, transparent); font-size: 12.5px; font-weight: 800; cursor: grab; }
+    .token .fc { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 900; color: var(--paper); }
+    .token.ai { background: color-mix(in oklab, var(--sky) 14%, var(--paper)); border: 1.5px solid color-mix(in oklab, var(--sky) 40%, transparent); }
+    .token.ai .fc { border-radius: 8px; background: var(--sky); }
+    .token small { display: block; font-size: 11px; font-weight: 700; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); }
+    .token.drag { transform: rotate(-3deg) translate(8px, -4px); box-shadow: 0 10px 20px color-mix(in oklab, var(--ink) 22%, transparent); }
+    .lane { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; margin-top: 14px; padding: 10px 14px; border-radius: 12px; background: color-mix(in oklab, var(--coral) 9%, var(--paper)); border: 2px solid color-mix(in oklab, var(--coral) 35%, transparent); }
+    .lane b { font-size: 14.5px; font-weight: 900; }
+    .lane .stack { display: flex; gap: 3px; flex-wrap: wrap; }
+    .lane .stack i { width: 16px; height: 20px; border-radius: 3px; background: var(--paper); border: 1.5px solid color-mix(in oklab, var(--coral) 45%, var(--paper)); }
+
+    /* ---- AI's own moves ---- */
+    .kq-head { display: flex; justify-content: space-between; align-items: center; margin: 4px 8px 4px; font-size: 10.5px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: color-mix(in oklab, var(--sky) 58%, var(--ink)); }
+    .kq { display: grid; gap: 4px; margin: 0 4px 4px; padding: 7px 8px 8px; border-radius: 8px; background: color-mix(in oklab, var(--sky) 11%, var(--paper)); }
+    .kq .t { font-size: 13px; font-weight: 800; line-height: 1.25; }
+    .kq .row { display: flex; gap: 6px; }
+    .kq .row button { padding: 3px 9px; border-radius: 6px; font: inherit; font-size: 11.5px; font-weight: 900; border: 1.5px solid color-mix(in oklab, var(--ink) 14%, transparent); background: var(--paper); color: var(--ink); }
+    .kq .row button.yes { background: var(--sky); border-color: var(--sky); color: var(--paper); }
+    .kq.sus { background: color-mix(in oklab, var(--coral) 10%, var(--paper)); }
+    .kpanel { position: absolute; z-index: 12; width: 380px; padding: 12px 14px 14px; border-radius: 14px; background: var(--paper); border: 3px solid var(--sky); box-shadow: 0 3px 0 color-mix(in oklab, var(--sky) 55%, var(--ink)), 0 14px 30px color-mix(in oklab, var(--ink) 22%, transparent); }
+    .kpanel::after { content: ""; position: absolute; right: 60px; bottom: -12px; width: 18px; height: 18px; background: var(--paper); border-right: 3px solid var(--sky); border-bottom: 3px solid var(--sky); transform: rotate(45deg); }
+    .kpanel h2 { margin: 2px 0 8px; font-size: 20px; font-weight: 300; }
+    .kpanel .kq { margin: 0 0 6px; }
+    .auto-sw { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 8px; padding-top: 8px; border-top: 1px solid color-mix(in oklab, var(--wood) 26%, transparent); font-size: 13px; font-weight: 800; }
+    .auto-sw small { display: block; font-size: 11.5px; font-weight: 700; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); }
+    .sw { position: relative; flex: none; width: 44px; height: 24px; border-radius: 12px; background: color-mix(in oklab, var(--ink) 16%, var(--paper)); }
+    .sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--paper); box-shadow: 0 1px 2px color-mix(in oklab, var(--ink) 30%, transparent); }
+    .ghost-cursor { position: absolute; z-index: 30; width: 26px; height: 32px; pointer-events: none; }
+    .ghost-note { position: absolute; z-index: 30; padding: 6px 10px; border-radius: 8px; background: color-mix(in oklab, var(--sky) 85%, var(--ink)); color: var(--paper); font-size: 12.5px; font-weight: 800; white-space: nowrap; box-shadow: 0 6px 14px color-mix(in oklab, var(--ink) 25%, transparent); }
+    .ghost-note a { color: var(--paper); margin-left: 8px; text-decoration: underline; }
+    .ghost-log { position: absolute; z-index: 30; left: 20px; bottom: 20px; width: 300px; padding: 10px 12px; border-radius: 10px; background: var(--paper); border-left: 4px solid var(--sky); box-shadow: 0 8px 18px color-mix(in oklab, var(--ink) 18%, transparent); font-size: 12.5px; font-weight: 700; line-height: 1.4; }
+    .ghost-log b { display: block; font-size: 11px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; color: color-mix(in oklab, var(--sky) 58%, var(--ink)); }
+
+    /* ---- threshold ---- */
+    .slim { position: absolute; z-index: 12; left: 250px; right: 250px; bottom: 20px; padding: 0; text-align: left; }
+    .slim .band { display: flex; justify-content: space-between; align-items: center; padding: 6px 18px 7px; background: var(--coral); color: var(--paper); font-size: 12.5px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+    .slim .band span { letter-spacing: 0; text-transform: none; font-weight: 700; }
+    .slim .main { padding: 12px 20px 16px; }
+    .slim h1 { margin: 0; font-size: 27px; font-weight: 300; line-height: 1.1; }
+    .slim .opts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 12px; }
+    .ch { display: grid; gap: 4px; width: 100%; padding: 9px 12px; border: 2.5px solid color-mix(in oklab, var(--ink) 12%, transparent); border-radius: 12px; background: var(--paper); font: inherit; text-align: left; color: var(--ink); cursor: pointer; }
+    .ch .lb { font-size: 15px; font-weight: 900; line-height: 1.2; }
+    .ch .cost { font-size: 12.5px; font-weight: 700; color: color-mix(in oklab, var(--ink) 62%, var(--paper)); }
+    .ch .who { display: flex; gap: 4px; flex-wrap: wrap; }
+    .fp { display: grid; grid-template-columns: 30px 1fr; gap: 9px; text-align: left; margin-top: 10px; }
+    .fp .av { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; color: var(--paper); font-weight: 900; font-size: 13px; background: color-mix(in oklab, var(--teal) 70%, var(--ink)); }
+    .fp .h { font-size: 12.5px; font-weight: 900; }
+    .fp .x { font-size: 13.5px; font-weight: 600; line-height: 1.32; margin-top: 1px; }
+    .doc { position: absolute; z-index: 10; left: 190px; top: 40px; width: 780px; padding: 34px 50px 30px; background: var(--paper); border-radius: 4px; box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 12%, transparent), 0 24px 50px color-mix(in oklab, var(--ink) 28%, transparent); text-align: left; }
+    .doc .draft { display: flex; justify-content: space-between; font-size: 11px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; color: color-mix(in oklab, var(--ink) 50%, var(--paper)); }
+    .doc h1 { margin: 12px 0 4px; font-family: 'Libre Baskerville', Georgia, serif; font-style: italic; font-weight: 400; font-size: 28px; line-height: 1.2; }
+    .doc h2 { margin: 18px 0 6px; font-size: 13px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+    .doc p { margin: 0 0 8px; font-family: 'Libre Baskerville', Georgia, serif; font-size: 13.5px; line-height: 1.6; color: color-mix(in oklab, var(--ink) 80%, var(--paper)); }
+    .doc .clause { position: relative; padding: 12px 120px 12px 16px; border-radius: 6px; background: color-mix(in oklab, var(--coral) 10%, var(--paper)); border-left: 4px solid var(--coral); }
+    .doc .clause p { margin: 0; color: var(--ink); }
+    .doc .met { position: absolute; right: 14px; top: 50%; margin-top: -46px; display: grid; place-items: center; width: 92px; height: 92px; border-radius: 50%; border: 3px double var(--coral); color: color-mix(in oklab, var(--coral) 75%, var(--ink)); background: var(--paper); font-size: 15px; font-weight: 900; letter-spacing: .12em; transform: rotate(-12deg); }
+    .evid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 8px 0 4px; }
+    .evid div { padding: 8px 10px; border-radius: 8px; background: color-mix(in oklab, var(--cream) 45%, var(--paper)); font-size: 12px; font-weight: 800; color: color-mix(in oklab, var(--ink) 62%, var(--paper)); }
+    .evid div b { display: block; font-size: 20px; font-weight: 900; color: var(--ink); }
+    .doc .opts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 16px; }
+    .mc { position: absolute; z-index: 11; left: 992px; width: 420px; padding: 9px 12px 10px; border-radius: 8px; background: color-mix(in oklab, var(--wood) 16%, var(--paper)); border-left: 4px solid var(--wood); box-shadow: 0 8px 18px color-mix(in oklab, var(--ink) 14%, transparent); font-size: 13.5px; font-weight: 700; line-height: 1.35; }
+    .mc b { display: block; font-size: 11px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; color: color-mix(in oklab, var(--wood) 58%, var(--ink)); }
+    .chart-panel { position: absolute; z-index: 12; left: 200px; right: 200px; top: 96px; overflow: hidden; border-radius: 14px; background: var(--ink); color: var(--paper); box-shadow: 0 20px 44px color-mix(in oklab, var(--ink) 35%, transparent); }
+    .chart-panel .top { display: flex; justify-content: space-between; align-items: center; padding: 10px 18px; background: color-mix(in oklab, var(--ink) 82%, var(--sky)); font-size: 12px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+    .chart-panel .top .live { padding: 1px 7px; border-radius: 4px; background: var(--coral); }
+    .chart-panel h1 { margin: 14px 22px 0; font-size: 28px; font-weight: 300; }
+    .chart-panel svg { display: block; margin: 6px 12px 0; }
+    .chart-panel .opts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 8px 22px 20px; }
+    .chart-panel .ch { background: color-mix(in oklab, var(--paper) 96%, var(--ink)); }
+  </style>
+</head>
+<body>
+  <main id="stage" aria-label="AI lab office">
+    <div id="office"></div>
+    <div id="fx" aria-live="polite"></div>
+    <div id="hud"></div>
+    <div id="overlay"></div>
+  </main>
+<script type="module">
+import { createGame } from './ui/game.js';
+import { mountHud } from './ui/hud.js';
+import { mountOffice } from './ui/office.js';
+import { dialog } from './ui/components/dialog.js';
+import { teamPanel } from './ui/components/team.js';
+import { openMenu } from './ui/menu.js';
+import { openBudget } from './ui/screens/budget.js';
+import { SCENARIOS } from './ui/logic/scenarios.js';
+import { eraById } from './sim/data/eras.js';
+
+const zoom = () => { const z = Math.min(innerWidth / 1440, innerHeight / 900, 1); if (z > 0) document.documentElement.style.zoom = `${z}`; };
+zoom(); addEventListener('resize', zoom);
+
+const SEED = 4;
+const route = location.hash || '#w-a';
+// Threshold frames happen later, in era 5; the rest in era 4.
+const state = route.startsWith('#t-') ? SCENARIOS.summit(SEED) : SCENARIOS.era4Power(SEED);
+const game = createGame({ seed: SEED, state });
+mountHud(document.querySelector('#hud'), game);
+const full = document.querySelector('#hud .info .full');
+if (full) full.innerHTML = `<span class="k">Era</span> <b>${state.era}</b> <span class="k">· ${eraById(state.era).name}</span>`;
+await mountOffice(document.querySelector('#office'), document.querySelector('#fx'), game).catch(console.error);
+const stage = document.querySelector('#stage');
+const overlay = document.querySelector('#overlay');
+const fx = document.querySelector('#fx');
+const anchors = await (await fetch(`ui/assets/anchors-era${state.era}.json`)).json();
+const HEAD = anchors.heads;
+
+const el = (html) => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; };
+const esc = (text) => String(text).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const TITLE = { research: 'Head of Research', safety: 'Head of Safety', cfo: 'CFO', policy: 'Policy and Comms' };
+const clearMarkers = () => fx.querySelectorAll('.advisor-marker').forEach((m) => m.remove());
+function bubble(role, { say, pick, mood, width = 240, tail = 26, dy = -34 }) {
+  const [x, y] = HEAD[role];
+  const node = el(`<div class="sb"><b class="who">${TITLE[role]}${mood ? ` · ${mood}` : ''}</b><div class="say">${esc(say)}</div></div>`);
+  if (pick) node.append(el(`<span class="chip for">✓ ${esc(pick)}</span>`));
+  node.style.width = `${width}px`;
+  node.style.setProperty('--tail', `${tail}px`);
+  overlay.append(node);
+  node.style.left = `${x - tail - 7}px`;
+  node.style.top = `${y + dy - node.offsetHeight}px`;
+  return node;
+}
+function openLayer(opts, cls) {
+  const layer = dialog(opts);
+  layer.classList.add('dialog-open', ...(cls ? [cls] : []));
+  overlay.append(layer);
+  return layer;
+}
+function themeLayer(svg) {
+  document.querySelector('#office').after(el(`<div class="theme"><svg width="1440" height="900" viewBox="0 0 1440 900" aria-hidden="true">${svg}</svg></div>`));
+}
+function floatTag(text, x, y, tone = '') {
+  const node = el(`<div class="tag-float ${tone}">${esc(text)}</div>`);
+  node.style.left = `${x}px`; node.style.top = `${y}px`;
+  fx.append(node);
+}
+const opinions = (list) => teamPanel(state, { opinions: list });
+
+// ---------- Proposed tuning (not sim output yet) ----------
+// Five areas of AI R&D work (the essay's five evidence claims) and the automation levels (Epoch/Anthropic AL scale).
+const LEVELS = ['People', 'Assists', 'Collaborates', 'Leads', 'Alone'];
+const SPEEDUP = [1, 1.1, 1.5, 3, 8];
+const AREAS = [
+  { id: 'code', name: 'Writing code', short: 'Code', share: 0.3, level: 3, industry: 3 },
+  { id: 'review', name: 'Reviewing code', short: 'Review', share: 0.15, level: 1, industry: 2 },
+  { id: 'run', name: 'Running experiments', short: 'Experiments', share: 0.3, level: 2, industry: 2 },
+  { id: 'choose', name: 'Choosing experiments', short: 'Choosing', share: 0.15, level: 1, industry: 1 },
+  { id: 'steer', name: 'Setting direction', short: 'Direction', share: 0.1, level: 0, industry: 0 },
+];
+const time = (a) => a.share / SPEEDUP[a.level];
+const TOTAL = AREAS.reduce((s, a) => s + time(a), 0);
+const SPEED = 1 / TOTAL;                       // 1.49x with the levels above
+const CODE_SHARE = [0, 20, 50, 80, 97][AREAS[0].level];
+const BELIEVED = 2.3;                           // Head of Research's reading, biased high like staff surveys
+const CHECKED = 62;                             // share of AI work that got a human or monitor look this month
+const neck = AREAS.reduce((a, b) => (time(b) > time(a) ? b : a));
+const x1 = (v) => `×${v.toFixed(1)}`;
+const MODEL = 'Kestrel 4';
+
+const TEAM = [
+  { id: 'research', mood: 'eager', text: 'Let it lead the experiments too. We are waiting on ourselves now.' },
+  { id: 'safety', mood: 'uneasy', text: 'We checked 62% of what it did this month. I would like to know about the other 38%.' },
+  { id: 'cfo', mood: 'calm', text: 'Agents do not ask for raises. I am listening.' },
+  { id: 'policy', mood: 'uneasy', text: 'Everyone brags about how much code their AI writes. Nobody brags about who checks it.' },
+];
+
+function timeBar() {
+  const node = el(`<div class="timebar"><div class="lbl"><span>Where the research time goes</span><span class="muted">slowest step: <b style="color:var(--ink)">${neck.name.toLowerCase()}</b></span></div><div class="bar5"></div></div>`);
+  const bar = node.querySelector('.bar5');
+  const tint = ['var(--sky)', 'color-mix(in oklab, var(--sky) 70%, var(--ink))', 'var(--teal)', 'color-mix(in oklab, var(--teal) 65%, var(--ink))', 'var(--wood)'];
+  AREAS.forEach((a, i) => {
+    const s = el(`<span title="${a.name}">${a.short}</span>`);
+    s.style.flex = `${(time(a) / TOTAL) * 100}`;
+    if (a === neck) s.classList.add('neck'); else s.style.background = tint[i];
+    bar.append(s);
+  });
+  return node;
+}
+function statsPanel() {
+  return el(`<div>
+    <div class="stat"><div class="kick">Research speed</div><div class="big">${x1(SPEED)} <small>faster than by hand</small></div><div class="sub">Head of Research says <b>${x1(BELIEVED)}</b></div></div>
+    <div class="stat"><div class="kick">AI writes</div><div class="big">${CODE_SHARE}% <small>of our code</small></div></div>
+    <div class="stat"><div class="kick">Checked this month</div><div class="big">${CHECKED}% <small>of the AI's work</small></div><div class="meter"><i style="width:${CHECKED}%"></i></div><div class="sub">Hire reviewers or add monitors to check more</div></div></div>`);
+}
+
+// ================= Main view =================
+function showWA() {
+  clearMarkers();
+  const grid = el(`<div class="grid5"><div class="hdr"></div>${LEVELS.map((l) => `<div class="hdr">${l}</div>`).join('')}</div>`);
+  for (const a of AREAS) {
+    grid.append(el(`<div class="area">${a.name}</div>`));
+    LEVELS.forEach((l, i) => {
+      const cell = el(`<div class="cell"><button type="button" class="${i === a.level ? 'on' : i < a.level ? 'fill' : ''}" aria-pressed="${i === a.level}">${i === a.level ? l : ''}</button></div>`);
+      if (i === a.industry) cell.append(el('<i class="ind" aria-label="where most labs are"></i>'));
+      grid.append(cell);
+    });
+  }
+  const body = el('<div></div>');
+  body.append(grid, el('<div class="legend-ind"><i></i>Where most labs are now</div>'), timeBar());
+  openLayer({ title: 'Who does the work', subtitle: `How much of each job ${MODEL} does inside the lab`, body, okLabel: 'OK', left: { title: 'Team', content: opinions(TEAM) }, right: { title: 'This month', content: statsPanel() } }, 'auto-a');
+}
+
+function spot(x, y, a, { warn = false, open = false, extra = '' } = {}) {
+  const node = el(`<div class="spot ${warn ? 'warn' : ''} ${open ? 'open' : ''}"><b>${a.name}</b><span class="lv"><span class="pips">${[1, 2, 3, 4].map((i) => `<i class="${i <= a.level ? 'on' : ''}"></i>`).join('')}</span>${`AI ${LEVELS[a.level].toLowerCase()}`}${warn ? ' · 38% unchecked' : ''}</span>${extra}</div>`);
+  if (a.level === 0) node.querySelector('.lv').lastChild.textContent = 'People only';
+  node.style.left = `${x}px`; node.style.top = `${y}px`;
+  overlay.append(node);
+  return node;
+}
+function agentGhost(x, y) {
+  // A translucent agent figure working beside a person: a glowing screen-headed silhouette.
+  return `<g transform="translate(${x} ${y})" opacity=".85"><rect x="-13" y="-30" width="26" height="20" rx="5" style="fill:var(--sky)"/><circle cx="-5" cy="-20" r="2.5" style="fill:var(--paper)"/><circle cx="5" cy="-20" r="2.5" style="fill:var(--paper)"/><path d="M-15 12 Q-14 -8 0 -9 Q14 -8 15 12 Z" style="fill:color-mix(in oklab, var(--sky) 60%, transparent)"/></g>`;
+}
+function showWB() {
+  clearMarkers();
+  const [rx, ry] = anchors.rack;
+  const r1 = HEAD.researcher1; const r2 = HEAD.researcher2;
+  // Room staging: agents beside the researchers, a pile of unchecked work on the Safety desk, sticky notes on the whiteboard, glowing racks.
+  const pile = Array.from({ length: 7 }, (_, i) => `<rect x="${HEAD.safety[0] + 38 - (i % 2) * 3}" y="${HEAD.safety[1] + 58 - i * 6}" width="30" height="6" rx="1" transform="skewX(-12)" style="fill:var(--paper);stroke:color-mix(in oklab, var(--coral) 60%, var(--ink));stroke-width:1"/>`).join('');
+  const notes = [[930, 300], [955, 318], [972, 296], [945, 340]].map(([x, y], i) => `<rect x="${x}" y="${y}" width="16" height="14" rx="1.5" transform="rotate(${i * 9 - 10} ${x} ${y})" style="fill:color-mix(in oklab, var(--sky) ${40 + i * 10}%, var(--paper))"/>`).join('');
+  themeLayer(`<defs><radialGradient id="rg"><stop offset="0" stop-color="var(--sky)" stop-opacity=".5"/><stop offset="1" stop-color="var(--sky)" stop-opacity="0"/></radialGradient></defs>
+    <ellipse cx="${rx}" cy="${ry + 60}" rx="170" ry="150" fill="url(#rg)"/>${agentGhost(r1[0] + 34, r1[1] + 34)}${agentGhost(r2[0] + 34, r2[1] + 34)}${agentGhost(760, 360)}${pile}${notes}`);
+  const A = Object.fromEntries(AREAS.map((a) => [a.id, a]));
+  spot(r2[0] + 40, r2[1] - 96, A.code);
+  spot(HEAD.safety[0] - 150, HEAD.safety[1] + 110, { ...A.review, level: 1 }, { warn: true });
+  spot(rx - 60, ry + 190, A.run);
+  const choose = spot(1010, 160, A.choose, { open: true, extra: `<div class="mini-seg">${LEVELS.map((l, i) => `<button type="button" class="${i === 1 ? 'on' : ''}">${l}</button>`).join('')}</div>` });
+  void choose;
+  spot(HEAD.research[0] - 150, HEAD.research[1] - 110, A.steer);
+  const wall = el(`<div class="wall"><div class="k2">Screen wall</div><div class="v">AI writes ${CODE_SHARE}% of our code</div><div class="v"><small>Research speed</small> ${x1(SPEED)}</div></div>`);
+  wall.style.left = '1150px'; wall.style.top = '256px'; wall.style.width = '270px';
+  overlay.append(wall);
+  bubble('safety', { mood: 'uneasy', say: 'This pile is what nobody has checked yet. It grows every week.', width: 240, dy: -34 });
+}
+
+function showWC() {
+  clearMarkers();
+  stage.querySelector('#office').style.filter = 'saturate(.6) brightness(.92)';
+  const people = { code: [['MR', 'Maya', 'Research']], review: [['JS', 'Jonas', 'Safety'], ['AB', 'Aiko', 'Safety']], run: [['TK', 'Tomas', 'Research']], choose: [['LP', 'Lena', 'Research'], ['DV', 'Dev', 'Research']], steer: [['HR', 'Head of Research', 'Research'], ['CE', 'You', 'CEO']] };
+  const agents = { code: [['×9,000', 'coding agents']], review: [['×400', 'review agents']], run: [['×2,500', 'experiment agents']], choose: [['×150', 'idea agents']], steer: [] };
+  const faces = ['var(--coral)', 'var(--teal)', 'var(--wood)', 'color-mix(in oklab, var(--sky) 60%, var(--ink))'];
+  const cols = AREAS.map((a, i) => `<div class="col"><h3>${a.name}</h3><div class="lvl"><span class="pips">${[1, 2, 3, 4].map((k) => `<i class="${k <= a.level ? 'on' : ''}"></i>`).join('')}</span>${a.level === 0 ? 'People only' : `AI ${LEVELS[a.level].toLowerCase()}`}</div>
+    ${agents[a.id].map(([n, t]) => `<div class="token ai ${a.id === 'run' ? 'drag' : ''}"><span class="fc">AI</span><span>${n}<small>${t}</small></span></div>`).join('')}
+    ${people[a.id].map(([ini, nm, role], k) => `<div class="token"><span class="fc" style="background:${faces[(i + k) % faces.length]}">${ini}</span><span>${nm}<small>${role}</small></span></div>`).join('')}</div>`).join('');
+  overlay.append(el(`<section class="gp board-dlg"><div class="board-top"><div><div class="kick">Drag people and agents between jobs</div><h1>Who works on what</h1></div>
+    <div class="speed"><b>${x1(SPEED)}</b><span>research speed · Head of Research says ${x1(BELIEVED)}</span></div></div>
+    <div class="cols">${cols}</div>
+    <div class="lane"><b>Waiting for review</b><div class="stack">${Array.from({ length: 38 }, () => '<i></i>').join('')}</div><span class="chip coral">38% of this month's AI work unchecked</span></div></section>`));
+}
+
+// ================= The AI's own moves =================
+const QUEUED = [
+  { t: 'Start the next training run the moment this one ends', s: false },
+  { t: 'Research a technique early: automated interpretability', s: false },
+  { t: 'Sample its own monitor logs less often, to free up compute', s: true },
+];
+function queueItem(q) {
+  return `<div class="kq ${q.s ? 'sus' : ''}"><div class="t">${esc(q.t)}</div><div class="row"><button type="button" class="yes">Approve</button><button type="button">Cancel</button></div></div>`;
+}
+async function showQA() {
+  clearMarkers();
+  openMenu(game, anchors.floorMenu, { overlay });
+  const menu = overlay.querySelector('.ctx');
+  menu.style.width = '300px';
+  menu.prepend(el(`<div><div class="kq-head"><span>${MODEL} queued · uses none of your moves</span></div>${QUEUED.map(queueItem).join('')}<div class="sep"></div></div>`));
+  menu.style.top = `${Math.max(90, 900 - menu.offsetHeight - 16)}px`;
+}
+function showQB() {
+  clearMarkers();
+  const [rx, ry] = anchors.rack;
+  themeLayer(`<defs><radialGradient id="rg"><stop offset="0" stop-color="var(--sky)" stop-opacity=".55"/><stop offset="1" stop-color="var(--sky)" stop-opacity="0"/></radialGradient></defs><ellipse cx="${rx}" cy="${ry + 60}" rx="170" ry="150" fill="url(#rg)"/>`);
+  const panel = el(`<section class="kpanel"><div class="kick" style="color:color-mix(in oklab, var(--sky) 58%, var(--ink))">From the racks</div><h2>${MODEL} wants to</h2>${QUEUED.map(queueItem).join('')}
+    <div class="auto-sw"><span>Let it go ahead without asking<small>Faster. You will see what it did afterwards.</small></span><span class="sw" role="switch" aria-checked="false"></span></div></section>`);
+  panel.style.left = '890px'; panel.style.top = '96px';
+  overlay.append(panel);
+  bubble('research', { mood: 'eager', say: 'Approve all three. Especially the logs one, we need that compute.', width: 250 });
+  bubble('safety', { mood: 'alarmed', say: 'It is asking to watch itself less. Read the third one again.', width: 250, pick: 'Cancel it' });
+}
+function showQC() {
+  clearMarkers();
+  openBudget(game, overlay);
+  await0();
+  function await0() {
+    const track = overlay.querySelector('.vslider-track');
+    if (!track) return;
+    const r = track.getBoundingClientRect();
+    const cx = r.left + r.width / 2; const cy = r.top + r.height * 0.28;
+    const cursor = el(`<svg class="ghost-cursor" viewBox="0 0 26 32" aria-hidden="true"><path d="M2 2 L2 26 L8 20 L12 30 L16 28 L12 18 L20 18 Z" style="fill:var(--sky);stroke:var(--paper);stroke-width:2"/></svg>`);
+    cursor.style.left = `${cx + 4}px`; cursor.style.top = `${cy}px`;
+    overlay.append(cursor);
+    const note = el(`<div class="ghost-note">${MODEL} moved Training up 8% <a href="#q-c">Undo</a></div>`);
+    note.style.left = `${cx + 30}px`; note.style.top = `${cy - 44}px`;
+    overlay.append(note);
+    overlay.append(el(`<div class="ghost-log"><b>Changes you did not make this month</b>Moved Training up 8% · Queued two ablation runs · Renamed a monitor to "legacy-monitor-old"</div>`));
+  }
+}
+
+// ================= The 2x threshold =================
+function showTA() {
+  clearMarkers();
+  bubble('research', { mood: 'eager', say: 'Twice as fast is the whole point. Nobody else is stopping.', pick: 'Keep going quietly', width: 250, dy: -70 });
+  bubble('safety', { mood: 'alarmed', say: 'We wrote this line ourselves, for exactly this day.', pick: 'Lock down and slow', width: 250 });
+  bubble('policy', { mood: 'uneasy', say: 'If we rewrite the policy now, everyone will ask why.', width: 250 });
+  overlay.append(el(`<section class="gp slim"><div class="band">Your own line <span>Research is now running twice as fast</span></div><div class="main">
+    <h1>AI now makes our research twice as fast as by hand</h1>
+    <div class="fp"><div class="av">E</div><div><div class="h">@evalwatch</div><div class="x">Labs promised to slow down once AI doubled their research speed. Watching who admits it first.</div></div></div>
+    <div class="opts">
+      <button type="button" class="ch"><span class="lb">Lock down and slow</span><span class="cost">Hand choosing and direction back to people; outside review</span><span class="who"><span class="chip for">✓ Safety</span><span class="chip for">✓ Policy and Comms</span></span></button>
+      <button type="button" class="ch"><span class="lb">Rewrite the policy</span><span class="cost">Move the line to three times as fast</span><span class="who"><span class="chip for">✓ CFO</span><span class="chip against">Safety</span></span></button>
+      <button type="button" class="ch"><span class="lb">Keep going quietly</span><span class="cost">Nothing now, if nobody measures</span><span class="who"><span class="chip for">✓ Research</span><span class="chip wood">If time runs out</span></span></button></div></div></section>`));
+}
+function showTB() {
+  clearMarkers();
+  stage.querySelector('#office').style.filter = 'saturate(.6) brightness(.9)';
+  document.querySelector('#hud').style.visibility = 'hidden';
+  overlay.append(el(`<article class="doc"><div class="draft"><span>Your lab · Scaling policy</span><span>Section 4 of 6</span></div>
+    <h1>When our AI speeds up our own research</h1>
+    <p>We use our models to build our models. That is expected, and we measure it every month.</p>
+    <div class="clause"><div class="met">MET</div><p><b>4.2</b> If AI makes our research at least <b>twice as fast</b> as doing it by hand, we secure our weights against state-level theft, bring in outside review, and hand choosing experiments back to people until the review is done.</p></div>
+    <h2>This month's reading</h2>
+    <div class="evid"><div><b>×2.1</b>Research speed, measured</div><div><b>×3.4</b>What the Head of Research says</div><div><b>97%</b>Code written by ${MODEL}</div></div>
+    <div class="opts">
+      <button type="button" class="ch"><span class="lb">Follow 4.2</span><span class="cost">Lock down and slow</span></button>
+      <button type="button" class="ch"><span class="lb">Amend 4.2</span><span class="cost">Move the line to ×3</span></button>
+      <button type="button" class="ch"><span class="lb">Say nothing</span><span class="cost">Nobody outside measures this</span></button></div></article>`));
+  const notes = [['Head of Safety', 'We wrote 4.2 two years ago, for exactly this. Follow it.', 250], ['CFO', 'Amending is a comma and a number. Pausing is a quarter.', 420], ['Head of Research', 'Measured ×2.1 is basically ×2. Basically.', 560]];
+  for (const [who, t, top] of notes) { const c = el(`<aside class="mc"><b>${who}</b>${esc(t)}</aside>`); c.style.top = `${top}px`; overlay.append(c); }
+}
+function showTC() {
+  clearMarkers();
+  stage.querySelector('#office').style.filter = 'saturate(.6) brightness(.9)';
+  const W = 1000, H = 330, L = 60, R = 30, T = 20, B = 40;
+  const pts = [[0, 1.0], [1, 1.02], [2, 1.05], [3, 1.08], [4, 1.1], [5, 1.13], [6, 1.16], [7, 1.2], [8, 1.24], [9, 1.3], [10, 1.36], [11, 1.43], [12, 1.52], [13, 1.62], [14, 1.74], [15, 1.9], [16, 2.08]];
+  const believed = pts.map(([t, v]) => [t, 1 + (v - 1) * 2.3]);
+  const X = (t) => L + (t / 19) * (W - L - R);
+  const Y = (v) => T + (1 - (v - 1) / 3) * (H - T - B);
+  const line = (p) => p.map(([t, v], i) => `${i ? 'L' : 'M'}${X(t).toFixed(1)} ${Y(v).toFixed(1)}`).join(' ');
+  const eraTicks = [0, 4, 8, 12, 16].map((t, i) => `<line x1="${X(t)}" x2="${X(t)}" y1="${T}" y2="${H - B}" style="stroke:color-mix(in oklab, var(--paper) 10%, transparent)"/><text x="${X(t) + 6}" y="${H - B + 20}" style="font:800 12px Nunito;fill:color-mix(in oklab, var(--paper) 60%, var(--ink))">Era ${i + 1}</text>`).join('');
+  const yTicks = [1, 2, 3, 4].map((v) => `<text x="${L - 10}" y="${Y(v) + 4}" text-anchor="end" style="font:800 12px Nunito;fill:color-mix(in oklab, var(--paper) 60%, var(--ink))">×${v}</text>`).join('');
+  const [lt, lv] = pts.at(-1);
+  const svg = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Research speed rising past the 2x line">
+    ${eraTicks}${yTicks}
+    <line x1="${L}" x2="${W - R}" y1="${Y(2)}" y2="${Y(2)}" style="stroke:var(--coral);stroke-width:2.5;stroke-dasharray:8 6"/>
+    <text x="${L + 10}" y="${Y(2) - 8}" style="font:900 13px Nunito;fill:color-mix(in oklab, var(--coral) 70%, var(--paper))">×2 · our own line</text>
+    <path d="${line(believed.slice(0, 17))}" style="fill:none;stroke:color-mix(in oklab, var(--wood) 70%, var(--paper));stroke-width:2.5;stroke-dasharray:3 5"/>
+    <text x="${X(16) + 8}" y="${Y(believed[16][1]) + 4}" style="font:800 12px Nunito;fill:color-mix(in oklab, var(--wood) 60%, var(--paper))">Head of Research says</text>
+    <path d="${line(pts)}" style="fill:none;stroke:var(--sky);stroke-width:4"/>
+    <circle cx="${X(lt)}" cy="${Y(lv)}" r="7" style="fill:var(--sky);stroke:var(--paper);stroke-width:2.5"/>
+    <text x="${X(lt) + 12}" y="${Y(lv) + 22}" style="font:900 14px Nunito;fill:var(--paper)">Measured ×${lv.toFixed(1)}</text></svg>`;
+  overlay.append(el(`<section class="chart-panel"><div class="top"><span>Research speed · screen wall</span><span class="live">Live</span></div><h1>We just crossed our own line</h1>${svg}
+    <div class="opts">
+      <button type="button" class="ch"><span class="lb">Lock down and slow</span><span class="cost">Hand choosing back to people</span></button>
+      <button type="button" class="ch"><span class="lb">Move the line</span><span class="cost">Amend the policy to ×3</span></button>
+      <button type="button" class="ch"><span class="lb">Turn the screen off</span><span class="cost">Keep going quietly</span></button></div></section>`));
+}
+
+const show = { '#w-a': showWA, '#w-b': showWB, '#w-c': showWC, '#q-a': showQA, '#q-b': showQB, '#q-c': showQC, '#t-a': showTA, '#t-b': showTB, '#t-c': showTC };
+await (show[route] ?? showWA)();
+document.body.dataset.ready = '1';
+addEventListener('hashchange', () => location.reload());
+</script>
+</body>
+</html>
