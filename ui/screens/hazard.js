@@ -6,7 +6,7 @@ export const HAZARD_CHOICES = [
   { id: 'ignore', label: 'Ignore it' },
 ];
 
-// PLACEHOLDER — the owner writes the final lines. Each advisor argues from what they believe; none is fully right.
+// Kept as the final lines by the owner (2026-09-26). Each advisor argues from what they believe; none is fully right.
 export const HAZARD_ARGUMENTS = [
   { role: 'research', title: 'Head of Research', say: 'Penalize it and move on. Clean traces, clean demo.', backs: 'penalize', width: 230, dx: -40 },
   { role: 'safety', title: 'Head of Safety', say: "Don't punish the thought. It'll just learn to stop saying it out loud.", backs: 'fix', width: 270, tail: 32, dx: 24 },
@@ -155,8 +155,8 @@ export function mountHazard(game, { stage, overlay }) {
     buttons[0].focus();
   }
 
-  // Another dialog or an event card already up goes first; the card opens when it closes.
-  const busy = () => Boolean(overlay.querySelector('.dialog-layer, .event-layer'));
+  // Another dialog, an event card or the screen wall already up goes first; the card opens when it closes.
+  const busy = () => Boolean(overlay.querySelector('.dialog-layer, .event-layer, .screenwall-layer'));
   const shouldOpen = () => Boolean(game.state.pendingModel?.hazard) && !game.state.ending && !layer && !busy();
 
   function check() {

@@ -9,8 +9,8 @@ import {
 } from '../logic/president.js';
 
 let assetsPromise = null;
-// Event cards and the phone sit above dialogs, so the scene waits for them too (as main.js blocked() does).
-const BLOCKING = '.dialog-layer, .event-layer, .ev-phone';
+// Event cards, the phone and the screen wall sit above dialogs, so the scene waits for them too (as main.js blocked() does).
+const BLOCKING = '.dialog-layer, .event-layer, .ev-phone, .screenwall-layer';
 let nextPresidentId = 0;
 
 // OWNER WRITES (placeholder)

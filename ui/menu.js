@@ -1,7 +1,7 @@
 import { MAX_MOVES } from '../sim/turn.js';
 import { EMERGENCY_OPTIONS, inDangerZone } from '../sim/economy.js';
 import { TECHNIQUES, techAvailable } from '../sim/techniques.js';
-import { TEAM_OF, TEAMS, teamBusyError } from '../sim/teams.js';
+import { TEAM_OF, TEAMS, busySubject, teamBusyError } from '../sim/teams.js';
 import { roundWord } from '../sim/time.js';
 import { projectQueue } from './logic/compute.js';
 import { openBudget } from './screens/budget.js';
@@ -126,7 +126,7 @@ function appendTeamTag(button, item, game) {
   const team = TEAM_OF[type];
   if (!team) return;
   const busy = teamBusyError(game.state, { type });
-  const busyPrefix = `the ${TEAMS[team]} is `;
+  const busyPrefix = `${busySubject(team)} `;
   const status = busy?.startsWith(busyPrefix) ? busy.slice(busyPrefix.length) : busy;
   const tag = document.createElement('span');
   tag.className = `team${busy ? ' busy' : ''}`;
