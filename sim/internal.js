@@ -12,6 +12,9 @@ const newestCapability = (state) => state.pendingModel?.capability ?? state.capa
 const internalCapability = (state) => state.internal?.capability ?? newestCapability(state);
 
 export function deployInternal(state, control) {
+  if (state.deal?.collapsed === false && state.deal.binding.includes('pauseAutomation')) {
+    return { ok: false, error: 'the summit deal pauses internal automation' };
+  }
   if (state.era < 3) return { ok: false, error: 'internal deployment opens in era 3' };
   if (state.models.length === 0 && !state.pendingModel) return { ok: false, error: 'you need a trained model' };
   if (typeof control !== 'number' || !(control >= 0 && control <= 1)) return { ok: false, error: 'control must be between 0 and 1' };

@@ -15,6 +15,7 @@ import { deployInternal, stopInternal, internalTick } from './internal.js';
 import { addressWarning, resolveEvent, eventsTick, fallbackChoice } from './events.js';
 import { CASES } from './data/constitution.js';
 import { setConstitution, amendConstitution } from './constitution.js';
+import { proposeSummit, holdOrShip, holdOrShipError } from './summit.js';
 
 export const MAX_MOVES = 2;
 const BUDGET_KEYS = ['training', 'safety', 'security', 'product', 'talent'];
@@ -43,6 +44,7 @@ function applyMove(state, move, rng) {
     case 'deployInternal': return deployInternal(state, move.control);
     case 'stopInternal': return stopInternal(state);
     case 'amendConstitution': return amendConstitution(state, move.change);
+    case 'summit': return proposeSummit(state, move, rng);
     default: return { ok: false, error: `unknown move ${move.type}` };
   }
 }
@@ -118,6 +120,13 @@ export function endTurn(prev, actions = {}, rng) {
   }
   const before = { arr: state.arr, capability: state.capability, cash: state.cash };
 
+  if (state.era === 5 && state.deal && state.turnInEra > 0) {
+    const choice = actions.holdOrShip ?? 'hold';
+    const error = holdOrShipError(choice);
+    if (error) errors.push(error);
+    else for (const event of holdOrShip(state, choice, rng)) events.push(event);
+  }
+
   activateReleases(state);
   updateServing(state);
   state.burnPlanned = projectBurn(state);
@@ -132,7 +141,8 @@ export function endTurn(prev, actions = {}, rng) {
   for (const move of moves.slice(0, MAX_MOVES)) {
     const r = applyMove(state, move, rng);
     if (r.ok) {
-      events.push({ type: move.type, ...r });
+      if (move.type === 'summit') events.push({ type: 'summit', signed: r.signed, binding: r.binding });
+      else events.push({ type: move.type, ...r });
       if (r.hazardIgnored) events.push({ type: 'hazardResolved', choice: 'ignore', auto: true });
       updateServing(state);
       state.burnPlanned = projectBurn(state);

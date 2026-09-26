@@ -45,6 +45,7 @@ export function createInitialState({ seed = 1 } = {}) {
     activeRun: null,
     pendingModel: null,
     internal: null,
+    deal: null,
     models: [],
     warnings: {},
     pendingEvents: [],

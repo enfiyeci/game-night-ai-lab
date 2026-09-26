@@ -114,7 +114,9 @@ export function releaseModel(state, release, rng) {
   state.staffTrust += m.publicEffects.st + sum('st');
   state.govFavor.us += m.publicEffects.govUs + sum('govUs');
   state.govFavor.intl += m.publicEffects.govIntl + sum('govIntl');
-  state.raceHeat += BALANCE.ownReleaseHeat + m.publicEffects.heat + sum('heat');
+  const releaseHeat = BALANCE.ownReleaseHeat + m.publicEffects.heat + sum('heat');
+  const delayed = state.deal?.collapsed === false && state.deal.binding.includes('releaseDelay');
+  state.raceHeat += releaseHeat * (delayed ? 0.5 : 1);
   state.alignmentDebt += sum('ad');
   state.misuseExposure += Math.max(0, m.capability - BALANCE.dangerLine) * 0.3;
   if (spec.channel === 'open') {

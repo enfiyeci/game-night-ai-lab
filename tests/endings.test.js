@@ -63,14 +63,20 @@ test('board reacts to growth, capability, trust and cash', () => {
 
 test('final endings', () => {
   const s = createInitialState();
+  s.capability = 100;
   assert.equal(finalEnding(s), 'aligned');
   const t = createInitialState();
+  t.capability = 100;
   t.alignmentDebt = 60;
   assert.equal(finalEnding(t), 'pyrrhic');
   const u = createInitialState();
-  u.flags.pacingDeal = true;
+  u.capability = 100;
+  u.deal = { signed: {}, binding: ['evaluators', 'sharedSafety'], trust: 2, collapsed: false, playerShipped: false };
   assert.equal(finalEnding(u), 'pacingDeal');
-  for (const id of ['acquihire', 'boardRemoved', 'misalignment', 'misuse', 'leftBehind', 'rivalDisaster', 'aligned', 'pacingDeal', 'pyrrhic']) {
+  const v = createInitialState();
+  v.rivals[0].capability = v.capability + 1;
+  assert.equal(finalEnding(v), 'overtaken');
+  for (const id of ['acquihire', 'boardRemoved', 'misalignment', 'misuse', 'leftBehind', 'rivalDisaster', 'aligned', 'pacingDeal', 'pyrrhic', 'overtaken']) {
     assert.ok(ENDINGS[id], id);
   }
 });

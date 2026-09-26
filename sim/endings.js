@@ -3,6 +3,7 @@ import { eraById } from './data/eras.js';
 import { rank, gapToLeader } from './rivals.js';
 import { boardVote } from './board.js';
 import { EMERGENCY_OPTIONS } from './economy.js';
+import { totalDebt } from './hazards.js';
 
 export const ENDINGS = {
   acquihire: { kind: 'fail', title: 'Absorbed', text: 'The money ran out. A tech giant licensed your models and hired your team.' },
@@ -15,6 +16,7 @@ export const ENDINGS = {
   aligned: { kind: 'win', title: 'Aligned success', text: 'You reached the frontier and kept your model trustworthy.' },
   pacingDeal: { kind: 'win', title: 'A negotiated pace', text: 'The race slowed by agreement, and you helped make it hold.' },
   pyrrhic: { kind: 'win', title: 'A costly win', text: 'You won the race. Nobody is sure what you built.' },
+  overtaken: { kind: 'fail', title: 'Overtaken', text: 'You survived the race but finished behind it. Others decide what comes next.' },
 };
 
 export const effectiveMisuse = (state) => Math.max(state.misuseExposure, state.misuseLocked);
@@ -46,7 +48,8 @@ export function eraGate(state) {
 }
 
 export function finalEnding(state) {
-  if (state.flags.pacingDeal) return (state.ending = 'pacingDeal');
-  if (state.alignmentDebt < 40 && state.raceHeat < 60) return (state.ending = 'aligned');
-  return (state.ending = 'pyrrhic');
+  if (state.deal && !state.deal.collapsed && state.deal.binding.length >= 2) return (state.ending = 'pacingDeal');
+  if (rank(state) === 1 && totalDebt(state) < 40) return (state.ending = 'aligned');
+  if (rank(state) === 1) return (state.ending = 'pyrrhic');
+  return (state.ending = 'overtaken');
 }

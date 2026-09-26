@@ -21,6 +21,7 @@ test('initial state matches the spec', () => {
   assert.equal(s.raceHeat, 20);
   assert.equal(s.era, 1);
   assert.equal(s.rivals.length, 4);
+  assert.equal(s.deal, null);
   assert.equal(s.ending, null);
 });
 

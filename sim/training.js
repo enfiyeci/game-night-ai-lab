@@ -66,7 +66,8 @@ export function resolveRun(state, run, rng) {
   const nextRunCapPenalty = state.flags.nextRunCapPenalty ?? 0;
   delete state.flags.nextRunCapPenalty;
   const uncappedGain = Math.max(0, Math.max(0, base) * talent * (1 - 0.5 * alignShare) * Math.max(0.2, 1 - 0.2 * run.spikes) - nextRunCapPenalty);
-  const capability = Math.min(BALANCE.maxCapability, state.capability + uncappedGain);
+  const gainCap = state.deal?.collapsed === false && state.deal.binding.includes('computeCap') ? 5 : Infinity;
+  const capability = Math.min(BALANCE.maxCapability, state.capability + Math.min(uncappedGain, gainCap));
   const gain = Math.max(0, capability - state.capability);
 
   const sum = (key) => effects.reduce((s, e) => s + (e[key] ?? 0), 0);
