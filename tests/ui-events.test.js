@@ -152,3 +152,12 @@ test('the copy file never talks about turns', () => {
   walk(COPY);
   for (const text of strings) assert.doesNotMatch(text, /\bturns?\b/i, text);
 });
+
+test('every real-event card has a catalog row the card screen can draw', () => {
+  for (const event of REAL_EVENTS) {
+    const row = catalogRow(event.id);
+    assert.ok(row, event.id);
+    const view = cardView({ id: event.id, title: row.card.title, post: row.card.post, choices: row.card.choices.map(({ id, label, cost, backers, opposers }) => ({ id, label, cost, backers, opposers })) });
+    assert.equal(view.choices.filter((choice) => choice.fallback).length, 1, event.id);
+  }
+});
