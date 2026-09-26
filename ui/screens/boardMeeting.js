@@ -1,12 +1,13 @@
 // The board meeting as a video call (board UI plan Task 6, spec §6.4), ported from docs/design/mockups/board/meeting.js.
 // The call rings over the office, the meeting plays with a private read of the room beside it, the seven votes are
 // revealed one at a time from the record the sim kept, then the result dialog (frame 4A) follows.
-// It is a round guard (game.beforeRoundEnd): in a round that holds a vote, it opens instead of the round ending, and the
-// round ends only when the player calls the vote.
-import { BOARD_MEMBERS, boardVoteThisRound, holdVote } from '../../sim/board.js';
+// Real time (the real-time lane's hook): a game subscriber opens it on the last story day before a round mark that holds
+// a vote and pauses the clock; the mark is crossed only when the player calls the vote, by the meeting itself.
+import { BOARD_MEMBERS, holdVote } from '../../sim/board.js';
 import { makeBoardDeals } from '../../sim/boardDeals.js';
-import { ERAS } from '../../sim/data/eras.js';
-import { boardView, meetingModel, resultModel, voteReveal } from '../logic/board.js';
+import { ERAS, eraById } from '../../sim/data/eras.js';
+import { nextRoundDay } from '../../sim/time.js';
+import { boardView, meetingDueNow, meetingModel, resultModel, voteReveal } from '../logic/board.js';
 import { ADVISOR_TITLE } from '../logic/events.js';
 import * as COPY from '../data/boardCopy.js';
 import { portrait } from '../components/portraits.js';
@@ -93,7 +94,7 @@ const html = (markup) => {
 // ('gate' | 'promise' | 'emergency'); any other kind reads as a plain special meeting.
 // The sim holds a called vote (emergency or promise) before the gate's, and one meeting holds one vote.
 function meetingKind(state, model) {
-  if (state.flags.boardVoteDue === 'emergency' || state.pendingEvents.some((pending) => pending.id === 'boardRevolt')) return 'emergency';
+  if (state.flags.boardVoteDue === 'emergency') return 'emergency';
   if (state.flags.boardVoteDue) return 'promise';
   return model.kind === 'gate' ? 'gate' : 'promise'; // otherwise era 5's forecast promise vote
 }
@@ -108,7 +109,11 @@ const band = (member, width = 118) => `<span class="mt-rb ${LEAN_CLASS[member.le
 // A vote-kept seat smiles and a remove seat frowns: once a vote is cast it is public, so the face may show it.
 const voteMood = (vote) => (vote === 'keep' ? 'happy' : vote === 'remove' ? 'cross' : null);
 
-function nextVoteEra(era) {
+// The era whose gate holds the next vote. After a special meeting before an era's last round, that era's own gate vote
+// is still to come (review M1); after a meeting in the last round (the gate, or a called vote that took its place), the
+// next gate era.
+export function nextVoteEra(era, lastRound) {
+  if (!lastRound && eraById(era).boardVoteAtGate) return era;
   return ERAS.find((candidate) => candidate.id > era && candidate.boardVoteAtGate)?.id ?? null;
 }
 
@@ -157,25 +162,35 @@ export function mountBoardMeeting(game, { overlay, stage }) {
   let session = null;
   const reduced = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
-  function open({ preview = false, step = 'ring', onCall = null } = {}) {
+  function open({ preview = false, step = 'ring' } = {}) {
     session?.close({ quiet: true });
     const state = game.state;
     const model = meetingModel(state);
     const view = boardView(state);
     const lean = Object.fromEntries(view.members.map((member) => [member.id, member]));
     const kind = meetingKind(state, model);
+    const lastRound = state.turnInEra === eraById(state.era).turns - 1;
     const previousFocus = document.activeElement;
     const timers = new Set();
     const picked = new Set();
-    let unsubscribe = null;
     let closed = false;
     let dealsLocked = false;
 
+    // Anything that throws inside the meeting closes it, so the clock resumes and a held ending plays.
+    const safely = (fn) => (...args) => {
+      try {
+        return fn(...args);
+      } catch (error) {
+        console.error(error);
+        close();
+        return undefined;
+      }
+    };
     const later = (fn, ms) => {
-      const id = setTimeout(() => {
+      const id = setTimeout(safely(() => {
         timers.delete(id);
         if (!closed) fn();
-      }, ms);
+      }), ms);
       timers.add(id);
       return id;
     };
@@ -231,8 +246,6 @@ export function mountBoardMeeting(game, { overlay, stage }) {
       if (closed) return;
       closed = true;
       stopTimers();
-      unsubscribe?.();
-      unsubscribe = null;
       watcher?.disconnect();
       root.remove();
       for (const child of benched) child.inert = false;
@@ -576,12 +589,12 @@ export function mountBoardMeeting(game, { overlay, stage }) {
       if (reduced()) {
         const next = button('btn mt-next', null);
         const label = () => { next.textContent = frames[at + 1] && !frames[at + 1].result ? COPY.NEXT_VOTE : COPY.CONTINUE; };
-        next.addEventListener('click', () => {
+        next.addEventListener('click', safely(() => {
           at += 1;
           if (at >= frames.length) { next.remove(); resultDialog(); return; }
           showFrame(frames[at]);
           label();
-        });
+        }));
         call.append(next);
         showFrame(frames[0]);
         label();
@@ -598,6 +611,9 @@ export function mountBoardMeeting(game, { overlay, stage }) {
       step();
     }
 
+    // Call the vote: this meeting's deals apply at once, then the meeting crosses the round mark itself (the clock is
+    // held by the meeting, and a one-day advance is the call the clock would make). The reveal plays from the state
+    // that crossed the mark. Anything that throws closes the meeting rather than lock the game.
     function callTheVote() {
       if (dealsLocked) return;
       const deals = [...picked];
@@ -607,28 +623,23 @@ export function mountBoardMeeting(game, { overlay, stage }) {
         playVote();
         return;
       }
-      if (deals.length) game.setField('boardDeals', deals.map((member) => ({ member, kind: member })));
-      const before = structuredClone(game.state);
-      unsubscribe = game.subscribe(({ state: next }) => {
-        const outcome = roundOutcome(before, next);
-        if (outcome === 'wait') return; // not this round's end
-        unsubscribe();
-        unsubscribe = null;
-        after = next;
-        if (outcome === 'reveal') { reveal = voteReveal(before, next); playVote(); return; }
-        if (outcome === 'deferred') { putOff(next); return; }
+      try {
+        if (deals.length) {
+          const made = game.setField('boardDeals', deals.map((member) => ({ member, kind: member })));
+          if (!made.ok) console.error(made.error);
+        }
+        const before = structuredClone(game.state);
+        const days = Math.max(1, nextRoundDay(before) - before.day);
+        for (let day = 0; day < days && !game.state.ending && game.state.turn === before.turn; day += 1) game.advanceDays(1);
+        after = game.state;
+        const outcome = roundOutcome(before, after);
+        if (outcome === 'reveal') { reveal = voteReveal(before, after); playVote(); return; }
+        if (outcome === 'deferred') { putOff(after); return; }
         close(); // no vote was held (another ending came first, or left behind): the ending plays
-      });
-      onCall?.();
-      // If the round never ends (a failing round end, or no notification), the meeting closes rather than lock the
-      // game: the clock resumes and a held ending is released.
-      const giveUp = () => setTimeout(() => {
-        if (closed || !unsubscribe) return;
-        unsubscribe();
-        unsubscribe = null;
+      } catch (error) {
+        console.error(error);
         close();
-      }, 0);
-      Promise.resolve(game.roundInFlight).then(giveUp, giveUp);
+      }
     }
 
     // The round ended with no vote and no ending (the sim put the vote off, e.g. while the lab cannot pay its bills):
@@ -694,7 +705,7 @@ export function mountBoardMeeting(game, { overlay, stage }) {
         since.append(row);
       }
       const prev = after.flags.prevBoardVote;
-      const nextEra = nextVoteEra(model.era);
+      const nextEra = nextVoteEra(model.era, lastRound);
       const notes = [];
       if (prev?.votes && prev.yes === reveal.yes && result.since.length > 2) notes.push(COPY.SINCE_NOTE.same);
       if ((result.passed || result.reversedByStaff) && !after.ending) notes.push(nextEra ? fill(COPY.SINCE_NOTE.next, { era: nextEra }) : COPY.SINCE_NOTE.none);
@@ -746,23 +757,26 @@ export function mountBoardMeeting(game, { overlay, stage }) {
     return session;
   }
 
-  // The round guard: in a round that holds a vote the meeting opens, and the round ends when the player calls the vote.
-  let calling = null;
-  game.beforeRoundEnd.push(() => {
-    if (calling) return calling;
-    if (!boardVoteThisRound(game.state)) return undefined;
-    calling = new Promise((resolve) => {
-      const release = () => { calling = null; resolve(); };
-      try {
-        open({ onCall: release });
-      } catch (error) { // a meeting that cannot open must not stop the round
-        console.error(error);
-        session?.close();
-        release();
-      }
-    });
-    return calling;
-  });
+  // Real time: on the last story day before a mark that holds a vote, the meeting opens once for that mark and holds
+  // the clock (the meeting is also a .dialog-layer, which the clock watches). A meeting that cannot open is logged and
+  // closed, so the clock resumes and the mark passes with the vote unseen rather than lock the game.
+  let openedFor = null;
+  const maybeOpen = (state) => {
+    if ((session && !session.preview) || !meetingDueNow(state)) return;
+    const mark = nextRoundDay(state);
+    if (openedFor === mark) return;
+    openedFor = mark;
+    game.clock?.pause(CLOCK_REASON);
+    try {
+      open();
+    } catch (error) {
+      console.error(error);
+      session?.close();
+      game.clock?.resume(CLOCK_REASON);
+    }
+  };
+  game.subscribe(({ state }) => maybeOpen(state));
+  maybeOpen(game.state);
 
   // Preview steps (debug routes): ring (Call the vote plays a vote held on a copy), room, vote, last, result, letter,
   // backdown, 4a; add ':loss' or ':staff' for a lost vote or the staff letter.
@@ -772,7 +786,7 @@ export function mountBoardMeeting(game, { overlay, stage }) {
   };
   return {
     preview(step = 'ring') {
-      if (session && !session.preview) return; // never replace a real meeting: its round is waiting on it
+      if (session && !session.preview) return; // never replace a real meeting: its mark is waiting on it
       open({ preview: true, step: STEPS[step] ?? 'ring' });
     },
   };

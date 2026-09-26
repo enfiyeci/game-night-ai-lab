@@ -1,6 +1,6 @@
 // The board (board UI plan Task 5, spec §6.1 and §6.2): one dialog with two views (frame L1 "The board", frame L4
 // "What moves the board"), switched like the finance planner's Timeline and The books; the countdown chip under the
-// HUD's info box; Policy and Comms' warning bubble; and going quiet (frame P5). Every string comes from
+// HUD's clock; Policy and Comms' warning bubble; and going quiet (frame P5). Every string comes from
 // ui/data/boardCopy.js and every number from ui/logic/board.js; support is only ever drawn as the staff read's band.
 import { BOARD_MEMBERS } from '../../sim/board.js';
 import * as COPY from '../data/boardCopy.js';
@@ -39,7 +39,7 @@ function boldLead(root, text, splitter) {
 const band = (member, width) => `<span class="bd-rb ${member.lean}" style="width:${width}px"><i style="left:${member.lo}%;width:${member.hi - member.lo}%"></i></span>`;
 
 function subtitle(state, game) {
-  return fill(COPY.BOARD_SUBTITLE, { era: state.era, countdown: countdownText(meetingInfo(state, clockOf(game))) });
+  return fill(COPY.BOARD_SUBTITLE, { era: state.era, countdown: countdownText(meetingInfo(state)) });
 }
 
 // ---- the board view (frame L1) ----------------------------------------------------------------------------------
@@ -57,7 +57,7 @@ function teamPanel() {
 
 function nextMeetingPanel(state, game) {
   const root = node('div', 'budget-summary compute-budget-summary');
-  for (const [label, value] of nextMeetingRows(state, clockOf(game))) {
+  for (const [label, value] of nextMeetingRows(state)) {
     const row = node('div', 'budget-summary-row');
     row.append(node('span', '', label), node('b', '', value));
     root.append(row);
@@ -217,9 +217,10 @@ export function mountBoard(game, { overlay, stage }) {
   let meetingOpen = false; // the board meeting (Task 6): the chip and the bubbles step aside until it closes
   const cardOpen = () => meetingOpen || Boolean(overlay.querySelector('.event-layer, .dialog-layer'));
 
+  // Under the HUD's clock (real time), or under the info box when there is no clock.
   function layout() {
-    const info = hud?.querySelector('.info');
-    const top = info ? info.offsetTop + info.offsetHeight + 8 : 92;
+    const above = hud?.querySelector('.clock') ?? hud?.querySelector('.info');
+    const top = above ? above.offsetTop + above.offsetHeight + 8 : 92;
     chip.style.top = `${top}px`;
     quietSlot.style.top = `${chip.hidden ? top : top + chip.offsetHeight + 8}px`;
   }
@@ -269,15 +270,14 @@ export function mountBoard(game, { overlay, stage }) {
 
   function update() {
     const state = game.state;
-    const clock = clockOf(game);
-    const info = meetingInfo(state, clock);
-    const warning = info ? boardWarning(state, clock) : null;
+    const info = meetingInfo(state);
+    const warning = info ? boardWarning(state) : null;
     const quiet = !state.ending && state.flags.boardQuiet === state.turn;
 
     chip.hidden = !info || meetingOpen;
     chip.classList.toggle('urgent', Boolean(warning));
     if (info) chip.querySelector('span').textContent = countdownText(info);
-    // The panel shows only while the warning is on: with a clock the sim's quiet flag lasts the whole vote round,
+    // The panel shows only while the warning is on: the sim's quiet flag lasts the whole vote round,
     // which can be longer than the month the warning covers.
     quietSlot.replaceChildren(...(quiet && warning ? [quietPanel(state)] : []));
     quietSlot.hidden = Boolean(overlay.querySelector('.dialog-layer'));

@@ -4,6 +4,7 @@
 import { BOARD_MEMBERS, boardSnapshot, boardVoteThisRound } from '../../sim/board.js';
 import { boardRead } from '../../sim/boardRead.js';
 import { eraById } from '../../sim/data/eras.js';
+import { nextRoundDay, roundMarkDay, roundWord } from '../../sim/time.js';
 import { inDangerZone, runway } from '../../sim/economy.js';
 import { openDeal } from '../../sim/boardDeals.js';
 import * as COPY from '../data/boardCopy.js';
@@ -27,19 +28,21 @@ function listOf(items) {
   return items.slice(0, -1).join(COPY.LIST_SEP) + COPY.AND + items.at(-1);
 }
 
-// The next board meeting (spec §5.4). Only gate eras have a scheduled one; a promise vote is a special meeting at the
-// end of the current round. Era 5's forecast promise vote also counts as special.
-export function meetingInfo(state, clock = null) {
+// The next board meeting (spec §5.4), in story days from the state (sim/time.js), never from the clock. Only gate eras
+// have a scheduled one, at the mark ending the era's last round; a called vote (a missed promise, the emergency card,
+// era 5's forecast) is a special meeting at the mark ending the current round.
+export function meetingInfo(state) {
   if (state.ending) return null;
   const era = eraById(state.era);
   const thisRound = boardVoteThisRound(state);
   const special = thisRound && !(era.boardVoteAtGate && state.turnInEra === era.turns - 1);
   if (!special && !era.boardVoteAtGate) return null;
-  const roundDays = era.monthsPerTurn * DAYS_PER_MONTH;
-  const leftInRound = clock ? clock.daysUntilNextRound() : roundDays;
-  const laterRounds = special ? 0 : era.turns - state.turnInEra - 1;
-  return { kind: special ? 'special' : 'gate', thisRound, days: leftInRound + laterRounds * roundDays, monthsPerRound: era.monthsPerTurn };
+  const marks = special ? 1 : era.turns - state.turnInEra;
+  return { kind: special ? 'special' : 'gate', thisRound, days: roundMarkDay(state, marks) - state.day, word: roundWord(state.era) };
 }
+
+// The board meeting opens on the last story day before the mark that holds a vote (the real-time lane's hook).
+export const meetingDueNow = (state) => !state.ending && nextRoundDay(state) - state.day === 1 && boardVoteThisRound(state);
 
 // Which time template fits: months from 60 days, weeks from 14, then days.
 function timeKey(days) {
@@ -50,14 +53,9 @@ function timeKey(days) {
   return whole === 1 ? { key: 'day', n: 1 } : { key: 'days', n: whole };
 }
 
-function specialWhen(monthsPerRound) {
-  const { when } = COPY.COUNTDOWN;
-  return monthsPerRound >= 3 ? when.quarter : monthsPerRound >= 1 ? when.month : when.week;
-}
-
 function timeText(info, templates) {
   if (!info) return COPY.COUNTDOWN.none;
-  if (info.kind === 'special') return fill(templates.special, { when: specialWhen(info.monthsPerRound) });
+  if (info.kind === 'special') return fill(templates.special, { when: COPY.COUNTDOWN.when[info.word] });
   const { key, n } = timeKey(info.days);
   return fill(templates[key], { n });
 }
@@ -73,11 +71,11 @@ function spokenTime(days) {
   return whole <= 1 ? COPY.TIME_WORDS.day : fill(COPY.TIME_WORDS.days, { n: inWords(whole) });
 }
 
-// Policy and Comms' warning (spec §5.4): a meeting at most a month away (without a clock, from the start of the vote
-// round) and fewer than four sure seats in the read.
-export function boardWarning(state, clock = null, read = boardRead(state)) {
-  const info = meetingInfo(state, clock);
-  if (!info || !(clock ? info.days <= 31 : info.thisRound) || read.tally.sure >= 4) return null;
+// Policy and Comms' warning (spec §5.4): a meeting at most a month (31 story days) away and fewer than four sure seats
+// in the read.
+export function boardWarning(state, read = boardRead(state)) {
+  const info = meetingInfo(state);
+  if (!info || info.days > 31 || read.tally.sure >= 4) return null;
   return { text: fill(COPY.WARNING, { time: spokenTime(info.days), sure: inWords(read.tally.sure) }) };
 }
 
@@ -120,9 +118,9 @@ function lastMeetingText(record) {
 }
 
 // The "Next meeting" panel beside the board tab.
-export function nextMeetingRows(state, clock = null) {
+export function nextMeetingRows(state) {
   const read = boardRead(state);
-  const info = meetingInfo(state, clock);
+  const info = meetingInfo(state);
   const last = state.boardLast ?? state.board;
   const widest = read.members.reduce((best, member) => (member.hi - member.lo > best.hi - best.lo ? member : best));
   let cooling = null;
@@ -145,7 +143,7 @@ export function nextMeetingRows(state, clock = null) {
 const leakedCount = (state) => state.promises.filter((promise) => promise.leaked).length;
 const compare = (now, then) => (now > then ? 'up' : now < then ? 'down' : 'flat');
 
-// Each issue's state this round (frame L4): the snapshot endTurn took last round against now, judged the way
+// Each issue's state this round (frame L4): the snapshot taken at the start of the last round (sim/turn.js) against now, judged the way
 // updateBoard judges it.
 function issueStates(state) {
   const before = state.boardBefore ?? boardSnapshot(state);

@@ -3,15 +3,15 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createInitialState } from '../sim/state.js';
 import { boardSnapshot, holdVote } from '../sim/board.js';
+import { ROUND_DAYS } from '../sim/time.js';
 import {
-  boardView, boardWarning, countdownText, dealOptions, issuesView, meetingInfo, meetingModel, nextMeetingRows,
+  boardView, boardWarning, countdownText, dealOptions, issuesView, meetingDueNow, meetingInfo, meetingModel, nextMeetingRows,
   resultModel, voteReveal, worryMember, worryTip,
 } from '../ui/logic/board.js';
 import { moodForLean, portrait } from '../ui/components/portraits.js';
 import { SCENARIOS } from '../ui/logic/scenarios.js';
 import { cardView } from '../ui/logic/events.js';
 
-const stubClock = (days) => ({ daysUntilNextRound: () => days, now: () => ({}), pause() {}, resume() {} });
 const era = (patch) => Object.assign(createInitialState({ seed: 2 }), patch);
 
 test('board copy never uses time-step words', () => {
@@ -25,30 +25,29 @@ test('portraits draw every director and moods map from leans', () => {
   assert.equal(moodForLean('against'), 'cross');
 });
 
-test('meeting info without a clock counts rounds left in months', () => {
+test('meeting info counts story days to the mark that holds the meeting, from the state', () => {
   assert.equal(meetingInfo(era({ era: 1 })), null);
   const info = meetingInfo(era({ era: 3, turnInEra: 1 }));
   assert.equal(info.kind, 'gate');
   assert.equal(info.thisRound, false);
-  assert.ok(Math.abs(info.days - 3 * 30.44) < 1);
+  assert.equal(info.days, 3 * ROUND_DAYS[3]);
   assert.equal(meetingInfo(era({ era: 3, turnInEra: 3 })).thisRound, true);
-  const special = meetingInfo(era({ era: 1, flags: { boardVoteDue: true } }));
+  assert.equal(meetingInfo(era({ era: 3, turnInEra: 2, day: 10, dayInRound: 10 })).days, 20 + ROUND_DAYS[3]);
+  assert.equal(meetingInfo(era({ era: 2, turnInEra: 3, day: 60, dayInRound: 60 })).days, ROUND_DAYS[2] - 60);
+  const special = meetingInfo(era({ era: 1, day: 30, dayInRound: 30, flags: { boardVoteDue: true } }));
   assert.equal(special.kind, 'special');
-});
-
-test('meeting info with a clock counts days to the era end', () => {
-  const info = meetingInfo(era({ era: 3, turnInEra: 2 }), stubClock(10));
-  assert.ok(Math.abs(info.days - (10 + 30.44)) < 1);
+  assert.equal(special.days, ROUND_DAYS[1] - 30);
+  assert.equal(special.word, 'quarter');
 });
 
 test('countdown text uses months, weeks, then days', () => {
   assert.match(countdownText({ kind: 'gate', days: 90 }), /months/);
   assert.match(countdownText({ kind: 'gate', days: 21 }), /3 weeks/);
   assert.match(countdownText({ kind: 'gate', days: 6 }), /6 days/);
-  assert.match(countdownText({ kind: 'special', days: 20, monthsPerRound: 1 }), /Special board meeting/);
+  assert.match(countdownText({ kind: 'special', days: 20, word: 'month' }), /Special board meeting at the end of the month/);
 });
 
-test('the warning shows only near a meeting when the read is short of four', () => {
+test('the warning shows only near a meeting (31 story days) when the read is short of four', () => {
   const close = era({ era: 3, turnInEra: 3, board: [60, 60, 50, 30, 50, 50, 30] });
   close.boardLast = [...close.board];
   assert.ok(boardWarning(close));
@@ -57,9 +56,21 @@ test('the warning shows only near a meeting when the read is short of four', () 
   assert.equal(boardWarning(safe), null);
   const early = era({ era: 3, turnInEra: 1, board: close.board, boardLast: close.board });
   assert.equal(boardWarning(early), null);
-  // With a clock the gate is a month away only in the vote round: 20 days plus one more month-long round is too far.
-  assert.equal(boardWarning(era({ era: 3, turnInEra: 2, board: close.board, boardLast: close.board }), stubClock(20)), null);
-  assert.ok(boardWarning(era({ era: 3, turnInEra: 3, board: close.board, boardLast: close.board }), stubClock(20)));
+  // 20 days plus one more month-long round is too far; 20 days in the vote round is near.
+  assert.equal(boardWarning(era({ era: 3, turnInEra: 2, day: 10, dayInRound: 10, board: close.board, boardLast: close.board })), null);
+  assert.ok(boardWarning(era({ era: 3, turnInEra: 3, day: 10, dayInRound: 10, board: close.board, boardLast: close.board })));
+  // Era 2's vote round is a quarter: the warning waits until the last month of it.
+  assert.equal(boardWarning(era({ era: 2, turnInEra: 3, day: 59, dayInRound: 59, board: close.board, boardLast: close.board })), null);
+  assert.ok(boardWarning(era({ era: 2, turnInEra: 3, day: 60, dayInRound: 60, board: close.board, boardLast: close.board })));
+});
+
+test('the meeting is due exactly on the last story day before a mark that holds a vote', () => {
+  const lastDay = ROUND_DAYS[3] - 1;
+  assert.equal(meetingDueNow(era({ era: 3, turnInEra: 3, day: lastDay, dayInRound: lastDay })), true);
+  assert.equal(meetingDueNow(era({ era: 3, turnInEra: 3, day: lastDay - 1, dayInRound: lastDay - 1 })), false);
+  assert.equal(meetingDueNow(era({ era: 3, turnInEra: 2, day: lastDay, dayInRound: lastDay })), false, 'no vote at this mark');
+  assert.equal(meetingDueNow(era({ era: 1, day: ROUND_DAYS[1] - 1, dayInRound: ROUND_DAYS[1] - 1, flags: { boardVoteDue: 'emergency' } })), true);
+  assert.equal(meetingDueNow(era({ era: 3, turnInEra: 3, day: lastDay, dayInRound: lastDay, ending: 'misuse' })), false);
 });
 
 test('board view and meeting strings carry no support numbers', () => {
