@@ -136,6 +136,31 @@ CSS = r"""
 .st.blank .in{background:color-mix(in oklab, var(--ink) 6%, var(--cream));border-style:dashed;color:color-mix(in oklab, var(--ink) 50%, var(--paper));justify-content:center;align-items:center;font-size:22px}
 .st .in small{font-size:9px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:color-mix(in oklab, var(--ink) 62%, var(--paper))}
 .env .btns{position:static;margin-top:18px;justify-content:flex-end}
+
+/* N-mix: N1 truth scale + N2 redacted headlines + N4 Lumen note */
+.mix{left:188px;top:112px;width:1064px;height:650px}
+.mix .cols{grid-template-columns:480px 1fr;gap:28px}
+.mix .adv{display:grid;grid-template-columns:118px 1fr 78px;align-items:center;gap:10px;padding:7px 0;border-top:1px solid color-mix(in oklab, var(--wood) 22%, transparent)}
+.mix .adv:first-of-type{border-top:0}
+.mix .adv .n{font-size:13px;font-weight:900;line-height:1.1}
+.mix .adv .n small{display:block;font-size:10.5px;font-weight:700;color:color-mix(in oklab, var(--ink) 62%, var(--paper))}
+.mix .scale{position:relative;height:10px;border-radius:5px;background:linear-gradient(90deg, color-mix(in oklab, var(--teal) 35%, var(--paper)) 0 33.3%, color-mix(in oklab, var(--wood) 30%, var(--paper)) 33.3% 66.6%, color-mix(in oklab, var(--coral) 30%, var(--paper)) 66.6% 100%)}
+.mix .scale b{position:absolute;top:-4px;width:18px;height:18px;margin-left:-9px;border-radius:50%;background:var(--ink);border:3px solid var(--paper)}
+.mix .v{font-size:12px;font-weight:900;text-align:right}
+.mix .sclab{display:grid;grid-template-columns:118px 1fr 78px;gap:10px;font-size:10.5px;font-weight:800;color:color-mix(in oklab, var(--ink) 58%, var(--paper));text-transform:uppercase;letter-spacing:.04em;margin:2px 0}
+.mix .sclab div{display:flex;justify-content:space-between}
+.mix .note{position:static;transform:none;width:auto;display:flex;gap:12px;align-items:flex-start;margin-top:14px;padding:12px 14px;border-radius:10px;box-shadow:none;
+  background:color-mix(in oklab, var(--sky) 8%, var(--paper));border:1.5px solid color-mix(in oklab, var(--sky) 45%, var(--paper));font-size:14px;font-weight:700;font-style:italic;line-height:1.45}
+.mix .note b{display:block;font-style:normal;font-size:10.5px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:color-mix(in oklab, var(--sky) 62%, var(--ink))}
+.heads{display:flex;flex-direction:column;gap:0}
+.hd2{padding:9px 0;border-top:1px solid color-mix(in oklab, var(--ink) 18%, transparent)}
+.hd2:first-child{border-top:0}
+.hd2 .t{font-size:17px;font-weight:900;text-transform:uppercase;letter-spacing:-.005em;line-height:1.1}
+.hd2 .m{font-size:11px;font-weight:700;color:color-mix(in oklab, var(--ink) 62%, var(--paper));margin-top:3px}
+.hd2.new .t::after{content:"NEW";margin-left:8px;font-size:9.5px;font-weight:900;color:var(--paper);background:var(--wood);border-radius:4px;padding:1px 5px;vertical-align:3px}
+.hd2.lock i{display:block;height:11px;background:var(--ink);border-radius:1px;margin:3px 0 4px}
+.hd2.lock i+i{width:62%}
+.twocol{display:grid;grid-template-columns:1fr 1fr;column-gap:22px}
 """
 
 ERA3_CHANGES = [
@@ -268,12 +293,44 @@ def n4():
 </div>"""
 
 
+def nmix():
+    scale = {"reliable": 0.28, "mixed": 0.62, "misleading": 1.05}
+    adv = "".join(
+        f'<div class="adv"><div class="n">{n}<small>{r}</small></div><div class="scale"><b style="left:{min(scale[v] / 1.5, 1) * 100:.0f}%"></b></div><div class="v">{v}</div></div>'
+        for n, r, v, q in ADV)
+    found = [("Absorbed", "this run · era 3 · a failure", "new"), ("Left behind", "found in era 3 · a failure", ""), ("Removed by the board", "found in era 2 · a failure", "")]
+    heads = "".join(f'<div class="hd2 {c}"><div class="t">{t}</div><div class="m">{m}</div></div>' for t, m, c in found)
+    heads += "".join(f'<div class="hd2 lock"><i></i><i></i><span class="kd {k}">{"a win" if k == "win" else "a failure"}</span></div>' for k in HIDDEN)
+    return f"""
+<div id="nmix" class="ov"><div class="wash"></div>
+  <section class="gp rel mix" role="dialog" aria-label="Run over">
+    <div class="top"><div><div class="kick">Run over · era 3, turn 11</div><h1>Absorbed</h1></div>
+      <div class="beat">Endings found: 3 of 11</div></div>
+    <div class="cols">
+      <div>
+        <div class="etx" style="font-size:15px;font-weight:600;line-height:1.45;margin:4px 0 10px">The money ran out. A tech giant licensed your models and hired your team. Two models shipped; the best was Kestrel 3 Core.</div>
+        <div class="sec">Who told you the truth</div>
+        <div class="sclab"><span></span><div><span>reliable</span><span>mixed</span><span>misleading</span></div><span></span></div>
+        {adv}
+        <div class="note"><div class="lg"></div><div><b>A note from Lumen</b>{EPI}</div></div>
+      </div>
+      <div>
+        <div class="sec">The Daily Token · your endings</div>
+        <div class="heads twocol">{heads}</div>
+      </div>
+    </div>
+    <div class="foot"><div class="nu" style="font-size:14px">Eight stories are still unwritten: three wins and five failures.</div>
+      <div><span class="btn2" style="margin-right:12px">Try a different constitution</span><span class="btn">Play again</span></div></div>
+  </section>
+</div>"""
+
+
 def build():
     s = BASE.read_text()
     s = s.replace("<title>Lab Office</title>", "<title>Era card and endings options</title>")
     s = s.replace("</style>", CSS + "</style>", 1)
     i = s.rfind("<script>(function(){var t=document.getElementById")
-    s = s[:i] + e2() + e3() + e4() + n2() + n3() + n4() + "\n" + s[i:]
+    s = s[:i] + e2() + e3() + e4() + n2() + n3() + n4() + nmix() + "\n" + s[i:]
     OUT.write_text(s)
     print("wrote", OUT)
 
