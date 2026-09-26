@@ -177,6 +177,14 @@ test('all template banks meet their minimum sizes', () => {
   for (const era of [1, 2, 3, 4, 5]) assert.ok(AMBIENT_POSTS[era].length >= 3);
 });
 
+test('raise and emergency posts describe the player lab, not a rival', () => {
+  const rivalPattern = new RegExp(`\\b(?:another|rival|${Object.keys(RIVAL_POSTS).join('|')})\\b`, 'i');
+  for (const template of [...COMPANY_POSTS.raise, ...COMPANY_POSTS.emergency]) {
+    assert.match(template.text, /\b(?:a|the) lab\b/i);
+    assert.doesNotMatch(template.text, rivalPattern);
+  }
+});
+
 test('every authored template renders within the post length limit', () => {
   const texts = [];
   const collect = (value) => {

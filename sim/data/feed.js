@@ -172,14 +172,14 @@ export const ERA_POSTS = {
 
 export const COMPANY_POSTS = {
   raise: [
-    { handle: '@term_sheet', text: 'another lab raised a mountain of money and called it runway.' },
-    { handle: '@cap_table', text: 'funding round closed. the slide deck has achieved sentience.' },
-    { handle: '@marketwire', text: 'investors found more cash behind the sofa.' },
+    { handle: '@term_sheet', text: 'a lab just raised enough money to make runway sound like a destination.' },
+    { handle: '@cap_table', text: 'the lab closed a funding round. the slide deck has achieved sentience.' },
+    { handle: '@marketwire', text: 'investors gave the lab more runway. the office snacks look cautiously optimistic.' },
   ],
   emergency: [
     { handle: '@hallway_badge', text: 'lights on late at the lab. normal startup things, surely.' },
-    { handle: '@coffee_invoice', text: 'the emergency plan is active. so is every espresso machine.' },
-    { handle: '@calendar_decline', text: 'all hands meeting moved to right now, which feels encouraging.' },
+    { handle: '@coffee_invoice', text: 'the lab is scrambling. every espresso machine has been called in.' },
+    { handle: '@calendar_decline', text: 'the lab moved its all-hands to right now, which feels encouraging.' },
   ],
   lawsuitPaid: [
     { handle: '@court_sketch', text: 'a lab settled its lawsuit. nobody admitted anything except the invoice.' },
