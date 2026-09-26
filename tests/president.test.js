@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
-import { meetingDue, runMeeting } from '../sim/president.js';
+import { meetingDue, openMeeting, runMeeting } from '../sim/president.js';
 import { MEETINGS } from '../sim/data/president.js';
 import { PROMISES } from '../sim/data/promises.js';
 import { endTurn } from '../sim/turn.js';
@@ -236,6 +236,55 @@ test('four points of flattery queue the President amendment demand', () => {
   const result = runMeeting(state, answerIds);
   assert.equal(result.outcome.flattery, 4);
   assert.equal(state.flags.presidentDemand, true);
+});
+
+test('second-meeting grudges lower patience and are exposed on the meeting state', () => {
+  const state = createInitialState();
+  state.turn = 17;
+  state.era = 5;
+  state.turnInEra = 1;
+  state.promises = [
+    { source: 'president', id: 'beatRivals', text: PROMISES.beatRivals.text, meeting: 'first', dueTurn: 11, status: 'refused' },
+    { source: 'president', id: 'domesticChips', text: PROMISES.domesticChips.text, meeting: 'first', dueTurn: 11, status: 'open' },
+    { source: 'president', id: 'noWokeFilters', text: PROMISES.noWokeFilters.text, meeting: 'first', dueTurn: 11, status: 'kept' },
+    { source: 'president', id: 'leadNextQuarter', text: PROMISES.leadNextQuarter.text, meeting: 'first', dueTurn: 11, status: 'delivered' },
+  ];
+  const out = endTurn(state, {}, no);
+  assert.deepEqual(out.state.meeting, {
+    id: 'second',
+    patience: 8,
+    grudges: [PROMISES.beatRivals.text, PROMISES.domesticChips.text],
+  });
+});
+
+test('second-meeting patience is clamped between four and twelve', () => {
+  const low = createInitialState();
+  low.turn = 17;
+  low.promises = ['beatRivals', 'domesticChips', 'noWokeFilters'].map((id) => ({
+    source: 'president', id, text: PROMISES[id].text, meeting: 'first', dueTurn: 11, status: 'refused',
+  }));
+  assert.equal(openMeeting(low, 'second').patience, 4);
+
+  const high = createInitialState();
+  high.turn = 17;
+  high.promises = ['beatRivals', 'domesticChips', 'noWokeFilters'].map((id) => ({
+    source: 'president', id, text: PROMISES[id].text, meeting: 'first', dueTurn: 11, status: 'kept',
+  }));
+  assert.equal(openMeeting(high, 'second').patience, 12);
+});
+
+test('a second-meeting grudge lowers the amendment-demand threshold to two flattery', () => {
+  const answerIds = plainIds('second');
+  answerIds[0] = meeting('second').exchanges[0].answers.find((answer) => answer.style === 'flatter').id;
+
+  const noGrudge = open(createInitialState(), 'second');
+  runMeeting(noGrudge, answerIds);
+  assert.equal(Object.hasOwn(noGrudge.flags, 'presidentDemand'), false);
+
+  const withGrudge = createInitialState();
+  withGrudge.meeting = { id: 'second', patience: 8, grudges: [PROMISES.beatRivals.text] };
+  runMeeting(withGrudge, answerIds);
+  assert.equal(withGrudge.flags.presidentDemand, true);
 });
 
 test('endTurn opens a due meeting and answers it on the next turn', () => {

@@ -1,5 +1,6 @@
 import { ERAS } from './data/eras.js';
 import { PROMISES } from './data/promises.js';
+import { hasLine } from './constitution.js';
 
 const LAST_TURN = ERAS.reduce((sum, era) => sum + era.turns, 0) - 1;
 
@@ -37,13 +38,21 @@ export function createPresidentPromise(id, meeting, turn, state) {
 }
 
 export function promiseUpkeep(state, rng) {
-  void rng;
   for (const promise of state.promises) {
     if (!isPresidentPromise(promise) || promise.status !== 'open' || promise.dueTurn > state.turn) continue;
     if (!promiseDefinition(promise).check(state, promise)) continue;
     promise.status = 'kept';
     state.govFavor.us += 5;
     pushFeed(state, '@executive_office', `Thank you to the lab for keeping its promise: “${promise.text}”`, 'event');
+  }
+  for (const promise of state.promises) {
+    if (!isPresidentPromise(promise) || promise.status !== 'open' || promise.leaked) continue;
+    const contradictsHeldLine = promiseDefinition(promise).contradicts.some((line) => hasLine(state, line));
+    if (!contradictsHeldLine || !rng.chance(0.15)) continue;
+    promise.leaked = true;
+    state.publicTrust -= 4;
+    state.staffTrust -= 6;
+    pushFeed(state, '@leakwire', `memo: lab promised the President it would … ${promise.text}`, 'event');
   }
 }
 

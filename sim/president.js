@@ -1,5 +1,6 @@
 import { MEETINGS } from './data/president.js';
 import { createPresidentPromise } from './promises.js';
+import { clamp } from './util.js';
 
 const meetingById = (id) => MEETINGS.find((meeting) => meeting.id === id);
 
@@ -49,6 +50,22 @@ export function meetingDue(state) {
   return meeting?.id ?? null;
 }
 
+export function openMeeting(state, id) {
+  if (id !== 'second') return { id, patience: 10 };
+  const firstPromises = state.promises.filter((promise) =>
+    promise.source === 'president' && promise.meeting === 'first');
+  const grudges = firstPromises
+    .filter((promise) => promise.status === 'refused'
+      || (promise.status === 'open' && promise.dueTurn < state.turn))
+    .map((promise) => promise.text);
+  const kept = firstPromises.filter((promise) => ['kept', 'delivered'].includes(promise.status)).length;
+  return {
+    id,
+    patience: clamp(10 - 2 * grudges.length + kept, 4, 12),
+    grudges,
+  };
+}
+
 export function runMeeting(state, answerIds) {
   const meeting = meetingById(state.meeting?.id);
   if (!meeting) return { ok: false, error: 'no open President meeting' };
@@ -94,7 +111,8 @@ export function runMeeting(state, answerIds) {
       break;
     }
   }
-  if (flattery >= 4) state.flags.presidentDemand = true;
+  const demandThreshold = meeting.id === 'second' && state.meeting.grudges?.length > 0 ? 2 : 4;
+  if (flattery >= demandThreshold) state.flags.presidentDemand = true;
   if (flattery === 0) state.flags.supplyChainRisk = true;
   return finishMeeting(state, meeting.id, walkedOut, flattery, promises, bargain);
 }

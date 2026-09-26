@@ -23,7 +23,7 @@ import {
   SUMMIT_SKIP_US_FAVOR,
   SUMMIT_SKIP_INTL_FAVOR,
 } from './summit.js';
-import { expireMeeting, meetingDue, runMeeting } from './president.js';
+import { expireMeeting, meetingDue, openMeeting, runMeeting } from './president.js';
 import { promiseUpkeep } from './promises.js';
 
 export const MAX_MOVES = 2;
@@ -109,7 +109,7 @@ export function endTurn(prev, actions = {}, rng) {
     }
     const id = meetingDue(state);
     if (id) {
-      state.meeting = { id, patience: 10 };
+      state.meeting = openMeeting(state, id);
       events.push({ type: 'meetingDue', id });
     }
   }

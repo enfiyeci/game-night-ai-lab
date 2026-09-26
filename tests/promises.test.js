@@ -267,3 +267,37 @@ test('forced promise deliveries use President-sourced constitution amendments', 
     assert.equal(state.constitution.amendments.at(-1).source, 'president', id);
   }
 });
+
+test('a contradictory open promise can leak only once', () => {
+  const state = createInitialState();
+  state.turn = 2;
+  state.constitution.hardLines = ['honest'];
+  state.promises.push(presidentPromise('noWokeFilters', { dueTurn: 8 }));
+  let rolls = 0;
+  const leaks = { chance: (probability) => { rolls += 1; assert.equal(probability, 0.15); return true; } };
+  promiseUpkeep(state, leaks);
+  assert.equal(rolls, 1);
+  assert.equal(state.promises[0].leaked, true);
+  assert.equal(state.publicTrust, 56);
+  assert.equal(state.staffTrust, 64);
+  assert.equal(state.feed.at(-1).handle, '@leakwire');
+  assert.match(state.feed.at(-1).text, /memo: lab promised the President it would/);
+  assert.match(state.feed.at(-1).text, /woke.*filters/i);
+
+  promiseUpkeep(state, leaks);
+  assert.equal(rolls, 1);
+  assert.equal(state.publicTrust, 56);
+  assert.equal(state.staffTrust, 64);
+});
+
+test('a promise without a currently held contradicting line cannot leak', () => {
+  const state = createInitialState();
+  state.turn = 2;
+  state.constitution.hardLines = ['privacy'];
+  state.promises.push(presidentPromise('noWokeFilters', { dueTurn: 8 }));
+  let rolls = 0;
+  promiseUpkeep(state, { chance: () => { rolls += 1; return true; } });
+  assert.equal(rolls, 0);
+  assert.equal(state.promises[0].leaked, false);
+  assert.equal(state.feed.length, 0);
+});
