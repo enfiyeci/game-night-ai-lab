@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "test": "node --test tests/*.test.js",
-    "balance": "node tools/balance.js 200"
+    "balance": "node tools/balance.js 200",
+    "demo-seeds": "node tools/demo-seeds.js 300"
   }
 }
