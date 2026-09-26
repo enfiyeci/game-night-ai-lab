@@ -6,6 +6,8 @@ import { rollTrainingHazard, applyAlignmentFaking, evalGamingDebt } from './haza
 import { controlUnits } from './internal.js';
 import { hasLine } from './constitution.js';
 
+export const SHARED_SAFETY_DEBT_MULT = 0.7;
+
 export function availableUnits(state) {
   const run = state.activeRun ? state.activeRun.units : 0;
   return Math.max(0, state.compute.online - state.compute.servingUnits - run - controlUnits(state));
@@ -72,7 +74,9 @@ export function resolveRun(state, run, rng) {
 
   const sum = (key) => effects.reduce((s, e) => s + (e[key] ?? 0), 0);
   const era = eraById(state.era);
-  const debtDelta = gain * (era.targetSafetyShare - alignShare) * BALANCE.alignDebtFactor + sum('ad');
+  const rawDebtDelta = gain * (era.targetSafetyShare - alignShare) * BALANCE.alignDebtFactor + sum('ad');
+  const sharedSafety = state.deal?.collapsed === false && state.deal.binding.includes('sharedSafety');
+  const debtDelta = rawDebtDelta > 0 && sharedSafety ? rawDebtDelta * SHARED_SAFETY_DEBT_MULT : rawDebtDelta;
   state.alignmentDebt += applyAlignmentFaking(state, debtDelta, capability);
   state.concealedDebt += evalGamingDebt(state, capability);
   state.misuseExposure += sum('mx');

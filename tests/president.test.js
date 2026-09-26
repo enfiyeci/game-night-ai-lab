@@ -178,7 +178,7 @@ test('endTurn opens a due meeting and answers it on the next turn', () => {
   assert.deepEqual(due.state.meeting, { id: 'first', patience: 10 });
   assert.deepEqual(due.events.filter((event) => event.type === 'meetingDue'), [{ type: 'meetingDue', id: 'first' }]);
 
-  const answered = endTurn(due.state, { presidentAnswers: plainIds() }, no);
+  const answered = endTurn(due.state, { moves: [{ type: 'meeting' }], presidentAnswers: plainIds() }, no);
   assert.equal(answered.state.meeting, null);
   assert.equal(answered.state.meetingsHeld.includes('first'), true);
   assert.equal(answered.events.filter((event) => event.type === 'meetingOutcome').length, 1);
@@ -194,7 +194,7 @@ test('an unanswered open meeting expires with one walkout penalty and is held', 
   assert.deepEqual(out.state.meetingsHeld, ['first']);
   assert.equal(out.state.govFavor.us, 40);
   assert.equal(out.errors.length, 1);
-  assert.match(out.errors[0], /president answers/i);
+  assert.match(out.errors[0], /meeting move/i);
   assert.deepEqual(out.events.filter((event) => event.type === 'meetingOutcome'), [
     { type: 'meetingOutcome', id: 'first', walkedOut: true, stake: 'federalContract' },
   ]);
@@ -202,7 +202,7 @@ test('an unanswered open meeting expires with one walkout penalty and is held', 
 
 function assertInvalidAnswersExpire(actions) {
   const state = open(createInitialState());
-  const out = endTurn(state, actions, no);
+  const out = endTurn(state, { moves: [{ type: 'meeting' }], ...actions }, no);
   assert.equal(out.state.meeting, null);
   assert.deepEqual(out.state.meetingsHeld, ['first']);
   assert.equal(out.state.govFavor.us, 40);
@@ -234,7 +234,33 @@ test('an unknown President answer id expires the open meeting', () => {
 test('meeting flattery causes the President demand card to be queued', () => {
   const state = open(createInitialState());
   state.turn = 1;
-  const out = endTurn(state, { presidentAnswers: flatteringIds() }, no);
+  const out = endTurn(state, { moves: [{ type: 'meeting' }], presidentAnswers: flatteringIds() }, no);
   assert.equal(out.state.flags.presidentDemand, true);
   assert.equal(out.state.pendingEvents.some((event) => event.id === 'president'), true);
+});
+
+test('President answers without a meeting move are rejected and the meeting expires', () => {
+  const state = open(createInitialState());
+  const out = endTurn(state, { presidentAnswers: plainIds() }, no);
+  assert.equal(out.state.meeting, null);
+  assert.deepEqual(out.state.meetingsHeld, ['first']);
+  assert.equal(out.state.govFavor.us, 40);
+  assert.ok(out.errors.some((error) => /meeting move/i.test(error)));
+});
+
+test('a meeting move needs an open meeting and consumes one of the two moves', () => {
+  const closed = endTurn(createInitialState(), { moves: [{ type: 'meeting' }] }, no);
+  assert.ok(closed.errors.some((error) => /no open President meeting/i.test(error)));
+
+  const state = open(createInitialState());
+  const out = endTurn(state, {
+    moves: [
+      { type: 'meeting' },
+      { type: 'deal', supplierId: 'coreflame' },
+      { type: 'deal', supplierId: 'coreflame' },
+    ],
+    presidentAnswers: plainIds(),
+  }, no);
+  assert.ok(out.errors.some((error) => error.includes('2 moves')));
+  assert.equal(out.events.filter((event) => event.type === 'deal').length, 1);
 });

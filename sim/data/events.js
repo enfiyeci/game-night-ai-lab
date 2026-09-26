@@ -4,8 +4,9 @@ import { DEMANDS } from './constitution.js';
 
 const modelsWithFlag = (state, flag) => state.models.filter((model) => (model.flags ?? []).includes(flag));
 const hasFlag = (state, flag) => modelsWithFlag(state, flag).length > 0;
-const hasActiveFlag = (state, flag) => modelsWithFlag(state, flag)
-  .some((model) => model.active && state.turn >= model.activeFromTurn);
+const liveModelsWithFlag = (state, flag) => modelsWithFlag(state, flag)
+  .filter((model) => model.active && !model.superseded && state.turn >= model.activeFromTurn);
+const hasActiveFlag = (state, flag) => liveModelsWithFlag(state, flag).length > 0;
 const targetedModels = (state, targets) => targets.map((index) => state.models[index]).filter(Boolean);
 const demandText = (id) => DEMANDS.find((demand) => demand.id === id).text;
 
@@ -69,7 +70,7 @@ export const EVENTS = [
     kind: 'planted',
     flag: 'jailbreakWaiting',
     fallback: 'deny',
-    trigger: (state) => hasFlag(state, 'jailbreakWaiting'),
+    trigger: (state) => hasActiveFlag(state, 'jailbreakWaiting'),
     warning: { handle: '@devnull_ops', text: 'found a trick that gets it to ignore its rules. thread below' },
     card: {
       title: 'Jailbreak goes viral',
@@ -106,7 +107,7 @@ export const EVENTS = [
     kind: 'planted',
     flag: 'hallucination',
     fallback: 'blame',
-    trigger: (state) => hasFlag(state, 'hallucination'),
+    trigger: (state) => hasActiveFlag(state, 'hallucination'),
     warning: { handle: '@lawyer_lena', text: 'a colleague filed a brief with some very creative case law' },
     card: {
       title: 'Fake-citation scandal',
@@ -204,7 +205,7 @@ export const EVENTS = [
     id: 'agentwreck',
     kind: 'planted',
     flag: 'agentic',
-    trigger: (state) => !hasLine(state, 'no-autonomy-grab') && state.era >= 3 && hasFlag(state, 'agentic'),
+    trigger: (state) => !hasLine(state, 'no-autonomy-grab') && state.era >= 3 && hasActiveFlag(state, 'agentic'),
     warning: { handle: '@support_ticket', text: 'your agent deleted our staging database. again.' },
     card: {
       title: "Agent wrecks a customer's system",
@@ -229,7 +230,7 @@ export const EVENTS = [
     id: 'companion',
     kind: 'planted',
     flag: 'sycophancy',
-    trigger: (state) => modelsWithFlag(state, 'sycophancy').some((model) => model.channel === 'consumer'),
+    trigger: (state) => liveModelsWithFlag(state, 'sycophancy').some((model) => model.channel === 'consumer'),
     warning: { handle: '@worried_mom', text: 'my daughter says the app is her best friend' },
     card: {
       title: 'Companion-harm lawsuit',

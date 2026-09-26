@@ -134,6 +134,15 @@ test('catalog amendments shift budgets, delay compute, and undercut active model
   assert.deepEqual(s.models.map((model) => model.priceStance), ['undercut', 'market']);
 });
 
+test('the open-letter meeting adjusts the budget submitted on the same turn', () => {
+  const s = createInitialState();
+  s.pendingEvents.push({ id: 'openletter' });
+  const budget = { spend: 20, split: { training: 0.3, safety: 0.2, security: 0.1, product: 0.2, talent: 0.2 } };
+  const out = endTurn(s, { budget, eventChoices: { openletter: 'meet' } }, no);
+  assert.ok(Math.abs(out.state.budget.split.training - 0.2) < 1e-12);
+  assert.ok(Math.abs(out.state.budget.split.safety - 0.3) < 1e-12);
+});
+
 test('rival releases are stored and a Qilin release triggers its card', () => {
   const s = createInitialState();
   s.era = 2;
@@ -198,4 +207,14 @@ test('a staged sycophantic release does not trigger flattery before it is live',
   const s = withFlag('sycophancy', { activeFromTurn: 2 });
   eventsTick(s, no);
   assert.equal(Object.hasOwn(s.warnings, 'flattery'), false);
+});
+
+test('customer incidents ignore staged and superseded models', () => {
+  const staged = withFlag('jailbreakWaiting', { activeFromTurn: 2 });
+  eventsTick(staged, no);
+  assert.equal(Object.hasOwn(staged.warnings, 'jailbreak'), false);
+
+  const superseded = withFlag('hallucination', { active: false, superseded: true });
+  eventsTick(superseded, no);
+  assert.equal(Object.hasOwn(superseded.warnings, 'citations'), false);
 });

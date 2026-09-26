@@ -55,6 +55,15 @@ test('an outside or government eval gate cuts eval gaming', () => {
   assert.ok(evalGaming(s, 80, ['govEval']) < evalGaming(s, 80, []));
 });
 
+test('a binding evaluators deal keeps cutting eval gaming', () => {
+  const s = createInitialState();
+  s.era = 4;
+  s.concealedDebt = 40;
+  const base = evalGaming(s, 80, []);
+  s.deal = { signed: {}, binding: ['evaluators'], trust: 2, collapsed: false, playerShipped: false };
+  assert.equal(evalGaming(s, 80, []), base * 0.4);
+});
+
 test('interpretability spend cuts eval gaming', () => {
   const s = createInitialState();
   s.era = 4; s.concealedDebt = 40;

@@ -11,7 +11,9 @@ const GAMING_RATE = { 3: 0.35, 4: 0.55, 5: 0.75 };
 export function evalGaming(state, capability, flags) {
   if (state.era < 3) return 0;
   const raw = Math.max(0, capability - GAMING_THRESHOLD) * GAMING_RATE[state.era];
-  const gate = (flags.includes('thirdPartyEval') || flags.includes('govEval') ? 0.4 : 1) * (safetySpend(state) >= INTERPRETABILITY_SPEND ? 0.6 : 1);
+  const outsideGate = flags.includes('thirdPartyEval') || flags.includes('govEval')
+    || (state.deal?.collapsed === false && state.deal.binding.includes('evaluators'));
+  const gate = (outsideGate ? 0.4 : 1) * (safetySpend(state) >= INTERPRETABILITY_SPEND ? 0.6 : 1);
   return Math.min(state.concealedDebt, raw * gate);
 }
 

@@ -74,6 +74,29 @@ test('cautious labs and friendly governments make commitments binding', () => {
   assert.ok(s.deal.signed.sharedSafety.includes('lodestar'));
 });
 
+test('Qilin signs verification only and cannot bind other commitments', () => {
+  const s = era5();
+  s.publicTrust = 100;
+  s.govFavor = { us: 100, intl: 100 };
+  s.rivals.find((rival) => rival.id === 'qilin').caution = 1;
+  const r = proposeSummit(s, { proposals: ['evaluators', 'sharedSafety', 'verification'], sweetener: 'evaluatorsFirst' }, calm);
+  assert.equal(r.signed.evaluators.includes('qilin'), false);
+  assert.equal(r.signed.sharedSafety.includes('qilin'), false);
+  assert.equal(r.signed.verification.includes('qilin'), true);
+
+  const onlyQilin = era5();
+  onlyQilin.publicTrust = 100;
+  onlyQilin.govFavor = { us: 100, intl: 100 };
+  for (const rival of onlyQilin.rivals) {
+    rival.capability = 0;
+    rival.caution = 0;
+  }
+  Object.assign(onlyQilin.rivals.find((rival) => rival.id === 'qilin'), { capability: onlyQilin.capability, caution: 1 });
+  const nonVerification = proposeSummit(onlyQilin, { proposals: ['sharedSafety'], sweetener: 'evaluatorsFirst' }, calm);
+  assert.equal(nonVerification.signed.sharedSafety.includes('qilin'), false);
+  assert.equal(nonVerification.binding.includes('sharedSafety'), false);
+});
+
 test('the room read is a label per party per commitment', () => {
   const r = readTheRoom(era5(), calm);
   assert.ok(['likely', 'unsure', 'unlikely'].includes(r.evaluators.west));
@@ -147,6 +170,22 @@ test('sharedSafety funds safety work and increases every rival caution', () => {
   assert.equal(s.alignmentDebt, 14);
   assert.equal(s.raceHeat, 15);
   assert.deepEqual(s.rivals.map((r) => r.caution), cautions.map((c) => Math.min(1, c + 0.1)));
+});
+
+test('sharedSafety slows positive alignment-debt growth from training', () => {
+  const plain = era5();
+  const protectedState = era5();
+  protectedState.deal = deal({ binding: ['sharedSafety'] });
+  assert.equal(startRun(plain, recipe).ok, true);
+  assert.equal(startRun(protectedState, recipe).ok, true);
+  const plainBefore = plain.alignmentDebt;
+  const protectedBefore = protectedState.alignmentDebt;
+  advanceRun(plain, calm);
+  advanceRun(protectedState, calm);
+  const plainIncrease = plain.alignmentDebt - plainBefore;
+  const protectedIncrease = protectedState.alignmentDebt - protectedBefore;
+  assert.ok(plainIncrease > 0);
+  assert.ok(Math.abs(protectedIncrease - plainIncrease * 0.7) < 1e-12);
 });
 
 test('pauseAutomation stops internal use without resetting its stage and blocks redeployment', () => {
@@ -293,11 +332,13 @@ test('endTurn emits the summit result and rejects an unknown hold or ship choice
   assert.deepEqual(Object.keys(event).sort(), ['binding', 'signed', 'type']);
 
   const next = structuredClone(summit.state);
+  next.deal.signed = Object.fromEntries(Object.keys(COMMITMENTS).map((id) => [id, id === 'evaluators' ? ['openbrain'] : []]));
   const before = structuredClone(next);
-  const invalid = endTurn(next, { holdOrShip: 'constructor' }, calm);
+  const invalid = endTurn(next, { holdOrShip: 'constructor' }, { ...calm, chance: () => true });
   assert.ok(invalid.errors.some((error) => error.includes('hold or ship')));
-  assert.equal(invalid.events.some((entry) => entry.type === 'defection'), false);
-  assert.equal(next.deal.playerShipped, before.deal.playerShipped);
+  assert.equal(invalid.events.some((entry) => entry.type === 'defection' && entry.party === 'openbrain'), true);
+  assert.equal(invalid.state.deal.playerShipped, before.deal.playerShipped);
+  assert.equal(invalid.state.deal.trust, before.deal.trust - 1);
 });
 
 test('final endings: a held deal wins; otherwise the frontier and total debt decide', () => {

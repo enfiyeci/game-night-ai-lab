@@ -195,6 +195,64 @@ test('a due release consumes serving compute before move validation', () => {
   assert.ok(out.state.compute.servingUnits > 5);
 });
 
+test('a quiet takeover stops training and event generation for the turn', () => {
+  const s = createInitialState();
+  s.era = 3;
+  s.turn = 1;
+  startRun(s, recipe);
+  s.activeRun.turnsLeft = 1;
+  s.internal = { control: 0, stage: 3, turns: 3, capability: 80 };
+  s.alignmentDebt = 100;
+  s.models.push({
+    active: true,
+    activated: true,
+    activeFromTurn: 0,
+    channel: 'consumer',
+    flags: ['sycophancy'],
+    users: 1e6,
+    userCap: 4e6,
+    priceStance: 'market',
+    servingCost: 0,
+    spec: { size: 'medium', arch: 'dense', context: 'short', precision: 'bf16', guard: false, channel: 'consumer', reasoning: 'off' },
+  });
+  s.warnings.flattery = { turn: 0 };
+  const hit = { next: () => 0, int: () => 0, chance: () => true, pick: (values) => values[0], normal: (mean) => mean };
+
+  const out = endTurn(s, {}, hit);
+
+  assert.equal(out.state.ending, 'quietTakeover');
+  assert.ok(out.state.activeRun);
+  assert.equal(out.state.pendingModel, null);
+  assert.equal(out.state.pendingEvents.length, 0);
+  assert.equal(out.events.some((event) => event.type === 'runComplete'), false);
+});
+
+test('the board sees card costs from the start-of-turn cash snapshot', () => {
+  const s = createInitialState();
+  s.era = 5;
+  s.turnInEra = 2;
+  s.cash = 100;
+  s.models.push({
+    active: true,
+    activated: true,
+    activeFromTurn: 0,
+    channel: 'enterprise',
+    flags: [],
+    users: 1.5e6,
+    userCap: 6e6,
+    priceStance: 'market',
+    servingCost: 0,
+    spec: { size: 'medium', arch: 'dense', context: 'short', precision: 'bf16', guard: false, channel: 'enterprise', reasoning: 'off' },
+  });
+  s.pendingEvents.push({ id: 'distill' });
+  const budget = { spend: 0, split: { training: 0.3, safety: 0.2, security: 0.1, product: 0.2, talent: 0.2 } };
+
+  const out = endTurn(s, { budget, eventChoices: { distill: 'settle' } }, createRng(22));
+
+  assert.ok(out.state.cash > 28 && out.state.cash < 70);
+  assert.equal(out.state.board[3], s.board[3] - 6);
+});
+
 test('endTurn emits a pause event when a run has lost reserved compute', () => {
   const s = createInitialState();
   startRun(s, recipe);

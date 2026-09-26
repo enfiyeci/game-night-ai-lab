@@ -16,6 +16,7 @@ export function deployInternal(state, control) {
     return { ok: false, error: 'the summit deal pauses internal automation' };
   }
   if (state.era < 3) return { ok: false, error: 'internal deployment opens in era 3' };
+  if (state.pendingModel?.hazard) return { ok: false, error: 'resolve the training hazard first' };
   if (state.models.length === 0 && !state.pendingModel) return { ok: false, error: 'you need a trained model' };
   if (typeof control !== 'number' || !(control >= 0 && control <= 1)) return { ok: false, error: 'control must be between 0 and 1' };
   // Adding back the current reservation lets a player change the level of an existing deployment.

@@ -43,6 +43,7 @@ function sweetenerBonus(commitmentId, sweetener) {
 }
 
 function stance(state, commitmentId, partyId, sweetener, rng) {
+  if (partyId === 'qilin' && commitmentId !== 'verification') return -Infinity;
   const party = partyById(state, partyId);
   let favor = 0;
   if (partyId === 'west') favor = (state.govFavor.us - 50) / 100;

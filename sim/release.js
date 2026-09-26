@@ -76,6 +76,7 @@ export function releaseModel(state, release, rng) {
   const generation = release.generation ?? 1;
   const name = modelName({ family: release.family, generation, size: m.size });
   state.capability = Math.max(state.capability, m.capability);
+  state.alignmentDebt += sum('ad');
   const launch = scoreLaunch(state, { capability: m.capability + REASONING_BONUS[reasoning], spec, flags, name, priceStance: release.price }, rng);
   const quality = clamp(1 + (launch.pressAvg - 6) / 8, 0.5, 1.6);
   const eraGrowth = 1 + 0.5 * (state.era - 1);
@@ -123,7 +124,6 @@ export function releaseModel(state, release, rng) {
   const releaseHeat = BALANCE.ownReleaseHeat + m.publicEffects.heat + sum('heat');
   const delayed = state.deal?.collapsed === false && state.deal.binding.includes('releaseDelay');
   state.raceHeat += releaseHeat * (delayed ? 0.5 : 1);
-  state.alignmentDebt += sum('ad');
   state.misuseExposure += Math.max(0, m.capability - BALANCE.dangerLine) * 0.3;
   if (spec.channel === 'open') {
     // Open weights add to whatever risk is already permanent, then lock the result.

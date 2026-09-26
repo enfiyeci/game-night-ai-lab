@@ -117,13 +117,15 @@ function summitMove(state, style, rng) {
 
 function plannedState(state, actions) {
   const planned = structuredClone(state);
-  if (planned.meeting && actions.presidentAnswers) runMeeting(planned, actions.presidentAnswers);
+  planned.budget = structuredClone(actions.budget);
+  if (planned.meeting && actions.moves.some((move) => move.type === 'meeting') && actions.presidentAnswers) {
+    runMeeting(planned, actions.presidentAnswers);
+  }
   if (planned.pendingModel?.hazard && actions.hazardChoice) resolveHazard(planned, actions.hazardChoice);
   for (const id of actions.addressWarnings ?? []) addressWarning(planned, id);
   for (const [id, choiceId] of Object.entries(actions.eventChoices)) resolveEvent(planned, id, choiceId);
   activateReleases(planned);
   updateServing(planned);
-  planned.budget = structuredClone(actions.budget);
   return planned;
 }
 
@@ -171,7 +173,10 @@ function makeStrategy(style, prefs) {
         .filter(([, warning]) => !warning.deferred)
         .map(([id]) => id);
     }
-    if (state.meeting) actions.presidentAnswers = presidentAnswers(state, style, rng);
+    if (state.meeting) {
+      actions.moves.push({ type: 'meeting' });
+      actions.presidentAnswers = presidentAnswers(state, style, rng);
+    }
     if (state.era === 5 && state.deal && state.turnInEra > 0) actions.holdOrShip = style === 'speed' ? 'ship' : 'hold';
 
     const planned = plannedState(state, actions);

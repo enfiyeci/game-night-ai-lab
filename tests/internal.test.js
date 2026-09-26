@@ -25,6 +25,14 @@ test('internal deployment opens in era 3 and needs a model', () => {
   assert.equal(deployInternal(t, '0.5').ok, false);
 });
 
+test('internal deployment waits for a pending training hazard to be resolved', () => {
+  const s = createInitialState();
+  s.era = 3;
+  s.pendingModel = { capability: 60, hazard: { type: 'rewardHacking', size: 10 } };
+  assert.deepEqual(deployInternal(s, 0), { ok: false, error: 'resolve the training hazard first' });
+  assert.equal(s.internal, null);
+});
+
 test('control reserves compute and lowers risk', () => {
   const s = withModel();
   s.alignmentDebt = 60; s.capability = 70;

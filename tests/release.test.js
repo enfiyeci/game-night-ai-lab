@@ -99,6 +99,16 @@ test('releasing with an unresolved hazard ignores it, and an outside eval expose
   assert.equal(s.alignmentDebt, 6 + 10);
 });
 
+test('release-card debt is visible in the launch safety benchmark', () => {
+  const s = trainedState();
+  s.alignmentDebt = 10;
+  s.concealedDebt = 0;
+  const r = releaseModel(s, { ...release, picks: ['channel-app'] }, rng);
+  const safety = r.model.launch.benchmarks.find((benchmark) => benchmark.id === 'gauntlet');
+  assert.equal(s.alignmentDebt, 13);
+  assert.equal(safety.truth, 91);
+});
+
 test('a new model on the same channel retires the old one', () => {
   const s = trainedState();
   const first = releaseModel(s, release, rng).model;
