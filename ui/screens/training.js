@@ -124,7 +124,7 @@ export function mountTraining(game, { stage, hud, overlay }) {
         .then(() => {
           if (generation !== flightGeneration) return;
           tick(spawn.kind);
-          sfx.tick(displayed[spawn.kind] % 10, { base: spawn.kind === 'capability' ? 523.25 : 392, gain: 0.06 });
+          if (!reducedMotion()) sfx.tick(displayed[spawn.kind] % 10, { base: spawn.kind === 'capability' ? 523.25 : 392, gain: 0.06 });
           inFlight -= 1;
           if (inFlight === 0) {
             flying = false;
