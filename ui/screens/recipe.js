@@ -52,6 +52,7 @@ function workingName(state, draft) {
     family: last?.family ?? 'Kestrel',
     generation: (last?.generation ?? 0) + 1,
     size: draft.sliders.size,
+    tierWords: state.tierWords,
   });
 }
 

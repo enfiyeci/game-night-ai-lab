@@ -24,6 +24,18 @@ test('model names are family + generation + tier word', () => {
   assert.equal(modelName({ family: 'Kestrel', generation: 3, size: 'small' }), 'Kestrel 3 Swift');
 });
 
+test('the player can rename the size words; blank or missing words fall back', () => {
+  const words = { small: 'Haiku', medium: 'Sonnet', large: '  ', xl: 42 };
+  assert.equal(modelName({ family: 'Kestrel', generation: 2, size: 'small', tierWords: words }), 'Kestrel 2 Haiku');
+  assert.equal(modelName({ family: 'Kestrel', generation: 2, size: 'large', tierWords: words }), 'Kestrel 2 Grand');
+  assert.equal(modelName({ family: 'Kestrel', generation: 2, size: 'xl', tierWords: words }), 'Kestrel 2 Apex');
+  const s = trainedState();
+  s.tierWords = { medium: ' Sonnet ' };
+  const r = releaseModel(s, release, rng);
+  assert.equal(r.model.name, 'Kestrel 1 Sonnet');
+  assert.equal(s.lastFlagship.name, 'Kestrel 1 Sonnet');
+});
+
 test('releasing a consumer model', () => {
   const s = trainedState();
   const r = releaseModel(s, release, rng);

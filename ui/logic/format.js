@@ -52,7 +52,7 @@ export function project(state) {
       : { name: 'No project', status: 'click the floor to plan your turn', progress: null };
   }
   const last = state.models.at(-1);
-  const name = modelName({ family: last?.family ?? 'Kestrel', generation: (last?.generation ?? 0) + 1, size: run.recipe.sliders.size });
+  const name = modelName({ family: last?.family ?? 'Kestrel', generation: (last?.generation ?? 0) + 1, size: run.recipe.sliders.size, tierWords: state.tierWords });
   const total = Math.max(1, run.turnsLeft, recipeCost(state, run.recipe).turns);
   const progress = (total - run.turnsLeft) / total;
   return { name, status: `training run · ${STAGE_WORDS[Math.min(2, Math.floor(progress * 3))]}`, progress };
