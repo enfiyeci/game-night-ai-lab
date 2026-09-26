@@ -3621,3 +3621,23 @@ button.dl-pill { font: inherit; font-size: 13px; font-weight: 900; color: var(--
 .screenwall-choice b { font-size: 16px; }
 .screenwall-choice small { color: color-mix(in srgb, var(--ink) 65%, transparent); }
 .screenwall-choice:hover, .screenwall-choice:focus-visible { outline: 3px solid var(--sky); }
+/* 2B: the AI asks from the racks (mockup q-b). Not modal: the clock keeps running while it is open.
+   Positioned from the rack anchor (left and bottom in racks.js); the tail at 300 px points down at the racks. */
+.racks-panel { pointer-events: auto; position: absolute; width: 370px; padding: 12px 14px 10px; border-radius: 12px; border: 2px solid var(--sky); background: var(--paper); box-shadow: 0 14px 34px color-mix(in srgb, var(--ink) 25%, transparent); z-index: 5; }
+.racks-panel[hidden] { display: none; }
+.racks-panel::after { content: ""; position: absolute; left: 292px; bottom: -9px; width: 14px; height: 14px; background: var(--paper); border-right: 2px solid var(--sky); border-bottom: 2px solid var(--sky); transform: rotate(45deg); }
+.racks-kicker { display: block; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: color-mix(in srgb, var(--sky) 80%, var(--ink)); }
+.racks-panel h2 { margin: 0 0 8px; font-size: 20px; font-weight: 400; line-height: 1.25; }
+.racks-item { padding: 8px 10px; border-radius: 8px; margin-bottom: 6px; background: color-mix(in srgb, var(--sky) 10%, var(--paper)); }
+.racks-item.risky { background: color-mix(in srgb, var(--coral) 10%, var(--paper)); }
+.racks-item p { margin: 0 0 6px; font-size: 13.5px; font-weight: 800; line-height: 1.3; }
+.racks-actions { display: flex; gap: 6px; }
+.racks-actions button { min-height: 26px; padding: 3px 12px; border-radius: 6px; border: 1.5px solid color-mix(in srgb, var(--ink) 25%, transparent); background: var(--paper); color: var(--ink); font: inherit; font-size: 12.5px; font-weight: 800; cursor: pointer; }
+.racks-actions button.approve { background: color-mix(in srgb, var(--sky) 80%, var(--ink)); border-color: transparent; color: var(--paper); }
+.racks-actions button:hover { border-color: var(--ink); }
+.racks-actions button:focus-visible, .racks-panel .compute-toggle:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+.racks-safety { z-index: 5; width: 230px; --tail: 33px; }
+.racks-safety[hidden] { display: none; }
+.racks-panel .compute-toggle { padding-top: 8px; }
+/* The desk phone sits above dialogs and could open an event card over the choice; it steps away until then. */
+.hazard-open .ev-phone, .hazard-open .ev-phone-button { display: none; }

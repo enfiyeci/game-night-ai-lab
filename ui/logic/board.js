@@ -192,7 +192,7 @@ export const worryMember = (state) => worryPick(state)?.id ?? null;
 
 export function worryTip(state) {
   const pick = worryPick(state);
-  return pick ? fill(COPY.WORRY, { name: nameOf(pick.id), issue: COPY.ISSUE_LABEL[pick.issue] }) : null;
+  return pick ? fill(COPY.WORRY, { name: nameOf(pick.id), issue: COPY.ISSUE_LABEL[pick.issue], ...COPY.PRONOUN[pick.id] }) : null;
 }
 
 export function dealOptions(state) {

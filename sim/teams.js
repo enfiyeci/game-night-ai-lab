@@ -16,10 +16,13 @@ export const TEAM_OF = {
   meeting: 'ceo',
 };
 
+// "you are" for the CEO, "the finance team is" for a team.
+export const busySubject = (team) => (team === 'ceo' ? 'you are' : `the ${TEAMS[team]} is`);
+
 export function teamBusyError(state, move) {
   const team = TEAM_OF[move.type];
   if (!team) return null;
   if (team === 'research' && state.activeRun) return 'the research team is busy with the training run';
-  if (state.round.teams[team]) return `the ${TEAMS[team]} is busy until ${storyDate(nextRoundDay(state)).label}`;
+  if (state.round.teams[team]) return `${busySubject(team)} busy until ${storyDate(nextRoundDay(state)).label}`;
   return null;
 }
