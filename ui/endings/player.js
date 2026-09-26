@@ -1,12 +1,12 @@
-// Plays an ending film: the player's own office, then world scenes (stage flats and screens, drawn by
-// tools/endings/gen_plates.py), then the title card and Lumen's last line. Rendering is a pure function of time,
-// so a film can start anywhere, freeze on a frame (for screenshots) and honour reduced motion.
+// Plays an ending film: the player's own office, then world scenes (screens drawn by tools/endings/gen_plates.py and
+// wide shots rendered in Blender by tools/endings/blender/), then the title card and Lumen's last line. Rendering is a
+// pure function of time, so a film can start anywhere, freeze on a frame (for screenshots) and honour reduced motion.
 //
 //   const film = await mountFilm(document.body, { id: 'misalignment', era: 4, onDone });
 //   film.play();            // from a click, so the sound may start
 //   film.seek(12.5);        // or show one frame
 //
-// Assets: ui/endings/films/<id>.json (the shot list), ui/assets/endings/plates/<plate>.svg,
+// Assets: ui/endings/films/<id>.json (the shot list), ui/assets/endings/plates/<plate>.svg, ui/assets/endings/clips/<clip>.mp4,
 // ui/assets/endings/<id>.m4a (sound), and the office art ui/assets/office-era<N>.svg with its anchors.
 import { buildTimeline, shotAt, camAt, sampleKeys, typedText } from './timeline.js';
 
@@ -146,6 +146,18 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
   await Promise.all([...new Set(film.shots.filter((s) => s.plate).map((s) => s.plate))].map(async (name) => {
     plates.set(name, await fetchText(`${base}ui/assets/endings/plates/${name}.svg`));
   }));
+  // Clips are fetched whole before the film starts, so playback never waits on the network mid-film.
+  const clips = new Map();
+  try {
+    await Promise.all([...new Set(timeline.shots.filter((s) => s.clip).map((s) => s.clip))].map(async (name) => {
+      const response = await fetch(`${base}ui/assets/endings/clips/${name}.mp4`);
+      if (!response.ok) throw new Error(`could not load clip ${name}`);
+      clips.set(name, URL.createObjectURL(await response.blob()));
+    }));
+  } catch (error) {
+    for (const url of clips.values()) URL.revokeObjectURL(url);
+    throw error;
+  }
 
   const el = document.createElement('div');
   el.className = 'film';
@@ -163,6 +175,18 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
   const shotsHost = $('.film-shots');
 
   const nodes = timeline.shots.map((shot) => {
+    if (shot.clip) {
+      const wrapEl = document.createElement('div');
+      wrapEl.className = 'film-shot';
+      const video = document.createElement('video');
+      Object.assign(video, { src: clips.get(shot.clip), muted: true, playsInline: true, preload: 'auto' });
+      video.setAttribute('aria-hidden', 'true');
+      wrapEl.append(video);
+      const dim = shot.kind === 'title' ? wrapEl.appendChild(document.createElement('div')) : null;
+      if (dim) dim.className = 'film-dim';
+      shotsHost.append(wrapEl);
+      return { wrapEl, video, dim };
+    }
     if (shot.kind === 'title') return null;
     const wrapEl = document.createElement('div');
     wrapEl.className = 'film-shot';
@@ -181,30 +205,53 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
   const titleEl = $('.film-title');
   const lumenText = lumenLine ?? film.lumen ?? '';
   let current = null;
+  let playing = false;
+
+  // A clip follows the film's clock: it plays while the film plays and is re-seeked when it drifts; otherwise it shows
+  // the frame for this moment. Reduced motion holds the clip's last frame, as the camera holds its final framing.
+  function syncClip(video, local, dur, still) {
+    const end = Math.min(dur, Number.isFinite(video.duration) ? video.duration : dur) - 0.01; // inside the last frame
+    const target = still ? end : Math.min(local, end);
+    if (playing && !still) {
+      if (video.paused) { video.currentTime = target; video.play().catch(() => {}); }
+      else if (Math.abs(video.currentTime - target) > 0.25) video.currentTime = target;
+    } else {
+      if (!video.paused) video.pause();
+      if (Math.abs(video.currentTime - target) > 0.02) video.currentTime = target;
+    }
+  }
 
   function render(t) {
     const still = reducedMotion();
     const { shot, local } = shotAt(timeline, t);
     if (shot !== current) {
-      if (current && nodes[current.index]) nodes[current.index].wrapEl.classList.remove('on');
+      if (current && nodes[current.index]) {
+        nodes[current.index].wrapEl.classList.remove('on');
+        nodes[current.index].video?.pause();
+      }
       if (nodes[shot.index]) nodes[shot.index].wrapEl.classList.add('on');
       $('.film-card').textContent = shot.card ?? '';
       $('.film-sub').textContent = shot.sub ?? '';
       titleEl.hidden = shot.kind !== 'title';
       current = shot;
     }
-    const fadeIn = Math.max(0, 1 - local / 0.35);
-    const fadeOut = shot.kind === 'title' ? 0 : Math.max(0, 1 - (shot.dur - local) / 0.22);
+    // shots fade through black unless the next one cuts in (a montage, or a title card that continues the take)
+    const next = timeline.shots[shot.index + 1];
+    const fadeIn = shot.cut ? 0 : Math.max(0, 1 - local / 0.35);
+    const fadeOut = shot.kind === 'title' || next?.cut ? 0 : Math.max(0, 1 - (shot.dur - local) / 0.22);
     $('.film-fade').style.opacity = still ? 0 : Math.min(1, fadeIn + fadeOut);
+    const node = nodes[shot.index];
+    if (node?.video) syncClip(node.video, local, shot.dur, still);
     if (shot.kind === 'title') {
       const k = (a, b) => (still ? (local >= a ? 1 : 0) : Math.min(1, Math.max(0, (local - a) / (b - a))));
+      if (node?.dim) node.dim.style.opacity = 0.6 * k(0, 1.2);
       titleEl.querySelector('h1').style.opacity = k(0.3, 1.4);
       titleEl.querySelector('.tagline').style.opacity = k(1.5, 2.4);
       titleEl.querySelector('.lumen').style.opacity = k(2.4, 2.8);
       titleEl.querySelector('.lumen span').textContent = still ? lumenText : typedText(lumenText, 2.8, local, 30);
       return;
     }
-    const node = nodes[shot.index];
+    if (node.video) return;
     node.svg.setAttribute('viewBox', viewBox(camAt(node.cam, local / shot.dur, still), node.frame));
     for (const [e, keys] of node.keyed) applyValues(e, sampleKeys(keys, local, still), still);
     for (const [e, start, text] of node.typed) e.textContent = still ? (local >= start ? text : '') : typedText(text, start, local);
@@ -227,10 +274,12 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
   function finish(reason) {
     if (done) return;
     done = true;
+    playing = false;
     cancelAnimationFrame(raf);
     audio?.pause();
     document.removeEventListener('keydown', onKey);
     el.remove();
+    for (const url of clips.values()) URL.revokeObjectURL(url);
     for (const child of inerted) child.inert = false;
     if (returnFocus?.isConnected) returnFocus.focus();
     onDone?.(reason);
@@ -240,7 +289,6 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
     if (event.key === 'Tab') { event.preventDefault(); $('.film-skip').focus(); } // Skip is the film's only control
   }
   $('.film-skip').addEventListener('click', () => finish('skipped'));
-  document.addEventListener('keydown', onKey);
   root.append(el);
   render(0);
 
@@ -251,8 +299,11 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
       returnFocus = document.activeElement;
       inerted = [...root.children].filter((child) => child !== el && !child.inert);
       for (const child of inerted) child.inert = true;
+      // Escape and the Tab trap belong to the playing film, not to whatever page mounted it (Codex review round 3)
+      document.addEventListener('keydown', onKey);
+      playing = true;
       started = performance.now() - from * 1000;
-          if (audio) { audio.currentTime = from; audio.play().catch(() => {}); }
+      if (audio) { audio.currentTime = from; audio.play().catch(() => {}); }
       const loop = () => {
         const t = clock();
         render(t);
@@ -262,7 +313,7 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
       raf = requestAnimationFrame(loop);
       $('.film-skip').focus();
     },
-    seek(t) { cancelAnimationFrame(raf); audio?.pause(); render(t); },
+    seek(t) { cancelAnimationFrame(raf); playing = false; audio?.pause(); render(t); },
     stop: () => finish('stopped'),
   };
 }

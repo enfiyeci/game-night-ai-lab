@@ -2,7 +2,9 @@
 """Synthesised sound for an ending film, timed from its shot list (ui/endings/films/<id>.json). No samples.
 
 Each shot lists cues as [name, at] or [name, at, until], in seconds from the shot's start. Ambiences (room, gulls,
-city, ...) run to the end of their shot. Under the whole film runs a low drone that swells on the title card.
+city, ...) run to the end of their shot. A run of badges or board rows is [name, at, count, step]: exactly count sounds,
+step seconds apart, so the sound matches what the picture shows. The film's "titleSfx" cues play under the title card.
+Under the whole film runs a low drone that swells on the title card.
 Writes ui/assets/endings/<id>.m4a (AAC, via ffmpeg). Needs numpy.
 
 Run: python3 tools/endings/make_sound.py misalignment
@@ -86,14 +88,31 @@ def high_tone(d):
     return np.sin(2 * np.pi * 2350 * t_axis(n)) * env(n, 1.5, 1.0) * 0.012
 
 
-def chime_seq(d):
-    """Soft notification chimes, one every ~0.3 s: the 'Resolved' badges popping."""
-    out = np.zeros(int((d + 0.5) * SR))
-    for k in range(int(d / 0.3 + 1e-9) + 1):   # onsets at 0, 0.3, ... up to d inclusive, one per badge
-        clip = tone([784, 988, 1175][k % 3], 0.5, 7, 0.05)
-        i = int(k * 0.3 * SR)
-        out[i:i + len(clip)] += clip[: len(out) - i]
+def run(one, count, step):
+    """count copies of one(k) (the k-th sound of the run), step seconds apart."""
+    clips = [one(k) for k in range(count)]
+    out = np.zeros(int((count - 1) * step * SR) + max(len(c) for c in clips))
+    for k, clip in enumerate(clips):
+        i = int(k * step * SR)
+        out[i:i + len(clip)] += clip
     return out
+
+
+def chimes(count, step):
+    """Soft notification chimes: the 'Resolved' badges popping, one per badge."""
+    return run(lambda k: tone([784, 988, 1175][k % 3], 0.5, 7, 0.05), count, step)
+
+
+def flaps(count, step):
+    """A departures-board row flipping: a burst of small plastic clacks, one burst per row."""
+    def burst(k):
+        out = np.zeros(int(0.12 * SR))
+        for j in range(4):
+            click = bandpass(noise(int(0.012 * SR)), 1200, 6000) * np.exp(-np.linspace(0, 9, int(0.012 * SR))) * 0.16
+            i = int(j * 0.024 * SR)
+            out[i:i + len(click)] += click
+        return out
+    return run(burst, count, step)
 
 
 def chime(d):
@@ -104,7 +123,20 @@ def chime(d):
 
 
 def tick(d):
-    return tone(1800, 0.06, 60, 0.3) + np.pad(tone(1400, 0.06, 60, 0.2), (int(0.09 * SR), 0))[: int(0.06 * SR)]
+    """Two quick clicks, the second 0.09 s after the first."""
+    n = int(0.15 * SR)
+    first = np.pad(tone(1800, 0.06, 60, 0.3), (0, n - int(0.06 * SR)))
+    return first + np.pad(tone(1400, 0.06, 60, 0.2), (int(0.09 * SR), 0))[:n]
+
+
+def sting(d):
+    """A news-channel sting: two bright stabs over a low hit."""
+    n = int(1.4 * SR)
+    t = t_axis(n)
+    hit = np.sin(2 * np.pi * 65 * t) * np.exp(-t * 5) * 0.12
+    out = hit + np.pad(tone(1046, 0.5, 6, 0.07) + tone(1568, 0.5, 6, 0.04), (0, n - int(0.5 * SR)))
+    second = tone(1318, 0.6, 5, 0.07)
+    return out + np.pad(second, (int(0.18 * SR), n - int(0.18 * SR) - len(second)))
 
 
 def gulls(d):
@@ -237,9 +269,9 @@ def whir(d):
 SOUNDS = {"room": room, "party": party, "tone": high_tone, "chime": chime, "tick": tick, "gulls": gulls, "door": door,
           "beeps": beeps, "hold": hold, "fridge": fridge, "flicker": flicker, "notify": notify, "typing": typing, "city": city,
           "powerdown": powerdown, "roomtone": roomtone, "creak": creak, "hum": hum, "clunk": clunk, "fansdown": fansdown,
-          "wind": wind, "emergency": emergency, "whir": whir}
-AMBIENT = {"room", "party", "tone", "gulls", "beeps", "city", "roomtone", "wind", "emergency"}
-CHIME_RUN = {"chime"}   # "chime" with an 'until' becomes a run of badge chimes
+          "wind": wind, "emergency": emergency, "whir": whir, "sting": sting}
+AMBIENT = {"room", "party", "tone", "gulls", "beeps", "city", "roomtone", "wind", "emergency", "fridge"}
+RUNS = {"chimes": chimes, "flaps": flaps}   # [name, at, count, step]
 
 
 def drone(d, swell_at):
@@ -261,16 +293,22 @@ def build(film_id):
         if i < len(track):
             track[i:j] += clip[: j - i]
 
+    def cues(sfx, start, shot_dur):
+        for cue in sfx:
+            name, at = cue[0], cue[1]
+            if name in RUNS:
+                clip = RUNS[name](cue[2], cue[3])
+            else:
+                until = cue[2] if len(cue) > 2 else (shot_dur if name in AMBIENT else None)
+                clip = SOUNDS[name]((min(until, shot_dur) - at) if until else 2.0)
+            add(start + at, clip[: int((shot_dur - at) * SR)])   # nothing spills into the next shot
+
     start = 0.0
     for shot in film["shots"]:
-        for cue in shot.get("sfx", []):
-            name, at = cue[0], cue[1]
-            until = cue[2] if len(cue) > 2 else (shot["dur"] if name in AMBIENT else None)
-            dur = (min(until, shot["dur"]) - at) if until else 2.0
-            clip = chime_seq(dur) if name in CHIME_RUN and len(cue) > 2 else SOUNDS[name](dur)
-            add(start + at, clip[: int((shot["dur"] - at) * SR)])   # nothing spills into the next shot
+        cues(shot.get("sfx", []), start, shot["dur"])
         start += shot["dur"]
     title_at = start
+    cues(film.get("titleSfx", []), title_at, film.get("titleDur", TITLE_DUR))
     add(0, drone(total, title_at))
     add(title_at + 2.8, chime(2.4) * 0.8)   # Lumen's line
     track = np.tanh(track * 2.6) / np.tanh(2.6)

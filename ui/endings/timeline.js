@@ -5,7 +5,9 @@ export const TITLE_DUR = 7;
 
 export function buildTimeline(film) {
   let t = 0;
-  const shots = [...film.shots, { kind: 'title', dur: film.titleDur ?? TITLE_DUR }].map((shot, index) => {
+  // A title card over a clip continues that take, so it cuts in rather than fading through black.
+  const title = { kind: 'title', dur: film.titleDur ?? TITLE_DUR, ...(film.titleClip && { clip: film.titleClip, cut: true }) };
+  const shots = [...film.shots, title].map((shot, index) => {
     const out = { ...shot, index, start: t, end: t + shot.dur };
     t += shot.dur;
     return out;

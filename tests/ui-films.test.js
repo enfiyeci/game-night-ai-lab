@@ -18,6 +18,13 @@ test('the timeline adds a title card and finds the shot at any time', () => {
   assert.equal(shotAt(tl, -4).shot.index, 0);
 });
 
+test('a title card over a clip cuts in from the last shot instead of fading', () => {
+  const plain = buildTimeline({ shots: [{ dur: 2 }] }).shots.at(-1);
+  assert.equal(plain.cut, undefined);
+  const over = buildTimeline({ shots: [{ dur: 2 }], titleClip: 'x' }).shots.at(-1);
+  assert.deepEqual([over.kind, over.clip, over.cut], ['title', 'x', true]);
+});
+
 test('camera moves default to the full frame and ease between ends', () => {
   assert.deepEqual(camAt(undefined, 0.5), { x: 640, y: 360, s: 1 });
   const cam = { from: { x: 0, s: 1 }, to: { x: 100, s: 2 } };
@@ -73,9 +80,11 @@ test('every film names a real ending, and every asset it uses exists', () => {
     assert.ok(ENDINGS[film.id], `${film.id} is an ending`);
     assert.ok(film.title && film.lumen, `${film.id} has a title and a Lumen line`);
     assert.ok(existsSync(`ui/assets/endings/${film.id}.m4a`), `${film.id} has its sound`);
+    if (film.titleClip) assert.ok(existsSync(`ui/assets/endings/clips/${film.titleClip}.mp4`), `clip ${film.titleClip} exists`);
     for (const shot of film.shots) {
       assert.ok(shot.dur > 0, `${film.id}: every shot has a duration`);
       if (shot.kind === 'plate') assert.ok(existsSync(`ui/assets/endings/plates/${shot.plate}.svg`), `plate ${shot.plate} exists`);
+      else if (shot.kind === 'video') assert.ok(existsSync(`ui/assets/endings/clips/${shot.clip}.mp4`), `clip ${shot.clip} exists`);
       else assert.equal(shot.kind, 'office');
       for (const b of shot.bubbles ?? []) assert.ok(roles.has(b.who), `${film.id}: ${b.who} has a desk`);
       for (const v of [shot.cam?.from, shot.cam?.to]) if (v?.focus) assert.ok(roles.has(v.focus), `${film.id}: camera focus ${v.focus}`);
@@ -83,9 +92,20 @@ test('every film names a real ending, and every asset it uses exists', () => {
   }
 });
 
-test('films stay between one and two minutes', () => {
+test('films run about 30 seconds (owner, 2026-09-25)', () => {
   for (const film of films) {
     const { total } = buildTimeline(film);
-    assert.ok(total >= 60 && total <= 120, `${film.id} runs ${total} s`);
+    assert.ok(total >= 25 && total <= 40, `${film.id} runs ${total} s`);
+  }
+});
+
+test('an office shot chimes once for each Resolved badge it shows', () => {
+  const badges = Object.keys(JSON.parse(readFileSync('ui/assets/anchors-era4.json', 'utf8')).heads).length - 1; // everyone but the CEO
+  for (const film of films) {
+    for (const shot of film.shots.filter((s) => s.kind === 'office' && s.chips)) {
+      const run = (shot.sfx ?? []).find(([name]) => name === 'chimes');
+      assert.ok(run, `${film.id}: the badges have chimes`);
+      assert.deepEqual([run[1], run[2], run[3]], [shot.chips.from, badges, shot.chips.step], `${film.id}: one chime per badge, in step`);
+    }
   }
 });

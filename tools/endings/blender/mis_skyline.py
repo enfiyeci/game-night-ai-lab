@@ -1,10 +1,13 @@
-"""Blender test for the ending films: the misalignment skyline shot, grounded rather than cartoon.
+"""Blender world shot for the misalignment film: the skyline blackout, grounded rather than cartoon.
 
 A procedural city at dusk. Windows and street lights go out in a wave that moves left to right, while one rooftop
-LED billboard keeps saying ALL SYSTEMS OPERATIONAL. 8 s at 24 fps, 1280 x 720, EEVEE.
+LED billboard keeps saying ALL SYSTEMS OPERATIONAL. One continuous take at 24 fps: frames 1-156 are the skyline
+shot (6.5 s), frames 157-324 play behind the title card (7 s) while the last lights on the right go out.
+The frame keeps the billboard inside the film's letterbox (the player covers the top and bottom 11% of the picture).
 
-Run: /Applications/Blender.app/Contents/MacOS/Blender -b --factory-startup -P tools/endings/blender/skyline_test.py -- <out_dir> [still]
-     'still' renders frames 1, 96 and 180 only. ffmpeg joins <out_dir>/f_####.png into a clip.
+Run: tools/endings/blender/render.sh mis_skyline mis-skyline:1-156 mis-skyline-title:157-324
+     or by hand: Blender -b --factory-startup -P tools/endings/blender/mis_skyline.py -- <out_dir> [still] [scale]
+     'still' renders frames 1, 80, 156 and 300 only; scale (default 1) multiplies the 1920 x 1080 frame.
 """
 import math
 import random
@@ -15,8 +18,9 @@ import bpy
 argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
 OUT = argv[0] if argv else "/tmp/skyline"
 STILL = len(argv) > 1 and argv[1] == "still"
-FPS, END = 24, 192
-SUN_ROT, SKY_STRENGTH = float(argv[2]) if len(argv) > 2 else 90.0, float(argv[3]) if len(argv) > 3 else 0.25
+SCALE = float(argv[2]) if len(argv) > 2 else 1.0
+FPS, SHOT_END, END = 24, 156, 324
+SUN_ROT, SKY_STRENGTH = 90.0, 0.3   # the values the owner saw in the Blender test
 FOG_HEX, FOG_K = "#7A6470", 0.0009
 rng = random.Random(7)
 
@@ -39,15 +43,14 @@ def node(nt, kind, **inputs):
 
 
 # ---------------------------------------------------------------- the blackout wave, shared by every light
-WAVE_X0, WAVE_X1 = -440.0, -80.0      # the wave's x position at frame 1 and at frame END (world metres)
+WAVE = ((10, -440.0), (SHOT_END - 12, -80.0), (END - 40, 320.0))   # (frame, x of the wave front in world metres)
 
 
 def wave_value(nt):
     v = nt.nodes.new("ShaderNodeValue")
-    v.outputs[0].default_value = WAVE_X0
-    v.outputs[0].keyframe_insert("default_value", frame=12)
-    v.outputs[0].default_value = WAVE_X1
-    v.outputs[0].keyframe_insert("default_value", frame=END - 10)
+    for frame, x in WAVE:
+        v.outputs[0].default_value = x
+        v.outputs[0].keyframe_insert("default_value", frame=frame)
     return v
 
 
@@ -272,22 +275,22 @@ sun = bpy.context.object
 sun.data.energy = 3.5
 sun.data.color = (1.0, 0.55, 0.35)
 
-# ---------------------------------------------------------------- camera: a slow drift across the avenue
+# ---------------------------------------------------------------- camera: a slow drift across the avenue, easing to a stop
 bpy.ops.object.camera_add()
 cam = bpy.context.object
-cam.data.lens = 32
+cam.data.lens = 30
 cam.data.dof.use_dof = False
 scene.camera = cam
-for frame, (cx, cy, cz) in ((1, (-260, -150, 46)), (END, (-170, -150, 50))):
+for frame, (cx, cy, cz), look_z in ((1, (-262, -160, 44), 58), (END, (-200, -176, 50), 62)):
     cam.location = (cx, cy, cz)
-    look = (cx + 20, 400, 30)
+    look = (cx + 16, 400, look_z)
     dx, dy, dz = look[0] - cx, look[1] - cy, look[2] - cz
     cam.rotation_euler = (math.atan2(math.hypot(dx, dy), -dz), 0, math.atan2(dy, dx) - math.pi / 2)
     cam.keyframe_insert("location", frame=frame)
     cam.keyframe_insert("rotation_euler", frame=frame)
 
 # ---------------------------------------------------------------- render settings
-scene.render.resolution_x, scene.render.resolution_y = 1280, 720
+scene.render.resolution_x, scene.render.resolution_y = round(1920 * SCALE), round(1080 * SCALE)
 scene.render.fps = FPS
 scene.frame_start, scene.frame_end = 1, END
 scene.render.image_settings.file_format = "PNG"
@@ -305,7 +308,7 @@ except TypeError:
     pass
 scene.view_settings.exposure = 0.4
 
-frames = [1, 96, 180] if STILL else range(1, END + 1)
+frames = [1, 80, SHOT_END, 300] if STILL else range(1, END + 1)
 for f in frames:
     scene.frame_set(f)
     vals = [n.outputs[0].default_value for m in bpy.data.materials if m.node_tree for n in m.node_tree.nodes if n.type == "VALUE"]

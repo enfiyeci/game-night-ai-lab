@@ -1,5 +1,6 @@
 /* Ending films: a 16:9 frame with letterbox bars, a time card, a subtitle line, the title card and a Skip button.
-   Colours come from the K2 tokens in ui/styles.css. */
+   Colours come from the K2 tokens in ui/styles.css. The in-world screens (plates) are set in IBM Plex. */
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap");
 .film {
   position: fixed;
   inset: 0;
@@ -20,6 +21,8 @@
 .film-shot { position: absolute; inset: 0; visibility: hidden; }
 .film-shot.on { visibility: visible; }
 .film-shot > svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.film-shot > video { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; }
+.film-dim { position: absolute; inset: 0; background: var(--ink); opacity: 0; }
 .film-bar { position: absolute; left: 0; right: 0; height: 11.12%; background: var(--ink); z-index: 3; }
 .film-bar.top { top: 0; }
 .film-bar.bottom { bottom: 0; }
@@ -43,7 +46,7 @@
 }
 .film-title[hidden] { display: none; }
 .film-title h1 { margin: 0; font-weight: 300; font-size: max(20px, 3.4cqw); letter-spacing: .3em; text-transform: uppercase; text-wrap: balance; }
-.film-title .tagline { margin: 0; font-size: max(14px, 1.6cqw); font-weight: 700; color: color-mix(in oklab, var(--cream) 85%, var(--paper)); max-width: 48ch; }
+.film-title .tagline { margin: 0; font-size: max(14px, 1.6cqw); font-weight: 700; color: color-mix(in oklab, var(--cream) 85%, var(--paper)); max-width: 48ch; text-wrap: balance; }
 .film-title .lumen { margin: 1.2cqw 0 0; font-size: max(15px, 1.75cqw); font-weight: 800; min-height: 2.6em; max-width: 44ch; }
 .film-title .lumen small {
   display: block; margin-bottom: .45em; font-size: .6em; font-weight: 900; letter-spacing: .16em; text-transform: uppercase;

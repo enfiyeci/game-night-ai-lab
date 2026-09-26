@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Bundle one ending film into a single self-contained HTML page for review (published as a private artifact).
 
-Everything the player fetches (the shot list, plates, office art for all five eras, anchors) is inlined and served
-by a small fetch shim; the sound is a data URI. The player code is inlined from ui/endings/, unchanged apart from
+Everything the player fetches (the shot list, plates, clips, office art for all five eras, anchors) is inlined and
+served by a small fetch shim; the sound and the clips are data URIs. The player code is inlined from ui/endings/, unchanged apart from
 its import/export lines.
 
 Run: python3 tools/endings/build_review.py misalignment <out.html>
@@ -27,12 +27,15 @@ def build(film_id, out):
     assets = {f"ui/endings/films/{film_id}.json": json.dumps(film)}
     for name in {s["plate"] for s in film["shots"] if s.get("plate")}:
         assets[f"ui/assets/endings/plates/{name}.svg"] = (ROOT / f"ui/assets/endings/plates/{name}.svg").read_text()
+    for name in {s["clip"] for s in film["shots"] if s.get("clip")} | ({film["titleClip"]} if film.get("titleClip") else set()):
+        data = (ROOT / f"ui/assets/endings/clips/{name}.mp4").read_bytes()
+        assets[f"ui/assets/endings/clips/{name}.mp4"] = "data:video/mp4;base64," + base64.b64encode(data).decode()
     for era in range(1, 6):
         assets[f"ui/assets/office-era{era}.svg"] = (ROOT / f"ui/assets/office-era{era}.svg").read_text()
         assets[f"ui/assets/anchors-era{era}.json"] = (ROOT / f"ui/assets/anchors-era{era}.json").read_text()
     audio = "data:audio/mp4;base64," + base64.b64encode((ROOT / f"ui/assets/endings/{film_id}.m4a").read_bytes()).decode()
     tokens = re.search(r":root\s*\{.*?\}", (ROOT / "ui/styles.css").read_text(), re.S).group(0)
-    css = tokens + "\n" + (ROOT / "ui/endings/endings.css").read_text()
+    css = (ROOT / "ui/endings/endings.css").read_text() + "\n" + tokens   # endings.css opens with an @import
     total = sum(s["dur"] for s in film["shots"]) + film.get("titleDur", 7)
     page = f"""<title>{film['title']} film</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -54,9 +57,9 @@ p {{ margin: 0; font-size: 17px; line-height: 1.55; color: color-mix(in oklab, v
 .era:focus-visible, .play:focus-visible {{ outline: 3px solid var(--sky); outline-offset: 3px; }}
 </style>
 <div class="intro">
-  <div class="kick">Game Night &middot; ending film &middot; pilot</div>
+  <div class="kick">Game Night &middot; ending film</div>
   <h1>{film['title']}</h1>
-  <p>The first full ending film in the style you picked: your office, then stage-flat scenes and screens out in the world, then the title card and Lumen's last line. About {round(total)} seconds, with sound.</p>
+  <p>Your office, then the world through the screens people were looking at and wide shots rendered in Blender, then the title card and Lumen's last line. About {round(total)} seconds, with sound.</p>
   <p>Pick the era your lab ended in (it changes the office), then play. Skip or Escape ends it early.</p>
   <div class="row" role="group" aria-label="Office era"><span>Office era</span>
     {''.join(f'<button type="button" class="era" data-era="{e}" aria-pressed="{str(e == 4).lower()}">{e}</button>' for e in range(1, 6))}</div>
@@ -65,7 +68,15 @@ p {{ margin: 0; font-size: 17px; line-height: 1.55; color: color-mix(in oklab, v
 <script type="module">
 const ASSETS = {json.dumps(assets)};
 const realFetch = globalThis.fetch.bind(globalThis);
-globalThis.fetch = (url, opts) => (url in ASSETS ? Promise.resolve(new Response(ASSETS[url])) : realFetch(url, opts));
+globalThis.fetch = (url, opts) => {{
+  if (!(url in ASSETS)) return realFetch(url, opts);
+  const value = ASSETS[url];
+  if (!value.startsWith('data:')) return Promise.resolve(new Response(value));
+  // decode data URIs here: the artifact viewer's content policy may refuse fetch() of a data: URL
+  const [head, body] = value.split(',');
+  const bytes = Uint8Array.from(atob(body), (c) => c.charCodeAt(0));
+  return Promise.resolve(new Response(new Blob([bytes], {{ type: head.slice(5).split(';')[0] }})));
+}};
 const AUDIO = "{audio}";
 {module_body("ui/endings/timeline.js")}
 {module_body("ui/endings/player.js")}
