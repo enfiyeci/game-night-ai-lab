@@ -6,7 +6,7 @@ import { endScreenModel, scalePosition } from '../ui/logic/ending.js';
 import { mountEnding } from '../ui/screens/end.js';
 import { SCENARIOS } from '../ui/logic/scenarios.js';
 
-const endedState = (ending, patch = {}) => ({ ...createInitialState({ seed: 3 }), ending, era: 3, turn: 11, ...patch });
+const endedState = (ending, patch = {}) => ({ ...createInitialState({ seed: 3 }), ending, era: 3, turn: 11, day: 800, ...patch });
 
 test('the end screen names this run first, marks a first find as new, then locked wins before locked failures', () => {
   const state = endedState('acquihire');
@@ -14,7 +14,7 @@ test('the end screen names this run first, marks a first find as new, then locke
     { id: 'acquihire', era: 3, count: 1 },
     { id: 'boardRemoved', era: 2, count: 1 },
   ], { newThisRun: true });
-  assert.equal(model.kicker, 'Run over · era 3, turn 11');
+  assert.equal(model.kicker, 'Run over · era 3, Y3 M3 W2');
   assert.equal(model.title, ENDINGS.acquihire.title);
   assert.equal(model.text, ENDINGS.acquihire.text);
   assert.equal(model.headlines.length, Object.keys(ENDINGS).length);
