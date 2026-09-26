@@ -10,9 +10,11 @@ const band = (x, calmBelow, alarmedAt) => (x < calmBelow ? 'calm' : x < alarmedA
 const finite = (x) => (Number.isFinite(x) ? x : 99);
 const cappedMonths = (x) => Math.min(99, finite(x));
 
-function lineFor(reading, turn) {
-  const lines = ADVISOR_LINES[reading.id][reading.band];
-  const line = lines[turn % lines.length];
+function lineFor(reading, state) {
+  const lines = ADVISOR_LINES[reading.id][reading.band]
+    .filter((line) => typeof line === 'string' || line.eras.includes(state.era))
+    .map((line) => typeof line === 'string' ? line : line.text);
+  const line = lines[state.turn % lines.length];
   return reading.weird ? `${line} ${ADVISOR_LINES.research.weird}` : line;
 }
 
@@ -38,7 +40,7 @@ export function advisorReadings(state, rng) {
     ...r,
     truth: finite(r.truth),
     estimate: finite(r.estimate),
-    line: lineFor(r, state.turn),
+    line: lineFor(r, state),
   }));
 }
 
