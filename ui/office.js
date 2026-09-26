@@ -7,11 +7,15 @@ function moodMap(state) {
   return new Map((state.lastBriefing ?? []).map(({ id, band }) => [id, MOODS.includes(band) ? band : 'calm']));
 }
 
-// K2's advisor marker (gen_K2.py): the tail tip sits just above the head anchor.
-const markerSvg = (text) => `<svg viewBox="-17 -25 34 45" width="34" height="45" aria-hidden="true">
+// K2's advisor marker (gen_K2.py), 20% larger, with the marks drawn as shapes so they sit centred and bold:
+// one "!" when uneasy, "!!" when alarmed. The tail tip sits just above the head anchor.
+const bang = (x, w) => `<path d="M${x - w / 2},-17.5 L${x + w / 2},-17.5 L${x + w * 0.3},-5.5 L${x - w * 0.3},-5.5 Z"
+    style="fill:var(--coral);stroke:var(--coral);stroke-width:1.6;stroke-linejoin:round"/>
+  <circle cx="${x}" cy="0" r="${w * 0.52}" style="fill:var(--coral)"/>`;
+const markerSvg = (alarmed) => `<svg viewBox="-17 -25 34 45" width="41" height="54" aria-hidden="true">
   <path d="M-15,-16 Q-15,-23 -8,-23 L8,-23 Q15,-23 15,-16 L15,2 Q15,9 8,9 L-1,9 L-9,18 L-7,9 L-8,9 Q-15,9 -15,2 Z"
     style="fill:var(--paper);stroke:var(--ink);stroke-width:1.8;stroke-linejoin:round"/>
-  <text x="0" y="3.5" text-anchor="middle" style="font-size:${text.length > 1 ? 19 : 22}px;font-weight:900;fill:var(--coral);letter-spacing:-.04em">${text}</text></svg>`;
+  ${alarmed ? bang(-4.6, 4.4) + bang(4.6, 4.4) : bang(0, 5)}</svg>`;
 
 function setMoods(svg, fx, anchors, state) {
   const moods = moodMap(state);
@@ -32,7 +36,7 @@ function setMoods(svg, fx, anchors, state) {
       marker.className = `advisor-marker ${mood}`;
       marker.setAttribute('role', 'img');
       marker.setAttribute('aria-label', `${role} is ${mood}`);
-      marker.innerHTML = markerSvg(mood === 'alarmed' ? '!!' : '!');
+      marker.innerHTML = markerSvg(mood === 'alarmed');
       marker.style.left = `${x + 22}px`;
       marker.style.top = `${y}px`;
       fx.append(marker);

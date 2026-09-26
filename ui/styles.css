@@ -204,9 +204,9 @@ svg.room {
 
 .advisor-marker {
   position: absolute;
-  width: 34px;
-  height: 45px;
-  margin: -45px 0 0 -17px; /* positioned by the tail tip; transform stays free for the bob */
+  width: 41px;
+  height: 54px;
+  margin: -54px 0 0 -20.5px; /* positioned by the tail tip; transform stays free for the bob */
   filter: drop-shadow(0 2px 3px color-mix(in oklab, var(--ink) 18%, transparent));
   animation: bob 2.2s ease-in-out infinite;
 }
