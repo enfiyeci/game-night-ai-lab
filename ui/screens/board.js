@@ -214,7 +214,8 @@ export function mountBoard(game, { overlay, stage }) {
   let wanted = []; // bubbles that should be on screen: { kind: 'warning' | 'quiet', role, say }
   let shown = [];
 
-  const cardOpen = () => Boolean(overlay.querySelector('.event-layer, .dialog-layer'));
+  let meetingOpen = false; // the board meeting (Task 6): the chip and the bubbles step aside until it closes
+  const cardOpen = () => meetingOpen || Boolean(overlay.querySelector('.event-layer, .dialog-layer'));
 
   function layout() {
     const info = hud?.querySelector('.info');
@@ -273,7 +274,7 @@ export function mountBoard(game, { overlay, stage }) {
     const warning = info ? boardWarning(state, clock) : null;
     const quiet = !state.ending && state.flags.boardQuiet === state.turn;
 
-    chip.hidden = !info;
+    chip.hidden = !info || meetingOpen;
     chip.classList.toggle('urgent', Boolean(warning));
     if (info) chip.querySelector('span').textContent = countdownText(info);
     // The panel shows only while the warning is on: with a clock the sim's quiet flag lasts the whole vote round,
@@ -324,6 +325,8 @@ export function mountBoard(game, { overlay, stage }) {
     draw();
   }).observe(overlay, { childList: true });
   overlay.addEventListener('event-card-open', clearShown);
+  overlay.addEventListener('board-meeting-open', () => { meetingOpen = true; update(); draw(); });
+  overlay.addEventListener('board-meeting-closed', () => { meetingOpen = false; update(); draw(); });
   overlay.addEventListener('gdt-dialog-closed', draw);
   // The advisors' quiet lines are chatter: a click anywhere else puts them away.
   document.addEventListener('pointerdown', (event) => {

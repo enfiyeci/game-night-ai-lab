@@ -268,6 +268,14 @@ export const RESULT_STAY = 'You stay.'; // OWNER WRITES
 export const RESULT_GO = 'The motion passes.'; // OWNER WRITES
 export const MOTION_FAILS = 'The motion fails';
 export const MOTION_PASSES = 'The motion passes';
+// The round ended with no vote held and no ending: the sim put the vote off (for now, only while the lab cannot pay
+// its bills).
+export const VOTE_PUT_OFF = {
+  title: 'The vote is put off', // OWNER WRITES
+  bills: 'The chair adjourns until the lab can pay its bills.', // OWNER WRITES
+  other: 'The chair adjourns. The board will take it up again.', // OWNER WRITES
+  chair: 'We will pick this up when the numbers are in. Nobody leave town.', // OWNER WRITES
+};
 export const LETTER_KICKER = 'Open letter to the board'; // OWNER WRITES
 export const STAFF_TWIST = [
   'The motion passes. Security is walking you out.', // OWNER WRITES
@@ -309,6 +317,8 @@ export const TEAM_AFTER_REMOVAL = [
   { id: 'policy', mood: 'alarmed', text: 'The press release is already out. They wrote it last week.' }, // OWNER WRITES
 ];
 export const LEAVE_THE_CALL = 'Leave the call'; // OWNER WRITES
+// You kept your seat, but the run ended the same day (another ending came right after the vote); the film follows.
+export const RUN_ENDED_OK = 'Continue'; // OWNER WRITES
 export const SINCE_TITLE = 'Since the last vote';
 export const SINCE_KEEPS = 'now keeps you';
 export const SINCE_AGAINST = 'now against you';

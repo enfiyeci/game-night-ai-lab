@@ -22,6 +22,7 @@ export function createGame({ seed = 1, state, history = [] } = {}) {
   const rivalReleases = [];
   const financeHistory = structuredClone(history);
   let financePlan = null; // the finance planner's goals and rounds, kept between openings; a plan, never a move
+  let roundInFlight = null; // endRound's promise while its guards run, so a second caller joins it
 
   return {
     get state() {
@@ -80,10 +81,34 @@ export function createGame({ seed = 1, state, history = [] } = {}) {
     },
     // Round guards (board UI plan Task 6): End turn, and later the real-time clock, await each before the round ends.
     // The board meeting is one: it opens instead of the round ending when that round holds a vote.
+    // A broken guard is logged and skipped, and a failing round end is logged and reported, so neither can lock the
+    // game; a second call while a round is ending joins it rather than ending another round.
     beforeRoundEnd: [],
-    async endRound() {
-      for (const guard of [...this.beforeRoundEnd]) await guard(this);
-      return this.endTurn();
+    get roundInFlight() {
+      return roundInFlight;
+    },
+    endRound() {
+      if (roundInFlight) return roundInFlight;
+      const run = (async () => {
+        await null; // roundInFlight is set before any guard runs
+        for (const guard of [...this.beforeRoundEnd]) {
+          try {
+            await guard(this);
+          } catch (error) {
+            console.error(error);
+          }
+        }
+        try {
+          return this.endTurn();
+        } catch (error) {
+          console.error(error);
+          return { events: [], errors: [String(error?.message ?? error)] };
+        } finally {
+          roundInFlight = null;
+        }
+      })();
+      roundInFlight = run;
+      return run;
     },
     subscribe(fn) {
       subscribers.add(fn);

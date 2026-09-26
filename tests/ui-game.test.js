@@ -60,3 +60,46 @@ test('endRound awaits every round guard before ending the round', async () => {
   assert.deepEqual(order, ['guard', 'ended']);
   assert.equal(game.state.turn, 1);
 });
+
+test('a throwing round guard is logged and the round still ends', async () => {
+  const game = createGame({ seed: 3 });
+  const logged = [];
+  const error = console.error;
+  console.error = (e) => logged.push(e);
+  try {
+    game.beforeRoundEnd.push(async () => { throw new Error('guard broke'); });
+    await game.endRound();
+  } finally { console.error = error; }
+  assert.equal(game.state.turn, 1);
+  assert.equal(logged.length, 1);
+});
+
+test('endRound never rejects when the round end itself throws', async () => {
+  const game = createGame({ seed: 3 });
+  game.endTurn = () => { throw new Error('sim broke'); };
+  const error = console.error;
+  console.error = () => {};
+  let result;
+  try { result = await game.endRound(); } finally { console.error = error; }
+  assert.deepEqual(result.events, []);
+  assert.match(result.errors[0], /sim broke/);
+  assert.equal(game.roundInFlight, null);
+});
+
+test('a second endRound while one is in flight returns the same promise and ends one round', async () => {
+  const game = createGame({ seed: 3 });
+  let open = null;
+  game.beforeRoundEnd.push(() => (open ? undefined : new Promise((resolve) => { open = resolve; })));
+  const first = game.endRound();
+  const second = game.endRound();
+  assert.equal(first, second);
+  assert.equal(game.roundInFlight, first);
+  await new Promise((resolve) => setTimeout(resolve, 0)); // the guard is now waiting
+  assert.equal(game.state.turn, 0);
+  open();
+  await first;
+  assert.equal(game.state.turn, 1);
+  assert.equal(game.roundInFlight, null);
+  await game.endRound();
+  assert.equal(game.state.turn, 2);
+});

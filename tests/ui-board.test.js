@@ -137,3 +137,20 @@ test('a lost vote\'s why line does not read like a win', () => {
   assert.doesNotMatch(result.why, /kept you\.$/);
   assert.match(result.why, /not enough/i);
 });
+
+test('the meeting reads its own round end: a vote, an ending, a vote put off, or not its notification', async () => {
+  const { roundOutcome } = await import('../ui/screens/boardMeeting.js');
+  const before = createInitialState({ seed: 2 });
+  const same = structuredClone(before);
+  assert.equal(roundOutcome(before, same), 'wait');
+  const voted = structuredClone(before);
+  voted.turn += 1;
+  holdVote(voted, 'gate');
+  assert.equal(roundOutcome(before, voted), 'reveal');
+  const ended = { ...structuredClone(before), turn: before.turn + 1, ending: 'leftBehind' };
+  assert.equal(roundOutcome(before, ended), 'ending');
+  const sameTurnEnding = { ...structuredClone(before), ending: 'acquihire' };
+  assert.equal(roundOutcome(before, sameTurnEnding), 'ending');
+  const putOff = { ...structuredClone(before), turn: before.turn + 1 };
+  assert.equal(roundOutcome(before, putOff), 'deferred');
+});

@@ -29,6 +29,7 @@ export const TIMING = {
   result: 3600,
   letter: 4800,
   backdown: 3200,
+  deferred: 4200,
   caption: 5000,
 };
 
@@ -111,6 +112,15 @@ function nextVoteEra(era) {
   return ERAS.find((candidate) => candidate.id > era && candidate.boardVoteAtGate)?.id ?? null;
 }
 
+// What the meeting does with a game notification after it called the vote. 'wait': not its round's end (same round,
+// no ending); 'reveal': a vote was held; 'ending': the run ended with no vote (the ending plays); 'deferred': the round
+// ended with no vote and no ending, so the vote was put off.
+export function roundOutcome(before, next) {
+  if (next.turn === before.turn && !next.ending) return 'wait';
+  if (voteReveal(before, next)) return 'reveal';
+  return next.ending ? 'ending' : 'deferred';
+}
+
 // The vote as a list of frames: each shows a still; animated, each lasts ms; reduced motion, each waits for a click
 // and the thinking beats are skipped (one step per director).
 function voteFrames(reveal, reduced) {
@@ -179,9 +189,22 @@ export function mountBoardMeeting(game, { overlay, stage }) {
     root.setAttribute('aria-modal', 'true');
     root.setAttribute('aria-label', COPY.MEETING_LABEL);
     root.tabIndex = -1;
-    // Whatever is already up (an event card, advisor bubbles, the phone, the round summary) waits under the meeting.
+    // Whatever is already up (an event card, advisor bubbles, the phone, the round summary) waits under the meeting, and
+    // so does anything another screen adds while it is open: it cannot be clicked or take focus until the meeting closes.
     const benched = [...overlay.children].filter((child) => !child.inert);
     for (const child of benched) child.inert = true;
+    const watcher = typeof MutationObserver === 'function' ? new MutationObserver((records) => {
+      for (const record of records) {
+        for (const added of record.addedNodes) {
+          if (added === root || added.nodeType !== 1 || added.inert) continue;
+          added.inert = true;
+          benched.push(added);
+        }
+      }
+      if (!closed && !root.contains(document.activeElement)) (root.querySelector('.dialog-ok, button:not([disabled])') ?? root).focus();
+    }) : null;
+    watcher?.observe(overlay, { childList: true });
+    session = { root, close, preview };
     overlay.append(root);
     stage?.classList.add('mt-dim');
     game.clock?.pause(CLOCK_REASON);
@@ -209,6 +232,8 @@ export function mountBoardMeeting(game, { overlay, stage }) {
       closed = true;
       stopTimers();
       unsubscribe?.();
+      unsubscribe = null;
+      watcher?.disconnect();
       root.remove();
       for (const child of benched) child.inert = false;
       stage?.classList.remove('mt-dim');
@@ -585,14 +610,47 @@ export function mountBoardMeeting(game, { overlay, stage }) {
       if (deals.length) game.setField('boardDeals', deals.map((member) => ({ member, kind: member })));
       const before = structuredClone(game.state);
       unsubscribe = game.subscribe(({ state: next }) => {
+        const outcome = roundOutcome(before, next);
+        if (outcome === 'wait') return; // not this round's end
         unsubscribe();
         unsubscribe = null;
-        reveal = voteReveal(before, next);
         after = next;
-        if (!reveal) { close(); return; } // no vote was held (another ending came first, or left behind): the ending plays
-        playVote();
+        if (outcome === 'reveal') { reveal = voteReveal(before, next); playVote(); return; }
+        if (outcome === 'deferred') { putOff(next); return; }
+        close(); // no vote was held (another ending came first, or left behind): the ending plays
       });
       onCall?.();
+      // If the round never ends (a failing round end, or no notification), the meeting closes rather than lock the
+      // game: the clock resumes and a held ending is released.
+      const giveUp = () => setTimeout(() => {
+        if (closed || !unsubscribe) return;
+        unsubscribe();
+        unsubscribe = null;
+        close();
+      }, 0);
+      Promise.resolve(game.roundInFlight).then(giveUp, giveUp);
+    }
+
+    // The round ended with no vote and no ending (the sim put the vote off, e.g. while the lab cannot pay its bills):
+    // say so, then close. Deals made stand; the sim judges them after the vote that is eventually held.
+    function putOff(next) {
+      stopTimers();
+      root.classList.add('step-result');
+      call.querySelector('.mt-top-t').textContent = COPY.VOTE_PUT_OFF.title;
+      call.querySelector('.mt-flash')?.remove();
+      const box = make('div', 'mt-flash deferred');
+      box.setAttribute('role', 'status');
+      box.append(make('b', 'small', COPY.VOTE_PUT_OFF.title), make('span', null, next.flags.insolvent ? COPY.VOTE_PUT_OFF.bills : COPY.VOTE_PUT_OFF.other));
+      call.append(box);
+      setCaption(COPY.CHAIR, COPY.VOTE_PUT_OFF.chair);
+      if (reduced()) {
+        const next = button('btn mt-next', COPY.CONTINUE);
+        next.addEventListener('click', () => close());
+        call.append(next);
+        next.focus();
+        return;
+      }
+      later(() => close(), TIMING.deferred);
     }
 
     // ---- 4. the result dialog (frame 4A) --------------------------------------------------------------------------
@@ -639,7 +697,7 @@ export function mountBoardMeeting(game, { overlay, stage }) {
       const nextEra = nextVoteEra(model.era);
       const notes = [];
       if (prev?.votes && prev.yes === reveal.yes && result.since.length > 2) notes.push(COPY.SINCE_NOTE.same);
-      if (result.passed || result.reversedByStaff) notes.push(nextEra ? fill(COPY.SINCE_NOTE.next, { era: nextEra }) : COPY.SINCE_NOTE.none);
+      if ((result.passed || result.reversedByStaff) && !after.ending) notes.push(nextEra ? fill(COPY.SINCE_NOTE.next, { era: nextEra }) : COPY.SINCE_NOTE.none);
       if (notes.length) since.append(make('p', 'mt-side-note', notes.join(' ')));
 
       const finish = () => close();
@@ -649,7 +707,7 @@ export function mountBoardMeeting(game, { overlay, stage }) {
         body,
         left: { title: COPY.TEAM_TITLE, content: team },
         right: { title: COPY.SINCE_TITLE, content: since },
-        okLabel: removed ? COPY.LEAVE_THE_CALL : COPY.BACK_TO_WORK,
+        okLabel: removed ? COPY.LEAVE_THE_CALL : after.ending ? COPY.RUN_ENDED_OK : COPY.BACK_TO_WORK,
         onOk: finish,
         onCancel: finish,
       });
@@ -683,7 +741,6 @@ export function mountBoardMeeting(game, { overlay, stage }) {
       if (base === '4a') resultDialog();
     }
 
-    session = { root, close, preview };
     if (preview && step !== 'ring') still(step);
     else ring();
     return session;
@@ -695,7 +752,14 @@ export function mountBoardMeeting(game, { overlay, stage }) {
     if (calling) return calling;
     if (!boardVoteThisRound(game.state)) return undefined;
     calling = new Promise((resolve) => {
-      open({ onCall: () => { calling = null; resolve(); } });
+      const release = () => { calling = null; resolve(); };
+      try {
+        open({ onCall: release });
+      } catch (error) { // a meeting that cannot open must not stop the round
+        console.error(error);
+        session?.close();
+        release();
+      }
     });
     return calling;
   });
