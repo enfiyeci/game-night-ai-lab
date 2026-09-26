@@ -31,7 +31,7 @@ test('later-era compute changes describe only options still available', () => {
   );
   assert.equal(
     eraIntro(5).changes[1],
-    'Spot and CoreFlame remain available; existing pipeline capacity can still arrive.',
+    'New Verde orders, power sites and Gulf deals close; only spot and CoreFlame remain.',
   );
 });
 

@@ -51,7 +51,7 @@ const COPY = {
     headline: 'The models improve the models; the calendar has given up.',
     changes: [
       'Automated research unlocks and training cycles accelerate.',
-      'Spot and CoreFlame remain available; existing pipeline capacity can still arrive.',
+      'New Verde orders, power sites and Gulf deals close; only spot and CoreFlame remain.',
       'A pacing summit asks whether the leading labs will slow together.',
     ],
     bottleneck: 'Compute, power, trust and time, all at once.',
