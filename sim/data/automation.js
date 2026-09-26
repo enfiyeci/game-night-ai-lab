@@ -41,6 +41,11 @@ export const RUN_SKIP_SPEED = 1.5;
 export const CLAIM_INFLATION = 2.5;
 export const FIRST_LINE = 2;
 export const HELD_BACK = -MAX_LEVEL; // an offset that keeps a job at People only in every era
+export const PROPOSE_LEVEL = 3; // "Leads" in choosing or direction
+export const LESS_LOGS_CHANCE = 0.35;
+export const LESS_LOGS_DEBT = 3;
+export const OVERNIGHT_BONUS = 2;
+export const OVERNIGHT_POINTS = 8;
 
 export const createAutomation = () => ({
   offsets: { review: 0, experiments: 0, choosing: 0, direction: 0 },
@@ -52,4 +57,6 @@ export const createAutomation = () => ({
   lineTurn: null,
   lockedDown: false,
   history: [],
+  autoApprove: false,
+  proposals: [],
 });

@@ -21,7 +21,7 @@ import {
 import { setConstitution, amendConstitution } from '../../sim/constitution.js';
 import { addressWarning, fallbackChoice, resolveEvent } from '../../sim/events.js';
 import { resolveHazard } from '../../sim/hazards.js';
-import { setAutomation } from '../../sim/automation.js';
+import { setAutomation, applyApprovals } from '../../sim/automation.js';
 import { buildSite, leaseMonthly, powerTurn, sitePower, SITE_TYPES } from '../../sim/power.js';
 import { expireMeeting, meetingDue, openMeeting, runMeeting } from '../../sim/president.js';
 import { allocate, placeOrder, PREPAY_SHARE, released, rivalOrders, withdrawOrder } from '../../sim/queue.js';
@@ -144,6 +144,8 @@ function projectBeforeMoves(state, queue) {
   if (queue.budget) setBudget(state, queue.budget);
   if (Object.hasOwn(queue, 'computeSplit')) setComputeSplit(state, queue.computeSplit);
   if (Object.hasOwn(queue, 'automation')) setAutomation(state, queue.automation);
+  if (typeof queue.aiAutoApprove === 'boolean') state.automation.autoApprove = queue.aiAutoApprove;
+  applyApprovals(state, queue.aiApprovals ?? {});
   if (queue.pledge != null) makePledge(state, queue.pledge);
   for (const action of queue.contractActions ?? []) contractAction(state, action);
   if (queue.queueWithdraw === true) withdrawOrder(state);
