@@ -2390,3 +2390,60 @@ svg.room {
   .bob,
   .advisor-marker { animation: none !important; }
 }
+
+/* ---------- release dialog (plan 2B Task 6, docs/design/mockups/release-flow-final.html) ---------- */
+.release-dialog .dialog-centre { top: 74px; left: 392px; width: 656px; min-height: 0; }
+.release-dialog .dialog-side { top: 150px; }
+.release-dialog .dialog-left { left: 120px; width: 250px; }
+.release-dialog .dialog-right { right: 70px; width: 300px; }
+.release-dialog .lbl { color: color-mix(in oklab, var(--ink) 62%, var(--paper)); font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.release-dialog .dialog-ok { width: auto; min-width: 150px; max-width: 100%; padding: 10px 26px; overflow-wrap: anywhere; }
+.release-heading { text-align: center; }
+.release-name { display: flex; justify-content: center; align-items: flex-end; gap: 10px; margin-top: 10px; }
+.release-field { display: grid; gap: 4px; text-align: left; }
+.release-field .lbl, .release-size .lbl { font-size: 10.5px; }
+.release-field input, .release-size input {
+  height: 42px; min-width: 170px; border-radius: 8px; border: 2px solid var(--wood); background: var(--paper);
+  padding: 0 12px; font: 800 19px/1 Nunito, "Trebuchet MS", sans-serif; color: var(--ink);
+}
+.release-field input { width: 190px; }
+.release-field input::placeholder { font-size: 15px; font-weight: 700; }
+.release-size input { width: 100%; }
+.release-field input:focus-visible, .release-size input:focus-visible { outline: 3px solid var(--sky); outline-offset: 1px; }
+.release-auto {
+  height: 42px; display: flex; align-items: center; padding: 0 14px; border-radius: 8px; font-size: 19px; font-weight: 800;
+  background: color-mix(in oklab, var(--ink) 7%, var(--paper)); color: color-mix(in oklab, var(--ink) 70%, var(--paper));
+}
+.release-auto.skipped { background: color-mix(in oklab, var(--wood) 18%, var(--paper)); color: var(--ink); }
+.release-skip { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 10px; font-size: 13.5px; font-weight: 800; }
+.release-skip-warning { color: color-mix(in oklab, var(--coral) 75%, var(--ink)); }
+.release-preview { margin-top: 4px; font-size: 15px; font-weight: 700; }
+.release-preview b { font-size: 22px; font-weight: 900; }
+.release-link { border: 0; background: none; padding: 0; font: inherit; font-size: 13px; font-weight: 800; cursor: pointer;
+  color: color-mix(in oklab, var(--sky) 75%, var(--ink)); text-decoration: underline; text-underline-offset: 3px; }
+.release-sliders { display: flex; justify-content: center; gap: 40px; align-items: flex-start; }
+.release-sliders .vslider-role { height: auto; font-size: 12px; }
+.release-sliders .vslider-scale { height: 150px; margin-top: 14px; }
+.release-sliders .vslider-scale .vslider-track,
+.release-sliders .vslider-notches { height: 150px; }
+.release-sliders .vslider-notch { flex-direction: column; align-items: flex-start; gap: 0; font-size: 12.5px; transform: translateY(-8px); }
+.release-sliders .vslider-notch::before { top: 8px; }
+.release-sliders .vslider-notch small { font-size: 11px; font-weight: 700; }
+.release-sliders .vslider-label { min-height: 0; margin-top: 26px; font-size: 15.5px; }
+.release-sliders .vslider-value { display: none; }
+.release-when.now { color: color-mix(in oklab, var(--teal) 60%, var(--ink)); }
+.release-when.later { color: color-mix(in oklab, var(--coral) 75%, var(--ink)); }
+.release-shipline { display: flex; justify-content: space-between; margin-top: 14px; padding: 10px 12px; font-size: 14px; font-weight: 800;
+  border-block: 1.5px solid color-mix(in oklab, var(--wood) 30%, transparent); }
+.release-error { min-height: 16px; margin-top: 6px; }
+.release-dialog .dlg .dialog-ok { margin-top: 8px; }
+.release-note { font-size: 13px; font-weight: 700; color: color-mix(in oklab, var(--ink) 60%, var(--paper)); max-width: 200px; }
+.release-ship { display: inline-block; white-space: nowrap; font-size: 10.5px; font-weight: 900; border-radius: 4px; padding: 1px 6px; margin-top: 3px; }
+.release-ship.now { background: color-mix(in oklab, var(--teal) 18%, var(--paper)); color: color-mix(in oklab, var(--teal) 60%, var(--ink)); }
+.release-ship.later { background: color-mix(in oklab, var(--coral) 14%, var(--paper)); color: color-mix(in oklab, var(--coral) 65%, var(--ink)); }
+.release-sizes { display: grid; gap: 10px; justify-items: center; }
+.release-size { display: grid; grid-template-columns: 110px 220px; align-items: center; gap: 12px; text-align: left; }
+.release-size .lbl { text-align: right; }
+.release-dialog-sizes .dialog-centre { top: 170px; }
+.release-dialog-sizes .release-note { max-width: 440px; margin: 4px 0 8px; text-wrap: balance; }
+.release-dialog-sizes .dlg .dialog-ok { margin-top: 18px; }
