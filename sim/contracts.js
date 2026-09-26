@@ -165,11 +165,11 @@ export function contractsTurn(state, rng) {
 }
 
 // Called after the economy has billed the turn, so the last month of a term is still paid.
-export function expireContracts(state) {
-  const months = eraById(state.era).monthsPerTurn;
+// Counts every term contract down by `months`. Stage 2 calls it daily with the months one day covers, so a term
+// starts the day its compute lands and ends on its end date, and an early landing is never billed past its term.
+export function expireContracts(state, months = eraById(state.era).monthsPerTurn) {
   const expired = [];
   state.compute.contracts = state.compute.contracts.filter((c) => {
-    if (c.arrivedTurn > state.turn) return true;
     if (c.monthsLeft == null) return true; // spot rolls over
     c.monthsLeft -= months;
     if (c.monthsLeft > 1e-9) return true;

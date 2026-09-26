@@ -44,7 +44,7 @@ export const MAX_MOVES = 2;
 const BUDGET_KEYS = ['training', 'security', 'product', 'talent'];
 // sideRng salts in sim/: 0 initial offers, 1 deals, 2 site opposition, 3 contracts, 4 queue,
 // 5 offers, 6 deliveries, 7 pooling, 8 board events (sim/data/boardEvents.js), 9 + card index for card landing days
-// (sim/events.js stampNewCards), 900 AI proposals, and 1000 + site ID for builds.
+// (sim/events.js stampNewCards), 900 AI proposals, 950 the first round's rival roll (sim/state.js), and 1000 + site ID for builds.
 const SITE_RNG_SALT_BASE = 1000;
 const AI_PROPOSAL_SALT = 900;
 
@@ -365,7 +365,6 @@ function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
         state.compute.surge = null;
       }
       spendCredits(state);
-      for (const x of expireContracts(state)) events.push({ type: 'contractEnded', supplier: x.supplier, units: x.units });
       for (const x of pullBumped(state)) events.push({ type: 'spotPulled', units: x.units });
       if (state.flags.conversionDeadline != null && state.turn >= state.flags.conversionDeadline && !state.flags.converted) {
         state.flags.converted = true;
@@ -507,6 +506,12 @@ export function advanceDays(prev, days, rng, observer = {}) {
     growUsers(state, fraction, { round: false });
     updateServing(state);
     accrueEconomy(state, monthsPerDay(state));
+    const ended = expireContracts(state, monthsPerDay(state));
+    if (ended.length) {
+      for (const x of ended) events.push({ type: 'contractEnded', supplier: x.supplier, units: x.units });
+      updateServing(state);
+      state.burnPlanned = projectBurn(state);
+    }
     state.day += 1;
     state.dayInRound += 1;
     postLandedCards(state);

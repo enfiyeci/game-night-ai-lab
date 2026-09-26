@@ -1,7 +1,9 @@
 import { BALANCE } from './balance.js';
 import { generateOffers, sideRng } from './contracts.js';
-import { createRivals } from './rivals.js';
+import { createRivals, rivalsTurn } from './rivals.js';
 import { createAutomation } from './data/automation.js';
+
+const RIVAL_START_SALT = 950; // sideRng salt for the first round's rival roll (see the salt list in sim/turn.js)
 import { INITIAL_BOARD, boardSnapshot } from './board.js';
 
 export function createInitialState({ seed = 1 } = {}) {
@@ -96,5 +98,6 @@ export function createInitialState({ seed = 1 } = {}) {
     board: [...state.board],
   };
   state.compute.offers = generateOffers(state, sideRng(state, 0));
+  rivalsTurn(state, sideRng(state, RIVAL_START_SALT), { deferTo: 0 }); // round 0's roll; each mark rolls the next round
   return state;
 }

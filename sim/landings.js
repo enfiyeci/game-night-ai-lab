@@ -25,10 +25,19 @@ export function landingDay(state, key, round) {
   return from + 1 + createRng(hashKey(state.seed ?? 1, key)).int(0, end - from - 1);
 }
 
-function stamp(state, item, round, key) {
+// A day in the last third of `round`, not yet passed: deliveries land close to their old date, so early bills stay
+// small at the next planning point (retune, 2026-09-26).
+export function lateInRoundDay(state, key, round) {
+  const { start, end } = roundSpan(round);
+  const from = Math.max(end - Math.floor((end - start) / 3), start, state.day);
+  if (from >= end) return end;
+  return from + 1 + createRng(hashKey(state.seed ?? 1, key)).int(0, end - from - 1);
+}
+
+function stamp(state, item, round, key, dayFor = landingDay) {
   if (item.landsFor === round && item.landsDay != null) return;
   item.landsFor = round;
-  item.landsDay = landingDay(state, key, round);
+  item.landsDay = dayFor(state, key, round);
 }
 
 // Owner pick (2026-09-26): each thing lands in the round whose mark used to fire it, on a day inside that round.
@@ -38,8 +47,8 @@ export function stampLandings(state) {
   for (const p of state.promises) {
     if (p.source === 'president' && p.dueTurn != null) stamp(state, p, p.dueTurn, `promise:${p.meeting}:${p.id}`);
   }
-  for (const p of state.compute.pipeline) stamp(state, p, p.arrivesTurn - 1, `pipeline:${p.id}:${p.arrivesTurn}`);
-  for (const s of state.power.sites) if (!s.online) stamp(state, s, s.arrivesTurn - 1, `site:${s.id}`);
+  for (const p of state.compute.pipeline) stamp(state, p, p.arrivesTurn - 1, `pipeline:${p.id}:${p.arrivesTurn}`, lateInRoundDay);
+  for (const s of state.power.sites) if (!s.online) stamp(state, s, s.arrivesTurn - 1, `site:${s.id}`, lateInRoundDay);
 }
 
 // Everything that lands today (stage 2), fired from advanceDays before the mark code.

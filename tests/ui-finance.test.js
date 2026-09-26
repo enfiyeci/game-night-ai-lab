@@ -32,6 +32,8 @@ test("this turn's projected spending equals the sim's own burn", () => {
 test('signed compute drops off when a contract term ends', () => {
   const state = era3();
   const [contract] = state.compute.contracts;
+  state.compute.contracts = [contract]; // this contract alone: others land and end on their own days
+  state.compute.pipeline = [];
   const lastBilled = Array.from({ length: 12 }, (_, i) => state.turn + i)
     .filter((t) => monthOfTurn(t) - monthOfTurn(state.turn) < contract.monthsLeft).at(-1);
   assert.equal(signedAt(state, lastBilled).units, contract.units);

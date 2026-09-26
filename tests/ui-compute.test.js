@@ -17,7 +17,9 @@ import {
   queueView,
   replaceQueueOrder,
   sitesView,
+  turnSummary,
 } from '../ui/logic/compute.js';
+import { storyDate } from '../sim/time.js';
 import { BALANCE } from '../sim/balance.js';
 import { allocate, placeOrder, rivalOrders, released } from '../sim/queue.js';
 import { buildSite, leaseBills, leaseMonthly, powerTurn } from '../sim/power.js';
@@ -354,4 +356,15 @@ test('view-model text never reveals poisoned hidden-state numbers', () => {
   }
   const rendered = JSON.stringify(text);
   for (const sentinel of sentinels) assert.doesNotMatch(rendered, new RegExp(sentinel));
+});
+
+test('sites and signed deals show the landing date, not the old mark', () => {
+  const s = createInitialState({ seed: 7 });
+  s.power.sites.push({ id: 'gas-t', source: 'gas', units: 40, arrivesTurn: 2, online: false, oppositionCut: null, landsDay: 170, landsFor: 1 });
+  const view = sitesView(s);
+  assert.equal(view.nextArrival.day, 170);
+  assert.match(view.sites.find((x) => x.id === 'gas-t').status, new RegExp(`online ${storyDate(170).label}`));
+  s.compute.pipeline.push({ id: 'c9', supplier: 'verde', units: 8, arrivesTurn: 2, landsDay: 175, landsFor: 1 });
+  const lines = turnSummary([{ type: 'deal', supplier: 'verde', arrivesTurn: 2 }], s);
+  assert.ok(lines.some((line) => line.includes(storyDate(175).label)), lines.join(' / '));
 });

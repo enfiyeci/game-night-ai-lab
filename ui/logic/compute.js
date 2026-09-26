@@ -478,10 +478,13 @@ export function sitesView(state) {
     unpoweredBill += darkUnits * contract.price * BALANCE.unitMonthlyCost;
     unitsLeft -= darkUnits;
   }
+  // The day a site comes online: its landing day once stamped (sim/landings.js), else its old round mark.
+  const landing = (site) => site.landsDay ?? storyDayForTurn(site.arrivesTurn);
   const pending = state.power.sites.filter((site) => !site.online).sort((a, b) => a.arrivesTurn - b.arrivesTurn);
   const nextArrival = pending[0] ? {
     turn: pending[0].arrivesTurn,
     turns: Math.max(0, pending[0].arrivesTurn - state.turn),
+    day: landing(pending[0]),
     units: pending[0].units,
     name: SITE_TYPES[pending[0].source]?.name ?? pending[0].source,
   } : null;
@@ -526,8 +529,8 @@ export function sitesView(state) {
       source: site.source,
       units: site.units,
       status: site.online
-        ? `Online since ${storyDate(storyDayForTurn(site.arrivesTurn)).label}`
-        : `Building · ${roundsToWords(state.era, turnsLeft)} left`,
+        ? `Online since ${storyDate(landing(site)).label}`
+        : `Building · online ${storyDate(landing(site)).label}`,
       progress: site.online ? 1 : Math.max(0, Math.min(1, 1 - turnsLeft / duration)),
       warning: site.oppositionCut ? 'Local opposition cut this site\'s capacity.' : '',
     };
@@ -613,7 +616,9 @@ export function turnSummary(events, state) {
         ?? state?.compute?.offers?.find((offer) => offer.id === event.offerId)?.supplier
         ?? supplierFromOfferId(event.offerId);
       const subject = supplier ? `You signed with ${supplierName(supplier)}` : 'You signed a compute deal';
-      lines.push(`${subject} — online from ${storyDate(storyDayForTurn(event.arrivesTurn)).label}`);
+      const day = state?.compute?.pipeline?.find((p) => p.arrivesTurn === event.arrivesTurn && p.landsDay != null)?.landsDay
+        ?? storyDayForTurn(event.arrivesTurn);
+      lines.push(`${subject} — online from ${storyDate(day).label}`);
     } else if (event.type === 'spotWarning') {
       lines.push(`Spot capacity may be pulled after next ${roundWord(state.era)}`);
     } else if (event.type === 'spotPulled') {

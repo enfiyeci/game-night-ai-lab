@@ -1,5 +1,8 @@
 import { BALANCE } from './balance.js';
-import { roundSpan } from './time.js';
+import { ERAS } from './data/eras.js';
+import { eraOfRound, roundSpan } from './time.js';
+
+const LAST_DAY = roundSpan(ERAS.reduce((sum, era) => sum + era.turns, 0) - 1).end;
 
 // Provisional fictional names (spec §11 open question); rename freely.
 export const RIVAL_TEMPLATES = [
@@ -29,8 +32,9 @@ export function leastCarefulRival(state) {
   return state.rivals.reduce((a, b) => (b.caution < a.caution ? b : a));
 }
 
-// With deferTo (a round), a launch rolled at this mark lands on the day its bar would fill during that round.
-// The random draws are the same as the immediate form, in the same order.
+// With deferTo, the roll is for round deferTo, made at the mark before it (the first round's roll comes with the
+// initial state). A launch lands half a round after the day its bar fills, so on average on the round's own mark,
+// where the turn-based game put it (retune, 2026-09-26). The draws are the same as the immediate form's.
 export function rivalsTurn(state, rng, { deferTo = null } = {}) {
   const releases = [];
   for (const r of state.rivals) {
@@ -40,12 +44,14 @@ export function rivalsTurn(state, rng, { deferTo = null } = {}) {
     if (r.progress >= 1) {
       r.progress = 0;
       r.releases += 1;
-      const uncappedGain = (5 + rng.int(0, 4)) * (1 + 0.1 * state.era);
+      const uncappedGain = (5 + rng.int(0, 4)) * (1 + 0.1 * (deferTo == null ? state.era : eraOfRound(deferTo)));
       const heat = 4 * r.speed * (1 - r.caution);
       if (deferTo != null) {
         const { start, end } = roundSpan(deferTo);
+        const days = end - start;
         const fill = Math.min(1, (1 - before) / step);
-        state.rivalLaunches.push({ id: r.id, gain: uncappedGain, heat, day: Math.min(end, start + Math.max(1, Math.ceil(fill * (end - start)))) });
+        const day = Math.min(LAST_DAY, start + Math.max(1, Math.ceil(fill * days)) + Math.floor(days / 2));
+        state.rivalLaunches.push({ id: r.id, gain: uncappedGain, heat, day });
         releases.push({ id: r.id });
         continue;
       }

@@ -162,3 +162,23 @@ test('chips landing just before era 4 still need power, as they did at the era 4
   assert.equal(r.s.era, 3);
   assert.equal(contract.needsPower, true);
 });
+
+test('a contract term runs on days: it ends on its end date, and an early landing bills no longer than its term', () => {
+  const rng = createRng(9);
+  let s = createInitialState({ seed: 9 });
+  s.cash = 1e6;
+  const id = addPipeline(s, { supplier: 'azuria', units: 10, price: 1, termMonths: 3, arrivesTurn: 2, needsPower: false });
+  s = applyActions(s, {}, rng).state;
+  const landsDay = s.compute.pipeline.find((p) => p.id === id).landsDay;
+  let days = 0;
+  let ended = null;
+  while (ended == null && s.day < 600) {
+    const r = advanceDays(s, 1, rng);
+    s = r.state;
+    if (s.compute.contracts.some((c) => c.id === id)) days += 1;
+    if (r.events.some((e) => e.type === 'contractEnded' && e.supplier === 'azuria')) ended = s.day;
+  }
+  assert.ok(ended != null, 'the contract ended');
+  assert.equal(ended, landsDay + 91); // three months of era-1 days (91 days a quarter) after it landed
+  assert.ok(days <= 91, `billed on ${days} days`);
+});
