@@ -36,6 +36,10 @@ const BUDGET_KEYS = ['training', 'security', 'product', 'talent'];
 
 export function setBudget(state, budget) {
   if (budget?.split && Object.hasOwn(budget.split, 'safety')) return { ok: false, error: 'the budget split has no safety slice: safety now runs on compute' };
+  if (budget?.split && (typeof budget.split === 'object' || typeof budget.split === 'function')) {
+    const unknown = Reflect.ownKeys(budget.split).find((key) => !BUDGET_KEYS.includes(key));
+    if (unknown !== undefined) return { ok: false, error: `unknown budget split key ${String(unknown)}` };
+  }
   const spend = budget?.spend;
   if (!Number.isFinite(spend) || spend < 0 || spend > 200) return { ok: false, error: 'spend must be between 0 and 200 $M per month' };
   const values = BUDGET_KEYS.map((k) => budget?.split?.[k]);
@@ -54,7 +58,7 @@ function applyMove(state, move, rng) {
     case 'release': return releaseModel(state, move.release, rng);
     case 'deal': return signOffer(state, move.offerId, sideRng(state, 1));
     case 'queueOrder': return placeOrder(state, move);
-    case 'buildSite': return buildSite(state, move.source, sideRng(state, 2));
+    case 'buildSite': return buildSite(state, move.source, sideRng(state, 2 + state.power.nextId));
     case 'raise': return raiseRound(state, move.archetype);
     case 'research': return researchTechnique(state, move.techId);
     case 'emergency': return useEmergency(state, move.option);
@@ -136,9 +140,12 @@ export function endTurn(prev, actions = {}, rng) {
     const r = contractAction(state, a);
     if (!r.ok) errors.push(r.error);
   }
-  if (actions.queueWithdraw) {
-    const r = withdrawOrder(state);
-    if (!r.ok) errors.push(r.error);
+  if (Object.hasOwn(actions, 'queueWithdraw')) {
+    if (typeof actions.queueWithdraw !== 'boolean') errors.push('queueWithdraw must be true or false');
+    else if (actions.queueWithdraw) {
+      const r = withdrawOrder(state);
+      if (!r.ok) errors.push(r.error);
+    }
   }
   if (actions.contractActions?.length) {
     updateServing(state);

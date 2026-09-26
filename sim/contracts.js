@@ -207,8 +207,10 @@ export function contractAction(state, { id, action } = {}) {
     c.units -= removed;
     c.scaledDown = true;
     const supplier = family(c.supplier);
-    for (const offer of state.compute.offers) {
-      if (family(offer.supplier) === supplier && typeof offer.arrivesIn === 'number') offer.arrivesIn += 1;
+    if (state.compute.delays[supplier] !== 1) {
+      for (const offer of state.compute.offers) {
+        if (family(offer.supplier) === supplier && typeof offer.arrivesIn === 'number') offer.arrivesIn += 1;
+      }
     }
     state.compute.delays[supplier] = 1;
   } else if (action === 'break') {

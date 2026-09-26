@@ -74,3 +74,16 @@ test('in era 4 new chips need site power, and the lease starts when the site is 
   assert.equal(next.power.sites[0].online, true);
   assert.equal(next.compute.online, 10 + Math.min(100, next.power.sites[0].units));
 });
+
+test('same-turn site builds use distinct deterministic side draws', () => {
+  const s = createInitialState({ seed: 1 });
+  s.era = 4;
+  s.turn = 12;
+  s.turnInEra = 0;
+  const actions = { moves: [{ type: 'buildSite', source: 'gas' }, { type: 'buildSite', source: 'gas' }] };
+  const first = endTurn(s, actions, createRng(1));
+  const second = endTurn(s, actions, createRng(1));
+  assert.deepEqual(first.errors, []);
+  assert.deepEqual(first.state.power.sites, second.state.power.sites);
+  assert.notEqual(first.state.power.sites[0].units, first.state.power.sites[1].units);
+});

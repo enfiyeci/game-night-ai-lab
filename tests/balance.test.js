@@ -37,6 +37,17 @@ test('every strategy sends only accepted actions', () => {
   }
 });
 
+test('strategy planning refreshes burn before checking emergency funding', () => {
+  const state = createInitialState({ seed: 91 });
+  state.era = 2;
+  state.turn = 4;
+  state.cash = 100;
+  state.arr = 0;
+  state.burnPlanned = 1;
+  const actions = balanceApi.STRATEGIES.safety(state, createRng(91));
+  assert.ok(actions.moves.some((move) => move.type === 'raise'));
+});
+
 test('difficulty target: no scripted strategy wins more than about a third of runs', { todo: 'plan 2C Task 8 re-tunes balance after the compute rework' }, () => {
   for (const [name, row] of Object.entries(targetReport)) {
     const wins = ['aligned', 'pacingDeal', 'pyrrhic'].reduce((sum, id) => sum + (row.endings[id] ?? 0), 0);

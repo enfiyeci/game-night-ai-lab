@@ -3,7 +3,7 @@ import { createRng } from '../sim/rng.js';
 import { endTurn } from '../sim/turn.js';
 import { cardById, cardUnlocked, slotsFor, pickableCards, validateRecipe, recipeCost } from '../sim/recipe.js';
 import { availableUnits } from '../sim/training.js';
-import { inDangerZone } from '../sim/economy.js';
+import { inDangerZone, projectBurn } from '../sim/economy.js';
 import { HARD_LINES, CASES } from '../sim/data/constitution.js';
 import { MEETINGS } from '../sim/data/president.js';
 import { COMMITMENTS } from '../sim/summit.js';
@@ -129,6 +129,7 @@ function plannedState(state, actions) {
   for (const [id, choiceId] of Object.entries(actions.eventChoices)) resolveEvent(planned, id, choiceId);
   activateReleases(planned);
   updateServing(planned);
+  planned.burnPlanned = projectBurn(planned);
   return planned;
 }
 

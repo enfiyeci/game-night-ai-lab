@@ -41,6 +41,19 @@ test('compute reserved by control is not available for serving', () => {
   assert.ok(computeSlices(s).shortfall > 0);
 });
 
+test('serving load ignores training runs but accounts for reserved safety compute', () => {
+  const s = createInitialState();
+  s.compute.split.safety = 0;
+  const model = consumerModel(9e6);
+  model.spec.arch = 'moe';
+  s.models.push(model);
+  const baseline = updateServing(s);
+  s.activeRun = { units: 5 };
+  assert.equal(updateServing(s), baseline);
+  s.compute.split.safety = 0.5;
+  assert.ok(updateServing(s) > baseline);
+});
+
 test('revenue, burn, cash and valuation', () => {
   const s = createInitialState();
   s.models.push(consumerModel(4e6));

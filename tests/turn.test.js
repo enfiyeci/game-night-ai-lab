@@ -68,6 +68,34 @@ test('budget values must be finite and non-negative', () => {
   }
 });
 
+test('the money budget rejects unknown split keys', () => {
+  const s = createInitialState();
+  const result = setBudget(s, { spend: 20, split: { training: 0.5, security: 0.1, product: 0.2, talent: 0.2, bonus: 0 } });
+  assert.equal(result.ok, false);
+  assert.match(result.error, /bonus/);
+});
+
+test('queue withdrawal accepts only booleans and withdraws only on true', () => {
+  const makeState = () => {
+    const s = createInitialState();
+    s.era = 3;
+    s.turn = 8;
+    s.cash = 0;
+    s.compute.queue = { order: null, carry: { units: 10, tier: 'standard' }, last: null };
+    return s;
+  };
+  const moves = [{ type: 'emergency', option: 'acquihire' }];
+  const invalid = endTurn(makeState(), { queueWithdraw: 'yes', moves }, createRng(23));
+  assert.ok(invalid.errors.some((error) => error.includes('queueWithdraw')));
+  assert.ok(invalid.state.compute.queue.carry);
+  const skipped = endTurn(makeState(), { queueWithdraw: false, moves }, createRng(23));
+  assert.deepEqual(skipped.errors, []);
+  assert.ok(skipped.state.compute.queue.carry);
+  const withdrawn = endTurn(makeState(), { queueWithdraw: true, moves }, createRng(23));
+  assert.deepEqual(withdrawn.errors, []);
+  assert.equal(withdrawn.state.compute.queue.carry, null);
+});
+
 test('serving load reflects user growth from the same turn', () => {
   const s = createInitialState();
   s.compute.online = 100;
@@ -110,7 +138,7 @@ test('a same-turn compute deal refreshes burn before a later emergency move', ()
   assert.deepEqual(out.events.slice(0, 2).map((e) => e.type), ['deal', 'emergency']);
 });
 
-test('a same-turn training run refreshes serving shortfall before a later emergency move', () => {
+test('a same-turn training run does not inflate serving burn for a later emergency move', () => {
   const s = createInitialState();
   s.compute.split.safety = 0;
   s.models.push({
@@ -125,8 +153,8 @@ test('a same-turn training run refreshes serving shortfall before a later emerge
     spec: { size: 'medium', arch: 'moe', context: 'short', precision: 'bf16', guard: false, channel: 'consumer', reasoning: 'off' },
   });
   const smallRecipe = { ...recipe, sliders: { ...recipe.sliders, size: 'small' } };
-  // The run costs $35M up front and pushes serving into spot cover, so burn rises from
-  // $49.6M to $50.64M a month: $300M left is over six months on the stale burn, under six on the fresh one.
+  // The run costs $35M up front, but serving keeps the same capacity and burn.
+  // With $300M left, runway remains just over six months and the emergency stays closed.
   s.cash = 300 + 35;
   const out = endTurn(s, {
     moves: [
@@ -134,8 +162,8 @@ test('a same-turn training run refreshes serving shortfall before a later emerge
       { type: 'emergency', option: 'bridgeRound' },
     ],
   }, createRng(17));
-  assert.equal(out.errors.length, 0);
-  assert.deepEqual(out.events.slice(0, 2).map((e) => e.type), ['startRun', 'emergency']);
+  assert.ok(out.errors.includes('emergency options open only when runway is short'));
+  assert.equal(out.events.some((event) => event.type === 'emergency'), false);
 });
 
 test('using a rescue extends insolvency grace for the current turn only', () => {

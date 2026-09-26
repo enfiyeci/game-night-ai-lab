@@ -1,7 +1,7 @@
 import { BALANCE } from './balance.js';
 import { eraById } from './data/eras.js';
 import { clamp } from './util.js';
-import { servingCost, PRICE_STANCE, REVENUE_PER_USER } from './serving.js';
+import { activeModels, safetyUnits, servingCost, PRICE_STANCE, REVENUE_PER_USER } from './serving.js';
 import { controlUnits } from './internal.js';
 import { monthlyBills, arrivingBills, creditOffset, addPipeline } from './contracts.js';
 import { leaseBills } from './power.js';
@@ -9,17 +9,17 @@ import { resaleCredit, safetyValue, spotCover } from './split.js';
 
 export const STATE_PREEMPTION_LEGAL_COST_MULTIPLIER = 0.7;
 
-export function activeModels(state) {
-  return state.models.filter((m) => m.active && m.channel !== 'open' && state.turn >= m.activeFromTurn);
-}
+export { activeModels } from './serving.js';
 
 export const safetySpend = (state) => safetyValue(state);
 
 export const revenuePerUser = (model) => REVENUE_PER_USER[model.channel] * PRICE_STANCE[model.priceStance].rev * (model.revenueMult ?? 1);
 
 export function updateServing(state) {
-  const runUnits = state.activeRun ? state.activeRun.units : 0;
-  const capacity = Math.max(0.001, state.compute.online - runUnits - controlUnits(state));
+  const online = state.compute.online;
+  const control = Math.min(online, controlUnits(state));
+  const safety = safetyUnits(online, control, state.compute.split.safety);
+  const capacity = Math.max(0.001, online - control - safety);
   const models = activeModels(state);
   const unitsAt = (load) =>
     models.reduce((s, m) => {

@@ -145,6 +145,25 @@ test('scale down delays an already-generated offer from the same supplier', () =
   assert.equal(signOffer(s, current.id, lo).arrivesTurn, s.turn + arrivesIn + 1);
 });
 
+test('two scale-downs in one supplier family delay current offers only once', () => {
+  const s = fresh(1);
+  signOffer(s, offer(s, 'coreflame').id, lo);
+  s.turn = SUPPLIERS.coreflame.arrival;
+  deliverDue(s, lo);
+  const first = s.compute.contracts.find((x) => x.supplier === 'coreflame');
+  const second = { ...first, id: 'coreflame-second', scaledDown: false };
+  s.compute.contracts.push(second);
+  s.compute.offers = generateOffers(s, lo);
+  const current = offer(s, 'coreflame');
+  const arrivesIn = current.arrivesIn;
+  const cash = s.cash;
+  const penalty = Math.round(first.units * SCALE_DOWN) * first.price * U * SCALE_DOWN_PENALTY_MONTHS;
+  assert.equal(contractAction(s, { id: first.id, action: 'scaleDown' }).ok, true);
+  assert.equal(contractAction(s, { id: second.id, action: 'scaleDown' }).ok, true);
+  assert.equal(current.arrivesIn, arrivesIn + 1);
+  assert.ok(Math.abs(s.cash - (cash - 2 * penalty)) < 1e-9);
+});
+
 test('neocloud trouble, and the Gulf license follows US favor', () => {
   const s = fresh(3, GULF_OPEN + 5);
   const pt = s.publicTrust;

@@ -44,6 +44,9 @@ test('a serving cap leaves more for training', () => {
 
 test('the split is validated', () => {
   const s = at(100, 0);
+  assert.match(setComputeSplit(s, null).error, /object/);
+  assert.match(setComputeSplit(s, 'safety').error, /object/);
+  assert.match(setComputeSplit(s, { safety: 0.2, bonus: 1 }).error, /bonus/);
   assert.equal(setComputeSplit(s, { safety: 0.6 }).ok, false);
   assert.equal(setComputeSplit(s, { safety: -0.1 }).ok, false);
   assert.equal(setComputeSplit(s, { servingCap: -1 }).ok, false);
@@ -58,11 +61,17 @@ test('spot covers a shortfall at the era price, or users suffer an outage', () =
   assert.ok(Math.abs(spotCover(s) - 5 * SPOT_PRICE[3] * U) < 1e-9);
   s.compute.split.coverWithSpot = false;
   assert.equal(spotCover(s), 0);
-  s.models.push({ active: true, users: 1000000, flags: [] });
+  s.models.push(
+    { active: true, activeFromTurn: 0, channel: 'consumer', users: 1000000, flags: [] },
+    { active: true, activeFromTurn: 1, channel: 'consumer', users: 1000000, flags: [] },
+    { active: true, activeFromTurn: 0, channel: 'open', users: 1000000, flags: [] },
+  );
   const pt = s.publicTrust;
   const ev = applySplitEffects(s);
   assert.ok(ev.some((e) => e.type === 'outage'));
   assert.ok(s.models[0].users < 1000000);
+  assert.equal(s.models[1].users, 1000000);
+  assert.equal(s.models[2].users, 1000000);
   assert.equal(s.publicTrust, pt - 2);
 });
 
@@ -93,11 +102,14 @@ test('the pledge is offered once in eras 1 and 2, and a lower share breaks it', 
   const s = at(100, 0, 0.1);
   assert.equal(makePledge(s, 0.15).ok, false);
   assert.equal(makePledge(s, 0.2).ok, true);
+  assert.equal(s.flags.safetyPledgeMade, true);
+  assert.equal(makePledge(s, 0.1).ok, false);
+  applySplitEffects(s);
+  assert.equal(s.flags.brokenPromise, true);
+  s.promises = s.promises.filter((p) => p.type !== 'safetyCompute');
   assert.equal(makePledge(s, 0.1).ok, false);
   const e3 = at(100, 0); e3.era = 3;
   assert.equal(makePledge(e3, 0.1).ok, false);
-  applySplitEffects(s);
-  assert.equal(s.flags.brokenPromise, true);
 });
 
 test('the safety readers use the compute share', async () => {
