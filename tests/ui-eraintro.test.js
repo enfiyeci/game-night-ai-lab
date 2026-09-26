@@ -15,15 +15,24 @@ test('every era has an intro with its simulation name', () => {
 });
 
 test('pace follows each era turn length', () => {
-  const paceByMonths = new Map([
-    [3, 'Each turn is now a quarter.'],
-    [1, 'Each turn is now a month.'],
-    [0.25, 'Each turn is now a week.'],
+  assert.deepEqual(ERAS.map(({ id }) => eraIntro(id).pace), [
+    'Each turn is a quarter.',
+    'Each turn is now a quarter.',
+    'Each turn is now a month.',
+    'Each turn is now a month.',
+    'Each turn is now a week.',
   ]);
+});
 
-  for (const era of ERAS) {
-    assert.equal(eraIntro(era.id).pace, paceByMonths.get(era.monthsPerTurn));
-  }
+test('later-era compute changes describe only options still available', () => {
+  assert.equal(
+    eraIntro(4).changes[2],
+    'Gas turbines and nuclear restarts are the new site options; both take time.',
+  );
+  assert.equal(
+    eraIntro(5).changes[1],
+    'Spot and CoreFlame remain available; existing pipeline capacity can still arrive.',
+  );
 });
 
 test('each intro has exactly three short, plain change lines', () => {

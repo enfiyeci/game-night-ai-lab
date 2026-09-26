@@ -42,7 +42,7 @@ const COPY = {
     changes: [
       'Cheaper safety checks and humanoid training data unlock new products.',
       'New chip contracts need powered sites before the hardware can work.',
-      'Build grid, gas, nuclear or Gulf sites, then expect delays and opposition.',
+      'Gas turbines and nuclear restarts are the new site options; both take time.',
     ],
     bottleneck: 'Powered sites; hardware without electricity still gets billed.',
     gate: 'Stay close to the leader and win the board vote.',
@@ -51,7 +51,7 @@ const COPY = {
     headline: 'The models improve the models; the calendar has given up.',
     changes: [
       'Automated research unlocks and training cycles accelerate.',
-      'No new chip orders or power sites; only existing plans can arrive.',
+      'Spot and CoreFlame remain available; existing pipeline capacity can still arrive.',
       'A pacing summit asks whether the leading labs will slow together.',
     ],
     bottleneck: 'Compute, power, trust and time, all at once.',
@@ -62,7 +62,7 @@ const COPY = {
 export const ERA_INTROS = ERAS.map(({ id, name, monthsPerTurn }) => ({
   era: id,
   name,
-  pace: PACE.get(monthsPerTurn),
+  pace: id === 1 ? 'Each turn is a quarter.' : PACE.get(monthsPerTurn),
   ...COPY[id],
 }));
 
