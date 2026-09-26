@@ -401,6 +401,7 @@ def contact(X0, Y0, r=0.42):
 
 
 def ws_front(seat, facing, person, big=False, tag="", extras=""):
+    # The person (body and hands) is wrapped in <g class="sitter"> so a scene can remove staff and keep their desks.
     X0, Y0 = seat
 
     def B(s0, f0, z, ds, df, h, base, **kw):
@@ -427,7 +428,7 @@ def ws_front(seat, facing, person, big=False, tag="", extras=""):
         o.append(shadow(X0 - 0.35, Y0 - hw, f1 + 0.35, 2 * hw))
     o.append(contact(X0, Y0))
     chair = FOLD_CHAIR if F["folding"] else person.get("chair", CHAIR)
-    o.append(f'<g transform="{tr}">{chair_behind(big, chair)}{body}</g>')
+    o.append(f'<g transform="{tr}">{chair_behind(big, chair)}<g class="sitter">{body}</g></g>')
     if F["folding"]:
         (x0, y0, _), (x1, y1, _) = WP(-hw, f0), WP(hw, f1)
         o.append(folding_table(x0, x1, y0, y1))
@@ -440,7 +441,7 @@ def ws_front(seat, facing, person, big=False, tag="", extras=""):
     o.append(B(-0.58, 0.37, 0.74, 0.7, 0.2, 0.025, KEYS, top=M("paper", 92, "ink")))
     o.append(B(0.24, 0.4, 0.74, 0.09, 0.13, 0.03, KEYS))
     o.append(extras_on_desk(extras, WP))
-    o.append(f'<g transform="{tr}">{hands}</g>')
+    o.append(f'<g transform="{tr}"><g class="sitter">{hands}</g></g>')
     # monitor: back faces the viewer
     ms0 = -1.25 if big else -1.0
     mw, mh = (0.9, 0.5) if big else (0.7, 0.46)
@@ -549,7 +550,7 @@ def ws_back(seat, person, variant):
     ax, ay = P(X0, Y0)
     o.append(contact(X0 - 0.05, Y0 + 0.1))
     sitter = "" if person is None else back_person(person)
-    o.append(f'<g transform="translate({ax:.1f},{ay:.1f}) scale({K})">{sitter}{chair_front()}</g>')
+    o.append(f'<g transform="translate({ax:.1f},{ay:.1f}) scale({K})"><g class="sitter">{sitter}</g>{chair_front()}</g>')
     return "".join(o), (ax + 2 * K, ay - 76 * K)
 
 
