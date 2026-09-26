@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import { createRng } from '../sim/rng.js';
 import { applyActions, advanceDays, endTurn } from '../sim/turn.js';
-import { ROUND_DAYS, storyDate, nextRoundDay } from '../sim/time.js';
+import { ROUND_DAYS, storyDate, nextRoundDay, roundSpan, eraOfRound } from '../sim/time.js';
 
 test('story dates use year, month and week', () => {
   assert.equal(storyDate(0).label, 'Y1 M1 W1');
@@ -63,4 +63,24 @@ test('a round mark several rounds ahead walks across an era change', async () =>
   s.era = 2; s.turnInEra = 3; s.day = 700; s.dayInRound = 0;
   assert.equal(roundMarkDay(s, 1), 791); // the last era-2 round
   assert.equal(roundMarkDay(s, 2), 821); // then a 30-day era-3 round
+});
+
+test('round spans walk the era lengths', () => {
+  assert.deepEqual(roundSpan(0), { start: 0, end: 91 });
+  assert.deepEqual(roundSpan(4), { start: 364, end: 455 });
+  assert.deepEqual(roundSpan(8), { start: 728, end: 758 });
+  assert.deepEqual(roundSpan(19), { start: 989, end: 996 });
+  assert.equal(eraOfRound(3), 1);
+  assert.equal(eraOfRound(16), 5);
+  assert.equal(eraOfRound(25), 5);
+});
+
+test('every mark falls on its round span end', () => {
+  const rng = createRng(8);
+  let s = createInitialState({ seed: 8 });
+  while (!s.ending && s.turn < 20) {
+    const turn = s.turn;
+    s = endTurn(s, {}, rng).state;
+    if (!s.ending) assert.equal(s.day, roundSpan(turn).end);
+  }
 });
