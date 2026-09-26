@@ -21,7 +21,7 @@ const jargonIds = (id = 'first') => styleIds('jargon', id);
 test('the President meeting script has the required exchanges and answer mix', () => {
   assert.deepEqual(MEETINGS.map(({ id, era, turnInEra }) => ({ id, era, turnInEra })), [
     { id: 'first', era: 2, turnInEra: 2 },
-    { id: 'second', era: 5, turnInEra: 1 },
+    { id: 'second', era: 4, turnInEra: 3 },
   ]);
   for (const entry of MEETINGS) {
     assert.equal(entry.exchanges.length, 3);
@@ -241,9 +241,9 @@ test('four points of flattery queue the President amendment demand', () => {
 
 test('second-meeting grudges lower patience and are exposed on the meeting state', () => {
   const state = createInitialState();
-  state.turn = 17;
-  state.era = 5;
-  state.turnInEra = 1;
+  state.turn = 15;
+  state.era = 4;
+  state.turnInEra = 3;
   state.promises = [
     { source: 'president', id: 'beatRivals', text: PROMISES.beatRivals.text, meeting: 'first', dueTurn: 11, status: 'refused' },
     { source: 'president', id: 'domesticChips', text: PROMISES.domesticChips.text, meeting: 'first', dueTurn: 11, status: 'open' },

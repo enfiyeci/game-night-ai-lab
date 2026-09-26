@@ -123,7 +123,7 @@ function stagePoint(event) {
   ];
 }
 
-const blocked = () => Boolean(overlay.querySelector('.dialog-layer, .event-layer, .ev-phone'));
+const blocked = () => Boolean(overlay.querySelector('.dialog-layer, .event-layer, .ev-phone, .screenwall-layer'));
 
 office.addEventListener('click', (event) => {
   if (event.target.closest?.('#person-ceo') && !blocked()) {
@@ -253,6 +253,15 @@ game.subscribe(({ state }) => {
 });
 
 globalThis.game = game;
+
+// The Geneva summit and the deal in play (plan 2026-09-26-summit-build).
+const { mountSummit, openSummit } = await import('./screens/summit.js');
+const { mountDeal } = await import('./screens/deal.js');
+mountSummit(game, overlay);
+mountDeal(game, overlay);
+const summitRoute = () => { if (location.hash === '#summit') openSummit(game, overlay); };
+summitRoute();
+addEventListener('hashchange', summitRoute);
 
 // The board meeting (board UI plan Task 6): opens on the last story day before a vote mark and holds the clock; the
 // ending waits for it. Preview routes: #meeting (the ring; Call the vote plays a vote held on a copy), #meeting-room, #meeting-vote,

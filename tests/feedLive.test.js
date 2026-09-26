@@ -176,3 +176,20 @@ test('a release that is not live yet is announced at once', () => {
   assert.ok(state.feed.some((post) => post.tag === 'announce'));
   assert.ok(!state.feed.some((post) => post.tag === 'launch'), 'launch posts wait for the model to go live');
 });
+
+test('a lab caught breaking the Geneva deal, or wrongly accused, gets the summit posts', () => {
+  const state = stateOnDay();
+  const rival = state.rivals[0];
+  reactToEvents(state, state, [{ type: 'dealBreakCaught', party: rival.id, how: 'checks', level: 1 }]);
+  runDays(state, 3);
+  const caught = new Set(REACTIONS.summit.caught.map(([, text]) => text.replaceAll('{rival}', rival.name)));
+  assert.ok(state.feed.length >= 1);
+  assert.ok(state.feed.every((post) => caught.has(post.text)));
+
+  const cleared = stateOnDay();
+  reactToEvents(cleared, cleared, [{ type: 'investigated', party: rival.id, found: false, insulted: true, level: 0 }]);
+  runDays(cleared, 3);
+  const falseAlarm = new Set(REACTIONS.summit.falseAlarm.map(([, text]) => text.replaceAll('{rival}', rival.name)));
+  assert.ok(cleared.feed.length >= 1);
+  assert.ok(cleared.feed.every((post) => falseAlarm.has(post.text)));
+});

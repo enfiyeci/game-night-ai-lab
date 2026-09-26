@@ -323,9 +323,12 @@ test('refusing pooling applies the stored risk, while accepting improves summit 
 
   const plain = createInitialState();
   const pooled = createInitialState();
+  plain.raceHeat = 50;
+  pooled.raceHeat = 50;
   pooled.flags.pooled = true;
-  assert.equal(readTheRoom(plain, no).evaluators.deepthink, 'unsure');
-  assert.equal(readTheRoom(pooled, no).evaluators.deepthink, 'likely');
+  const plan = { proposals: ['evaluators'], checks: { evaluators: 1 } };
+  assert.equal(readTheRoom(plain, plan).evaluators.deepthink, 'maybe');
+  assert.equal(readTheRoom(pooled, plan).evaluators.deepthink, 'yes');
 });
 
 test('the old data-center event is gone', async () => {

@@ -96,6 +96,7 @@ export function releasePayload(state, draft) {
     family: draft.family.trim().slice(0, 24),
     generation: nextGeneration(state, draft.skip),
     tierWords: { ...draft.tierWords },
+    ...(draft.breakDeal === true && { breakDeal: true }),
   };
 }
 

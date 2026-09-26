@@ -28,6 +28,8 @@ const inSeason = (extra, day) => !extra?.season || (SEASON_MONTHS[extra.season] 
 const feedRng = (state, salt) => createRng(((state.seed >>> 0) * 2246822519 + state.day * 3266489917 + salt * 668265263) >>> 0);
 const hash = (text) => [...text].reduce((h, c) => (Math.imul(h, 31) + c.charCodeAt(0)) >>> 0, 7);
 
+const partyName = (state, party) => state.rivals.find((r) => r.id === party)?.name ?? PARTY_NAMES[party] ?? 'a rival lab';
+
 function newestLiveModel(state) {
   let newest = null;
   for (const [index, model] of (state.models ?? []).entries()) {
@@ -221,13 +223,12 @@ export function reactToEvents(before, state, events, { atMark = false } = {}) {
           s.add(R.summit.checks, 1, 'summit', { from: 1, to: 3 });
         } else s.add(R.summit.failed, 2, 'summit', { from: 0, to: 1 });
         break;
-      case 'defection':
-        if (event.detected) {
-          const rival = event.party === 'player'
-            ? '{lab}'
-            : state.rivals.find((r) => r.id === event.party)?.name ?? PARTY_NAMES[event.party] ?? 'a rival lab';
-          s.add(R.summit.caught, 2, 'summit', { rival, from: 0, to: 2 });
-        }
+      // The summit's checks or an investigation catch a lab breaking the deal, or clear one wrongly accused (sim/summit.js).
+      case 'playerCaught': s.add(R.summit.caught, 2, 'summit', { rival: '{lab}', from: 0, to: 2 }); break;
+      case 'dealBreakCaught': s.add(R.summit.caught, 2, 'summit', { rival: partyName(state, event.party), from: 0, to: 2 }); break;
+      case 'investigated':
+        if (event.found) s.add(R.summit.caught, 2, 'summit', { rival: partyName(state, event.party), from: 0, to: 2 });
+        else if (event.insulted) s.add(R.summit.falseAlarm, 2, 'summit', { rival: partyName(state, event.party), from: 0, to: 2 });
         break;
       case 'dealCollapsed': s.add(R.summit.failed, 2, 'summit', { from: 0, to: 2 }); break;
       default: break;

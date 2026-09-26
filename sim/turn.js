@@ -25,8 +25,11 @@ import { CASES } from './data/constitution.js';
 import { setConstitution, amendConstitution } from './constitution.js';
 import {
   proposeSummit,
-  holdOrShip,
-  holdOrShipError,
+  dealWeek,
+  dealBinds,
+  investigate,
+  expireSuspicions,
+  playerBreak,
   SUMMIT_SKIP_RACE_HEAT,
   SUMMIT_SKIP_US_FAVOR,
   SUMMIT_SKIP_INTL_FAVOR,
@@ -43,7 +46,7 @@ export const MAX_MOVES = 2;
 const BUDGET_KEYS = ['training', 'security', 'product', 'talent'];
 // sideRng salts in sim/: 0 initial offers, 1 deals, 2 site opposition, 3 contracts, 4 queue,
 // 5 offers, 6 deliveries, 7 pooling, 8 board events (sim/data/boardEvents.js), 9 + card index for card landing days
-// (sim/events.js stampNewCards), 900 AI proposals, and 1000 + site ID for builds.
+// (sim/events.js stampNewCards), 900 AI proposals, 1000 + site ID for builds, and 2000 + motion index for summit votes.
 const SITE_RNG_SALT_BASE = 1000;
 const AI_PROPOSAL_SALT = 900;
 
@@ -67,8 +70,25 @@ export function setBudget(state, budget) {
 
 function applyMove(state, move, rng) {
   switch (move.type) {
-    case 'startRun': return startRun(state, move.recipe);
-    case 'release': return releaseModel(state, move.release, rng);
+    case 'startRun': {
+      const r = startRun(state, move.recipe);
+      // Breaking the Geneva cap is a choice made when the run starts.
+      if (r.ok && move.breakDeal === true && dealBinds(state, 'computeCap')) {
+        state.activeRun.uncapped = true;
+        playerBreak(state, 'computeCap');
+        r.brokeDeal = 'computeCap';
+      }
+      return r;
+    }
+    case 'release': {
+      const inGap = dealBinds(state, 'releaseDelay') && move.release?.breakDeal === true;
+      const r = releaseModel(state, move.release, rng);
+      if (r.ok && inGap && r.brokeGap) {
+        playerBreak(state, 'releaseDelay');
+        r.brokeDeal = 'releaseDelay';
+      }
+      return r;
+    }
     case 'deal': return signOffer(state, move.offerId, sideRng(state, 1));
     case 'queueOrder': return placeOrder(state, move);
     case 'buildSite': return buildSite(state, move.source, sideRng(state, SITE_RNG_SALT_BASE + state.power.nextId));
@@ -223,10 +243,10 @@ export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = 
     const result = resolveEvent(state, id, eventChoices[id]);
     if (!result.ok) errors.push(result.error);
   }
-  if (Object.hasOwn(actions, 'holdOrShip') && actions.holdOrShip !== undefined) {
-    const error = holdOrShipError(actions.holdOrShip);
-    if (error) errors.push(error);
-    else state.holdOrShipChoice = actions.holdOrShip;
+  for (const id of actions.investigate ?? []) {
+    const result = investigate(state, id, rng);
+    if (!result.ok) errors.push(result.error);
+    else events.push({ type: 'investigated', party: result.party, found: result.found, insulted: result.insulted === true, level: result.level });
   }
 
   activateReleases(state);
@@ -269,8 +289,12 @@ export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = 
     const r = applyMove(state, move, rng);
     if (r.ok) {
       if (move.type === 'release') r.model.releasedDay = state.day;
-      if (move.type === 'summit') events.push({ type: 'summit', signed: r.signed, binding: r.binding });
+      if (move.type === 'summit') {
+        events.push({ type: 'summit', signed: r.signed, binding: r.binding });
+        for (const e of r.events) events.push(e);
+      }
       else events.push({ type: move.type, ...r });
+      if (r.brokeDeal) events.push({ type: 'playerBreak', card: r.brokeDeal });
       if (r.hazardIgnored) events.push({ type: 'hazardResolved', choice: 'ignore', auto: true });
       updateServing(state);
       state.burnPlanned = projectBurn(state);
@@ -326,7 +350,7 @@ function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
   }
 
   if (state.era === 5 && state.deal && state.turnInEra > 0) {
-    for (const event of holdOrShip(state, state.holdOrShipChoice, rng)) events.push(event);
+    for (const event of dealWeek(state, rng)) events.push(event);
   }
 
   if (!state.ending) {
@@ -508,6 +532,7 @@ export function advanceDays(prev, days, rng, observer = {}) {
     accrueEconomy(state, monthsPerDay(state));
     state.day += 1;
     state.dayInRound += 1;
+    expireSuspicions(state);
     releaseDueFeed(state);
     postLandedCards(state);
     for (const e of resolveDue(state)) events.push(e);

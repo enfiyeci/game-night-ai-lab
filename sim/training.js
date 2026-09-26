@@ -43,6 +43,7 @@ export function advanceRunBy(state, rng, fraction) {
   if (run.turnsLeft > 1e-9) return null;
   state.activeRun = null;
   state.pendingModel = resolveRun(state, run, rng);
+  if (run.uncapped) state.pendingModel.uncapped = true; // run past the Geneva cap
   return state.pendingModel;
 }
 
@@ -84,7 +85,8 @@ export function resolveRun(state, run, rng) {
   const spikeFactor = (n) => Math.max(0.2, 1 - 0.2 * n);
   const gainWith = (n) => Math.max(0, Math.max(0, base) * talent * (1 - 0.5 * alignShare) * spikeFactor(n) - nextRunCapPenalty);
   const uncappedGain = gainWith(run.spikes);
-  const gainCap = state.deal?.collapsed === false && state.deal.binding.includes('computeCap') ? 5 : Infinity;
+  // Past the Geneva cap only when the player chose to break the deal for this run.
+  const gainCap = state.deal?.collapsed === false && state.deal.binding.includes('computeCap') && !run.uncapped ? 5 : Infinity;
   const capability = Math.min(BALANCE.maxCapability, state.capability + Math.min(uncappedGain, gainCap));
   const gain = Math.max(0, capability - state.capability);
   const spikeLoss = run.spikes > 0

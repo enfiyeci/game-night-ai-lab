@@ -6,7 +6,7 @@ import { availableUnits, startRun } from '../sim/training.js';
 import { inDangerZone, projectBurn } from '../sim/economy.js';
 import { HARD_LINES, CASES } from '../sim/data/constitution.js';
 import { MEETINGS } from '../sim/data/president.js';
-import { COMMITMENTS } from '../sim/summit.js';
+import { COMMITMENTS, PARTIES, dealBinds } from '../sim/summit.js';
 import { checkLoad, jobLevels, jobLocked, maxLevel, setAutomation } from '../sim/automation.js';
 import { HANDOFF_JOBS, JOBS, MAX_CHECK, MONITOR_CAPACITY, PACK, REVIEWER_CAPACITY } from '../sim/data/automation.js';
 import { resolveHazard } from '../sim/hazards.js';
@@ -159,9 +159,21 @@ function automationChoice(state, style, rng) {
 
 function summitMove(state, style, rng) {
   if (state.era !== 5 || state.turnInEra !== 0 || state.deal || style === 'speed') return null;
-  if (style === 'safety') return { type: 'summit', proposals: ['evaluators', 'sharedSafety', 'verification'] };
-  if (style === 'balanced') return { type: 'summit', proposals: ['evaluators', 'sharedSafety'] };
-  return { type: 'summit', proposals: shuffled(Object.keys(COMMITMENTS), rng).slice(0, rng.int(1, 3)) };
+  if (style === 'safety') {
+    return {
+      type: 'summit',
+      proposals: ['evaluators', 'sharedSafety', 'verification'],
+      checks: { evaluators: 2, sharedSafety: 2, verification: 3 },
+      promises: { east: 'inspectors', west: state.cash >= 50 ? 'pay' : 'goFirst' },
+    };
+  }
+  if (style === 'balanced') {
+    return { type: 'summit', proposals: ['evaluators', 'sharedSafety'], checks: { evaluators: 2, sharedSafety: 2 }, promises: { east: 'goFirst' } };
+  }
+  const proposals = shuffled(Object.keys(COMMITMENTS), rng).slice(0, rng.int(1, 3));
+  const checks = Object.fromEntries(proposals.map((card) => [card, rng.int(0, 3)]));
+  const promisedTo = shuffled(PARTIES, rng).slice(0, rng.int(0, 2));
+  return { type: 'summit', proposals, checks, promises: Object.fromEntries(promisedTo.map((party) => [party, 'goFirst'])) };
 }
 
 function plannedState(state, actions) {
@@ -339,7 +351,6 @@ function makeStrategy(style, prefs, policy = {}) {
     }
     const meeting = state.meeting;
     if (meeting) actions.presidentAnswers = presidentAnswers(state, style, rng);
-    if (state.era === 5 && state.deal && state.turnInEra > 0) actions.holdOrShip = style === 'speed' ? 'ship' : 'hold';
 
     const preAutomation = structuredClone(state);
     preAutomation.budget = structuredClone(actions.budget);
@@ -356,7 +367,8 @@ function makeStrategy(style, prefs, policy = {}) {
       if (releaseModel(structuredClone(planned), move.release, VALIDATION_RNG).ok) actions.moves.push(move);
     } else if (!planned.activeRun && actions.moves.length < 2) {
       const recipe = bestRecipe(planned, prefs);
-      if (recipe) actions.moves.push({ type: 'startRun', recipe });
+      // The speed bot breaks the Geneva cap whenever one binds.
+      if (recipe) actions.moves.push({ type: 'startRun', recipe, ...(style === 'speed' && dealBinds(state, 'computeCap') && { breakDeal: true }) });
     }
     const afterPriority = structuredClone(planned);
     const priority = actions.moves.find((move) => move.type === 'startRun' || move.type === 'release');
