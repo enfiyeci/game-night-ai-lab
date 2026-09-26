@@ -618,7 +618,8 @@ export const EVENTS = [
           effects(state) {
             const site = state.power.sites.find((candidate) => candidate.id === state.flags.oppositionSite);
             if (site) {
-              site.arrivesTurn += 2;
+              site.online = false;
+              site.arrivesTurn = Math.max(site.arrivesTurn, state.turn) + 2;
               refreshOnline(state);
             }
           },

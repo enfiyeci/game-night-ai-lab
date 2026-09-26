@@ -9,7 +9,7 @@ import { endTurn } from '../sim/turn.js';
 import { createRng } from '../sim/rng.js';
 import { contractBill } from '../sim/contracts.js';
 import { RESCUE_MONTHS, SPOT_PRICE } from '../sim/data/compute.js';
-import { leaseMonthly } from '../sim/power.js';
+import { leaseMonthly, powerTurn } from '../sim/power.js';
 import { readTheRoom } from '../sim/summit.js';
 
 const no = { next: () => 0.99, int: (a) => a, chance: () => false, pick: (a) => a[0], normal: (m) => m };
@@ -120,6 +120,42 @@ test('site opposition never targets a site that will be online before its card c
   building.power.sites.push({ id: 'gas-building', source: 'gas', units: 400, arrivesTurn: 15, online: false, oppositionCut: null });
   assert.equal(event.trigger(building, sharedRng), true);
   assert.equal(building.flags.oppositionSite, 'gas-building');
+});
+
+test('moving a deferred opposed site takes it offline and brings it back two turns later', () => {
+  const s = createInitialState({ seed: 71 });
+  s.era = 4;
+  s.turn = 12;
+  s.seenEvents = [...EVENTS, ...EVENTS_6C]
+    .filter((event) => event.id !== 'siteOpposition')
+    .map((event) => event.id);
+  s.compute.contracts.push({ id: 'v', supplier: 'verde', units: 400, price: 1, monthsLeft: 24, needsPower: true, dark: false });
+  s.power.sites.push({ id: 'gas-deferred', source: 'gas', units: 400, arrivesTurn: 15, online: false, oppositionCut: null });
+  s.pendingEvents = [{ id: 'block-a' }, { id: 'block-b' }];
+
+  eventsTick(s, no);
+  assert.ok(s.warnings.siteOpposition);
+  s.turn = 13;
+  eventsTick(s, no);
+  assert.equal(s.warnings.siteOpposition.deferred, true);
+  s.pendingEvents = [];
+  s.turn = 14;
+  eventsTick(s, no);
+  assert.equal(s.pendingEvents.some((event) => event.id === 'siteOpposition'), true);
+  s.turn = 15;
+  assert.equal(powerTurn(s).some((event) => event.id === 'gas-deferred'), true);
+  assert.equal(s.power.sites[0].online, true);
+
+  assert.equal(resolveEvent(s, 'siteOpposition', 'move').ok, true);
+  assert.equal(s.power.sites[0].online, false);
+  assert.equal(s.power.sites[0].arrivesTurn, 17);
+  assert.equal(s.compute.online, 10);
+  s.turn = 16;
+  assert.deepEqual(powerTurn(s), []);
+  assert.equal(s.power.sites[0].online, false);
+  s.turn = 17;
+  assert.equal(powerTurn(s).some((event) => event.id === 'gas-deferred'), true);
+  assert.equal(s.power.sites[0].online, true);
 });
 
 test('site opposition benefits cost one lease month and moving delays the selected site', () => {
