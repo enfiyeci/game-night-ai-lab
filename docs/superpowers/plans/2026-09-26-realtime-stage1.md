@@ -887,3 +887,18 @@ export function roundsToWords(era, n) {
 - Spec coverage: 1D stage 1 is covered by Tasks 1, 2 and 5. 2A (45 s per round) is in Task 4. 3C with 2 per round is in Tasks 1, 2 and 5. 4C (speeds, no skip) is in Task 5. Warnings not pausing is in Task 4: `watch` pauses only on dialogs and menus, and the events lane pauses on cards itself. Card deadlines are in Task 2. No turn wording is in Task 6.
 - Known stage-2 items (not in this plan): rival launches, lawsuits, promises, contract arrivals, site builds and era changes on story days; retuning.
 - Merge risk: the board-redesign branch changes `sim/turn.js` (`boardSnapshot`, board promise, `feedPosts`) and `sim/state.js`. When merging, port its additions into `endRound` (the world step) and `applyActions` (`actions.boardPromise`), and replace `state.roundStart` with `boardSnapshot(state)` at the round mark.
+
+## Review record (2026-09-26, pre-merge into `ui`, tier 3)
+
+Codex `gpt-5.6-sol`, straight `review --base ui` (session 01a0dd77-9fb1-75f2-9a21-4f0f597b6d31) and adversarial exec (session 01a0dd77-9fb1-7732-bc93-ea61b1ca9ff5), run concurrently; the mutation guard was clean in every round. The fix wave ran on `gpt-5.6-terra` because `gpt-5.6-sol` was at capacity.
+
+Round 1: straight 6 findings, adversarial 6 (REVISE); 9 distinct after de-duplication.
+- Fixed in 3684a11: training capacity rechecked after player actions; clock step capped at 1 s and converted day by day at the current era's rate; `game.advanceDays` publishes each day and stops on pause; no landing dates after the ending; previews leave pending cards alone; `releasedDay` recorded and shown; card feed posts on the landing day; warning bars use their own span.
+- Won't fix: `endTurn` skips the one-action-per-team rule. Deliberate, so the balance tool's scripted two-move rounds keep their meaning; the team rule is balanced in playtests instead.
+- Deviation: a daily capacity recheck (the reviewer's first suggestion) moved the balance by up to 16.5 points, so the round-level check stays, invalidated by player actions (the reviewer's second suggestion). Balance after the fix equals the baseline exactly.
+
+Round 2: straight APPROVED. Adversarial REVISE with 3 findings, all fixed in ad0b40b: speed changes rescaled owed time; `advanceDays` returned only the last day's results; cards made on the final mark opened after the ending.
+
+Round 3 (cap): adversarial REVISE with 1 finding. A card set aside before the ending stays actionable after it. Escalated to the owner per the 3-round cap.
+
+Tests after round 2: 540, 538 pass, 0 fail, 2 known todo. Balance: identical to the pre-fix baseline.
