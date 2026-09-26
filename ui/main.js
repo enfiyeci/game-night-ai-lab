@@ -19,6 +19,8 @@ import { openQueue } from './screens/compute.js';
 import { openPowerSites } from './screens/sites.js';
 import { mountHistory, openArticle, openHistory } from './screens/history.js';
 import { mountEvents } from './screens/events.js';
+import { mountBriefing } from './screens/briefing.js';
+import { mountFeed } from './screens/feed.js';
 
 const params = new URLSearchParams(location.search);
 
@@ -62,6 +64,8 @@ mountRecipe(game, overlay);
 mountHistory(game, overlay);
 mountTurnSummary(overlay, game);
 const events = mountEvents(game, { stage, overlay });
+mountBriefing(game, { office, overlay });
+mountFeed(game, { overlay, events });
 
 function stagePoint(event) {
   const rect = stage.getBoundingClientRect();

@@ -108,6 +108,13 @@ test('queue helpers merge instead of replacing', () => {
   assert.deepEqual(game.queue.addressWarnings, ['neocloudTrouble']);
 });
 
+test('answers go straight to the game when it can apply them at once', () => {
+  const calls = [];
+  const realtime = { answerCard: (id, choiceId) => { calls.push([id, choiceId]); return { ok: true }; } };
+  assert.deepEqual(queueAnswer(realtime, 'investors', 'refuse'), { ok: true });
+  assert.deepEqual(calls, [['investors', 'refuse']]);
+});
+
 test('jokes are optional per advisor and band', () => {
   assert.equal(typeof jokeFor('cfo', 'alarmed', 0), 'string');
   assert.equal(jokeFor('nobody', 'calm', 0), null);

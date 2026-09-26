@@ -231,7 +231,8 @@ export function mountEvents(game, { stage, overlay }) {
     for (const line of argueLines(view)) {
       const head = anchors.heads[line.role];
       if (!head) continue;
-      bubbles.push(bubbleAt(layer, head, { label: ADVISOR_TITLE[line.role], say: line.say, pick: line.pick, width: 240, dy: line.role === 'cfo' ? -64 : -34 }));
+      const band = game.state.lastBriefing?.find((reading) => reading.id === line.role)?.band ?? 'calm';
+      bubbles.push(bubbleAt(layer, head, { label: ADVISOR_TITLE[line.role], say: line.say, pick: line.pick, width: 240, dy: band === 'calm' ? -34 : -64 })); // clear their "!" marker
     }
     separate(bubbles);
     card.querySelector('.ev-choice')?.focus();

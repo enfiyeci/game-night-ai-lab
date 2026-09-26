@@ -109,9 +109,12 @@ export function consequenceLines({ before, answered, events }) {
   });
 }
 
-// game.setField replaces a whole field, so merge before writing.
+// Under real time the game answers a card at once (game.answerCard). With turns the answer waits
+// in the queue for endTurn; game.setField replaces a whole field, so merge before writing.
 export function queueAnswer(game, id, choiceId) {
+  if (typeof game.answerCard === 'function') return game.answerCard(id, choiceId);
   game.setField('eventChoices', { ...(game.queue.eventChoices ?? {}), [id]: choiceId });
+  return { ok: true };
 }
 
 export function queueLookInto(game, id) {
