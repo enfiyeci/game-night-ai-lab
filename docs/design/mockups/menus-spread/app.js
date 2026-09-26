@@ -40,7 +40,9 @@ const GROWN = [0, 0, 24, 27, 31, 35, 21, 25, 26, 28, 30, 32, 34, 36, 38, 41, 41,
 const BURN = [55, 55, 63, 63, 67, 67, 58, 91, 80, 80, 80, 80, 84, 84, 84, 84, 88, 88, 88, 88];
 const ONLINE = [10, 10, 18, 18, 18, 18, 10, 40, 30, 30, 30, 30, 51, 51, 51, 51, 51, 51, 51, 51];
 
-function cashChart({ w, h, dark = false, raise = true, releases = true, lowest = true, label = true }) {
+// What-if from the game's projector (ui/logic/finance.js project()): era 4 and 5 goals at 120 MW, no round.
+const GHOST = [738, 683, 627, 572, 516, 325, 135, -56];
+function cashChart({ w, h, dark = false, raise = true, releases = true, lowest = true, label = true, ghost = false }) {
   const padL = 58; const padR = 16; const padT = 16; const padB = 34;
   const iw = w - padL - padR; const ih = h - padT - padB;
   const x = (t) => padL + (t / 20) * iw;
@@ -78,6 +80,14 @@ function cashChart({ w, h, dark = false, raise = true, releases = true, lowest =
       s += `<line x1="${x(t)}" x2="${x(t)}" y1="${y(0)}" y2="${y(0) - 10}" style="stroke:var(--coral);stroke-width:3"/>`;
       s += `<text x="${x(t)}" y="${y(0) - 15}" text-anchor="middle" style="font-size:11px;font-weight:900;fill:var(--coral)">${name}</text>`;
     }
+  }
+  if (ghost) {
+    const pts = GHOST.slice(0, 7).map((v, i) => [x(NOW + i), y(v)]);
+    const cross = NOW + 6 + 135 / 191;
+    pts.push([x(cross), y(0)]);
+    s += `<path d="M${pts.map((q) => q.join(',')).join(' L')}" style="fill:none;stroke:var(--coral);stroke-width:2.5;stroke-dasharray:3 5;stroke-linecap:round;opacity:.9"/>`;
+    s += `<path d="M${x(cross) - 7},${y(0) - 7} l14,14 M${x(cross) + 7},${y(0) - 7} l-14,14" style="stroke:var(--coral);stroke-width:3;stroke-linecap:round"/>`;
+    s += `<text x="${x(cross) - 14}" y="${y(0) - 6}" text-anchor="end" style="font-size:12px;font-weight:900;fill:var(--coral)">120 MW: out of cash, month 30</text>`;
   }
   if (lowest) {
     s += `<circle cx="${x(20)}" cy="${y(216)}" r="5" style="fill:${plan}"/>`;
@@ -282,23 +292,52 @@ const financeSec = {
         <div class="row" style="justify-content:space-between;margin-top:10px"><span class="back" style="font-size:13px">How we worked this out</span><span class="btn">Keep this plan</span><span class="back">The books \u203a</span></div>
       </section>
       ${stats([['Era 3 goal', '30 units'], ['Era 4 goal', '51 MW'], ['Era 5 goal', '51 MW'], ['Raise in era 4', 'off'], ['Promise to the board', 'off'], ['Lowest cash', '$216M']], { x: 40, y: 150, w: 250, title: 'This plan', verdict: 'Cash lasts the run. You end with about $216M.' })}` },
-    { code: 'B', name: 'Cash first', kind: 'mid', text: 'One wide panel led by the question players ask: does the money last? A big cash line (past solid, plan dashed, the round and each release marked), then the levers in one row under it. The compute and monthly charts move to their own tabs.', draw: () => `${office(3)}${hud()}<div class="veil strong"></div>
-      <section class="gp dlg" style="left:140px;top:112px;width:1160px;height:760px;padding:18px 30px 20px;text-align:left">
+    { code: 'B', name: 'Cash first', kind: 'mid', text: 'One wide panel led by the question players ask: how long does the money last? A big cash line (past solid, plan dashed, the round and each release marked), then a strip that answers it in months, with what-ifs from the game\u2019s own projector. The levers sit in one row under that; the compute and monthly charts move to their own tabs.', draw: () => {
+      // Month ruler for the afloat strip: month 24 (now) to 40.
+      const mx = (m) => ((m - 24) / 16) * 520;
+      const whatIf = (label, verdict, tone, months, note) => `<div class="row" style="gap:10px;padding:6px 0;border-top:1px solid color-mix(in oklab, var(--wood) 18%, transparent)"><div style="width:190px;font-size:13px;font-weight:800">${label}</div>
+        <div style="position:relative;flex:1;height:10px;border-radius:5px;background:color-mix(in oklab, var(--ink) 8%, var(--paper))"><i style="position:absolute;left:0;top:0;bottom:0;width:${Math.min(100, (months - 24) / 9 * 100)}%;border-radius:5px;background:var(--${tone})"></i></div>
+        <div style="width:230px;font-size:13px;font-weight:900;color:color-mix(in oklab, var(--${tone}) 75%, var(--ink))">${verdict}</div></div>`;
+      return `${office(3)}${hud()}<div class="veil strong"></div>
+      <section class="gp dlg" style="left:130px;top:104px;width:1180px;padding:16px 30px 18px;text-align:left">
         <div class="row" style="gap:16px;align-items:flex-end"><div><h1>Plan the years ahead</h1><div class="subt">Era 3 \u00b7 month 24 of 33</div></div><div style="flex:1"></div>
           <span class="tab on">Cash</span><span class="tab">Compute</span><span class="tab">Each month</span><span class="tab">The books</span></div>
-        <div class="row" style="margin:14px 0 6px;gap:14px;padding:10px 14px;border-radius:10px;background:color-mix(in oklab, var(--teal) 13%, var(--paper))">
-          <div style="font-size:21px;font-weight:900;color:color-mix(in oklab, var(--teal) 70%, var(--ink))">Cash lasts the run. You end with about $216M.</div><div style="flex:1"></div>
+        <div class="row" style="margin:10px 0 4px;gap:14px;padding:9px 14px;border-radius:10px;background:color-mix(in oklab, var(--teal) 13%, var(--paper))">
+          <div style="font-size:20px;font-weight:900;color:color-mix(in oklab, var(--teal) 70%, var(--ink))">Cash lasts the run. You end with about $216M.</div><div style="flex:1"></div>
           <div style="font-size:13px;font-weight:800;font-style:italic;max-width:360px" class="muted">CFO: \u201cIt holds. We spend 4 times what we earn by era 5.\u201d</div></div>
-        ${cashChart({ w: 1100, h: 380 })}
-        <div style="display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:14px;margin-top:10px">
-          <div class="card" style="padding:12px 14px"><div class="k-lab">Compute goal</div>
-            ${[['Era 3', '30 units'], ['Era 4', '51 MW'], ['Era 5', '51 MW']].map(([e, v]) => `<div class="row" style="justify-content:space-between;margin-top:8px;font-weight:800;font-size:14px">${e}<span class="step"><i>\u2212</i>${v}<i>+</i></span></div>`).join('')}</div>
-          <div class="card" style="padding:12px 14px"><div class="k-lab">Paying for it</div>
-            ${['Raise in era 3', 'Raise in era 4', 'Raise in era 5'].map((e) => `<div class="row" style="justify-content:space-between;margin-top:9px;font-weight:800;font-size:14px">${e}<span class="sw"></span></div>`).join('')}<div class="muted" style="font-size:11.5px;font-weight:700;margin-top:6px">about $1.3B each from a growth fund</div></div>
-          <div class="card" style="padding:12px 14px;display:grid;align-content:space-between"><div><div class="k-lab">The board</div><div class="row" style="justify-content:space-between;margin-top:9px;font-weight:800;font-size:14px">Promise 30 units by the end of era 3<span class="sw"></span></div></div>
-            <div class="row" style="gap:12px;margin-top:12px;justify-content:flex-end"><span class="back">Cancel</span><span class="btn">Keep this plan</span></div></div>
+        ${cashChart({ w: 1120, h: 270, ghost: true })}
+        <div style="display:grid;grid-template-columns:560px 1fr;gap:26px;margin-top:4px;padding:12px 16px 12px;border-radius:12px;background:var(--paper)">
+          <div><div class="k-lab">How long the cash lasts</div>
+            <div style="position:relative;height:74px;margin-top:10px">
+              <div style="position:absolute;left:0;top:22px;width:520px;height:16px;border-radius:8px;background:color-mix(in oklab, var(--ink) 8%, var(--paper))"></div>
+              <div style="position:absolute;left:0;top:22px;width:${mx(33)}px;height:16px;border-radius:8px 0 0 8px;background:var(--teal)"></div>
+              <div style="position:absolute;left:${mx(33)}px;top:22px;width:${mx(36.4) - mx(33)}px;height:16px;border-radius:0 8px 8px 0;background:repeating-linear-gradient(135deg, color-mix(in oklab, var(--teal) 55%, var(--paper)) 0 5px, var(--paper) 5px 9px)"></div>
+              <div style="position:absolute;left:${mx(33)}px;top:14px;width:3px;height:32px;margin-left:-1px;background:var(--ink)"></div>
+              <div style="position:absolute;left:${mx(33) - 60}px;top:0;width:120px;text-align:center;font-size:11px;font-weight:900">the finish \u00b7 month 33</div>
+              <div style="position:absolute;left:${mx(37.3)}px;top:18px;width:2px;height:24px;background:var(--coral)"></div>
+              <div style="position:absolute;left:${mx(37.3) - 70}px;top:46px;width:140px;text-align:center;font-size:11px;font-weight:800;color:color-mix(in oklab, var(--coral) 80%, var(--ink))">today\u2019s spending: out around month 37</div>
+              <div style="position:absolute;left:0;top:46px;font-size:11px;font-weight:800" class="muted">now \u00b7 month 24</div>
+            </div>
+            <div style="font-size:13px;font-weight:800;line-height:1.4">On this plan you reach the finish with <b>$216M</b>, enough for about <b>3 more months</b>. At today\u2019s spending alone, cash lasts <b>about 13 months</b>.</div></div>
+          <div><div class="k-lab">What if</div>
+            <div style="margin-top:6px">
+              ${whatIf('This plan', 'to the finish, $216M left', 'teal', 33)}
+              ${whatIf('Raise a round in era 4', 'to the finish, about $1.5B left', 'teal', 33)}
+              ${whatIf('Era 4 goal 120 MW', 'out of cash in month 30', 'coral', 30.7)}
+              ${whatIf('120 MW and a round in era 4', 'to the finish, about $817M left', 'teal', 33)}
+            </div>
+            <div class="muted" style="font-size:11.5px;font-weight:700;margin-top:6px">Point at a what-if to draw its line on the chart. Figures from the game\u2019s own projection for this run.</div></div>
         </div>
-      </section>` },
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:12px;margin-top:10px;align-items:stretch">
+          <div class="card" style="padding:10px 14px"><div class="k-lab">Compute goal</div>
+            <div class="row" style="justify-content:space-between;margin-top:6px;white-space:nowrap">${[['Era 3', '30 units'], ['Era 4', '51 MW'], ['Era 5', '51 MW']].map(([e, v]) => `<div><div class="muted" style="font-size:12px;font-weight:800">${e}</div><span class="step" style="font-size:14px"><i>\u2212</i>${v}<i>+</i></span></div>`).join('')}</div></div>
+          <div class="card" style="padding:10px 14px"><div class="k-lab">Paying for it</div>
+            <div class="row" style="gap:14px;margin-top:6px;font-weight:800;font-size:13.5px;white-space:nowrap"><span style="flex:1">Raise a round in</span>${['Era 3', 'Era 4', 'Era 5'].map((e) => `<span class="row" style="gap:6px">${e}<span class="sw"></span></span>`).join('')}</div>
+            <div class="row" style="gap:10px;margin-top:8px;font-weight:800;font-size:13.5px"><span style="flex:1">Promise the board 30 units by era 3\u2019s end</span><span class="sw"></span></div></div>
+          <div class="row"><span class="btn" style="width:auto;padding:12px 18px;white-space:nowrap">Keep this plan</span></div>
+        </div>
+      </section>`;
+    } },
     { code: 'C', name: 'The CFO\u2019s screen', kind: 'exp', text: 'The plan plays on the office\u2019s own screen wall, the dark panel you approved for the automation charts, and Margot the CFO says what she thinks from her desk. The three levers are paper cards along the bottom.', draw: () => `${office(3)}${hud()}<div class="veil dim"></div>
       <section style="position:absolute;left:70px;top:120px;width:800px;height:460px;border-radius:16px;background:var(--deep);border:8px solid color-mix(in oklab, var(--ink) 70%, var(--wood));box-shadow:0 20px 50px color-mix(in oklab, var(--ink) 40%, transparent);padding:14px 18px;color:var(--paper)">
         <div class="row" style="gap:10px;font-size:13px;font-weight:900;letter-spacing:.08em"><span style="padding:2px 8px;border-radius:5px;background:var(--coral)">LIVE</span>CASH \u00b7 ${LAB.toUpperCase()}<div style="flex:1"></div><span style="opacity:.7">month 24 of 33</span></div>
@@ -503,6 +542,8 @@ const endingsSec = {
 };
 
 const SECTIONS = [intro, menuSec, companySec, financeSec, companyScreens, soundSec, endingsSec];
+// Owner picks, 2026-09-26.
+const OWNER = { intro: 'C', menu: 'A', company: 'B', finance: 'B', 'company-screens': 'C', sound: 'A', endings: 'C' };
 
 // ---------- page ----------
 const store = { get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* the page works without storage */ } } };
@@ -532,7 +573,7 @@ for (const s of SECTIONS) {
   root.append(sec);
   const opts = sec.querySelector('.opts');
   const view = sec.querySelector('.view');
-  let active = s.rec;
+  let active = OWNER[s.id] ?? s.rec;
   const show = () => {
     const o = s.options.find((x) => x.code === active);
     view.replaceChildren(frame(o.draw()));
@@ -548,7 +589,7 @@ for (const s of SECTIONS) {
     const [cls, word] = KIND[o.kind];
     const b = document.createElement('div');
     b.className = 'opt'; b.dataset.code = o.code; b.tabIndex = 0; b.setAttribute('role', 'button');
-    b.innerHTML = `<div class="opt-top"><span class="code">${s.n}${o.code}</span><b>${o.name}</b><span class="chip ${cls}">${word}</span>${o.code === s.rec ? '<span class="chip rec">Recommended</span>' : ''}</div><p>${o.text}</p><button type="button" class="pick" aria-pressed="false">Pick</button>`;
+    b.innerHTML = `<div class="opt-top"><span class="code">${s.n}${o.code}</span><b>${o.name}</b><span class="chip ${cls}">${word}</span>${OWNER[s.id] === o.code ? '<span class="chip rec">Your pick</span>' : ''}${o.code === s.rec && OWNER[s.id] !== o.code ? '<span class="chip" style="border:1.5px solid var(--line);color:var(--muted)">My rec</span>' : ''}</div><p>${o.text}</p><button type="button" class="pick" aria-pressed="false">Pick</button>`;
     const pick = b.querySelector('.pick');
     const syncPick = () => { const on = (picks[s.id] ?? []).includes(o.code); pick.setAttribute('aria-pressed', String(on)); pick.textContent = on ? 'Picked' : 'Pick'; };
     pick.addEventListener('click', (e) => {
