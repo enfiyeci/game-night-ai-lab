@@ -1,7 +1,7 @@
 import { BALANCE } from './balance.js';
 import { eraById } from './data/eras.js';
 import { clamp } from './util.js';
-import { startRun, advanceRun, advanceRunBy } from './training.js';
+import { startRun, advanceRun, advanceRunBy, recheckCapacity } from './training.js';
 import { activateReleases, releaseModel } from './release.js';
 import {
   signOffer, contractAction, deliverDue, contractsTurn, expireContracts, pullBumped, spendCredits, generateOffers, monthlyBills, sideRng,
@@ -222,6 +222,7 @@ export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = 
     }
     const r = applyMove(state, move, rng);
     if (r.ok) {
+      if (move.type === 'release') r.model.releasedDay = state.day;
       if (move.type === 'summit') events.push({ type: 'summit', signed: r.signed, binding: r.binding });
       else events.push({ type: move.type, ...r });
       if (r.hazardIgnored) events.push({ type: 'hazardResolved', choice: 'ignore', auto: true });
@@ -242,6 +243,7 @@ export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = 
     recordAdvisors(state, rng);
     finishEnding(state, events);
   }
+  recheckCapacity(state);
   return { state, events, errors };
 }
 
@@ -363,9 +365,21 @@ function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
   state.round = { moves: 0, teams: {} };
   delete state.flags.emergencyUsedThisTurn;
   state.roundStart = { arr: state.arr, capability: state.capability, cash: state.cash };
-  stampNewCards(state, rng);
+  if (!state.ending) stampNewCards(state, rng);
   if (state.ending) {
     finishEnding(state, events);
+  }
+}
+
+function postLandedCards(state) {
+  for (const card of state.pendingEvents) {
+    if (card.posted || card.landsAt == null || card.landsAt > state.day) continue;
+    if (!card.post) {
+      card.posted = true;
+      continue;
+    }
+    pushFeed(state, card.post.handle, card.post.text, 'event');
+    card.posted = true;
   }
 }
 
@@ -389,8 +403,12 @@ export function advanceDays(prev, days, rng, observer = {}) {
     accrueEconomy(state, monthsPerDay(state));
     state.day += 1;
     state.dayInRound += 1;
+    postLandedCards(state);
     for (const e of resolveDue(state)) events.push(e);
-    if (reachesMark) endRound(state, rng, observer, events, errors, fraction);
+    if (reachesMark) {
+      endRound(state, rng, observer, events, errors, fraction);
+      postLandedCards(state);
+    }
   }
   return { state, events, errors };
 }

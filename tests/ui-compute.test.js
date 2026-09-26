@@ -219,6 +219,13 @@ test('projected contract actions refresh deal cash and exclusivity checks', () =
   assert.match(prepaid.reason, /cash/i);
 });
 
+test('a projection leaves a pending card alone until its story-day deadline', () => {
+  const s = createInitialState();
+  s.pendingEvents.push({ id: 'distill', dueAt: s.day + 10 });
+  const projected = projectQueue(s, { moves: [] });
+  assert.deepEqual(projected.pendingEvents, s.pendingEvents);
+});
+
 test('the compute bar adds up to online compute and marks the pledge', () => {
   const s = createInitialState();
   s.compute.online = 200; s.compute.servingUnits = 90; s.compute.split.safety = 0.12;

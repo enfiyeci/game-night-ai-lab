@@ -64,11 +64,12 @@ test('an action applies at once and the counter counts the round', () => {
   assert.equal(g.state.budget.spend, 40);
 });
 
-test('advancing days notifies subscribers and moves the date', () => {
+test('advancing days publishes every date and stops when the clock pauses', () => {
   const g = createGame({ seed: 1 });
-  let calls = 0;
-  g.subscribe(() => { calls += 1; });
+  const days = [];
+  g.clock = { now: () => ({ paused: days.length >= 3 }) };
+  g.subscribe(({ state }) => { days.push(state.day); });
   g.advanceDays(5);
-  assert.equal(g.state.day, 5);
-  assert.equal(calls, 1);
+  assert.deepEqual(days, [1, 2, 3]);
+  assert.equal(g.state.day, 3);
 });

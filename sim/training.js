@@ -27,6 +27,7 @@ export function startRun(state, recipe) {
 export function advanceRunBy(state, rng, fraction) {
   const run = state.activeRun;
   if (!run) return null;
+  // Capacity is checked once per round, as the balance was tuned; a player action rechecks it.
   if (fraction >= 1 || run.capacityTurn !== state.turn) {
     run.capacityTurn = state.turn;
     run.canAdvance = computeSlices(state).training >= run.units;
@@ -46,6 +47,11 @@ export function advanceRunBy(state, rng, fraction) {
 }
 
 export const advanceRun = (state, rng) => advanceRunBy(state, rng, 1);
+
+// A player action (a new compute split, a deal, a release) can change training capacity mid-round.
+export function recheckCapacity(state) {
+  if (state.activeRun) delete state.activeRun.capacityTurn;
+}
 
 export function resolveRun(state, run, rng) {
   const { size, length, alignShare } = run.recipe.sliders;

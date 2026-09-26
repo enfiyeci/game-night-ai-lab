@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import { createRng } from '../sim/rng.js';
 import { advanceDays } from '../sim/turn.js';
-import { stampNewCards, resolveDue } from '../sim/events.js';
+import { eventsTick, stampNewCards, resolveDue } from '../sim/events.js';
 import { DEFAULT_EVENT_TIMING, EVENT_TIMING } from '../sim/data/eventTiming.js';
 
 const withCard = (seed) => {
@@ -11,6 +11,7 @@ const withCard = (seed) => {
   s.pendingEvents.push({ id: 'lossSpike', title: 't', post: { handle: '@x', text: 'y' }, choices: [], targets: [] });
   return s;
 };
+const no = { next: () => 0.99, int: () => 0, chance: () => false, pick: (values) => values[0], normal: (mean) => mean };
 
 test('a new card lands inside the next round and is due some days later', () => {
   const s = withCard(1);
@@ -46,4 +47,19 @@ test('a new warning gets the day it was raised and the next round mark', () => {
   stampNewCards(s, createRng(4));
   assert.equal(s.warnings.lossSpike.day, 0);
   assert.equal(s.warnings.lossSpike.dueAt, 91);
+});
+
+test('an event card post appears on its landing day, once', () => {
+  const s = createInitialState({ seed: 5 });
+  s.internal = { control: 0, stage: 2, turns: 1, stageTurn: 0 };
+  eventsTick(s, no);
+  const card = s.pendingEvents[0];
+  card.landsAt = 2;
+  card.dueAt = 10;
+  let out = advanceDays(s, 1, createRng(5));
+  assert.equal(out.state.feed.length, 0);
+  out = advanceDays(out.state, 1, createRng(5));
+  assert.deepEqual(out.state.feed, [{ turn: 0, handle: card.post.handle, text: card.post.text, tag: 'event' }]);
+  out = advanceDays(out.state, 1, createRng(5));
+  assert.equal(out.state.feed.length, 1);
 });

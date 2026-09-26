@@ -156,7 +156,7 @@ function projectBeforeMoves(state, queue) {
     if (Object.hasOwn(choices, pending.id)) resolveEvent(state, pending.id, choices[pending.id]);
   }
   for (const pending of [...state.pendingEvents]) {
-    resolveEvent(state, pending.id, fallbackChoice(pending.id, pending));
+    if (pending.dueAt == null) resolveEvent(state, pending.id, fallbackChoice(pending.id, pending));
   }
   activateReleases(state);
   afterMove(state);

@@ -3,7 +3,12 @@ import { ADVISOR_TITLE, formatStoryTime, jokeFor, lookIntoCost, openWarnings, qu
 import { money } from '../logic/format.js';
 
 const ROLES = ['research', 'safety', 'cfo', 'policy'];
-const WARNING_BAR_DAYS = 21;
+
+export function warningProgress(warning, day) {
+  const start = Number.isFinite(warning.day) ? warning.day : warning.dueAt;
+  const span = Math.max(1, warning.dueAt - start);
+  return Math.max(0, warning.dueAt - day) / span;
+}
 
 // Advisors speak when clicked (owner pick 7A) and raise warnings at their desks (pick 1C).
 // Warnings only inform, so they never pause the clock. Updates can arrive every story week,
@@ -104,10 +109,10 @@ export function mountBriefing(game, { office, overlay }) {
   }
 
   function warningDue(id) {
-    const dueAt = game.state.warnings?.[id]?.dueAt;
-    if (!Number.isFinite(dueAt) || !Number.isFinite(game.state.day)) return null;
-    const days = Math.max(0, dueAt - game.state.day);
-    return dueBar(`Gets worse in ${formatStoryTime(days)} if nobody acts`, days / WARNING_BAR_DAYS, { calm: true }); // OWNER WRITES
+    const warning = game.state.warnings?.[id];
+    if (!Number.isFinite(warning?.dueAt) || !Number.isFinite(game.state.day)) return null;
+    const days = Math.max(0, warning.dueAt - game.state.day);
+    return dueBar(`Gets worse in ${formatStoryTime(days)} if nobody acts`, warningProgress(warning, game.state.day), { calm: true }); // OWNER WRITES
   }
 
   function showNextWarning() {

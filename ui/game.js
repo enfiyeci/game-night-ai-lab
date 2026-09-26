@@ -88,7 +88,12 @@ export function createGame({ seed = 1, state } = {}) {
       if (actions.moves.length || Object.keys(actions.eventChoices).length) game.flush();
       debugActionEvents = [];
       debugActionErrors = [];
-      return publish(runDays(currentState, n, rng));
+      let result = { ok: true, error: undefined, events: [], errors: [] };
+      for (let day = 0; day < n; day += 1) {
+        result = publish(runDays(currentState, 1, rng));
+        if (currentState.ending || game.clock?.now().paused) break;
+      }
+      return result;
     },
     endTurn() { // debug and tests only; players never skip
       const queued = actions;

@@ -58,7 +58,6 @@ function queuePromiseCalls(state, event, out) {
     delete state.warnings[key];
     const card = promiseCallCard(state, event, promise);
     state.pendingEvents.push(card);
-    pushFeed(state, card.post.handle, card.post.text, 'event');
     out.push({ type: 'eventCard', id: card.id, eventId: event.id, promiseId: promise.id, promiseMeeting: promise.meeting });
   }
 }
@@ -99,7 +98,6 @@ export function eventsTick(state, rng) {
     }
     state.pendingEvents.push(publicCard(state, event));
     if (event.kind !== 'internal' && !state.seenEvents.includes(event.id)) state.seenEvents.push(event.id);
-    pushFeed(state, event.card.post.handle, event.card.post.text, 'event');
     out.push({ type: 'eventCard', id: event.id });
   }
   return out;

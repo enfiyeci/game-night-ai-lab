@@ -67,7 +67,9 @@ export function historyRows(state) {
       return {
         name: model.name,
         releasedTurn: model.releasedTurn,
-        releasedDate: storyDate(storyDayForTurn(model.releasedTurn)).label,
+        releasedDate: Number.isFinite(model.releasedDay)
+          ? storyDate(model.releasedDay).label
+          : storyDate(storyDayForTurn(model.releasedTurn)).label,
         era: eraForTurn(model.releasedTurn).name,
         channelWords: HISTORY_CHANNEL_WORDS[model.channel] ?? model.channel,
         priceWords: HISTORY_PRICE_WORDS[model.priceStance] ?? model.priceStance,

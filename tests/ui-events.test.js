@@ -10,6 +10,7 @@ import {
   hasLanded, jokeFor, lookIntoCost, openWarnings, queueAnswer, queueLookInto, timingFor,
 } from '../ui/logic/events.js';
 import { DEFAULT_EVENT_TIMING, EVENT_TIMING } from '../sim/data/eventTiming.js';
+import { warningProgress } from '../ui/screens/briefing.js';
 
 const ALL = [...EVENTS, ...EVENTS_6C];
 const pendingOf = (id) => {
@@ -74,6 +75,11 @@ test('deadlines come from the sim\'s story days and read in story words', () => 
   assert.equal(dueText('investors', 21), 'Answer within about 3 weeks');
   assert.equal(timingFor('investors').days, DEFAULT_EVENT_TIMING.days);
   assert.equal(timingFor('weightTheft').days, 14);
+});
+
+test('warning bars use their own deadline span', () => {
+  assert.equal(warningProgress({ day: 100, dueAt: 110 }, 105), 0.5);
+  assert.equal(warningProgress({ day: 100, dueAt: 100 }, 100), 0);
 });
 
 test('the sim timing table names real cards with a known class', () => {

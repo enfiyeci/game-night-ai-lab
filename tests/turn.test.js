@@ -34,6 +34,14 @@ test('train then release across two turns', () => {
   assert.equal(state.turn, 2);
 });
 
+test('a successful release records the current story day', () => {
+  const rng = createRng(5);
+  let state = endTurn(createInitialState(), { moves: [{ type: 'startRun', recipe }] }, rng).state;
+  const releasedDay = state.day;
+  state = endTurn(state, { moves: [{ type: 'release', release }] }, rng).state;
+  assert.equal(state.models.at(-1).releasedDay, releasedDay);
+});
+
 test('a release capability gain is measured from the start-of-turn board baseline', () => {
   const rng = createRng(19);
   let { state } = endTurn(createInitialState(), { moves: [{ type: 'startRun', recipe }] }, rng);
@@ -282,6 +290,32 @@ test('a quiet takeover stops training and event generation for the turn', () => 
   assert.equal(out.state.pendingModel, null);
   assert.equal(out.state.pendingEvents.length, 0);
   assert.equal(out.events.some((event) => event.type === 'runComplete'), false);
+});
+
+test('a terminal round does not stamp cards that cannot land', () => {
+  const s = createInitialState();
+  s.era = 5;
+  s.turn = 19;
+  s.turnInEra = 3;
+  s.capability = 100;
+  s.warnings.jailbreak = { turn: 18 };
+  s.models.push({
+    active: true,
+    activated: true,
+    activeFromTurn: 0,
+    channel: 'consumer',
+    flags: ['jailbreakWaiting'],
+    users: 1e6,
+    userCap: 4e6,
+    priceStance: 'market',
+    servingCost: 0,
+    spec: { size: 'medium', arch: 'dense', context: 'short', precision: 'bf16', guard: false, channel: 'consumer', reasoning: 'off' },
+  });
+  const out = endTurn(s, {}, createRng(1));
+  const card = out.state.pendingEvents.find((event) => event.id === 'jailbreak');
+  assert.ok(out.state.ending);
+  assert.ok(card);
+  assert.equal(card.landsAt, undefined);
 });
 
 test('the board sees card costs from the start-of-turn cash snapshot', () => {

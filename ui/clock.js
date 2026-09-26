@@ -1,6 +1,7 @@
 import { ROUND_DAYS, storyDate } from '../sim/time.js';
 
 const SPEEDS = [0, 1, 2, 4];
+const MAX_STEP_MS = 1000;
 
 export function createClock(game, { now = () => performance.now(), secondsPerRound = 45 } = {}) {
   let speed = 1;
@@ -15,21 +16,23 @@ export function createClock(game, { now = () => performance.now(), secondsPerRou
 
   function step() {
     const t = now();
-    const dt = last === null ? 0 : t - last;
+    const dt = last === null ? 0 : Math.min(MAX_STEP_MS, Math.max(0, t - last));
     last = t;
     if (game.state.ending || reasons.size > 0 || speed === 0) return;
-    owed += (dt * speed * ROUND_DAYS[game.state.era]) / (secondsPerRound * 1000);
-    const days = Math.floor(owed);
-    if (days <= 0) return;
-    owed -= days;
-    for (let day = 0; day < days; day += 1) {
+    owed += dt;
+    let advanced = false;
+    while (true) {
       if (game.state.ending || reasons.size > 0 || speed === 0) {
         owed = 0;
         break;
       }
+      const msPerDay = (secondsPerRound * 1000) / ROUND_DAYS[game.state.era] / speed;
+      if (owed + 1e-9 < msPerDay) break;
+      owed -= msPerDay;
       game.advanceDays(1);
+      advanced = true;
     }
-    emit();
+    if (advanced) emit();
   }
 
   return {
