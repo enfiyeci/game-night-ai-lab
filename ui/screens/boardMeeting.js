@@ -88,14 +88,13 @@ const html = (markup) => {
   return box.firstElementChild;
 };
 
-// Which kind of meeting this is, before the vote (the ring and the 4A subtitle). The record's kind wins after it.
-// Any kind other than 'gate' is a special meeting; a compute promise and an emergency vote have their own words.
+// Which kind of meeting this is, forecast before the vote for the ring. After the vote, 4A uses the record's kind
+// ('gate' | 'promise' | 'emergency'); any other kind reads as a plain special meeting.
+// The sim holds a called vote (emergency or promise) before the gate's, and one meeting holds one vote.
 function meetingKind(state, model) {
-  if (model.kind === 'gate') return 'gate';
-  if (state.pendingEvents.some((pending) => pending.id === 'boardRevolt')) return 'emergency';
-  const promise = state.boardPromise;
-  if (promise?.status === 'open' || (state.flags.boardVoteDue && promise?.status === 'missed')) return 'promise';
-  return 'emergency';
+  if (state.flags.boardVoteDue === 'emergency' || state.pendingEvents.some((pending) => pending.id === 'boardRevolt')) return 'emergency';
+  if (state.flags.boardVoteDue) return 'promise';
+  return model.kind === 'gate' ? 'gate' : 'promise'; // otherwise era 5's forecast promise vote
 }
 
 // "Growth and Financier" back to director ids: the raise lines name the directors they move.
@@ -180,6 +179,9 @@ export function mountBoardMeeting(game, { overlay, stage }) {
     root.setAttribute('aria-modal', 'true');
     root.setAttribute('aria-label', COPY.MEETING_LABEL);
     root.tabIndex = -1;
+    // Whatever is already up (an event card, advisor bubbles, the phone, the round summary) waits under the meeting.
+    const benched = [...overlay.children].filter((child) => !child.inert);
+    for (const child of benched) child.inert = true;
     overlay.append(root);
     stage?.classList.add('mt-dim');
     game.clock?.pause(CLOCK_REASON);
@@ -208,6 +210,7 @@ export function mountBoardMeeting(game, { overlay, stage }) {
       stopTimers();
       unsubscribe?.();
       root.remove();
+      for (const child of benched) child.inert = false;
       stage?.classList.remove('mt-dim');
       game.clock?.resume(CLOCK_REASON);
       if (session?.root === root) session = null;
@@ -617,7 +620,8 @@ export function mountBoardMeeting(game, { overlay, stage }) {
       body.append(seats, score, make('div', 'mt-vote-result', line), make('p', 'mt-vote-why', result.why));
 
       const team = make('div', 'budget-team');
-      for (const opinion of COPY.TEAM_AFTER_VOTE) {
+      const removed = !result.passed && !result.reversedByStaff;
+      for (const opinion of removed ? COPY.TEAM_AFTER_REMOVAL : COPY.TEAM_AFTER_VOTE) {
         const row = make('div', 'compute-opinion');
         const heading = make('div', 'compute-opinion-heading');
         heading.append(make('span', null, ADVISOR_TITLE[opinion.id]), make('span', `compute-mood ${opinion.mood}`, opinion.mood));
@@ -645,7 +649,7 @@ export function mountBoardMeeting(game, { overlay, stage }) {
         body,
         left: { title: COPY.TEAM_TITLE, content: team },
         right: { title: COPY.SINCE_TITLE, content: since },
-        okLabel: COPY.BACK_TO_WORK,
+        okLabel: removed ? COPY.LEAVE_THE_CALL : COPY.BACK_TO_WORK,
         onOk: finish,
         onCancel: finish,
       });

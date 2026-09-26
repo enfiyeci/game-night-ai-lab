@@ -2760,7 +2760,7 @@ svg.room {
   --mt-on: color-mix(in oklab, var(--paper) 94%, var(--wood));
   --mt-on-dim: color-mix(in oklab, var(--paper) 60%, var(--mt-night));
   --mt-remove: color-mix(in oklab, var(--coral) 90%, var(--ink));
-  z-index: 12;
+  z-index: 40; /* above every overlay layer (event cards 20, the phone 25); below the ending film (50) */
   overflow: hidden;
   color: var(--mt-on);
   font-family: "Nunito", "Trebuchet MS", sans-serif;
