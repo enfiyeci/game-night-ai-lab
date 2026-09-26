@@ -381,6 +381,14 @@ player's own last best, shown through several noisy judges.
   ("N of 5"). Beside it, a price sheet: what customers pay per million tokens, what serving costs
   per million tokens, and the margin. The safety row names who checked it. Build plan:
   `docs/superpowers/plans/2026-09-26-release-flow.md`.
+- **A release that ends the run (owner pick 2026-09-26, option B).** In era 4 a release can roll
+  the misalignment ending in the same turn. The reveal still plays first, with its good reviews,
+  and the ending film starts only after the player closes it: the contrast is the story beat.
+  The film waits for any open dialog (`.dialog-layer`) and starts on `gdt-dialog-closed`.
+- **Open weights is hidden for now (owner 2026-09-26).** It earns nothing in the sim (no users,
+  no revenue, no serving cost) and only adds race heat, international favour and permanent misuse
+  risk, so the `channel-open` and `tamper` cards carry `hidden: true` and the screens don't offer
+  them. The sim rules stay; see `docs/open-decisions.md` item 18.
 
 ## 7. One turn, screen by screen
 
