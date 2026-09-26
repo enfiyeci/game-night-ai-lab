@@ -21,3 +21,9 @@ test('research is busy while a training run is under way', () => {
   s.activeRun = { turnsLeft: 1 };
   assert.match(teamBusyError(s, { type: 'research', techId: 'x' }), /research team is busy/);
 });
+
+test('when you are the busy one, the message says "you are", not "the you is"', () => {
+  const s = createInitialState({ seed: 1 });
+  s.round.teams.ceo = 'meeting';
+  assert.equal(teamBusyError(s, { type: 'meeting' }), 'you are busy until Y1 M4 W1');
+});
