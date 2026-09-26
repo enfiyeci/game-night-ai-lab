@@ -7,6 +7,7 @@ shoulder), v3.svg (close two-shot) and anchors.json (head points for the HTML ov
 """
 import json
 import os
+import re
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -32,48 +33,90 @@ def svg(body, label):
 
 
 # ------------------------------------------------------------------ the President's head (owner 2026-09-26: "more like Trump")
-TAN = M(M("wood", 58, "coral"), 72, "paper")
-GOLD = M("cream", 45, "wood")
+TAN = M(M("wood", 55, "coral"), 80, "paper")
+TAN_D = M(TAN, 84, "ink")
+GOLD = M("cream", 52, "wood")
+GOLD_HI = M("cream", 70, "paper")
+GOLD_D = M("wood", 82, "ink")
+LIP = M("coral", 45, TAN)
 
 
 def president_head(hx, hy, mood):
-    """A cartoon caricature drawn over front_person's head: swept blond hair, orange tan with pale eye rings,
-    a squint and a pout. Same sprite units as front_person (head radius 14)."""
+    """A cartoon caricature drawn over front_person's head: a wide jowly face, orange tan with pale rings
+    around the eyes, a squint, the pursed pout, and a big blond swoop combed forward over the brow.
+    Same sprite units as front_person (head radius 14)."""
     hs = f"fill:{GOLD};stroke:{G.EDGE};stroke-width:.7"
+    ink = "fill:none;stroke:var(--ink);stroke-linecap:round;stroke-linejoin:round"
     o = [
-        # hair volume behind the head and over the ear
-        f'<path d="M{hx + 16},{hy + 6} Q{hx + 20},{hy - 8} {hx + 12},{hy - 16} L{hx + 6},{hy - 4} Q{hx + 12},{hy} {hx + 12},{hy + 8} Z" style="{hs}"/>',
-        f'<circle cx="{hx}" cy="{hy}" r="15.5" style="fill:{TAN};stroke:{G.EDGE};stroke-width:.8"/>',
-        f'<ellipse cx="{hx + 13}" cy="{hy + 3}" rx="3.2" ry="4.2" style="fill:{M(TAN, 90, "ink")};stroke:{G.EDGE};stroke-width:.6"/>',
+        # hair at the back of the head, showing behind the crown and the ear
+        f'<path d="M{hx + 17},{hy + 7} Q{hx + 21},{hy - 6} {hx + 14},{hy - 17} L{hx + 4},{hy - 8} Q{hx + 12},{hy - 2} {hx + 12},{hy + 9} Z" style="{hs}"/>',
+        # the face: wider at the jaw than at the brow, with jowls
+        f'<path d="M{hx - 14.5},{hy - 2} C{hx - 14.5},{hy - 17} {hx + 15},{hy - 17} {hx + 15},{hy - 2} '
+        f'C{hx + 16.5},{hy + 8} {hx + 12},{hy + 17} {hx - 1},{hy + 17} C{hx - 12},{hy + 17} {hx - 17},{hy + 9} {hx - 14.5},{hy - 2} Z" '
+        f'style="fill:{TAN};stroke:{G.EDGE};stroke-width:.8"/>',
+        # the jowl and double-chin creases
+        f'<path d="M{hx - 10},{hy + 13} Q{hx - 4.5},{hy + 16} {hx + 1},{hy + 13.2} M{hx - 13.8},{hy + 6} Q{hx - 12.5},{hy + 10} {hx - 10.5},{hy + 11.5}" '
+        f'style="fill:none;stroke:{TAN_D};stroke-width:.9;stroke-linecap:round"/>',
+        f'<ellipse cx="{hx + 14}" cy="{hy + 3}" rx="3.2" ry="4.4" style="fill:{TAN_D};stroke:{G.EDGE};stroke-width:.6"/>',
         # pale rings around the eyes
-        f'<ellipse cx="{hx - 7}" cy="{hy + 1.5}" rx="4.6" ry="3.4" style="fill:{M(TAN, 45, "paper")}"/>',
-        f'<ellipse cx="{hx + 1.5}" cy="{hy + 1.5}" rx="4.6" ry="3.4" style="fill:{M(TAN, 45, "paper")}"/>',
+        f'<ellipse cx="{hx - 7.5}" cy="{hy + 1.2}" rx="5" ry="3.6" style="fill:{M(TAN, 38, "paper")}"/>',
+        f'<ellipse cx="{hx + 2}" cy="{hy + 1.2}" rx="5" ry="3.6" style="fill:{M(TAN, 38, "paper")}"/>',
     ]
-    ink = "fill:none;stroke:var(--ink);stroke-linecap:round"
+    brow = f"fill:none;stroke:{GOLD_D};stroke-width:2.2;stroke-linecap:round"
     if mood == "uneasy":
-        o.append(f'<path d="M{hx - 10},{hy + 1.5} Q{hx - 7},{hy - .5} {hx - 4},{hy + 1.5} M{hx - 1.5},{hy + 1.5} Q{hx + 1.5},{hy - .5} {hx + 4.5},{hy + 1.5}" style="{ink};stroke-width:1.7"/>'
-                 f'<path d="M{hx - 11},{hy - 5} L{hx - 4},{hy - 2.5} M{hx - 1},{hy - 2.5} L{hx + 6},{hy - 5}" style="fill:none;stroke:{M(GOLD, 70, "ink")};stroke-width:1.8;stroke-linecap:round"/>'
-                 f'<path d="M{hx - 8},{hy + 11} Q{hx - 4.5},{hy + 7} {hx - 1},{hy + 11}" style="{ink};stroke-width:1.8"/>')
+        # a hard squint, brows pulled down to the middle, the pout turned down
+        o.append(f'<path d="M{hx - 10.5},{hy + 2.2} L{hx - 4.5},{hy + 1} M{hx - 1},{hy + 1} L{hx + 5},{hy + 2.2}" style="{ink};stroke-width:1.9"/>'
+                 f'<path d="M{hx - 12},{hy - 5.5} Q{hx - 8},{hy - 5} {hx - 4.5},{hy - 2.2} M{hx - .5},{hy - 2.2} Q{hx + 3},{hy - 5} {hx + 7},{hy - 5.5}" style="{brow}"/>'
+                 f'<path d="M{hx - 3.5},{hy - 2.5} L{hx - 3},{hy - .5}" style="fill:none;stroke:{TAN_D};stroke-width:.8;stroke-linecap:round"/>'
+                 f'<path d="M{hx - 9},{hy + 11.2} Q{hx - 5.5},{hy + 7.8} {hx - 2},{hy + 11.2} Q{hx - 5.5},{hy + 10} {hx - 9},{hy + 11.2} Z" style="fill:{LIP};stroke:var(--ink);stroke-width:1.3;stroke-linejoin:round"/>'
+                 f'<ellipse cx="{hx - 5.5}" cy="{hy + 12.2}" rx="2.4" ry="1.2" style="fill:{LIP};stroke:{TAN_D};stroke-width:.6"/>')
     else:
-        o.append(f'<path d="M{hx - 10},{hy + 1} Q{hx - 7},{hy + 3} {hx - 4},{hy + 1} M{hx - 1.5},{hy + 1} Q{hx + 1.5},{hy + 3} {hx + 4.5},{hy + 1}" style="{ink};stroke-width:1.7"/>'
-                 f'<path d="M{hx - 11},{hy - 3.5} L{hx - 4},{hy - 4} M{hx - 1},{hy - 4} L{hx + 6},{hy - 3.5}" style="fill:none;stroke:{M(GOLD, 70, "ink")};stroke-width:1.8;stroke-linecap:round"/>'
-                 f'<ellipse cx="{hx - 4.5}" cy="{hy + 9}" rx="2.8" ry="2.2" style="fill:var(--ink);stroke:{M(TAN, 70, "coral")};stroke-width:1.4"/>')
-    # the swept-over hair: a big swoop from the back, over the top, forward past the brow
-    o.append(f'<path d="M{hx + 15},{hy - 2} Q{hx + 16},{hy - 19} {hx + 1},{hy - 21} Q{hx - 17},{hy - 22} {hx - 22},{hy - 11} '
-             f'Q{hx - 23},{hy - 5} {hx - 17},{hy - 6} Q{hx - 12},{hy - 11} {hx - 4},{hy - 10} Q{hx + 6},{hy - 10} {hx + 12},{hy - 3} Z" style="{hs}"/>')
-    o.append(f'<path d="M{hx + 10},{hy - 15} Q{hx - 4},{hy - 19} {hx - 18},{hy - 12} M{hx + 12},{hy - 9} Q{hx},{hy - 14} {hx - 12},{hy - 10}" style="fill:none;stroke:{M(GOLD, 78, "ink")};stroke-width:1.1"/>')
+        # a pleased squint and the pursed "o" pout
+        o.append(f'<ellipse cx="{hx - 7.5}" cy="{hy + 1.3}" rx="2.5" ry="1.25" style="fill:var(--ink)"/><ellipse cx="{hx + 2}" cy="{hy + 1.3}" rx="2.5" ry="1.25" style="fill:var(--ink)"/>'
+                 f'<path d="M{hx - 11},{hy + .2} Q{hx - 7.5},{hy - 1} {hx - 4},{hy + .4} M{hx - 1.5},{hy + .4} Q{hx + 2},{hy - 1} {hx + 5.5},{hy + .2}" style="{ink};stroke-width:1.1"/>'
+                 f'<path d="M{hx - 12},{hy - 3.8} Q{hx - 8},{hy - 5.6} {hx - 4.5},{hy - 4} M{hx - .5},{hy - 4} Q{hx + 3},{hy - 5.6} {hx + 7},{hy - 3.8}" style="{brow}"/>'
+                 f'<ellipse cx="{hx - 5}" cy="{hy + 10}" rx="3.4" ry="2.7" style="fill:{LIP};stroke:{M(LIP, 80, "ink")};stroke-width:.7"/>'
+                 f'<ellipse cx="{hx - 5}" cy="{hy + 10.1}" rx="1.5" ry="1.2" style="fill:var(--ink)"/>')
+    # the swoop: rises high off the crown, sweeps forward and curls down over the brow
+    swoop = (f'M{hx + 16},{hy - 3} Q{hx + 16},{hy - 15} {hx + 6},{hy - 19} Q{hx - 4},{hy - 23} {hx - 12},{hy - 28} '
+             f'Q{hx - 22},{hy - 27} {hx - 25},{hy - 17} Q{hx - 26},{hy - 9} {hx - 21},{hy - 5} Q{hx - 17},{hy - 3} {hx - 16},{hy - 8} '
+             f'Q{hx - 11},{hy - 12} {hx - 3},{hy - 12} Q{hx + 7},{hy - 12} {hx + 13},{hy - 2} Z')
+    o.append(f'<path d="{swoop}" style="{hs}"/>')
+    # shade under the curl and along the hairline, light along the crest, then combed strands
+    o.append(f'<path d="M{hx - 24.5},{hy - 10} Q{hx - 23},{hy - 4} {hx - 18.5},{hy - 5} Q{hx - 16},{hy - 6} {hx - 16},{hy - 8} Q{hx - 11},{hy - 12} {hx - 3},{hy - 12} '
+             f'Q{hx + 7},{hy - 12} {hx + 13},{hy - 2} Q{hx + 8},{hy - 14} {hx - 3},{hy - 14.5} Q{hx - 14},{hy - 15} {hx - 19},{hy - 10} Q{hx - 22},{hy - 8} {hx - 24.5},{hy - 10} Z" '
+             f'style="fill:{M(GOLD, 76, "wood")}"/>')
+    o.append(f'<path d="M{hx + 10},{hy - 16} Q{hx},{hy - 20} {hx - 11},{hy - 25.5} Q{hx - 18},{hy - 25} {hx - 22},{hy - 18}" style="fill:none;stroke:{GOLD_HI};stroke-width:3.2;stroke-linecap:round"/>')
+    o.append(f'<path d="M{hx + 14},{hy - 7} Q{hx + 8},{hy - 16} {hx - 4},{hy - 19} Q{hx - 14},{hy - 22} {hx - 21},{hy - 13} '
+             f'M{hx + 10},{hy - 4} Q{hx + 4},{hy - 13} {hx - 6},{hy - 16} Q{hx - 15},{hy - 18} {hx - 20},{hy - 9}" '
+             f'style="fill:none;stroke:{GOLD_D};stroke-width:.9;stroke-linecap:round;opacity:.7"/>')
+    # the side sweep, combed back over the top of the ear
+    o.append(f'<path d="M{hx + 9},{hy - 7} Q{hx + 17},{hy - 8} {hx + 19},{hy + 2} Q{hx + 17},{hy - 1} {hx + 13},{hy - 1} Q{hx + 12},{hy - 5} {hx + 9},{hy - 7} Z" style="{hs}"/>')
     return "".join(o)
 
 
 def president_extras(hx, hy, mood, top=-58):
-    """A long red tie, a flag pin, and (when uneasy) the hand back at the chin over the new head."""
-    o = [f'<path d="M-2.4,{top + 2} L2.4,{top + 2} L3.4,-12 L0,-7 L-3.4,-12 Z" style="fill:{M("coral", 88, "ink")};stroke:{G.EDGE};stroke-width:.6"/>',
-         f'<circle cx="-9" cy="{top + 7}" r="1.8" style="fill:{NAVY};stroke:var(--paper);stroke-width:.8"/>']
+    """A wide red tie with a knot, a flag pin on the lapel, and (when uneasy) the hand back at the chin
+    over the new head and a sweat drop the hair would otherwise hide."""
+    tie = M("coral", 88, "ink")
+    o = [f'<path d="M-4.2,{top} L0,{top + 5} L4.2,{top} L3,{top + 13} L0,{top + 6} L-3,{top + 13} Z" style="fill:var(--paper);stroke:{G.EDGE};stroke-width:.5"/>',
+         f'<path d="M-2.4,{top + 5.5} L2.4,{top + 5.5} L4.8,-14 L0,-8 L-4.8,-14 Z" style="fill:{tie};stroke:{G.EDGE};stroke-width:.6"/>',
+         f'<path d="M-2.8,{top + 1.2} L2.8,{top + 1.2} L2.2,{top + 6} L-2.2,{top + 6} Z" style="fill:{M(tie, 84, "ink")};stroke:{G.EDGE};stroke-width:.5"/>',
+         f'<path d="M.8,{top + 7} L2.8,-16" style="fill:none;stroke:{M(tie, 80, "ink")};stroke-width:.8;stroke-linecap:round"/>']
+    # the flag pin: a small striped flag with a blue corner
+    fx, fy = -11, top + 7
+    o.append(f'<rect x="{fx - .3}" y="{fy - .3}" width="5.6" height="4" rx=".5" style="fill:{BRASS}"/>'
+             f'<rect x="{fx}" y="{fy}" width="5" height="3.4" style="fill:var(--paper)"/>'
+             f'<path d="M{fx},{fy + .5} h5 M{fx},{fy + 1.7} h5 M{fx},{fy + 2.9} h5" style="stroke:{M("coral", 85, "ink")};stroke-width:.6"/>'
+             f'<rect x="{fx}" y="{fy}" width="2.2" height="1.9" style="fill:{NAVY}"/>')
     if mood == "uneasy":
         sk = TAN
         o.append(f'<path d="M10,-35 L{hx + 7},{hy + 18}" style="fill:none;stroke:{G.EDGE};stroke-width:8;stroke-linecap:round"/>'
                  f'<path d="M10,-35 L{hx + 7},{hy + 18}" style="fill:none;stroke:{PRES["shirt"]};stroke-width:6.5;stroke-linecap:round"/>'
                  f'<path d="M{hx + 3},{hy + 12} q2,-3 6,-1.5 q3,1.5 1.5,5 q-2,2.5 -5.5,1.5 q-3,-1.5 -2,-5 Z" style="fill:{sk};stroke:{G.EDGE};stroke-width:.7"/>')
+        dx, dy = hx - 19, hy + 3
+        o.append(f'<path d="M{dx},{dy - 6} Q{dx + 4.5},{dy + 1} {dx},{dy + 3.5} Q{dx - 4.5},{dy + 1} {dx},{dy - 6} Z" '
+                 f'style="fill:{M("sky", 45, "paper")};stroke:{M("sky", 70, "ink")};stroke-width:.8"/>')
     return "".join(o)
 
 
@@ -349,21 +392,24 @@ def desk_front(x0, x1, top, bottom, scale=1.0):
 
 def v2(mood="uneasy"):
     o = [backdrop("b")]
-    # his chair and the President, drawn at 3.2x the office scale
-    s = 3.1
-    ox, oy = 720, 612
+    # his chair and the President, drawn at 3.35x the office scale
+    s = 3.35
+    ox, oy = 720, 614
     p = dict(PRES, mood=mood)
-    body, hands, (hx, hy) = G.front_person(dict(p, skin=TAN))
+    body, hands, (hx, hy) = G.front_person(dict(p, skin=TAN, hair=GOLD))
+    body = re.sub(r'<path d="[^"]*" style="fill:color-mix\(in oklab, var\(--sky\) 45%[^"]*"/>', "", body)  # his own sweat drop is drawn over the hair
     body += president_head(hx, hy, mood) + president_extras(hx, hy, mood, top=-55 if mood == "uneasy" else -58)
     hands = hands.replace(G.SK_LIGHT, TAN)
-    o.append(f'<rect x="{ox - 95}" y="{oy - 330}" width="200" height="300" rx="46" style="fill:{M("wood", 40, "ink")};stroke:{G.EDGE}"/>'
-             f'<rect x="{ox - 72}" y="{oy - 306}" width="154" height="250" rx="34" style="fill:{M("wood", 48, "ink")}"/>')
+    if mood != "uneasy":  # at this size the resting hand must land on the desk top, not its front
+        hands = hands.replace("M7,-34 Q-8,-27 -19,-25", "M7,-34 Q-5,-35 -15,-37").replace('cx="-20" cy="-25"', 'cx="-16" cy="-37"')
+    o.append(f'<rect x="{ox - 100}" y="{oy - 350}" width="210" height="320" rx="48" style="fill:{M("wood", 40, "ink")};stroke:{G.EDGE}"/>'
+             f'<rect x="{ox - 76}" y="{oy - 326}" width="162" height="270" rx="36" style="fill:{M("wood", 48, "ink")}"/>')
     o.append(f'<g transform="translate({ox},{oy}) scale({s})">{body}</g>')
     o.append(desk_front(470, 970, 500, 700))
     o.append(f'<rect x="560" y="482" width="96" height="16" rx="2" style="fill:var(--paper);stroke:{A("ink", 30)}" transform="rotate(-4 608 490)"/>'
              f'<rect x="846" y="474" width="52" height="26" rx="5" style="fill:var(--ink)"/><path d="M852,474 q20,-16 40,0" style="fill:none;stroke:var(--ink);stroke-width:6"/>')
     o.append(f'<g transform="translate({ox},{oy}) scale({s})">{hands}</g>')
-    heads = {"president": [ox + hx * s, oy + (hy - 22) * s]}
+    heads = {"president": [ox + hx * s, oy + (hy - 28) * s]}
     # you and Policy and Comms, seen from behind, in the foreground
     bs = 4.0
     for role, (bx, by) in (("ceo", (300, 1010)), ("policy", (1140, 1020))):

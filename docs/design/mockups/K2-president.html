@@ -91,8 +91,8 @@ if (route === 'v1') {
 if (route === 'v2') {
   const [hx, hy] = anchors.president;
   const b = el(`<div class="pbub" style="width:440px;--tx:34px"><div class="hdr"><span class="who">The President</span>${dots(PATIENCE)}</div><div class="say">${esc(ex.prompt)}</div></div>`);
-  place(b, hx + 40, 0);
-  b.style.top = `${hy - 40 - b.offsetHeight + 80}px`;
+  place(b, hx + 84, 0);
+  b.style.top = `${hy - 40 - b.offsetHeight + 100}px`;
   b.style.setProperty('--tx', '-6px');
   const box = el(`<div class="ansbox" style="width:680px"><div class="top"><span class="kick">Your answer</span>${steps(Q)}</div>${answers(ex, 0)}</div>`);
   place(box, 380, 0);
