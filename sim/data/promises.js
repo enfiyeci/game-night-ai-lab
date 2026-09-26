@@ -1,8 +1,19 @@
 import { forceAmendConstitution, hasLine } from '../constitution.js';
 import { rank } from '../rivals.js';
 
-const releasesSince = (state, promise) => state.models.filter((model) => model.releasedTurn >= promise.madeTurn);
-const amendmentsSince = (state, promise) => state.constitution.amendments.filter((amendment) => amendment.turn >= promise.madeTurn);
+const baselineFor = (state, promise) => state.promiseBaselines?.[`${promise.meeting}:${promise.id}`];
+const releasesSince = (state, promise) => {
+  const baseline = baselineFor(state, promise);
+  return baseline
+    ? state.models.slice(baseline.models)
+    : state.models.filter((model) => model.releasedTurn >= promise.madeTurn);
+};
+const amendmentsSince = (state, promise) => {
+  const baseline = baselineFor(state, promise);
+  return baseline
+    ? state.constitution.amendments.slice(baseline.amendments)
+    : state.constitution.amendments.filter((amendment) => amendment.turn >= promise.madeTurn);
+};
 
 function rushDemo(state) {
   state.cash -= 40;
@@ -64,8 +75,12 @@ export const PROMISES = {
   domesticChips: {
     id: 'domesticChips',
     text: 'Buy only domestic chips.', // OWNER WRITES
-    check: (state, promise) => ![...state.compute.contracts, ...state.compute.pipeline]
-      .some((entry) => entry.supplier === 'gulf' && entry.signedTurn >= promise.madeTurn),
+    check: (state, promise) => {
+      const deals = state.compute.deals ?? [];
+      const baseline = baselineFor(state, promise);
+      return !(baseline ? deals.slice(baseline.deals) : deals.filter((entry) => entry.turn >= promise.madeTurn))
+        .some((entry) => entry.supplier === 'gulf');
+    },
     deliver: { label: 'Buy out the foreign order', effects(state) { state.cash -= 30; } }, // OWNER WRITES
     contradicts: [],
   },

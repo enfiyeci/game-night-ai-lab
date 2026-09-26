@@ -20,6 +20,7 @@ export function createInitialState({ seed = 1 } = {}) {
       online: BALANCE.startCompute,
       contracts: [{ supplier: 'starter', units: BALANCE.startCompute, costMult: 1, failChance: 0 }],
       pipeline: [],
+      deals: [],
       servingUnits: 0,
       overflow: 0,
     },
@@ -57,6 +58,7 @@ export function createInitialState({ seed = 1 } = {}) {
 
     constitution: { hardLines: [], rulings: {}, amendments: [] },
     promises: [],
+    promiseBaselines: {},
     meeting: null,
     meetingsHeld: [],
     flags: {},

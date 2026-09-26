@@ -286,6 +286,21 @@ export const EVENTS = [
     },
   },
   {
+    id: 'promiseCall',
+    kind: 'promise',
+    trigger: () => false,
+    warning: null,
+    card: {
+      title: "The President's office is calling in your promise",
+      post: { handle: '@executive_office', text: '' },
+      choices: [
+        { id: 'deliver', label: 'Deliver', cost: 'the promised action', backers: ['Government'], opposers: [], effects() {} },
+        { id: 'stall', label: 'Stall', cost: 'government favor', backers: [], opposers: ['Government'], effects() {} },
+        { id: 'refuse', label: 'Refuse', cost: 'government favor', backers: ['Staff'], opposers: ['Government'], effects() {} },
+      ],
+    },
+  },
+  {
     id: 'president',
     kind: 'world',
     trigger: (state) => state.flags.presidentDemand === true,

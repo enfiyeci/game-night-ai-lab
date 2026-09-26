@@ -24,6 +24,7 @@ import {
   SUMMIT_SKIP_INTL_FAVOR,
 } from './summit.js';
 import { expireMeeting, meetingDue, runMeeting } from './president.js';
+import { promiseUpkeep } from './promises.js';
 
 export const MAX_MOVES = 2;
 const BUDGET_KEYS = ['training', 'safety', 'security', 'product', 'talent'];
@@ -127,20 +128,25 @@ export function endTurn(prev, actions = {}, rng) {
   }
   const eventChoices = actions.eventChoices ?? {};
   const handledChoices = new Set();
-  for (const { id } of [...state.pendingEvents]) {
-    if (!Object.hasOwn(eventChoices, id)) continue;
-    const choiceId = eventChoices[id];
+  for (const pending of [...state.pendingEvents]) {
+    const { id } = pending;
+    const choiceKey = Object.hasOwn(eventChoices, id)
+      ? id
+      : pending.eventId && Object.hasOwn(eventChoices, pending.eventId) ? pending.eventId : null;
+    if (!choiceKey) continue;
+    const choiceId = eventChoices[choiceKey];
     const result = resolveEvent(state, id, choiceId);
     if (!result.ok) errors.push(result.error);
-    handledChoices.add(id);
+    handledChoices.add(choiceKey);
   }
   for (const id of Object.keys(eventChoices)) {
     if (handledChoices.has(id)) continue;
     const result = resolveEvent(state, id, eventChoices[id]);
     if (!result.ok) errors.push(result.error);
   }
-  for (const { id } of [...state.pendingEvents]) {
-    const choiceId = fallbackChoice(id);
+  for (const pending of [...state.pendingEvents]) {
+    const { id } = pending;
+    const choiceId = fallbackChoice(id, pending);
     const result = resolveEvent(state, id, choiceId);
     if (!result.ok) errors.push(result.error);
     else events.push({ type: 'eventResolved', id, choiceId, auto: true });
@@ -216,6 +222,7 @@ export function endTurn(prev, actions = {}, rng) {
       state.lastRivalReleases = rivalsTurn(state, rng);
       for (const r of state.lastRivalReleases) events.push({ type: 'rivalRelease', ...r });
       state.raceHeat -= BALANCE.raceHeatDecay;
+      promiseUpkeep(state, rng);
       for (const e of eventsTick(state, rng)) events.push(e);
       normalize(state);
       updateBoard(state, before);

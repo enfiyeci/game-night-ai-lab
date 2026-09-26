@@ -1,5 +1,12 @@
 import { EVENTS } from './data/events.js';
 import { hasLine } from './constitution.js';
+import {
+  failedPresidentPromises,
+  promiseCallCard,
+  promiseCallKey,
+  promiseFallback,
+  resolvePromiseCall,
+} from './promises.js';
 
 const MAX_CARDS = 2;
 const byId = (id) => EVENTS.find((event) => event.id === id);
@@ -20,9 +27,39 @@ export function pushFeed(state, handle, text, tag = 'feed') {
   if (state.feed.length > 40) state.feed.splice(0, state.feed.length - 40);
 }
 
+function queuePromiseCalls(state, event, out) {
+  for (const promise of failedPresidentPromises(state)) {
+    const queued = state.pendingEvents.some((pending) =>
+      pending.eventId === event.id
+      && pending.promiseId === promise.id
+      && pending.promiseMeeting === promise.meeting);
+    if (queued) continue;
+    const key = promiseCallKey(promise);
+    if (state.pendingEvents.length >= MAX_CARDS) {
+      state.warnings[key] = {
+        turn: state.turn,
+        deferred: true,
+        eventId: event.id,
+        promiseId: promise.id,
+        promiseMeeting: promise.meeting,
+      };
+      continue;
+    }
+    delete state.warnings[key];
+    const card = promiseCallCard(event, promise);
+    state.pendingEvents.push(card);
+    pushFeed(state, card.post.handle, card.post.text, 'event');
+    out.push({ type: 'eventCard', id: event.id, promiseId: promise.id, promiseMeeting: promise.meeting });
+  }
+}
+
 export function eventsTick(state, rng) {
   const out = [];
   for (const event of orderedEvents) {
+    if (event.kind === 'promise') {
+      queuePromiseCalls(state, event, out);
+      continue;
+    }
     if (state.pendingEvents.some((pending) => pending.id === event.id)) continue;
     if (event.kind !== 'internal' && state.seenEvents.includes(event.id)) continue;
     const hasWarning = Object.hasOwn(state.warnings, event.id);
@@ -61,7 +98,9 @@ export function eventsTick(state, rng) {
 export function addressWarning(state, id) {
   const event = byId(id);
   const warned = Object.hasOwn(state.warnings, id) ? state.warnings[id] : null;
-  if (!event || event.kind === 'internal' || !warned || warned.deferred) return { ok: false, error: `no warning ${id}` };
+  if (!event || event.kind === 'internal' || event.kind === 'promise' || !warned || warned.deferred) {
+    return { ok: false, error: `no warning ${id}` };
+  }
   state.cash -= 5 * state.era;
   delete state.warnings[id];
   if (event.flag) {
@@ -72,19 +111,31 @@ export function addressWarning(state, id) {
 }
 
 export function resolveEvent(state, id, choiceId) {
-  const index = state.pendingEvents.findIndex((pending) => pending.id === id);
+  let index = state.pendingEvents.findIndex((pending) => pending.id === id);
+  if (index < 0) index = state.pendingEvents.findIndex((pending) => pending.eventId === id);
   if (index < 0) return { ok: false, error: `no pending event ${id}` };
-  const event = byId(id);
-  const choice = event?.card.choices.find((candidate) => candidate.id === choiceId);
+  const pending = state.pendingEvents[index];
+  const event = byId(pending.eventId ?? pending.id);
+  const choice = event?.kind === 'promise'
+    ? pending.choices?.find((candidate) => candidate.id === choiceId)
+    : event?.card.choices.find((candidate) => candidate.id === choiceId);
   if (!choice) return { ok: false, error: `unknown choice ${choiceId}` };
-  const targets = state.pendingEvents[index].targets ?? targetIndices(state, event);
-  choice.effects(state, targets);
+  if (event.kind === 'promise') {
+    const result = resolvePromiseCall(state, pending, choiceId);
+    if (!result.ok) return result;
+  } else {
+    const catalogChoice = event?.card.choices.find((candidate) => candidate.id === choiceId);
+    if (!catalogChoice) return { ok: false, error: `unknown choice ${choiceId}` };
+    const targets = pending.targets ?? targetIndices(state, event);
+    catalogChoice.effects(state, targets);
+  }
   if (hasLine(state, 'honest') && ['defend', 'deny', 'stonewall', 'coverup'].includes(choice.id)) state.staffTrust -= 3;
   state.pendingEvents.splice(index, 1);
-  return { ok: true, id, choiceId };
+  return { ok: true, id: pending.id, choiceId };
 }
 
-export function fallbackChoice(id) {
-  const event = byId(id);
+export function fallbackChoice(id, pending) {
+  const event = byId(pending?.eventId ?? id);
+  if (event?.kind === 'promise') return promiseFallback(pending);
   return event?.fallback ?? event?.card.choices.at(-1)?.id;
 }

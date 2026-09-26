@@ -1,4 +1,5 @@
 import { MEETINGS } from './data/president.js';
+import { createPresidentPromise } from './promises.js';
 
 const meetingById = (id) => MEETINGS.find((meeting) => meeting.id === id);
 
@@ -79,9 +80,13 @@ export function runMeeting(state, answerIds) {
     state.publicTrust -= answer.flattery;
     if (answer.bargain) bargain = true;
     if (answer.promise) {
-      const promise = { text: answer.promise, dueTurn: state.turn + 6 };
-      state.promises.push(promise);
-      promises.push(promise);
+      const alreadyMade = state.promises.some((promise) =>
+        promise.source === 'president' && promise.meeting === meeting.id && promise.id === answer.promise);
+      if (!alreadyMade) {
+        const promise = createPresidentPromise(answer.promise, meeting.id, state.turn, state);
+        state.promises.push(promise);
+        promises.push(promise);
+      }
     }
     if (state.meeting.patience <= 0) {
       state.govFavor.us -= 10;

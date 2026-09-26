@@ -17,6 +17,8 @@ export function signDeal(state, supplierId) {
   const upfront = s.units * s.costMult * BALANCE.unitMonthlyCost * s.prepayMonths;
   if (upfront > state.cash) return { ok: false, error: 'not enough cash for the prepayment' };
   state.cash -= upfront;
+  state.compute.deals ??= [];
+  state.compute.deals.push({ supplier: s.id, turn: state.turn });
   const arrivesTurn = state.turn + s.delay + BOTTLENECK_DELAY[eraById(state.era).bottleneck];
   state.compute.pipeline.push({ supplier: s.id, units: s.units, costMult: s.costMult, failChance: s.failChance, arrivesTurn });
   if (s.govUs) state.govFavor.us += s.govUs;

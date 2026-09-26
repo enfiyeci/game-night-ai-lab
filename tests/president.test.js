@@ -169,7 +169,17 @@ test('answer promise values are promise ids', () => {
   const expected = meeting().exchanges
     .map((exchange, index) => exchange.answers.find((answer) => answer.id === answerIds[index]).promise)
     .filter(Boolean)
-    .map((id) => ({ text: id, dueTurn: 15 }));
+    .map((id) => ({
+      source: 'president',
+      id,
+      text: PROMISES[id].text,
+      meeting: 'first',
+      madeTurn: 9,
+      dueTurn: 13,
+      status: 'open',
+      stalled: false,
+      leaked: false,
+    }));
   const result = runMeeting(state, answerIds);
   assert.deepEqual(state.promises, expected);
   assert.deepEqual(result.outcome.promises, expected);

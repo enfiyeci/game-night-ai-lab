@@ -88,7 +88,7 @@ function eventChoices(state, style, rng) {
     if (style === 'speed') choice = event.choices.at(-1);
     else if (style === 'safety') choice = event.choices[0];
     else if (style === 'balanced') {
-      choice = event.choices.find((candidate) => candidate.id === BALANCED_EVENT_CHOICES[event.id]) ?? event.choices[0];
+      choice = event.choices.find((candidate) => candidate.id === BALANCED_EVENT_CHOICES[event.eventId ?? event.id]) ?? event.choices[0];
     } else choice = rng.pick(event.choices);
     return [event.id, choice.id];
   }));
