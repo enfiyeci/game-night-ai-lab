@@ -1,6 +1,7 @@
 import { ERAS, eraById } from './data/eras.js';
 import { seat } from './board.js';
 import { clamp } from './util.js';
+import { roundWord } from './time.js';
 
 // A public compute promise to the board, made from the finance planner (owner design 2026-09-26): "X units by era Y".
 // It pays a little now, and on the promised era's last turn the board reacts on a sliding scale of how close you got.
@@ -27,7 +28,7 @@ export function makeBoardPromise(state, promise) {
   const { units, era } = promise;
   if (!Number.isInteger(units) || units <= 0) return { ok: false, error: 'promise a whole number of compute units' };
   if (!Number.isInteger(era) || era < state.era || era > ERAS.length) return { ok: false, error: 'promise an era that is still ahead' };
-  if (era === state.era && state.turnInEra >= eraById(era).turns - 1) return { ok: false, error: 'this era ends this turn' };
+  if (era === state.era && state.turnInEra >= eraById(era).turns - 1) return { ok: false, error: `this era ends this ${roundWord(state.era)}` };
   if (state.boardPromise?.status === 'open') return { ok: false, error: 'you already have a promise open with the board' };
   state.boardPromise = { units, era, madeTurn: state.turn, status: 'open' };
   for (const [id, amount] of Object.entries(PROMISE_MADE)) state.board[seat(id)] += amount;

@@ -3,7 +3,8 @@ import { EVENTS_6C } from './data/events6c.js';
 import { BOARD_EVENTS } from './data/boardEvents.js';
 import { hasLine } from './constitution.js';
 import { EVENT_TIMING, DEFAULT_EVENT_TIMING } from './data/eventTiming.js';
-import { ROUND_DAYS, nextRoundDay } from './time.js';
+import { ROUND_DAYS, nextRoundDay, roundMarkDay } from './time.js';
+import { eraById } from './data/eras.js';
 import { sideRng } from './contracts.js';
 import {
   failedPresidentPromises,
@@ -153,6 +154,15 @@ export function fallbackChoice(id, pending) {
   return event?.fallback ?? event?.card.choices.at(-1)?.id;
 }
 
+// A round mark falls on this story day (walking era changes, as roundMarkDay does).
+function isMarkDay(state, day) {
+  for (let k = 1; k <= 40; k += 1) {
+    const mark = roundMarkDay(state, k);
+    if (mark >= day) return mark === day;
+  }
+  return false;
+}
+
 export function stampNewCards(state) {
   const days = ROUND_DAYS[state.era];
   state.pendingEvents.forEach((card, index) => {
@@ -160,6 +170,13 @@ export function stampNewCards(state) {
     const rng = sideRng(state, 9 + index);
     card.landsAt = state.day + rng.int(0, Math.max(0, Math.floor(days * 0.8) - 1));
     card.dueAt = card.landsAt + (EVENT_TIMING[card.eventId ?? card.id] ?? DEFAULT_EVENT_TIMING).days;
+    // A board card must resolve before its meeting opens: due by the day before the vote round's mark.
+    if (byId(card.id)?.kind === 'board') {
+      card.dueAt = Math.min(card.dueAt, roundMarkDay(state, eraById(state.era).turns - state.turnInEra) - 1);
+    }
+    // The emergency vote must be known the day before its mark, when the meeting opens: a card due on a mark day
+    // would resolve inside the mark's own step. One day earlier.
+    if (card.id === 'boardRevolt' && isMarkDay(state, card.dueAt)) card.dueAt -= 1;
   });
   for (const warning of Object.values(state.warnings)) {
     if (warning.deferred || warning.dueAt != null) continue;

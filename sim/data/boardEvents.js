@@ -6,9 +6,9 @@ import { pushFeed } from '../events.js';
 import { clamp } from '../util.js';
 import { eraById } from './eras.js';
 
-// Events in the weeks before a board meeting (spec §5.5, frames P1 to P4, R1, R3). One may land when endTurn ends the
-// era's second round and one when it ends the third, so each is answerable before the vote round ends.
-const BOARD_EVENT_SALT = 8; // sideRng salts 0 to 7 are taken (sim/turn.js)
+// Events in the weeks before a board meeting (spec §5.5, frames P1 to P4, R1, R3). One may be made at the mark ending the
+// era's second round and one at the mark ending the third; each lands in the next round and is due before the vote.
+const BOARD_EVENT_SALT = 8; // see the sideRng salt list in sim/turn.js
 const MONEY = ['growth', 'financier', 'sovereign'];
 const KICKER = 'Before the board meets';
 
@@ -204,12 +204,13 @@ export const BOARD_EVENTS = [
 
 const BOARD_IDS = new Set(BOARD_EVENTS.map((event) => event.id));
 
-// Which board card lands this round, if any: eras with a gate vote, at the end of their second and third rounds, one
-// card per window (no board card is pending: endTurn has resolved every card before eventsTick runs).
+// Which board card lands this round, if any: eras with a gate vote, at the marks ending their second and third rounds,
+// one card per window. Under real time the second window's card may arrive while the first is still open (each is due
+// before the vote, sim/events.js stampNewCards); a card made at this mark has no landing day yet.
 export function pickBoardEvent(state) {
   const era = eraById(state.era);
   if (!era.boardVoteAtGate || (state.turnInEra !== 1 && state.turnInEra !== 2)) return null;
-  if (state.pendingEvents.some((pending) => BOARD_IDS.has(pending.id))) return null;
+  if (state.pendingEvents.some((pending) => BOARD_IDS.has(pending.id) && pending.landsAt == null)) return null;
   const eligible = BOARD_EVENTS.filter((event) => !state.seenEvents.includes(event.id) && event.eligible(state));
   if (eligible.length === 0) return null;
   return boardRng(state, 0).pick(eligible).id;

@@ -21,7 +21,7 @@ export const INITIAL_BOARD = [70, 65, 60, 65, 70, 60, 70];
 export const seat = (id) => BOARD_MEMBERS.findIndex((member) => member.id === id);
 export const STAFF_LETTER_TRUST = 65;
 
-// What updateBoard compares against: taken at the start of endTurn.
+// What updateBoard compares against: taken at each round mark (state.roundStart), for the round that follows.
 export function boardSnapshot(state) {
   return {
     arr: state.arr,
@@ -87,10 +87,10 @@ export function voteOrder(state, turn = state.turn) {
 // is judged at that round's end, and a bad miss votes at once.
 export function boardVoteThisRound(state) {
   if (state.ending) return false;
-  if (state.flags.boardVoteDue) return true; // true (a missed promise) or 'emergency' (boardRevolt)
-  // The emergency-vote card (boardRevolt, sim/data/events6c.js) sets boardVoteDue in every choice; it is resolved at
-  // the start of endTurn, so its vote is held in that same round.
-  if (state.pendingEvents.some((pending) => pending.id === 'boardRevolt')) return true;
+  // true (a missed promise) or 'emergency' (the boardRevolt card, sim/data/events6c.js). Under real time that card is
+  // answered at once or resolves on its due day, never on a round mark (sim/events.js stampNewCards), so the flag is
+  // set by the day before the mark that holds its vote.
+  if (state.flags.boardVoteDue) return true;
   const era = eraById(state.era);
   const lastRound = state.turnInEra === era.turns - 1;
   if (era.boardVoteAtGate && lastRound) return true;

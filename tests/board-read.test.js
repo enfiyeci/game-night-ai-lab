@@ -110,11 +110,12 @@ test('an emergency vote is recorded as an emergency', () => {
 });
 
 test('one meeting, one vote: an emergency vote in a gate round replaces the gate vote', () => {
-  // Era 2's last round, with the emergency-vote card pending: it is held in checkTurnEndings, so the gate holds none.
+  // Era 2's last round, with the emergency-vote card answered at once: it is held in checkTurnEndings at the mark, so the
+  // gate holds none.
   const state = at({ era: 2, turnInEra: 3, turn: 7, board: [80, 80, 80, 80, 80, 80, 80] });
   state.pendingEvents = [{ id: 'boardRevolt' }];
   assert.equal(boardVoteThisRound(state), true);
-  const out = endTurn(state, {}, createRng(3));
+  const out = endTurn(state, { eventChoices: { boardRevolt: 'face' } }, createRng(3));
   assert.equal(out.state.ending, null);
   assert.equal(out.state.era, 3, 'the era gate still let the lab through');
   assert.equal(out.state.flags.boardVotesHeld, 1);
