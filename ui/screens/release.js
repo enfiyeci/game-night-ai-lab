@@ -27,8 +27,14 @@ export function openRelease(game, overlayRoot, { stage } = {}) {
   const projected = () => projectQueue(game.state, queueBeforeRelease(game.queue));
   let draft = releaseDraft(projected(), remembered.get(game));
   let opened;
+  // Editing an already-queued release replaces it in place rather than spending a second move.
+  const isEditing = game.queue.moves.some((move) => move.type === 'release');
 
-  function showSizes() {
+  // `fromMain` is true only when this step was reached via "Rename sizes" inside the main dialog,
+  // where there is a main dialog to return to with the draft intact. On the very first release
+  // (nothing remembered yet, entered directly) there is no main dialog behind it, so cancelling
+  // closes the whole flow as before.
+  function showSizes(fromMain = false) {
     const body = el('div', 'release-sizes');
     body.append(el('p', 'release-note', 'You name these once. Every model takes one from its size, like Kestrel 4 Core.'));
     const inputs = {};
@@ -49,6 +55,9 @@ export function openRelease(game, overlayRoot, { stage } = {}) {
       subtitle: 'Small, medium, large and extra large models each get a word',
       body,
       okLabel: 'Save sizes',
+      backLabel: fromMain ? 'Back' : undefined,
+      onBack: fromMain ? () => showMain() : undefined,
+      onCancel: fromMain ? () => showMain() : undefined,
       onOk() {
         for (const size of SIZE_ORDER) draft.tierWords[size] = inputs[size].value.trim() || tierWord(size);
         showMain();
@@ -99,7 +108,7 @@ export function openRelease(game, overlayRoot, { stage } = {}) {
     const previewName = el('b');
     const rename = el('button', 'release-link', 'Rename sizes');
     rename.type = 'button';
-    rename.addEventListener('click', () => showSizes());
+    rename.addEventListener('click', () => showSizes(true));
     preview.append('It will ship as ', previewName, ' · ', rename);
     body.append(nameRow, skipLabel, preview, el('div', 'rule'));
 
@@ -174,7 +183,7 @@ export function openRelease(game, overlayRoot, { stage } = {}) {
       when.append(el('span', `release-when ${check.delay > 0 ? 'later' : 'now'}`, shipWords(check.delay)));
       shipLine.replaceChildren(
         when,
-        el('span', null, `${check.cash > 0 ? `Costs ${money(check.cash)}` : 'No cash cost'} · uses 1 of your 2 moves`),
+        el('span', null, `${check.cash > 0 ? `Costs ${money(check.cash)}` : 'No cash cost'} · ${isEditing ? 'replaces your queued release' : 'uses 1 of your 2 moves'}`),
       );
       error.textContent = check.errors[0] ?? '';
       leftContent.replaceChildren(teamPanel(now, { opinions: releaseOpinions(now, draft) }));
@@ -210,6 +219,8 @@ export function openRelease(game, overlayRoot, { stage } = {}) {
       right: { title: 'Release choices', content: rightContent },
       body,
       okLabel: 'Release',
+      backLabel: 'Back',
+      onBack: () => opened.close(),
       onOk() {
         const check = releasePreview(game.state, game.queue, draft);
         if (!check.ok) {
@@ -224,7 +235,10 @@ export function openRelease(game, overlayRoot, { stage } = {}) {
         const after = { ...game.queue, moves: index < 0 ? [...moves, move] : moves.map((queued, at) => (at === index ? move : queued)) };
         const problem = queuedMoveProblem(game.state, after);
         if (problem) {
-          error.textContent = problem[0].toUpperCase() + problem.slice(1);
+          // The release itself already passed the check above, so a problem here means a move
+          // queued after it (for example a training run that no longer fits the cash left after
+          // a pricier evaluation) would fail.
+          error.textContent = `A move queued after the release would fail: ${problem}`;
           return;
         }
         let result;

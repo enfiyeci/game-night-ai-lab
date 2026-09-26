@@ -223,10 +223,16 @@ export function showReveal(overlayRoot, { state, model, misalignmentIncident = f
       done.focus();
       return;
     }
-    if (event.key === 'Enter' || event.key === 'Escape') {
-      if (event.repeat) return;
-      // preventDefault also suppresses the button's native Enter-activation click, so close()
-      // (idempotent via the `closed` guard) only runs once here.
+    if (event.key === 'Enter' || event.key === ' ' || event.key === 'Escape') {
+      if (event.repeat) {
+        // A key held from before the build-up finished still auto-repeats here. Without
+        // preventDefault, the browser's native Enter/Space activation on the focused Continue
+        // button would still fire a click and close the reveal out from under the held key.
+        event.preventDefault();
+        return;
+      }
+      // preventDefault also suppresses the button's native Enter/Space-activation click, so
+      // close() (idempotent via the `closed` guard) only runs once here.
       event.preventDefault();
       close();
     }

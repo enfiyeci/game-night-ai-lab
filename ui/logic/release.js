@@ -1,5 +1,5 @@
 import { cardById, pickableCards, resolveCards, slotsFor } from '../../sim/recipe.js';
-import { TIER_WORDS, modelName, releaseModel, tierWord } from '../../sim/release.js';
+import { modelName, releaseModel, tierWord } from '../../sim/release.js';
 import { createRng } from '../../sim/rng.js';
 import { CHANNEL, PRICE_STANCE, REASONING, REVENUE_PER_USER, USAGE, margin, servingCost } from '../../sim/serving.js';
 import { projectQueue } from './compute.js';

@@ -6,10 +6,12 @@ import { openBudget } from './screens/budget.js';
 
 const registeredHandlers = new Map();
 
+const releaseQueued = (game) => game.queue.moves.some((move) => move.type === 'release');
+
 export const ITEMS = [
   { id: 'budget', label: "Plan this turn's budget", free: true },
   { id: 'training', label: 'Start a training run', unavailable: (state, game) => (game.queue.moves.some((move) => move.type === 'startRun') && 'A training run is already queued this turn') || (state.activeRun && 'A run is already under way') || (state.pendingModel && 'Release the trained model first') },
-  { id: 'release', label: 'Release a model', editsQueued: (game) => game.queue.moves.some((move) => move.type === 'release'), unavailable: (state, game) => !game.queue.moves.some((move) => move.type === 'release') && !state.pendingModel && 'Release needs a finished model' },
+  { id: 'release', label: 'Release a model', editsQueued: (game) => releaseQueued(game), unavailable: (state, game) => !releaseQueued(game) && !state.pendingModel && 'Release needs a finished model' },
   { id: 'internal', label: 'Deploy a model internally', unavailable: (state) => state.era < 3 && 'Internal deployment opens in era 3' },
   { id: 'constitution', label: 'Amend the constitution' },
   { id: 'meeting', label: 'Take a meeting', unavailable: (state) => !state.meeting && 'No meeting is scheduled' },
