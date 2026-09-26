@@ -1405,3 +1405,18 @@ git commit -m "feat(ui): the desk phone holds set-aside cards, warnings and the 
   - With `prefers-reduced-motion` emulated, nothing animates.
 - [ ] **Step 3: If `ui/clock.js` from the real-time lane has been merged into `ui` by now,** merge `origin/ui` into `events-build`, then check that an open card pauses the clock, that the due bar shows story days, and that a set-aside card turns into "Time ran out" when its days pass. If the clock is not merged yet, record in the plan's review record that this path is untested.
 - [ ] **Step 4: Publish the screenshots** (a card, each of the four crises, a warning bubble, an advisor bubble, the phone and the busy panel) as one private review artifact for the owner, following the design skill's screenshot rules. Record every owner reaction in `~/.claude/skills/design/LEARNINGS.md` the same day.
+
+---
+
+## Changes made during the build (2026-09-26)
+
+The owner picked week-by-week time (real-time pick 1D) while this plan was being built. The real-time lane then set a new contract, and the code follows it instead of the task text above:
+
+- **Cards can outlive a round.** The `daysUntilNextRound()` cap is gone. The sim gives each pending card `landsAt` and `dueAt` in story days and counts `state.day`. The UI shows a card once `state.day >= landsAt`, and its bar shows `dueAt - state.day` (`hasLanded`, `daysLeft(pending, state)` in `ui/logic/events.js`). Without those fields (turn mode) cards show at once with no bar.
+- **Timing lives in the sim.** The days moved from `ui/data/eventCopy.js` to a new data file, `sim/data/eventTiming.js` (`EVENT_TIMING`, `DEFAULT_EVENT_TIMING`). The real-time sim reads it to set `dueAt`. This is the one file this lane adds under `sim/`, at the real-time lane's request. The due phrases stay in `eventCopy.js` as `DUE` and `DEFAULT_DUE`.
+- **The card flow is diff-based.** Subscribers now fire after every story day, so `mountEvents` no longer resets per round. It queues cards that land and writes a consequence line for cards that leave. The "Time ran out" state was dropped: an unanswered card leaves the sim at `dueAt` and becomes a "Nobody answered" line.
+- **Answers apply at once** through `game.answerCard(id, choiceId)` when the game has it; otherwise they merge into `eventChoices` (`queueAnswer`).
+- **Warnings** show "Gets worse in …" from `state.warnings[id].dueAt` when it exists.
+- **Bubbles rise above an advisor's "!" marker** (dy −64 when their band is not calm), and `separate()` lifts one of two bubbles that would touch.
+- **The whistleblower's press tag** sits by the door, down-left of the Policy desk, where no bubble covers it.
+- **IBM Plex Mono** was added to the font link in `index.html` for the crisis pictures.
