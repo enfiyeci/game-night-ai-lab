@@ -319,3 +319,14 @@ test('with time-based posts off, a quiet moment posts nothing', async () => {
   const s = createInitialState({ seed: 4 });
   assert.deepEqual(feedPosts(s, s, [], { ambient: false, timeBased: false }), []);
 });
+
+test('a trust drop from an instant action still gets its mood post at the round mark', async () => {
+  const { createInitialState } = await import('../sim/state.js');
+  const { createRng } = await import('../sim/rng.js');
+  const { advanceDays } = await import('../sim/turn.js');
+  const s = createInitialState({ seed: 5 });
+  s.roundStart.publicTrust = 41;
+  s.publicTrust = 36; // dropped mid-round by an action
+  const out = advanceDays(s, 91, createRng(5)).state;
+  assert.ok(out.feed.some((post) => post.tag === 'mood'), 'the low-trust mood post appears');
+});

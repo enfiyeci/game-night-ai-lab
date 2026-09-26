@@ -56,3 +56,11 @@ test('a whole run still ends within 20 rounds', () => {
   assert.ok(s.ending);
   assert.ok(s.turn <= 20);
 });
+
+test('a round mark several rounds ahead walks across an era change', async () => {
+  const { roundMarkDay } = await import('../sim/time.js');
+  const s = createInitialState({ seed: 1 });
+  s.era = 2; s.turnInEra = 3; s.day = 700; s.dayInRound = 0;
+  assert.equal(roundMarkDay(s, 1), 791); // the last era-2 round
+  assert.equal(roundMarkDay(s, 2), 821); // then a 30-day era-3 round
+});

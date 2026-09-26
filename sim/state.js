@@ -81,7 +81,7 @@ export function createInitialState({ seed = 1 } = {}) {
     lastBriefing: [],
     ending: null,
   };
-  state.roundStart = { arr: state.arr, capability: state.capability, cash: state.cash };
+  state.roundStart = { arr: state.arr, capability: state.capability, cash: state.cash, raceHeat: state.raceHeat, publicTrust: state.publicTrust };
   state.compute.offers = generateOffers(state, sideRng(state, 0));
   return state;
 }

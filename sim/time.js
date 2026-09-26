@@ -1,4 +1,4 @@
-import { eraById } from './data/eras.js';
+import { ERAS, eraById } from './data/eras.js';
 
 // Story days per hidden round mark: a quarter, a month, a week (today's turn lengths).
 export const ROUND_DAYS = { 1: 91, 2: 91, 3: 30, 4: 30, 5: 7 };
@@ -19,4 +19,17 @@ export function storyDate(day) {
   while (rest >= MONTH_DAYS[m]) { rest -= MONTH_DAYS[m]; m += 1; }
   const w = Math.min(4, Math.floor(rest / 7) + 1);
   return { y, m: m + 1, w, label: `Y${y} M${m + 1} W${w}` };
+}
+
+// The story day of the round mark `rounds` marks from now, walking era changes (4 rounds per era).
+export function roundMarkDay(state, rounds) {
+  let day = nextRoundDay(state);
+  let era = state.era;
+  let inEra = state.turnInEra + 1;
+  for (let k = 1; k < rounds; k += 1) {
+    if (inEra >= ERAS[era - 1].turns && era < ERAS.length) { era += 1; inEra = 0; }
+    day += ROUND_DAYS[era];
+    inEra += 1;
+  }
+  return day;
 }

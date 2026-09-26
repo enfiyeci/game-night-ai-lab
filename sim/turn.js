@@ -371,14 +371,14 @@ function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
     // A delayed release goes live at the round mark, action or not (the old turn did this first thing next turn).
     const waiting = state.models.filter((model) => model.active && !model.activated);
     activateReleases(state);
-    for (const model of waiting) if (model.activated) events.push({ type: 'modelLive', model });
+    for (const model of waiting) if (model.activated && model.active) events.push({ type: 'modelLive', model });
     updateServing(state);
     state.burnPlanned = projectBurn(state);
   }
   state.dayInRound = 0;
   state.round = { moves: 0, teams: {} };
   delete state.flags.emergencyUsedThisTurn;
-  state.roundStart = { arr: state.arr, capability: state.capability, cash: state.cash };
+  state.roundStart = { arr: state.arr, capability: state.capability, cash: state.cash, raceHeat: state.raceHeat, publicTrust: state.publicTrust };
   if (!state.ending) stampNewCards(state, rng);
   // A card made on the final mark can never be seen or answered.
   else state.pendingEvents = state.pendingEvents.filter((card) => card.landsAt != null);
@@ -405,7 +405,8 @@ export function advanceDays(prev, days, rng, observer = {}) {
   const errors = [];
   if (state.ending) return { state, events, errors: ['the run is over'] };
   for (let i = 0; i < days && !state.ending; i += 1) {
-    const mood = { raceHeat: state.raceHeat, publicTrust: state.publicTrust };
+    // Mood posts compare the whole round, start to mark, as the old turn did, so an instant action's shift is not lost.
+    const mood = { raceHeat: state.roundStart.raceHeat ?? state.raceHeat, publicTrust: state.roundStart.publicTrust ?? state.publicTrust };
     const firstEvent = events.length;
     const fraction = 1 / ROUND_DAYS[state.era];
     budgetEffects(state, fraction);
