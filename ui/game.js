@@ -7,6 +7,7 @@ import {
   MAX_MOVES,
   setBudget as validateBudget,
 } from '../sim/turn.js';
+import { turnRecord } from './logic/finance.js';
 
 const initialQueue = (budget) => ({
   budget: structuredClone(budget),
@@ -18,12 +19,19 @@ const initialQueue = (budget) => ({
   holdOrShip: undefined,
 });
 
-export function createGame({ seed = 1, state } = {}) {
+// history: finance records of turns played before this game object existed (debug scenarios pass their own).
+export function createGame({ seed = 1, state, history = [] } = {}) {
   let currentState = structuredClone(state ?? createInitialState({ seed }));
   const rng = createRng(seed);
   let actions = initialQueue(currentState.budget);
   const subscribers = new Set();
   const rivalReleases = [];
+  const financeHistory = structuredClone(history);
+  let financePlan = null; // the finance planner's goals and rounds, kept between openings; a plan, never a move
+  // The finance history gains a row at each round mark: the round's start state, its end state and every event in it
+  // (instant actions included, so a raise counts in the round it was made).
+  let roundStartState = currentState;
+  let roundEvents = [];
   let debugActionEvents = [];
   let debugActionErrors = [];
   let lastAlignShare = currentState.activeRun?.recipe.sliders.alignShare;
@@ -34,6 +42,12 @@ export function createGame({ seed = 1, state } = {}) {
     const hadRun = Boolean(currentState.activeRun);
     if (hadRun) lastAlignShare = currentState.activeRun.recipe.sliders.alignShare;
     currentState = update.state;
+    roundEvents.push(...update.events);
+    if (currentState.turn !== releaseTurn) {
+      if (!roundStartState.ending) financeHistory.push(turnRecord(roundStartState, currentState, roundEvents));
+      roundStartState = currentState;
+      roundEvents = [];
+    }
     if (currentState.activeRun) lastAlignShare = currentState.activeRun.recipe.sliders.alignShare;
     else if (!hadRun && update.events.some((event) => event.type === 'runComplete')) {
       const started = queued?.moves.find((move) => move.type === 'startRun'); // a run that started and finished in one step
@@ -43,7 +57,14 @@ export function createGame({ seed = 1, state } = {}) {
       if (event.type === 'rivalRelease') rivalReleases.push({ turn: releaseTurn, id: event.id });
     }
     const notification = { state: currentState, events: update.events, errors: update.errors };
-    for (const subscriber of subscribers) subscriber(notification);
+    // One broken screen must not stop the others (the board meeting's opener among them) or the clock's loop.
+    for (const subscriber of subscribers) {
+      try {
+        subscriber(notification);
+      } catch (error) {
+        console.error(error);
+      }
+    }
     return {
       ok: update.errors.length === 0,
       error: update.errors[0],
@@ -65,6 +86,15 @@ export function createGame({ seed = 1, state } = {}) {
       debugActionEvents.push(...result.events);
       debugActionErrors.push(...result.errors);
       return result;
+    },
+    get financeHistory() {
+      return financeHistory.map((row) => ({ ...row }));
+    },
+    get financePlan() {
+      return financePlan && structuredClone(financePlan);
+    },
+    setFinancePlan(plan) {
+      financePlan = structuredClone(plan);
     },
     get lastAlignShare() {
       return lastAlignShare;

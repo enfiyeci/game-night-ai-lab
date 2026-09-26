@@ -1,5 +1,6 @@
 import { EVENTS } from '../../sim/data/events.js';
 import { EVENTS_6C } from '../../sim/data/events6c.js';
+import { BOARD_EVENTS } from '../../sim/data/boardEvents.js';
 import { DEFAULT_EVENT_TIMING, EVENT_TIMING } from '../../sim/data/eventTiming.js';
 import { fallbackChoice } from '../../sim/events.js';
 import {
@@ -11,7 +12,7 @@ export const TAG_TO_ADVISOR = { Research: 'research', Safety: 'safety', CFO: 'cf
 const ARGUE_ORDER = ['safety', 'research', 'cfo', 'policy'];
 const DAYS_PER_MONTH = 30.44;
 
-const ALL = [...EVENTS, ...EVENTS_6C];
+const ALL = [...EVENTS, ...EVENTS_6C, ...BOARD_EVENTS];
 const baseId = (id) => (id.startsWith('promiseCall:') ? 'promiseCall' : id);
 
 export const catalogRow = (id) => ALL.find((event) => event.id === baseId(id));
@@ -37,6 +38,8 @@ export function cardView(pending) {
     post: pending.post,
     crisis: Boolean(row?.crisis),
     staging: CRISIS_STAGING[pending.id] ?? null,
+    kicker: pending.kicker ?? null,
+    watching: pending.watching ?? [],
     choices: pending.choices.map((choice) => ({
       id: choice.id,
       label: choice.label,

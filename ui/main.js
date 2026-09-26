@@ -3,7 +3,7 @@ import { createClock } from './clock.js';
 import { createGame } from './game.js';
 import { mountHud } from './hud.js';
 import { mountOffice } from './office.js';
-import { SCENARIOS } from './logic/scenarios.js';
+import { SCENARIOS, scenarioHistory } from './logic/scenarios.js';
 import { powerSitesAvailable, queueScreenAvailable } from './logic/compute.js';
 import { meetingFor } from './logic/president.js';
 import { openMenu } from './menu.js';
@@ -28,8 +28,10 @@ import { mountEvents } from './screens/events.js';
 import { mountBriefing } from './screens/briefing.js';
 import { mountFeed } from './screens/feed.js';
 import { mountEnding } from './screens/end.js';
+import { mountFinance, openFinance } from './screens/finance.js';
 import { createCollection } from './logic/collection.js';
 import { lumenEpilogue } from '../sim/lumen.js';
+import { mountBoard, openBoard } from './screens/board.js';
 import { mountTraining } from './screens/training.js';
 import { mountHazard } from './screens/hazard.js';
 import { mountAutomation, openAutomation } from './screens/automation.js';
@@ -61,8 +63,10 @@ addEventListener('resize', fitToWindow);
 const seed = seedForRun();
 const scenarioName = params.get('scenario') ?? 'start';
 const buildScenario = SCENARIOS[scenarioName] ?? SCENARIOS.start;
-const game = createGame({ seed, state: buildScenario(seed) });
+const initialState = buildScenario(seed);
+const game = createGame({ seed, state: initialState, history: scenarioHistory(initialState) });
 if (params.has('lab')) game.state.labName = params.get('lab');
+if (location.hash === '#board-warning') delete game.state.flags.boardQuiet; // debug still: the warning without going quiet
 
 const stage = document.querySelector('#stage');
 const office = document.querySelector('#office');
@@ -85,6 +89,7 @@ mountHistory(game, overlay);
 mountAutomation(game, overlay);
 mountTurnSummary(overlay, game);
 mountScreenWall(game, overlay);
+mountFinance(game, overlay);
 const training = mountTraining(game, { stage, hud, overlay });
 mountHazard(game, { stage, overlay });
 const events = mountEvents(game, { stage, overlay });
@@ -106,6 +111,7 @@ const ending = mountEnding(game, overlay, {
   onPlayAgain: () => location.assign(location.pathname),
   lumenNote: (state) => lumenEpilogue(state),
 });
+const board = mountBoard(game, { overlay, stage });
 
 function stagePoint(event) {
   const rect = stage.getBoundingClientRect();
@@ -182,6 +188,21 @@ async function openDebugRoute() {
     openEmergency(game, overlay);
     return;
   }
+  if (location.hash === '#finance' || location.hash === '#books') {
+    openFinance(game, overlay, { view: location.hash === '#books' ? 'books' : 'timeline' });
+    return;
+  }
+  if (location.hash === '#board' || location.hash === '#board-moves') {
+    openBoard(game, overlay, { view: location.hash === '#board-moves' ? 'moves' : 'board' });
+    return;
+  }
+  if (location.hash === '#board-say' || location.hash === '#board-warning') {
+    // Stills of the board's bubbles: waiting cards are put aside, as "Decide later" does.
+    await new Promise((resolve) => { setTimeout(resolve, 600); });
+    for (let i = 0; i < 5 && overlay.querySelector('.ev-later'); i++) overlay.querySelector('.ev-later').click();
+    board.refresh();
+    return;
+  }
   if (location.hash === '#president' || location.hash === '#president-q2') {
     const meeting = meetingFor(game.state);
     if (!meeting) return;
@@ -230,3 +251,28 @@ game.subscribe(({ state }) => {
 });
 
 globalThis.game = game;
+
+// The board meeting (board UI plan Task 6): opens on the last story day before a vote mark and holds the clock; the
+// ending waits for it. Preview routes: #meeting (the ring; Call the vote plays a vote held on a copy), #meeting-room, #meeting-vote,
+// #meeting-vote-last, #meeting-result, #meeting-result-loss, #meeting-result-staff, #meeting-result-backdown,
+// #meeting-4a, #meeting-4a-loss, #meeting-4a-staff.
+import { mountBoardMeeting } from './screens/boardMeeting.js';
+import { boardVoteThisRound } from '../sim/board.js';
+import { nextRoundDay } from '../sim/time.js';
+
+const meeting = mountBoardMeeting(game, { overlay, stage });
+// #meeting-live (debug): run the story days up to the last day before the next mark that holds a vote, where the real
+// meeting opens by itself (in a round that holds one; load ?scenario=boardVote).
+const liveMeetingRoute = () => {
+  if (location.hash !== '#meeting-live' || game.state.ending || !boardVoteThisRound(game.state)) return;
+  const turn = game.state.turn;
+  while (!game.state.ending && game.state.turn === turn && nextRoundDay(game.state) - game.state.day > 1) game.advanceDays(1);
+};
+liveMeetingRoute();
+addEventListener('hashchange', liveMeetingRoute);
+const meetingRoute = () => {
+  const step = location.hash.match(/^#meeting(?:-([\w-]+))?$/);
+  if (step && step[1] !== 'live' && !game.state.ending) meeting.preview(step[1] ?? 'ring');
+};
+meetingRoute();
+addEventListener('hashchange', meetingRoute);

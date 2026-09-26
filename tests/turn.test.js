@@ -5,6 +5,7 @@ import { createRng } from '../sim/rng.js';
 import { endTurn, setBudget } from '../sim/turn.js';
 import { startRun } from '../sim/training.js';
 import { BALANCE } from '../sim/balance.js';
+import { INITIAL_BOARD, seat } from '../sim/board.js';
 
 const recipe = {
   sliders: { size: 'medium', length: 'optimal', alignShare: 0.15 },
@@ -42,12 +43,14 @@ test('a successful release records the current story day', () => {
   assert.equal(state.models.at(-1).releasedDay, releasedDay);
 });
 
-test('a release capability gain is measured from the start-of-turn board baseline', () => {
+test('a release valuation gain is measured from the start-of-turn board baseline', () => {
   const rng = createRng(19);
   let { state } = endTurn(createInitialState(), { moves: [{ type: 'startRun', recipe }] }, rng);
-  const before = state.board[1];
+  const before = state.board[seat('financier')];
+  const valuation = state.valuation;
   ({ state } = endTurn(state, { moves: [{ type: 'release', release }] }, rng));
-  assert.equal(state.board[1], before + 3);
+  assert.ok(state.valuation > valuation);
+  assert.equal(state.board[seat('financier')], before + 2);
 });
 
 test('only two actions per round, and bad moves are reported', () => {
@@ -210,7 +213,7 @@ test('using a rescue extends insolvency grace for the current turn only', () => 
 
 test('conversion deadlines trigger once after the economy step', () => {
   const base = createInitialState();
-  base.board = [50, 50, 50, 50, 50];
+  base.board = INITIAL_BOARD.map(() => 50);
   const due = structuredClone(base);
   due.flags.conversionDeadline = 0;
   const control = endTurn(base, {}, createRng(9)).state;
@@ -317,30 +320,13 @@ test('a card made on the final round mark is dropped, never shown after the endi
   assert.ok(out.state.pendingEvents.every((event) => event.landsAt != null));
 });
 
-test('the board sees card costs from the start-of-turn cash snapshot', () => {
+test('the board sees event choices from the start-of-turn snapshot', () => {
   const s = createInitialState();
-  s.era = 5;
-  s.turnInEra = 2;
-  s.cash = 100;
-  s.models.push({
-    active: true,
-    activated: true,
-    activeFromTurn: 0,
-    channel: 'enterprise',
-    flags: [],
-    users: 1.5e6,
-    userCap: 6e6,
-    priceStance: 'market',
-    servingCost: 0,
-    spec: { size: 'medium', arch: 'dense', context: 'short', precision: 'bf16', guard: false, channel: 'enterprise', reasoning: 'off' },
-  });
-  s.pendingEvents.push({ id: 'distill' });
-  const budget = { spend: 0, split: { training: 0.5, security: 0.1, product: 0.2, talent: 0.2 } };
-
-  const out = endTurn(s, { budget, eventChoices: { distill: 'settle' } }, createRng(22));
-
-  assert.ok(out.state.cash > 28 && out.state.cash < 70);
-  assert.equal(out.state.board[3], s.board[3] - 6);
+  s.pendingEvents.push({ id: 'president' });
+  const out = endTurn(s, { eventChoices: { president: 'refuse' } }, createRng(22));
+  assert.equal(out.state.govFavor.us, 42);
+  // the hawk sees both the fall in US favor (-2) and the low level it ends at (-2)
+  assert.equal(out.state.board[seat('security')], s.board[seat('security')] - 4);
 });
 
 test('endTurn emits a pause event when a run has lost reserved compute', () => {

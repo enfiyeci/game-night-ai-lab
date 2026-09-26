@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=1440">
+  <!-- Standalone board-meeting prototype. Serve the repo root; open docs/design/mockups/board/meeting.html?step=room
+       (steps: ring, room, statement, vote-0 ... vote-7, fails) or ?play for the timed sequence. -->
+  <title>Board meeting prototype</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800;900&family=Caveat:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="meeting.css">
+</head>
+<body>
+  <div id="meeting" class="mt-root"></div>
+  <script type="module">
+    import { mountMeeting, TIMELINE } from './meeting.js';
+    const root = document.getElementById('meeting');
+    const params = new URLSearchParams(location.search);
+    const officeSvg = await fetch('../../../../ui/assets/office-era3.svg').then((r) => r.text()).catch(() => '');
+    if (params.has('play')) {
+      for (const [step, at] of TIMELINE) setTimeout(() => step !== 'result' && mountMeeting(root, { step, officeSvg }), at);
+    } else mountMeeting(root, { step: params.get('step') ?? 'room', officeSvg });
+    await document.fonts.ready;
+    document.body.dataset.ready = '1';
+  </script>
+</body>
+</html>

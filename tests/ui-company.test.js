@@ -312,3 +312,19 @@ test('a queued acquihire ends the projected run', () => {
   const state = SCENARIOS.danger(1);
   assert.equal(projectQueue(state, { moves: [{ type: 'emergency', option: 'acquihire' }] }).ending, 'acquihire');
 });
+
+test('the turn summary reports board promises, the board\'s verdict and the staff letter', () => {
+  assert.deepEqual(turnSummary([
+    { type: 'boardPromise', units: 30, era: 3 },
+    { type: 'boardPromiseJudged', ratio: 1.1, vote: false },
+    { type: 'boardPromiseJudged', ratio: 0.6, vote: false },
+    { type: 'boardPromiseJudged', ratio: 0.3, vote: true },
+    { type: 'staffLetter' },
+  ], createInitialState()), [
+    'You promised the board 30 units by the end of era 3',
+    'You kept your compute promise to the board',
+    'You came up short of your compute promise to the board',
+    'You missed your compute promise badly, and the board wants a vote',
+    'Staff signed a letter to keep you, and the board backed down',
+  ]);
+});

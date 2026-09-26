@@ -13,6 +13,7 @@ import {
 import { checkTurnEndings } from '../sim/endings.js';
 import { advanceDays, endTurn } from '../sim/turn.js';
 import { BALANCE } from '../sim/balance.js';
+import { INITIAL_BOARD, STAFF_LETTER_TRUST } from '../sim/board.js';
 import { startRun, resolveRun } from '../sim/training.js';
 
 const no = { next: () => 0.99, int: () => 0, chance: () => false, pick: (a) => a[0], normal: (m) => m };
@@ -90,10 +91,12 @@ test('weight theft and self-exfiltration are crises', () => {
 
 test('a due board vote is held in checkTurnEndings and can remove the player', () => {
   const lose = createInitialState();
-  lose.board = [49, 49, 49, 60, 60];
+  lose.board = [49, 49, 49, 60, 60, 60, 49];
+  lose.staffTrust = STAFF_LETTER_TRUST - 1;
   lose.flags.boardVoteDue = true;
   assert.equal(checkTurnEndings(lose, no), 'boardRemoved');
-  assert.deepEqual(lose.flags.lastBoardVote, { turn: 0, yes: 2, passed: false });
+  const { turn, yes, passed } = lose.flags.lastBoardVote;
+  assert.deepEqual({ turn, yes, passed }, { turn: 0, yes: 3, passed: false });
   assert.equal(lose.flags.boardVoteDue, undefined);
 
   const win = createInitialState();
@@ -106,7 +109,7 @@ test('a due board vote is held in checkTurnEndings and can remove the player', (
 test('a due board vote waits while the lab is insolvent', () => {
   const s = createInitialState();
   s.cash = -1;
-  s.board = [0, 0, 0, 0, 0];
+  s.board = INITIAL_BOARD.map(() => 0);
   s.flags.boardVoteDue = true;
   assert.equal(checkTurnEndings(s, no), null);
   assert.equal(s.flags.boardVoteDue, true);
@@ -265,7 +268,8 @@ test('a crisis leads to a board revolt card, and its vote runs at the end of tha
   s.flags.boardCrisis = true;
   eventsTick(s, no);
   assert.ok(s.pendingEvents.some((e) => e.id === 'boardRevolt'));
-  s.board = [10, 10, 10, 10, 10];
+  s.board = INITIAL_BOARD.map(() => 10);
+  s.flags.staffLetterUsed = true;
   const out = endTurn(s, { eventChoices: { boardRevolt: 'face' } }, no);
   assert.equal(out.state.ending, 'boardRemoved');
   assert.equal(out.state.flags.boardCrisis, undefined);
@@ -273,17 +277,17 @@ test('a crisis leads to a board revolt card, and its vote runs at the end of tha
 
 test('lobbying lifts the two least supportive members', () => {
   const s = createInitialState();
-  s.board = [40, 30, 30, 70, 80];
+  s.board = [40, 30, 30, 70, 80, 70, 70];
   s.pendingEvents.push({ id: 'boardRevolt' });
   resolveEvent(s, 'boardRevolt', 'lobby');
-  assert.deepEqual(s.board, [40, 42, 42, 70, 80]);
-  assert.equal(s.flags.boardVoteDue, true);
+  assert.deepEqual(s.board, [40, 42, 42, 70, 80, 70, 70]);
+  assert.equal(s.flags.boardVoteDue, 'emergency');
 });
 
 test('the low-support revolt fires once; later revolts need a new crisis', () => {
   const s = createInitialState();
   s.era = 2;
-  s.board = [10, 10, 10, 60, 60];
+  s.board = [10, 10, 10, 10, 60, 60, 60];
   eventsTick(s, no);
   resolveEvent(s, 'boardRevolt', 'concede');
   s.turn += 1;

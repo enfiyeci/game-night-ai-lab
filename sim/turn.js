@@ -13,7 +13,10 @@ import {
 } from './economy.js';
 import { researchTechnique } from './techniques.js';
 import { rivalsTurn } from './rivals.js';
-import { updateBoard } from './board.js';
+import { boardSnapshot, boardVoteThisRound, holdVote, updateBoard } from './board.js';
+import { dealVerdictPost, judgeBoardDeals, makeBoardDeals } from './boardDeals.js';
+import { boardRead } from './boardRead.js';
+import { judgeBoardPromise, makeBoardPromise } from './boardPromise.js';
 import { checkTurnEndings, eraGate, finalEnding } from './endings.js';
 import { recordAdvisors } from './advisors.js';
 import { resolveHazard, exposeConcealed, INTERPRETABILITY_SPEND } from './hazards.js';
@@ -39,7 +42,8 @@ import { setAutomation, automationTick } from './automation.js';
 export const MAX_MOVES = 2;
 const BUDGET_KEYS = ['training', 'security', 'product', 'talent'];
 // sideRng salts in sim/: 0 initial offers, 1 deals, 2 site opposition, 3 contracts, 4 queue,
-// 5 offers, 6 deliveries, 7 pooling, and 1000 + site ID for builds.
+// 5 offers, 6 deliveries, 7 pooling, 8 board events (sim/data/boardEvents.js), 9 + card index for card landing days
+// (sim/events.js stampNewCards), and 1000 + site ID for builds.
 const SITE_RNG_SALT_BASE = 1000;
 
 export function setBudget(state, budget) {
@@ -103,7 +107,12 @@ function postFeed(before, state, events, atMark) {
   for (const post of feedPosts(before, state, events, { ambient: atMark, timeBased: atMark })) pushFeed(state, post.handle, post.text, post.tag);
 }
 
-function finishEnding(state, events) {
+// madeBefore: the round the run ended in; deals made in it never had a next meeting and stay open.
+function finishEnding(state, events, madeBefore = state.turn) {
+  for (const e of judgeBoardDeals(state, { final: true, madeBefore })) {
+    events.push(e);
+    pushFeed(state, '@board_minutes', dealVerdictPost(e.member, e.kept), 'event');
+  }
   judgeEndingPromises(state);
   state.pendingEvents = []; // nothing can be answered once the run is over
   for (const [id, warning] of Object.entries(state.warnings)) {
@@ -131,6 +140,17 @@ export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = 
       if (!result.ok) errors.push(result.error);
     }
   } else if (actions.constitution) errors.push('the constitution can only be set on turn 0');
+  if (actions.boardPromise) {
+    const r = makeBoardPromise(state, actions.boardPromise);
+    if (r.ok) events.push({ type: 'boardPromise', units: r.units, era: r.era });
+    else errors.push(r.error);
+  }
+  // Deals are made in the board meeting, at once, and only in a round that holds a vote; the vote mark judges them.
+  if (actions.boardDeals?.length) { // the UI may send an empty list
+    const r = makeBoardDeals(state, actions.boardDeals);
+    if (r.ok) events.push({ type: 'boardDeals', members: actions.boardDeals.map((deal) => deal.member) });
+    else errors.push(r.error);
+  }
   if (actions.budget) {
     const r = setBudget(state, actions.budget);
     if (!r.ok) errors.push(r.error);
@@ -248,6 +268,8 @@ export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = 
   activateReleases(state);
   updateServing(state);
   state.burnPlanned = projectBurn(state);
+  // The safety chair hears about an ignored hazard at the round mark (updateBoard).
+  if (events.some((e) => e.type === 'hazardResolved' && e.choice === 'ignore')) state.round.hazardIgnored = true;
   if (state.ending) {
     normalize(state);
     recordAdvisors(state, rng);
@@ -260,6 +282,15 @@ export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = 
 }
 
 function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
+  const roundTurn = state.turn;
+  const votesAtStart = state.flags.boardVotesHeld ?? 0;
+  // Deals from the last meeting are judged at this meeting's mark, before its vote (deals made this round wait).
+  if (boardVoteThisRound(state)) {
+    for (const e of judgeBoardDeals(state)) {
+      events.push(e);
+      pushFeed(state, '@board_minutes', dealVerdictPost(e.member, e.kept), 'event');
+    }
+  }
   const meetingIdAtStart = state.meeting?.id ?? null;
   if (!meetingIdAtStart) {
     const id = meetingDue(state);
@@ -332,8 +363,24 @@ function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
       promiseUpkeep(state, rng);
       for (const e of eventsTick(state, rng)) events.push(e);
       normalize(state);
-      updateBoard(state, state.roundStart);
+      // Compared with the round's start (taken at the last mark). A hazard ignored by an instant action this round
+      // still costs the safety chair, as it did when the choice was part of the turn.
+      const boardEvents = state.round.hazardIgnored ? [...events, { type: 'hazardResolved', choice: 'ignore' }] : events;
+      updateBoard(state, { ...boardSnapshot(state), ...state.roundStart }, boardEvents);
       checkTurnEndings(state, rng);
+      // Judged after this turn's endings, so a vote it calls is held next turn rather than beside the era gate's.
+      const judged = state.ending ? null : judgeBoardPromise(state);
+      if (judged) {
+        events.push(judged);
+        pushFeed(state, '@board_minutes', judged.ratio >= 1
+          ? 'the board says the lab hit the compute it promised. nobody expected that.'
+          : judged.vote ? 'the lab missed its compute promise by a mile. the board wants a vote.' : 'the lab came up short of its compute promise. the board took notes.', 'event');
+        // Era 5's last turn is the run's last, so there is no next turn: the vote is held now.
+        if (judged.vote && state.era === 5) {
+          delete state.flags.boardVoteDue;
+          if (!holdVote(state, 'promise').passed) state.ending = 'boardRemoved';
+        }
+      }
     }
   }
 
@@ -353,7 +400,7 @@ function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
   state.turnInEra += 1;
   state.monthsElapsed += era.monthsPerTurn;
   if (!state.ending && state.turnInEra >= era.turns) {
-    eraGate(state);
+    eraGate(state, { voteHeld: (state.flags.boardVotesHeld ?? 0) > votesAtStart });
     if (!state.ending) {
       if (state.era === 5) {
         if (state.flags.insolvent && state.cash <= 0) state.ending = 'acquihire';
@@ -377,15 +424,32 @@ function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
     updateServing(state);
     state.burnPlanned = projectBurn(state);
   }
+  // The board at the round mark (spec §5.1): the read and L4 compare with the round just ended, never the last click.
+  const start = state.roundStart ?? {};
+  state.boardLast = start.board ? [...start.board] : [...state.board];
+  state.boardBefore = { ...boardSnapshot(state), ...start };
+  delete state.boardBefore.board;
   state.dayInRound = 0;
   state.round = { moves: 0, teams: {} };
   delete state.flags.emergencyUsedThisTurn;
-  state.roundStart = { arr: state.arr, capability: state.capability, cash: state.cash, raceHeat: state.raceHeat, publicTrust: state.publicTrust };
+  state.roundStart = {
+    ...boardSnapshot(state), capability: state.capability, cash: state.cash, raceHeat: state.raceHeat, publicTrust: state.publicTrust,
+    board: [...state.board],
+  };
+  // The board goes quiet in a close vote round (spec §5.4, P5): every band widens while the UI shows the quiet panel.
+  if (!state.ending && boardVoteThisRound(state) && boardRead(state).tally.sure < BALANCE.boardPassMembers) {
+    state.flags.boardQuiet = state.turn;
+  }
+  if (state.flags.staffLetterPending) {
+    delete state.flags.staffLetterPending;
+    events.push({ type: 'staffLetter' });
+    pushFeed(state, '@leakwire', 'most of the lab signed a letter: reinstate the ceo or we walk. the board backed down.', 'event');
+  }
   if (!state.ending) stampNewCards(state, rng);
   // A card made on the final mark can never be seen or answered.
   else state.pendingEvents = state.pendingEvents.filter((card) => card.landsAt != null);
   if (state.ending) {
-    finishEnding(state, events);
+    finishEnding(state, events, roundTurn);
   }
 }
 

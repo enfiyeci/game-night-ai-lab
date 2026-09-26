@@ -225,9 +225,25 @@ export function mountEnding(game, overlay, { collection, onPlayAgain, loadFilm =
     else play();
   };
 
+  // A board meeting holds the film until it closes: the vote that removed you plays out first (board UI plan Task 6).
+  // Then any other dialog (the release reveal, held for the meeting) still goes first.
+  let meetingOpen = false;
+  let heldForMeeting = false;
+  overlay?.addEventListener?.('board-meeting-open', () => { meetingOpen = true; });
+  overlay?.addEventListener?.('board-meeting-closed', () => {
+    meetingOpen = false;
+    if (!heldForMeeting) return;
+    heldForMeeting = false;
+    queueMicrotask(playWhenClear); // the release reveal opens on this same event
+  });
+
   const unsubscribe = game.subscribe(({ state }) => {
     if (!state.ending || recorded === state.ending) return;
     record(state);
+    if (meetingOpen) {
+      heldForMeeting = true;
+      return;
+    }
     // Deferred one microtask: game.js's notify loop runs every subscriber for this endTurn synchronously and
     // in registration order, so a later subscriber (the release reveal) may not have opened its dialog yet if
     // we checked right here. Waiting a microtask runs after that whole synchronous loop finishes, so the

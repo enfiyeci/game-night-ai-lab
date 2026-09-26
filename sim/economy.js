@@ -1,6 +1,7 @@
 import { BALANCE } from './balance.js';
 import { eraById } from './data/eras.js';
 import { clamp } from './util.js';
+import { seat } from './board.js';
 import { activeModels, safetyUnits, servingCost, PRICE_STANCE, REVENUE_PER_USER } from './serving.js';
 import { controlUnits, reviewerCost } from './automation.js';
 import { monthlyBills, arrivingBills, creditOffset, addPipeline } from './contracts.js';
@@ -120,7 +121,7 @@ export function raiseRound(state, archetype) {
   state.cash += amount;
   state.flags.lastRoundEra = state.era;
   state.board = state.board.map((s) => s - 3);
-  if (archetype === 'vc') state.board[0] += 8;
+  if (archetype === 'vc') state.board[seat('growth')] += 8;
   if (archetype === 'strategic') {
     state.flags.strategicStrings = true;
   }

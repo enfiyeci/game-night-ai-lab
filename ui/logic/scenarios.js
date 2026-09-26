@@ -4,8 +4,10 @@ import { advanceDays, endTurn } from '../../sim/turn.js';
 import { cardById, cardUnlocked, recipeCost, slotsFor, validateRecipe } from '../../sim/recipe.js';
 import { availableUnits } from '../../sim/training.js';
 import { inDangerZone } from '../../sim/economy.js';
+import { boardVoteThisRound } from '../../sim/board.js';
 import { MEETINGS } from '../../sim/data/president.js';
 import { setAutomation } from '../../sim/automation.js';
+import { turnRecord } from './finance.js';
 
 const preferences = {
   pre: ['licensed-data', 'hazard-filter-built', 'hazard-filter-reuse'],
@@ -91,11 +93,21 @@ function scriptedActions(state) {
   return actions;
 }
 
+// Finance records for every scenario state, so the finance planner has a past on debug routes too.
+const histories = new WeakMap();
+export const scenarioHistory = (state) => histories.get(state) ?? [];
+
+function step(state, actions, rng) {
+  const update = endTurn(state, actions, rng);
+  if (!state.ending) histories.set(update.state, [...scenarioHistory(state), turnRecord(state, update.state, update.events)]);
+  return update;
+}
+
 function throughTurn(seed, targetTurn, stopWhen = () => false) {
   const rng = createRng(seed);
   let state = createInitialState({ seed });
   while (!state.ending && state.turn < targetTurn && !stopWhen(state)) {
-    ({ state } = endTurn(state, scriptedActions(state), rng));
+    ({ state } = step(state, scriptedActions(state), rng));
   }
   return state;
 }
@@ -136,7 +148,7 @@ function dealsState(seed) {
   if (state.ending || state.era !== 2) return state;
   const actions = scriptedActions(state);
   actions.moves = [{ type: 'raise', archetype: 'vc' }, ...actions.moves].slice(0, 2);
-  ({ state } = endTurn(state, actions, rng));
+  ({ state } = step(state, actions, rng));
   return state;
 }
 
@@ -144,7 +156,7 @@ function budgetState(seed) {
   const rng = createRng(seed);
   let state = atEra(seed, 3);
   if (state.ending || state.era !== 3) return state;
-  ({ state } = endTurn(state, scriptedActions(state), rng));
+  ({ state } = step(state, scriptedActions(state), rng));
   return state;
 }
 
@@ -157,13 +169,13 @@ function powerState(seed) {
     if (grid && grid.upfront <= state.cash) {
       actions.moves = [{ type: 'deal', offerId: grid.id }, ...actions.moves].slice(0, 2);
     }
-    ({ state } = endTurn(state, actions, rng));
+    ({ state } = step(state, actions, rng));
   }
   if (state.ending || state.era !== 4) return state;
 
   let actions = scriptedActions(state);
   actions.moves = [{ type: 'buildSite', source: 'gas' }, { type: 'raise', archetype: 'vc' }];
-  ({ state } = endTurn(state, actions, rng));
+  ({ state } = step(state, actions, rng));
   if (state.ending || state.era !== 4) return state;
 
   actions = scriptedActions(state);
@@ -171,9 +183,9 @@ function powerState(seed) {
     (offer.supplier === 'verde' || offer.supplier === 'loi') && offer.upfront <= state.cash
   ));
   if (chips) actions.moves = [{ type: 'deal', offerId: chips.id }, ...actions.moves].slice(0, 2);
-  ({ state } = endTurn(state, actions, rng));
+  ({ state } = step(state, actions, rng));
   while (!state.ending && state.era === 4 && state.turn < 15) {
-    ({ state } = endTurn(state, scriptedActions(state), rng));
+    ({ state } = step(state, scriptedActions(state), rng));
   }
   return state;
 }
@@ -189,7 +201,7 @@ function dangerState(seed) {
         picks: { pre: [], mid: [], post: [] },
       },
     }] : state.pendingModel ? [{ type: 'release', release: release(state) }] : [];
-    ({ state } = endTurn(state, {
+    ({ state } = step(state, {
       budget: {
         spend: 70,
         split: { training: 0.55, security: 0.05, product: 0.05, talent: 0.35 },
@@ -266,6 +278,7 @@ export const SCENARIOS = {
   era3Queue: (seed) => atEra(seed, 3),
   era3Budget: budgetState,
   era4Power: powerState,
+  boardVote: (seed) => throughTurn(seed, 20, (s) => boardVoteThisRound(s)),
   hazard: hazardState,
   automation: automationState,
   ownLine: ownLineState,

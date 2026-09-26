@@ -1,7 +1,7 @@
 import { BALANCE } from './balance.js';
 import { eraById } from './data/eras.js';
 import { rank, gapToLeader } from './rivals.js';
-import { boardVote } from './board.js';
+import { holdVote } from './board.js';
 import { EMERGENCY_OPTIONS } from './economy.js';
 import { totalDebt } from './hazards.js';
 
@@ -33,10 +33,9 @@ export function checkTurnEndings(state, rng) {
     return null;
   }
   if (state.flags.boardVoteDue) {
+    const kind = state.flags.boardVoteDue === 'emergency' ? 'emergency' : 'promise';
     delete state.flags.boardVoteDue;
-    const vote = boardVote(state);
-    state.flags.lastBoardVote = { turn: state.turn, yes: vote.yes, passed: vote.passed };
-    if (!vote.passed) return (state.ending = 'boardRemoved');
+    if (!holdVote(state, kind).passed) return (state.ending = 'boardRemoved');
   }
   if (state.capability > BALANCE.dangerLine && effectiveMisuse(state) > BALANCE.misuseDisasterLine && rng.chance(BALANCE.misuseRollChance)) {
     return (state.ending = 'misuse');
@@ -47,9 +46,11 @@ export function checkTurnEndings(state, rng) {
   return null;
 }
 
-export function eraGate(state) {
+// Runs after endTurn has moved the turn on, so the vote order uses the read of the round just played (turn - 1).
+// voteHeld: this round already held a vote (an emergency vote); one meeting holds one vote, so the gate holds none.
+export function eraGate(state, { voteHeld = false } = {}) {
   if (rank(state) > BALANCE.gateMaxRank && gapToLeader(state) > BALANCE.gateMaxGap) return (state.ending = 'leftBehind');
-  if (eraById(state.era).boardVoteAtGate && !boardVote(state).passed) return (state.ending = 'boardRemoved');
+  if (eraById(state.era).boardVoteAtGate && !voteHeld && !holdVote(state, 'gate', state.turn - 1).passed) return (state.ending = 'boardRemoved');
   return null;
 }
 

@@ -635,6 +635,14 @@ export function turnSummary(events, state) {
       lines.push('The lab broke its public safety-compute pledge');
     } else if (event.type === 'raise') {
       lines.push(`You raised ${money(event.amount)}`);
+    } else if (event.type === 'boardPromise') {
+      lines.push(`You promised the board ${computeAmount(event.units, event.era)} by the end of era ${event.era}`);
+    } else if (event.type === 'boardPromiseJudged') {
+      lines.push(event.ratio >= 1 ? 'You kept your compute promise to the board'
+        : event.vote ? 'You missed your compute promise badly, and the board wants a vote'
+          : 'You came up short of your compute promise to the board');
+    } else if (event.type === 'staffLetter') {
+      lines.push('Staff signed a letter to keep you, and the board backed down');
     } else if (event.type === 'research') {
       const name = techniqueName(event.techId);
       if (name) lines.push(`Your researchers cracked ${name}`);
