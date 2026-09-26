@@ -6,6 +6,7 @@ import {
   raiseRound, useEmergency, monthlyRevenue,
 } from '../sim/economy.js';
 import * as economyApi from '../sim/economy.js';
+import { deployInternal } from '../sim/internal.js';
 
 const consumerModel = (users) => ({
   name: 'Kestrel 1 Core', active: true, activeFromTurn: 0, channel: 'consumer', priceStance: 'market',
@@ -20,6 +21,20 @@ test('serving load uses compute and overflows at scale', () => {
   assert.ok(Math.abs(units - 4e6 * 2.4 / 1.46e6) < 1e-6);
   assert.equal(s.compute.overflow, 0);
   s.models[0].users = 8e6;
+  updateServing(s);
+  assert.ok(s.compute.overflow > 0);
+});
+
+test('compute reserved by control is not available for serving', () => {
+  const s = createInitialState();
+  s.era = 3;
+  s.models.push(consumerModel(1e6));
+  updateServing(s);
+  assert.equal(deployInternal(s, 1).ok, true);
+  s.models[0].users = 1e7; // fits in 10 units, not in the 8 left after control
+  const bare = { ...s, internal: null, compute: { ...s.compute } };
+  updateServing(bare);
+  assert.equal(bare.compute.overflow, 0);
   updateServing(s);
   assert.ok(s.compute.overflow > 0);
 });
@@ -79,6 +94,16 @@ test('lawsuits come due', () => {
   assert.equal(s.cash, 880);
   assert.equal(s.publicTrust, 57);
   assert.equal(s.legalCases.length, 1);
+});
+
+test('state-law preemption discounts legal cases when they are paid', () => {
+  const s = createInitialState();
+  s.flags.statePreemption = true;
+  s.legalCases.push({ cost: 100, dueTurn: 0, source: 'state safety law' });
+  const paid = legalTick(s);
+  assert.deepEqual(paid, [{ cost: 70, dueTurn: 0, source: 'state safety law' }]);
+  assert.equal(s.cash, 930);
+  assert.equal(s.publicTrust, 57);
 });
 
 test('one funding round per era, with strings attached', () => {

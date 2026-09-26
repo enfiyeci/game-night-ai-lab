@@ -4,6 +4,7 @@ import { createInitialState } from '../sim/state.js';
 import { startRun, advanceRun } from '../sim/training.js';
 import { releaseModel, modelName } from '../sim/release.js';
 import * as releaseApi from '../sim/release.js';
+import { rank } from '../sim/rivals.js';
 
 const rng = { next: () => 0.5, int: () => 0, chance: (p) => p > 0.5, normal: (m) => m };
 const recipe = {
@@ -28,13 +29,15 @@ test('releasing a consumer model', () => {
   assert.equal(r.ok, true);
   assert.equal(r.model.name, 'Kestrel 1 Core');
   assert.equal(r.model.channel, 'consumer');
-  assert.equal(r.model.outlets.length, 4);
-  assert.ok(r.model.outlets.every((x) => x >= 1 && x <= 10));
+  assert.equal(r.model.launch.benchmarks.length, 5);
+  assert.equal(r.model.launch.press.length, 4);
+  assert.ok(r.model.launch.press.every((p) => p.score >= 1 && p.score <= 10));
+  assert.equal(s.lastFlagship.name, 'Kestrel 1 Core');
+  assert.equal(s.lastFlagshipScore, r.model.launch.capAvg);
   assert.ok(r.model.users > 0);
   assert.equal(s.pendingModel, null);
   assert.equal(s.cash, 1000 - 35 - 10);
   assert.equal(s.capability, r.model.capability);
-  assert.equal(s.lastFlagshipScore, r.model.launchScore);
 });
 
 test('release needs a trained model and a family name', () => {
@@ -75,6 +78,35 @@ test('release enum values must be own table entries', () => {
     assert.equal(result.ok, false);
     assert.deepEqual(s, before);
   }
+});
+
+test('a failed release leaves a pending training hazard untouched', () => {
+  const s = trainedState();
+  s.pendingModel.hazard = { type: 'rewardHacking', size: 6 };
+  const before = structuredClone(s);
+  assert.equal(releaseModel(s, { ...release, price: 'constructor' }, rng).ok, false);
+  assert.deepEqual(s, before);
+});
+
+test('releasing with an unresolved hazard ignores it, and an outside eval exposes concealed debt', () => {
+  const s = trainedState();
+  s.era = 2;
+  s.alignmentDebt = 0; s.concealedDebt = 20;
+  s.pendingModel.hazard = { type: 'rewardHacking', size: 6 };
+  const r = releaseModel(s, { ...release, picks: ['eval-third', 'channel-app'] }, rng);
+  assert.equal(r.ok, true);
+  assert.equal(s.concealedDebt, 10);
+  assert.equal(s.alignmentDebt, 6 + 10);
+});
+
+test('release-card debt is visible in the launch safety benchmark', () => {
+  const s = trainedState();
+  s.alignmentDebt = 10;
+  s.concealedDebt = 0;
+  const r = releaseModel(s, { ...release, picks: ['channel-app'] }, rng);
+  const safety = r.model.launch.benchmarks.find((benchmark) => benchmark.id === 'gauntlet');
+  assert.equal(s.alignmentDebt, 13);
+  assert.equal(safety.truth, 91);
 });
 
 test('a new model on the same channel retires the old one', () => {
@@ -128,4 +160,43 @@ test('agentic releases can end the game in misalignment', () => {
   s.alignmentDebt = 100;
   releaseModel(s, release, rng);
   assert.equal(s.ending, 'misalignment');
+});
+
+test('press and reactions see the post-release rank', () => {
+  const s = trainedState();
+  s.pendingModel.capability = 40;
+  const r = releaseModel(s, release, rng);
+  assert.equal(rank(s), 1);
+  assert.ok(r.model.launch.reactions.some((x) => x.handle === '@lodestar_eng'));
+});
+
+test('the flagship bar is the best release, not the most recent', () => {
+  const s = trainedState();
+  s.pendingModel.capability = 80;
+  const strong = releaseModel(s, release, rng).model;
+  startRun(s, recipe);
+  advanceRun(s, rng);
+  s.pendingModel.capability = 30;
+  releaseModel(s, { ...release, generation: 2 }, rng);
+  assert.equal(s.lastFlagship.name, strong.name);
+  assert.equal(s.lastFlagshipScore, strong.launch.capAvg);
+});
+
+test('releaseDelay requires two turns between launches without mutating a refused release', () => {
+  const s = trainedState();
+  s.era = 5;
+  s.turn = 10;
+  s.deal = { signed: {}, binding: ['releaseDelay'], trust: 2, collapsed: false, playerShipped: false };
+  assert.equal(releaseModel(s, release, rng).ok, true);
+  startRun(s, recipe);
+  advanceRun(s, rng);
+  s.turn = 11;
+  const before = structuredClone(s);
+  assert.deepEqual(releaseModel(s, { ...release, generation: 2 }, rng), {
+    ok: false,
+    error: 'the summit deal requires a gap between launches',
+  });
+  assert.deepEqual(s, before);
+  s.turn = 12;
+  assert.equal(releaseModel(s, { ...release, generation: 2 }, rng).ok, true);
 });

@@ -2,16 +2,21 @@ import { BALANCE } from './balance.js';
 import { eraById } from './data/eras.js';
 import { clamp } from './util.js';
 import { servingCost, PRICE_STANCE, REVENUE_PER_USER } from './serving.js';
+import { controlUnits } from './internal.js';
+
+export const STATE_PREEMPTION_LEGAL_COST_MULTIPLIER = 0.7;
 
 export function activeModels(state) {
   return state.models.filter((m) => m.active && m.channel !== 'open' && state.turn >= m.activeFromTurn);
 }
 
-export const revenuePerUser = (model) => REVENUE_PER_USER[model.channel] * PRICE_STANCE[model.priceStance].rev;
+export const safetySpend = (state) => state.budget.spend * state.budget.split.safety;
+
+export const revenuePerUser = (model) => REVENUE_PER_USER[model.channel] * PRICE_STANCE[model.priceStance].rev * (model.revenueMult ?? 1);
 
 export function updateServing(state) {
   const runUnits = state.activeRun ? state.activeRun.units : 0;
-  const capacity = Math.max(0.001, state.compute.online - runUnits);
+  const capacity = Math.max(0.001, state.compute.online - runUnits - controlUnits(state));
   const models = activeModels(state);
   const unitsAt = (load) =>
     models.reduce((s, m) => {
@@ -77,7 +82,10 @@ export function runway(state, which) {
 }
 
 export function legalTick(state) {
-  const paid = state.legalCases.filter((c) => c.dueTurn <= state.turn);
+  const multiplier = state.flags.statePreemption === true ? STATE_PREEMPTION_LEGAL_COST_MULTIPLIER : 1;
+  const paid = state.legalCases
+    .filter((c) => c.dueTurn <= state.turn)
+    .map((c) => ({ ...c, cost: c.cost * multiplier }));
   state.legalCases = state.legalCases.filter((c) => c.dueTurn > state.turn);
   for (const c of paid) {
     state.cash -= c.cost;

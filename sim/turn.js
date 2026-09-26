@@ -4,12 +4,27 @@ import { clamp } from './util.js';
 import { startRun, advanceRun } from './training.js';
 import { activateReleases, releaseModel } from './release.js';
 import { signDeal, computeTurn } from './compute.js';
-import { updateServing, growUsers, applyEconomy, legalTick, projectBurn, raiseRound, useEmergency } from './economy.js';
+import { updateServing, growUsers, applyEconomy, legalTick, projectBurn, raiseRound, useEmergency, safetySpend } from './economy.js';
 import { researchTechnique } from './techniques.js';
 import { rivalsTurn } from './rivals.js';
 import { updateBoard } from './board.js';
 import { checkTurnEndings, eraGate, finalEnding } from './endings.js';
 import { recordAdvisors } from './advisors.js';
+import { resolveHazard, exposeConcealed, INTERPRETABILITY_SPEND } from './hazards.js';
+import { deployInternal, stopInternal, internalTick } from './internal.js';
+import { addressWarning, resolveEvent, eventsTick, fallbackChoice } from './events.js';
+import { CASES } from './data/constitution.js';
+import { setConstitution, amendConstitution } from './constitution.js';
+import {
+  proposeSummit,
+  holdOrShip,
+  holdOrShipError,
+  SUMMIT_SKIP_RACE_HEAT,
+  SUMMIT_SKIP_US_FAVOR,
+  SUMMIT_SKIP_INTL_FAVOR,
+} from './summit.js';
+import { expireMeeting, meetingDue, openMeeting, runMeeting } from './president.js';
+import { judgeEndingPromises, promiseUpkeep } from './promises.js';
 
 export const MAX_MOVES = 2;
 const BUDGET_KEYS = ['training', 'safety', 'security', 'product', 'talent'];
@@ -35,6 +50,10 @@ function applyMove(state, move, rng) {
     case 'raise': return raiseRound(state, move.archetype);
     case 'research': return researchTechnique(state, move.techId);
     case 'emergency': return useEmergency(state, move.option);
+    case 'deployInternal': return deployInternal(state, move.control);
+    case 'stopInternal': return stopInternal(state);
+    case 'amendConstitution': return amendConstitution(state, move.change);
+    case 'summit': return proposeSummit(state, move, rng);
     default: return { ok: false, error: `unknown move ${move.type}` };
   }
 }
@@ -49,10 +68,11 @@ function budgetEffects(state) {
   state.growthBoost = split.product * k * 0.02;
   state.researchPoints += split.talent * k * 3;
   state.staffTrust += split.talent * k * 0.3 - 0.3;
+  if (safetySpend(state) >= INTERPRETABILITY_SPEND) exposeConcealed(state, 0.1);
 }
 
 function normalize(state) {
-  for (const key of ['alignmentDebt', 'misuseExposure', 'misuseLocked', 'security', 'raceHeat', 'publicTrust', 'staffTrust']) {
+  for (const key of ['alignmentDebt', 'concealedDebt', 'misuseExposure', 'misuseLocked', 'security', 'raceHeat', 'publicTrust', 'staffTrust']) {
     state[key] = clamp(state[key], 0, 100);
   }
   state.perceivedAdOffset = clamp(state.perceivedAdOffset, 0, 100);
@@ -64,55 +84,155 @@ export function endTurn(prev, actions = {}, rng) {
   const state = structuredClone(prev);
   const events = [];
   const errors = [];
+  const before = { arr: state.arr, capability: state.capability, cash: state.cash };
   delete state.flags.emergencyUsedThisTurn;
   if (state.ending) return { state, events, errors: ['the run is over'] };
-  const before = { arr: state.arr, capability: state.capability, cash: state.cash };
+  if (state.turn === 0) {
+    if (actions.constitution) {
+      const result = setConstitution(state, actions.constitution);
+      if (!result.ok) errors.push(result.error);
+    }
+    if (state.constitution.hardLines.length === 0) {
+      setConstitution(state, {
+        hardLines: ['no-wmd', 'honest', 'accept-shutdown'],
+        rulings: Object.fromEntries(CASES.map((entry) => [entry.id, entry.options[0].id])),
+      });
+    }
+  } else if (actions.constitution) errors.push('the constitution can only be set on turn 0');
+  const moves = actions.moves ?? [];
+  if (moves.length > MAX_MOVES) errors.push(`only ${MAX_MOVES} moves per turn`);
+  const activeMoves = moves.slice(0, MAX_MOVES);
+  const meetingIdAtStart = state.meeting?.id ?? null;
+  if (!meetingIdAtStart) {
+    if (activeMoves.some((move) => move.type === 'meeting') || Object.hasOwn(actions, 'presidentAnswers')) {
+      errors.push('no open President meeting');
+    }
+    const id = meetingDue(state);
+    if (id) {
+      state.meeting = openMeeting(state, id);
+      events.push({ type: 'meetingDue', id });
+    }
+  }
+  if (actions.budget) {
+    const r = setBudget(state, actions.budget);
+    if (!r.ok) errors.push(r.error);
+  }
+  if (actions.hazardChoice && state.pendingModel?.hazard) {
+    const r = resolveHazard(state, actions.hazardChoice);
+    if (!r.ok) errors.push(r.error);
+    else events.push({ type: 'hazardResolved', choice: actions.hazardChoice });
+  }
+  for (const id of actions.addressWarnings ?? []) {
+    const result = addressWarning(state, id);
+    if (!result.ok) errors.push(result.error);
+  }
+  const eventChoices = actions.eventChoices ?? {};
+  const handledChoices = new Set();
+  for (const pending of [...state.pendingEvents]) {
+    const { id } = pending;
+    const choiceKey = Object.hasOwn(eventChoices, id) ? id : null;
+    if (!choiceKey) continue;
+    const choiceId = eventChoices[choiceKey];
+    const result = resolveEvent(state, id, choiceId);
+    if (!result.ok) errors.push(result.error);
+    handledChoices.add(choiceKey);
+  }
+  for (const id of Object.keys(eventChoices)) {
+    if (handledChoices.has(id)) continue;
+    const result = resolveEvent(state, id, eventChoices[id]);
+    if (!result.ok) errors.push(result.error);
+  }
+  for (const pending of [...state.pendingEvents]) {
+    const { id } = pending;
+    const choiceId = fallbackChoice(id, pending);
+    const result = resolveEvent(state, id, choiceId);
+    if (!result.ok) errors.push(result.error);
+    else events.push({ type: 'eventResolved', id, choiceId, auto: true });
+  }
+  if (state.era === 5 && state.deal && state.turnInEra > 0) {
+    const choice = actions.holdOrShip ?? 'hold';
+    const error = holdOrShipError(choice);
+    if (error) errors.push(error);
+    for (const event of holdOrShip(state, error ? 'hold' : choice, rng)) events.push(event);
+  }
 
   activateReleases(state);
   updateServing(state);
   state.burnPlanned = projectBurn(state);
 
-  if (actions.budget) {
-    const r = setBudget(state, actions.budget);
-    if (!r.ok) errors.push(r.error);
-    else state.burnPlanned = projectBurn(state);
-  }
-  const moves = actions.moves ?? [];
-  if (moves.length > MAX_MOVES) errors.push(`only ${MAX_MOVES} moves per turn`);
-  for (const move of moves.slice(0, MAX_MOVES)) {
+  for (const move of activeMoves) {
+    if (move.type === 'meeting') {
+      if (!meetingIdAtStart) continue;
+      if (!state.meeting) {
+        errors.push('no open President meeting');
+        continue;
+      }
+      const id = state.meeting.id;
+      const answerIds = Object.hasOwn(actions, 'presidentAnswers') ? actions.presidentAnswers : undefined;
+      const result = runMeeting(state, answerIds);
+      if (!result.ok) errors.push(result.error);
+      const outcome = result.ok ? result.outcome : expireMeeting(state).outcome;
+      events.push({ type: 'meetingOutcome', id, walkedOut: outcome.walkedOut, stake: outcome.stake });
+      updateServing(state);
+      state.burnPlanned = projectBurn(state);
+      continue;
+    }
     const r = applyMove(state, move, rng);
     if (r.ok) {
-      events.push({ type: move.type, ...r });
+      if (move.type === 'summit') events.push({ type: 'summit', signed: r.signed, binding: r.binding });
+      else events.push({ type: move.type, ...r });
+      if (r.hazardIgnored) events.push({ type: 'hazardResolved', choice: 'ignore', auto: true });
       updateServing(state);
       state.burnPlanned = projectBurn(state);
     } else errors.push(r.error);
     if (state.ending) break;
   }
 
+  if (meetingIdAtStart && state.meeting) {
+    errors.push(Object.hasOwn(actions, 'presidentAnswers')
+      ? 'President answers require a meeting move'
+      : 'take the President meeting with a meeting move');
+    const outcome = expireMeeting(state).outcome;
+    events.push({ type: 'meetingOutcome', id: meetingIdAtStart, walkedOut: outcome.walkedOut, stake: outcome.stake });
+  }
+
   if (!state.ending) {
     budgetEffects(state);
-    const trained = advanceRun(state, rng);
-    if (trained?.type === 'runPaused') events.push(trained);
-    else if (trained) events.push({ type: 'runComplete', gain: trained.gain });
-    const { arrived, failed } = computeTurn(state, rng);
-    for (const a of arrived) events.push({ type: 'computeArrived', supplier: a.supplier, units: a.units });
-    for (const f of failed) events.push({ type: 'computeFailed', supplier: f.supplier, units: f.units });
-    growUsers(state);
-    updateServing(state);
-    applyEconomy(state);
-    if (state.flags.conversionDeadline != null && state.turn >= state.flags.conversionDeadline && !state.flags.converted) {
-      state.flags.converted = true;
-      state.board = state.board.map((support) => support - 6);
-      state.publicTrust -= 4;
-      state.staffTrust -= 6;
-      events.push({ type: 'conversionFight' });
+    for (const e of internalTick(state, rng)) events.push(e);
+    if (!state.ending) {
+      const trained = advanceRun(state, rng);
+      if (trained?.type === 'runPaused') events.push(trained);
+      else if (trained) events.push({ type: 'runComplete', gain: trained.gain });
+      const { arrived, failed } = computeTurn(state, rng);
+      for (const a of arrived) events.push({ type: 'computeArrived', supplier: a.supplier, units: a.units });
+      for (const f of failed) events.push({ type: 'computeFailed', supplier: f.supplier, units: f.units });
+      growUsers(state);
+      updateServing(state);
+      applyEconomy(state);
+      if (state.flags.conversionDeadline != null && state.turn >= state.flags.conversionDeadline && !state.flags.converted) {
+        state.flags.converted = true;
+        state.board = state.board.map((support) => support - 6);
+        state.publicTrust -= 4;
+        state.staffTrust -= 6;
+        events.push({ type: 'conversionFight' });
+      }
+      for (const c of legalTick(state)) events.push({ type: 'lawsuitPaid', cost: c.cost, source: c.source });
+      state.lastRivalReleases = rivalsTurn(state, rng);
+      for (const r of state.lastRivalReleases) events.push({ type: 'rivalRelease', ...r });
+      state.raceHeat -= BALANCE.raceHeatDecay;
+      promiseUpkeep(state, rng);
+      for (const e of eventsTick(state, rng)) events.push(e);
+      normalize(state);
+      updateBoard(state, before);
+      checkTurnEndings(state, rng);
     }
-    for (const c of legalTick(state)) events.push({ type: 'lawsuitPaid', cost: c.cost, source: c.source });
-    for (const r of rivalsTurn(state, rng)) events.push({ type: 'rivalRelease', ...r });
-    state.raceHeat -= BALANCE.raceHeatDecay;
-    normalize(state);
-    updateBoard(state, before);
-    checkTurnEndings(state, rng);
+  }
+
+  if (!state.ending && state.era === 5 && state.turnInEra === 0 && !state.deal) {
+    state.raceHeat += SUMMIT_SKIP_RACE_HEAT;
+    state.govFavor.us -= SUMMIT_SKIP_US_FAVOR;
+    state.govFavor.intl -= SUMMIT_SKIP_INTL_FAVOR;
+    events.push({ type: 'summitSkipped' });
   }
 
   normalize(state);
@@ -135,6 +255,13 @@ export function endTurn(prev, actions = {}, rng) {
       }
     }
   }
-  if (state.ending) events.push({ type: 'ending', ending: state.ending });
+  if (state.ending) {
+    judgeEndingPromises(state);
+    state.pendingEvents = state.pendingEvents.filter((pending) => pending.eventId !== 'promiseCall');
+    for (const [id, warning] of Object.entries(state.warnings)) {
+      if (warning.eventId === 'promiseCall') delete state.warnings[id];
+    }
+    events.push({ type: 'ending', ending: state.ending });
+  }
   return { state, events, errors };
 }
