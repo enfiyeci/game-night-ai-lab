@@ -23,6 +23,7 @@ import {
   SUMMIT_SKIP_US_FAVOR,
   SUMMIT_SKIP_INTL_FAVOR,
 } from './summit.js';
+import { expireMeeting, meetingDue, runMeeting } from './president.js';
 
 export const MAX_MOVES = 2;
 const BUDGET_KEYS = ['training', 'safety', 'security', 'product', 'talent'];
@@ -96,6 +97,21 @@ export function endTurn(prev, actions = {}, rng) {
       });
     }
   } else if (actions.constitution) errors.push('the constitution can only be set on turn 0');
+  if (state.meeting) {
+    const id = state.meeting.id;
+    const result = Object.hasOwn(actions, 'presidentAnswers')
+      ? runMeeting(state, actions.presidentAnswers)
+      : expireMeeting(state);
+    if (!result.ok) errors.push(result.error);
+    else events.push({ type: 'meetingOutcome', id, walkedOut: result.outcome.walkedOut, stake: result.outcome.stake });
+  } else {
+    if (Object.hasOwn(actions, 'presidentAnswers')) errors.push('no open President meeting');
+    const id = meetingDue(state);
+    if (id) {
+      state.meeting = { id, patience: 10 };
+      events.push({ type: 'meetingDue', id });
+    }
+  }
   if (actions.hazardChoice && state.pendingModel?.hazard) {
     const r = resolveHazard(state, actions.hazardChoice);
     if (!r.ok) errors.push(r.error);

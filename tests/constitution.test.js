@@ -194,8 +194,7 @@ test('no-power-grab costs favor once and automatically refuses the President dem
   amendConstitution(state, { remove: 'no-power-grab', add: 'privacy' });
   amendConstitution(state, { remove: 'privacy', add: 'no-power-grab' });
   assert.equal(state.govFavor.us, 47);
-  state.era = 2;
-  state.turnInEra = 2;
+  state.flags.presidentDemand = true;
   eventsTick(state, no);
   assert.equal(state.pendingEvents.some((event) => event.id === 'president'), false);
   assert.equal(state.seenEvents.includes('president'), true);
@@ -263,7 +262,7 @@ test('no-autonomy-grab blocks agent incidents and reduces agentic RL capability'
 function demandState(id) {
   const state = createInitialState();
   adopt(state);
-  if (id === 'president') { state.era = 2; state.turnInEra = 2; }
+  if (id === 'president') state.flags.presidentDemand = true;
   if (id === 'investors') state.cash = 299;
   if (id === 'users') state.models.push({ channel: 'consumer', users: 6e6, flags: [], active: true, activeFromTurn: 0 });
   if (id === 'political') state.era = 3;

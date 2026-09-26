@@ -287,8 +287,7 @@ export const EVENTS = [
   {
     id: 'president',
     kind: 'world',
-    // Task 7 may tie this demand to the first President meeting.
-    trigger: (state) => state.era >= 2 && state.turnInEra >= 2,
+    trigger: (state) => state.flags.presidentDemand === true,
     warning: null,
     card: {
       title: demandText('president'),
