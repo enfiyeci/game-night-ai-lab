@@ -1,6 +1,6 @@
 import { openDialog } from '../components/dialog.js';
 import { teamPanel } from '../components/team.js';
-import { dealCards, turnSummary } from '../logic/compute.js';
+import { dealCards, projectQueue, turnSummary } from '../logic/compute.js';
 import { money, months, pct } from '../logic/format.js';
 import { registerMenuHandler } from '../menu.js';
 import {
@@ -75,12 +75,6 @@ function rowValue(card, label) {
   return card.rows.find(([name]) => name === label)?.[1] ?? '';
 }
 
-function moneyNumber(value) {
-  if (!value || value === 'none') return 0;
-  const amount = Number.parseFloat(value.replace(/[^0-9.]/g, ''));
-  return value.endsWith('B') ? amount * 1000 : amount;
-}
-
 function arrivalTurn(state, text) {
   if (text === 'next turn') return state.turn + 1;
   const turns = Number.parseInt(text.match(/\d+/)?.[0] ?? '1', 10);
@@ -93,11 +87,18 @@ function runwayNow(state) {
   return runway(clone, 'planned');
 }
 
-function runwayAfterUpfront(state, upfront) {
-  const clone = structuredClone(state);
-  clone.cash -= upfront;
-  clone.burnPlanned = projectBurn(clone);
-  return runway(clone, 'planned');
+function setActionDisabled(button, reason) {
+  button.querySelector('.button-disabled-reason')?.remove();
+  button.disabled = Boolean(reason);
+  if (!reason) {
+    button.removeAttribute('title');
+    return;
+  }
+  button.title = reason;
+  const hidden = document.createElement('span');
+  hidden.className = 'visually-hidden button-disabled-reason';
+  hidden.textContent = `: ${reason}`;
+  button.append(hidden);
 }
 
 function setSelected(buttons, selected, { showTag = false } = {}) {
@@ -203,7 +204,8 @@ function dealCard(card) {
 
 export function openDeals(game, overlayRoot) {
   const state = game.state;
-  const cards = dealCards({ ...state, movesLeft: game.movesLeft() });
+  const projected = projectQueue(state, game.queue);
+  const cards = dealCards({ ...projected, movesLeft: game.movesLeft() });
   let selected = cards.find((card) => !card.disabled)?.id ?? '';
   const body = document.createElement('div');
   const group = document.createElement('div');
@@ -230,15 +232,15 @@ export function openDeals(game, overlayRoot) {
       return;
     }
     const upfrontText = rowValue(card, 'Upfront');
-    const upfront = moneyNumber(upfrontText);
-    rightContent.replaceChildren(statusPanel([
+    const rows = [
       ['Pay now', upfrontText],
       ['Monthly cost', rowValue(card, 'Monthly')],
-      ['Arrives on', `turn ${arrivalTurn(state, rowValue(card, 'Arrives'))}`],
-      ['Runway now', months(runwayNow(state))],
-      ['After signing', months(runwayAfterUpfront(state, upfront))],
-    ]));
-    foot.text.textContent = `Signing uses 1 of 2 moves this turn · pay ${upfront === 0 ? money(0) : upfrontText} now`;
+      ['Online from', `turn ${arrivalTurn(projected, rowValue(card, 'Arrives'))}`],
+      ['Runway now', months(runwayNow(projected))],
+    ];
+    if (Number.isFinite(card.runwayAfter)) rows.push(['After signing', months(card.runwayAfter)]);
+    rightContent.replaceChildren(statusPanel(rows));
+    foot.text.textContent = `Signing uses 1 of 2 moves this turn · pay ${upfrontText === 'none' ? money(0) : upfrontText} now`;
   }
 
   wireChoices(group, buttons, (id) => {
@@ -305,22 +307,31 @@ function simpleCard({ id, monogram, name, kind, big, per, chip, explanation, dis
   const copy = document.createElement('span');
   copy.className = 'company-explanation';
   copy.textContent = explanation;
-  catchBlock.append(catchChip, copy);
-  button.append(who, amount, detail, catchBlock);
+  if (chip) catchBlock.append(catchChip);
+  catchBlock.append(copy);
+  button.append(who);
+  if (big) button.append(amount);
+  if (per) button.append(detail);
+  button.append(catchBlock);
   disabledReason(button, disabled ? reason : '');
   return button;
 }
 
 export function openRaise(game, overlayRoot) {
   const state = game.state;
+  const projected = projectQueue(state, game.queue);
+  const queued = game.queue.moves.some((move) => move.type === 'raise')
+    && state.flags.lastRoundEra !== state.era
+    && projected.flags.lastRoundEra === projected.era;
   const reason = game.movesLeft() === 0
     ? 'Both moves are used this turn'
-    : state.era < 2 ? 'Funding rounds open in era 2'
-      : state.flags.lastRoundEra === state.era ? 'You already raised a round this era' : '';
+    : queued ? 'A round is already queued this turn'
+      : projected.era < 2 ? 'Funding rounds open in era 2'
+        : projected.flags.lastRoundEra === projected.era ? 'You already raised a round this era' : '';
   const options = Object.entries(INVESTORS).map(([id, investor]) => ({
     id,
     investor,
-    amount: Math.round(state.valuation * investor.share),
+    amount: Math.round(projected.valuation * investor.share),
     ...INVESTOR_COPY[id],
   }));
   let selected = reason ? '' : options[0].id;
@@ -352,9 +363,9 @@ export function openRaise(game, overlayRoot) {
     const option = options.find((entry) => entry.id === selected);
     rightContent.replaceChildren(option
       ? statusPanel([
-        ['Cash now', money(state.cash)],
+        ['Cash now', money(projected.cash)],
         ['Raise', money(option.amount)],
-        ['Cash after', money(state.cash + option.amount)],
+        ['Cash after', money(projected.cash + option.amount)],
         ['Share of lab', pct(option.investor.share)],
       ])
       : statusPanel([], reason));
@@ -383,11 +394,21 @@ export function openRaise(game, overlayRoot) {
 
 export function openResearch(game, overlayRoot) {
   const state = game.state;
+  const projected = projectQueue(state, game.queue);
+  const queued = new Set(game.queue.moves
+    .filter((move) => move.type === 'research')
+    .map((move) => move.techId));
   const options = TECHNIQUES.filter((technique) => (
-    !techAvailable(state, technique.id) && state.era >= technique.era - 1
+    (!techAvailable(projected, technique.id) || queued.has(technique.id))
+      && projected.era >= technique.era - 1
   ));
   const noMoves = game.movesLeft() === 0;
-  let selected = options.find((technique) => !noMoves && state.researchPoints >= technique.researchCost)?.id ?? '';
+  let selected = options.find((technique) => (
+    !noMoves
+      && !queued.has(technique.id)
+      && !techAvailable(projected, technique.id)
+      && projected.researchPoints >= technique.researchCost
+  ))?.id ?? '';
   const body = document.createElement('div');
   const group = document.createElement('div');
   group.className = 'research-list';
@@ -412,12 +433,14 @@ export function openResearch(game, overlayRoot) {
     amount.textContent = `${technique.researchCost}`;
     const units = document.createTextNode(' research points');
     const affordability = document.createElement('em');
-    affordability.textContent = state.researchPoints >= technique.researchCost ? 'You can afford this' : 'Cannot afford yet';
+    affordability.textContent = projected.researchPoints >= technique.researchCost ? 'You can afford this' : 'Cannot afford yet';
     cost.append(amount, units, affordability);
     button.append(copy, cost);
     const reason = noMoves
       ? 'Both moves are used this turn'
-      : state.researchPoints < technique.researchCost ? 'Not enough research points' : '';
+      : queued.has(technique.id) ? 'This technique is already queued this turn'
+        : techAvailable(projected, technique.id) ? 'This technique is already available'
+          : projected.researchPoints < technique.researchCost ? 'Not enough research points' : '';
     disabledReason(button, reason);
     return button;
   });
@@ -437,18 +460,28 @@ export function openResearch(game, overlayRoot) {
     setSelected(buttons, selected);
     const technique = options.find((entry) => entry.id === selected);
     rightContent.replaceChildren(statusPanel(technique ? [
-      ['Points now', `${Math.round(state.researchPoints)}`],
+      ['Points now', `${Math.round(projected.researchPoints)}`],
       ['Cost', `${technique.researchCost}`],
-      ['After research', `${Math.round(state.researchPoints - technique.researchCost)}`],
+      ['After research', `${Math.round(projected.researchPoints - technique.researchCost)}`],
       ['Industry access', `era ${technique.era}`],
-    ] : [['Research points', `${Math.round(state.researchPoints)}`]], technique ? '' : 'Pick an affordable technique.'));
+    ] : [['Research points', `${Math.round(projected.researchPoints)}`]], technique ? '' : 'Pick an affordable technique.'));
+    if (opened) {
+      const available = buttons.some((button) => !button.disabled);
+      const actionReason = selected
+        ? ''
+        : noMoves ? 'Both moves are used this turn'
+          : available ? 'Select a technique to research'
+            : options.length === 0 ? 'Nothing to research early right now'
+              : 'No listed technique is affordable or available this turn';
+      setActionDisabled(opened.querySelector('.dialog-ok'), actionReason);
+    }
   }
   wireChoices(group, buttons, (id) => { selected = id; error.textContent = ''; renderSelection(); });
 
   let opened;
   opened = openDialog(overlayRoot, {
     title: 'Research a technique early',
-    subtitle: `Era ${state.era} · ${Math.round(state.researchPoints)} research points available`,
+    subtitle: `Era ${state.era} · ${Math.round(projected.researchPoints)} research points available`,
     left: { title: 'Team', content: teamPanel(state) },
     right: { title: 'Research', content: rightContent },
     body,
@@ -467,11 +500,19 @@ export function openResearch(game, overlayRoot) {
 
 export function openEmergency(game, overlayRoot) {
   const state = game.state;
-  const used = new Set(state.flags.emergencyUsed ?? []);
+  const projected = projectQueue(state, game.queue);
+  const usedBefore = new Set(state.flags.emergencyUsed ?? []);
+  const used = new Set(projected.flags.emergencyUsed ?? []);
   const noMoves = game.movesLeft() === 0;
-  const outsideDangerZone = !inDangerZone(state);
+  const covered = inDangerZone(state) && !inDangerZone(projected);
+  const outsideDangerZone = !inDangerZone(projected);
+  const queued = new Set(game.queue.moves
+    .filter((move) => move.type === 'emergency')
+    .map((move) => move.option));
   const options = Object.entries(EMERGENCY_OPTIONS).map(([id, consequence]) => ({ id, consequence }));
-  let selected = options.find((option) => !noMoves && !outsideDangerZone && !used.has(option.id))?.id ?? '';
+  let selected = options.find((option) => (
+    !noMoves && !covered && !outsideDangerZone && !used.has(option.id) && !queued.has(option.id)
+  ))?.id ?? '';
   let acquihireArmed = false;
   const body = document.createElement('div');
   const group = document.createElement('div');
@@ -483,15 +524,16 @@ export function openEmergency(game, overlayRoot) {
     monogram: EMERGENCY_NAMES[option.id][0],
     name: EMERGENCY_NAMES[option.id],
     kind: 'emergency option',
-    big: option.id === 'acquihire' ? 'Final' : 'Once',
-    per: option.id === 'acquihire' ? 'ends this run' : 'one-time rescue',
-    chip: used.has(option.id) ? 'Already used' : 'Last resort',
+    chip: option.id === 'acquihire' ? 'Ends the run' : '',
     explanation: option.consequence,
-    disabled: noMoves || outsideDangerZone || used.has(option.id),
+    disabled: noMoves || covered || outsideDangerZone || used.has(option.id) || queued.has(option.id),
     reason: noMoves
       ? 'Both moves are used this turn'
-      : outsideDangerZone ? 'Emergency options open only when runway is short'
-        : used.has(option.id) ? 'Already used' : '',
+      : covered ? 'A queued move already covers the shortfall'
+        : outsideDangerZone ? 'Emergency options open only when runway is short'
+          : usedBefore.has(option.id) ? 'Already used'
+            : queued.has(option.id) ? 'This emergency option is already queued this turn'
+              : used.has(option.id) ? 'Already used' : '',
   }));
   group.append(...buttons);
   const error = errorBox();
@@ -501,12 +543,11 @@ export function openEmergency(game, overlayRoot) {
 
   function renderSelection() {
     setSelected(buttons, selected);
-    const option = options.find((entry) => entry.id === selected);
     rightContent.replaceChildren(statusPanel([
-      ['Cash now', money(state.cash)],
-      ['Runway', months(runwayNow(state))],
-      ['Used before', `${used.size} option${used.size === 1 ? '' : 's'}`],
-    ], option?.consequence ?? 'No emergency option is available.'));
+      ['Cash now', money(projected.cash)],
+      ['Runway', months(runwayNow(projected))],
+      ['Options used', `${used.size}`],
+    ]));
     const ok = opened?.querySelector('.dialog-ok');
     if (ok) ok.textContent = selected === 'acquihire' ? 'Accept — the run ends' : 'Use option';
   }
@@ -557,27 +598,30 @@ export function mountTurnSummary(overlayRoot, game) {
   let toast = null;
   let removeEscape = null;
   let pendingFrame = null;
+  let pendingSummaries = null;
 
-  const dismiss = () => {
-    if (pendingFrame !== null) cancelAnimationFrame(pendingFrame);
-    pendingFrame = null;
+  const removeToast = () => {
     toast?.remove();
     toast = null;
     removeEscape?.();
     removeEscape = null;
   };
 
-  return game.subscribe(({ state, events, errors }) => {
-    dismiss();
-    const summaries = turnSummary([
-      ...events,
-      ...errors.map((error) => ({ type: 'error', error })),
-    ], state);
-    if (summaries.length === 0) return;
+  const dismiss = () => {
+    if (pendingFrame !== null) cancelAnimationFrame(pendingFrame);
+    pendingFrame = null;
+    pendingSummaries = null;
+    removeToast();
+  };
 
+  const schedule = () => {
+    if (!pendingSummaries || pendingFrame !== null) return;
     pendingFrame = requestAnimationFrame(() => {
       pendingFrame = null;
-      if (overlayRoot.querySelector('.dialog-layer')) return;
+      if (!pendingSummaries || overlayRoot.querySelector('.dialog-layer')) return;
+      const summaries = pendingSummaries;
+      pendingSummaries = null;
+      removeToast();
       toast = document.createElement('section');
       toast.className = 'turn-summary';
       toast.setAttribute('aria-live', 'polite');
@@ -608,5 +652,25 @@ export function mountTurnSummary(overlayRoot, game) {
       addEventListener('keydown', onEscape);
       removeEscape = () => removeEventListener('keydown', onEscape);
     });
+  };
+
+  const onDialogClosed = () => schedule();
+  overlayRoot.addEventListener('gdt-dialog-closed', onDialogClosed);
+  const unsubscribe = game.subscribe(({ state, events, errors }) => {
+    if (pendingFrame !== null) cancelAnimationFrame(pendingFrame);
+    pendingFrame = null;
+    removeToast();
+    const summaries = turnSummary([
+      ...events,
+      ...errors.map((error) => ({ type: 'error', error })),
+    ], state);
+    pendingSummaries = summaries.length > 0 ? summaries : null;
+    schedule();
   });
+
+  return () => {
+    unsubscribe();
+    overlayRoot.removeEventListener('gdt-dialog-closed', onDialogClosed);
+    dismiss();
+  };
 }

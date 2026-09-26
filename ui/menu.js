@@ -1,6 +1,7 @@
 import { MAX_MOVES } from '../sim/turn.js';
-import { inDangerZone } from '../sim/economy.js';
+import { EMERGENCY_OPTIONS, inDangerZone } from '../sim/economy.js';
 import { TECHNIQUES, techAvailable } from '../sim/techniques.js';
+import { projectQueue } from './logic/compute.js';
 import { openBudget } from './screens/budget.js';
 
 const registeredHandlers = new Map();
@@ -22,7 +23,11 @@ const COMPANY_ITEMS = [
   {
     id: 'raise',
     label: 'Raise a round',
-    unavailable(state) {
+    unavailable(state, game) {
+      const queued = game.queue.moves.some((move) => move.type === 'raise')
+        && game.state.flags.lastRoundEra !== game.state.era
+        && state.flags.lastRoundEra === state.era;
+      if (queued) return 'A round is already queued this turn';
       if (state.era < 2) return 'Funding rounds open in era 2';
       if (state.flags.lastRoundEra === state.era) return 'You already raised a round this era';
       return '';
@@ -31,14 +36,42 @@ const COMPANY_ITEMS = [
   {
     id: 'research',
     label: 'Research a technique early',
-    unavailable(state) {
-      const available = TECHNIQUES.some((technique) => (
+    unavailable(state, game) {
+      const available = TECHNIQUES.filter((technique) => (
         !techAvailable(state, technique.id) && state.era >= technique.era - 1
       ));
-      return available ? '' : 'Nothing to research early right now';
+      const queued = new Set(game.queue.moves
+        .filter((move) => move.type === 'research')
+        .map((move) => move.techId));
+      const beforeQueue = TECHNIQUES.filter((technique) => (
+        !techAvailable(game.state, technique.id) && game.state.era >= technique.era - 1
+      ));
+      if (available.some((technique) => state.researchPoints >= technique.researchCost)) return '';
+      if (beforeQueue.length > 0 && beforeQueue.every((technique) => queued.has(technique.id))) {
+        return 'Every available technique is already queued this turn';
+      }
+      if (available.length > 0) return 'Not enough research points';
+      return 'Nothing to research early right now';
     },
   },
-  { id: 'emergency', label: 'Emergency options', hidden: (state) => !inDangerZone(state) },
+  {
+    id: 'emergency',
+    label: 'Emergency options',
+    hidden: (state, game) => !inDangerZone(state) && !inDangerZone(game.state),
+    unavailable(state, game) {
+      if (inDangerZone(game.state) && !inDangerZone(state)) {
+        return 'A queued move already covers the shortfall';
+      }
+      if (!inDangerZone(state)) return 'Emergency options open only when runway is short';
+      const used = new Set(state.flags.emergencyUsed ?? []);
+      const available = Object.keys(EMERGENCY_OPTIONS).filter((option) => !used.has(option));
+      const queued = new Set(game.queue.moves
+        .filter((move) => move.type === 'emergency')
+        .map((move) => move.option));
+      return available.length > 0 && available.every((option) => queued.has(option))
+        ? 'Every unused emergency option is already queued this turn' : '';
+    },
+  },
 ];
 
 export function registerMenuHandler(id, fn) {
@@ -53,8 +86,9 @@ function handlerFor(id, handlers) {
   return registeredHandlers.get(id);
 }
 
-function disabledReason(item, game, handler) {
-  const unavailable = item.unavailable?.(game.state);
+function disabledReason(item, game, handler, state = game.state) {
+  if (!item.free && state.ending) return 'A queued move ends the run';
+  const unavailable = item.unavailable?.(state, game);
   if (unavailable) return unavailable;
   if (!item.free && game.movesLeft() === 0) return 'Both moves are used this turn';
   if (!handler && item.id !== 'budget' && item.id !== 'endTurn' && item.id !== 'company') return 'Not built yet';
@@ -116,7 +150,11 @@ export function openMenu(game, point, { overlay = document.querySelector('#overl
 
   function openCompany({ focusFirst = true } = {}) {
     if (submenu) {
-      if (focusFirst) submenu.querySelector('[role="menuitem"]:not([aria-disabled="true"])')?.focus();
+      if (focusFirst) {
+        const first = submenu.querySelector('[role="menuitem"]:not([aria-disabled="true"])')
+          ?? submenu.querySelector('[role="menuitem"]');
+        first?.focus();
+      }
       return;
     }
     submenu = document.createElement('div');
@@ -124,13 +162,14 @@ export function openMenu(game, point, { overlay = document.querySelector('#overl
     submenu.setAttribute('role', 'menu');
     submenu.setAttribute('aria-label', 'Company actions');
     companyButton.setAttribute('aria-expanded', 'true');
+    const projected = projectQueue(game.state, game.queue);
 
     for (const item of COMPANY_ITEMS) {
-      if (item.hidden?.(game.state)) continue;
+      if (item.hidden?.(projected, game)) continue;
       const customHandler = handlerFor(item.id, handlers);
       const reason = game.movesLeft() === 0
         ? 'Both moves are used this turn'
-        : disabledReason(item, game, customHandler);
+        : disabledReason(item, game, customHandler, projected);
       const button = document.createElement('button');
       button.className = 'it';
       button.type = 'button';
@@ -161,7 +200,7 @@ export function openMenu(game, point, { overlay = document.querySelector('#overl
     submenu.style.top = `${Math.max(12, Math.min(900 - submenuHeight - 12, companyTop - 5))}px`;
 
     submenu.addEventListener('keydown', (event) => {
-      const items = [...submenu.querySelectorAll('[role="menuitem"]:not([aria-disabled="true"])')];
+      const items = [...submenu.querySelectorAll('[role="menuitem"]')];
       const current = items.indexOf(document.activeElement);
       let next = current;
       if (items.length === 0 && !['ArrowLeft', 'Escape'].includes(event.key)) return;
@@ -184,9 +223,14 @@ export function openMenu(game, point, { overlay = document.querySelector('#overl
       event.stopPropagation();
       items[next]?.focus();
     });
-    if (focusFirst) submenu.querySelector('[role="menuitem"]:not([aria-disabled="true"])')?.focus();
+    if (focusFirst) {
+      const first = submenu.querySelector('[role="menuitem"]:not([aria-disabled="true"])')
+        ?? submenu.querySelector('[role="menuitem"]');
+      first?.focus();
+    }
   }
 
+  const projected = projectQueue(game.state, game.queue);
   for (const item of ITEMS) {
     if (item.divider) {
       const divider = document.createElement('div');
@@ -197,7 +241,7 @@ export function openMenu(game, point, { overlay = document.querySelector('#overl
     }
 
     const customHandler = handlerFor(item.id, handlers);
-    const reason = disabledReason(item, game, customHandler);
+    const reason = disabledReason(item, game, customHandler, projected);
     const button = document.createElement('button');
     button.className = 'it';
     button.type = 'button';
@@ -253,9 +297,9 @@ export function openMenu(game, point, { overlay = document.querySelector('#overl
 
   if (companyOpen) openCompany();
 
-  const enabled = () => [...menu.querySelectorAll('[role="menuitem"]:not([aria-disabled="true"])')];
+  const menuItems = () => [...menu.querySelectorAll('[role="menuitem"]')];
   menu.addEventListener('keydown', (event) => {
-    const items = enabled();
+    const items = menuItems();
     const current = items.indexOf(document.activeElement);
     let next = current;
     if (event.key === 'ArrowDown') next = (current + 1) % items.length;
@@ -282,6 +326,10 @@ export function openMenu(game, point, { overlay = document.querySelector('#overl
   layer.addEventListener('pointerdown', (event) => {
     if (!menu.contains(event.target) && !submenu?.contains(event.target)) close();
   });
-  if (!companyOpen) enabled()[0]?.focus();
+  if (!companyOpen) {
+    const first = menu.querySelector('[role="menuitem"]:not([aria-disabled="true"])')
+      ?? menu.querySelector('[role="menuitem"]');
+    first?.focus();
+  }
   return { element: layer, close };
 }

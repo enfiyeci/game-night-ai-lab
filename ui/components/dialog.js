@@ -104,6 +104,7 @@ export function openDialog(overlayRoot, opts) {
     layer.remove();
     closers.delete(layer);
     if (previousFocus?.isConnected && typeof previousFocus.focus === 'function') previousFocus.focus();
+    overlayRoot.dispatchEvent(new CustomEvent('gdt-dialog-closed'));
   };
   const cancel = () => {
     try {

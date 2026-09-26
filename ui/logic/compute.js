@@ -1,9 +1,20 @@
 import { BALANCE } from '../../sim/balance.js';
-import { BOTTLENECK_DELAY, SUPPLIERS } from '../../sim/compute.js';
+import { BOTTLENECK_DELAY, SUPPLIERS, signDeal } from '../../sim/compute.js';
 import { eraById } from '../../sim/data/eras.js';
-import { EMERGENCY_OPTIONS } from '../../sim/economy.js';
+import {
+  EMERGENCY_OPTIONS,
+  projectBurn,
+  raiseRound,
+  runway,
+  updateServing,
+  useEmergency,
+} from '../../sim/economy.js';
+import { activateReleases, releaseModel } from '../../sim/release.js';
 import { RIVAL_TEMPLATES } from '../../sim/rivals.js';
-import { TECHNIQUES } from '../../sim/techniques.js';
+import { createRng } from '../../sim/rng.js';
+import { TECHNIQUES, researchTechnique } from '../../sim/techniques.js';
+import { startRun } from '../../sim/training.js';
+import { MAX_MOVES, setBudget } from '../../sim/turn.js';
 import { money } from './format.js';
 
 const SUPPLIER_COPY = {
@@ -18,8 +29,8 @@ const SUPPLIER_COPY = {
     name: 'Azuria',
     kind: 'cloud',
     per: 'reserved capacity',
-    chip: 'Exclusive',
-    explanation: 'No other cloud deals while it runs.',
+    chip: 'Pricier',
+    explanation: 'A quarter more per unit, but nothing upfront.',
   },
   coreflame: {
     name: 'CoreFlame',
@@ -44,8 +55,55 @@ const price = (multiplier) => {
 
 const arrival = (turns) => {
   if (turns === 0) return 'next turn';
-  return `in ${turns} turn${turns === 1 ? '' : 's'}`;
+  return `in ${turns + 1} turns`;
 };
+
+function runwayAfterDeal(state, supplierId) {
+  const clone = structuredClone(state);
+  const result = applyDealMove(clone, { type: 'deal', supplierId });
+  if (!result.ok) return null;
+  updateServing(clone);
+  clone.burnPlanned = projectBurn(clone);
+  return runway(clone, 'planned');
+}
+
+export function applyDealMove(state, move) {
+  return signDeal(state, move.supplierId);
+}
+
+function applyProjectedMove(state, move) {
+  if (move.type === 'startRun') return startRun(state, move.recipe);
+  if (move.type === 'deal') return applyDealMove(state, move);
+  if (move.type === 'raise') return raiseRound(state, move.archetype);
+  if (move.type === 'research') return researchTechnique(state, move.techId);
+  if (move.type === 'emergency') return useEmergency(state, move.option);
+  // The release's cost is fixed; its random draws only score the press, so a throwaway stream will do.
+  if (move.type === 'release') return releaseModel(state, move.release, createRng(0));
+  return null;
+}
+
+export function projectQueue(state, queue = {}) {
+  const projected = structuredClone(state);
+  if (projected.ending) return projected;
+  // The same start-of-turn steps as sim/turn.js endTurn, so burn and the danger zone match what it sees.
+  delete projected.flags.emergencyUsedThisTurn;
+  activateReleases(projected);
+  updateServing(projected);
+  projected.burnPlanned = projectBurn(projected);
+  if (queue.budget) {
+    const result = setBudget(projected, queue.budget);
+    if (result.ok) projected.burnPlanned = projectBurn(projected);
+  }
+
+  for (const move of (queue.moves ?? []).slice(0, MAX_MOVES)) {
+    const result = applyProjectedMove(projected, move);
+    if (!result?.ok) continue;
+    updateServing(projected);
+    projected.burnPlanned = projectBurn(projected);
+    if (projected.ending) break;
+  }
+  return projected;
+}
 
 export function dealCards(state) {
   const bottleneckDelay = BOTTLENECK_DELAY[eraById(state.era).bottleneck];
@@ -77,6 +135,7 @@ export function dealCards(state) {
         : shortOnCash ? 'Not enough cash for the prepayment' : '',
       viaQueue: false,
       move: { type: 'deal', supplierId: supplier.id },
+      runwayAfter: runwayAfterDeal(state, supplier.id),
     };
   });
 }
@@ -92,13 +151,6 @@ const EMERGENCY_SUMMARIES = {
   acquihire: 'You accepted an acquihire — the run is over',
 };
 
-function dealSupplier(event, events, state) {
-  if (event.supplier ?? event.supplierId) return event.supplier ?? event.supplierId;
-  const queued = state?.compute?.pipeline?.find((deal) => deal.arrivesTurn === event.arrivesTurn);
-  if (queued) return queued.supplier;
-  return events.find((candidate) => candidate.type === 'computeArrived')?.supplier;
-}
-
 export function turnSummary(events, state) {
   const list = Array.isArray(events) ? events : [];
   const lines = [];
@@ -111,9 +163,12 @@ export function turnSummary(events, state) {
     } else if (event.type === 'computeFailed') {
       lines.push(`${supplierName(event.supplier)} went under — ${event.units} units lost`);
     } else if (event.type === 'deal') {
-      const id = dealSupplier(event, list, state);
-      const visibleTurn = Math.max(event.arrivesTurn, state?.turn ?? event.arrivesTurn);
-      if (id) lines.push(`You signed with ${supplierName(id)} — chips arrive on turn ${visibleTurn}`);
+      const id = event.supplier ?? event.supplierId;
+      const subject = id ? `You signed with ${supplierName(id)}` : 'You signed a compute deal';
+      const onlineTurn = event.arrivesTurn + 1;
+      lines.push(state?.turn >= onlineTurn
+        ? `${subject} — the compute is already online`
+        : `${subject} — online from turn ${onlineTurn}`);
     } else if (event.type === 'raise') {
       lines.push(`You raised ${money(event.amount)}`);
     } else if (event.type === 'research') {

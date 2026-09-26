@@ -438,6 +438,13 @@ svg.room {
   outline-offset: 3px;
 }
 
+.btn:disabled {
+  color: color-mix(in oklab, var(--paper) 70%, var(--ink));
+  background: color-mix(in oklab, var(--coral) 38%, var(--paper));
+  box-shadow: none;
+  cursor: default;
+}
+
 .dlg .dialog-ok { margin-top: 20px; }
 
 .budget-sliders {
@@ -683,7 +690,10 @@ svg.room {
   gap: 10px;
 }
 
-.company-option-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.company-option-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+}
 .emergency-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
 .company-card {
@@ -702,7 +712,7 @@ svg.room {
   cursor: pointer;
 }
 
-.company-option-card { min-height: 260px; }
+.company-option-card { min-height: 0; }
 
 .company-card:hover:not(:disabled),
 .company-card:focus-visible,
