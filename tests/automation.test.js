@@ -3,13 +3,15 @@ import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import {
   PACK, createAutomation, REVIEWER_CAPACITY, MONITOR_CAPACITY, AI_REVIEW_BLIND, RUN_BONUS_PER_SPEED, POINTS_PER_SPEED,
+  OVERNIGHT_POINTS,
 } from '../sim/data/automation.js';
 import {
   jobLevels, researchSpeed, claimedSpeed, codeShare, timeShares, bottleneck, checkLoad, checking,
   reviewerCost, controlUnits, effectiveChecks, automationRisk, setAutomation, handBack, addMonitor, automationTick, lockDown,
+  aiProposals, applyApprovals,
 } from '../sim/automation.js';
 import { eventsTick, resolveEvent, fallbackChoice } from '../sim/events.js';
-import { endTurn } from '../sim/turn.js';
+import { endTurn, applyActions } from '../sim/turn.js';
 import { startRun } from '../sim/training.js';
 import { createRng } from '../sim/rng.js';
 
@@ -333,4 +335,140 @@ test('turning the screen off is the fallback and hides debt', () => {
   resolveEvent(s, 'ownLine', 'screenOff');
   assert.equal(s.flags.hidLine, true);
   assert.equal(s.concealedDebt, 4);
+});
+
+test('from "leads" in choosing or direction, the AI proposes its own moves', () => {
+  const s = atEra(5);
+  assert.deepEqual(aiProposals(s, miss), []); // choosing is at Collaborates in era 5's pack
+  s.compute.online = 500;
+  setAutomation(s, { levels: { choosing: 3 }, checks: { monitors: 1 } });
+  s.activeRun = { bonus: 0, units: 2, turnsLeft: 3 };
+  const ids = aiProposals(s, hit).map((proposal) => proposal.id);
+  assert.deepEqual(ids, ['overnight', 'lessLogs']);
+  s.compute.online = controlUnits(s); // every unit taken by monitors: no idle compute to run experiments on
+  assert.deepEqual(aiProposals(s, hit).map((proposal) => proposal.id), ['lessLogs']);
+});
+
+const atLeads = () => {
+  const s = atEra(5);
+  s.compute.online = 500;
+  s.automation.offsets.choosing = 1; // era 5's pack has choosing at Collaborates; one above is Leads
+  return s;
+};
+
+test('approved moves run without using the two moves; the risky one weakens oversight', () => {
+  const s = atLeads();
+  s.automation.checks.monitors = 1;
+  s.activeRun = { bonus: 0, units: 2, turnsLeft: 3 };
+  s.automation.proposals = [{ id: 'overnight', label: '', risky: false }, { id: 'lessLogs', label: '', risky: true }];
+  const events = applyApprovals(s, { overnight: true, lessLogs: true });
+  assert.deepEqual(events, [{ type: 'aiMove', id: 'overnight' }, { type: 'aiMove', id: 'lessLogs' }]);
+  assert.equal(s.activeRun.bonus, 2);
+  assert.equal(s.automation.checks.monitors, 0);
+  assert.equal(s.concealedDebt, 3);
+  assert.deepEqual(s.automation.proposals, []);
+});
+
+test('"let it go ahead without asking" approves everything from then on', () => {
+  const s = atLeads();
+  s.automation.autoApprove = true;
+  s.automation.proposals = [{ id: 'overnight', label: '', risky: false }];
+  assert.equal(applyApprovals(s, {}).length, 1);
+});
+
+test('answering one proposal clears only that one; a cancelled one is dropped unrun', () => {
+  const s = atLeads();
+  s.automation.checks.monitors = 1;
+  s.automation.proposals = [{ id: 'overnight', label: '', risky: false }, { id: 'lessLogs', label: '', risky: true }];
+  assert.deepEqual(applyApprovals(s, { lessLogs: true }), [{ type: 'aiMove', id: 'lessLogs' }]);
+  assert.deepEqual(s.automation.proposals.map((proposal) => proposal.id), ['overnight']);
+  const points = s.researchPoints;
+  assert.deepEqual(applyApprovals(s, { overnight: false }), []);
+  assert.deepEqual(s.automation.proposals, []);
+  assert.equal(s.researchPoints, points);
+});
+
+test('endTurn: at Leads the AI queues moves at the mark; with "go ahead" on it runs them there', () => {
+  const leads = (autoApprove) => {
+    const s = atEra(5);
+    s.compute.online = 500;
+    assert.equal(setAutomation(s, { levels: { choosing: 3 } }).ok, true);
+    s.automation.autoApprove = autoApprove;
+    return endTurn(s, {}, createRng(1));
+  };
+  const asked = leads(false);
+  assert.deepEqual(asked.state.automation.proposals.map((proposal) => proposal.id), ['overnight']);
+  const ahead = leads(true);
+  assert.deepEqual(ahead.state.automation.proposals, []);
+  assert.ok(ahead.events.some((event) => event.type === 'aiMove' && event.id === 'overnight'));
+  assert.equal(ahead.state.researchPoints - asked.state.researchPoints, OVERNIGHT_POINTS);
+  assert.ok(ahead.state.feed.some((post) => post.handle === '@your_model' && post.text.startsWith('went ahead without asking')));
+});
+
+test('endTurn: approvals are a free action and turning "go ahead" on runs what is waiting', () => {
+  const s = atLeads();
+  s.automation.proposals = [{ id: 'overnight', label: '', risky: false }];
+  const approved = applyActions(s, { aiApprovals: { overnight: true } }, miss);
+  assert.deepEqual(approved.errors, []);
+  assert.equal(approved.state.researchPoints - s.researchPoints, OVERNIGHT_POINTS);
+  assert.equal(approved.state.round?.moves ?? 0, s.round?.moves ?? 0);
+  const ahead = applyActions(s, { aiAutoApprove: true }, miss);
+  assert.equal(ahead.state.automation.autoApprove, true);
+  assert.deepEqual(ahead.state.automation.proposals, []);
+  assert.ok(ahead.state.feed.some((post) => post.handle === '@your_model'));
+  assert.ok(applyActions(s, { aiAutoApprove: 'yes' }, miss).errors.includes('aiAutoApprove must be true or false'));
+});
+
+test('"less logs" approved with no monitors left does nothing and is cleared', () => {
+  const s = atLeads();
+  s.automation.proposals = [{ id: 'lessLogs', label: '', risky: true }];
+  const debt = s.concealedDebt;
+  assert.deepEqual(applyApprovals(s, { lessLogs: true }), []);
+  assert.equal(s.concealedDebt, debt);
+  assert.equal(s.automation.checks.monitors, 0);
+  assert.deepEqual(s.automation.proposals, []);
+});
+
+test('"overnight" approved with no idle compute left does nothing and is cleared', () => {
+  const s = atLeads();
+  s.compute.online = 0;
+  s.automation.proposals = [{ id: 'overnight', label: '', risky: false }];
+  const points = s.researchPoints;
+  assert.deepEqual(applyApprovals(s, { overnight: true }), []);
+  assert.equal(s.researchPoints, points);
+  assert.deepEqual(s.automation.proposals, []);
+});
+
+test('after a lock-down the waiting proposals are withdrawn, even with "go ahead" on', () => {
+  const s = atLeads();
+  s.automation.checks.monitors = 1;
+  s.automation.proposals = [{ id: 'overnight', label: '', risky: false }, { id: 'lessLogs', label: '', risky: true }];
+  lockDown(s);
+  const points = s.researchPoints;
+  assert.deepEqual(applyApprovals(s, { overnight: true, lessLogs: true }), []);
+  assert.deepEqual(s.automation.proposals, []);
+  assert.equal(s.researchPoints, points);
+  assert.equal(s.automation.checks.monitors, 1);
+  s.automation.proposals = [{ id: 'overnight', label: '', risky: false }];
+  const ahead = applyActions(s, { aiAutoApprove: true }, miss);
+  assert.deepEqual(ahead.events.filter((event) => event.type === 'aiMove'), []);
+  assert.deepEqual(ahead.state.automation.proposals, []);
+});
+
+test('endTurn: the mark that ends the run in a quiet takeover queues and runs no AI moves', () => {
+  const takeover = (autoApprove) => {
+    const s = atLeads();
+    s.capability = 80;
+    s.alignmentDebt = 100;
+    s.automation.stage = 4; // the default constitution's accept-shutdown line adds a fourth step before the takeover
+    s.automation.autoApprove = autoApprove;
+    return endTurn(s, {}, hit);
+  };
+  const asked = takeover(false);
+  assert.equal(asked.state.ending, 'quietTakeover');
+  assert.deepEqual(asked.state.automation.proposals, []);
+  const ahead = takeover(true);
+  assert.equal(ahead.state.ending, 'quietTakeover');
+  assert.deepEqual(ahead.events.filter((event) => event.type === 'aiMove'), []);
+  assert.equal(ahead.state.feed.some((post) => post.handle === '@your_model'), false);
 });

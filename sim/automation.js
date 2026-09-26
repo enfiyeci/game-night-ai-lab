@@ -7,6 +7,7 @@ import {
   JOBS, HANDOFF_JOBS, LAST_TWO_JOBS, MAX_LEVEL, LEVEL_SPEED, AI_SHARE, CHECK_LOAD, PACK,
   REVIEWER_CAPACITY, MONITOR_CAPACITY, REVIEWER_MONTHLY, MONITOR_UNITS, AI_REVIEW_BLIND, RISK_SCALE,
   CLAIM_INFLATION, MAX_CHECK, HELD_BACK, TROUBLE_ERA, RUN_BONUS_PER_SPEED, POINTS_PER_SPEED, RUN_SKIP_SPEED,
+  PROPOSE_LEVEL, LESS_LOGS_CHANCE, LESS_LOGS_DEBT, OVERNIGHT_BONUS, OVERNIGHT_POINTS,
 } from './data/automation.js';
 
 // The work is done by the newest trained model, released or not.
@@ -182,4 +183,48 @@ export function automationTick(state, rng) {
 
 export function lockDown(state) {
   state.automation.lockedDown = true;
+}
+
+// The AI proposes its own moves only while choosing or direction is at Leads or above.
+const proposing = (state) => {
+  const levels = jobLevels(state);
+  return levels[3] >= PROPOSE_LEVEL || levels[4] >= PROPOSE_LEVEL;
+};
+
+export function aiProposals(state, rng) {
+  if (!proposing(state)) return [];
+  const out = [];
+  if (availableUnits(state) >= 1) out.push({ id: 'overnight', label: 'Run experiments overnight on idle compute', risky: false });
+  if (state.automation.checks.monitors > 0 && rng.chance(LESS_LOGS_CHANCE)) {
+    out.push({ id: 'lessLogs', label: 'Sample its own monitor logs less often, to free up compute', risky: true });
+  }
+  return out;
+}
+
+// Each answer applies at once: approved moves run, cancelled ones are dropped, unanswered ones keep waiting.
+// A move that no longer makes sense when approved (no idle compute, no monitors left) is dropped without effect,
+// and a lock-down withdraws everything that was waiting.
+export function applyApprovals(state, approvals = {}) {
+  if (!proposing(state)) {
+    state.automation.proposals = [];
+    return [];
+  }
+  const events = [];
+  const answered = (proposal) => state.automation.autoApprove || typeof approvals[proposal.id] === 'boolean';
+  for (const proposal of state.automation.proposals) {
+    if (!state.automation.autoApprove && approvals[proposal.id] !== true) continue;
+    if (proposal.id === 'overnight') {
+      if (availableUnits(state) < 1) continue;
+      if (state.activeRun) state.activeRun.bonus += OVERNIGHT_BONUS;
+      else state.researchPoints += OVERNIGHT_POINTS;
+    }
+    if (proposal.id === 'lessLogs') {
+      if (state.automation.checks.monitors === 0) continue;
+      state.automation.checks.monitors -= 1;
+      state.concealedDebt += LESS_LOGS_DEBT;
+    }
+    events.push({ type: 'aiMove', id: proposal.id });
+  }
+  state.automation.proposals = state.automation.proposals.filter((proposal) => !answered(proposal));
+  return events;
 }

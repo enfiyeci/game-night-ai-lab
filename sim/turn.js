@@ -37,14 +37,15 @@ import { applySplitEffects, makePledge, setComputeSplit, spotCover } from './spl
 import { ROUND_DAYS, monthsPerDay } from './time.js';
 import { TEAM_OF, teamBusyError } from './teams.js';
 import { feedPosts } from './feed.js';
-import { setAutomation, automationTick } from './automation.js';
+import { setAutomation, automationTick, aiProposals, applyApprovals } from './automation.js';
 
 export const MAX_MOVES = 2;
 const BUDGET_KEYS = ['training', 'security', 'product', 'talent'];
 // sideRng salts in sim/: 0 initial offers, 1 deals, 2 site opposition, 3 contracts, 4 queue,
 // 5 offers, 6 deliveries, 7 pooling, 8 board events (sim/data/boardEvents.js), 9 + card index for card landing days
-// (sim/events.js stampNewCards), and 1000 + site ID for builds.
+// (sim/events.js stampNewCards), 900 AI proposals, and 1000 + site ID for builds.
 const SITE_RNG_SALT_BASE = 1000;
+const AI_PROPOSAL_SALT = 900;
 
 export function setBudget(state, budget) {
   if (budget?.split && Object.hasOwn(budget.split, 'safety')) return { ok: false, error: 'the budget split has no safety slice: safety now runs on compute' };
@@ -121,6 +122,14 @@ function finishEnding(state, events, madeBefore = state.turn) {
   events.push({ type: 'ending', ending: state.ending });
 }
 
+// The AI's own moves; with "go ahead without asking" on, the player only hears about them afterwards.
+function pushAiMoves(state, events, moves) {
+  for (const e of moves) {
+    events.push(e);
+    if (state.automation.autoApprove) pushFeed(state, '@your_model', `went ahead without asking: ${e.id === 'lessLogs' ? 'sampled its own monitor logs less often' : 'ran experiments overnight'}`, 'feed');
+  }
+}
+
 function setDefaultConstitution(state) {
   setConstitution(state, {
     hardLines: ['no-wmd', 'honest', 'accept-shutdown'],
@@ -163,6 +172,11 @@ export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = 
     const r = setAutomation(state, actions.automation);
     if (!r.ok) errors.push(r.error);
   }
+  if (Object.hasOwn(actions, 'aiAutoApprove')) {
+    if (typeof actions.aiAutoApprove !== 'boolean') errors.push('aiAutoApprove must be true or false');
+    else state.automation.autoApprove = actions.aiAutoApprove;
+  }
+  pushAiMoves(state, events, applyApprovals(state, actions.aiApprovals ?? {}));
   if (actions.pledge != null) {
     const r = makePledge(state, actions.pledge);
     if (!r.ok) errors.push(r.error);
@@ -320,6 +334,8 @@ function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
     }
     for (const e of automationTick(state, rng)) events.push(e);
     if (!state.ending) {
+      state.automation.proposals = aiProposals(state, sideRng(state, AI_PROPOSAL_SALT));
+      if (state.automation.autoApprove) pushAiMoves(state, events, applyApprovals(state, {}));
       if (trainingFraction > 0) {
         const trained = advanceRunBy(state, rng, trainingFraction);
         if (trained?.type === 'runPaused') events.push(trained);
