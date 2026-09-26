@@ -6,6 +6,9 @@ import { endTurn } from '../sim/turn.js';
 import { BALANCE } from '../sim/balance.js';
 import { BOARD_MEMBERS, boardVoteThisRound, holdVote, misread, voteOrder } from '../sim/board.js';
 import { boardRead } from '../sim/boardRead.js';
+import { checkTurnEndings, eraGate } from '../sim/endings.js';
+import { resolveEvent } from '../sim/events.js';
+import { playerActions } from './helpers/policy.js';
 
 const at = (patch = {}) => Object.assign(createInitialState({ seed: 11 }), patch);
 
@@ -81,20 +84,64 @@ test('voteOrder puts the closest director last', () => {
   assert.equal(voteOrder(state).at(-1), 6);
 });
 
+test('voteOrder takes the round\'s turn, and the gate vote orders by the read the player saw', () => {
+  // Every director close to the cut-off, so the misread decides the order and it differs between turns 7 and 8.
+  const state = at({ era: 2, turn: 8, board: [56, 54, 57, 53, 55, 52, 58] });
+  assert.deepEqual(voteOrder(state), voteOrder(state, 8));
+  assert.notDeepEqual(voteOrder(state, 7), voteOrder(state, 8), 'precondition: the two turns order differently');
+  // eraGate runs after endTurn has moved the turn on, so the player saw turn 7's read.
+  eraGate(state);
+  assert.deepEqual(state.flags.lastBoardVote.order, voteOrder(state, 7));
+});
+
+test('an emergency vote is recorded as an emergency', () => {
+  const state = at({ era: 2, board: [70, 70, 70, 70, 70, 70, 70] });
+  state.pendingEvents = [{ id: 'boardRevolt' }];
+  assert.equal(resolveEvent(state, 'boardRevolt', 'face').ok, true);
+  assert.equal(state.flags.boardVoteDue, 'emergency');
+  assert.equal(boardVoteThisRound(state), true);
+  assert.equal(checkTurnEndings(state, { chance: () => false }), null);
+  assert.equal(state.flags.lastBoardVote.kind, 'emergency');
+  assert.equal(state.flags.boardVoteDue, undefined);
+  const promised = at();
+  promised.flags.boardVoteDue = true;
+  checkTurnEndings(promised, { chance: () => false });
+  assert.equal(promised.flags.lastBoardVote.kind, 'promise');
+});
+
+test('one meeting, one vote: an emergency vote in a gate round replaces the gate vote', () => {
+  // Era 2's last round, with the emergency-vote card pending: it is held in checkTurnEndings, so the gate holds none.
+  const state = at({ era: 2, turnInEra: 3, turn: 7, board: [80, 80, 80, 80, 80, 80, 80] });
+  state.pendingEvents = [{ id: 'boardRevolt' }];
+  assert.equal(boardVoteThisRound(state), true);
+  const out = endTurn(state, {}, createRng(3));
+  assert.equal(out.state.ending, null);
+  assert.equal(out.state.era, 3, 'the era gate still let the lab through');
+  assert.equal(out.state.flags.boardVotesHeld, 1);
+  assert.equal(out.state.flags.lastBoardVote.kind, 'emergency');
+  assert.equal(out.state.flags.prevBoardVote, undefined);
+});
+
 test('boardVoteThisRound is true exactly in rounds that hold a vote', () => {
-  const rng = createRng(1);
-  let state = createInitialState({ seed: 1 });
-  let checked = 0;
-  while (!state.ending && state.turn < 20) {
-    const expected = boardVoteThisRound(state);
-    const votesBefore = state.flags.boardVotesHeld ?? 0;
-    state = endTurn(state, {}, rng).state;
-    const held = (state.flags.boardVotesHeld ?? 0) > votesBefore;
-    if (held) assert.ok(expected, `vote held without forecast at turn ${state.turn}`);
-    if (expected && !held) assert.ok(state.ending, 'a forecast vote round without a vote must have ended the run first');
-    checked += 1;
+  // A player who trains, releases and raises survives to the board meetings (empty actions end the run by turn 8).
+  let votes = 0;
+  let forecasts = 0;
+  for (let seed = 1; seed <= 6; seed += 1) {
+    const rng = createRng(seed);
+    let state = createInitialState({ seed });
+    while (!state.ending && state.turn < 30) {
+      const expected = boardVoteThisRound(state);
+      const votesBefore = state.flags.boardVotesHeld ?? 0;
+      state = endTurn(state, playerActions(state), rng).state;
+      const held = (state.flags.boardVotesHeld ?? 0) > votesBefore;
+      if (held) assert.ok(expected, `vote held without forecast, seed ${seed}, turn ${state.turn}`);
+      if (expected && !held) assert.ok(state.ending || state.flags.insolvent, `forecast without a vote, ending or insolvency, seed ${seed}, turn ${state.turn}`);
+      if (held) votes += 1;
+      if (expected) forecasts += 1;
+    }
   }
-  assert.ok(checked > 4);
+  assert.ok(votes >= 6, `the runs reached ${votes} votes`);
+  assert.ok(forecasts >= votes);
 });
 
 test('endTurn stores last round\'s board and snapshot', () => {

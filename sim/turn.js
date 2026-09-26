@@ -12,7 +12,7 @@ import { updateServing, growUsers, applyEconomy, legalTick, projectBurn, raiseRo
 import { researchTechnique } from './techniques.js';
 import { rivalsTurn } from './rivals.js';
 import { boardSnapshot, boardVoteThisRound, holdVote, updateBoard } from './board.js';
-import { dealText, judgeBoardDeals, makeBoardDeals } from './boardDeals.js';
+import { dealVerdictPost, judgeBoardDeals, makeBoardDeals } from './boardDeals.js';
 import { boardRead } from './boardRead.js';
 import { judgeBoardPromise, makeBoardPromise } from './boardPromise.js';
 import { checkTurnEndings, eraGate, finalEnding } from './endings.js';
@@ -128,10 +128,10 @@ export function endTurn(prev, actions = {}, rng, observer = {}) {
   if (boardVoteThisRound(prev)) {
     for (const e of judgeBoardDeals(state)) {
       events.push(e);
-      pushFeed(state, '@board_minutes', e.kept ? `a director says the lab kept its word: ${dealText(e.member).toLowerCase()}.` : `a director says the lab broke its word. they are done.`, 'event'); // OWNER WRITES
+      pushFeed(state, '@board_minutes', dealVerdictPost(e.member, e.kept), 'event');
     }
   }
-  if (actions.boardDeals) {
+  if (actions.boardDeals?.length) { // the UI may send an empty list every round
     const r = makeBoardDeals(state, actions.boardDeals);
     if (r.ok) events.push({ type: 'boardDeals', members: actions.boardDeals.map((deal) => deal.member) });
     else errors.push(r.error);
@@ -337,7 +337,7 @@ export function endTurn(prev, actions = {}, rng, observer = {}) {
   state.turnInEra += 1;
   state.monthsElapsed += era.monthsPerTurn;
   if (!state.ending && state.turnInEra >= era.turns) {
-    eraGate(state);
+    eraGate(state, { voteHeld: (state.flags.boardVotesHeld ?? 0) > (prev.flags.boardVotesHeld ?? 0) });
     if (!state.ending) {
       if (state.era === 5) {
         if (state.flags.insolvent && state.cash <= 0) state.ending = 'acquihire';
@@ -367,7 +367,11 @@ export function endTurn(prev, actions = {}, rng, observer = {}) {
     pushFeed(state, '@leakwire', 'most of the lab signed a letter: reinstate the ceo or we walk. the board backed down.', 'event');
   }
   if (state.ending) {
-    for (const e of judgeBoardDeals(state, { final: true })) events.push(e);
+    // Deals made in this last round never had a next meeting: they stay open.
+    for (const e of judgeBoardDeals(state, { final: true, madeBefore: prev.turn })) {
+      events.push(e);
+      pushFeed(state, '@board_minutes', dealVerdictPost(e.member, e.kept), 'event');
+    }
     judgeEndingPromises(state);
     state.pendingEvents = state.pendingEvents.filter((pending) => pending.eventId !== 'promiseCall');
     for (const [id, warning] of Object.entries(state.warnings)) {

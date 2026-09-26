@@ -7,6 +7,8 @@ import { seat, boardVoteThisRound } from '../sim/board.js';
 import { boardRead } from '../sim/boardRead.js';
 import { eventsTick, resolveEvent } from '../sim/events.js';
 import { BOARD_EVENTS, pickBoardEvent } from '../sim/data/boardEvents.js';
+import { BALANCE } from '../sim/balance.js';
+import { playerActions } from './helpers/policy.js';
 
 const IDS = ['boardRequest', 'boardWobble', 'boardLeak', 'boardOped', 'boardBuyer', 'boardWashington'];
 const inWindow = (patch = {}) => Object.assign(createInitialState({ seed: 21 }), { era: 3, turnInEra: 1, turn: 9 }, patch);
@@ -85,22 +87,61 @@ test('the leak widens the read while pending and until the meeting if ignored', 
 });
 
 test('the board goes quiet in a close vote round, and only then', () => {
+  // Seed 8 with a player who survives to the meetings: three vote rounds, two of them close.
   const rng = createRng(8);
   let state = createInitialState({ seed: 8 });
-  while (!state.ending && state.turn < 20) {
-    state = endTurn(state, {}, rng).state;
+  let voteRounds = 0;
+  let quietRounds = 0;
+  while (!state.ending && state.turn < 30) {
+    state = endTurn(state, playerActions(state), rng).state;
     if (state.ending) break;
     const quiet = state.flags.boardQuiet === state.turn;
-    if (quiet) assert.ok(boardVoteThisRound(state));
+    if (!boardVoteThisRound(state)) {
+      assert.equal(quiet, false, `quiet outside a vote round at turn ${state.turn}`);
+      continue;
+    }
+    voteRounds += 1;
+    const unquiet = structuredClone(state);
+    delete unquiet.flags.boardQuiet;
+    assert.equal(quiet, boardRead(unquiet).tally.sure < BALANCE.boardPassMembers, `quiet must match a close read at turn ${state.turn}`);
+    if (quiet) quietRounds += 1;
   }
+  assert.ok(voteRounds > 0, 'the run reached a vote round');
+  assert.ok(quietRounds > 0, 'the run went quiet at least once');
 });
 
 test('board events never draw from the main rng', () => {
-  const play = () => {
-    const rng = createRng(13);
-    let state = createInitialState({ seed: 13 });
-    while (!state.ending && state.turn < 16) state = endTurn(state, {}, rng).state;
-    return [rng.next(), state.seenEvents.filter((id) => IDS.includes(id))];
-  };
-  assert.deepEqual(play(), play());
+  // eventsTick with and without the board cards (seen already), counting main-rng calls: board events come last in
+  // the tick and draw nothing, so the counts match while a board card lands in one run only.
+  let landed = 0;
+  for (let seed = 1; seed <= 20; seed += 1) {
+    const calls = (state) => {
+      const real = createRng(seed);
+      let count = 0;
+      const spy = new Proxy(real, { get: (target, key) => (typeof target[key] === 'function' ? (...args) => { count += 1; return target[key](...args); } : target[key]) });
+      eventsTick(state, spy);
+      return count;
+    };
+    const withBoard = Object.assign(createInitialState({ seed }), { era: 3, turnInEra: 1 + (seed % 2), turn: 9 + (seed % 2) });
+    const without = structuredClone(withBoard);
+    without.seenEvents = [...without.seenEvents, ...IDS];
+    assert.equal(calls(withBoard), calls(without), `seed ${seed}`);
+    assert.equal(without.pendingEvents.some((p) => IDS.includes(p.id)), false);
+    if (withBoard.pendingEvents.some((p) => IDS.includes(p.id))) landed += 1;
+  }
+  assert.equal(landed, 20, 'a board card landed in every in-window run');
+});
+
+test('the cleaned-up report coming out is a candor hit', () => {
+  const event = BOARD_EVENTS.find((e) => e.id === 'boardRequest');
+  let leaks = 0;
+  for (let seed = 1; seed <= 30; seed += 1) {
+    const state = inWindow({ seed, turn: 9 + seed });
+    const hits = state.flags.candorHits ?? 0;
+    event.card.choices.find((c) => c.id === 'tidy').effects(state, []);
+    const leaked = (state.boardLost ?? []).includes('candor');
+    assert.equal(state.flags.candorHits ?? 0, hits + (leaked ? 1 : 0), `seed ${seed}`);
+    if (leaked) leaks += 1;
+  }
+  assert.ok(leaks > 0, 'the report came out in at least one run');
 });
