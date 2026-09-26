@@ -82,6 +82,28 @@ const releaseState = (seed) => throughTurn(seed, 3);
 // The first era-3 turn with a training run under way, so the HUD shows a project and its progress bar.
 const midEra3 = (seed) => throughTurn(seed, 12, (s) => s.era === 3 && s.activeRun !== null);
 
+function dangerState(seed) {
+  const rng = createRng(seed);
+  let state = createInitialState({ seed });
+  while (!state.ending && state.turn < 20 && !(state.era >= 2 && inDangerZone(state))) {
+    const moves = state.turn === 0 ? [{
+      type: 'startRun',
+      recipe: {
+        sliders: { size: 'small', length: 'optimal', alignShare: 0.4 },
+        picks: { pre: [], mid: [], post: [] },
+      },
+    }] : [];
+    ({ state } = endTurn(state, {
+      budget: {
+        spend: 70,
+        split: { training: 0.5, safety: 0.05, security: 0.05, product: 0.05, talent: 0.35 },
+      },
+      moves,
+    }, rng));
+  }
+  return state;
+}
+
 export const SCENARIOS = {
   start,
   midEra3,
@@ -91,4 +113,5 @@ export const SCENARIOS = {
   // After Plan 2A merges, this scenario will stop with the era-5 summit open.
   summit: (seed) => throughTurn(seed, 20, (s) => s.era === 5),
   ending: (seed) => throughTurn(seed, 20),
+  danger: dangerState,
 };

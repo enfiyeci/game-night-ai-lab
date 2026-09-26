@@ -3,8 +3,17 @@ import { createGame } from './game.js';
 import { mountHud } from './hud.js';
 import { mountOffice } from './office.js';
 import { SCENARIOS } from './logic/scenarios.js';
+import { dealCards } from './logic/compute.js';
 import { openMenu } from './menu.js';
 import { openBudget } from './screens/budget.js';
+import {
+  mountCompany,
+  mountTurnSummary,
+  openDeals,
+  openEmergency,
+  openRaise,
+  openResearch,
+} from './screens/company.js';
 
 const params = new URLSearchParams(location.search);
 
@@ -42,6 +51,8 @@ const overlay = document.querySelector('#overlay');
 
 mountHud(hud, game);
 await mountOffice(office, fx, game).catch((error) => console.error(error));
+mountCompany(game, overlay);
+mountTurnSummary(overlay, game);
 
 function stagePoint(event) {
   const rect = stage.getBoundingClientRect();
@@ -61,11 +72,33 @@ async function openDebugRoute() {
     openBudget(game, overlay);
     return;
   }
-  if (location.hash !== '#menu') return;
+  if (location.hash === '#deals') {
+    openDeals(game, overlay);
+    return;
+  }
+  if (location.hash === '#raise') {
+    openRaise(game, overlay);
+    return;
+  }
+  if (location.hash === '#research') {
+    openResearch(game, overlay);
+    return;
+  }
+  if (location.hash === '#emergency') {
+    openEmergency(game, overlay);
+    return;
+  }
+  if (location.hash === '#summary') {
+    const card = dealCards(game.state).find((offer) => !offer.disabled);
+    if (card) game.addMove(card.move);
+    game.endTurn();
+    return;
+  }
+  if (location.hash !== '#menu' && location.hash !== '#company') return;
   const response = await fetch(`ui/assets/anchors-era${game.state.era}.json`);
   if (!response.ok) throw new Error(`could not load anchors for era ${game.state.era}`);
   const anchors = await response.json();
-  openMenu(game, anchors.floorMenu, { overlay });
+  openMenu(game, anchors.floorMenu, { overlay, companyOpen: location.hash === '#company' });
 }
 
 await openDebugRoute().catch((error) => console.error(error));
