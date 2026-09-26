@@ -29,6 +29,10 @@ only through search-result snippets, and those claims carry ⚠️ inline.
 6. `finance-planning/README.md`: game finance screens and real labs' compute plans (2026-09-25),
    behind the finance planner mockups. Subagent output; paywalled figures are second-hand.
 
+7. `lab-boards/real-lab-boards-2026-09-26.md`: who sits on the OpenAI and Anthropic boards (and why Google
+   DeepMind, Meta and xAI have none that can remove a leader), what each kind of member pushes on, and seven board
+   archetypes for the game. Subagent output; several sources partly read, flagged ⚠️ inline.
+
 ## Notable catches
 
 - `ai-lab-mechanics/notes/training_decisions.md` read every source only as a snippet; its
