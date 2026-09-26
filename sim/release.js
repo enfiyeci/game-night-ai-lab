@@ -14,7 +14,13 @@ export const MIN_RELEASE_GAP_TURNS = 2;
 export const MISALIGNMENT_CHECK_ERA = 3;
 export const MISALIGNMENT_ENDING_ERA = 4;
 
-export const modelName = ({ family, generation, size }) => `${family} ${generation} ${TIER_WORDS[size]}`;
+// The player can rename the four size words once for their lab (state.tierWords); a blank word falls back to the default.
+export const tierWord = (size, words) => {
+  const custom = typeof words?.[size] === 'string' ? words[size].trim() : '';
+  return custom || TIER_WORDS[size];
+};
+
+export const modelName = ({ family, generation, size, tierWords }) => `${family} ${generation} ${tierWord(size, tierWords)}`;
 
 const releaseOrder = (state, model) => model.releaseSequence ?? state.models.indexOf(model);
 
@@ -77,7 +83,7 @@ export function releaseModel(state, release, rng) {
   if (flags.includes('thirdPartyEval') || flags.includes('govEval')) exposeConcealed(state, 0.5);
 
   const generation = release.generation ?? 1;
-  const name = modelName({ family: release.family, generation, size: m.size });
+  const name = modelName({ family: release.family, generation, size: m.size, tierWords: state.tierWords });
   state.capability = Math.max(state.capability, m.capability);
   state.alignmentDebt += sum('ad');
   const launch = scoreLaunch(state, { capability: m.capability + REASONING_BONUS[reasoning], spec, flags, name, priceStance: release.price }, rng);

@@ -25,7 +25,7 @@ export function mountHud(root, game) {
       <div class="hud" aria-label="Current project">
         <div class="ctr cap"><div class="badge">${bubbleCount(run, 'capability')}</div><div class="tag">Capability</div></div>
         <div class="pill">
-          <div class="t">${pill.name}</div>
+          <div class="t"></div>
           <div class="s">${pill.status}</div>
           ${pill.progress === null ? '' : `<div class="bar"><i style="width:${Math.round(pill.progress * 100)}%"></i></div>`}
         </div>
@@ -43,6 +43,8 @@ export function mountHud(root, game) {
           <span class="k">Valuation</span><b>${money(state.valuation)}</b>
         </span>
       </button>`;
+
+    root.querySelector('.pill .t').textContent = pill.name; // player-typed names are text, never markup
 
     root.querySelector('.info').addEventListener('click', () => {
       expanded = !expanded;
