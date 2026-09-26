@@ -2,9 +2,17 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import { slotsFor } from '../sim/recipe.js';
+import { placeOrder, released } from '../sim/queue.js';
 import { createGame } from '../ui/game.js';
-import { cardCostWords, queuedRunProblem, recipePreview, sanitizeDraft } from '../ui/logic/actions.js';
-import { projectQueue } from '../ui/logic/compute.js';
+import {
+  budgetPreviewQueue,
+  cardCostWords,
+  queuedMoveProblem,
+  queuedRunProblem,
+  recipePreview,
+  sanitizeDraft,
+} from '../ui/logic/actions.js';
+import { opinions, projectQueue } from '../ui/logic/compute.js';
 import { SCENARIOS } from '../ui/logic/scenarios.js';
 
 const recipe = ({ size = 'small', length = 'optimal', alignShare = 0.2, pre = [], mid = [], post = [] } = {}) => ({
@@ -118,6 +126,68 @@ test('queuedRunProblem revalidates a queued run against the edited compute split
     computeSplit: { ...state.compute.split, safety: 0.5 },
     pledge: 0.2,
   }), 'not enough free compute');
+});
+
+test('budget preview keeps a pledge local and updates allocation advice', () => {
+  const state = createInitialState();
+  const queue = { budget: structuredClone(state.budget), moves: [] };
+  const snapshot = structuredClone(queue);
+  const withSafety = (safety) => budgetPreviewQueue(queue, {
+    budget: state.budget,
+    computeSplit: { ...state.compute.split, safety },
+    pledge: 0.2,
+    canPledge: true,
+  });
+
+  const low = projectQueue(state, withSafety(0.1));
+  const high = projectQueue(state, withSafety(0.2));
+  assert.deepEqual(queue, snapshot);
+  assert.equal(Object.hasOwn(queue, 'pledge'), false);
+  assert.equal(withSafety(0.1).pledge, 0.2);
+  assert.match(opinions(low, 'budget').find((item) => item.id === 'safety').text, /breaks/);
+  assert.match(opinions(high, 'budget').find((item) => item.id === 'safety').text, /keeps/);
+});
+
+test('queuedMoveProblem rejects contract actions that break queued runs, deals, or orders', () => {
+  const runState = createInitialState({ seed: 1 });
+  const spot = runState.compute.offers.find((offer) => offer.supplier === 'spot');
+  const runQueue = {
+    moves: [
+      { type: 'deal', offerId: spot.id },
+      { type: 'startRun', recipe: recipe({ size: 'large' }) },
+    ],
+  };
+  const runSnapshot = structuredClone(runState);
+  assert.equal(queuedMoveProblem(runState, runQueue), '');
+  assert.equal(queuedMoveProblem(runState, {
+    ...runQueue,
+    contractActions: [{ id: 'starter', action: 'scaleDown' }],
+  }), 'not enough free compute');
+  assert.deepEqual(runState, runSnapshot);
+
+  const dealState = createInitialState({ seed: 1 });
+  const verde = dealState.compute.offers.find((offer) => offer.supplier === 'verde');
+  dealState.cash = verde.upfront;
+  const dealQueue = { moves: [{ type: 'deal', offerId: verde.id }] };
+  assert.equal(queuedMoveProblem(dealState, dealQueue), '');
+  assert.match(queuedMoveProblem(dealState, {
+    ...dealQueue,
+    contractActions: [{ id: 'starter', action: 'break' }],
+  }), /cash/);
+
+  const orderState = createInitialState({ seed: 1 });
+  orderState.era = 3;
+  const order = { type: 'queueOrder', units: Math.min(10, released(orderState)), tier: 'prepaid' };
+  const funded = structuredClone(orderState);
+  funded.cash = Number.MAX_SAFE_INTEGER;
+  const upfront = placeOrder(funded, order).upfront;
+  orderState.cash = upfront;
+  const orderQueue = { moves: [order] };
+  assert.equal(queuedMoveProblem(orderState, orderQueue), '');
+  assert.equal(queuedMoveProblem(orderState, {
+    ...orderQueue,
+    contractActions: [{ id: 'starter', action: 'break' }],
+  }), 'not enough cash to prepay');
 });
 
 test('sanitizeDraft drops invalid picks and repairs sliders without mutating input', () => {
