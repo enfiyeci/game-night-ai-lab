@@ -3642,3 +3642,68 @@ button.dl-pill { font: inherit; font-size: 13px; font-weight: 900; color: var(--
 .racks-panel .compute-toggle { padding-top: 8px; }
 /* The desk phone sits above dialogs and could open an event card over the choice; it steps away until then. */
 .hazard-open .ev-phone, .hazard-open .ev-phone-button { display: none; }
+
+/* ---------- front door: endings wall, then the naming board (gn-title-music; docs/design/mockups/K2-title-menu.html#e1) ---------- */
+html.title-night { background: color-mix(in oklab, var(--ink) 96%, var(--sky)); }
+.title-sky { position: absolute; inset: 0; z-index: 0; background: radial-gradient(ellipse 70% 70% at 50% 45%, color-mix(in oklab, var(--ink) 78%, var(--sky)), color-mix(in oklab, var(--ink) 96%, var(--sky))); transition: opacity 1s ease; }
+html.title-waking .title-sky { opacity: 0; }
+html.title-night #office { filter: brightness(.36) saturate(.55); }
+html.title-waking #office { transition: filter 1s ease; }
+html.title-night #office [id^="person-"] { opacity: 0; }
+html.title-waking #office [id^="person-"] { transition: opacity .6s ease .4s; }
+html.title-night #fx,
+html.title-night #hud { opacity: 0; }
+html.title-waking #hud { transition: opacity .5s ease .6s; }
+.title-layer { position: absolute; inset: 0; z-index: 45; pointer-events: auto; }
+.title-wall,
+.title-naming { position: absolute; inset: 0; }
+
+/* the main menu: eleven ending stills and the title panel */
+.title-wall { background: color-mix(in oklab, var(--ink) 92%, var(--sky)); transition: opacity .5s ease, visibility 0s linear 0s; }
+.title-layer.on-naming .title-wall { opacity: 0; visibility: hidden; transition: opacity .5s ease, visibility 0s linear .5s; }
+.title-wall-grid { position: absolute; left: 24px; right: 24px; top: 24px; height: 560px; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(3, 1fr); gap: 12px; }
+.title-tile { position: relative; margin: 0; overflow: hidden; border-radius: 10px; background: color-mix(in oklab, var(--ink) 92%, var(--sky)); }
+.title-tile img { display: block; width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) blur(3px) brightness(.35); }
+.title-tile.found img { filter: none; }
+.title-tile figcaption { position: absolute; left: 0; right: 0; bottom: 0; padding: 22px 12px 9px; color: var(--paper); font-size: 15px; font-weight: 900; background: linear-gradient(transparent, color-mix(in oklab, var(--ink) 85%, transparent)); }
+.title-tile figcaption small { display: block; font-size: 11px; font-weight: 800; opacity: .8; }
+.title-tile-q { position: absolute; inset: 0; display: grid; place-items: center; color: color-mix(in oklab, var(--paper) 50%, transparent); font-size: 38px; font-weight: 900; }
+.title-tile-note { display: grid; place-items: center; padding: 12px; border: 2px dashed color-mix(in oklab, var(--paper) 25%, transparent); background: none; color: color-mix(in oklab, var(--paper) 70%, transparent); font-size: 14px; font-weight: 800; text-align: center; }
+.title-menu { left: 24px; right: 24px; top: 608px; height: 268px; padding: 30px 40px; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 30px; }
+.title-menu h1 { margin: 0; font-size: 78px; font-weight: 300; letter-spacing: -.03em; line-height: 1; }
+.title-sub { margin: 10px 0 0; font-size: 17px; font-weight: 700; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); }
+.title-sub b { color: var(--ink); font-weight: 900; }
+.title-actions { display: grid; gap: 12px; width: 330px; }
+.title-new { width: 100%; padding: 13px 0; font-size: 19px; }
+.title-links { display: flex; justify-content: center; gap: 26px; }
+.title-link { border: 0; padding: 4px 2px; font: inherit; font-size: 14px; font-weight: 800; color: color-mix(in oklab, var(--wood) 70%, var(--ink)); background: none; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+
+/* the naming scene: the board lowers into the dark office on its cables */
+.title-sign { position: absolute; inset: 0; width: 1440px; height: 900px; overflow: visible; pointer-events: none; }
+.title-board { transition: transform .9s cubic-bezier(.2, .8, .3, 1); }
+.title-layer.on-wall .title-board,
+.title-layer.leaving .title-board { transform: translateY(-560px); }
+.title-layer.leaving .title-board { transition: transform .9s cubic-bezier(.5, 0, .75, 0); }
+.title-face { stroke: color-mix(in oklab, var(--ink) 30%, transparent); stroke-width: .8; stroke-linejoin: round; }
+.title-front { fill: color-mix(in oklab, var(--wood) 80%, var(--paper)); }
+.title-inset { fill: color-mix(in oklab, var(--wood) 70%, var(--paper)); }
+.title-top { fill: color-mix(in oklab, var(--wood) 62%, var(--paper)); }
+.title-end { fill: color-mix(in oklab, var(--wood) 55%, var(--ink)); }
+.title-cable { stroke: color-mix(in oklab, var(--ink) 55%, var(--paper)); stroke-width: 2; }
+.title-kicker { font-family: "Nunito", sans-serif; font-size: 13px; font-weight: 900; letter-spacing: 3px; fill: color-mix(in oklab, var(--wood) 40%, var(--ink)); }
+.title-name { font-family: "Nunito", sans-serif; font-size: 58px; font-weight: 900; fill: color-mix(in oklab, var(--ink) 88%, var(--wood)); }
+.title-name.empty { fill: color-mix(in oklab, var(--wood) 48%, var(--ink)); }
+.title-panel { left: 500px; bottom: 64px; width: 440px; padding: 16px 20px 12px; text-align: center; transition: opacity .3s ease .4s; }
+.title-layer.on-wall .title-panel,
+.title-layer.leaving .title-panel { opacity: 0; transition: opacity .3s ease; }
+.title-field { display: block; text-align: left; }
+.title-field span { display: block; margin-bottom: 6px; font-size: 12px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: color-mix(in oklab, var(--ink) 60%, var(--paper)); }
+.title-field input { width: 100%; padding: 10px 14px; border: 2px solid color-mix(in oklab, var(--wood) 55%, var(--paper)); border-radius: 10px; font: inherit; font-size: 19px; font-weight: 800; color: var(--ink); background: var(--paper); }
+.title-field input::placeholder { color: color-mix(in oklab, var(--ink) 38%, var(--paper)); }
+.title-field input:focus-visible,
+.title-link:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+.title-start { width: 100%; margin-top: 12px; padding: 13px 0; font-size: 19px; }
+.title-back { margin-top: 8px; }
+@media (prefers-reduced-motion: reduce) {
+  .title-board, .title-wall, .title-panel, html.title-waking #office, html.title-waking #hud, html.title-waking #office [id^="person-"], .title-sky { transition: none; }
+}

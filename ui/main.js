@@ -37,6 +37,8 @@ import { mountHazard } from './screens/hazard.js';
 import { mountAutomation, openAutomation } from './screens/automation.js';
 import { mountScreenWall } from './screens/screenwall.js';
 import { mountRacks } from './screens/racks.js';
+import { mountTitle } from './screens/title.js';
+import { titleShows } from './logic/title.js';
 
 const params = new URLSearchParams(location.search);
 
@@ -80,7 +82,22 @@ game.clock = createClock(game);
 await mountOffice(office, fx, game).catch((error) => console.error(error));
 game.clock.watch(overlay);
 if (params.has('paused')) game.clock.setSpeed(0);
+// The title screen shows on a plain visit; debug links (?scenario=, a #route, ?notitle) go straight into the game.
+const showTitle = titleShows({ search: location.search, hash: location.hash, ending: game.state.ending });
+if (showTitle) game.clock.pause('title');
 game.clock.start();
+const collection = createCollection(browserStorage());
+if (showTitle) {
+  mountTitle(game, {
+    stage,
+    overlay,
+    collection,
+    onStart: () => {
+      game.clock.resume('title');
+      document.dispatchEvent(new CustomEvent('ai-lab:start')); // the guided intro starts here
+    },
+  });
+}
 mountCompany(game, overlay);
 mountRecipe(game, overlay);
 mountRelease(game, overlay);
@@ -109,7 +126,7 @@ function browserStorage() {
 
 // Play again starts a fresh run: drop the debug seed and scenario so the run counter picks the next seed.
 const ending = mountEnding(game, overlay, {
-  collection: createCollection(browserStorage()),
+  collection,
   onPlayAgain: () => location.assign(location.pathname),
   lumenNote: (state) => lumenEpilogue(state),
 });
