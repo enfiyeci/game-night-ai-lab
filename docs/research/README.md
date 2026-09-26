@@ -26,6 +26,9 @@ only through search-result snippets, and those claims carry ⚠️ inline.
    "ran out of money" endings (Inflection, Adept, Character.AI, Stability AI), used to
    calibrate the out-of-money ending.
 
+6. `finance-planning/README.md`: game finance screens and real labs' compute plans (2026-09-25),
+   behind the finance planner mockups. Subagent output; paywalled figures are second-hand.
+
 ## Notable catches
 
 - `ai-lab-mechanics/notes/training_decisions.md` read every source only as a snippet; its
