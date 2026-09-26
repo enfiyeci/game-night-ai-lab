@@ -13,6 +13,7 @@ import { researchTechnique } from './techniques.js';
 import { rivalsTurn } from './rivals.js';
 import { boardSnapshot, boardVoteThisRound, holdVote, updateBoard } from './board.js';
 import { dealText, judgeBoardDeals, makeBoardDeals } from './boardDeals.js';
+import { boardRead } from './boardRead.js';
 import { judgeBoardPromise, makeBoardPromise } from './boardPromise.js';
 import { checkTurnEndings, eraGate, finalEnding } from './endings.js';
 import { recordAdvisors } from './advisors.js';
@@ -355,6 +356,10 @@ export function endTurn(prev, actions = {}, rng, observer = {}) {
     state.compute.offers = generateOffers(state, sideRng(state, 5));
     updateServing(state);
     state.burnPlanned = projectBurn(state);
+  }
+  // The board goes quiet in a close vote round (spec §5.4, P5): every band widens while the UI shows the quiet panel.
+  if (!state.ending && boardVoteThisRound(state) && boardRead(state).tally.sure < BALANCE.boardPassMembers) {
+    state.flags.boardQuiet = state.turn;
   }
   if (state.flags.staffLetterPending) {
     delete state.flags.staffLetterPending;
