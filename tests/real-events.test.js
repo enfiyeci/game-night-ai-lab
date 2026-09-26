@@ -8,6 +8,9 @@ import { EVENTS_6C } from '../sim/data/events6c.js';
 import { REAL_EVENTS } from '../sim/data/realEvents.js';
 import { EVENT_TIMING } from '../sim/data/eventTiming.js';
 import { ROUND_DAYS } from '../sim/time.js';
+import { startRun, advanceRun } from '../sim/training.js';
+import { activateReleases, releaseModel } from '../sim/release.js';
+import { shipDelay } from '../ui/logic/release.js';
 
 const text = JSON.parse(readFileSync(new URL('../docs/superpowers/plans/2026-09-26-real-event-cards-text.json', import.meta.url)));
 const no = { next: () => 0.99, int: () => 0, chance: () => false, pick: (a) => a[0], normal: (m) => m };
@@ -114,8 +117,8 @@ const reactionCases = [
     (s) => { s.models.push(liveModel({ flags: ['scraped'] })); },
     (s) => { s.era = 3; s.models.push(liveModel({ flags: ['scraped'] })); }],
   ['redTeamLie',
-    (s) => { s.models.push({ id: 'r', capability: 30, active: true, activated: false, activeFromTurn: s.turn, flags: ['fullEval'] }); },
-    (s) => { s.models.push({ id: 'r', capability: 30, active: true, activated: true, activeFromTurn: s.turn, flags: ['fullEval'] }); }],
+    (s) => { s.models.push({ id: 'r', capability: 30, active: true, activated: true, releasedTurn: s.turn, activeFromTurn: s.turn, flags: ['fullEval'] }); },
+    (s) => { s.models.push({ id: 'r', capability: 30, active: true, activated: true, releasedTurn: s.turn - 1, activeFromTurn: s.turn, flags: ['fullEval'] }); }],
   ['exitGag',
     (s) => { s.era = 2; s.seenEvents.push('safetyQuits'); },
     (s) => { s.era = 2; }],
@@ -272,4 +275,63 @@ test('holding your release after a rival ships does not heat the race', () => {
   s.pendingEvents.push({ id: 'rivalShips' });
   resolveEvent(s, 'rivalShips', 'hold');
   assert.equal(s.raceHeat, heat);
+});
+
+// Review round 2 fixes (both Codex passes, 2026-09-26).
+const trainRng = { next: () => 0.5, int: () => 0, chance: (p) => p > 0.5, normal: (m) => m };
+function trainedModel(era) {
+  // Trained on the era-1 starter lab, then released in the era the card needs.
+  const s = createInitialState();
+  s.cash = 1000;
+  startRun(s, { sliders: { size: 'medium', length: 'optimal', alignShare: 0.15 }, picks: { pre: [], mid: [], post: [] } });
+  advanceRun(s, trainRng);
+  s.era = era;
+  s.pendingModel.capability = 40;
+  return s;
+}
+const ship = (s, picks) => releaseModel(s, { picks: [...picks, 'channel-app'], price: 'market', reasoning: 'off', family: 'Kestrel', generation: 1 }, trainRng);
+
+test('the red team card holds back its model even after the round mark made it live', () => {
+  const s = trainedModel(2);
+  assert.equal(ship(s, ['eval-third']).ok, true);
+  const model = s.models.at(-1);
+  assert.equal(row('redTeamLie').trigger(s), true);
+  s.turn += 1; // the round mark: the card is answered after the model goes live
+  activateReleases(s);
+  assert.equal(model.activated, true);
+  s.pendingEvents.push({ id: 'redTeamLie' });
+  resolveEvent(s, 'redTeamLie', 'delay');
+  assert.equal(model.activated, false);
+  assert.equal(model.activeFromTurn, s.turn + 1);
+  s.turn += 1;
+  activateReleases(s);
+  assert.equal(model.activated, true);
+});
+
+test('a full-eval release that goes live at once still raises the red team card', () => {
+  const s = trainedModel(1);
+  assert.equal(ship(s, ['eval-full']).ok, true);
+  assert.equal(s.models.at(-1).activated, true);
+  assert.equal(row('redTeamLie').trigger(s), true);
+});
+
+test('after signing the testing agreement every release waits a round, and the preview says so', () => {
+  const s = trainedModel(2);
+  const research = s.researchPoints;
+  s.pendingEvents.push({ id: 'preReleaseTests' });
+  resolveEvent(s, 'preReleaseTests', 'sign');
+  assert.equal(s.researchPoints, research);
+  assert.equal(shipDelay(s, ['eval-full', 'channel-app']), 1);
+  const turn = s.turn;
+  assert.equal(ship(s, ['eval-full']).ok, true);
+  assert.equal(s.models.at(-1).activeFromTurn, turn + 1);
+});
+
+test('the government test card does not make a signed lab wait twice', () => {
+  const s = trainedModel(3);
+  s.flags.govTesting = true;
+  assert.equal(shipDelay(s, ['eval-gov', 'channel-app']), 1);
+  const turn = s.turn;
+  assert.equal(ship(s, ['eval-gov']).ok, true);
+  assert.equal(s.models.at(-1).activeFromTurn, turn + 1);
 });

@@ -22,6 +22,11 @@ export const tierWord = (size, words) => {
 
 export const modelName = ({ family, generation, size, tierWords }) => `${family} ${generation} ${tierWord(size, tierWords)}`;
 
+// Rounds a release waits: its cards, the trained model's own delay, and one more for the government's tests once the
+// lab signed the testing agreement (the preReleaseTests card), unless an eval-gov card already waits for them.
+export const releaseWait = (state, cards) => cards.reduce((sum, card) => sum + (card.cost.turns ?? 0), state.pendingModel?.releaseDelay ?? 0)
+  + (state.flags.govTesting && !cards.some((card) => (card.effects.flags ?? []).includes('govEval')) ? 1 : 0);
+
 const TIER_WORD_MAX = 16;
 // The release move can carry the player's four size words (named once, on the first release).
 export const cleanTierWords = (words) => Object.fromEntries(Object.keys(TIER_WORDS).map((size) => [
@@ -82,7 +87,7 @@ export function releaseModel(state, release, rng) {
 
   const effects = cards.map((c) => c.effects);
   const sum = (key) => effects.reduce((s, e) => s + (e[key] ?? 0), 0);
-  const delay = cards.reduce((s, c) => s + (c.cost.turns ?? 0), m.releaseDelay ?? 0);
+  const delay = releaseWait(state, cards);
   const spec = Object.assign({}, m.spec, ...effects.map((e) => e.spec ?? {}), { reasoning });
   const flags = [...new Set([...m.flags, ...effects.flatMap((e) => e.flags ?? [])])];
   if (spec.channel === 'enterprise' && flags.includes('agentic')) spec.channel = 'agent';

@@ -1,6 +1,6 @@
 import { roundsToWords } from './format.js';
 import { cardById, pickableCards, resolveCards, slotsFor } from '../../sim/recipe.js';
-import { modelName, releaseModel, tierWord } from '../../sim/release.js';
+import { modelName, releaseModel, releaseWait, tierWord } from '../../sim/release.js';
 import { createRng } from '../../sim/rng.js';
 import { CHANNEL, PRICE_STANCE, REASONING, REVENUE_PER_USER, USAGE, margin, servingCost } from '../../sim/serving.js';
 import { applyProjectedMove, projectQueue } from './compute.js';
@@ -44,7 +44,7 @@ export function servingPerMillion(spec, era) {
 export const perMillion = (value) => `$${value.toFixed(2)}`;
 
 export function shipDelay(state, picks) {
-  return cardsFor(state, picks).reduce((sum, card) => sum + (card.cost.turns ?? 0), state.pendingModel?.releaseDelay ?? 0);
+  return releaseWait(state, cardsFor(state, picks));
 }
 
 // A ship delay counts hidden rounds; say it in story time for the current era.

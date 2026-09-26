@@ -316,7 +316,7 @@ const hasAiWork = (state) => jobLevels(state).some((level) => level > 0);
 const hardLine = (state) => state.constitution.hardLines.at(-1);
 const copyrightCase = (state) => state.legalCases.find((legalCase) => legalCase.source === 'copyright');
 const gasSite = (state) => state.power.sites.find((site) => site.source === 'gas' && site.online);
-const evaluatedWaiting = (model) => model.active && !model.activated && model.capability >= 30
+const evaluatedRelease = (state, model) => model.active && model.releasedTurn === state.turn && model.capability >= 30
   && (model.flags ?? []).some((flag) => flag === 'fullEval' || flag === 'thirdPartyEval');
 const strandedSite = (state) => state.power.sites.find((site) => !site.online && site.arrivesTurn >= state.turn + 3);
 
@@ -402,12 +402,23 @@ export const REAL_EVENTS = [
   }),
   makeEvent('redTeamLie', {
     fallback: 'omit',
-    // A release that ran full or outside evals, released but not yet live: the red team's finding lands in between.
-    trigger: (state) => state.models.some(evaluatedWaiting),
+    // A release this round that ran full or outside evals. The card is answered after the round mark, when the model
+    // may already be live, so it remembers which model the red team tested.
+    trigger(state) {
+      const index = state.models.findIndex((model) => evaluatedRelease(state, model));
+      if (index < 0) return false;
+      state.flags.redTeamModel = index;
+      return true;
+    },
     effects: {
       publish(state) { state.publicTrust -= 2; state.staffTrust += 3; },
       delay(state) {
-        for (const model of state.models.filter(evaluatedWaiting)) model.activeFromTurn = Math.max(model.activeFromTurn ?? 0, state.turn) + 1;
+        // Pulled back (or held) for one more round while its tools are locked down.
+        const model = state.models[state.flags.redTeamModel];
+        if (model?.active) {
+          model.activated = false;
+          model.activeFromTurn = Math.max(model.activeFromTurn ?? 0, state.turn) + 1;
+        }
         state.alignmentDebt -= 2;
       },
       omit(state) { state.concealedDebt += 3; },
@@ -424,8 +435,8 @@ export const REAL_EVENTS = [
   }),
   anchor('preReleaseTests', 2, 2, 0.66, 'decline', {
     sign(state) {
-      state.govFavor.us += 6; state.security += 4; state.flags.govTesting = true; state.researchPoints -= 10;
-      if (state.pendingModel) state.pendingModel.releaseDelay = (state.pendingModel.releaseDelay ?? 0) + 1;
+      // Every later release waits a round for the government's tests (sim/release.js releaseWait).
+      state.govFavor.us += 6; state.security += 4; state.flags.govTesting = true;
     },
     after(state) { state.govFavor.us += 1; },
     decline(state) { state.govFavor.us -= 5; },
