@@ -155,8 +155,8 @@ export function mountHazard(game, { stage, overlay }) {
     buttons[0].focus();
   }
 
-  // Another dialog or an event card already up goes first; the card opens when it closes.
-  const busy = () => Boolean(overlay.querySelector('.dialog-layer, .event-layer'));
+  // Another dialog, an event card or the screen wall already up goes first; the card opens when it closes.
+  const busy = () => Boolean(overlay.querySelector('.dialog-layer, .event-layer, .screenwall-layer'));
   const shouldOpen = () => Boolean(game.state.pendingModel?.hazard) && !game.state.ending && !layer && !busy();
 
   function check() {
