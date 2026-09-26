@@ -26,8 +26,8 @@ real events only.
 `ui/data/eventCopy.js` and timing in `sim/data/eventTiming.js`, like the real-event cards. Each card should say plainly
 in the research record which part is documented and which part is the game's invention.
 
-**One consequence for the demo.** With real events only, era 5 has no event cards of its own from this pass; its
-content comes from the summit and the other era 5 lanes.
+**One consequence for the demo.** Era 5 is set after today, so with real events only its seven cards reuse the most
+recent real events that match its themes (2025–2026); see `docs/research/era-events/era5/`.
 
 ## Stolen model weights (parked 2026-09-26)
 
