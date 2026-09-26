@@ -118,14 +118,6 @@ function officeShot(svgText, anchors, shot) {
     const [x, y] = heads[shot.confetti.who];
     fx += confetti(x, y - 50, shot.confetti.at);
   }
-  if (shot.leave) {
-    // each person who leaves takes their desk light with them: a soft shadow settles where they sat
-    shot.leave.order.forEach((role, i) => {
-      const [x, y] = heads[role];
-      const at = shot.leave.from + i * shot.leave.step;
-      fx += `<ellipse cx="${x}" cy="${y + 34}" rx="92" ry="60" style="fill:var(--ink);filter:blur(14px)" ${keysAttr([[at, { o: 0 }], [at + 0.5, { o: 0.45 }]])}/>`;
-    });
-  }
   if (shot.robot) {
     // Lumen hovers beside the CEO desk, or drifts from one desk (from) to another (to) during move: [start, end]
     const { from, to, move } = shot.robot;
@@ -163,7 +155,7 @@ function viewBox({ x, y, s }, frame) {
 
 function applyValues(el, v, still) {
   if ('o' in v) el.style.opacity = v.o;
-  if (still) return; // reduced motion: things appear and disappear, but nothing moves
+  // reduced motion: keys arrive stepped (see sampleKeys), so things jump to their places rather than travel there
   if ('x' in v || 'y' in v || 's' in v || 'r' in v) {
     el.style.transformBox = 'fill-box';
     el.style.transformOrigin = el.dataset.origin ?? 'center';
@@ -257,27 +249,43 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
     }
   }
 
-  // The office art does not label its people by role, so each seated figure (body and hands are separate groups) is
-  // matched to the nearest head anchor, measured in the SVG's own coordinates once it is in the page.
+  // The office art does not label its people by role, and some eras seat people at desks with no anchor. So the seated
+  // figures (a front-facing person is two groups, body and hands) are measured in the SVG's own coordinates once it is
+  // in the page, grouped into people, and matched to the nearest desk anchor. Everyone then leaves on a beat of their
+  // own, spread evenly over the same span in every era: unanchored staff first, then the roles in leave.order.
   function keyLeavers(node) {
     node.keyedLeave = true;
-    const heads = anchors.heads;
+    const { heads } = anchors;
     const toSvg = node.svg.getScreenCTM()?.inverse();
     if (!toSvg) return;
+    const people = [];
     for (const g of node.svg.querySelectorAll('.sitter')) {
       const box = g.getBBox();
-      const m = toSvg.multiply(g.getScreenCTM());
-      const c = new DOMPoint(box.x + box.width / 2, box.y + box.height / 2).matrixTransform(m);
+      const c = new DOMPoint(box.x + box.width / 2, box.y + box.height / 2).matrixTransform(toSvg.multiply(g.getScreenCTM()));
+      const near = people.find((p) => Math.hypot(p.x - c.x, p.y - c.y) < 75);
+      if (near) near.groups.push(g);
+      else people.push({ x: c.x, y: c.y, groups: [g] });
+    }
+    for (const p of people) {
       let best = null;
       for (const [role, [hx, hy]] of Object.entries(heads)) {
-        const d = Math.hypot(c.x - hx, c.y - (hy + 40));
-        if (d < 130 && (!best || d < best.d)) best = { role, d };
+        const d = Math.hypot(p.x - hx, p.y - (hy + 40));
+        if (d < 110 && (!best || d < best.d)) best = { role, d };
       }
-      const i = best ? node.leave.order.indexOf(best.role) : -1;
-      if (i < 0) continue;
-      const at = node.leave.from + i * node.leave.step;
-      node.keyed.push([g, [[at, { o: 1 }], [at + 0.4, { o: 0 }]]]);
+      p.rank = best ? node.leave.order.indexOf(best.role) : -1;
     }
+    const leaving = [...people].sort((a, b) => a.rank - b.rank);
+    const span = node.leave.step * (node.leave.order.length - 1);
+    leaving.forEach((p, k) => {
+      const at = node.leave.from + (leaving.length > 1 ? (k * span) / (leaving.length - 1) : 0);
+      for (const g of p.groups) node.keyed.push([g, [[at, { o: 1 }], [at + 0.4, { o: 0 }]]]);
+      // their desk light goes with them: a soft shadow settles where they sat
+      const shade = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+      Object.entries({ cx: p.x, cy: p.y, rx: 92, ry: 60 }).forEach(([k2, v]) => shade.setAttribute(k2, v));
+      shade.setAttribute('style', 'fill:var(--ink);filter:blur(14px);opacity:0');
+      node.svg.lastElementChild.before(shade);   // under the film's own layer (Lumen, bubbles), over the room
+      node.keyed.push([shade, [[at, { o: 0 }], [at + 0.5, { o: 0.45 }]]]);
+    });
   }
 
   function render(t) {

@@ -152,6 +152,36 @@ def stamps(count, step):
     return run(stamp, count, step)
 
 
+def backups(offset, until):
+    """One soft ping per backup of the model, on the globe's schedule (tools/endings/blender/globe.py, backup_time,
+    53 data centres), for clip seconds offset..until. Returned relative to offset."""
+    n = 53
+    times = [0.4 + 10.5 * (i / n) ** 0.55 - offset for i in range(n)]
+    times = [t for t in times if 0 <= t < until - offset]
+    out = np.zeros(int((until - offset + 0.5) * SR))
+    for k, t in enumerate(times):
+        clip = tone([1568, 1760, 2093, 1976][k % 4], 0.3, 10, 0.03)
+        i = int(t * SR)
+        out[i:i + len(clip)] += clip[: len(out) - i]
+    return out
+
+
+def walkout(d):
+    """People leaving over a stretch of time: chairs rolling back and footsteps, irregular, not one sound per person."""
+    out = np.zeros(int(d * SR))
+    at = 0.1
+    while at < d - 0.4:
+        roll = lowpass(noise(int(0.18 * SR)), 500) * env(int(0.18 * SR), 0.02, 0.08) * 0.05
+        i = int(at * SR)
+        out[i:i + len(roll)] += roll[: len(out) - i]
+        for j in range(3):
+            f = lowpass(noise(int(0.06 * SR)), 900) * np.exp(-np.linspace(0, 8, int(0.06 * SR))) * 0.1
+            k = int((at + 0.2 + j * 0.11) * SR)
+            out[k:k + len(f)] += f[: len(out) - k]
+        at += rng.uniform(0.45, 0.8)
+    return out
+
+
 def pings(count, step):
     """Soft pings, one per new copy, alternating left and right in a mono mix by pitch."""
     return run(lambda k: tone([1568, 1760, 2093, 1976][k % 4], 0.35, 9, 0.035), count, step)
@@ -330,7 +360,7 @@ def whir(d):
 SOUNDS = {"room": room, "party": party, "tone": high_tone, "chime": chime, "tick": tick, "gulls": gulls, "door": door,
           "beeps": beeps, "hold": hold, "fridge": fridge, "flicker": flicker, "notify": notify, "typing": typing, "city": city,
           "powerdown": powerdown, "roomtone": roomtone, "creak": creak, "hum": hum, "clunk": clunk, "fansdown": fansdown,
-          "wind": wind, "emergency": emergency, "whir": whir, "sting": sting, "flare": flare, "pen": pen, "crickets": crickets, "chord": chord}
+          "wind": wind, "emergency": emergency, "whir": whir, "sting": sting, "flare": flare, "pen": pen, "crickets": crickets, "chord": chord, "walkout": walkout}
 AMBIENT = {"room", "party", "tone", "gulls", "beeps", "city", "roomtone", "wind", "emergency", "fridge", "crickets", "hum"}
 RUNS = {"chimes": chimes, "flaps": flaps, "steps": steps, "stamps": stamps, "pings": pings}   # [name, at, count, step]
 
@@ -359,6 +389,8 @@ def build(film_id):
             name, at = cue[0], cue[1]
             if name in RUNS:
                 clip = RUNS[name](cue[2], cue[3])
+            elif name == "backups":   # [name, at, clip offset of this shot, clip seconds it runs to]
+                clip = backups(cue[2], cue[3])
             else:
                 until = cue[2] if len(cue) > 2 else (shot_dur if name in AMBIENT else None)
                 clip = SOUNDS[name]((min(until, shot_dur) - at) if until else 2.0)

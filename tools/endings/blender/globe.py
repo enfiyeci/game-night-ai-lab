@@ -129,13 +129,19 @@ DATA_CENTRES = [(-77.5, 39), (-73.6, 45.5), (-96.8, 32.8), (-100.4, 20.6), (-46.
                 (-17.4, 14.7), (-0.2, 5.6), (39.3, -6.8), (32.6, 0.3), (18.4, -33.9), (58.4, 23.6), (69.2, 34.5)]
 
 
+def backup_time(i, n):
+    """When backup i of n appears, in seconds into the take: the gaps shrink, so copies come faster and faster.
+    tools/endings/make_sound.py ("backups") plays one ping on the same schedule; keep the two in step."""
+    return 0.4 + 10.5 * (i / n) ** 0.55
+
+
 def variant_backups():
     """Backups of the model placed quietly in data centres: cool dots blink on, faster and faster, and keep coming."""
     sites = DATA_CENTRES[:]
     rng.shuffle(sites)
     dots = []
     for i, (lo, la) in enumerate(sites):
-        t_on = 0.4 + 10.5 * (i / len(sites)) ** 1.6   # slow at first, then more every night
+        t_on = backup_time(i, len(sites))   # slow at first, then more every night
         dots.append(dict(lon=lo, lat=la, t_on=t_on, colA="#9FC6EA", colB="#9FC6EA", t_sw=999))
     return dict(dots=dots, seconds=11.5, view=(-8, 24), spin=14)
 
