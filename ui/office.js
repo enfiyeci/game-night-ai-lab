@@ -60,6 +60,12 @@ async function loadEra(era) {
   const svg = documentNode.documentElement;
   svg.classList.add('room', 'office-room');
   svg.dataset.era = `${era}`;
+  const ceo = svg.querySelector('#person-ceo');
+  if (ceo) {
+    ceo.setAttribute('tabindex', '0');
+    ceo.setAttribute('role', 'button');
+    ceo.setAttribute('aria-label', 'Your monitor: the encyclopedia page about your models');
+  }
   return { svg, anchors: anchorsResponse };
 }
 

@@ -17,6 +17,7 @@ export function createGame({ seed = 1, state } = {}) {
   const rng = createRng(seed);
   let actions = initialQueue(currentState.budget);
   const subscribers = new Set();
+  const rivalReleases = [];
 
   return {
     get state() {
@@ -24,6 +25,9 @@ export function createGame({ seed = 1, state } = {}) {
     },
     get queue() {
       return actions;
+    },
+    get rivalReleases() {
+      return rivalReleases.map((release) => ({ ...release }));
     },
     setBudget(budget) {
       const candidate = structuredClone(currentState);
@@ -48,9 +52,13 @@ export function createGame({ seed = 1, state } = {}) {
       return { ok: true };
     },
     endTurn() {
+      const turn = currentState.turn;
       const update = runTurn(currentState, actions, rng);
       currentState = update.state;
       actions = initialQueue(actions.budget);
+      for (const event of update.events) {
+        if (event.type === 'rivalRelease') rivalReleases.push({ turn, id: event.id });
+      }
       const notification = { state: currentState, events: update.events, errors: update.errors };
       for (const subscriber of subscribers) subscriber(notification);
       return { events: update.events, errors: update.errors };

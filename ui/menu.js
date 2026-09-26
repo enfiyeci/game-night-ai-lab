@@ -14,6 +14,7 @@ const ITEMS = [
   { id: 'constitution', label: 'Amend the constitution' },
   { id: 'meeting', label: 'Take a meeting', unavailable: (state) => !state.meeting && 'No meeting is scheduled' },
   { id: 'company', label: 'Company', free: true, submenu: true },
+  { id: 'history', label: 'Lab history', free: true, unavailable: (_state, game) => game.state.models.length === 0 && 'Nothing released yet' },
   { divider: true },
   { id: 'endTurn', label: 'End turn', free: true },
 ];
