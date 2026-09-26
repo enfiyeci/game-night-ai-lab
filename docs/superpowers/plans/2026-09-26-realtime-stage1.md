@@ -902,3 +902,14 @@ Round 2: straight APPROVED. Adversarial REVISE with 3 findings, all fixed in ad0
 Round 3 (cap): adversarial REVISE with 1 finding. A card set aside before the ending stays actionable after it. Escalated to the owner per the 3-round cap. The owner chose to fix it without a fourth round: `finishEnding` now clears every pending card, with a regression test.
 
 Tests after round 2: 540, 538 pass, 0 fail, 2 known todo. Balance: identical to the pre-fix baseline.
+
+## Review record — merging the new `ui` (with `ui-endings`, 8dd19d4) into `realtime` (tier 2)
+
+Codex `gpt-5.6-sol` adversarial, session 01a0ddb1-4531-7ba2-92df-0ac56e2b719d. The mutation guard was clean in every round.
+
+- Resolution: `feedPosts` from main runs after player actions (event-driven posts only) and after story days with events. Reception, mood and ambient posts run only at round marks. The ending and event screens are both mounted. The `#reveal` route no longer ends a turn. Release wording is in story time. The release lane's menu tests now check instant release and team limits.
+- Round 1 (REVISE, 4): delayed releases announced "is out" at once; reception posts repeated after every action; focus was lost behind the reveal; the end screen said "turn". All fixed. The same pass found and fixed a latent bug: a delayed release went live only when the player acted. It now activates at the round mark (`modelLive` event). Balance: the largest ending shift is 4 points (limit 5), because the balance bot sees delayed models go live one step earlier; without that activation, the mix equals the baseline exactly.
+- Round 2 (REVISE, 4): mood thresholds crossed by an instant action were lost; a superseded delayed model got launch posts; a scheduled reveal showed live users and sales; the ship date ignored era changes. All fixed, each with a test.
+- Round 3: APPROVED, no findings.
+
+Tests: 643, 641 pass, 0 fail, 2 known todo. Browser check: the release reveal opens and pauses the clock; a finished run shows the end screen with a story date and the clock stays stopped; the only console error is a missing favicon.
