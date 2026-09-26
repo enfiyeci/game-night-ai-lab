@@ -106,15 +106,19 @@ test('a deal card is disabled when cash cannot cover its prepayment', () => {
 
 test('queued prepayments are projected before another deal is offered', () => {
   const state = createInitialState();
-  state.cash = 80;
+  const offer = state.compute.offers.find((candidate) => candidate.supplier === 'verde');
+  assert.ok(offer);
+  state.cash = offer.upfront + Math.max(1, offer.monthly);
+  const startingCash = state.cash;
   const first = dealCards(state).find((card) => card.name === 'Verde');
   assert.ok(first);
+  assert.equal(first.disabled, false);
 
   const projected = projectQueue(state, { budget: state.budget, moves: [first.move] });
   const second = dealCards(projected).find((card) => card.id === first.id);
   assert.equal(second, undefined, 'a queued offer is single-use');
-  assert.ok(projected.cash < state.cash);
-  assert.equal(state.cash, 80);
+  assert.equal(projected.cash, startingCash - offer.upfront);
+  assert.equal(state.cash, startingCash);
 
   const game = createGame({ seed: 4, state });
   game.addMove(first.move);

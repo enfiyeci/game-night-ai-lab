@@ -96,15 +96,17 @@ test('LOI commitments show the delivery range and site-power status', () => {
 test('future deal projection brings due power sites online before delivery', () => {
   const s = createInitialState({ seed: 1 });
   s.era = 4;
-  s.cash = 5000;
   s.compute.offers = generateOffers(s, sideRng(s, 5));
-  s.power.sites.push({
-    id: 'gas-due', source: 'gas', units: 2000, arrivesTurn: s.turn + 1, online: false, oppositionCut: null,
-  });
   const offer = s.compute.offers.find((candidate) => candidate.supplier === 'verde');
+  assert.ok(offer);
+  s.cash = offer.upfront + Math.max(100, offer.monthly);
+  s.power.sites.push({
+    id: 'gas-due', source: 'gas', units: offer.units, arrivesTurn: s.turn + 1, online: false, oppositionCut: null,
+  });
   const view = commitmentsView(s, offer.id);
   const signed = structuredClone(s);
   const result = signOffer(signed, offer.id, sideRng(signed, 1));
+  assert.equal(result.ok, true);
   while (signed.turn < result.arrivesTurn) {
     signed.turn += 1;
     powerTurn(signed);
@@ -133,10 +135,12 @@ test('dark Gulf commitments say that billing is paused', () => {
 test('the queue preview compares standard and prepaid', () => {
   const s = createInitialState();
   s.era = 3;
-  const q = queueView(s, { units: 60, tier: 'standard' });
-  assert.equal(q.released, released(s));
-  assert.equal(q.you.standard, allocate(released(s), [...rivalOrders(s), { lab: 'you', units: 60, tier: 'standard' }]).you);
-  assert.equal(q.you.prepaid, allocate(released(s), [...rivalOrders(s), { lab: 'you', units: 60, tier: 'prepaid' }]).you);
+  const supply = released(s);
+  const units = Math.max(1, Math.round(supply * 0.75));
+  const q = queueView(s, { units, tier: 'standard' });
+  assert.equal(q.released, supply);
+  assert.equal(q.you.standard, allocate(supply, [...rivalOrders(s), { lab: 'you', units, tier: 'standard' }]).you);
+  assert.equal(q.you.prepaid, allocate(supply, [...rivalOrders(s), { lab: 'you', units, tier: 'prepaid' }]).you);
   assert.equal(q.rows.find((r) => r.lab === 'qilin').tier, 'none');
 });
 
