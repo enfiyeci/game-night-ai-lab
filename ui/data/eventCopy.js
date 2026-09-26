@@ -210,6 +210,11 @@ export const CONSEQUENCES = {
     report: 'Internal use was shut down and Washington was notified. The disclosure damaged the lab\'s public standing.', // OWNER WRITES
     coverup: 'The logs were wiped. Everyone who saw the terminal learned to stop talking, and the copy was never found.', // OWNER WRITES
   },
+  ownLine: {
+    lockDown: 'Choosing experiments and setting direction went back to people for good. The lab slowed down, and said so in public.', // OWNER WRITES
+    moveLine: 'The policy line was raised one step. The work kept speeding up, and the research staff noticed who had moved it.', // OWNER WRITES
+    screenOff: 'The speed screen went dark. The work carried on at full pace, and nobody outside the lab heard about the line.', // OWNER WRITES
+  },
   lossSpike: {
     rollback: 'The spike was rolled back, and the training schedule slipped while the lost ground was recovered.', // OWNER WRITES
     slow: 'The learning rate was lowered. The run traded a smaller gain for a safer response to the spike.', // OWNER WRITES

@@ -179,3 +179,7 @@ export function automationTick(state, rng) {
   a.stageTurn = state.turn;
   return [...events, { type: a.stage === 1 ? 'internalWarning' : 'internalIncident', stage: a.stage }];
 }
+
+export function lockDown(state) {
+  state.automation.lockedDown = true;
+}

@@ -6,8 +6,9 @@ import {
 } from '../sim/data/automation.js';
 import {
   jobLevels, researchSpeed, claimedSpeed, codeShare, timeShares, bottleneck, checkLoad, checking,
-  reviewerCost, controlUnits, effectiveChecks, automationRisk, setAutomation, handBack, addMonitor, automationTick,
+  reviewerCost, controlUnits, effectiveChecks, automationRisk, setAutomation, handBack, addMonitor, automationTick, lockDown,
 } from '../sim/automation.js';
+import { eventsTick, resolveEvent, fallbackChoice } from '../sim/events.js';
 import { endTurn } from '../sim/turn.js';
 import { startRun } from '../sim/training.js';
 import { createRng } from '../sim/rng.js';
@@ -291,4 +292,45 @@ test('endTurn: pushing the hand-offs makes a finishing run gain more', () => {
 test('the old moves are gone', () => {
   const { errors } = endTurn(atEra(3), { moves: [{ type: 'deployInternal', control: 1 }] }, miss);
   assert.ok(errors.includes('unknown move deployInternal'));
+});
+
+test('crossing the line queues the screen-wall card', () => {
+  const s = atEra(5);
+  s.turn = 16;
+  automationTick(s, miss);
+  eventsTick(s, miss);
+  assert.equal(s.pendingEvents[0].id, 'ownLine');
+  assert.deepEqual(s.pendingEvents[0].choices.map((choice) => choice.id), ['lockDown', 'moveLine', 'screenOff']);
+});
+
+test('lock down hands the last two jobs back to people for the rest of the run', () => {
+  const s = atEra(5);
+  s.pendingEvents.push({ id: 'ownLine' });
+  assert.equal(resolveEvent(s, 'ownLine', 'lockDown').ok, true);
+  assert.deepEqual(jobLevels(s).slice(3), [0, 0]);
+  assert.equal(s.publicTrust, 63);
+  assert.equal(s.govFavor.us, 53);
+  assert.equal(s.staffTrust, 72);
+  assert.equal(setAutomation(s, { levels: { direction: 1 } }).ok, false);
+});
+
+test('moving the line raises it by one, costs staff trust, and the card can fire again', () => {
+  const s = atEra(5);
+  s.automation.lineCrossed = 2;
+  s.pendingEvents.push({ id: 'ownLine' });
+  resolveEvent(s, 'ownLine', 'moveLine');
+  assert.equal(s.automation.line, 3);
+  assert.equal(s.staffTrust, 64);
+  s.compute.online = 500;
+  assert.equal(setAutomation(s, { levels: { review: 4, experiments: 4, choosing: 3, direction: 2 } }).ok, true);
+  assert.equal(automationTick(s, miss)[0].line, 3);
+});
+
+test('turning the screen off is the fallback and hides debt', () => {
+  assert.equal(fallbackChoice('ownLine', { id: 'ownLine' }), 'screenOff');
+  const s = atEra(5);
+  s.pendingEvents.push({ id: 'ownLine' });
+  resolveEvent(s, 'ownLine', 'screenOff');
+  assert.equal(s.flags.hidLine, true);
+  assert.equal(s.concealedDebt, 4);
 });

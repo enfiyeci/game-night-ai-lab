@@ -49,6 +49,7 @@ const BALANCED_EVENT_CHOICES = {
   datacenter: 'benefits',
   oversightTamper: 'controls',
   selfExfiltration: 'report',
+  ownLine: 'lockDown',
   lossSpike: 'rollback',
   capabilityJump: 'audit',
   whistleblower: 'cooperate',

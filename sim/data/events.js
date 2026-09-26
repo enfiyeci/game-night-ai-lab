@@ -1,4 +1,4 @@
-import { addMonitor, handBack } from '../automation.js';
+import { addMonitor, handBack, lockDown } from '../automation.js';
 import { forceAmendConstitution, hasLine } from '../constitution.js';
 import { contractBill, refreshOnline, sideRng } from '../contracts.js';
 import { leaseMonthly } from '../power.js';
@@ -765,6 +765,41 @@ export const EVENTS = [
           effects(state) {
             state.security -= 10;
             state.flags.coverUp = true;
+          },
+        },
+      ],
+    },
+  },
+  {
+    id: 'ownLine',
+    kind: 'internal',
+    trigger: (state) => state.automation.lineTurn === state.turn,
+    warning: null,
+    card: {
+      title: 'We just crossed our own line',
+      post: { handle: '@your_research', text: 'measured research speed just passed the line in our own policy' },
+      choices: [
+        {
+          id: 'lockDown', label: 'Lock down and slow', cost: 'choosing and direction go back to people', backers: ['Safety'], opposers: ['Research'],
+          effects(state) {
+            lockDown(state);
+            state.publicTrust += 3;
+            state.govFavor.us += 3;
+            state.staffTrust += 2;
+          },
+        },
+        {
+          id: 'moveLine', label: 'Move the line', cost: 'staff trust', backers: ['Research'], opposers: ['Safety'],
+          effects(state) {
+            state.automation.line += 1;
+            state.staffTrust -= 6;
+          },
+        },
+        {
+          id: 'screenOff', label: 'Turn the screen off', cost: '—', backers: ['CFO'], opposers: ['Safety'],
+          effects(state) {
+            state.flags.hidLine = true;
+            state.concealedDebt += 4;
           },
         },
       ],
