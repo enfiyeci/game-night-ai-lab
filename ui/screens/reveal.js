@@ -1,7 +1,7 @@
 import { roundMarkDay, storyDate } from '../../sim/time.js';
 import { money, pct, users } from '../logic/format.js';
 import { beatCount, checkLabel, flagshipBefore, leaderboard, oneDecimal, perMillion, priceSheet, salesEstimate } from '../logic/release.js';
-import { createSfx } from '../sfx.js';
+import { sfx } from '../sfx.js';
 
 // Coral stays for the misalignment warning post, so ordinary avatars never look like a warning (mockup avatar set).
 const AVATAR_COLOURS = ['var(--ink)', 'var(--teal)', 'var(--sky)', 'var(--wood)', 'color-mix(in oklab, var(--sky) 55%, var(--ink))'];
@@ -136,7 +136,6 @@ function sheet(model, era) {
 // Owner 2026-09-26: numbers and bars start fast and slow down as they near the real value, and the whole
 // show runs about 1 min 25 s (about 10 s a benchmark, 12 s for the leaderboard, 23 s for the press).
 const easeOut = (p) => 1 - (1 - p) ** 5;
-const sfx = createSfx();
 
 // Waits and tweens the player can hurry: advance() finishes the current beat, end() the whole show.
 class Timeline {

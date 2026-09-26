@@ -170,8 +170,8 @@ export function createSfx() {
       tone({ freq: 392, type: 'triangle', dur: 0.2, gain: 0.12 });
       tone({ freq: 311.13, type: 'triangle', at: 0.16, dur: 0.35, gain: 0.12 });
     },
-    // A new row or card entering.
-    pop(pitch = 0) { tone({ freq: 660 * 2 ** (pitch / 12), type: 'sine', dur: 0.09, gain: 0.12, slideTo: 990 * 2 ** (pitch / 12) }); },
+    // A new row or card entering, or a training bubble leaving a desk.
+    pop(pitch = 0, gain = 0.12) { tone({ freq: 660 * 2 ** (pitch / 12), type: 'sine', dur: 0.09, gain, slideTo: 990 * 2 ** (pitch / 12) }); },
     // One rank climbed on a leaderboard.
     climb(rank = 0) {
       noise({ dur: 0.18, gain: 0.05, from: 900, to: 4000, q: 1 });
@@ -179,3 +179,8 @@ export function createSfx() {
     },
   };
 }
+
+// One shared instance for the whole game (browsers cap how many audio contexts a page may open).
+// Browsers only start audio after a click or key, so the first one anywhere unlocks it.
+export const sfx = createSfx();
+for (const type of ['pointerdown', 'keydown']) globalThis.addEventListener?.(type, () => sfx.unlock(), { capture: true, once: true });
