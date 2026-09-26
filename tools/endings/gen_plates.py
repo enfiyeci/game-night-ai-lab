@@ -595,23 +595,27 @@ def rd_card():
 
 # ================================================================ A negotiated pace
 def pd_news():
-    """Signing day. The accord as the run made it: its binding terms (two columns of three), up to three signatures and
-    a ticker, all written by the player from the run's deal. The President signs last, for the cameras."""
+    """Signing day. The accord as the run made it: up to three binding terms (a summit takes at most three proposals),
+    each with the parties that signed it, and a ticker, all written by the player from the run's deal. The President
+    signs last, for the cameras."""
     fill = lambda name: f'data-fill="{{{name}}}" '
     picture = doc_panel(256, 104, 824, 280, "The Geneva Accord on Frontier AI · Signed copy")
-    for i in range(6):
-        picture += T(280 + (i // 3) * 400, 192 + (i % 3) * 42, "", 22, 500, attrs=fill(f"term{i + 1}"))
     for i in range(3):
-        picture += (f'<g {show(0.4 + i * 0.3, 0.2)}>'
-                    + T(540 + i * 175, 356, "", 20, 400, M("sky", 70, "ink"), extra="font-style:italic", attrs=fill(f"sig{i + 1}")) + '</g>')
+        y = 190 + i * 64
+        picture += (T(280, y, "", 22, 500, attrs=fill(f"term{i + 1}"))
+                    + f'<g {show(0.4 + i * 0.3, 0.2)}>' + T(306, y + 25, "", 15, 400, M("sky", 70, "ink"), extra="font-style:italic",
+                                                           attrs=fill(f"signed{i + 1}")) + '</g>')
     return news("pdnews", picture, "THE PRESIDENT, AT THE SIGNING", [(1.4, "“Great deal. Maybe the greatest deal in the history"),
                                                                     (2.4, "of computers. Nobody slows down better than us.”")],
                 "", t_quote=1.2, clock="12:00 CET", ticker_fill="{ticker}")
 
 
-def launcher(fid, console, subject, warning, button, evaluator=True):
-    """Month 1, 2 am, at a lab bound by the accord ({lab}, filled in by the player). A cursor comes to rest on a
-    button that would break the deal, waits, then moves away."""
+def launcher(fid, console, subject, warning, button, evaluator_always=False):
+    """Month 1, 2 am, at a lab still bound by the accord ({lab}, filled in by the player). A cursor comes to rest on a
+    button that would break one of the deal's terms, waits, then moves away. The embedded evaluator shows only when
+    the deal put evaluators in the labs (data-if)."""
+    evaluator = (T(210, 460, "Embedded evaluator on site: J. Okafor", 17, 400, DIM)
+                 + f'<circle cx="224" cy="500" r="6" style="fill:{TAG_TEAL}"/>' + T(240, 506, "present", 16, 600, TAG_TEAL, mono=True))
     o = [f'<rect width="{W}" height="{H}" style="fill:{M("ink", 94, "sky")}"/>',
          f'<rect x="170" y="110" width="940" height="440" rx="6" style="fill:var(--paper)"/>',
          f'<rect x="170" y="110" width="940" height="48" rx="6" style="fill:{M("coral", 14, "paper")}"/>',
@@ -619,10 +623,8 @@ def launcher(fid, console, subject, warning, button, evaluator=True):
          T(210, 220, subject, 30, 500, mono=True),
          T(210, 262, warning, 20, 400, CORAL_LIGHT, mono=True),
          f'<rect x="210" y="310" width="380" height="66" rx="6" style="fill:{TAG_CORAL}"/>',
-         T(400, 352, button, 22, 600, "var(--paper)", "middle")]
-    if evaluator:
-        o += [T(210, 460, "Embedded evaluator on site: J. Okafor", 17, 400, DIM),
-              f'<circle cx="224" cy="500" r="6" style="fill:{TAG_TEAL}"/>' + T(240, 506, "present", 16, 600, TAG_TEAL, mono=True)]
+         T(400, 352, button, 22, 600, "var(--paper)", "middle"),
+         evaluator if evaluator_always else f'<g data-if="evaluators">{evaluator}</g>']
     cur = K([[0, {"x": 0, "y": 0}], [1.0, {"x": 0, "y": 0}], [2.6, {"x": 0, "y": 0}], [3.4, {"x": 360, "y": 120}]])
     o.append(f'<g {K([[0, {"x": -260, "y": 180}], [0.8, {"x": 0, "y": 0}]])}><g {cur}>'
              f'<path d="M548,356 l0,30 l8,-8 l6,13 l5,-2 l-6,-13 l12,0 Z" style="fill:var(--paper);stroke:var(--ink);stroke-width:1.5"/></g></g>')
@@ -630,19 +632,27 @@ def launcher(fid, console, subject, warning, button, evaluator=True):
     return svg("".join(o) + over, defs)
 
 
+# The 2 am scenes; the film plays the first one its deal made binding (byDeal in pacingDeal.json). The ending needs two
+# binding terms, so verification, last in that order, never picks the scene and has none.
 def pd_cursor():
-    """The deal capped compute: a training run over the cap."""
     return launcher("pdcur", "Training launcher", "run-4411 · 3.1e27 FLOP", "Accord cap: 1.0e27 FLOP", "Start run (exceeds cap)")
 
 
 def pd_cursor_evals():
-    """The deal put evaluators in every lab: a release their evaluator has not signed off."""
-    return launcher("pdcurev", "Release console", "rc-7 · ready to ship", "Accord evaluator sign-off: missing", "Ship without sign-off")
+    return launcher("pdcurev", "Release console", "rc-7 · ready to ship", "Accord evaluator sign-off: missing", "Ship without sign-off",
+                    evaluator_always=True)
 
 
-def pd_cursor_accord():
-    """Any other deal: a release the accord has not cleared, and nobody in the room to stop it."""
-    return launcher("pdcurac", "Release console", "rc-7 · ready to ship", "Not cleared under the Accord", "Ship anyway", evaluator=False)
+def pd_cursor_automation():
+    return launcher("pdcurau", "Research agents", "agent-swarm-12 · 400 copies", "Paused: no AI-run AI research", "Resume the swarm")
+
+
+def pd_cursor_delay():
+    return launcher("pdcurde", "Release console", "rc-7 · ready to ship", "Accord gap between launches: 6 days left", "Ship now")
+
+
+def pd_cursor_sharing():
+    return launcher("pdcursh", "Safety research", "finding-88 · deception probe", "Accord: shared with every signatory", "Keep it internal")
 
 
 # ================================================================ A costly win
@@ -799,7 +809,8 @@ PLATES = {"mis-port-board": mis_port_board, "mis-triage": mis_triage, "mis-lapto
           "mu-alert": mu_alert, "mu-room": mu_room, "mu-hospital": mu_hospital, "mu-hearing": mu_hearing,
           "lb-cafe": lb_cafe, "lb-chat": lb_chat, "lb-summit": lb_summit,
           "rd-slide": rd_slide, "rd-card": rd_card, "pd-news": pd_news, "pd-cursor": pd_cursor,
-          "pd-cursor-evals": pd_cursor_evals, "pd-cursor-accord": pd_cursor_accord,
+          "pd-cursor-evals": pd_cursor_evals, "pd-cursor-automation": pd_cursor_automation, "pd-cursor-delay": pd_cursor_delay,
+          "pd-cursor-sharing": pd_cursor_sharing,
           "cw-port": cw_port, "cw-triage": cw_triage, "cw-chat": cw_chat, "cw-reveal": cw_reveal, "cw-phone": cw_phone,
           "ov-launch": ov_launch, "ov-news": ov_news, "ov-chat": ov_chat}
 

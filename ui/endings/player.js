@@ -222,6 +222,7 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
     wrapEl.className = 'film-shot';
     const svg = shot.kind === 'office' ? officeShot(officeText, anchors, shot) : parseSvg(plates.get(shot.plate));
     for (const e of svg.querySelectorAll('[data-fill]')) e.textContent = fillText(e.dataset.fill, values);
+    for (const e of svg.querySelectorAll('[data-if]')) if (!values[e.dataset.if]) e.remove();
     wrapEl.append(svg);
     shotsHost.append(wrapEl);
     const frame = shot.kind === 'office' ? OFFICE : PLATE;

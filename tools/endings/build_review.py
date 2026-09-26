@@ -16,9 +16,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 # Deals to try on a film that follows the run (see resolveFilm in ui/endings/timeline.js); None is the film's own example.
+# Each is one the sim can make: every binding term has a lab and a government signing it, and Qilin signs only verification.
 DEALS = [("Cap, evaluators, verification", None),
-         ("Evaluators and shared safety", (["evaluators", "sharedSafety"], ["deepthink", "lodestar", "west"])),
-         ("Release delay and verification", (["releaseDelay", "verification"], ["qilin", "west", "east"]))]
+         ("Evaluators and shared safety", {"binding": ["evaluators", "sharedSafety"],
+                                           "signed": {"evaluators": ["deepthink", "west"], "sharedSafety": ["lodestar", "west", "east"]}}),
+         ("Pause automation and verification", {"binding": ["pauseAutomation", "verification"],
+                                                "signed": {"pauseAutomation": ["lodestar", "west"], "verification": ["qilin", "west", "east"]}})]
 
 
 def film_files(film_id):
@@ -100,7 +103,7 @@ let era = 4;
 let id = {json.dumps(ids[0])};
 let deal = 0;
 const DEAL_FILMS = {json.dumps(deal_films)};
-const RUNS = {json.dumps([None if d is None else {"deal": {"binding": d[0], "signed": {c: d[1] for c in d[0]}}} for _, d in DEALS])};
+const RUNS = {json.dumps([d and {"deal": d} for _, d in DEALS])};
 const deals = document.getElementById('deals');
 deals.hidden = !DEAL_FILMS.includes(id);
 const choose = (sel, key, set) => document.querySelectorAll(sel).forEach((b) => b.addEventListener('click', () => {{

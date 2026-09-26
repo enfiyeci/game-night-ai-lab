@@ -58,9 +58,13 @@ export function typedText(text, startAt, t, cps = 26) {
 
 // ---------------------------------------------------------------- films that follow the run
 // A film with a deal block (A negotiated pace) shows the deal the run made: {name} in a card, or in a plate's data-fill
-// text, becomes the value of that name, and a shot's byDeal list ([[commitment, plate], ..., ['*', plate]]) picks the
-// first plate whose commitment is binding. The 2 am scene happens at a lab that signed what the scene is about. With
-// no run, the film's own example deal is used. run = {deal: {binding: [...], signed: {commitment: [party ids]}}}.
+// text, becomes the value of that name; a plate element with data-if="name" shows only when that value is set; and a
+// shot's byDeal list ([[commitment, plate], ...]) picks the first plate whose commitment is binding. With no run, the
+// film's own example deal is used. run = {deal: state.deal}: {binding: [...], signed: {commitment: [party ids]}}.
+//
+// The sim drops a rival that broke the deal from every signed list but leaves the terms binding, so the signers here
+// are the ones who kept it (the signing-day ticker counts them too). Your lab always kept it: this ending needs you
+// to have held, so it heads every signature list and hosts the 2 am scene when no rival still keeps its term.
 const NUMBER_WORDS = ['NO', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN'];
 
 export const fillText = (template, values) => template.replace(/\{(\w+)\}/g, (_, key) => values[key] ?? '');
@@ -70,21 +74,29 @@ export function resolveFilm(film, run) {
   if (!spec) return { film, values: {} };
   const deal = run?.deal ?? spec.example;
   const binding = Object.keys(spec.terms).filter((c) => deal.binding.includes(c));
-  const signedAny = (names, terms) => Object.keys(names).filter((p) => terms.some((c) => deal.signed?.[c]?.includes(p)));
-  const labs = signedAny(spec.labs, binding);
-  const govs = signedAny(spec.governments, binding);
+  const signers = (c) => deal.signed?.[c] ?? [];
+  const labsKeeping = (terms) => Object.keys(spec.labs).filter((p) => terms.some((c) => signers(c).includes(p)));
 
-  const pick = (shot) => shot.byDeal?.find(([c]) => c === '*' || binding.includes(c));
+  const pick = (shot) => shot.byDeal?.find(([c]) => binding.includes(c));
   const about = film.shots.map(pick).find(Boolean)?.[0];
-  const lab = (about && about !== '*' ? signedAny(spec.labs, [about]) : labs)[0] ?? labs[0] ?? Object.keys(spec.labs)[0];
+  const rival = about && labsKeeping([about])[0];
 
   const total = Object.keys(spec.labs).length + 1;     // the rivals, and you
-  const signing = labs.length + 1;
+  const signing = labsKeeping(binding).length + 1;
   const count = signing === total ? `ALL ${NUMBER_WORDS[total]}` : `${NUMBER_WORDS[signing]} OF ${NUMBER_WORDS[total]}`;
   const ticker = [`${count} FRONTIER LABS SIGN`, ...binding.map((c) => spec.headlines[c])].join('  ·  ');
-  const values = { lab: spec.labs[lab], ticker: `${ticker}  ·  `.repeat(4) };
-  binding.forEach((c, i) => { values[`term${i + 1}`] = `${i + 1}.  ${spec.terms[c]}`; });
-  [...labs.slice(0, 3 - govs.length), ...govs].forEach((p, i) => { values[`sig${i + 1}`] = spec.labs[p] ?? spec.governments[p]; });
+  const values = {
+    lab: rival ? spec.labs[rival] : spec.you.lab,
+    place: rival ? spec.labs[rival] : spec.you.place,
+    evaluators: binding.includes('evaluators') ? 'yes' : '',
+    ticker: `${ticker}  ·  `.repeat(4),
+  };
+  const parties = { ...spec.labs, ...spec.governments };
+  binding.forEach((c, i) => {
+    const names = [spec.you.lab, ...Object.keys(parties).filter((p) => signers(c).includes(p)).map((p) => parties[p])];
+    values[`term${i + 1}`] = `${i + 1}.  ${spec.terms[c]}`;
+    values[`signed${i + 1}`] = `Signed: ${names.join(', ')}`;
+  });
 
   const shots = film.shots.map((shot) => ({
     ...shot,

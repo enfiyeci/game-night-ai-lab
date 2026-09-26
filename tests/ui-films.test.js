@@ -117,10 +117,14 @@ test('an office shot chimes once for each Resolved badge it shows', () => {
 
 const pacing = films.find((f) => f.id === 'pacingDeal');
 const scene = (resolved) => resolved.film.shots.find((s) => s.byDeal);
-const run = (binding, signers) => ({ deal: { binding, signed: Object.fromEntries(binding.map((c) => [c, signers])) } });
+const run = (signed) => ({ deal: { binding: Object.keys(signed), signed } });
 
-test('a negotiated pace names every commitment and every party the summit can have', () => {
-  for (const c of Object.keys(COMMITMENTS)) assert.ok(pacing.deal.terms[c] && pacing.deal.headlines[c], `${c} has words`);
+test('a negotiated pace has words for every commitment and party, and a 2 am scene for every deal the ending allows', () => {
+  const ids = Object.keys(COMMITMENTS);
+  for (const c of ids) assert.ok(pacing.deal.terms[c] && pacing.deal.headlines[c], `${c} has words`);
+  for (const a of ids) for (const b of ids) {   // the ending needs two binding terms
+    if (a !== b) assert.ok(scene({ film: pacing }).byDeal.some(([k]) => k === a || k === b), `${a} + ${b} has a 2 am scene`);
+  }
   for (const p of PARTIES) assert.ok(pacing.deal.labs[p] ?? pacing.deal.governments[p], `${p} has a name`);
   for (const r of RIVAL_TEMPLATES) assert.equal(pacing.deal.labs[r.id], r.name);
 });
@@ -130,36 +134,42 @@ test('with no run, a negotiated pace plays its example deal', () => {
   assert.equal(scene(r).plate, 'pd-cursor');
   assert.equal(scene(r).card, 'Month 1, 2 am · OpenBrain');
   assert.equal(r.values.term3, '3.  US–China verification channel');
-  assert.deepEqual([r.values.sig1, r.values.sig2, r.values.sig3], ['OpenBrain', 'US Commerce', 'PRC Commerce']);
+  assert.equal(r.values.signed3, 'Signed: Kestrel Labs, OpenBrain, Lodestar, DeepThink, Qilin, United States, China');
+  assert.equal(r.values.evaluators, 'yes');
   assert.ok(r.values.ticker.startsWith('ALL FIVE FRONTIER LABS SIGN  ·  CHIP ORDERS PAUSED'));
 });
 
-test('a negotiated pace shows the deal the run actually made', () => {
-  const r = resolveFilm(pacing, run(['sharedSafety', 'evaluators'], ['deepthink', 'lodestar', 'west']));
+test('a negotiated pace shows the deal the run actually made, term by term', () => {
+  const r = resolveFilm(pacing, run({ sharedSafety: ['lodestar', 'west', 'east'], evaluators: ['deepthink', 'west'] }));
   assert.equal(scene(r).plate, 'pd-cursor-evals');
-  assert.equal(scene(r).card, 'Month 1, 2 am · Lodestar');           // a lab that signed, in the sim's own order
+  assert.equal(scene(r).card, 'Month 1, 2 am · DeepThink');           // the lab that signed what the scene is about
   assert.equal(r.values.term1, '1.  Evaluators inside every lab');
+  assert.equal(r.values.signed1, 'Signed: Kestrel Labs, DeepThink, United States');
   assert.equal(r.values.term2, '2.  Safety research shared openly');
+  assert.equal(r.values.signed2, 'Signed: Kestrel Labs, Lodestar, United States, China');
   assert.equal(r.values.term3, undefined);
-  assert.deepEqual([r.values.sig1, r.values.sig2, r.values.sig3], ['Lodestar', 'DeepThink', 'US Commerce']);
   assert.ok(r.values.ticker.startsWith('THREE OF FIVE FRONTIER LABS SIGN  ·  INSPECTORS ARRIVE MONDAY  ·  LABS OPEN THEIR SAFETY RESEARCH  ·  '));
   assert.ok(!r.values.ticker.includes('CHIP ORDERS'));
 });
 
-test('without a cap or evaluators, the 2 am scene is the Accord in general, at a lab bound by it', () => {
-  const r = resolveFilm(pacing, run(['releaseDelay', 'verification'], ['qilin', 'west', 'east']));
-  assert.equal(scene(r).plate, 'pd-cursor-accord');
-  assert.equal(scene(r).card, 'Month 1, 2 am · Qilin');
-  assert.deepEqual([r.values.sig1, r.values.sig2, r.values.sig3], ['Qilin', 'US Commerce', 'PRC Commerce']);
+test('the 2 am scene is about a term the deal made binding, and the evaluator appears only with evaluators', () => {
+  const r = resolveFilm(pacing, run({ computeCap: ['openbrain', 'west'], sharedSafety: ['lodestar', 'west'] }));
+  assert.equal(scene(r).plate, 'pd-cursor');
+  assert.equal(r.values.evaluators, '');
+  const q = resolveFilm(pacing, run({ pauseAutomation: ['lodestar', 'west'], verification: ['qilin', 'west', 'east'] }));
+  assert.equal(scene(q).plate, 'pd-cursor-automation');
+  assert.equal(scene(q).card, 'Month 1, 2 am · Lodestar');
 });
 
-test('the scene lab signed the commitment the scene is about', () => {
-  const deal = { binding: ['computeCap', 'evaluators'], signed: { computeCap: ['qilin', 'west'], evaluators: ['openbrain', 'west'] } };
-  assert.equal(scene(resolveFilm(pacing, { deal })).card, 'Month 1, 2 am · Qilin');
+test('when every rival broke the term the scene is about, it happens at your lab, which held', () => {
+  const r = resolveFilm(pacing, run({ computeCap: ['west'], evaluators: ['openbrain', 'west'] }));   // the rivals that signed the cap broke the deal
+  assert.equal(scene(r).card, 'Month 1, 2 am · Your lab');
+  assert.equal(r.values.lab, 'Kestrel Labs');
+  assert.equal(r.values.signed1, 'Signed: Kestrel Labs, United States');
 });
 
 test('films without run data are left as they are', () => {
   const film = films.find((f) => f.id === 'misalignment');
-  assert.equal(resolveFilm(film, run(['evaluators'], ['west'])).film, film);
+  assert.equal(resolveFilm(film, run({ evaluators: ['west'] })).film, film);
   assert.equal(fillText('{a} and {b}', { a: 'x' }), 'x and ');
 });
