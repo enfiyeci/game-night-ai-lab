@@ -58,9 +58,14 @@ function scriptedActions(state) {
     addressWarnings: Object.entries(state.warnings)
       .filter(([, warning]) => !warning.deferred)
       .map(([id]) => id),
-    eventChoices: Object.fromEntries(state.pendingEvents.map((event) => [event.id, event.choices[0].id])),
+    eventChoices: Object.fromEntries(state.pendingEvents.map((event) => [
+      event.id,
+      event.id === 'pledgeDrop' && event.choices.some((choice) => choice.id === 'refuse')
+        ? 'refuse' : event.choices[0].id,
+    ])),
     moves,
   };
+  if (state.turn === 0) actions.pledge = 0.1;
   if (state.pendingModel?.hazard) actions.hazardChoice = 'ignore';
   if (state.meeting) {
     const meeting = MEETINGS.find((entry) => entry.id === state.meeting.id);
@@ -98,6 +103,55 @@ const start = (seed) => createInitialState({ seed });
 const releaseState = (seed) => throughTurn(seed, 3);
 // The first era-3 turn with a training run under way, so the HUD shows a project and its progress bar.
 const midEra3 = (seed) => throughTurn(seed, 12, (s) => s.era === 3 && s.activeRun !== null);
+const atEra = (seed, era) => throughTurn(seed, 20, (state) => state.era === era);
+
+function dealsState(seed) {
+  const rng = createRng(seed);
+  let state = atEra(seed, 2);
+  if (state.ending || state.era !== 2) return state;
+  const actions = scriptedActions(state);
+  actions.moves = [{ type: 'raise', archetype: 'vc' }, ...actions.moves].slice(0, 2);
+  ({ state } = endTurn(state, actions, rng));
+  return state;
+}
+
+function budgetState(seed) {
+  const rng = createRng(seed);
+  let state = atEra(seed, 3);
+  if (state.ending || state.era !== 3) return state;
+  ({ state } = endTurn(state, scriptedActions(state), rng));
+  return state;
+}
+
+function powerState(seed) {
+  const rng = createRng(seed);
+  let state = createInitialState({ seed });
+  while (!state.ending && state.era < 4) {
+    const actions = scriptedActions(state);
+    const grid = state.compute.offers.find((offer) => offer.supplier === 'grid');
+    if (grid && grid.upfront <= state.cash) {
+      actions.moves = [{ type: 'deal', offerId: grid.id }, ...actions.moves].slice(0, 2);
+    }
+    ({ state } = endTurn(state, actions, rng));
+  }
+  if (state.ending || state.era !== 4) return state;
+
+  let actions = scriptedActions(state);
+  actions.moves = [{ type: 'buildSite', source: 'gas' }, { type: 'raise', archetype: 'vc' }];
+  ({ state } = endTurn(state, actions, rng));
+  if (state.ending || state.era !== 4) return state;
+
+  actions = scriptedActions(state);
+  const chips = state.compute.offers.find((offer) => (
+    (offer.supplier === 'verde' || offer.supplier === 'loi') && offer.upfront <= state.cash
+  ));
+  if (chips) actions.moves = [{ type: 'deal', offerId: chips.id }, ...actions.moves].slice(0, 2);
+  ({ state } = endTurn(state, actions, rng));
+  while (!state.ending && state.era === 4 && state.turn < 15) {
+    ({ state } = endTurn(state, scriptedActions(state), rng));
+  }
+  return state;
+}
 
 function dangerState(seed) {
   const rng = createRng(seed);
@@ -130,4 +184,8 @@ export const SCENARIOS = {
   summit: (seed) => throughTurn(seed, 20, (s) => s.era === 5 && s.turnInEra === 0 && !s.deal),
   ending: (seed) => throughTurn(seed, 20),
   danger: dangerState,
+  era2Deals: dealsState,
+  era3Queue: (seed) => atEra(seed, 3),
+  era3Budget: budgetState,
+  era4Power: powerState,
 };

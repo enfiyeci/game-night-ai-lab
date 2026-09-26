@@ -1,8 +1,10 @@
 import { openDialog } from '../components/dialog.js';
 import { teamPanel } from '../components/team.js';
-import { dealCards, projectQueue, turnSummary } from '../logic/compute.js';
+import { projectQueue, turnSummary } from '../logic/compute.js';
 import { money, months, pct } from '../logic/format.js';
 import { registerMenuHandler } from '../menu.js';
+import { openDeals, openQueue } from './compute.js';
+import { openPowerSites } from './sites.js';
 import {
   EMERGENCY_OPTIONS,
   INVESTORS,
@@ -71,17 +73,6 @@ function finishDialog(opened, kind, footerRoot) {
   return opened;
 }
 
-function rowValue(card, label) {
-  return card.rows.find(([name]) => name === label)?.[1] ?? '';
-}
-
-function arrivalTurn(state, text) {
-  if (text === 'now') return state.turn;
-  if (text === 'next turn') return state.turn + 1;
-  const turns = Number.parseInt(text.match(/\d+/)?.[0] ?? '1', 10);
-  return state.turn + turns;
-}
-
 function runwayNow(state) {
   const clone = structuredClone(state);
   clone.burnPlanned = projectBurn(clone);
@@ -145,135 +136,6 @@ function disabledReason(button, reason) {
   text.className = 'company-card-reason';
   text.textContent = reason;
   button.append(text);
-}
-
-function dealCard(card) {
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.className = `company-card deal-card supplier-${card.id}`;
-  button.dataset.choice = card.id;
-  button.setAttribute('role', 'radio');
-  button.setAttribute('aria-checked', 'false');
-
-  const who = document.createElement('span');
-  who.className = 'company-who';
-  const monogram = document.createElement('span');
-  monogram.className = 'company-monogram';
-  monogram.textContent = card.name[0];
-  const identity = document.createElement('span');
-  const name = document.createElement('strong');
-  name.textContent = card.name;
-  const kind = document.createElement('span');
-  kind.className = 'company-kind';
-  kind.textContent = card.kind;
-  identity.append(name, kind);
-  who.append(monogram, identity);
-
-  const big = document.createElement('span');
-  big.className = 'company-big';
-  big.textContent = `${card.big}`;
-  const unit = document.createElement('small');
-  unit.textContent = ` ${card.unit}`;
-  big.append(unit);
-  const per = document.createElement('span');
-  per.className = 'company-per';
-  per.textContent = card.per;
-
-  const rows = document.createElement('span');
-  rows.className = 'company-kv';
-  for (const [label, value] of card.rows) {
-    const key = document.createElement('span');
-    key.textContent = label;
-    const answer = document.createElement('b');
-    answer.textContent = value;
-    rows.append(key, answer);
-  }
-
-  const catchBlock = document.createElement('span');
-  catchBlock.className = 'company-catch';
-  const chip = document.createElement('span');
-  chip.className = `company-chip${card.chip === 'No strings' ? ' no-strings' : ''}`;
-  chip.textContent = card.chip;
-  const explanation = document.createElement('span');
-  explanation.className = 'company-explanation';
-  explanation.textContent = card.explanation;
-  catchBlock.append(chip, explanation);
-  button.append(who, big, per, rows, catchBlock);
-  disabledReason(button, card.disabled ? card.reason : '');
-  return button;
-}
-
-export function openDeals(game, overlayRoot) {
-  const state = game.state;
-  const projected = projectQueue(state, game.queue);
-  const cards = dealCards({ ...projected, movesLeft: game.movesLeft() });
-  let selected = cards.find((card) => !card.disabled)?.id ?? '';
-  const body = document.createElement('div');
-  const group = document.createElement('div');
-  group.className = 'deal-cards';
-  group.setAttribute('role', 'radiogroup');
-  group.setAttribute('aria-label', 'Compute suppliers');
-  const buttons = cards.map(dealCard);
-  group.append(...buttons);
-  const error = errorBox();
-  const foot = footer('');
-  body.append(group, error);
-  const rightContent = document.createElement('div');
-
-  function cardForSelection() {
-    return cards.find((card) => card.id === selected);
-  }
-
-  function renderSelection() {
-    setSelected(buttons, selected, { showTag: true });
-    const card = cardForSelection();
-    if (!card) {
-      rightContent.replaceChildren(statusPanel([], 'No supplier can be signed right now.'));
-      foot.text.textContent = 'Signing uses 1 of 2 moves this turn';
-      return;
-    }
-    const upfrontText = rowValue(card, 'Upfront') || 'none';
-    const rows = [
-      ['Pay now', upfrontText],
-      ['Monthly cost', rowValue(card, 'Monthly')],
-      ['Online from', `turn ${arrivalTurn(projected, rowValue(card, 'Arrives'))}`],
-      ['Runway now', months(runwayNow(projected))],
-    ];
-    if (Number.isFinite(card.runwayAfter)) rows.push(['After signing (full bill)', months(card.runwayAfter)]);
-    rightContent.replaceChildren(statusPanel(rows));
-    foot.text.textContent = upfrontText === 'none'
-      ? 'Signing uses 1 of 2 moves this turn · nothing to pay now'
-      : `Signing uses 1 of 2 moves this turn · pay ${upfrontText} now`;
-  }
-
-  wireChoices(group, buttons, (id) => {
-    selected = id;
-    error.textContent = '';
-    renderSelection();
-  });
-
-  let opened;
-  opened = openDialog(overlayRoot, {
-    title: 'Sign a compute deal',
-    subtitle: `Era ${state.era} · pick one supplier`,
-    left: { title: 'Team', content: teamPanel(state) },
-    right: { title: 'This deal', content: rightContent },
-    body,
-    okLabel: 'Sign',
-    onOk() {
-      const card = cardForSelection();
-      if (!card || card.disabled) {
-        error.textContent = card?.reason ?? 'Choose an available supplier.';
-        return;
-      }
-      const result = game.addMove(card.move);
-      if (result.ok) opened.close();
-      else error.textContent = result.error ?? 'The deal could not be queued.';
-    },
-  });
-  finishDialog(opened, 'deals', foot.root);
-  renderSelection();
-  return opened;
 }
 
 function simpleCard({ id, monogram, name, kind, big, per, chip, explanation, disabled, reason }) {
@@ -590,12 +452,16 @@ export function openEmergency(game, overlayRoot) {
 export function mountCompany(game, overlayRoot) {
   const unregister = [
     registerMenuHandler('deals', () => openDeals(game, overlayRoot)),
+    registerMenuHandler('queue', () => openQueue(game, overlayRoot)),
+    registerMenuHandler('power', () => openPowerSites(game, overlayRoot)),
     registerMenuHandler('raise', () => openRaise(game, overlayRoot)),
     registerMenuHandler('research', () => openResearch(game, overlayRoot)),
     registerMenuHandler('emergency', () => openEmergency(game, overlayRoot)),
   ];
   return () => unregister.forEach((remove) => remove());
 }
+
+export { openDeals, openQueue };
 
 export function mountTurnSummary(overlayRoot, game) {
   let toast = null;

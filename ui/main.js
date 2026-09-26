@@ -14,6 +14,8 @@ import {
   openRaise,
   openResearch,
 } from './screens/company.js';
+import { openQueue } from './screens/compute.js';
+import { openPowerSites } from './screens/sites.js';
 
 const params = new URLSearchParams(location.search);
 
@@ -74,6 +76,14 @@ async function openDebugRoute() {
   }
   if (location.hash === '#deals') {
     openDeals(game, overlay);
+    return;
+  }
+  if (location.hash === '#queue') {
+    openQueue(game, overlay);
+    return;
+  }
+  if (location.hash === '#power') {
+    openPowerSites(game, overlay);
     return;
   }
   if (location.hash === '#raise') {

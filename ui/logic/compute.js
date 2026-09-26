@@ -1,8 +1,11 @@
 import { CASES } from '../../sim/data/constitution.js';
 import { EQUITY_SHARE, SUPPLIERS } from '../../sim/data/compute.js';
+import { BALANCE } from '../../sim/balance.js';
 import {
   contractAction,
+  contractBill,
   exclusiveActive,
+  monthlyBills,
   sideRng,
   signOffer,
 } from '../../sim/contracts.js';
@@ -10,6 +13,7 @@ import {
   EMERGENCY_OPTIONS,
   projectBurn,
   raiseRound,
+  runway,
   updateServing,
   useEmergency,
 } from '../../sim/economy.js';
@@ -17,13 +21,13 @@ import { setConstitution, amendConstitution } from '../../sim/constitution.js';
 import { addressWarning, fallbackChoice, resolveEvent } from '../../sim/events.js';
 import { resolveHazard } from '../../sim/hazards.js';
 import { deployInternal, stopInternal } from '../../sim/internal.js';
-import { buildSite } from '../../sim/power.js';
+import { buildSite, leaseMonthly, sitePower, SITE_TYPES } from '../../sim/power.js';
 import { expireMeeting, meetingDue, openMeeting, runMeeting } from '../../sim/president.js';
-import { placeOrder, withdrawOrder } from '../../sim/queue.js';
+import { allocate, placeOrder, PREPAY_SHARE, released, rivalOrders, withdrawOrder } from '../../sim/queue.js';
 import { activateReleases, releaseModel } from '../../sim/release.js';
 import { RIVAL_TEMPLATES } from '../../sim/rivals.js';
 import { createRng } from '../../sim/rng.js';
-import { makePledge, setComputeSplit } from '../../sim/split.js';
+import { computeSlices, makePledge, setComputeSplit } from '../../sim/split.js';
 import { TECHNIQUES, researchTechnique } from '../../sim/techniques.js';
 import { startRun } from '../../sim/training.js';
 import { MAX_MOVES, setBudget } from '../../sim/turn.js';
@@ -223,7 +227,244 @@ export function dealCards(state) {
     });
 }
 
-const supplierName = (id) => SUPPLIERS[id]?.name ?? (id === 'rescue' ? 'Rescue partner' : id);
+function runwayFor(state, extraMonthly = 0) {
+  const clone = structuredClone(state);
+  updateServing(clone);
+  clone.burnPlanned = projectBurn(clone) + extraMonthly;
+  return runway(clone, 'planned');
+}
+
+function commitmentRow(contract, state, isNew = false) {
+  const supplier = supplierName(contract.supplier);
+  const monthsLeft = isNew
+    ? `arrives turn ${contract.arrivesTurn}`
+    : contract.monthsLeft == null ? 'renews each turn' : `${Math.max(0, Math.ceil(contract.monthsLeft))} months left`;
+  return {
+    id: contract.id,
+    name: `${supplier}${isNew ? ' (new)' : ''}`,
+    units: contract.units,
+    bill: contractBill(contract),
+    monthsLeft,
+    canScaleDown: !isNew && !contract.scaledDown,
+    canBuyout: !isNew && contract.supplier === 'azuria' && !contract.exclusiveBought,
+    unpowered: Boolean(contract.dark || (contract.needsPower && state.compute.unpowered > 0)),
+  };
+}
+
+export function commitmentsView(state, offerId) {
+  const billNow = monthlyBills(state);
+  const rows = state.compute.contracts.map((contract) => commitmentRow(contract, state));
+  const segments = state.compute.contracts
+    .map((contract) => ({ id: contract.id, bill: contractBill(contract), isNew: false }))
+    .filter((segment) => segment.bill > 0);
+  const offer = state.compute.offers.find((candidate) => candidate.id === offerId);
+  let billAfter = billNow;
+  let afterFromTurn = state.turn;
+  let runwayAfter = runwayFor(state);
+
+  if (offer && !offer.viaQueue && offer.supplier !== 'grid') {
+    const newContract = {
+      id: offer.id,
+      supplier: offer.supplier === 'azuriaEquity' ? 'azuria' : offer.supplier === 'loi' ? 'verde' : offer.supplier,
+      units: offer.units,
+      price: offer.price,
+      monthsLeft: offer.termMonths,
+      arrivesTurn: state.turn + offer.arrivesIn,
+      needsPower: offer.supplier === 'verde' && state.era >= 4,
+      dark: false,
+      scaledDown: false,
+      exclusiveBought: false,
+    };
+    const addedBill = contractBill(newContract);
+    billAfter += addedBill;
+    afterFromTurn = newContract.arrivesTurn;
+    segments.push({ id: offer.id, bill: addedBill, isNew: true });
+    rows.push(commitmentRow(newContract, state, true));
+
+    const clone = structuredClone(state);
+    const result = applyDealMove(clone, { type: 'deal', offerId });
+    if (result.ok) runwayAfter = runwayFor(clone, offer.arrivesIn === 0 ? 0 : addedBill);
+  }
+
+  return {
+    billNow,
+    billAfter,
+    afterFromTurn,
+    segments,
+    rows,
+    runwayNow: runwayFor(state),
+    runwayAfter,
+  };
+}
+
+export function queueView(state, draft = {}) {
+  const supply = released(state);
+  const units = Math.max(1, Math.min(supply, Math.round(draft.units ?? supply)));
+  const tier = draft.tier === 'prepaid' ? 'prepaid' : 'standard';
+  const rivals = rivalOrders(state);
+  const outcome = allocate(supply, [...rivals, { lab: 'you', units, tier }]);
+  const standard = allocate(supply, [...rivals, { lab: 'you', units, tier: 'standard' }]).you;
+  const prepaid = allocate(supply, [...rivals, { lab: 'you', units, tier: 'prepaid' }]).you;
+  const names = new Map(state.rivals.map((rival) => [rival.id, rival.name]));
+  const rows = rivals.map((order) => ({
+    ...order,
+    name: names.get(order.lab) ?? rivalName(order.lab) ?? order.lab,
+    ordered: order.units,
+    got: outcome[order.lab] ?? 0,
+  }));
+  rows.splice(Math.min(1, rows.length), 0, {
+    lab: 'you', name: 'You', tier, ordered: units, got: outcome.you ?? 0,
+  });
+  for (const rival of state.rivals.filter((candidate) => candidate.eastern)) {
+    rows.push({ lab: rival.id, name: rival.name, tier: 'none', ordered: 0, got: 0 });
+  }
+  const announcements = state.rivals
+    .filter((rival) => !rival.eastern && rival.prepayNext)
+    .map((rival) => `${rival.name} will prepay next turn. Standard shares will shrink.`);
+  const term = SUPPLIERS.verde.termMonths;
+  const upfront = Math.round(PREPAY_SHARE * units * SUPPLIERS.verde.price * BALANCE.unitMonthlyCost * term);
+  return { released: supply, rows, you: { standard, prepaid, upfront }, announcements };
+}
+
+export function computeBar(state) {
+  const slices = computeSlices(state);
+  const training = Math.min(slices.training, slices.run);
+  const segments = [
+    { key: 'serving', units: slices.serving },
+    { key: 'control', units: slices.control },
+    { key: 'safety', units: slices.safety },
+    { key: 'training', units: training },
+    { key: 'idle', units: slices.idle },
+  ];
+  const pledge = state.promises.find((promise) => promise.type === 'safetyCompute');
+  return {
+    online: slices.online,
+    segments,
+    needMarker: slices.need,
+    pledgeMarker: pledge ? { share: pledge.share, kept: state.compute.split.safety + 1e-9 >= pledge.share } : null,
+  };
+}
+
+const SITE_TAGS = {
+  grid: ['Reserved in an earlier era'],
+  gas: ['Public trust', 'Local opposition risk'],
+  nuclear: ['Public trust', 'Half of restarts slip'],
+};
+
+export function sitesView(state) {
+  const powerOnline = sitePower(state);
+  const liveNeedingPower = state.compute.contracts.filter((contract) => contract.needsPower && !contract.dark);
+  const chipsNeedingPower = liveNeedingPower.reduce((sum, contract) => sum + contract.units, 0);
+  const unpowered = Math.max(0, chipsNeedingPower - powerOnline);
+  let unitsLeft = unpowered;
+  let unpoweredBill = 0;
+  for (const contract of [...liveNeedingPower].sort((a, b) => b.price - a.price)) {
+    const darkUnits = Math.min(unitsLeft, contract.units);
+    unpoweredBill += darkUnits * contract.price * BALANCE.unitMonthlyCost;
+    unitsLeft -= darkUnits;
+  }
+  const pending = state.power.sites.filter((site) => !site.online).sort((a, b) => a.arrivesTurn - b.arrivesTurn);
+  const nextArrival = pending[0] ? {
+    turn: pending[0].arrivesTurn,
+    turns: Math.max(0, pending[0].arrivesTurn - state.turn),
+    units: pending[0].units,
+    name: SITE_TYPES[pending[0].source]?.name ?? pending[0].source,
+  } : null;
+  const options = ['gas', 'nuclear'].map((source) => {
+    const type = SITE_TYPES[source];
+    const units = Math.round((type.size[0] + type.size[1]) / 20) * 10;
+    const ready = source === 'nuclear' ? `${type.turns}–${type.turns + 2} turns` : `${type.turns} turns`;
+    const reason = state.era !== 4 ? 'Power sites are built in era 4' : '';
+    return {
+      source,
+      name: type.name,
+      units,
+      readyIn: ready,
+      lease: leaseMonthly(units),
+      tags: SITE_TAGS[source],
+      disabled: Boolean(reason),
+      reason,
+    };
+  });
+  const gulfOffer = state.compute.offers.find((offer) => offer.supplier === 'gulf');
+  const gulfUnits = gulfOffer?.units ?? SUPPLIERS.gulf.size[0] * 50;
+  options.push({
+    source: 'gulf',
+    name: 'Gulf campus',
+    units: gulfUnits,
+    readyIn: gulfOffer ? `${gulfOffer.arrivesIn} turns` : 'approval required',
+    lease: gulfOffer?.monthly ?? gulfUnits * BALANCE.unitMonthlyCost,
+    tags: ['Needs US approval'],
+    disabled: true,
+    reason: gulfOffer ? 'Sign this sovereign capacity from compute deals.' : 'Locked. This site needs US government support.',
+  });
+  const sites = state.power.sites.map((site) => {
+    const duration = SITE_TYPES[site.source]?.turns ?? Math.max(1, site.arrivesTurn - state.turn);
+    const turnsLeft = Math.max(0, site.arrivesTurn - state.turn);
+    return {
+      id: site.id,
+      name: SITE_TYPES[site.source]?.name ?? site.source,
+      source: site.source,
+      units: site.units,
+      status: site.online ? `Online since turn ${site.arrivesTurn}` : `Building · ${turnsLeft} ${turnsLeft === 1 ? 'turn' : 'turns'} left`,
+      progress: site.online ? 1 : Math.max(0, Math.min(1, 1 - turnsLeft / duration)),
+      warning: site.oppositionCut ? 'Local opposition cut this site\'s capacity.' : '',
+    };
+  });
+  return { powerOnline, chipsNeedingPower, unpowered, unpoweredBill, nextArrival, options, sites };
+}
+
+const ADVISOR_NAMES = {
+  research: 'Head of Research',
+  safety: 'Head of Safety',
+  cfo: 'CFO',
+  policy: 'Policy and Comms',
+};
+
+function opinionText(state, screen, id) {
+  const bar = computeBar(state);
+  const sites = sitesView(state);
+  const pledge = state.promises.find((promise) => promise.type === 'safetyCompute');
+  const idle = bar.segments.find((segment) => segment.key === 'idle').units;
+  const dealLines = {
+    research: "More compute lets us train a larger model sooner.",
+    safety: pledge ? `Our ${pct(pledge.share)} safety pledge grows with the fleet. Budget for it.` : 'More compute needs a matching safety allocation.',
+    cfo: 'Take-or-pay: we pay every month, even if the chips sit idle.',
+    policy: "Supplier terms can change who trusts the lab.",
+  };
+  const queueLines = {
+    research: 'Prepaid orders are served before standard orders.',
+    safety: `Whatever arrives, ${pct(state.compute.split.safety)} of it goes to safety.`,
+    cfo: 'Prepaying ties up cash we may need before the next round.',
+    policy: 'Prepaying looks like racing. Washington notices.',
+  };
+  const budgetLines = {
+    research: idle > 0 ? `${computeAmount(idle, state.era)} sit idle. Start a bigger run, or sell the time.` : 'Training can use every unit left after serving and safety.',
+    safety: pledge ? `${pct(state.compute.split.safety)} ${state.compute.split.safety >= pledge.share ? 'keeps' : 'breaks'} our ${pct(pledge.share)} pledge.` : 'A larger safety slice gives evaluations more room.',
+    cfo: idle > 0 ? `Idle compute still costs ${money(idle * BALANCE.unitMonthlyCost)} a month.` : 'Every online unit is doing useful work this turn.',
+    policy: bar.needMarker <= bar.segments.find((segment) => segment.key === 'serving').units ? 'Serving is covered. No outages this turn.' : 'Serving is short. Users may see an outage.',
+  };
+  const powerLines = {
+    research: sites.unpowered > 0 ? `${computeAmount(sites.unpowered, state.era)} of chips are sitting dark. We could be training on them.` : 'Every contracted chip has power.',
+    safety: `More power means bigger runs. Keep the safety slice at ${pct(state.compute.split.safety)}.`,
+    cfo: sites.unpowered > 0 ? `Unpowered chips still bill ${money(sites.unpoweredBill)} a month.` : 'No chip bill is wasted on unpowered capacity.',
+    policy: 'Gas is fast, while nuclear restarts can slip and draw scrutiny.',
+  };
+  return ({ deals: dealLines, queue: queueLines, budget: budgetLines, power: powerLines }[screen] ?? dealLines)[id];
+}
+
+export function opinions(state, screen) {
+  const readings = new Map((state.lastBriefing ?? []).map((reading) => [reading.id, reading]));
+  return ['research', 'cfo', 'safety', 'policy'].map((id) => ({
+    id,
+    name: ADVISOR_NAMES[id],
+    mood: readings.get(id)?.band ?? 'calm',
+    text: opinionText(state, screen, id),
+  }));
+}
+
+const supplierName = (id) => SUPPLIERS[id]?.name
+  ?? ({ starter: 'Starter cloud', rescue: 'Rescue partner' }[id] ?? id);
 const supplierFromOfferId = (offerId) => Object.keys(SUPPLIERS)
   .sort((a, b) => b.length - a.length)
   .find((id) => offerId?.startsWith(`${id}-`));
@@ -260,11 +501,15 @@ export function turnSummary(events, state) {
       lines.push(`${supplierName(event.supplier)} contract ended`);
     } else if (event.type === 'queueFilled') {
       lines.push(event.waiting > 0 ? 'Verde filled part of your order; the rest stays queued' : 'Verde filled your queue order');
+    } else if (event.type === 'queueOrder') {
+      lines.push(`${event.tier === 'prepaid' ? 'Prepaid' : 'Standard'} Verde order placed`);
     } else if (event.type === 'rivalPrepays') {
       const name = rivalName(event.lab);
       if (name) lines.push(`${name} will prepay Verde for priority`);
     } else if (event.type === 'siteOnline') {
       lines.push(`${event.source === 'gas' ? 'Gas turbines' : event.source === 'nuclear' ? 'Nuclear restart' : 'Grid connection'} came online`);
+    } else if (event.type === 'buildSite') {
+      lines.push(`${event.source === 'gas' || event.site?.startsWith('gas-') ? 'Gas turbine' : 'Nuclear restart'} site construction started`);
     } else if (event.type === 'outage') {
       lines.push('Users reported an outage');
     } else if (event.type === 'pledgeBroken') {

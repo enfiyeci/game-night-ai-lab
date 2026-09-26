@@ -5,9 +5,28 @@ export const ADVISORS = [
   { id: 'policy', name: 'Policy and Comms' },
 ];
 
-export function teamPanel(state) {
+export function teamPanel(state, opinions = null) {
   const root = document.createElement('div');
   root.className = 'budget-team';
+  if (opinions) {
+    for (const opinion of opinions) {
+      const row = document.createElement('div');
+      row.className = 'compute-opinion';
+      const heading = document.createElement('div');
+      heading.className = 'compute-opinion-heading';
+      const name = document.createElement('span');
+      name.textContent = opinion.name ?? ADVISORS.find((advisor) => advisor.id === opinion.id)?.name ?? opinion.id;
+      const mood = document.createElement('span');
+      mood.className = `compute-mood ${opinion.mood}`;
+      mood.textContent = opinion.mood;
+      const quote = document.createElement('q');
+      quote.textContent = opinion.text;
+      heading.append(name, mood);
+      row.append(heading, quote);
+      root.append(row);
+    }
+    return root;
+  }
   const readings = new Map((state.lastBriefing ?? []).map((reading) => [reading.id, reading]));
   for (const advisor of ADVISORS) {
     const row = document.createElement('div');
