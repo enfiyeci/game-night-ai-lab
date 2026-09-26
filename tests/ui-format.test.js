@@ -36,3 +36,7 @@ test('the project pill names the run after the next model in the family and trac
   s.activeRun = null; s.pendingModel = {};
   assert.equal(project(s).status, 'ready to release');
 });
+
+test('arriving compute counts only the share left after pooling', () => {
+  assert.equal(compute({ online: 50, pooled: 0.3, pipeline: [{ units: 100 }] }), '50 units online · 70 units arriving');
+});

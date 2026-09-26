@@ -35,7 +35,9 @@ export function computeAmount(units, era = 1) {
 
 export function compute(value, era = 1) {
   const online = value?.online ?? 0;
-  const arriving = (value?.pipeline ?? []).reduce((sum, deal) => sum + (deal.units ?? 0), 0);
+  // Pooled compute goes to the government pool, so only the rest of an arrival becomes usable (sim/contracts.js refreshOnline).
+  const gross = (value?.pipeline ?? []).reduce((sum, deal) => sum + (deal.units ?? 0), 0);
+  const arriving = Math.floor(gross * (1 - (value?.pooled ?? 0)));
   return `${computeAmount(online, era)} online · ${computeAmount(arriving, era)} arriving`;
 }
 
