@@ -7,7 +7,7 @@ import {
   dealCards,
   opinions,
   projectQueue,
-  queueOrderPreview,
+  queueOrderPreflight,
   replaceQueueOrder,
   queueScreenAvailable,
   queueView,
@@ -33,6 +33,7 @@ function dealButton(card) {
   const button = element('button', `company-card supplier-${card.supplier}`);
   button.type = 'button';
   button.dataset.choice = card.id;
+  button.dataset.focusKey = `offer:${card.id}`;
   button.setAttribute('role', 'radio');
   button.setAttribute('aria-checked', 'false');
   button.disabled = card.disabled;
@@ -79,6 +80,7 @@ function gridReservationButton(card) {
   const button = element('button', 'grid-reservation-strip');
   button.type = 'button';
   button.dataset.choice = card.id;
+  button.dataset.focusKey = `offer:${card.id}`;
   button.setAttribute('role', 'radio');
   button.setAttribute('aria-checked', 'false');
   button.disabled = card.disabled;
@@ -103,9 +105,12 @@ function commitmentPanel(game, state, selected, onAction) {
   const billNow = element('div', 'compute-bill-row');
   billNow.append(element('span', '', 'Monthly bill now'), element('b', '', `${money(view.billNow)}/mo`));
   const billAfter = element('div', 'compute-bill-row');
+  const afterBill = view.billAfterRange
+    ? `${money(view.billAfterRange[0])}–${money(view.billAfterRange[1])}/mo`
+    : `${money(view.billAfter)}/mo`;
   billAfter.append(
     element('span', '', `After signing, from turn ${view.afterFromTurn}`),
-    element('b', 'after', `${money(view.billAfter)}/mo`),
+    element('b', 'after', afterBill),
   );
   const stack = element('div', 'commitment-stack');
   stack.setAttribute('aria-label', 'Monthly bill by contract');
@@ -120,6 +125,8 @@ function commitmentPanel(game, state, selected, onAction) {
 
   for (const row of view.rows) {
     const card = element('div', `commitment-row${row.isNew ? ' new' : ''}`);
+    card.dataset.contractId = row.id;
+    card.tabIndex = -1;
     const top = element('div', 'r1');
     const bill = row.billRange
       ? `${money(row.billRange[0])}–${money(row.billRange[1])}/mo`
@@ -142,10 +149,11 @@ function commitmentPanel(game, state, selected, onAction) {
       for (const [label, action] of choices) {
         const button = element('button', 'compute-ghost', label);
         button.type = 'button';
+        button.dataset.focusKey = `contract:${row.id}:${action}`;
         button.addEventListener('click', () => {
           const next = [...(game.queue.contractActions ?? []).filter((item) => item.id !== row.id), { id: row.id, action }];
           game.setField('contractActions', next);
-          onAction();
+          onAction(button.dataset.focusKey);
         });
         actions.append(button);
       }
@@ -156,7 +164,10 @@ function commitmentPanel(game, state, selected, onAction) {
   const runwayNow = element('div', 'compute-runway-row');
   runwayNow.append(element('span', '', 'Runway now'), element('b', '', months(view.runwayNow)));
   const runwayAfter = element('div', 'compute-runway-row compact');
-  runwayAfter.append(element('span', '', 'After signing'), element('b', 'bad', months(view.runwayAfter)));
+  const afterRunway = view.runwayAfterRange
+    ? `${months(view.runwayAfterRange[0])}–${months(view.runwayAfterRange[1])}`
+    : months(view.runwayAfter);
+  runwayAfter.append(element('span', '', 'After signing'), element('b', 'bad', afterRunway));
   root.append(runwayNow, runwayAfter);
   return root;
 }
@@ -197,10 +208,10 @@ export function openDeals(game, overlayRoot) {
     return { state, cards, gridCard };
   }
 
-  function render() {
+  function render({ focusKey = document.activeElement?.dataset?.focusKey } = {}) {
     const { state, cards, gridCard } = currentCards();
     const allCards = [...cards, ...(gridCard ? [gridCard] : [])];
-    if (!allCards.some((card) => card.id === selected)) {
+    if (!allCards.some((card) => card.id === selected && !card.disabled)) {
       selected = allCards.find((card) => !card.disabled)?.id ?? allCards[0]?.id ?? '';
     }
     const group = element('div', 'deal-cards');
@@ -228,11 +239,11 @@ export function openDeals(game, overlayRoot) {
       button.addEventListener('click', () => {
         selected = button.dataset.choice;
         error.textContent = '';
-        render();
+        render({ focusKey: button.dataset.focusKey });
       });
     }
     const card = cards.find((candidate) => candidate.id === selected) ?? (gridCard?.id === selected ? gridCard : null);
-    right.replaceChildren(commitmentPanel(game, state, selected, render));
+    right.replaceChildren(commitmentPanel(game, state, selected, (key) => render({ focusKey: key })));
     const upfront = card?.upfront != null ? money(card.upfront) : card ? Object.fromEntries(card.rows).Upfront : 'none';
     note.textContent = upfront && upfront !== 'none'
       ? `Signing uses 1 of 2 moves this turn · pay ${upfront} now`
@@ -242,6 +253,18 @@ export function openDeals(game, overlayRoot) {
     body.replaceChildren(group);
     if (gridStrip) body.append(gridStrip);
     body.append(error);
+    if (focusKey) {
+      const exact = [...opened.querySelectorAll('[data-focus-key]')]
+        .find((control) => control.dataset.focusKey === focusKey);
+      const contractId = focusKey.startsWith('contract:') ? focusKey.split(':')[1] : '';
+      const contract = contractId
+        ? [...opened.querySelectorAll('[data-contract-id]')]
+          .find((control) => control.dataset.contractId === contractId)
+        : null;
+      const selectedOffer = [...opened.querySelectorAll('[data-choice]')]
+        .find((control) => control.dataset.choice === selected);
+      (exact ?? contract ?? selectedOffer)?.focus();
+    }
   }
 
   opened = openDialog(overlayRoot, {
@@ -304,14 +327,12 @@ function restoreFocus(root, label) {
 
 export function openQueue(game, overlayRoot) {
   if (!queueScreenAvailable(game.state)) return null;
-  const withoutDraft = () => ({
-    ...game.queue,
-    moves: game.queue.moves.filter((move) => move.type !== 'queueOrder'),
-  });
-  const initial = projectQueue(game.state, withoutDraft());
+  const existingDraft = game.queue.moves.find((move) => move.type === 'queueOrder');
+  const initialDraft = existingDraft ?? { units: 1, tier: 'standard' };
+  const initial = queueOrderPreflight(game.state, game.queue, initialDraft).state;
   const max = queueView(initial).released;
-  let units = Math.min(max, game.queue.moves.find((move) => move.type === 'queueOrder')?.units ?? Math.max(1, Math.round(max * 0.4)));
-  let tier = game.queue.moves.find((move) => move.type === 'queueOrder')?.tier ?? 'standard';
+  let units = Math.min(max, existingDraft?.units ?? Math.max(1, Math.round(max * 0.4)));
+  let tier = existingDraft?.tier ?? 'standard';
   const body = element('div', 'queue-layout');
   const allocation = element('div', 'queue-allocation');
   const order = element('div', 'queue-order');
@@ -321,10 +342,10 @@ export function openQueue(game, overlayRoot) {
   let orderButton;
 
   function render({ focusLabel } = {}) {
-    const state = projectQueue(game.state, withoutDraft());
+    const preview = queueOrderPreflight(game.state, game.queue, { units, tier });
+    const state = preview.state;
     const view = queueView(state, { units, tier });
     const existingOrder = game.queue.moves.some((move) => move.type === 'queueOrder');
-    const preview = queueOrderPreview(state, { units, tier });
     const moveReason = !existingOrder && game.movesLeft() === 0 ? 'Both moves are used this turn' : '';
     const orderReason = moveReason || preview.reason;
     allocation.replaceChildren();
@@ -452,8 +473,7 @@ export function openQueue(game, overlayRoot) {
     body,
     okLabel: 'Order',
     onOk() {
-      const state = projectQueue(game.state, withoutDraft());
-      const preview = queueOrderPreview(state, { units, tier });
+      const preview = queueOrderPreflight(game.state, game.queue, { units, tier });
       const existingOrder = game.queue.moves.some((move) => move.type === 'queueOrder');
       if (!preview.ok || (!existingOrder && game.movesLeft() === 0)) {
         error.textContent = preview.reason || 'Both moves are used this turn';

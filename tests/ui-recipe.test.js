@@ -103,6 +103,23 @@ test('queuedRunProblem revalidates a queued run against a replacement budget', (
   assert.deepEqual(queue, snapshot);
 });
 
+test('queuedRunProblem revalidates a queued run against the edited compute split', () => {
+  const state = createInitialState();
+  const queuedRecipe = recipe({ size: 'medium', post: ['rlhf'] });
+  const queue = { moves: [{ type: 'startRun', recipe: queuedRecipe }] };
+
+  assert.equal(queuedRunProblem(state, {
+    ...queue,
+    computeSplit: { ...state.compute.split, safety: 0.1 },
+    pledge: 0.1,
+  }), '');
+  assert.equal(queuedRunProblem(state, {
+    ...queue,
+    computeSplit: { ...state.compute.split, safety: 0.5 },
+    pledge: 0.2,
+  }), 'not enough free compute');
+});
+
 test('sanitizeDraft drops invalid picks and repairs sliders without mutating input', () => {
   const state = createInitialState();
   const input = recipe({

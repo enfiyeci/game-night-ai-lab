@@ -298,7 +298,12 @@ export function openBudget(game, overlayRoot) {
     body,
     onOk() {
       const budget = budgetFromSliders(values, level, state.era);
-      const problem = queuedRunProblem(game.state, { ...game.queue, budget });
+      const problem = queuedRunProblem(game.state, {
+        ...game.queue,
+        budget,
+        computeSplit: split,
+        ...(pledge && canPledge ? { pledge } : {}),
+      });
       if (problem) {
         const message = problem[0].toUpperCase() + problem.slice(1);
         error.textContent = `Your queued training run would no longer work: ${message}. Change the run first.`;

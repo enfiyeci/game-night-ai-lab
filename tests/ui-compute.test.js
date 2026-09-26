@@ -10,6 +10,7 @@ import {
   pledgeAvailable,
   powerSitesAvailable,
   projectQueue,
+  queueOrderPreflight,
   queueOrderPreview,
   queueScreenAvailable,
   queueView,
@@ -18,7 +19,7 @@ import {
 } from '../ui/logic/compute.js';
 import { BALANCE } from '../sim/balance.js';
 import { allocate, placeOrder, rivalOrders, released } from '../sim/queue.js';
-import { buildSite, leaseMonthly } from '../sim/power.js';
+import { buildSite, leaseBills, leaseMonthly, powerTurn } from '../sim/power.js';
 import { creditOffset, deliverDue, generateOffers, sideRng, signOffer } from '../sim/contracts.js';
 import { projectBurn, runway, updateServing } from '../sim/economy.js';
 import { computeAmount, money } from '../ui/logic/format.js';
@@ -80,10 +81,41 @@ test('LOI commitments show the delivery range and site-power status', () => {
   s.cash = 5000;
   s.compute.offers = generateOffers(s, sideRng(s, 5));
   const offer = s.compute.offers.find((candidate) => candidate.supplier === 'loi');
-  const row = commitmentsView(s, offer.id).rows.find((candidate) => candidate.name.includes('(new)'));
+  const view = commitmentsView(s, offer.id);
+  const row = view.rows.find((candidate) => candidate.name.includes('(new)'));
   assert.deepEqual(row.unitsRange, [Math.round(offer.units * 0.3), offer.units]);
   assert.deepEqual(row.billRange, row.unitsRange.map((units) => units * offer.price * BALANCE.unitMonthlyCost));
   assert.match(row.status, /power|Unpowered/i);
+  assert.equal(view.billAfter, null);
+  assert.deepEqual(view.billAfterRange, row.billRange.map((bill) => view.billNow + bill));
+  assert.equal(view.runwayAfter, null);
+  assert.equal(view.runwayAfterRange.length, 2);
+  assert.ok(view.runwayAfterRange[0] <= view.runwayAfterRange[1]);
+});
+
+test('future deal projection brings due power sites online before delivery', () => {
+  const s = createInitialState({ seed: 1 });
+  s.era = 4;
+  s.cash = 5000;
+  s.compute.offers = generateOffers(s, sideRng(s, 5));
+  s.power.sites.push({
+    id: 'gas-due', source: 'gas', units: 2000, arrivesTurn: s.turn + 1, online: false, oppositionCut: null,
+  });
+  const offer = s.compute.offers.find((candidate) => candidate.supplier === 'verde');
+  const view = commitmentsView(s, offer.id);
+  const signed = structuredClone(s);
+  const result = signOffer(signed, offer.id, sideRng(signed, 1));
+  while (signed.turn < result.arrivesTurn) {
+    signed.turn += 1;
+    powerTurn(signed);
+    deliverDue(signed, sideRng(signed, 6));
+  }
+  updateServing(signed);
+  signed.burnPlanned = projectBurn(signed);
+  assert.equal(signed.power.sites[0].online, true);
+  assert.ok(leaseBills(signed) > 0);
+  assert.equal(view.runwayAfter, runway(signed, 'planned'));
+  assert.equal(view.rows.find((row) => row.isNew).status, 'Needs site power');
 });
 
 test('dark Gulf commitments say that billing is paused', () => {
@@ -123,7 +155,7 @@ test('queue order preflight mirrors sim rejection and withdrawal rules', () => {
   assert.equal(rejected.reason, direct.error);
 });
 
-test('replacing a queue draft keeps one order after the moves used for preflight', () => {
+test('replacing a queue draft keeps its position and preflights before later moves', () => {
   const moves = [
     { type: 'queueOrder', units: 10, tier: 'standard' },
     { type: 'raise', archetype: 'vc' },
@@ -131,9 +163,21 @@ test('replacing a queue draft keeps one order after the moves used for preflight
   ];
   const next = replaceQueueOrder(moves, { units: 30, tier: 'prepaid' });
   assert.deepEqual(next, [
-    moves[1],
     { type: 'queueOrder', units: 30, tier: 'prepaid' },
+    moves[1],
   ]);
+
+  const s = createInitialState();
+  s.era = 3;
+  s.cash = 0;
+  const queue = { moves: [moves[0], moves[1]] };
+  const direct = placeOrder(structuredClone(s), { units: 30, tier: 'prepaid' });
+  const preview = queueOrderPreflight(s, queue, { units: 30, tier: 'prepaid' });
+  const afterRaise = projectQueue(s, { moves: [moves[1]] });
+  assert.equal(preview.index, 0);
+  assert.equal(preview.reason, direct.error);
+  assert.match(preview.reason, /cash/i);
+  assert.equal(queueOrderPreview(afterRaise, { units: 30, tier: 'prepaid' }).ok, true);
 });
 
 test('projected contract actions refresh deal cash and exclusivity checks', () => {
@@ -182,12 +226,17 @@ test('idle compute cost uses the average billed price of online contracts', () =
   s.compute.contracts = [{
     id: 'spot', supplier: 'spot', units: 100, price: 3, monthsLeft: null,
     needsPower: false, dark: false, scaledDown: false, exclusiveBought: false,
+  }, {
+    id: 'verde-dark-by-power', supplier: 'verde', units: 900, price: 1, monthsLeft: 24,
+    needsPower: true, dark: false, scaledDown: false, exclusiveBought: false,
   }];
   s.compute.online = 100;
   s.compute.servingUnits = 0;
   s.compute.split.safety = 0.1;
   const idle = computeBar(s).segments.find((segment) => segment.key === 'idle').units;
   assert.equal(idleComputeCost(s), idle * 3 * BALANCE.unitMonthlyCost);
+  assert.ok(s.compute.contracts.reduce((sum, contract) => sum + contract.units * contract.price * BALANCE.unitMonthlyCost, 0)
+    > idleComputeCost(s));
   assert.match(opinions(s, 'budget').find((opinion) => opinion.id === 'cfo').text, new RegExp(money(idleComputeCost(s)).replace('$', '\\$')));
 });
 

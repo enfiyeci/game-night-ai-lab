@@ -22,7 +22,7 @@ import { setConstitution, amendConstitution } from '../../sim/constitution.js';
 import { addressWarning, fallbackChoice, resolveEvent } from '../../sim/events.js';
 import { resolveHazard } from '../../sim/hazards.js';
 import { deployInternal, stopInternal } from '../../sim/internal.js';
-import { buildSite, leaseMonthly, sitePower, SITE_TYPES } from '../../sim/power.js';
+import { buildSite, leaseMonthly, powerTurn, sitePower, SITE_TYPES } from '../../sim/power.js';
 import { expireMeeting, meetingDue, openMeeting, runMeeting } from '../../sim/president.js';
 import { allocate, placeOrder, PREPAY_SHARE, released, rivalOrders, withdrawOrder } from '../../sim/queue.js';
 import { activateReleases, releaseModel } from '../../sim/release.js';
@@ -70,7 +70,7 @@ function afterMove(state) {
   state.burnPlanned = projectBurn(state);
 }
 
-function signedDealProjection(state, offer) {
+function signedDealProjection(state, offer, deliveryRng = null) {
   const clone = structuredClone(state);
   const existing = new Set([
     ...clone.compute.contracts.map((contract) => contract.id),
@@ -79,8 +79,12 @@ function signedDealProjection(state, offer) {
   const result = signOffer(clone, offer.id, sideRng(clone, 1));
   if (!result.ok) return { result, state: clone, contracts: [] };
   if (offer.supplier !== 'grid' && result.arrivesTurn > clone.turn) {
-    clone.turn = result.arrivesTurn;
-    deliverDue(clone, sideRng(clone, 6));
+    while (clone.turn < result.arrivesTurn) {
+      clone.turn += 1;
+      powerTurn(clone);
+      deliverDue(clone, clone.turn === result.arrivesTurn && deliveryRng
+        ? deliveryRng : sideRng(clone, 6));
+    }
   }
   afterMove(clone);
   return {
@@ -91,6 +95,7 @@ function signedDealProjection(state, offer) {
 }
 
 function runwayAfterDeal(state, offer) {
+  if (offer.supplier === 'loi') return null;
   const projection = signedDealProjection(state, offer);
   return projection.result.ok ? runway(projection.state, 'planned') : null;
 }
@@ -284,19 +289,47 @@ export function commitmentsView(state, offerId) {
     .filter((segment) => segment.bill > 0);
   const offer = state.compute.offers.find((candidate) => candidate.id === offerId);
   let billAfter = billNow;
+  let billAfterRange = null;
   let afterFromTurn = state.turn;
   let runwayAfter = runwayFor(state);
+  let runwayAfterRange = null;
 
   if (offer && !offer.viaQueue) {
-    const projection = signedDealProjection(state, offer);
-    if (projection.result.ok) {
-      afterFromTurn = projection.result.arrivesTurn;
-      runwayAfter = runway(projection.state, 'planned');
-      for (const contract of projection.contracts) {
-        const addedBill = contractBill(contract);
-        billAfter += addedBill;
-        segments.push({ id: contract.id, bill: addedBill, isNew: true });
-        rows.push(commitmentRow(contract, projection.state, true, offer));
+    if (offer.supplier === 'loi') {
+      const low = signedDealProjection(state, offer, { next: () => 0 });
+      const high = signedDealProjection(state, offer, { next: () => 1 });
+      if (low.result.ok && high.result.ok) {
+        afterFromTurn = low.result.arrivesTurn;
+        const lowBill = low.contracts.reduce((sum, contract) => sum + contractBill(contract), 0);
+        const highBill = high.contracts.reduce((sum, contract) => sum + contractBill(contract), 0);
+        billAfter = null;
+        billAfterRange = [billNow + lowBill, billNow + highBill].sort((a, b) => a - b);
+        runwayAfter = null;
+        runwayAfterRange = [runway(low.state, 'planned'), runway(high.state, 'planned')].sort((a, b) => a - b);
+        const contract = low.contracts[0];
+        if (contract) {
+          segments.push({
+            id: contract.id,
+            bill: (lowBill + highBill) / 2,
+            billRange: [lowBill, highBill],
+            isNew: true,
+          });
+          const row = commitmentRow(contract, low.state, true, offer);
+          row.status = 'Needs site power';
+          rows.push(row);
+        }
+      }
+    } else {
+      const projection = signedDealProjection(state, offer);
+      if (projection.result.ok) {
+        afterFromTurn = projection.result.arrivesTurn;
+        runwayAfter = runway(projection.state, 'planned');
+        for (const contract of projection.contracts) {
+          const addedBill = contractBill(contract);
+          billAfter += addedBill;
+          segments.push({ id: contract.id, bill: addedBill, isNew: true });
+          rows.push(commitmentRow(contract, projection.state, true, offer));
+        }
       }
     }
   }
@@ -304,11 +337,13 @@ export function commitmentsView(state, offerId) {
   return {
     billNow,
     billAfter,
+    billAfterRange,
     afterFromTurn,
     segments,
     rows,
     runwayNow: runwayFor(state),
     runwayAfter,
+    runwayAfterRange,
   };
 }
 
@@ -348,10 +383,21 @@ export function queueOrderPreview(state, draft) {
 }
 
 export function replaceQueueOrder(moves, draft) {
-  return [
-    ...moves.filter((move) => move.type !== 'queueOrder'),
-    { type: 'queueOrder', units: draft.units, tier: draft.tier },
-  ];
+  const index = moves.findIndex((move) => move.type === 'queueOrder');
+  const replacement = { type: 'queueOrder', units: draft.units, tier: draft.tier };
+  if (index < 0) return [...moves, replacement];
+  return moves.flatMap((move, moveIndex) => {
+    if (move.type !== 'queueOrder') return [move];
+    return moveIndex === index ? [replacement] : [];
+  });
+}
+
+export function queueOrderPreflight(state, queue, draft) {
+  const moves = queue?.moves ?? [];
+  const index = moves.findIndex((move) => move.type === 'queueOrder');
+  const preceding = index < 0 ? moves : moves.slice(0, index);
+  const beforeOrder = projectQueue(state, { ...queue, moves: preceding });
+  return { ...queueOrderPreview(beforeOrder, draft), state: beforeOrder, index };
 }
 
 export const queueScreenAvailable = (state) => state.era === 3;
@@ -383,9 +429,23 @@ export function computeBar(state) {
 }
 
 export function idleComputeCost(state) {
-  if (state.compute.online <= 0) return 0;
+  const powered = poweredBilling(state);
+  if (powered.units <= 0) return 0;
   const idle = computeBar(state).segments.find((segment) => segment.key === 'idle')?.units ?? 0;
-  return idle * (monthlyBills(state) / state.compute.online);
+  return idle * (powered.bill / powered.units);
+}
+
+function poweredBilling(state) {
+  const live = state.compute.contracts.filter((contract) => !contract.dark);
+  const own = live.filter((contract) => !contract.needsPower);
+  const needs = live.filter((contract) => contract.needsPower);
+  const ownUnits = own.reduce((sum, contract) => sum + contract.units, 0);
+  const ownBill = own.reduce((sum, contract) => sum + contractBill(contract), 0);
+  const needsUnits = needs.reduce((sum, contract) => sum + contract.units, 0);
+  const poweredNeeds = Math.min(needsUnits, sitePower(state));
+  const poweredShare = needsUnits > 0 ? poweredNeeds / needsUnits : 0;
+  const needsBill = needs.reduce((sum, contract) => sum + contractBill(contract), 0) * poweredShare;
+  return { units: Math.min(state.compute.online, ownUnits + poweredNeeds), bill: ownBill + needsBill };
 }
 
 const SITE_TAGS = {
