@@ -4619,7 +4619,7 @@ export const REACTIONS = {
    }
   ],
   [
-   "@scoreline",
+   "@scorewing",
    "FULL TIME: A 94th-minute winner sends the underdogs into the cup final for the first time in their 120-year history.",
    {
     "replies": [
@@ -4631,11 +4631,11 @@ export const REACTIONS = {
    }
   ],
   [
-   "@scoreline",
+   "@scorewing",
    "The world's top-ranked tennis player withdraws from the season finale with a wrist injury."
   ],
   [
-   "@scoreline",
+   "@scorewing",
    "Record crowd: 91,000 people attend the women's club final, the most ever for a women's club match.",
    {
     "replies": [
@@ -4647,11 +4647,11 @@ export const REACTIONS = {
    }
   ],
   [
-   "@scoreline",
+   "@scorewing",
    "A marathon runner has broken the world record by 31 seconds in near-perfect conditions."
   ],
   [
-   "@scoreline",
+   "@scorewing",
    "Fans boycott the season opener over a 40% rise in ticket prices. The stadium was a third empty.",
    {
     "replies": [
@@ -4687,7 +4687,7 @@ export const REACTIONS = {
    }
   ],
   [
-   "@scoreline",
+   "@scorewing",
    "The national team's coach has been sacked after a 4-0 defeat. It is the third coach in two years.",
    {
     "replies": [
