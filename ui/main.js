@@ -11,7 +11,7 @@ import { openBudget } from './screens/budget.js';
 import { mountRecipe, openRecipe } from './screens/recipe.js';
 import { mountRelease, openRelease } from './screens/release.js';
 import { mountReveal, showReveal } from './screens/reveal.js';
-import { mountSound } from './screens/sound.js';
+import { mountSound, openSound } from './screens/sound.js';
 import { music } from './music.js';
 import { releaseDraft, releasePayload } from './logic/release.js';
 import {
@@ -94,6 +94,8 @@ if (showTitle) {
     stage,
     overlay,
     collection,
+    music,
+    openSound,
     onStart: () => {
       game.clock.resume('title');
       document.dispatchEvent(new CustomEvent('ai-lab:start')); // the guided intro starts here
