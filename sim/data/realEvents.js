@@ -3,6 +3,7 @@ import { forceAmendConstitution } from '../constitution.js';
 import { refreshOnline } from '../contracts.js';
 import { exposeConcealed } from '../hazards.js';
 import { leaseMonthly } from '../power.js';
+import { holdRelease } from '../release.js';
 import { clamp } from '../util.js';
 import {
   anchorAt, hasFlag, liveModelsWithFlag,
@@ -413,12 +414,8 @@ export const REAL_EVENTS = [
     effects: {
       publish(state) { state.publicTrust -= 2; state.staffTrust += 3; },
       delay(state) {
-        // Pulled back (or held) for one more round while its tools are locked down.
-        const model = state.models[state.flags.redTeamModel];
-        if (model?.active) {
-          model.activated = false;
-          model.activeFromTurn = Math.max(model.activeFromTurn ?? 0, state.turn) + 1;
-        }
+        // Held (or pulled back) for one more round while its tools are locked down.
+        holdRelease(state, state.models[state.flags.redTeamModel]);
         state.alignmentDebt -= 2;
       },
       omit(state) { state.concealedDebt += 3; },

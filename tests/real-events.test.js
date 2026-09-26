@@ -11,6 +11,7 @@ import { ROUND_DAYS } from '../sim/time.js';
 import { startRun, advanceRun } from '../sim/training.js';
 import { activateReleases, releaseModel } from '../sim/release.js';
 import { shipDelay } from '../ui/logic/release.js';
+import { activeModels } from '../sim/serving.js';
 
 const text = JSON.parse(readFileSync(new URL('../docs/superpowers/plans/2026-09-26-real-event-cards-text.json', import.meta.url)));
 const no = { next: () => 0.99, int: () => 0, chance: () => false, pick: (a) => a[0], normal: (m) => m };
@@ -334,4 +335,29 @@ test('the government test card does not make a signed lab wait twice', () => {
   const turn = s.turn;
   assert.equal(ship(s, ['eval-gov']).ok, true);
   assert.equal(s.models.at(-1).activeFromTurn, turn + 1);
+});
+
+// Review round 3 fix (Codex adversarial pass, 2026-09-26).
+test('pulling back a live release puts the model it replaced back in service until it relaunches', () => {
+  const s = trainedModel(2);
+  s.models.push(liveModel({ releaseSequence: -1, users: 2e6 }));
+  const old = s.models.at(-1);
+  assert.equal(ship(s, ['eval-third']).ok, true);
+  const model = s.models.at(-1);
+  assert.equal(model.channel, old.channel);
+  assert.equal(row('redTeamLie').trigger(s), true);
+  s.turn += 1;
+  activateReleases(s);
+  assert.equal(old.active, false);
+  s.pendingEvents.push({ id: 'redTeamLie' });
+  resolveEvent(s, 'redTeamLie', 'delay');
+  assert.equal(old.active, true);
+  assert.equal(old.users, 2e6);
+  assert.equal(model.activated, false);
+  assert.deepEqual(activeModels(s), [old]);
+  s.turn += 1;
+  activateReleases(s);
+  assert.equal(old.active, false);
+  assert.equal(model.activated, true);
+  assert.equal(model.users >= 2e6, true);
 });

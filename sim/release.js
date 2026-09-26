@@ -50,9 +50,12 @@ export function activateReleases(state) {
       continue;
     }
     let carried = 0;
+    // Remembered so a release pulled back before its next round (holdRelease) can hand the channel back.
+    model.replaced = [];
     for (const old of state.models) {
       if (old !== model && old.active && old.activated && old.channel === model.channel && releaseOrder(state, old) < order) {
         carried = Math.max(carried, old.users);
+        model.replaced.push({ index: state.models.indexOf(old), users: old.users });
         old.active = false;
         old.users = 0;
       }
@@ -61,6 +64,21 @@ export function activateReleases(state) {
     model.userCap = Math.max(model.userCap, model.users * 4);
     model.activated = true;
   }
+}
+
+// Holds a release back one more round (the red team card's delay). One that already went live comes off again, and
+// the models it replaced serve their users until it relaunches at the next mark, when activateReleases retires them.
+export function holdRelease(state, model) {
+  if (!model?.active) return;
+  if (model.activated) {
+    for (const { index, users } of model.replaced ?? []) {
+      const old = state.models[index];
+      if (old) { old.active = true; old.users = users; }
+    }
+    model.users = model.newUsers ?? model.users;
+    model.activated = false;
+  }
+  model.activeFromTurn = Math.max(model.activeFromTurn ?? 0, state.turn) + 1;
 }
 
 export function releaseModel(state, release, rng) {
