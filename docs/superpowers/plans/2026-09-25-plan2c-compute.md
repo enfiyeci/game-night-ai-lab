@@ -283,7 +283,7 @@ export function poweredUnits(state) {
   - `generateOffers(state, rng)` → offer list. Offer shape: `{ id, supplier, units, arrivesIn, upfront, monthly, termMonths, price, string, credits? }`; the era 3 queue card is `{ id: 'verde-queue-<turn>', supplier: 'verde', viaQueue: true }`; the grid card is `{ id, supplier: 'grid', upfront: 50, string: 'gridReservation' }`.
   - `signOffer(state, offerId, rng)` → `{ ok, offerId?, arrivesTurn?, error? }`.
   - `addPipeline(state, { supplier, units, price, termMonths, arrivesTurn, string, headline? })` → id.
-  - `contractsTurn(state, rng)` → `{ arrived, bumped, warnedBump }`; `expireContracts(state)` → expired contracts; `refreshOnline(state)`.
+  - `deliverDue(state, rng)` → the contracts that arrived (pipeline items due by `state.turn`); `contractsTurn(state, rng)` → `{ bumped, warnedBump }` (spot pulls and warnings, spot renewal price, CoreFlame trouble rolls, the Gulf license); `expireContracts(state)` → expired contracts; `refreshOnline(state)`.
   - `contractBill(c)`, `monthlyBills(state)`, `arrivingBills(state)`, `creditOffset(state)`, `spendCredits(state)` → $M used; `perTurn(monthly, months)`; `exclusiveActive(state)`.
   - `contractAction(state, { id, action })` → `{ ok }` with actions `scaleDown`, `break`, `buyout`.
   - Contract shape: `{ id, supplier, units, price, monthsLeft, needsPower, string, arrivedTurn, scaledDown, troubled, dark, bumpNext, exclusiveBought, headline }`. Spot has `monthsLeft: null`: it renews every turn until the player breaks it (free) or it is pulled. A pipeline item may carry `needsPower` to override the default (Verde chips arriving in era 4 or later need site power).
@@ -299,7 +299,7 @@ import { createInitialState } from '../sim/state.js';
 import { BALANCE } from '../sim/balance.js';
 import { SUPPLIERS, SPOT_PRICE, EQUITY_SHARE, GULF_OPEN, SCALE_DOWN, SCALE_DOWN_PENALTY_MONTHS, BREAK_SHARE, BUYOUT_MONTHS, eraScale } from '../sim/data/compute.js';
 import {
-  generateOffers, signOffer, contractsTurn, expireContracts, contractAction, monthlyBills,
+  generateOffers, signOffer, deliverDue, contractsTurn, expireContracts, contractAction, monthlyBills,
   creditOffset, spendCredits, perTurn, exclusiveActive, sideRng,
 } from '../sim/contracts.js';
 
@@ -356,7 +356,7 @@ test('a signed contract bills every month until its term ends, used or not', () 
   assert.equal(s.cash, cash - v.upfront);
   assert.equal(s.compute.offers.some((o) => o.id === v.id), false, 'offers are single use');
   s.turn = v.arrivesIn;
-  contractsTurn(s, lo);
+  deliverDue(s, lo);
   assert.equal(s.compute.online, 10 + v.units);
   assert.ok(Math.abs(monthlyBills(s) - (10 + v.units) * U) < 1e-9);
   const c = s.compute.contracts.find((x) => x.supplier === 'verde');
@@ -390,7 +390,7 @@ test('an Azuria contract, cloud or investment, blocks other clouds until bought 
   assert.equal(exclusiveActive(s), true);
   assert.equal(signOffer(s, offer(s, 'coreflame').id, lo).ok, false);
   s.turn = 1;
-  contractsTurn(s, lo);
+  deliverDue(s, lo);
   const c = s.compute.contracts.find((x) => x.supplier === 'azuria');
   const cash = s.cash;
   assert.equal(contractAction(s, { id: c.id, action: 'buyout' }).ok, true);
@@ -407,7 +407,7 @@ test('scale down once with a penalty and a slower next offer; break costs a shar
   const cf = offer(s, 'coreflame');
   signOffer(s, cf.id, lo);
   s.turn = 1;
-  contractsTurn(s, lo);
+  deliverDue(s, lo);
   const c = s.compute.contracts.find((x) => x.supplier === 'coreflame');
   const removed = Math.round(cf.units * SCALE_DOWN);
   let cash = s.cash;
@@ -431,6 +431,7 @@ test('neocloud trouble, and the Gulf license follows US favor', () => {
   assert.equal(signOffer(s, offer(s, 'gulf').id, lo).ok, true);
   assert.equal(s.publicTrust, pt - 2);
   s.turn = 2;
+  deliverDue(s, lo);
   contractsTurn(s, fire);
   assert.equal(s.compute.contracts.find((c) => c.supplier === 'coreflame').troubled, true);
   const g = s.compute.contracts.find((c) => c.supplier === 'gulf');
@@ -452,7 +453,7 @@ test('a letter of intent delivers 30 to 100 percent of its headline and needs po
   assert.equal(l.units, small('loi', 4));
   assert.equal(signOffer(s, l.id, lo).ok, true);
   s.turn = l.arrivesIn;
-  contractsTurn(s, lo);
+  deliverDue(s, lo);
   const c = s.compute.contracts.find((x) => x.headline === l.units);
   assert.equal(c.units, Math.round(l.units * 0.3));
   assert.equal(c.needsPower, true);
@@ -469,7 +470,7 @@ test('equity-for-compute credits pay Azuria bills and cost board support', () =>
   signOffer(s, e.id, lo);
   assert.deepEqual(s.board, board.map((b) => b - 3));
   s.turn = 1;
-  contractsTurn(s, lo);
+  deliverDue(s, lo);
   assert.ok(Math.abs(creditOffset(s) - e.units * U) < 1e-9);
   const used = spendCredits(s);
   assert.ok(Math.abs(s.compute.credits - (e.credits - used)) < 1e-9);
@@ -622,14 +623,21 @@ export function signOffer(state, offerId, rng) {
   return { ok: true, offerId, arrivesTurn };
 }
 
-export function contractsTurn(state, rng) {
-  const months = eraById(state.era).monthsPerTurn;
+// Called once the turn has advanced, so what is due on turn T is online while the player plans turn T.
+export function deliverDue(state, rng) {
   const arrived = [];
   state.compute.pipeline = state.compute.pipeline.filter((p) => {
     if (p.arrivesTurn > state.turn) return true;
     arrived.push(arrive(state, p, rng));
     return false;
   });
+  refreshOnline(state);
+  return arrived;
+}
+
+// Called at turn end, before plan 2A's event tick, so a CoreFlame failure is warned about the same turn.
+export function contractsTurn(state, rng) {
+  const months = eraById(state.era).monthsPerTurn;
   const bumped = state.compute.contracts.filter((c) => c.bumpNext);
   state.compute.contracts = state.compute.contracts.filter((c) => !c.bumpNext);
   const spots = state.compute.contracts.filter((c) => c.supplier === 'spot');
@@ -644,7 +652,7 @@ export function contractsTurn(state, rng) {
     }
   }
   refreshOnline(state);
-  return { arrived, bumped, warnedBump };
+  return { bumped, warnedBump };
 }
 
 // Called after the economy has billed the turn, so the last month of a term is still paid.
@@ -952,7 +960,7 @@ import { createInitialState } from '../sim/state.js';
 import { createRng } from '../sim/rng.js';
 import { endTurn } from '../sim/turn.js';
 import { recipeCost } from '../sim/recipe.js';
-import { computeRent } from '../sim/economy.js';
+import { computeRent, projectBurn } from '../sim/economy.js';
 import { eraScale, SCALE_DOWN } from '../sim/data/compute.js';
 import { allocate, rivalOrders, released } from '../sim/queue.js';
 
@@ -976,6 +984,7 @@ test('a deal move signs an offer; it is online on its arrival turn and its bill 
   assert.equal(out.state.compute.online, 10 + cf.units, 'usable for moves and training on its arrival turn');
   assert.ok(out.events.some((e) => e.type === 'computeArrived' && e.supplier === 'coreflame'));
   assert.ok(computeRent(out.state) > computeRent(s));
+  assert.ok(Math.abs(out.state.burnPlanned - projectBurn(out.state)) < 1e-9, 'the returned burn already includes the new bill');
   assert.equal(endTurn(s, { moves: [{ type: 'deal', supplierId: 'coreflame' }] }, createRng(2)).errors.length, 1);
 });
 
@@ -1048,7 +1057,7 @@ test('in era 4 new chips need site power, and the lease starts when the site is 
 Build the state object into a `const state = { ... }`, then `state.compute.offers = generateOffers(state, sideRng(state, 0)); return state;`.
 
 - [ ] **Step 4: Turn wiring** in `sim/turn.js`:
-  - Imports: remove `signDeal, computeTurn` from `./compute.js`; add `signOffer, contractAction, contractsTurn, expireContracts, spendCredits, generateOffers, sideRng` from `./contracts.js`, `placeOrder, withdrawOrder, queueTurn` from `./queue.js`, `buildSite, powerTurn` from `./power.js`, `pushFeed` from `./events.js`.
+  - Imports: remove `signDeal, computeTurn` from `./compute.js`; add `signOffer, contractAction, deliverDue, contractsTurn, expireContracts, spendCredits, generateOffers, sideRng` from `./contracts.js`, `placeOrder, withdrawOrder, queueTurn` from `./queue.js`, `buildSite, powerTurn` from `./power.js`, `pushFeed` from `./events.js`.
   - `applyMove`: replace `case 'deal'` with `case 'deal': return signOffer(state, move.offerId, sideRng(state, 1));` and add `case 'queueOrder': return placeOrder(state, move);` and `case 'buildSite': return buildSite(state, move.source, sideRng(state, 2));`.
   - In `endTurn`, right after the budget block and before the moves loop:
 
@@ -1067,9 +1076,15 @@ Build the state object into a `const state = { ... }`, then `state.compute.offer
   }
 ```
 
-  - Replace the `computeTurn` block with the queue allocation only (it stays at turn end, after training):
+  - Replace the `computeTurn` block with the turn-end contract risks and the queue allocation. They stay here, after training and before plan 2A's `eventsTick`, so a CoreFlame trouble roll is warned about in the same turn:
 
 ```js
+    const c = contractsTurn(state, sideRng(state, 3));
+    for (const x of c.bumped) events.push({ type: 'spotPulled', units: x.units });
+    if (c.warnedBump) {
+      events.push({ type: 'spotWarning' });
+      pushFeed(state, '@marketwire', 'spot GPU capacity is being pulled for prepaid customers', 'warning');
+    }
     for (const e of queueTurn(state, sideRng(state, 4))) {
       events.push(e);
       if (e.type === 'rivalPrepays') pushFeed(state, '@marketwire', `${state.rivals.find((r) => r.id === e.lab).name} prepays Verde for priority`, 'feed');
@@ -1083,19 +1098,15 @@ Build the state object into a `const state = { ... }`, then `state.compute.offer
     for (const x of expireContracts(state)) events.push({ type: 'contractEnded', supplier: x.supplier, units: x.units });
 ```
 
-  - At the very end of `endTurn`, just before the `if (state.ending) events.push(...)` line, deliver what is due on the new turn and make its offers. The turn and era have already advanced here, so a contract, queue fill or site due on turn T is online in the state the player plans turn T with, and its moves and training can use it (spot arrives during the move itself):
+  - At the very end of `endTurn`, just before the `if (state.ending) events.push(...)` line, deliver what is due on the new turn, make its offers, and re-project serving and burn. The turn and era have already advanced here, so a contract, queue fill or site due on turn T is online in the state the player plans turn T with, and its moves and training can use it (spot arrives during the move itself). The re-projection makes the returned `burnPlanned` (the CFO's runway and the UI) include the new bills and leases, and drop what expired, was pulled or ended after `applyEconomy`:
 
 ```js
   if (!state.ending) {
     for (const e of powerTurn(state)) events.push(e);
-    const c = contractsTurn(state, sideRng(state, 3)); // ends with refreshOnline, which counts the new sites' power
-    for (const x of c.arrived) events.push({ type: 'computeArrived', supplier: x.supplier, units: x.units });
-    for (const x of c.bumped) events.push({ type: 'spotPulled', units: x.units });
-    if (c.warnedBump) {
-      events.push({ type: 'spotWarning' });
-      pushFeed(state, '@marketwire', 'spot GPU capacity is being pulled for prepaid customers', 'warning');
-    }
+    for (const x of deliverDue(state, sideRng(state, 6))) events.push({ type: 'computeArrived', supplier: x.supplier, units: x.units }); // its refreshOnline counts the new sites' power
     state.compute.offers = generateOffers(state, sideRng(state, 5));
+    updateServing(state);
+    state.burnPlanned = projectBurn(state);
   }
 ```
 
@@ -1407,6 +1418,8 @@ import { createInitialState } from '../sim/state.js';
 import { eventsTick, addressWarning, resolveEvent } from '../sim/events.js';
 import { updateServing, monthlyRevenue } from '../sim/economy.js';
 import { EVENTS } from '../sim/data/events.js';
+import { endTurn } from '../sim/turn.js';
+import { createRng } from '../sim/rng.js';
 
 const no = { next: () => 0.99, int: (a) => a, chance: () => false, pick: (a) => a[0], normal: (m) => m };
 const yes = { ...no, next: () => 0, chance: () => true };
@@ -1425,6 +1438,19 @@ test('a troubled neocloud warns first, then asks what to do', () => {
   assert.equal(s.pendingEvents[0].id, 'neocloudTrouble');
   assert.equal(resolveEvent(s, 'neocloudTrouble', 'letgo').ok, true);
   assert.equal(s.compute.contracts.some((c) => c.id === 'cf'), false);
+});
+
+test('a CoreFlame failure is warned about in the turn it happens', () => {
+  // Search seeds for a turn whose trouble roll hits (about 6% per era 1 turn), then check the same turn's events.
+  let out = null;
+  for (let seed = 1; seed <= 2000 && !out; seed++) {
+    const s = createInitialState({ seed });
+    s.compute.contracts.push({ id: 'cf', supplier: 'coreflame', units: 5, price: 1, monthsLeft: 12, needsPower: false, dark: false, troubled: false, string: 'fragile' });
+    const r = endTurn(s, {}, createRng(seed));
+    if (r.state.compute.contracts.some((c) => c.id === 'cf' && c.troubled)) out = r;
+  }
+  assert.ok(out, 'some seed rolls CoreFlame trouble');
+  assert.ok(out.events.some((e) => e.type === 'warning' && e.id === 'neocloudTrouble'));
 });
 
 test('acting on the neocloud warning refinances it', () => {
@@ -1705,3 +1731,8 @@ Round 1 ran on `gpt-5.6-terra`, because `gpt-5.6-sol` returned "Selected model i
 2. Idle resale paid the era share of the base price whatever a contract cost, so the half-price rescue capacity earned money when resold. Idle units are now resold from the cheapest contracts first, each at no more than its own price. This refines spec §5.3, which does not cover contracts priced below the resale share. A new split test covers it.
 3. The agent surge's `route` choice never applied its 30% usage loss. The surge now carries `usage: 0.7`, which scales both the serving load and `monthlyRevenue` for its two turns. A new events test covers it.
 4. The split tests hard-coded the unit price, the spot price and the resale share. They now use `BALANCE.unitMonthlyCost`, `SPOT_PRICE` and `RESALE`.
+
+Round 2 resumed the same session on `gpt-5.6-sol`. Verdict REVISE, two important findings, both caused by fix 1 and both fixed:
+
+1. The delivery after the turn advance changed compute and bills after the last burn projection, so the returned `burnPlanned` left out new bills and leases. The end-of-turn block now re-runs `updateServing` and `projectBurn` last. That also covers contracts that expired, spot that was pulled and a surge that ended after `applyEconomy`. The Task 4 deal test checks the returned burn.
+2. Moving all of `contractsTurn` after the turn advance put CoreFlame trouble rolls after plan 2A's `eventsTick`, so the warning came a turn late. Task 2 splits delivery into `deliverDue`, which runs after the advance. `contractsTurn` keeps the spot pulls, trouble rolls and Gulf license at turn end, before the event tick. A new Task 6 test checks that a failure is warned about in the same turn.
