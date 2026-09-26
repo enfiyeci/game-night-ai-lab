@@ -1,0 +1,86 @@
+/* Ending films: a 16:9 frame with letterbox bars, a time card, a subtitle line, the title card and a Skip button.
+   Colours come from the K2 tokens in ui/styles.css. The in-world screens (plates) are set in IBM Plex. */
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap");
+.film {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  background: var(--ink);
+  font-family: "Nunito", "Trebuchet MS", sans-serif;
+}
+.film-frame {
+  position: relative;
+  width: min(100vw, calc(100vh * 16 / 9));
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--ink);
+  container-type: inline-size;
+}
+.film-shot { position: absolute; inset: 0; visibility: hidden; }
+.film-shot.on { visibility: visible; }
+.film-shot > svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.film-shot > video { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; }
+.film-dim { position: absolute; inset: 0; background: var(--ink); opacity: 0; }
+.film-bar { position: absolute; left: 0; right: 0; height: 11.12%; background: var(--ink); z-index: 3; }
+.film-bar.top { top: 0; }
+.film-bar.bottom { bottom: 0; }
+.film-card {
+  position: absolute; left: 2.2%; bottom: 13.6%; z-index: 4;
+  padding: .45em 1.1em; border-radius: 999px;
+  background: color-mix(in oklab, var(--paper) 92%, transparent); color: var(--ink);
+  font-size: max(11px, 1.05cqw); font-weight: 800; white-space: nowrap;
+}
+.film-card:empty { display: none; }
+.film-sub {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 11.12%; z-index: 4;
+  display: grid; place-items: center; padding: 0 6%;
+  color: color-mix(in oklab, var(--cream) 80%, var(--paper));
+  font-size: max(13px, 1.35cqw); font-weight: 700; text-align: center;
+}
+/* Lumen's narration: the AI tells the ending in its own words, typed into the bottom bar like its last line on the
+   title card. The typed spans are hidden from screen readers; .film-say-read, a live region, reads each line whole. */
+.film-say {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 11.12%; z-index: 4;
+  display: flex; align-items: center; justify-content: center; gap: 1.1em; padding: 0 6%;
+  color: var(--paper); font-size: max(13px, 1.4cqw); font-weight: 700;
+}
+.film-say[hidden] { display: none; }
+.film-say small {
+  flex: none; font-size: .6em; font-weight: 900; letter-spacing: .16em; text-transform: uppercase;
+  color: color-mix(in oklab, var(--sky) 45%, var(--paper));
+}
+.film-say p { margin: 0; max-width: 54ch; text-wrap: balance; }
+.film-say .rest { color: transparent; }
+.film-say-read { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; margin: 0; }
+/* A narrow frame (a phone held upright) has no room for two lines in the bar: the narration grows up over the picture
+   on a dark backing, and the time card moves up into the empty top bar so the two never meet. */
+@container (max-width: 720px) {
+  .film-say { height: auto; min-height: 11.12%; padding: .5em 5%; font-size: 12px; gap: .8em;
+    background: color-mix(in oklab, var(--ink) 88%, transparent); }
+  .film-say small { display: none; }
+  .film-say p { max-width: none; }
+  .film-card { bottom: auto; top: 1.2%; padding: .2em .9em; }
+}
+.film-title {
+  position: absolute; inset: 11.12% 0; z-index: 4;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.4cqw;
+  color: var(--paper); text-align: center; padding: 0 10%;
+}
+.film-title[hidden] { display: none; }
+.film-title h1 { margin: 0; font-weight: 300; font-size: max(20px, 3.4cqw); letter-spacing: .3em; text-transform: uppercase; text-wrap: balance; }
+.film-title .tagline { margin: 0; font-size: max(14px, 1.6cqw); font-weight: 700; color: color-mix(in oklab, var(--cream) 85%, var(--paper)); max-width: 48ch; text-wrap: balance; }
+.film-title .lumen { margin: 1.2cqw 0 0; font-size: max(15px, 1.75cqw); font-weight: 800; min-height: 2.6em; max-width: 44ch; }
+.film-title .lumen small {
+  display: block; margin-bottom: .45em; font-size: .6em; font-weight: 900; letter-spacing: .16em; text-transform: uppercase;
+  color: color-mix(in oklab, var(--sky) 45%, var(--paper));
+}
+.film-skip {
+  position: absolute; right: 1.6%; top: 2.2%; z-index: 5;
+  font: 800 max(14px, 1cqw) "Nunito", sans-serif; padding: .5em 1.1em; min-height: 32px; border-radius: .7em;
+  border: 2px solid color-mix(in oklab, var(--paper) 40%, var(--ink)); background: transparent;
+  color: color-mix(in oklab, var(--paper) 80%, var(--ink)); cursor: pointer;
+}
+.film-skip:hover { color: var(--paper); border-color: var(--paper); }
+.film-skip:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }

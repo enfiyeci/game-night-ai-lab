@@ -34,6 +34,7 @@ import { judgeEndingPromises, promiseUpkeep } from './promises.js';
 import { applySplitEffects, makePledge, setComputeSplit, spotCover } from './split.js';
 import { ROUND_DAYS, monthsPerDay } from './time.js';
 import { TEAM_OF, teamBusyError } from './teams.js';
+import { feedPosts } from './feed.js';
 
 export const MAX_MOVES = 2;
 const BUDGET_KEYS = ['training', 'security', 'product', 'talent'];
@@ -98,6 +99,11 @@ function normalize(state) {
   state.govFavor.intl = clamp(state.govFavor.intl, 0, 100);
 }
 
+// Feed reactions to what just happened. Ambient filler only at a round mark, so quiet days stay quiet.
+function postFeed(before, state, events, ambient) {
+  for (const post of feedPosts(before, state, events, { ambient })) pushFeed(state, post.handle, post.text, post.tag);
+}
+
 function finishEnding(state, events) {
   judgeEndingPromises(state);
   state.pendingEvents = []; // nothing can be answered once the run is over
@@ -116,6 +122,7 @@ function setDefaultConstitution(state) {
 
 export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = {}) {
   const state = structuredClone(prev);
+  const mood = { raceHeat: prev.raceHeat, publicTrust: prev.publicTrust };
   const events = [];
   const errors = [];
   if (state.ending) return { state, events, errors: ['the run is over'] };
@@ -243,6 +250,7 @@ export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = 
     recordAdvisors(state, rng);
     finishEnding(state, events);
   }
+  if (events.length) postFeed(mood, state, events, false);
   recheckCapacity(state);
   return { state, events, errors };
 }
@@ -391,6 +399,8 @@ export function advanceDays(prev, days, rng, observer = {}) {
   const errors = [];
   if (state.ending) return { state, events, errors: ['the run is over'] };
   for (let i = 0; i < days && !state.ending; i += 1) {
+    const mood = { raceHeat: state.raceHeat, publicTrust: state.publicTrust };
+    const firstEvent = events.length;
     const fraction = 1 / ROUND_DAYS[state.era];
     budgetEffects(state, fraction);
     const reachesMark = state.dayInRound + 1 >= ROUND_DAYS[state.era];
@@ -411,6 +421,8 @@ export function advanceDays(prev, days, rng, observer = {}) {
       endRound(state, rng, observer, events, errors, fraction);
       postLandedCards(state);
     }
+    const dayEvents = events.slice(firstEvent);
+    if (reachesMark || dayEvents.length) postFeed(mood, state, dayEvents, reachesMark);
   }
   return { state, events, errors };
 }

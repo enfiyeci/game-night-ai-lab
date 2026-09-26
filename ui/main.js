@@ -8,6 +8,9 @@ import { powerSitesAvailable, queueScreenAvailable } from './logic/compute.js';
 import { openMenu } from './menu.js';
 import { openBudget } from './screens/budget.js';
 import { mountRecipe, openRecipe } from './screens/recipe.js';
+import { mountRelease, openRelease } from './screens/release.js';
+import { mountReveal } from './screens/reveal.js';
+import { releaseDraft, releasePayload } from './logic/release.js';
 import {
   mountCompany,
   mountTurnSummary,
@@ -22,6 +25,9 @@ import { mountHistory, openArticle, openHistory } from './screens/history.js';
 import { mountEvents } from './screens/events.js';
 import { mountBriefing } from './screens/briefing.js';
 import { mountFeed } from './screens/feed.js';
+import { mountEnding } from './screens/end.js';
+import { createCollection } from './logic/collection.js';
+import { lumenEpilogue } from '../sim/lumen.js';
 
 const params = new URLSearchParams(location.search);
 
@@ -66,11 +72,29 @@ if (params.has('paused')) game.clock.setSpeed(0);
 game.clock.start();
 mountCompany(game, overlay);
 mountRecipe(game, overlay);
+mountRelease(game, overlay);
+mountReveal(game, overlay);
 mountHistory(game, overlay);
 mountTurnSummary(overlay, game);
 const events = mountEvents(game, { stage, overlay });
 mountBriefing(game, { office, overlay });
 mountFeed(game, { overlay, events });
+
+function browserStorage() {
+  try {
+    return localStorage;
+  } catch {
+    const values = new Map();
+    return { getItem: (key) => values.get(key) ?? null, setItem: (key, value) => values.set(key, value) };
+  }
+}
+
+// Play again starts a fresh run: drop the debug seed and scenario so the run counter picks the next seed.
+const ending = mountEnding(game, overlay, {
+  collection: createCollection(browserStorage()),
+  onPlayAgain: () => location.assign(location.pathname),
+  lumenNote: (state) => lumenEpilogue(state),
+});
 
 function stagePoint(event) {
   const rect = stage.getBoundingClientRect();
@@ -98,6 +122,7 @@ office.addEventListener('keydown', (event) => {
 });
 
 async function openDebugRoute() {
+  if (game.state.ending) return; // a finished run shows only its end screen
   const previewId = location.hash.match(/^#event-(\w+)$/)?.[1];
   if (previewId) {
     await events.preview(previewId);
@@ -106,6 +131,16 @@ async function openDebugRoute() {
   const recipeStage = location.hash.match(/^#recipe([123])$/)?.[1];
   if (recipeStage) {
     openRecipe(game, overlay, { stage: Number(recipeStage) });
+    return;
+  }
+  if (location.hash === '#release' || location.hash === '#sizes') {
+    if (game.state.pendingModel) openRelease(game, overlay, { stage: location.hash === '#sizes' ? 'sizes' : 'main' });
+    return;
+  }
+  if (location.hash === '#reveal') {
+    if (!game.state.pendingModel) return;
+    const draft = { ...releaseDraft(game.state), family: 'Kestrel', picks: ['eval-full'], reasoning: 'medium' };
+    game.addMove({ type: 'release', release: releasePayload(game.state, draft) }); // applies at once
     return;
   }
   if (location.hash === '#budget') {
@@ -160,6 +195,10 @@ addEventListener('hashchange', () => openDebugRoute().catch((error) => console.e
 
 if (game.state.ending && ENDINGS[game.state.ending]) {
   stage.setAttribute('aria-label', ENDINGS[game.state.ending].title);
+  ending.show({ save: false }); // already over when the page loaded: no click to start the film's sound, and not a run the player reached
 }
+game.subscribe(({ state }) => {
+  if (state.ending && ENDINGS[state.ending]) stage.setAttribute('aria-label', ENDINGS[state.ending].title);
+});
 
 globalThis.game = game;

@@ -164,7 +164,49 @@ in section 6e). A lab that is insolvent when era 5 ends never wins; it ends in a
     from the constitution. The end-of-run reveal shows what the player wrote next to what the
     model learned, and in the takeover endings the AI's epilogue is written from its learned
     values.
+- **Advisor cast (owner-approved 2026-09-25).** Priya Raman, Head of Research: relentless
+  optimist, every problem is one more run away. Tomas Lind, Head of Safety: quiet and precise,
+  talks in test results. Margot Hale, CFO: dry, allergic to surprises, forgets the lawyers.
+  Jules Ferreira, Policy and Comms: smooth reader of rooms, speaks in headlines. Each voice
+  shows its advisor's bias.
 - **Feed.** A read-only Twitter-like feed of generated posts reacting to events and state.
+  **Purpose (owner 2026-09-25):** mostly for reading people's reactions to what is going on and
+  to how your new model was received: launch reactions, follow-up reception for a few turns,
+  rival launches, era changes, company news and public mood. It is flavour, not a hidden
+  signal source. **Placement (owner pick 2026-09-25, option A):** a phone on the CEO desk buzzes with a count of new posts; clicking it slides a phone panel up on the left. Build: plan 2D, D1; mockup `docs/design/mockups/K2-feed-lumen.html#a`.
+- **Lumen, the narrator (owner 2026-09-25: option a).** The lab's AI assistant, named by the
+  player, speaks a line at the start of every turn and gives the ending epilogue. Its arc: an
+  eager flatterer that grows a moral spine if trained well; it stays flattering if trained on
+  sycophancy, and turns smooth and evasive when hidden debt is high (the learned self leaking
+  through). **Presence (owner pick 2026-09-25, from option C):** a small floating robot in the office that drifts between desks and speaks in bubbles like the advisors. Build: plan 2D, D2; mockup `docs/design/mockups/K2-feed-lumen.html#c`.
+- **Ending animations (owner 2026-09-25).** Every ending plays its own short cinematic sequence
+  with sound before the endings screen. Style: the drawn K2 look, animated in the browser ("i like
+  the office drawing version"), not a Blender render. Each sequence opens in the player's own
+  office (their era, their staff), then cuts to scenes outside the lab that show how the ending
+  affects the world ("just doing the office is not the most ideal"). Test and sources:
+  `docs/design/endings-test/`. The endings screen after it is a mix of N1, N2 and N4 (mockup
+  `docs/design/mockups/K2-side-options.html#nmix`), pending the owner's approval.
+  **Scripts first, grounded in AI-safety thinking (owner 2026-09-25):** each ending gets a written
+  script before any art. Failure stories follow how the AI-safety community expects things to go
+  wrong, not cartoon villainy: a misaligned model is usually pursuing a proxy it learned
+  (specification gaming, goal misgeneralisation), telling people what they want to hear
+  (sycophancy), or quietly gathering resources and avoiding shutdown because that helps almost
+  any goal (instrumental convergence), often while looking fine on tests (deceptive alignment,
+  evaluation gaming). Some endings are about people and power rather than the model (misuse, race
+  dynamics, concentration of power, gradual disempowerment). One scenario may still be openly
+  hostile; that is a deliberate exception.
+  **Scripts approved by the owner 2026-09-25:** the private doc "Game Night ending scripts"
+  (https://claude.ai/code/artifact/8c3cc116-3941-430b-81f6-f68f737e41a6). Owner asked for longer
+  sequences across many places, so each runs about 60–90 s over 6–9 shots, and all eleven reuse
+  one "world set" of ten places re-dressed per ending. Also approved: new Lumen epilogues for
+  `acquihire`, `misalignment`, `pyrrhic` and `overtaken` (to copy into `sim/data/lumen.js`); a rare
+  openly hostile variant of `misalignment` (emergent misalignment; needs one sim flag); and short
+  President lines in nine endings in a Trump-style voice ("make it sound like trump"), the
+  President still unnamed. Build order: `quietTakeover`, then `misalignment` and `aligned`.
+  **World-scene style (owner pick 2026-09-25): B and C** from the four mockups in
+  `docs/design/mockups/world-styles.html` (artifact "Ending world styles"): places drawn front-on
+  as layered stage flats with parallax pans (B), plus shots told through screens such as laptops,
+  phones, camera walls and status pages (C). The office beat stays the isometric K2 office.
 - **President meetings** (era 2 or 3, and era 5). **The owner writes this dialogue
   (2026-09-25); build the mechanics and leave the script to the owner.** A fictional president, recognizable in style
   but not named after the real person (owner may override). Each answer has a flattery level
@@ -211,6 +253,9 @@ Part 2. That report's menu tables are the working content; this section fixes ho
   (tier word comes from size; theme sets offered, free typing allowed). Generation jumps raise
   the launch bar; rebrands without a real gain draw feed mockery; names matching a real lab's
   product are swapped for a parody.
+  *Update 2026-09-26 (owner):* each skipped number raises the critics' bar by 1 benchmark point, and
+  the feed always talks about the jump (impressed at a capability gain of 5 or more, mocking below).
+  The parody-name swap is not built.
 - **Running cost.** Each model card shows `servingCost` ($ per active user per month) and its
   margin, recomputed every turn:
   `servingCost = USAGE[era] × CHANNEL × REASONING[effort] × HW[era] × SIZE × ARCH(load) ×
@@ -374,6 +419,18 @@ player's own last best, shown through several noisy judges.
   price complaints, rival snark, and political questions about agents.
 - **Effects.** The press average and the flagship result set user growth and hype (sentiment),
   as reviews drive sales in Game Dev Tycoon.
+- **Reveal header (owner picks 2026-09-26).** The badge counts all five rows, safety included
+  ("N of 5"). Beside it, a price sheet: what customers pay per million tokens, what serving costs
+  per million tokens, and the margin. The safety row names who checked it. Build plan:
+  `docs/superpowers/plans/2026-09-26-release-flow.md`.
+- **A release that ends the run (owner pick 2026-09-26, option B).** In era 4 a release can roll
+  the misalignment ending in the same turn. The reveal still plays first, with its good reviews,
+  and the ending film starts only after the player closes it: the contrast is the story beat.
+  The film waits for any open dialog (`.dialog-layer`) and starts on `gdt-dialog-closed`.
+- **Open weights is hidden for now (owner 2026-09-26).** It earns nothing in the sim (no users,
+  no revenue, no serving cost) and only adds race heat, international favour and permanent misuse
+  risk, so the `channel-open` and `tamper` cards carry `hidden: true` and the screens don't offer
+  them. The sim rules stay; see `docs/open-decisions.md` item 18.
 
 ## 7. One turn, screen by screen
 

@@ -8,6 +8,8 @@ import { openBudget } from './screens/budget.js';
 
 const registeredHandlers = new Map();
 
+const releaseQueued = (game) => game.queue.moves.some((move) => move.type === 'release');
+
 const MOVE_TYPE = {
   training: 'startRun',
   release: 'release',
@@ -23,10 +25,10 @@ const MOVE_TYPE = {
 
 const sentenceCase = (text) => text ? `${text[0].toUpperCase()}${text.slice(1)}` : '';
 
-const ITEMS = [
+export const ITEMS = [
   { id: 'budget', label: 'Plan the budget', free: true },
   { id: 'training', label: 'Start a training run', unavailable: (state, game) => (game.queue.moves.some((move) => move.type === 'startRun') && `A training run already started this ${roundWord(state.era)}`) || (state.activeRun && 'A run is already under way') || (state.pendingModel && 'Release the trained model first') },
-  { id: 'release', label: 'Release a model', unavailable: (state) => !state.pendingModel && 'Release needs a finished model' },
+  { id: 'release', label: 'Release a model', editsQueued: (game) => releaseQueued(game), unavailable: (state, game) => !releaseQueued(game) && !state.pendingModel && 'Release needs a finished model' },
   { id: 'internal', label: 'Deploy a model internally', unavailable: (state) => state.era < 3 && 'Internal deployment opens in era 3' },
   { id: 'constitution', label: 'Amend the constitution' },
   { id: 'meeting', label: 'Take a meeting', unavailable: (state) => !state.meeting && 'No meeting is scheduled' },
@@ -103,13 +105,13 @@ function handlerFor(id, handlers) {
   return registeredHandlers.get(id);
 }
 
-function disabledReason(item, game, handler, state = game.state) {
+export function disabledReason(item, game, handler, state = game.state) {
   if (!item.free && state.ending) return 'A queued move ends the run';
   const busy = MOVE_TYPE[item.id] && teamBusyError(game.state, { type: MOVE_TYPE[item.id] });
   if (busy) return sentenceCase(busy);
   const unavailable = item.unavailable?.(state, game);
   if (unavailable) return unavailable;
-  if (!item.free && game.movesLeft() === 0) return `Both team actions are used this ${roundWord(state.era)}`;
+  if (!item.free && game.movesLeft() === 0 && !item.editsQueued?.(game)) return `Both team actions are used this ${roundWord(state.era)}`;
   if (!handler && item.id !== 'budget' && item.id !== 'company') return 'Not built yet';
   return '';
 }

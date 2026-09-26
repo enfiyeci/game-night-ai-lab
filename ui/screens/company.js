@@ -527,6 +527,13 @@ export function mountTurnSummary(overlayRoot, game) {
   const onDialogClosed = () => schedule();
   overlayRoot.addEventListener('gdt-dialog-closed', onDialogClosed);
   const unsubscribe = game.subscribe(({ state, events, errors }) => {
+    if (state.ending) { // the ending film and the end-of-run screen replace the summary
+      if (pendingFrame !== null) cancelAnimationFrame(pendingFrame);
+      pendingFrame = null;
+      removeToast();
+      pendingSummaries = null;
+      return;
+    }
     // Subscribers fire every story day; a quiet day keeps whatever toast is showing.
     const summaries = turnSummary([
       ...events,
