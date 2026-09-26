@@ -1,7 +1,14 @@
 import { monthlyBills } from '../../sim/contracts.js';
 import { projectBurn, runway } from '../../sim/economy.js';
 import { PLEDGES } from '../../sim/split.js';
-import { budgetFromSliders, levelFor, queuedRunProblem, SPEND_LEVELS, spendFor } from '../logic/actions.js';
+import {
+  budgetFromSliders,
+  budgetPreviewQueue,
+  levelFor,
+  queuedRunProblem,
+  SPEND_LEVELS,
+  spendFor,
+} from '../logic/actions.js';
 import { computeBar, idleComputeCost, opinions, pledgeAvailable, projectQueue } from '../logic/compute.js';
 import { computeAmount, money, months, pct } from '../logic/format.js';
 import { openDialog } from '../components/dialog.js';
@@ -142,6 +149,7 @@ export function openBudget(game, overlayRoot) {
   const computeBox = element('div', 'compute-box');
   const error = element('div', 'dialog-error');
   error.setAttribute('role', 'alert');
+  const team = element('div', 'budget-team');
   const right = element('div');
   body.append(moneyBand, computeBand, error);
   let opened;
@@ -168,12 +176,12 @@ export function openBudget(game, overlayRoot) {
   }
 
   function previewState() {
-    return projectQueue(state, {
-      ...game.queue,
+    return projectQueue(state, budgetPreviewQueue(game.queue, {
       budget: budgetFromSliders(values, level, state.era),
       computeSplit: split,
-      ...(pledge && canPledge ? { pledge } : {}),
-    });
+      pledge,
+      canPledge,
+    }));
   }
 
   function renderCompute(projected) {
@@ -265,7 +273,6 @@ export function openBudget(game, overlayRoot) {
         button.setAttribute('aria-pressed', `${pledge === share}`);
         button.addEventListener('click', () => {
           pledge = share;
-          game.setField('pledge', share);
           render({ focusLabel: `Pledge ${pct(share)}` });
         });
         choices.append(button);
@@ -286,6 +293,8 @@ export function openBudget(game, overlayRoot) {
     const projected = previewState();
     computeBand.replaceChildren(computeHeading, computeBox);
     renderCompute(projected);
+    const nextTeam = teamPanel(projected, { opinions: opinions(projected, 'budget') });
+    team.replaceChildren(...nextTeam.children);
     right.replaceChildren(summaryPanel(projected, values, level));
     restoreFocus(body, focusLabel);
   }
@@ -293,17 +302,18 @@ export function openBudget(game, overlayRoot) {
   opened = openDialog(overlayRoot, {
     title: "Plan this turn's budget",
     subtitle: `Era ${state.era} · money for people and programs, compute for everything that runs`,
-    left: { title: 'Team', content: teamPanel(state, { opinions: opinions(previewState(), 'budget') }) },
+    left: { title: 'Team', content: team },
     right: { title: 'This turn', content: right },
     body,
     onOk() {
       const budget = budgetFromSliders(values, level, state.era);
-      const problem = queuedRunProblem(game.state, {
-        ...game.queue,
+      const candidateQueue = budgetPreviewQueue(game.queue, {
         budget,
         computeSplit: split,
-        ...(pledge && canPledge ? { pledge } : {}),
+        pledge,
+        canPledge,
       });
+      const problem = queuedRunProblem(game.state, candidateQueue);
       if (problem) {
         const message = problem[0].toUpperCase() + problem.slice(1);
         error.textContent = `Your queued training run would no longer work: ${message}. Change the run first.`;

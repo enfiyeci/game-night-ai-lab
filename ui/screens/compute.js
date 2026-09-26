@@ -1,6 +1,7 @@
 import { openDialog } from '../components/dialog.js';
 import { eraById } from '../../sim/data/eras.js';
 import { teamPanel } from '../components/team.js';
+import { queuedMoveProblem } from '../logic/actions.js';
 import {
   applyDealMove,
   commitmentsView,
@@ -10,6 +11,7 @@ import {
   queueOrderPreflight,
   replaceQueueOrder,
   queueScreenAvailable,
+  queueTrainingView,
   queueView,
 } from '../logic/compute.js';
 import { computeAmount, money, months } from '../logic/format.js';
@@ -152,8 +154,13 @@ function commitmentPanel(game, state, selected, onAction) {
         button.dataset.focusKey = `contract:${row.id}:${action}`;
         button.addEventListener('click', () => {
           const next = [...(game.queue.contractActions ?? []).filter((item) => item.id !== row.id), { id: row.id, action }];
+          const problem = queuedMoveProblem(game.state, { ...game.queue, contractActions: next });
+          if (problem) {
+            onAction(button.dataset.focusKey, problem);
+            return;
+          }
           game.setField('contractActions', next);
-          onAction(button.dataset.focusKey);
+          onAction(button.dataset.focusKey, '');
         });
         actions.append(button);
       }
@@ -243,7 +250,10 @@ export function openDeals(game, overlayRoot) {
       });
     }
     const card = cards.find((candidate) => candidate.id === selected) ?? (gridCard?.id === selected ? gridCard : null);
-    right.replaceChildren(commitmentPanel(game, state, selected, (key) => render({ focusKey: key })));
+    right.replaceChildren(commitmentPanel(game, state, selected, (key, problem) => {
+      error.textContent = problem ? `This change would break a queued move: ${problem}.` : '';
+      render({ focusKey: key });
+    }));
     const upfront = card?.upfront != null ? money(card.upfront) : card ? Object.fromEntries(card.rows).Upfront : 'none';
     note.textContent = upfront && upfront !== 'none'
       ? `Signing uses 1 of 2 moves this turn · pay ${upfront} now`
@@ -445,9 +455,7 @@ export function openQueue(game, overlayRoot) {
       order.append(footer);
     }
 
-    const free = Math.max(0, state.compute.online - state.compute.servingUnits);
-    const need = state.activeRun?.units ?? Math.ceil(state.compute.online * 1.25);
-    const short = Math.max(0, need - free);
+    const { free, need, short } = queueTrainingView(state);
     right.replaceChildren();
     for (const [label, value, detail] of [
       ['Next run', computeAmount(need, state.era), 'needs this much training compute'],

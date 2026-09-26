@@ -8,7 +8,10 @@ import {
   slotsFor,
   validateRecipe,
 } from '../../sim/recipe.js';
-import { availableUnits } from '../../sim/training.js';
+import { signOffer, sideRng } from '../../sim/contracts.js';
+import { placeOrder } from '../../sim/queue.js';
+import { availableUnits, startRun } from '../../sim/training.js';
+import { MAX_MOVES } from '../../sim/turn.js';
 import { projectQueue } from './compute.js';
 import { money } from './format.js';
 
@@ -54,6 +57,15 @@ export function budgetFromSliders(values, level, era) {
   return { spend: spendFor(level, era), split: normaliseSplit(values) };
 }
 
+export function budgetPreviewQueue(queue, { budget, computeSplit, pledge, canPledge }) {
+  return {
+    ...(queue ?? {}),
+    budget,
+    computeSplit,
+    ...(pledge != null && canPledge ? { pledge } : {}),
+  };
+}
+
 const DEFAULT_RECIPE = {
   sliders: { size: 'medium', length: 'optimal', alignShare: 0.2 },
   picks: { pre: [], mid: [], post: [] },
@@ -97,6 +109,25 @@ export function queuedRunProblem(state, queue) {
   const projected = projectQueue(state, beforeRun);
   const preview = recipePreview(projected, moves[runIndex].recipe);
   return preview.errors[0] ?? '';
+}
+
+function queuedMoveResult(state, move) {
+  const candidate = structuredClone(state);
+  if (move.type === 'startRun') return startRun(candidate, move.recipe);
+  if (move.type === 'deal') return signOffer(candidate, move.offerId, sideRng(candidate, 1));
+  if (move.type === 'queueOrder') return placeOrder(candidate, move);
+  return { ok: true };
+}
+
+export function queuedMoveProblem(state, queue) {
+  const moves = (queue?.moves ?? []).slice(0, MAX_MOVES);
+  for (let index = 0; index < moves.length; index += 1) {
+    const beforeMove = { ...(queue ?? {}), moves: moves.slice(0, index) };
+    const projected = projectQueue(state, beforeMove);
+    const result = queuedMoveResult(projected, moves[index]);
+    if (!result.ok) return result.error ?? 'queued move is no longer available';
+  }
+  return '';
 }
 
 export function sanitizeDraft(state, draft) {

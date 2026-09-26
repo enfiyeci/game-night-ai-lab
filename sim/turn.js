@@ -30,6 +30,7 @@ import {
 import { expireMeeting, meetingDue, openMeeting, runMeeting } from './president.js';
 import { judgeEndingPromises, promiseUpkeep } from './promises.js';
 import { applySplitEffects, makePledge, setComputeSplit, spotCover } from './split.js';
+import { feedPosts } from './feed.js';
 
 export const MAX_MOVES = 2;
 const BUDGET_KEYS = ['training', 'security', 'product', 'talent'];
@@ -328,6 +329,9 @@ export function endTurn(prev, actions = {}, rng, observer = {}) {
       if (warning.eventId === 'promiseCall') delete state.warnings[id];
     }
     events.push({ type: 'ending', ending: state.ending });
+  }
+  for (const post of feedPosts(prev, state, events)) {
+    pushFeed(state, post.handle, post.text, post.tag);
   }
   return { state, events, errors };
 }
