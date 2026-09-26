@@ -146,9 +146,19 @@ export function mountTitle(game, { stage, overlay, collection, music, openSound 
   stage.prepend(sky);
   root.classList.add('title-night');
 
-  // Everything under the title is out of reach until the lights come on (keyboard focus included).
-  const beneath = [...stage.querySelectorAll(':scope > #office, :scope > #fx, :scope > #hud')];
-  for (const node of beneath) node.inert = true;
+  // Everything under the title is out of reach until the lights come on, keyboard focus included: the office,
+  // the HUD, and anything other screens add to the overlay meanwhile (the phone button, cards). Only the title and
+  // the dialogs it opens stay live.
+  const benched = new Set();
+  const own = new Set();
+  const bench = (node) => {
+    if (node.inert || own.has(node)) return;
+    node.inert = true;
+    benched.add(node);
+  };
+  for (const node of stage.querySelectorAll(':scope > #office, :scope > #fx, :scope > #hud')) bench(node);
+  const benchOverlay = () => { for (const child of overlay.children) bench(child); };
+  const watcher = new MutationObserver(benchOverlay);
 
   const layer = make('div', 'title-layer on-wall');
   layer.setAttribute('role', 'dialog');
@@ -158,13 +168,18 @@ export function mountTitle(game, { stage, overlay, collection, music, openSound 
   const naming = buildNaming(game);
   naming.scene.inert = true;
   layer.append(naming.scene, wall.scene);
+  own.add(layer);
   overlay.append(layer);
+  benchOverlay();
+  watcher.observe(overlay, { childList: true });
   music?.playTitle?.();
 
   // Sound and Credits open the Sound and music dialog above the title.
   const sound = (tab) => {
     const dialog = openSound(game, overlay, { tab });
-    if (dialog) dialog.style.zIndex = '46';
+    if (!dialog) return;
+    own.add(dialog);
+    dialog.style.zIndex = '46';
   };
   wall.sound.addEventListener('click', () => sound('sound'));
   wall.credits.addEventListener('click', () => sound('credits'));
@@ -199,7 +214,8 @@ export function mountTitle(game, { stage, overlay, collection, music, openSound 
     const finish = () => {
       layer.remove();
       sky.remove();
-      for (const node of beneath) node.inert = false;
+      watcher.disconnect();
+      for (const node of benched) node.inert = false;
       root.classList.remove('title-waking');
       onStart({ labName: value });
     };
