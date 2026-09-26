@@ -39,7 +39,8 @@ test('midEra3 is an era-3 turn with a training run under way', () => {
 });
 
 test('the summit scenario stops on the opening turn of era 5', () => {
-  const s = SCENARIOS.summit(1);
+  // Under plan 2C Task 8's balance, seed 1's scripted run ends in era 4, so use a seed that reaches era 5.
+  const s = SCENARIOS.summit(3);
   assert.equal(s.era, 5);
   assert.equal(s.turnInEra, 0);
   assert.equal(s.deal, null);

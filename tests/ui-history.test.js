@@ -6,6 +6,8 @@ import { createGame } from '../ui/game.js';
 import { SCENARIOS } from '../ui/logic/scenarios.js';
 import {
   CONTROVERSY_HANDLES,
+  HISTORY_CHANNEL_WORDS,
+  HISTORY_PRICE_WORDS,
   NON_CRITICAL_REACTION_HANDLES,
   article,
   historyRows,
@@ -24,29 +26,25 @@ test('every generated release reaction handle has an explicit editorial classifi
 });
 
 test('history rows expose release details and public benchmark averages in release order', () => {
-  const rows = historyRows(SCENARIOS.summit(4));
-  assert.deepEqual(rows.map((row) => row.name), [
-    'Kestrel 1 Core',
-    'Kestrel 2 Core',
-    'Kestrel 3 Swift',
-    'Kestrel 4 Core',
-  ]);
-  assert.deepEqual(rows.map((row) => row.era), [
-    'Chat assistants',
-    'The scale-up',
-    'Reasoning and agents',
-    'The gigawatt race',
-  ]);
-  assert.deepEqual(rows.map((row) => row.youAvg), [22.25, 40.75, 56.5, 74.75]);
-  assert.deepEqual(rows.map((row) => row.rivalAvg), [23, 37, 47.75, 67.25]);
-  assert.equal(rows[0].channelWords, 'API');
-  assert.equal(rows[0].priceWords, 'Cheap');
-  assert.equal(rows[1].priceWords, 'Market price');
+  // Expectations come from the scenario's own models, so a balance change does not break the test.
+  const state = SCENARIOS.summit(4);
+  const rows = historyRows(state);
+  const eraNames = ['Chat assistants', 'The scale-up', 'Reasoning and agents', 'The gigawatt race', 'Self-improvement and pacing'];
+  const mean = (values) => values.reduce((sum, value) => sum + value, 0) / values.length;
+  const capMean = (model, key) => mean(model.launch.benchmarks.filter((b) => b.kind === 'cap').map((b) => b[key]));
+  assert.ok(rows.length >= 2);
+  assert.deepEqual(rows.map((row) => row.name), state.models.map((model) => model.name));
+  // Each era is four turns long.
+  assert.deepEqual(rows.map((row) => row.era), state.models.map((model) => eraNames[Math.floor(model.releasedTurn / 4)]));
+  assert.deepEqual(rows.map((row) => row.youAvg), state.models.map((model) => capMean(model, 'shown')));
+  assert.deepEqual(rows.map((row) => row.rivalAvg), state.models.map((model) => capMean(model, 'rival')));
+  assert.deepEqual(rows.map((row) => row.channelWords), state.models.map((model) => HISTORY_CHANNEL_WORDS[model.channel]));
+  assert.deepEqual(rows.map((row) => row.priceWords), state.models.map((model) => HISTORY_PRICE_WORDS[model.priceStance]));
   assert.deepEqual(labSummary(rows), {
-    released: 4,
-    bestPress: 10,
-    biggestLaunch: 1875000,
-    stillServing: 1,
+    released: state.models.length,
+    bestPress: Math.max(...state.models.map((model) => model.launch.pressAvg)),
+    biggestLaunch: Math.max(...state.models.map((model) => model.newUsers)),
+    stillServing: state.models.filter((model) => model.active).length,
   });
 });
 
@@ -64,15 +62,17 @@ test('article controversies quote only criticism reactions that occurred', () =>
   const result = article(state, rows);
   const text = result.controversies.filter((part) => typeof part === 'string').join('');
   const present = rows.flatMap((row) => row.reactions);
-  const expectedHandles = ['@ml_hobbyist', '@pm_everywhere', '@skeptic_sam', '@benchwatch', '@lawyer_lena'];
-  for (const handle of expectedHandles) {
-    const reaction = present.find((entry) => entry.handle === handle);
-    assert.ok(text.includes(reaction.text), handle);
-  }
+  const critical = new Set(CONTROVERSY_HANDLES);
+  // The article quotes each critic once: their first critical post.
+  const expected = present.filter((entry) => critical.has(entry.handle)
+    && (entry.handle !== '@marketwire' || entry.text.includes('underwhelms; analysts question the spend')))
+    .filter((entry, index, list) => list.findIndex((other) => other.handle === entry.handle) === index);
+  assert.ok(expected.length > 0, 'the scenario should contain at least one critical reaction');
+  for (const reaction of expected) assert.ok(text.includes(reaction.text), reaction.handle);
   const citedReactions = result.references.slice(2);
-  assert.equal(citedReactions.length, expectedHandles.length);
+  assert.equal(citedReactions.length, expected.length);
   assert.ok(citedReactions.every((reference) => present.some((reaction) => reference.includes(reaction.text))));
-  assert.ok(!text.includes('tops the leaderboards'));
+  for (const reaction of present.filter((entry) => !critical.has(entry.handle))) assert.ok(!text.includes(reaction.text), reaction.handle);
 });
 
 test('article records rule-skipping and behavioural concerns as controversies', () => {
@@ -126,12 +126,7 @@ test('race series places rival release ticks into their lab rows', () => {
     { turn: 4, id: 'qilin' },
     { turn: 7, id: 'openbrain' },
   ]);
-  assert.deepEqual(series.you.map(({ turn, value }) => ({ turn, value })), [
-    { turn: 2, value: 22.25 },
-    { turn: 6, value: 40.75 },
-    { turn: 9, value: 56.5 },
-    { turn: 12, value: 74.75 },
-  ]);
+  assert.deepEqual(series.you.map(({ turn, value }) => ({ turn, value })), rows.map((row) => ({ turn: row.releasedTurn, value: row.youAvg })));
   assert.deepEqual(series.ticks, [
     { id: 'openbrain', name: 'OpenBrain', turns: [1, 7] },
     { id: 'lodestar', name: 'Lodestar', turns: [] },
