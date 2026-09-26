@@ -144,3 +144,38 @@ test('the ending film keeps waiting through a second dialog before playing', asy
   await new Promise((resolve) => setTimeout(resolve, 0));
   assert.equal(played, 1);
 });
+
+test('the ending subscriber checks for open dialogs only after every subscriber for the notification has run', async () => {
+  const subscribers = [];
+  const game = { state: createInitialState({ seed: 2 }), subscribe: (fn) => { subscribers.push(fn); return () => {}; } };
+  const collection = { record: () => {}, entries: () => [] };
+  let played = 0;
+  let loadFilmCalls = 0;
+  const overlay = new EventTarget();
+  let layer = null;
+  overlay.querySelector = (sel) => (sel === '.dialog-layer' ? layer : null);
+  mountEnding(game, overlay, {
+    collection,
+    loadFilm: async () => { loadFilmCalls += 1; return { play: () => { played += 1; } }; },
+  });
+  // A second subscriber, registered AFTER mountEnding's own (like a release reveal reacting to the same
+  // endTurn), opens a dialog layer during the same notification.
+  subscribers.push(() => { layer = {}; });
+
+  game.state = { ...game.state, ending: 'pacingDeal', era: 5 };
+  const notification = { state: game.state, events: [], errors: [] };
+  subscribers.forEach((fn) => fn(notification)); // mirrors game.js's synchronous notify loop over all subscribers
+
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(loadFilmCalls, 0, 'the film must not start: the reveal opened a dialog during the same notification');
+
+  layer = null;
+  overlay.dispatchEvent(new Event('gdt-dialog-closed'));
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(loadFilmCalls, 1);
+  assert.equal(played, 1);
+
+  overlay.dispatchEvent(new Event('gdt-dialog-closed'));
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(loadFilmCalls, 1, 'a stray later close event must not start it again');
+});

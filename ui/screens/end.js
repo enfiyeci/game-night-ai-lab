@@ -228,7 +228,11 @@ export function mountEnding(game, overlay, { collection, onPlayAgain, loadFilm =
   const unsubscribe = game.subscribe(({ state }) => {
     if (!state.ending || recorded === state.ending) return;
     record(state);
-    playWhenClear();
+    // Deferred one microtask: game.js's notify loop runs every subscriber for this endTurn synchronously and
+    // in registration order, so a later subscriber (the release reveal) may not have opened its dialog yet if
+    // we checked right here. Waiting a microtask runs after that whole synchronous loop finishes, so the
+    // dialog is open by the time we check, whichever order the subscribers were registered in.
+    queueMicrotask(playWhenClear);
   });
 
   return { show, play, unsubscribe };
