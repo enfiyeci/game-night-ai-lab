@@ -252,6 +252,7 @@ function whyText(record, prev) {
   const money = BOARD_MEMBERS.filter((member) => member.kind === 'money');
   let why;
   if (keepers.length === 0) why = COPY.WHY.nobody;
+  else if (!record.passed) why = fill(COPY.WHY.notEnough, { names: capitalise(listOf(keepers.map((member) => inline(member.id)))) });
   else if (money.every((member) => keepers.includes(member)) && keepers.length > money.length) {
     const others = keepers.filter((member) => member.kind !== 'money').map((member) => inline(member.id));
     why = fill(COPY.WHY.moneyPlus, { names: listOf(others), count: inWords(keepers.length) });

@@ -173,11 +173,14 @@ export const RING = {
   title: 'Board of directors',
   gate: 'Board meeting · end of era {era}',
   special: 'Special meeting · era {era}',
+  promise: 'Special meeting · the compute promise', // OWNER WRITES
+  emergency: 'Emergency meeting · era {era}', // OWNER WRITES
   motion: 'Motion: remove the chief executive',
   join: 'Join',
   decline: 'Decline',
 };
 export const DECLINE_JOKE = 'The board will minute that you declined.'; // OWNER WRITES
+export const MEETING_LABEL = 'Board meeting';
 
 // ---- the meeting: the room ------------------------------------------------------------------------------------------
 export const MOTION = 'Motion: remove the chief executive';
@@ -186,15 +189,18 @@ export const VOTE_OPENS = 'vote opens in {time}';
 export const LEAN_BAR = { keep: '{n} keep', maybe: '{n} undecided', remove: '{n} remove' };
 export const YOU = 'You';
 export const LEAVE = 'Leave';
+export const LEAVE_JOKE = 'The chair would like to remind you that the motion is about you.'; // OWNER WRITES
 
 export const NOTES_HEAD = 'Your notes · only you see this';
 export const NOTES = {
   read: 'Staff read',
   readCaveat: '· can be wrong',
   readLine: '{lo} to {hi} keep you',
+  readExact: '{lo} keep you',
   need: '· you need 4',
   raise: 'What they’ll raise',
   swing: 'Could go either way',
+  noSwing: 'Nobody, your staff think. They have been wrong before.', // OWNER WRITES
   messaging: '{a} and {b} are messaging each other',
   dealsHead: 'Offer deals before the vote · any number',
   noDeal: 'No deal. Let the numbers talk.',
@@ -221,6 +227,9 @@ export const CHAIR_OPEN = 'The motion is on the floor. One vote each, please.'; 
 export const VOTING = 'Voting';
 export const VOTE_CARD = { keep: 'Keep', remove: 'Remove', pending: '…' };
 export const METER = '{keep} keep · {remove} remove · 4 keep you';
+// Reduced motion: the reveal waits for the player, one director at a time.
+export const NEXT_VOTE = 'Next vote';
+export const CONTINUE = 'Continue';
 
 export const VOTE_LINES = {
   growth: {
@@ -259,6 +268,7 @@ export const RESULT_STAY = 'You stay.'; // OWNER WRITES
 export const RESULT_GO = 'The motion passes.'; // OWNER WRITES
 export const MOTION_FAILS = 'The motion fails';
 export const MOTION_PASSES = 'The motion passes';
+export const LETTER_KICKER = 'Open letter to the board'; // OWNER WRITES
 export const STAFF_TWIST = [
   'The motion passes. Security is walking you out.', // OWNER WRITES
   'Then the messages start. Most of the lab has signed a letter: if you go, they go.', // OWNER WRITES
@@ -267,7 +277,12 @@ export const STAFF_TWIST = [
 
 // ---- the result dialog (frame 4A) -----------------------------------------------------------------------------------
 export const RESULT_TITLE = 'The board votes';
-export const RESULT_SUBTITLE = { gate: 'End of era {era} · motion to remove the chief executive', special: 'Special meeting · motion to remove the chief executive' };
+export const RESULT_SUBTITLE = {
+  gate: 'End of era {era} · motion to remove the chief executive',
+  special: 'Special meeting · motion to remove the chief executive',
+  promise: 'Special meeting on the compute promise · motion to remove the chief executive', // OWNER WRITES
+  emergency: 'Emergency meeting · motion to remove the chief executive', // OWNER WRITES
+};
 export const RESULT_LINE = {
   close: 'You stay, by one vote.', // OWNER WRITES
   stay: 'You stay.', // OWNER WRITES
@@ -277,6 +292,7 @@ export const RESULT_LINE = {
 export const WHY = {
   moneyPlus: 'The three money seats kept you, and {names} made it {count}.', // OWNER WRITES
   keptBy: '{names} kept you.', // OWNER WRITES
+  notEnough: '{names} voted to keep you. It was not enough.', // OWNER WRITES
   nobody: 'Nobody kept you.', // OWNER WRITES
   switchedAway: '{name}, who kept you last time, voted to remove you this time.', // OWNER WRITES
   switchedBack: '{name}, who voted against you last time, kept you this time.', // OWNER WRITES
@@ -286,6 +302,13 @@ export const TEAM_AFTER_VOTE = [
   { id: 'safety', mood: 'alarmed', text: 'We kept the job and lost the trustee. That trade gets worse.' }, // OWNER WRITES
   { id: 'policy', mood: 'uneasy', text: 'Nobody leak the three. Please.' }, // OWNER WRITES
 ];
+// When the vote removes you (the film follows the dialog).
+export const TEAM_AFTER_REMOVAL = [
+  { id: 'cfo', mood: 'alarmed', text: 'I have the handover numbers ready. Nobody has asked for them yet.' }, // OWNER WRITES
+  { id: 'safety', mood: 'uneasy', text: 'Whoever they bring in, I hope they read the eval reports.' }, // OWNER WRITES
+  { id: 'policy', mood: 'alarmed', text: 'The press release is already out. They wrote it last week.' }, // OWNER WRITES
+];
+export const LEAVE_THE_CALL = 'Leave the call'; // OWNER WRITES
 export const SINCE_TITLE = 'Since the last vote';
 export const SINCE_KEEPS = 'now keeps you';
 export const SINCE_AGAINST = 'now against you';

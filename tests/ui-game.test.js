@@ -50,3 +50,13 @@ test('the event scenario stops on the first turn with a pending card', () => {
   const s = SCENARIOS.event(1);
   assert.ok(s.pendingEvents.length > 0);
 });
+
+test('endRound awaits every round guard before ending the round', async () => {
+  const game = createGame({ seed: 3 });
+  const order = [];
+  game.beforeRoundEnd.push(async () => { order.push('guard'); });
+  game.subscribe(() => order.push('ended'));
+  await game.endRound();
+  assert.deepEqual(order, ['guard', 'ended']);
+  assert.equal(game.state.turn, 1);
+});

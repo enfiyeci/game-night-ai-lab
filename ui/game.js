@@ -78,6 +78,13 @@ export function createGame({ seed = 1, state, history = [] } = {}) {
       for (const subscriber of subscribers) subscriber(notification);
       return { events: update.events, errors: update.errors };
     },
+    // Round guards (board UI plan Task 6): End turn, and later the real-time clock, await each before the round ends.
+    // The board meeting is one: it opens instead of the round ending when that round holds a vote.
+    beforeRoundEnd: [],
+    async endRound() {
+      for (const guard of [...this.beforeRoundEnd]) await guard(this);
+      return this.endTurn();
+    },
     subscribe(fn) {
       subscribers.add(fn);
       return () => subscribers.delete(fn);

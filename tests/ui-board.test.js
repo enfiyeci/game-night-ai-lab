@@ -126,3 +126,14 @@ test('the worry tip names the director worryMember picks, so the map can highlig
   assert.equal(worryMember(calm), null);
   assert.equal(worryTip(calm), null);
 });
+
+test('a lost vote\'s why line does not read like a win', () => {
+  const state = createInitialState({ seed: 2 });
+  state.board = [70, 70, 70, 30, 30, 30, 30];
+  state.flags.staffLetterUsed = true;
+  holdVote(state, 'gate');
+  const result = resultModel(state);
+  assert.equal(result.passed, false);
+  assert.doesNotMatch(result.why, /kept you\.$/);
+  assert.match(result.why, /not enough/i);
+});

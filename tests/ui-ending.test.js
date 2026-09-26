@@ -89,3 +89,23 @@ test('reaching an ending records it once and plays its film once', async () => {
   assert.deepEqual([films[0].id, films[0].era, films[0].run], ['pacingDeal', 5, { deal: { binding: ['compute', 'evals'] } }]);
   assert.equal(played, 1);
 });
+
+test('an ending reached while a board meeting is open waits for the meeting to close', async () => {
+  const subscribers = [];
+  const game = { state: createInitialState({ seed: 2 }), subscribe: (fn) => { subscribers.push(fn); return () => {}; } };
+  const overlay = new EventTarget();
+  let loads = 0;
+  mountEnding(game, overlay, {
+    collection: { record: () => {}, entries: () => [] },
+    loadFilm: async () => { loads += 1; return { play: () => {} }; },
+  });
+  overlay.dispatchEvent(new Event('board-meeting-open'));
+  game.state = { ...game.state, ending: 'boardRemoved', era: 2 };
+  subscribers.forEach((fn) => fn({ state: game.state, events: [], errors: [] }));
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(loads, 0);
+  overlay.dispatchEvent(new Event('board-meeting-closed'));
+  overlay.dispatchEvent(new Event('board-meeting-closed'));
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(loads, 1);
+});

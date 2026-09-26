@@ -225,3 +225,17 @@ game.subscribe(({ state }) => {
 });
 
 globalThis.game = game;
+
+// The board meeting (board UI plan Task 6): a round guard on End turn, mounted after mountEnding so the ending waits for
+// it. Preview routes: #meeting (the ring; Call the vote plays a vote held on a copy), #meeting-room, #meeting-vote,
+// #meeting-vote-last, #meeting-result, #meeting-result-loss, #meeting-result-staff, #meeting-result-backdown,
+// #meeting-4a, #meeting-4a-loss, #meeting-4a-staff.
+import { mountBoardMeeting } from './screens/boardMeeting.js';
+
+const meeting = mountBoardMeeting(game, { overlay, stage });
+const meetingRoute = () => {
+  const step = location.hash.match(/^#meeting(?:-([\w-]+))?$/);
+  if (step && !game.state.ending) meeting.preview(step[1] ?? 'ring');
+};
+meetingRoute();
+addEventListener('hashchange', meetingRoute);

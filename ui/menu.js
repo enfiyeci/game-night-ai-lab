@@ -278,7 +278,7 @@ export function openMenu(game, point, { overlay = document.querySelector('#overl
           openBudget(game, overlay);
         } else if (item.id === 'endTurn') {
           close(); // before the turn ends, so a dialog opened by a subscriber keeps focus
-          game.endTurn();
+          game.endRound();
         } else {
           close();
           customHandler(game, overlay);
