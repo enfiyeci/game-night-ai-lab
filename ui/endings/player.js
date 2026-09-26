@@ -261,6 +261,7 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
     const people = [];
     for (const g of node.svg.querySelectorAll('.sitter')) {
       const box = g.getBBox();
+      if (!box.width || !box.height) continue;   // an empty seat (era 5 leaves two), not a person
       const c = new DOMPoint(box.x + box.width / 2, box.y + box.height / 2).matrixTransform(toSvg.multiply(g.getScreenCTM()));
       const near = people.find((p) => Math.hypot(p.x - c.x, p.y - c.y) < 75);
       if (near) near.groups.push(g);
