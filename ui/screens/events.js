@@ -1,7 +1,8 @@
 import { PICTURES } from '../data/crisisArt.js';
 import { bubbleAt, choiceButton, dueBar, el, loadAnchors, post } from '../components/eventBits.js';
 import {
-  ADVISOR_TITLE, argueLines, cardView, catalogRow, consequenceLines, daysLeft, dueText, queueAnswer, timingFor,
+  ADVISOR_TITLE, argueLines, cardView, catalogRow, consequenceLines, daysLeft, dueText, hasLanded, queueAnswer,
+  timingFor,
 } from '../logic/events.js';
 
 const CLOCK_REASON = 'event-card';
@@ -90,17 +91,22 @@ function separate(nodes) {
   }
 }
 
-function showBusy(overlay, lines) {
+const MAX_BUSY_LINES = 6;
+
+function showBusy(overlay, lines, onDismiss) {
   overlay.querySelector('.ev-busy')?.remove();
   if (!lines.length) return;
   const node = el('<section class="ev-busy" aria-live="polite"><div class="ev-busy-head"><strong>While you were busy</strong><button type="button" aria-label="Dismiss">×</button></div><ul></ul></section>');
-  for (const line of lines) {
+  for (const line of lines.slice(-MAX_BUSY_LINES)) {
     const item = el(`<li${line.ok ? ' class="ok"' : ''}><b></b><span></span></li>`);
     item.querySelector('b').textContent = line.head;
     item.querySelector('span').textContent = line.text;
     node.querySelector('ul').append(item);
   }
-  node.querySelector('button').addEventListener('click', () => node.remove());
+  node.querySelector('button').addEventListener('click', () => {
+    node.remove();
+    onDismiss();
+  });
   overlay.append(node);
   // company.js puts its round toast in the same top-left slot one frame later; sit under it.
   requestAnimationFrame(() => requestAnimationFrame(() => {
@@ -109,62 +115,31 @@ function showBusy(overlay, lines) {
   }));
 }
 
+// The card flow follows cards as they land in and leave state.pendingEvents, so it works the same
+// whether the game notifies once per turn or once per story week (owner pick 1D).
 export function mountEvents(game, { stage, overlay }) {
   let anchors = null;
-  let answered = {};
-  let setAside = new Set();
-  let expired = new Set();
-  let landed = new Map();
+  const known = new Map(); // id -> card view, for every landed card still pending
+  const answered = {}; // id -> the choice the player picked, until the card leaves the sim
+  const setAside = new Set();
   let queue = [];
-  let before = [];
   let current = null;
-  let clockHooked = false;
+  let busyLines = [];
+  let previewing = false;
 
   const clock = () => game.clock ?? null;
-  const nowMonths = () => clock()?.now().monthsElapsed ?? 0;
   const emit = (name) => overlay.dispatchEvent(new CustomEvent(name));
+  const pendingOf = (id) => game.state.pendingEvents.find((candidate) => candidate.id === id);
+  const remaining = (id) => {
+    const pending = pendingOf(id);
+    return pending ? daysLeft(pending, game.state) : null;
+  };
 
-  function remaining(id) {
-    const running = clock();
-    if (!running) return null;
-    return daysLeft({
-      timingDays: timingFor(id).days,
-      landedMonths: landed.get(id) ?? nowMonths(),
-      nowMonths: nowMonths(),
-      daysUntilRound: running.daysUntilNextRound(),
-    });
-  }
-
-  function hookClock() {
-    const running = clock();
-    if (!running || clockHooked) return;
-    clockHooked = true;
-    running.on('tick', () => {
-      let changed = false;
-      for (const id of [...setAside]) {
-        if (remaining(id) > 0) continue;
-        setAside.delete(id);
-        expired.add(id);
-        changed = true;
-      }
-      if (changed) emit('events-changed');
-    });
-  }
-
-  function startRound(state) {
-    answered = {};
-    setAside = new Set();
-    expired = new Set();
-    landed = new Map();
-    before = state.pendingEvents.map(cardView);
-    for (const card of before) landed.set(card.id, nowMonths());
-    queue = [...before].sort((a, b) => Number(b.crisis) - Number(a.crisis)).map((card) => card.id);
-  }
-
-  function close() {
+  function close({ aside = false } = {}) {
     if (!current) return;
-    const { layer, cleanup } = current;
+    const { id, layer, cleanup, preview } = current;
     current = null;
+    if (aside && !preview && !Object.hasOwn(answered, id) && known.has(id)) setAside.add(id);
     layer.remove();
     cleanup?.();
     clock()?.resume(CLOCK_REASON);
@@ -172,10 +147,33 @@ export function mountEvents(game, { stage, overlay }) {
     emit('events-changed');
   }
 
+  function sync(state, events) {
+    const live = new Set(state.pendingEvents.map((pending) => pending.id));
+    const gone = [...known.values()].filter((view) => !live.has(view.id));
+    if (gone.length) {
+      busyLines = [...busyLines, ...consequenceLines({ before: gone, answered, events })].slice(-MAX_BUSY_LINES);
+      for (const view of gone) {
+        known.delete(view.id);
+        setAside.delete(view.id);
+        delete answered[view.id];
+      }
+      if (current && !current.preview && !live.has(current.id)) close();
+      showBusy(overlay, busyLines, () => { busyLines = []; });
+    }
+    queue = queue.filter((id) => live.has(id));
+    const landed = state.pendingEvents
+      .filter((pending) => !known.has(pending.id) && hasLanded(pending, state))
+      .map(cardView)
+      .sort((a, b) => Number(b.crisis) - Number(a.crisis));
+    for (const view of landed) {
+      known.set(view.id, view);
+      queue.push(view.id);
+    }
+  }
+
   function openNext() {
     while (!current && queue.length) {
-      const id = queue.shift();
-      if (openCard(id)) return;
+      if (openCard(queue.shift())) return;
     }
   }
 
@@ -184,7 +182,7 @@ export function mountEvents(game, { stage, overlay }) {
     overlay.append(layer);
     clock()?.pause(CLOCK_REASON);
     const cleanup = view.staging ? stageRoom(view.staging, { stage, layerRoot: layer, anchors }) : null;
-    current = { id: view.id, layer, cleanup };
+    current = { id: view.id, layer, cleanup, preview };
 
     const card = el(`<section class="gp ev-card${view.staging ? '' : ' no-pic'}" role="dialog" aria-modal="false"><div class="ev-card-main"><div class="ev-card-top"><h1></h1></div><div class="ev-choices"></div><div class="ev-card-foot"><button type="button" class="ev-act ghost ev-later">Decide later</button></div></div></section>`);
     const titleId = `ev-title-${view.id.replace(/\W/g, '-')}`;
@@ -202,15 +200,15 @@ export function mountEvents(game, { stage, overlay }) {
       figure.querySelector('figcaption').textContent = view.staging.caption;
       card.querySelector('.ev-card-main').before(figure);
     }
-    const days = remaining(view.id);
+    const days = preview ? null : remaining(view.id);
     if (days !== null) card.querySelector('.ev-card-top').append(dueBar(dueText(view.id, days), days / timingFor(view.id).days));
     card.querySelector('.ev-card-top').after(post(view.post));
     for (const choice of view.choices) {
       const button = choiceButton(choice);
       button.addEventListener('click', () => {
         if (!preview) {
-          queueAnswer(game, view.id, choice.id);
           answered[view.id] = choice.id;
+          queueAnswer(game, view.id, choice.id);
         }
         close();
         openNext();
@@ -218,8 +216,7 @@ export function mountEvents(game, { stage, overlay }) {
       card.querySelector('.ev-choices').append(button);
     }
     const later = () => {
-      if (!preview) setAside.add(view.id);
-      close();
+      close({ aside: true });
       openNext();
     };
     card.querySelector('.ev-later').addEventListener('click', later);
@@ -242,36 +239,26 @@ export function mountEvents(game, { stage, overlay }) {
   }
 
   function openCard(id, { preview = null } = {}) {
-    const pending = preview ?? game.state.pendingEvents.find((candidate) => candidate.id === id);
-    if (!pending || Object.hasOwn(answered, id) || expired.has(id) || !anchors) return false;
-    if (current) {
-      if (!preview && !Object.hasOwn(answered, current.id)) setAside.add(current.id);
-      close();
-    }
+    const view = preview ? cardView(preview) : known.get(id);
+    if (!view || !anchors || (!preview && Object.hasOwn(answered, id))) return false;
+    close({ aside: true });
     setAside.delete(id);
-    render(cardView(pending), { preview: Boolean(preview) });
+    render(view, { preview: Boolean(preview) });
     return true;
   }
 
-  async function prepare(state) {
-    anchors = await loadAnchors(state.era);
-    hookClock();
-  }
-
   game.subscribe(({ state, events }) => {
-    close();
-    const lines = consequenceLines({ before, answered, events });
-    prepare(state).then(() => {
-      startRound(state);
-      showBusy(overlay, lines);
-      openNext();
+    sync(state, events ?? []);
+    loadAnchors(state.era).then((loaded) => {
+      anchors = loaded;
+      if (!previewing) openNext();
       emit('events-changed');
     }).catch((error) => console.error(error));
   });
 
-  let previewing = false;
-  const ready = prepare(game.state).then(() => {
-    startRound(game.state);
+  sync(game.state, []);
+  const ready = loadAnchors(game.state.era).then((loaded) => {
+    anchors = loaded;
     if (!previewing) openNext();
     emit('events-changed');
   }).catch((error) => console.error(error));
@@ -284,25 +271,20 @@ export function mountEvents(game, { stage, overlay }) {
       if (!row) return;
       previewing = true;
       await ready;
-      queue = [];
-      const pending = {
-        id,
-        title: row.card.title,
-        post: row.card.post,
-        choices: row.card.choices.map(({ id: choiceId, label, cost, backers, opposers }) => ({ id: choiceId, label, cost, backers, opposers })),
-      };
-      openCard(id, { preview: pending });
-    },
-    waiting() {
-      return [...setAside, ...expired].map((id) => {
-        const view = before.find((card) => card.id === id);
-        const days = expired.has(id) ? 0 : remaining(id);
-        return {
+      openCard(id, {
+        preview: {
           id,
-          title: view?.title ?? id,
-          expired: expired.has(id),
-          due: expired.has(id) ? 'Time ran out' : days === null ? null : dueText(id, days),
-        };
+          title: row.card.title,
+          post: row.card.post,
+          choices: row.card.choices.map(({ id: choiceId, label, cost, backers, opposers }) => ({ id: choiceId, label, cost, backers, opposers })),
+        },
+      });
+    },
+    // Cards the player put aside and can still answer, for the desk phone.
+    waiting() {
+      return [...setAside].filter((id) => known.has(id) && !Object.hasOwn(answered, id)).map((id) => {
+        const days = remaining(id);
+        return { id, title: known.get(id).title, due: days === null ? null : dueText(id, days) };
       });
     },
   };

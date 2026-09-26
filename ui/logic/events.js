@@ -1,8 +1,9 @@
 import { EVENTS } from '../../sim/data/events.js';
 import { EVENTS_6C } from '../../sim/data/events6c.js';
+import { DEFAULT_EVENT_TIMING, EVENT_TIMING } from '../../sim/data/eventTiming.js';
 import { fallbackChoice } from '../../sim/events.js';
 import {
-  ARGUE, CONSEQUENCES, CRISIS_STAGING, DEFAULT_TIMING, JOKES, TIMING, WARNING_ADVISOR,
+  ARGUE, CONSEQUENCES, CRISIS_STAGING, DEFAULT_DUE, DUE, JOKES, WARNING_ADVISOR,
 } from '../data/eventCopy.js';
 
 export const ADVISOR_TITLE = { research: 'Head of Research', safety: 'Head of Safety', cfo: 'CFO', policy: 'Policy and Comms' };
@@ -67,7 +68,10 @@ export function argueLines(view, limit = 3) {
   return lines.slice(0, limit);
 }
 
-export const timingFor = (id) => TIMING[baseId(id)] ?? DEFAULT_TIMING;
+export const timingFor = (id) => ({
+  ...(EVENT_TIMING[baseId(id)] ?? DEFAULT_EVENT_TIMING),
+  due: DUE[baseId(id)] ?? DEFAULT_DUE,
+});
 
 export function formatStoryTime(days) {
   if (days < 1) return 'less than a day';
@@ -79,9 +83,15 @@ export function formatStoryTime(days) {
   return `about ${Math.round(days / DAYS_PER_MONTH)} months`;
 }
 
-export function daysLeft({ timingDays, landedMonths, nowMonths, daysUntilRound }) {
-  const own = timingDays - (nowMonths - landedMonths) * DAYS_PER_MONTH;
-  return Math.max(0, Math.min(own, daysUntilRound));
+// Under week-by-week time (owner pick 1D) the sim gives each pending card landsAt and dueAt in
+// story days, and state.day counts them. Without those fields (turns) every card is shown at
+// once and has no deadline bar.
+export const hasLanded = (pending, state) => !Number.isFinite(pending.landsAt)
+  || !Number.isFinite(state.day) || state.day >= pending.landsAt;
+
+export function daysLeft(pending, state) {
+  if (!Number.isFinite(pending.dueAt) || !Number.isFinite(state.day)) return null;
+  return Math.max(0, pending.dueAt - state.day);
 }
 
 export const dueText = (id, days) => timingFor(id).due.replace('{time}', formatStoryTime(days));

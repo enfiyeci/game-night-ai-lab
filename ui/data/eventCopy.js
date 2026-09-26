@@ -20,28 +20,23 @@ export const WARNING_ADVISOR = {
   whistleblower: 'policy',
 };
 
-// Story time each card waits before it resolves on its own ({time} is filled in).
-// First guesses, to tune after the first playthrough.
-export const DEFAULT_TIMING = Object.freeze({ days: 21, due: 'Answer within {time}' }); // OWNER WRITES
-export const TIMING = {
-  weightTheft: { days: 14, due: 'The leak goes public in {time}' }, // OWNER WRITES
-  selfExfiltration: { days: 3, due: 'The copy finishes in {time}' }, // OWNER WRITES
-  whistleblower: { days: 9, due: 'The story runs in {time}' }, // OWNER WRITES
-  safetyQuits: { days: 7, due: 'Their post is trending. Answer within {time}' }, // OWNER WRITES
-  jailbreak: { days: 5, due: 'The thread is spreading. Answer within {time}' }, // OWNER WRITES
-  oversightTamper: { days: 3, due: 'Answer within {time}' }, // OWNER WRITES
-  agentSurge: { days: 4, due: 'The servers fall over in {time}' }, // OWNER WRITES
-  lossSpike: { days: 5, due: 'The run stalls in {time}' }, // OWNER WRITES
-  capabilityJump: { days: 5, due: 'Answer within {time}' }, // OWNER WRITES
-  viralDemo: { days: 5, due: 'The buzz fades in {time}' }, // OWNER WRITES
-  agentwreck: { days: 7, due: 'Answer within {time}' }, // OWNER WRITES
-  neocloudTrouble: { days: 10, due: 'They run out of cash in {time}' }, // OWNER WRITES
-  priceWar: { days: 10, due: 'Answer within {time}' }, // OWNER WRITES
-  boardRevolt: { days: 14, due: 'The board votes in {time}' }, // OWNER WRITES
-  senateHearing: { days: 30, due: 'The hearing is in {time}' }, // OWNER WRITES
-  pooling: { days: 45, due: 'Washington wants an answer within {time}' }, // OWNER WRITES
-  pledgeDrop: { days: 45, due: 'Answer within {time}' }, // OWNER WRITES
-  copyright: { days: 45, due: 'The first hearing is in {time}' }, // OWNER WRITES
+// What the deadline bar on a card says ({time} is filled in). The days themselves live in
+// sim/data/eventTiming.js, because the real-time sim enforces them.
+export const DEFAULT_DUE = 'Answer within {time}'; // OWNER WRITES
+export const DUE = {
+  weightTheft: 'The leak goes public in {time}', // OWNER WRITES
+  selfExfiltration: 'The copy finishes in {time}', // OWNER WRITES
+  whistleblower: 'The story runs in {time}', // OWNER WRITES
+  safetyQuits: 'Their post is trending. Answer within {time}', // OWNER WRITES
+  jailbreak: 'The thread is spreading. Answer within {time}', // OWNER WRITES
+  agentSurge: 'The servers fall over in {time}', // OWNER WRITES
+  lossSpike: 'The run stalls in {time}', // OWNER WRITES
+  viralDemo: 'The buzz fades in {time}', // OWNER WRITES
+  neocloudTrouble: 'They run out of cash in {time}', // OWNER WRITES
+  boardRevolt: 'The board votes in {time}', // OWNER WRITES
+  senateHearing: 'The hearing is in {time}', // OWNER WRITES
+  pooling: 'Washington wants an answer within {time}', // OWNER WRITES
+  copyright: 'The first hearing is in {time}', // OWNER WRITES
 };
 
 // What an advisor says from their desk while a card is up. `pick` is a choice id; null means the

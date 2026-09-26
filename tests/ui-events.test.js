@@ -7,8 +7,9 @@ import { SCENARIOS } from '../ui/logic/scenarios.js';
 import * as COPY from '../ui/data/eventCopy.js';
 import {
   argueLines, cardView, catalogRow, consequenceLines, daysLeft, dueText, formatStoryTime,
-  jokeFor, lookIntoCost, openWarnings, queueAnswer, queueLookInto, timingFor,
+  hasLanded, jokeFor, lookIntoCost, openWarnings, queueAnswer, queueLookInto, timingFor,
 } from '../ui/logic/events.js';
+import { DEFAULT_EVENT_TIMING, EVENT_TIMING } from '../sim/data/eventTiming.js';
 
 const ALL = [...EVENTS, ...EVENTS_6C];
 const pendingOf = (id) => {
@@ -57,10 +58,13 @@ test('argue lines use written lines, stay silent where marked, and fall back to 
   assert.ok(flattery.length <= 3);
 });
 
-test('deadlines are capped by the next round and read in story words', () => {
-  assert.equal(daysLeft({ timingDays: 14, landedMonths: 1, nowMonths: 1, daysUntilRound: 60 }), 14);
-  assert.equal(daysLeft({ timingDays: 14, landedMonths: 1, nowMonths: 1, daysUntilRound: 5 }), 5);
-  assert.equal(daysLeft({ timingDays: 14, landedMonths: 1, nowMonths: 2, daysUntilRound: 60 }), 0);
+test('deadlines come from the sim\'s story days and read in story words', () => {
+  assert.equal(daysLeft({ landsAt: 10, dueAt: 24 }, { day: 12 }), 12);
+  assert.equal(daysLeft({ landsAt: 10, dueAt: 24 }, { day: 30 }), 0);
+  assert.equal(daysLeft({}, { turn: 3 }), null);
+  assert.equal(hasLanded({ landsAt: 10 }, { day: 9 }), false);
+  assert.equal(hasLanded({ landsAt: 10 }, { day: 10 }), true);
+  assert.equal(hasLanded({}, { turn: 3 }), true);
   assert.equal(formatStoryTime(0.4), 'less than a day');
   assert.equal(formatStoryTime(1), '1 day');
   assert.equal(formatStoryTime(9), '9 days');
@@ -68,7 +72,16 @@ test('deadlines are capped by the next round and read in story words', () => {
   assert.equal(formatStoryTime(90), 'about 3 months');
   assert.equal(dueText('whistleblower', 9), 'The story runs in 9 days');
   assert.equal(dueText('investors', 21), 'Answer within about 3 weeks');
-  assert.equal(timingFor('investors'), COPY.DEFAULT_TIMING);
+  assert.equal(timingFor('investors').days, DEFAULT_EVENT_TIMING.days);
+  assert.equal(timingFor('weightTheft').days, 14);
+});
+
+test('the sim timing table names real cards with a known class', () => {
+  for (const [id, timing] of Object.entries(EVENT_TIMING)) {
+    assert.ok(ALL.some((event) => event.id === id), id);
+    assert.ok(['short', 'normal', 'long'].includes(timing.class), id);
+    assert.ok(Number.isInteger(timing.days) && timing.days > 0, id);
+  }
 });
 
 test('consequence lines tell answered and ignored cards', () => {
