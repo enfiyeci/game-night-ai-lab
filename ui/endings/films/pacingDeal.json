@@ -14,13 +14,13 @@
         {"who": "research", "at": 0.5, "to": 2.4, "text": "Home before dark? Weird. Fine."},
         {"who": "safety", "at": 2.5, "to": 4.6, "text": "See you tomorrow."}
       ],
-      "leave": {"order": ["researcher1", "researcher2", "policy", "cfo", "research", "safety"], "from": 1.2, "step": 0.6},
+      "leave": {"order": ["researcher1", "researcher2", "policy", "cfo", "research", "safety"], "staff": true, "from": 1.2, "step": 0.6},
       "cam": {"to": {"focus": "ceo", "s": 1.25}},
       "sfx": [["room", 0], ["walkout", 1.1, 4.8]]
     },
     {"kind": "plate", "plate": "pd-news", "dur": 5, "card": "Signing day · Geneva",
      "cam": {"from": {"s": 1.0}, "to": {"s": 1.05}}, "sfx": [["roomtone", 0], ["pen", 0.4], ["sting", 1.2]]},
-    {"kind": "plate", "plate": "pd-cursor", "dur": 4, "card": "Month 3, 2 am · OpenBrain",
+    {"kind": "plate", "plate": "pd-cursor", "dur": 4, "card": "Month 1, 2 am · OpenBrain",
      "cam": {"from": {"s": 1.0}, "to": {"x": 560, "y": 340, "s": 1.1}}, "sfx": [["hum", 0]]},
     {"kind": "video", "clip": "pd-desert", "dur": 5, "card": "Month 2 · The desert campus",
      "sfx": [["wind", 0], ["creak", 1.5]]},

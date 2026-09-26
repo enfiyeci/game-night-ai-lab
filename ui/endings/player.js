@@ -251,8 +251,9 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
 
   // The office art does not label its people by role, and some eras seat people at desks with no anchor. So the seated
   // figures (a front-facing person is two groups, body and hands) are measured in the SVG's own coordinates once it is
-  // in the page, grouped into people, and matched to the nearest desk anchor. Everyone then leaves on a beat of their
-  // own, spread evenly over the same span in every era: unanchored staff first, then the roles in leave.order.
+  // in the page, grouped into people, and matched to the nearest desk anchor. The roles in leave.order leave, each on a
+  // beat of their own, spread evenly over the same span in every era; with leave.staff, unanchored staff go first.
+  // Everyone else stays at their desk.
   function keyLeavers(node) {
     node.keyedLeave = true;
     const { heads } = anchors;
@@ -274,8 +275,9 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
         if (d < 110 && (!best || d < best.d)) best = { role, d };
       }
       p.rank = best ? node.leave.order.indexOf(best.role) : -1;
+      p.goes = best ? p.rank >= 0 : !!node.leave.staff;
     }
-    const leaving = [...people].sort((a, b) => a.rank - b.rank);
+    const leaving = people.filter((p) => p.goes).sort((a, b) => a.rank - b.rank);
     const span = node.leave.step * (node.leave.order.length - 1);
     leaving.forEach((p, k) => {
       const at = node.leave.from + (leaving.length > 1 ? (k * span) / (leaving.length - 1) : 0);

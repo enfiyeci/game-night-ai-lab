@@ -521,8 +521,8 @@ def lb_cafe():
     """Month 4. The leader's launch on Dot's TV; your lab's name slides off the ticker."""
     ticker_mask = f'<rect x="226" y="508" width="828" height="56" style="fill:{M("ink", 80, "sky")}"/>'
     names = [("OPNB", "+4.2%"), ("DPTK", "+1.1%"), ("LDST", "+0.6%"), ("KSTL", "−38%")]
-    tick = "".join(T(256 + i * 200, 543, f"{a} {b}", 17, 600, CORAL_LIGHT if a == "KSTL" else "var(--paper)", mono=True) for i, (a, b) in enumerate(names))
-    slide = f'<g {K([[1.0, {"o": 1, "y": 0}], [1.8, {"o": 0, "y": 40}]])}>' + T(856, 543, "KSTL −38%", 17, 600, CORAL_DARK, mono=True) + '</g>'
+    slide = (f'<g clip-path="url(#lbcafe-tick)"><g {K([[1.0, {"o": 1, "y": 0}], [1.8, {"o": 0, "y": 40}]])}>'
+             + T(856, 543, "KSTL −38%", 17, 600, CORAL_DARK, mono=True) + '</g></g>')
     extra = ticker_mask + "".join(T(256 + i * 200, 543, f"{a} {b}", 17, 600, "var(--paper)", mono=True) for i, (a, b) in enumerate(names[:3])) + slide
     return cafe_tv("lbcafe", "LIVE · OPENBRAIN LAUNCH", ["OpenBrain 7 is here:", "“the only model you need”"],
                    ["Rivals scramble to respond."], "", extra)
@@ -605,7 +605,7 @@ def pd_news():
 
 
 def pd_cursor():
-    """Month 3, 2 am, at OpenBrain. A cursor hovers over a run that would break the cap, then moves away."""
+    """Month 1, 2 am, at OpenBrain. A cursor hovers over a run that would break the cap, then moves away."""
     o = [f'<rect width="{W}" height="{H}" style="fill:{M("ink", 94, "sky")}"/>',
          f'<rect x="170" y="110" width="940" height="440" rx="6" style="fill:var(--paper)"/>',
          f'<rect x="170" y="110" width="940" height="48" rx="6" style="fill:{M("coral", 14, "paper")}"/>',
@@ -618,15 +618,15 @@ def pd_cursor():
          f'<circle cx="224" cy="500" r="6" style="fill:{TAG_TEAL}"/>' + T(240, 506, "present", 16, 600, TAG_TEAL, mono=True)]
     cur = K([[0, {"x": 0, "y": 0}], [1.0, {"x": 0, "y": 0}], [2.6, {"x": 0, "y": 0}], [3.4, {"x": 360, "y": 120}]])
     o.append(f'<g {K([[0, {"x": -260, "y": 180}], [0.8, {"x": 0, "y": 0}]])}><g {cur}>'
-             f'<path d="M430,338 l0,30 l8,-8 l6,13 l5,-2 l-6,-13 l12,0 Z" style="fill:var(--paper);stroke:var(--ink);stroke-width:1.5"/></g></g>')
+             f'<path d="M548,356 l0,30 l8,-8 l6,13 l5,-2 l-6,-13 l12,0 Z" style="fill:var(--paper);stroke:var(--ink);stroke-width:1.5"/></g></g>')
     defs, over = glass("pdcur", "var(--paper)")
     return svg("".join(o) + over, defs)
 
 
 # ================================================================ A costly win
-def summary_screen(fid, app, question, t_answer=0.3, dark=False):
+def summary_screen(fid, app, question, t_answer=0.3, dark=False, asker="Operator"):
     """One of three places the winning model runs; asked why, it says a summary is available on request."""
-    return chat(fid, app, [(0, "Operator", [question], True), (t_answer, MODEL, ["Summary available on request."], False)])
+    return chat(fid, app, [(0, asker, [question], True), (t_answer, MODEL, ["Summary available on request."], False)])
 
 
 def cw_port():
@@ -638,7 +638,7 @@ def cw_triage():
 
 
 def cw_chat():
-    return summary_screen("cwchat", "Homework help", "why did you change my thesis?")
+    return summary_screen("cwchat", "Homework help", "why did you change my thesis?", asker="Mina")
 
 
 def cw_reveal():

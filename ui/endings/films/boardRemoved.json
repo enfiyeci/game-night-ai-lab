@@ -14,7 +14,7 @@
         {"who": "safety", "at": 2.4, "to": 5, "text": "So the pledge goes with you."}
       ],
       "leave": {"order": ["ceo"], "from": 3.2, "step": 0.5},
-      "cam": {"to": {"focus": "ceo", "s": 1.35}},
+      "cam": {"to": {"focus": "ceo", "s": 1.22}},
       "sfx": [["room", 0], ["walkout", 3.0, 4.2]]
     },
     {"kind": "plate", "plate": "rb-slide", "dur": 4, "card": "Day 1 · Your lab",
@@ -23,7 +23,7 @@
      "cam": {"from": {"s": 1.0}, "to": {"x": 700, "s": 1.06}}, "sfx": [["room", 0], ["notify", 1.2], ["notify", 1.6], ["notify", 2.0]]},
     {"kind": "plate", "plate": "rb-hearing", "dur": 4, "card": "Month 2 · Washington",
      "cam": {"from": {"s": 1.0}, "to": {"s": 1.05}}, "sfx": [["roomtone", 0], ["sting", 0]]},
-    {"kind": "video", "clip": "rb-skyline", "dur": 6, "card": "Week 6 · The city",
+    {"kind": "video", "clip": "rb-skyline", "dur": 6, "card": "Month 3 · The city",
      "sfx": [["city", 0], ["flaps", 1.0, 1, 0.3], ["flaps", 2.4, 1, 0.3], ["flaps", 3.5, 1, 0.3], ["flaps", 4.4, 1, 0.3], ["flaps", 5.2, 1, 0.3], ["flaps", 5.8, 1, 0.3]]}
   ]
 }
