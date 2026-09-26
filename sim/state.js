@@ -1,6 +1,7 @@
 import { BALANCE } from './balance.js';
 import { generateOffers, sideRng } from './contracts.js';
 import { createRivals } from './rivals.js';
+import { createAutomation } from './data/automation.js';
 
 export function createInitialState({ seed = 1 } = {}) {
   const state = {
@@ -60,6 +61,7 @@ export function createInitialState({ seed = 1 } = {}) {
     activeRun: null,
     pendingModel: null,
     internal: null,
+    automation: createAutomation(),
     deal: null,
     models: [],
     warnings: {},
