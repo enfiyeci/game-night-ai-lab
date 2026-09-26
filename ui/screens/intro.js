@@ -106,7 +106,8 @@ export function mountIntro(game, { stage, overlay, storage }) {
     if (last) next.textContent = 'Open the menu';
     next.addEventListener('click', () => {
       if (last) {
-        openMenu(game, anchors.floorMenu, { overlay });
+        // The same screens that block a floor click (ui/main.js) block this button.
+        if (!overlay.querySelector('.dialog-layer, .event-layer, .ev-phone, .screenwall-layer')) openMenu(game, anchors.floorMenu, { overlay });
         return;
       }
       index += 1;
