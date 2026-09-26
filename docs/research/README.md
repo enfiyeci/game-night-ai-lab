@@ -29,16 +29,22 @@ only through search-result snippets, and those claims carry ⚠️ inline.
    how Game Dev Tycoon's time works (it has no speed buttons), how real-time-with-pause games
    run a clock over a fixed tick, every turn assumption in our code with file:line citations,
    and four designs with a ship-by-the-deadline verdict. See `realtime-time-flow/README.md`.
-6. `event-cards/README.md` — how games present events, dilemmas and warnings (Game Dev Tycoon
+7. `event-cards/README.md` — how games present events, dilemmas and warnings (Game Dev Tycoon
    first), what our specs and sim already decide, and the event-card decisions put to the owner
    (2026-09-26).
 
-6. `finance-planning/README.md`: game finance screens and real labs' compute plans (2026-09-25),
+8. `finance-planning/README.md`: game finance screens and real labs' compute plans (2026-09-25),
    behind the finance planner mockups. Subagent output; paywalled figures are second-hand.
 
-7. `lab-boards/real-lab-boards-2026-09-26.md`: who sits on the OpenAI and Anthropic boards (and why Google
+9. `lab-boards/real-lab-boards-2026-09-26.md`: who sits on the OpenAI and Anthropic boards (and why Google
    DeepMind, Meta and xAI have none that can remove a leader), what each kind of member pushes on, and seven board
    archetypes for the game. Subagent output; several sources partly read, flagged ⚠️ inline.
+10. `feed-dead-buttons.md` — how games treat controls that do nothing on fake websites and
+   social feeds (2026-09-26); Football Manager's manual read in full, the rest mostly summaries.
+11. `recursive-self-improvement/README.md` — how the labs describe and measure AI automating AI
+   research (2026-09-26): Anthropic's "When AI builds itself" essay and automation index, the
+   RSP, OpenAI and Google DeepMind thresholds, share-of-code figures, METR's measured speedups,
+   and how other games model a self-accelerating loop. Start with its verified-rows table.
 
 ## Notable catches
 
