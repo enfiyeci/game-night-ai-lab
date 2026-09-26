@@ -1,0 +1,387 @@
+<title>Event card picks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital@0;1&family=Nunito:wght@400;600;700;800&display=swap">
+<style>
+:root {
+  --cream: #F1E4C8;
+  --paper: #FFFBF1;
+  --ink: #2E2A2B;
+  --teal: #3F9C8F;
+  --wood: #C8864C;
+  --coral: #E0613B;
+  --sky: #3F84C6;
+  --muted: color-mix(in oklab, var(--ink) 68%, var(--cream));
+  --line: color-mix(in oklab, var(--ink) 16%, var(--cream));
+  --teal-ink: color-mix(in oklab, var(--teal) 70%, var(--ink));
+  --coral-ink: color-mix(in oklab, var(--coral) 72%, var(--ink));
+  --wood-ink: color-mix(in oklab, var(--wood) 60%, var(--ink));
+  --serif: "Libre Baskerville", Georgia, serif;
+  --sans: "Nunito", "Trebuchet MS", sans-serif;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--cream);
+  color: var(--ink);
+  font: 15px/1.55 var(--sans);
+  padding: 0 24px;
+}
+.wrap { max-width: 1180px; margin: 0 auto; padding-block: 40px 72px; display: grid; gap: 40px; }
+h1, h2 { font-family: var(--serif); font-style: italic; font-weight: 400; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(28px, 4vw, 40px); line-height: 1.15; }
+h2 { font-size: 22px; line-height: 1.25; }
+p { margin: 0; }
+.eyebrow { font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--wood-ink); }
+.lead { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 32px; align-items: end; }
+.lead .intro { display: grid; gap: 14px; max-width: 64ch; }
+.lead .intro p { font-size: 16px; }
+.deadline { background: var(--paper); border-left: 4px solid var(--coral); padding: 14px 18px; display: grid; gap: 6px; }
+.deadline strong { font-weight: 800; }
+
+/* already decided */
+.decided { display: grid; gap: 14px; }
+.decided ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
+.decided li { background: color-mix(in oklab, var(--paper) 60%, var(--cream)); padding: 12px 14px; display: grid; gap: 4px; }
+.decided li b { font-weight: 800; }
+.decided li small { color: var(--muted); font-size: 12.5px; }
+
+/* questions */
+.q { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 28px; padding-top: 28px; border-top: 1px solid var(--line); }
+.q-head { display: grid; gap: 10px; align-content: start; }
+.q-head .num { font-weight: 800; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.q-head p { max-width: 58ch; }
+.why { font-size: 13.5px; color: var(--muted); display: grid; gap: 6px; }
+.why b { color: var(--ink); font-weight: 700; }
+.opts { display: grid; gap: 10px; align-content: start; }
+.opt { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px; align-items: start; background: var(--paper); border: 2px solid var(--line); padding: 14px 16px; cursor: pointer; }
+.opt:hover { border-color: color-mix(in oklab, var(--wood) 55%, var(--line)); }
+.opt:has(input:checked) { border-color: var(--teal); box-shadow: inset 0 0 0 1px var(--teal); }
+.opt:has(input:focus-visible) { outline: 3px solid var(--sky); outline-offset: 2px; }
+.opt input { width: 20px; height: 20px; margin: 3px 0 0; accent-color: var(--teal); }
+.opt-body { display: grid; gap: 6px; }
+.opt-title { font-weight: 800; font-size: 15.5px; }
+.opt-title .key { color: var(--muted); font-weight: 700; margin-right: 4px; }
+.opt-body p { font-size: 14px; }
+.src { font-size: 12.5px; color: var(--muted); }
+.tags { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+.tag { font-size: 11.5px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; padding: 3px 8px; white-space: nowrap; }
+.tag.rec { background: var(--teal-ink); color: var(--paper); }
+.tag.cheap { color: var(--teal-ink); border: 1.5px solid currentColor; }
+.tag.costly { color: var(--coral-ink); border: 1.5px solid currentColor; }
+.tag.decided { color: var(--ink); border: 1.5px dashed currentColor; }
+.sketch { width: 132px; height: 84px; display: block; }
+.opt.has-sketch { grid-template-columns: auto 132px minmax(0, 1fr) auto; }
+.room { fill: var(--cream); stroke: var(--line); stroke-width: 1.5; }
+.desk { fill: color-mix(in oklab, var(--wood) 45%, var(--cream)); }
+.head { fill: var(--wood-ink); }
+.hud { fill: var(--ink); opacity: .75; }
+.sketch .hi { fill: var(--teal); }
+.sketch .hi-line { stroke: var(--teal); stroke-width: 2; fill: var(--paper); }
+.sketch .panel { fill: var(--paper); stroke: var(--ink); stroke-width: 1.2; }
+.sketch .txt { fill: var(--ink); opacity: .35; }
+.note { font-size: 13px; color: var(--muted); }
+
+/* later + research */
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 28px; padding-top: 28px; border-top: 1px solid var(--line); }
+.cols section { display: grid; gap: 12px; align-content: start; }
+.cols ul { margin: 0; padding-left: 18px; display: grid; gap: 8px; font-size: 14px; }
+code { font-size: 12.5px; background: color-mix(in oklab, var(--paper) 50%, var(--cream)); padding: 1px 5px; overflow-wrap: anywhere; }
+
+/* reply bar */
+.reply { position: sticky; bottom: 0; background: var(--ink); color: var(--paper); padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)); display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; margin: 0 -24px; }
+.reply output { font-weight: 700; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.reply button { font: 800 14px var(--sans); background: var(--wood); color: var(--ink); border: 0; padding: 9px 16px; cursor: pointer; }
+.reply button:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+
+@media (max-width: 820px) {
+  .lead, .q { grid-template-columns: 1fr; }
+  .opt.has-sketch { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .opt.has-sketch .sketch { grid-column: 2 / 4; grid-row: 2; }
+}
+@media (max-width: 480px) {
+  body { padding: 0 16px; }
+  .reply { margin: 0 -16px; }
+  .opt, .opt.has-sketch { grid-template-columns: auto minmax(0, 1fr); }
+  .opt > input { grid-column: 1; grid-row: 1; }
+  .opt .opt-body { grid-column: 2; }
+  .tags { grid-column: 2; flex-direction: row; flex-wrap: wrap; align-items: center; }
+  .opt.has-sketch .sketch { grid-column: 2; grid-row: auto; }
+}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <g id="office">
+      <rect class="room" x="1" y="1" width="130" height="82"/>
+      <rect class="hud" x="1" y="1" width="130" height="7"/>
+      <rect class="desk" x="14" y="28" width="22" height="10"/><circle class="head" cx="25" cy="24" r="4"/>
+      <rect class="desk" x="48" y="28" width="22" height="10"/><circle class="head" cx="59" cy="24" r="4"/>
+      <rect class="desk" x="82" y="28" width="22" height="10"/><circle class="head" cx="93" cy="24" r="4"/>
+      <rect class="desk" x="30" y="58" width="22" height="10"/><circle class="head" cx="41" cy="54" r="4"/>
+      <rect class="desk" x="72" y="60" width="34" height="12"/><circle class="head" cx="89" cy="55" r="4.5"/>
+    </g>
+  </defs>
+</svg>
+
+<div class="wrap">
+
+  <header class="lead">
+    <div class="intro">
+      <span class="eyebrow">Game Night: AI Lab · plan 2B Task 8 · picks before mockups</span>
+      <h1>How should events and warnings reach the player?</h1>
+      <p>The sim already raises warnings and deals event cards: 36 kinds, plus up to nine President promise calls. None of them reach the screen today, and any card left unanswered resolves silently at the end of the turn. There are seven decisions below. Each option shows how it would work, the research behind it, and what it costs to build. The recommended option comes first.</p>
+    </div>
+    <div class="deadline">
+      <strong>Submissions close tonight, 2026-09-27 12:00 AM PT.</strong>
+      <p>Every recommended option reuses parts that already exist: the dialog, the Team panel, the feed phone and the sim's <code>fallbackChoice</code>. Options tagged Costly need new writing, new animation or a sim change.</p>
+    </div>
+  </header>
+
+  <section class="decided" aria-labelledby="decided-h">
+    <h2 id="decided-h">Already decided (kept unless you reopen them)</h2>
+    <ul>
+      <li><b>Warning first, then a card</b><span>A warning shows first. Acting on it costs $5M × the era number. Ignoring it turns it into a full card next turn.</span><small>Your pick, spec §6c; built in <code>sim/events.js</code></small></li>
+      <li><b>At most two cards a turn</b><span>A third card waits out of sight until a slot frees up. Pooling, on the last turn of era 4, can push the count to three.</span><small><code>MAX_CARDS = 2</code>; pooling bypasses it</small></li>
+      <li><b>What a card holds</b><span>A title, a feed-style post, and 2–3 choices with written costs. Advisor tags show who backs a choice (a check) and who opposes it (struck through).</span><small>Spec §6c, plan 2B Task 8</small></li>
+      <li><b>No hidden numbers</b><span>All 36 cards already state their costs as money or plain words, such as "staff trust". No new card text is needed.</span><small>Checked row by row against the data files</small></li>
+    </ul>
+  </section>
+
+  <form id="picks" onsubmit="return false">
+
+  <!-- Q1 -->
+  <section class="q" aria-labelledby="q1">
+    <div class="q-head">
+      <span class="num">Decision 1 of 7</span>
+      <h2 id="q1">Where does a warning show up?</h2>
+      <p>A warning is a small feed post, like "@tired_parent: it agrees with everything I say. everything.", with one button to act on it. The plan puts it in a toast under the HUD. You have since picked the feed phone on the CEO's desk.</p>
+      <div class="why"><span><b>Research.</b> RimWorld and Factorio split one-shot notices from persistent alerts, so the player can tell them apart at a glance. Plague Inc.'s news ticker hints at trouble before it lands, and the hints crowd out the jokes as the danger grows. You have picked the in-office option every time something lives in the office during play.</span></div>
+    </div>
+    <div class="opts" role="radiogroup" aria-labelledby="q1">
+      <label class="opt has-sketch"><input type="radio" name="q1" value="A" id="q1a">
+        <svg class="sketch" viewBox="0 0 132 84" aria-hidden="true"><use href="#office"/><rect class="hi" x="108" y="62" width="6" height="10"/><rect class="hi-line" x="56" y="44" width="48" height="12"/><circle class="hi" cx="114" cy="61" r="3"/></svg>
+        <span class="opt-body"><span class="opt-title"><span class="key">A</span>On the feed phone</span><p>The phone on the desk buzzes, and the warning slides out beside it for a few seconds. It then stays pinned at the top of the phone, with an "Act on it ($5M)" button, until next turn.</p><span class="src">Plague Inc. ticker; RimWorld letters; your feed pick A.</span></span>
+        <span class="tags"><span class="tag rec">Recommended</span><span class="tag cheap">Cheap</span></span>
+      </label>
+      <label class="opt has-sketch"><input type="radio" name="q1" value="B" id="q1b">
+        <svg class="sketch" viewBox="0 0 132 84" aria-hidden="true"><use href="#office"/><rect class="hi-line" x="4" y="11" width="52" height="12"/><rect class="hi" x="108" y="62" width="6" height="10"/></svg>
+        <span class="opt-body"><span class="opt-title"><span class="key">B</span>A toast under the HUD, as the plan says</span><p>A small panel at the top left shows the post and the "Act on it" button. The same post also lands in the phone.</p><span class="src">Plan 2B Task 8 as written; Factorio alerts.</span></span>
+        <span class="tags"><span class="tag cheap">Cheap</span></span>
+      </label>
+      <label class="opt has-sketch"><input type="radio" name="q1" value="C" id="q1c">
+        <svg class="sketch" viewBox="0 0 132 84" aria-hidden="true"><use href="#office"/><rect class="hi-line" x="64" y="4" width="44" height="14"/><path class="hi-line" d="M 70 18 L 63 22 L 76 18 Z"/></svg>
+        <span class="opt-body"><span class="opt-title"><span class="key">C</span>An advisor says it</span><p>The advisor whose area it is speaks the warning in a bubble at their desk, with the button inside the bubble.</p><span class="src">Two Point Hospital's announcer ⚠️ (search snippets only); Tropico's advisors.</span></span>
+        <span class="tags"><span class="tag costly">Costly</span></span>
+      </label>
+      <p class="note">Why C is costly: warnings are not linked to advisors in the data, so all 14 would need an owner assigned. It would also give the "!" marker a second meaning.</p>
+    </div>
+  </section>
+
+  <!-- Q2 -->
+  <section class="q" aria-labelledby="q2">
+    <div class="q-head">
+      <span class="num">Decision 2 of 7</span>
+      <h2 id="q2">What does an event card look like?</h2>
+      <p>The card is a new kind of screen, so this one gets a spread. Choose which to mock up; you can tick more than one. Each mockup would use a real card from the game, such as "Flattery blowup".</p>
+      <div class="why"><span><b>Research.</b> Nearly every game surveyed keeps its early signs inside the world but pauses for a proper window when a decision is due. Game Dev Tycoon uses one pop-up for everything. Crusader Kings 3 stages the people involved inside its event window. Your compute dialogs, with the Team panel of opinions on the left, were accepted first time.</span></div>
+    </div>
+    <div class="opts" aria-labelledby="q2">
+      <label class="opt has-sketch"><input type="checkbox" name="q2" value="A" id="q2a">
+        <svg class="sketch" viewBox="0 0 132 84" aria-hidden="true"><use href="#office"/><rect class="panel" x="18" y="14" width="96" height="62"/><rect class="txt" x="22" y="20" width="22" height="50"/><rect class="txt" x="50" y="20" width="58" height="6"/><rect class="hi-line" x="50" y="32" width="58" height="10"/><rect class="hi-line" x="50" y="46" width="58" height="10"/><rect class="hi-line" x="50" y="60" width="58" height="10"/></svg>
+        <span class="opt-body"><span class="opt-title"><span class="key">A</span>Game Dev Tycoon dialog, with the Team panel</span><p>This is the plan's centred dialog. The four advisors sit on the left, each showing which choice they back. The post is styled like a phone post, and the choices are bordered rows with their cost and tags.</p><span class="src">Plan 2B Task 8; GDT <code>Notification</code>; your compute dialogs.</span></span>
+        <span class="tags"><span class="tag rec">Build this</span><span class="tag cheap">Cheap</span></span>
+      </label>
+      <label class="opt has-sketch"><input type="checkbox" name="q2" value="B" id="q2b">
+        <svg class="sketch" viewBox="0 0 132 84" aria-hidden="true"><use href="#office"/><rect class="panel" x="6" y="12" width="40" height="68" rx="5"/><rect class="txt" x="10" y="18" width="32" height="18"/><rect class="hi-line" x="10" y="42" width="32" height="10"/><rect class="hi-line" x="10" y="56" width="32" height="10"/></svg>
+        <span class="opt-body"><span class="opt-title"><span class="key">B</span>The phone takes the stage</span><p>The phone slides up large on the left, like the feed panel. The card is the top post, with the choices as buttons under it. The office stays in view.</p><span class="src">Your feed pick A; Reigns' one-card layout ⚠️ (layout details not confirmed from a primary source).</span></span>
+        <span class="tags"><span class="tag cheap">Cheap</span></span>
+      </label>
+      <label class="opt has-sketch"><input type="checkbox" name="q2" value="C" id="q2c">
+        <svg class="sketch" viewBox="0 0 132 84" aria-hidden="true"><use href="#office"/><rect class="hi-line" x="14" y="10" width="26" height="9"/><rect class="hi-line" x="80" y="10" width="26" height="9"/><rect class="hi-line" x="46" y="10" width="26" height="9"/><rect class="panel" x="22" y="64" width="88" height="17"/><rect class="hi" x="26" y="70" width="24" height="6"/><rect class="hi" x="54" y="70" width="24" height="6"/><rect class="hi" x="82" y="70" width="24" height="6"/></svg>
+        <span class="opt-body"><span class="opt-title"><span class="key">C</span>The advisors argue it out in the room</span><p>A slim card sits along the bottom, like the E2 era banner. Each advisor with a view speaks from their desk ("Patch it quietly." or "Don't."). The office stays fully visible.</p><span class="src">Your E2 era card; Crusader Kings 3's portraits.</span></span>
+        <span class="tags"><span class="tag costly">Costly</span></span>
+      </label>
+      <p class="note">Why C is costly: the bubble lines need writing or templating from the backer tags. Also, four of the eight tags (Product, Government, Security, Staff) have no desk in the office.</p>
+    </div>
+  </section>
+
+  <!-- Q3 -->
+  <section class="q" aria-labelledby="q3">
+    <div class="q-head">
+      <span class="num">Decision 3 of 7</span>
+      <h2 id="q3">Can the player put a card aside?</h2>
+      <p>The plan does not say. The shared dialog closes with Escape, so as things stand a closed card would be forgotten until it resolves itself at the end of the turn.</p>
+      <div class="why"><span><b>Research.</b> Game Dev Tycoon lets less urgent notices wait in a sidebar, while a few types always pop up. Crusader Kings 3 lets events wait, but not forever.</span></div>
+    </div>
+    <div class="opts" role="radiogroup" aria-labelledby="q3">
+      <label class="opt"><input type="radio" name="q3" value="A" id="q3a">
+        <span class="opt-body"><span class="opt-title"><span class="key">A</span>Yes: "Decide later"</span><p>The card goes to the phone, where it waits with an unread mark. Pressing End Turn with a card still open shows a short reminder: "1 card unanswered. It will go the way marked."</p><span class="src">GDT sidebar and <code>AutoPopup</code> types; Crusader Kings 3's wait.</span></span>
+        <span class="tags"><span class="tag rec">Recommended</span><span class="tag cheap">Cheap</span></span>
+      </label>
+      <label class="opt"><input type="radio" name="q3" value="B" id="q3b">
+        <span class="opt-body"><span class="opt-title"><span class="key">B</span>No: answer before the turn ends</span><p>The card has no close button, and End Turn stays locked until every card is answered. This is the simplest option, but the player cannot look around the office before choosing.</p><span class="src">FTL and Reigns: the decision fills the screen.</span></span>
+        <span class="tags"><span class="tag cheap">Cheap</span></span>
+      </label>
+    </div>
+  </section>
+
+  <!-- Q4 -->
+  <section class="q" aria-labelledby="q4">
+    <div class="q-head">
+      <span class="num">Decision 4 of 7</span>
+      <h2 id="q4">What does the player see when a card is ignored?</h2>
+      <p>Every card has a do-nothing choice (for "Flattery blowup" it is "Defend it"; for "Jailbreak goes viral" it is "Deny it"). The sim picks it silently when a card goes unanswered.</p>
+      <div class="why"><span><b>Research.</b> Crusader Kings 3 auto-picks the first option after four in-game months, and no surveyed game shows the player that default in advance. Showing it would be our own idea. It turns the silent fallback into a choice the player can read.</span></div>
+    </div>
+    <div class="opts" role="radiogroup" aria-labelledby="q4">
+      <label class="opt"><input type="radio" name="q4" value="A" id="q4a">
+        <span class="opt-body"><span class="opt-title"><span class="key">A</span>Mark it on the card, and report it after</span><p>The do-nothing row carries a small "If you do nothing" tag. After the turn, the "This turn" summary says "Ignored: Flattery blowup. You defended it."</p><span class="src">The sim already exports <code>fallbackChoice</code>; the summary line is new.</span></span>
+        <span class="tags"><span class="tag rec">Recommended</span><span class="tag cheap">Cheap</span></span>
+      </label>
+      <label class="opt"><input type="radio" name="q4" value="B" id="q4b">
+        <span class="opt-body"><span class="opt-title"><span class="key">B</span>Report it after only</span><p>The card shows no tag, but the summary line still says what happened.</p><span class="src">GDT and Crusader Kings 3 behave this way.</span></span>
+        <span class="tags"><span class="tag cheap">Cheap</span></span>
+      </label>
+      <label class="opt"><input type="radio" name="q4" value="C" id="q4c">
+        <span class="opt-body"><span class="opt-title"><span class="key">C</span>Keep it silent, as today</span><p>The effects happen, but nothing says so.</p><span class="src">Not recommended: the game's main drama stays invisible.</span></span>
+        <span class="tags"><span class="tag decided">Today</span></span>
+      </label>
+    </div>
+  </section>
+
+  <!-- Q5 -->
+  <section class="q" aria-labelledby="q5">
+    <div class="q-head">
+      <span class="num">Decision 5 of 7</span>
+      <h2 id="q5">What happens when two or three cards arrive at once?</h2>
+      <p>Normally there are two at most; pooling can make it three. A President promise call is also a card and takes a slot.</p>
+      <div class="why"><span><b>Research.</b> Crusader Kings 3 keeps a queue the player opens on demand ⚠️ (details from search summaries only). RimWorld and Factorio keep urgent things apart from everything else.</span></div>
+    </div>
+    <div class="opts" role="radiogroup" aria-labelledby="q5">
+      <label class="opt"><input type="radio" name="q5" value="A" id="q5a">
+        <span class="opt-body"><span class="opt-title"><span class="key">A</span>One after another at the start of the turn</span><p>Each card opens in turn, with "Card 1 of 2" in its header. Any card put aside (decision 3) waits on the phone.</p><span class="src">Plan 2B Task 8 ("each card opens in turn").</span></span>
+        <span class="tags"><span class="tag rec">Recommended</span><span class="tag cheap">Cheap</span></span>
+      </label>
+      <label class="opt"><input type="radio" name="q5" value="B" id="q5b">
+        <span class="opt-body"><span class="opt-title"><span class="key">B</span>The phone is the inbox</span><p>Nothing opens by itself. The phone buzzes with a count, and the player opens cards in any order. This is quieter, but a player can miss a card entirely.</p><span class="src">GDT sidebar messages; Crusader Kings 3's queue ⚠️.</span></span>
+        <span class="tags"><span class="tag cheap">Cheap</span></span>
+      </label>
+    </div>
+  </section>
+
+  <!-- Q6 -->
+  <section class="q" aria-labelledby="q6">
+    <div class="q-head">
+      <span class="num">Decision 6 of 7</span>
+      <h2 id="q6">Should crisis cards look different?</h2>
+      <p>Four cards are crises: "Weights stolen by a foreign state", "Weights copied to an outside server", "A whistleblower goes public" and "Your Head of Safety quits publicly". Answering one of them puts the board in crisis mode.</p>
+      <div class="why"><span><b>Research.</b> RimWorld colours its letters by threat, from blue to red. Stellaris names its severity stages ("Severe", "Catastrophic") instead of showing a number. Oxygen Not Included turns the screen edge red in a red alert ⚠️ (search snippets only).</span></div>
+    </div>
+    <div class="opts" role="radiogroup" aria-labelledby="q6">
+      <label class="opt"><input type="radio" name="q6" value="A" id="q6a">
+        <span class="opt-body"><span class="opt-title"><span class="key">A</span>A coral "Crisis" band, opened first</span><p>The card header gets a coral band and the word "Crisis". The word matters, because colour must never carry the meaning alone. Crisis cards open before the others.</p><span class="src">RimWorld letters; Stellaris stage names.</span></span>
+        <span class="tags"><span class="tag rec">Recommended</span><span class="tag cheap">Cheap</span></span>
+      </label>
+      <label class="opt"><input type="radio" name="q6" value="B" id="q6b">
+        <span class="opt-body"><span class="opt-title"><span class="key">B</span>A, plus a warning light in the room</span><p>While a crisis card is open, the office lights dim and a slow coral wash pulses. This is a motion idea, so it is offered rather than added.</p><span class="src">Oxygen Not Included red alert ⚠️.</span></span>
+        <span class="tags"><span class="tag cheap">Cheap</span></span>
+      </label>
+      <label class="opt"><input type="radio" name="q6" value="C" id="q6c">
+        <span class="opt-body"><span class="opt-title"><span class="key">C</span>No difference</span><p>Crisis cards look like every other card.</p><span class="src">Game Dev Tycoon.</span></span>
+        <span class="tags"><span class="tag cheap">Cheap</span></span>
+      </label>
+    </div>
+  </section>
+
+  <!-- Q7 -->
+  <section class="q" aria-labelledby="q7">
+    <div class="q-head">
+      <span class="num">Decision 7 of 7</span>
+      <h2 id="q7">What do the advisors' "!" marks mean?</h2>
+      <p>Today "!" means uneasy and "!!" means alarmed, based on each advisor's private reading of the lab. Nothing happens when the player clicks an advisor.</p>
+      <div class="why"><span><b>Research.</b> The writing on alert fatigue (players tuning out a flood of alerts) says to give each channel one job ⚠️ (general writing reached only through search summaries). Cities: Skylines' Chirper feed became noise because it mixed jokes with real news ⚠️.</span></div>
+    </div>
+    <div class="opts" role="radiogroup" aria-labelledby="q7">
+      <label class="opt"><input type="radio" name="q7" value="A" id="q7a">
+        <span class="opt-body"><span class="opt-title"><span class="key">A</span>Mood only; a click reads the advisor's line</span><p>Clicking an advisor opens their line for the turn in a bubble, and the "!" clears. Events and warnings stay on the phone, so each channel has one job.</p><span class="src">Plan 2B Task 8; Tropico advisors.</span></span>
+        <span class="tags"><span class="tag rec">Recommended</span><span class="tag cheap">Cheap</span></span>
+      </label>
+      <label class="opt"><input type="radio" name="q7" value="B" id="q7b">
+        <span class="opt-body"><span class="opt-title"><span class="key">B</span>Also mark advisors with a view on a waiting card</span><p>A second small mark appears over an advisor who backs or opposes a choice on a pending card. Clicking it opens that card.</p><span class="src">Two Point Hospital's staff alerts ⚠️.</span></span>
+        <span class="tags"><span class="tag costly">Costly</span></span>
+      </label>
+    </div>
+  </section>
+
+  </form>
+
+  <div class="cols">
+    <section aria-labelledby="later-h">
+      <h2 id="later-h">Not for tonight</h2>
+      <ul>
+        <li><b>Lumen reacts to warnings.</b> The robot flies to the phone and comments. This waits on the plan 2D merge, which brings Lumen's lines.</li>
+        <li><b>Size words on costs</b>, such as "staff trust (slightly)", the way Frostpunk words them. This needs new text on all 36 cards and a sim data change, and the UI lane may not change the sim.</li>
+        <li><b>Chains of events across several turns.</b> You rejected these in spec §6c as too much writing.</li>
+      </ul>
+    </section>
+    <section aria-labelledby="build-h">
+      <h2 id="build-h">Build notes found on the way</h2>
+      <ul>
+        <li>A warning's text is not handed to the UI directly. The screen must read it back from the feed post the sim made (tagged <code>warning</code>).</li>
+        <li><code>setField</code> replaces a whole field. Answering two cards must merge the answers first, or the second answer erases the first.</li>
+        <li>The "This turn" summary drops event results today; decision 4 adds them.</li>
+        <li>The <code>president</code> demand card and the President meeting are different systems. Keep them as separate screens.</li>
+      </ul>
+    </section>
+    <section aria-labelledby="res-h">
+      <h2 id="res-h">Research behind this page</h2>
+      <p class="note">Saved in the repo on branch <code>events-research</code> at <code>docs/research/event-cards/</code>, with the full report and four notes. These covered Game Dev Tycoon and Game Dev Story, dilemma cards in seven games, warning systems in eleven games, and our own specs, plans and code.</p>
+      <p class="note">⚠️ Sources that could not be read in full are marked ⚠️ above. The main gaps: every Fandom wiki page failed to load, so the Frostpunk, FTL and Chirper details come from search summaries. Whether Game Dev Tycoon pauses during a pop-up is unconfirmed. Game Dev Story's pop-up layout is barely documented anywhere.</p>
+    </section>
+  </div>
+
+  <div class="reply" role="region" aria-label="Your picks">
+    <span>Your reply: <output id="summary" for="picks">pick options above</output></span>
+    <button type="button" id="copy">Copy reply</button>
+  </div>
+
+</div>
+
+<script>
+(() => {
+  const form = document.getElementById('picks');
+  const out = document.getElementById('summary');
+  const btn = document.getElementById('copy');
+  const KEY = 'event-picks-v1';
+  const text = () => {
+    const parts = [];
+    for (let i = 1; i <= 7; i++) {
+      const chosen = [...form.querySelectorAll(`input[name="q${i}"]:checked`)].map((input) => input.value);
+      if (chosen.length) parts.push(`${i}${chosen.join('+')}`);
+    }
+    return parts.length ? `Event picks: ${parts.join(' ')}` : '';
+  };
+  const render = () => {
+    const value = text();
+    out.textContent = value || 'pick options above';
+    try { localStorage.setItem(KEY, JSON.stringify([...form.querySelectorAll('input:checked')].map((input) => input.id))); } catch (e) {}
+  };
+  try {
+    for (const id of JSON.parse(localStorage.getItem(KEY) || '[]')) {
+      const input = document.getElementById(id);
+      if (input) input.checked = true;
+    }
+  } catch (e) {}
+  form.addEventListener('change', render);
+  render();
+  btn.addEventListener('click', () => {
+    const value = text();
+    if (!value) { out.textContent = 'pick at least one option first'; return; }
+    const done = () => { btn.textContent = 'Copied'; setTimeout(() => { btn.textContent = 'Copy reply'; }, 1600); };
+    const fallback = () => { const range = document.createRange(); range.selectNodeContents(out); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(range); btn.textContent = 'Selected: press copy'; };
+    try { navigator.clipboard.writeText(value).then(done, fallback); } catch (e) { fallback(); }
+  });
+})();
+</script>
