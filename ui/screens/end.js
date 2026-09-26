@@ -219,10 +219,22 @@ export function mountEnding(game, overlay, { collection, onPlayAgain, loadFilm =
     }
   }
 
+  // A board meeting holds the film until it closes: the vote that removed you plays out first (board UI plan Task 6).
+  let meetingOpen = false;
+  let heldForMeeting = false;
+  overlay?.addEventListener?.('board-meeting-open', () => { meetingOpen = true; });
+  overlay?.addEventListener?.('board-meeting-closed', () => {
+    meetingOpen = false;
+    if (!heldForMeeting) return;
+    heldForMeeting = false;
+    play();
+  });
+
   const unsubscribe = game.subscribe(({ state }) => {
     if (!state.ending || recorded === state.ending) return;
     record(state);
-    play();
+    if (meetingOpen) heldForMeeting = true;
+    else play();
   });
 
   return { show, play, unsubscribe };
