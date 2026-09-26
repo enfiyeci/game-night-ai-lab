@@ -3150,6 +3150,8 @@ svg.room {
   .mt-layer *::before,
   .mt-layer *::after { animation: none !important; transition: none !important; }
   #stage.mt-dim #office { transform: none; }
+}
+
 /* ---- Task 5: training run and cheating trace ---- */
 #training-fx { position: absolute; inset: 0; width: 1440px; height: 900px; z-index: 2; pointer-events: none; }
 .fly-bubble { position: absolute; left: -12px; top: -12px; width: 24px; height: 24px; border-radius: 50%; will-change: transform; }
