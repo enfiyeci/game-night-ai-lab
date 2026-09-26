@@ -5,11 +5,11 @@ const registeredHandlers = new Map();
 
 const ITEMS = [
   { id: 'budget', label: "Plan this turn's budget", free: true },
-  { id: 'training', label: 'Start a training run', unavailable: (state) => state.activeRun && 'a run is already under way' },
-  { id: 'release', label: 'Release a model', unavailable: (state) => !state.pendingModel && 'release needs a finished model' },
-  { id: 'internal', label: 'Deploy a model internally', unavailable: (state) => state.era < 3 && 'internal deployment opens in era 3' },
+  { id: 'training', label: 'Start a training run', unavailable: (state) => (state.activeRun && 'A run is already under way') || (state.pendingModel && 'Release the trained model first') },
+  { id: 'release', label: 'Release a model', unavailable: (state) => !state.pendingModel && 'Release needs a finished model' },
+  { id: 'internal', label: 'Deploy a model internally', unavailable: (state) => state.era < 3 && 'Internal deployment opens in era 3' },
   { id: 'constitution', label: 'Amend the constitution' },
-  { id: 'meeting', label: 'Take a meeting', unavailable: (state) => !state.meeting && 'no meeting is scheduled' },
+  { id: 'meeting', label: 'Take a meeting', unavailable: (state) => !state.meeting && 'No meeting is scheduled' },
   { divider: true },
   { id: 'endTurn', label: 'End turn', free: true },
 ];
@@ -99,8 +99,8 @@ export function openMenu(game, point, { overlay = document.querySelector('#overl
           close();
           openBudget(game, overlay);
         } else if (item.id === 'endTurn') {
+          close(); // before the turn ends, so a dialog opened by a subscriber keeps focus
           game.endTurn();
-          close();
         } else {
           close();
           customHandler(game, overlay);
