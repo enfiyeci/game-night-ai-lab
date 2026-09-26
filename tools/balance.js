@@ -39,6 +39,17 @@ const BALANCED_EVENT_CHOICES = {
   datacenter: 'benefits',
   oversightTamper: 'controls',
   selfExfiltration: 'report',
+  lossSpike: 'rollback',
+  capabilityJump: 'audit',
+  whistleblower: 'cooperate',
+  safetyQuits: 'persuade',
+  boardRevolt: 'lobby',
+  rivalBreakthrough: 'study',
+  exportFlip: 'back',
+  priceWar: 'match',
+  copyright: 'license',
+  senateHearing: 'candid',
+  viralDemo: 'ride',
 };
 
 function shuffled(values, rng) {

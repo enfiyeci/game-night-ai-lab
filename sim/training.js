@@ -64,10 +64,15 @@ export function resolveRun(state, run, rng) {
   const talent = 0.8 + talentSpend(state) / 20;
   const nextRunCapPenalty = state.flags.nextRunCapPenalty ?? 0;
   delete state.flags.nextRunCapPenalty;
-  const uncappedGain = Math.max(0, Math.max(0, base) * talent * (1 - 0.5 * alignShare) * Math.max(0.2, 1 - 0.2 * run.spikes) - nextRunCapPenalty);
+  const spikeFactor = (n) => Math.max(0.2, 1 - 0.2 * n);
+  const gainWith = (n) => Math.max(0, Math.max(0, base) * talent * (1 - 0.5 * alignShare) * spikeFactor(n) - nextRunCapPenalty);
+  const uncappedGain = gainWith(run.spikes);
   const gainCap = state.deal?.collapsed === false && state.deal.binding.includes('computeCap') ? 5 : Infinity;
   const capability = Math.min(BALANCE.maxCapability, state.capability + Math.min(uncappedGain, gainCap));
   const gain = Math.max(0, capability - state.capability);
+  const spikeLoss = run.spikes > 0
+    ? Math.max(0, Math.min(BALANCE.maxCapability, state.capability + Math.min(gainWith(run.spikes - 1), gainCap)) - capability)
+    : 0;
 
   const sum = (key) => effects.reduce((s, e) => s + (e[key] ?? 0), 0);
   const era = eraById(state.era);
@@ -95,6 +100,9 @@ export function resolveRun(state, run, rng) {
   return {
     capability,
     gain,
+    spikes: run.spikes,
+    spikesAnswered: run.spikesAnswered ?? 0,
+    spikeLoss,
     size,
     spec,
     flags,

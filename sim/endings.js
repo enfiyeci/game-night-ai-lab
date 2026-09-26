@@ -32,6 +32,12 @@ export function checkTurnEndings(state, rng) {
     state.flags.insolvent = true;
     return null;
   }
+  if (state.flags.boardVoteDue) {
+    delete state.flags.boardVoteDue;
+    const vote = boardVote(state);
+    state.flags.lastBoardVote = { turn: state.turn, yes: vote.yes, passed: vote.passed };
+    if (!vote.passed) return (state.ending = 'boardRemoved');
+  }
   if (state.capability > BALANCE.dangerLine && effectiveMisuse(state) > BALANCE.misuseDisasterLine && rng.chance(BALANCE.misuseRollChance)) {
     return (state.ending = 'misuse');
   }
