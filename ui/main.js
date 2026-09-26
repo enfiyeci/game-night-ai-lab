@@ -3,6 +3,8 @@ import { createGame } from './game.js';
 import { mountHud } from './hud.js';
 import { mountOffice } from './office.js';
 import { SCENARIOS } from './logic/scenarios.js';
+import { openMenu } from './menu.js';
+import { openBudget } from './screens/budget.js';
 
 const params = new URLSearchParams(location.search);
 
@@ -36,9 +38,38 @@ const stage = document.querySelector('#stage');
 const office = document.querySelector('#office');
 const fx = document.querySelector('#fx');
 const hud = document.querySelector('#hud');
+const overlay = document.querySelector('#overlay');
 
 mountHud(hud, game);
 await mountOffice(office, fx, game).catch((error) => console.error(error));
+
+function stagePoint(event) {
+  const rect = stage.getBoundingClientRect();
+  return [
+    ((event.clientX - rect.left) / rect.width) * 1440,
+    ((event.clientY - rect.top) / rect.height) * 900,
+  ];
+}
+
+office.addEventListener('click', (event) => {
+  if (!event.target.closest?.('#floor') || overlay.querySelector('.dialog-layer')) return;
+  openMenu(game, stagePoint(event), { overlay });
+});
+
+async function openDebugRoute() {
+  if (location.hash === '#budget') {
+    openBudget(game, overlay);
+    return;
+  }
+  if (location.hash !== '#menu') return;
+  const response = await fetch(`ui/assets/anchors-era${game.state.era}.json`);
+  if (!response.ok) throw new Error(`could not load anchors for era ${game.state.era}`);
+  const anchors = await response.json();
+  openMenu(game, anchors.floorMenu, { overlay });
+}
+
+await openDebugRoute().catch((error) => console.error(error));
+addEventListener('hashchange', () => openDebugRoute().catch((error) => console.error(error)));
 
 if (game.state.ending && ENDINGS[game.state.ending]) {
   stage.setAttribute('aria-label', ENDINGS[game.state.ending].title);
