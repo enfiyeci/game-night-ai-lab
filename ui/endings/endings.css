@@ -1,4 +1,4 @@
-/* Ending films: a 16:9 frame with letterbox bars, a time card, a subtitle line, the title card and a Skip button.
+/* Ending films: a 16:9 frame with letterbox bars, a time card, the title card and a Skip button.
    Colours come from the K2 tokens in ui/styles.css. The in-world screens (plates) are set in IBM Plex. */
 @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap");
 .film {
@@ -22,6 +22,11 @@
 .film-shot.on { visibility: visible; }
 .film-shot > svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .film-shot > video { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; }
+/* A still: its renders and live screens on a 1920 x 1080 stage that the player scales and moves (renderStill). */
+.film-stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; }
+.film-stage > img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.film-screen { position: absolute; left: 0; top: 0; transform-origin: 0 0; overflow: hidden; }
+.film-screen > svg { display: block; width: 100%; height: 100%; }
 .film-dim { position: absolute; inset: 0; background: var(--ink); opacity: 0; }
 .film-bar { position: absolute; left: 0; right: 0; height: 11.12%; background: var(--ink); z-index: 3; }
 .film-bar.top { top: 0; }
@@ -39,28 +44,8 @@
   color: color-mix(in oklab, var(--cream) 80%, var(--paper));
   font-size: max(13px, 1.35cqw); font-weight: 700; text-align: center;
 }
-/* Lumen's narration: the AI tells the ending in its own words, typed into the bottom bar like its last line on the
-   title card. The typed spans are hidden from screen readers; .film-say-read, a live region, reads each line whole. */
-.film-say {
-  position: absolute; left: 0; right: 0; bottom: 0; height: 11.12%; z-index: 4;
-  display: flex; align-items: center; justify-content: center; gap: 1.1em; padding: 0 6%;
-  color: var(--paper); font-size: max(13px, 1.4cqw); font-weight: 700;
-}
-.film-say[hidden] { display: none; }
-.film-say small {
-  flex: none; font-size: .6em; font-weight: 900; letter-spacing: .16em; text-transform: uppercase;
-  color: color-mix(in oklab, var(--sky) 45%, var(--paper));
-}
-.film-say p { margin: 0; max-width: 54ch; text-wrap: balance; }
-.film-say .rest { color: transparent; }
-.film-say-read { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; margin: 0; }
-/* A narrow frame (a phone held upright) has no room for two lines in the bar: the narration grows up over the picture
-   on a dark backing, and the time card moves up into the empty top bar so the two never meet. */
+/* A narrow frame (a phone held upright): the time card moves up into the empty top bar. */
 @container (max-width: 720px) {
-  .film-say { height: auto; min-height: 11.12%; padding: .5em 5%; font-size: 12px; gap: .8em;
-    background: color-mix(in oklab, var(--ink) 88%, transparent); }
-  .film-say small { display: none; }
-  .film-say p { max-width: none; }
   .film-card { bottom: auto; top: 1.2%; padding: .2em .9em; }
 }
 .film-title {

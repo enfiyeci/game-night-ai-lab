@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plate frame</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../ui/styles.css">
+  <style>html, body { margin: 0; width: 1280px; height: 720px; overflow: hidden; background: var(--ink); } svg { display: block; width: 1280px; height: 720px; }</style>
+</head>
+<body>
+  <!-- One screen design (ui/assets/endings/plates/<plate>.svg) in its finished state, for Blender to put on a
+       screen: every keyframed element at its last key, typed text in full, a film's example deal filled in.
+       ?plate=<name>[&film=<film id>]. Screenshotted by tools/endings/plate_png.sh. -->
+  <script type="module">
+    import { resolveFilm, fillText, sampleKeys } from '../../ui/endings/timeline.js';
+    const q = new URLSearchParams(location.search);
+    const text = await (await fetch(`../../ui/assets/endings/plates/${q.get('plate')}.svg`)).text();
+    const svg = document.importNode(new DOMParser().parseFromString(text, 'image/svg+xml').documentElement, true);
+    let values = {};
+    if (q.get('film')) values = resolveFilm(await (await fetch(`../../ui/endings/films/${q.get('film')}.json`)).json()).values;
+    for (const e of svg.querySelectorAll('[data-fill]')) e.textContent = fillText(e.dataset.fill, values);
+    for (const e of svg.querySelectorAll('[data-if]')) if (!values[e.dataset.if]) e.remove();
+    for (const e of svg.querySelectorAll('[data-type]')) e.textContent = e.dataset.text ?? e.textContent;
+    for (const e of svg.querySelectorAll('[data-k]')) {
+      const v = sampleKeys(JSON.parse(e.dataset.k), 1e9);
+      if ('o' in v) e.style.opacity = v.o;
+      if ('x' in v || 'y' in v || 's' in v || 'r' in v) {
+        e.style.transformBox = 'fill-box';
+        e.style.transformOrigin = e.dataset.origin ?? 'center';
+        e.style.transform = `translate(${v.x ?? 0}px,${v.y ?? 0}px) rotate(${v.r ?? 0}deg) scale(${v.s ?? 1})`;
+      }
+    }
+    document.body.append(svg);
+    await document.fonts.ready;
+    document.title = 'ready';
+  </script>
+</body>
+</html>

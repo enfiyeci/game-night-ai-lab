@@ -1,5 +1,6 @@
-// Plays an ending film: the player's own office, then world scenes (screens drawn by tools/endings/gen_plates.py and
-// wide shots rendered in Blender by tools/endings/blender/), then the title card and Lumen's last line. Rendering is a
+// Plays an ending film: the player's own office, then world scenes (stills rendered in Blender by the set scripts in
+// tools/endings/blender/, some with a live screen design laid over a screen in the picture), then the title card and
+// Lumen's last line. No narration: the scenes carry the story (owner, 2026-09-26). Rendering is a
 // pure function of time, so a film can start anywhere, freeze on a frame (for screenshots) and honour reduced motion.
 //
 //   const film = await mountFilm(document.body, { id: 'misalignment', era: 4, onDone });
@@ -8,17 +9,19 @@
 //
 // run (optional) is what the run ended with, for films that follow it: {deal: state.deal} (see resolveFilm).
 //
-// Assets: ui/endings/films/<id>.json (the shot list), ui/endings/narration.json (Lumen's lines), ui/assets/endings/plates/<plate>.svg, ui/assets/endings/clips/<clip>.mp4,
+// Assets: ui/endings/films/<id>.json (the shot list), ui/assets/endings/stills/<still>.jpg with <still>.json (its
+// screens' corners), ui/assets/endings/plates/<plate>.svg (screen designs), ui/assets/endings/clips/<clip>.mp4,
 // ui/assets/endings/<id>.m4a (sound), and the office art ui/assets/office-era<N>.svg with its anchors.
-import { buildTimeline, shotAt, camAt, sampleKeys, typedText, resolveFilm, fillText, withNarration } from './timeline.js';
+//
+// A still shot: {kind: 'still', image | frames: [{image, at, fade}], cam: {from, to} in image pixels,
+//   screens: [{at: <screen name in the still's json>, plate}]}.
+import { buildTimeline, shotAt, camAt, sampleKeys, typedText, resolveFilm, fillText, stillCam, frameAlphas, quadMatrix, STILL } from './timeline.js';
 
 const OFFICE = { w: 1440, h: 810, cx: 720, cy: 450, fullH: 900 };
 const PLATE = { w: 1280, h: 720, cx: 640, cy: 360, fullH: 720 };
 const reducedMotion = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const keysAttr = (keys) => `data-k='${JSON.stringify(keys)}'`;
-const SAY_AT = 0.35;   // Lumen's narration (a shot's say) starts typing this long into the shot, at SAY_CPS
-const SAY_CPS = 38;
 
 async function fetchText(url) {
   const response = await fetch(url);
@@ -168,9 +171,7 @@ function applyValues(el, v, still) {
 }
 
 export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumenLine, onDone, sound = true, audioUrl, run }) {
-  // the narration file is optional: without it the film plays with no Lumen lines
-  const narration = await fetchText(`${base}ui/endings/narration.json`).then(JSON.parse).catch(() => ({}));
-  const raw = withNarration(JSON.parse(await fetchText(`${base}ui/endings/films/${id}.json`)), narration[id]);
+  const raw = JSON.parse(await fetchText(`${base}ui/endings/films/${id}.json`));
   const { film, values } = resolveFilm(raw, run);
   const timeline = buildTimeline(film);
   const needsOffice = film.shots.some((s) => s.kind === 'office');
@@ -178,19 +179,33 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
     ? await Promise.all([fetchText(`${base}ui/assets/office-era${era}.svg`), fetchText(`${base}ui/assets/anchors-era${era}.json`).then(JSON.parse)])
     : [null, null];
   const plates = new Map();
-  await Promise.all([...new Set(film.shots.filter((s) => s.plate).map((s) => s.plate))].map(async (name) => {
+  const plateNames = film.shots.flatMap((s) => [s.plate, ...(s.screens ?? []).map((c) => c.plate)]).filter(Boolean);
+  await Promise.all([...new Set(plateNames)].map(async (name) => {
     plates.set(name, await fetchText(`${base}ui/assets/endings/plates/${name}.svg`));
   }));
-  // Clips are fetched whole before the film starts, so playback never waits on the network mid-film.
+  // Clips and stills are fetched whole before the film starts, so playback never waits on the network mid-film.
   const clips = new Map();
+  const stills = new Map();   // name -> {url, screens}
+  const stillNames = timeline.shots.flatMap((s) => (s.frames ?? []).map((f) => f.image).concat(s.image ?? [])).filter(Boolean);
   try {
-    await Promise.all([...new Set(timeline.shots.filter((s) => s.clip).map((s) => s.clip))].map(async (name) => {
-      const response = await fetch(`${base}ui/assets/endings/clips/${name}.mp4`);
-      if (!response.ok) throw new Error(`could not load clip ${name}`);
-      clips.set(name, URL.createObjectURL(await response.blob()));
-    }));
+    await Promise.all([
+      ...[...new Set(timeline.shots.filter((s) => s.clip).map((s) => s.clip))].map(async (name) => {
+        const response = await fetch(`${base}ui/assets/endings/clips/${name}.mp4`);
+        if (!response.ok) throw new Error(`could not load clip ${name}`);
+        clips.set(name, URL.createObjectURL(await response.blob()));
+      }),
+      ...[...new Set(stillNames)].map(async (name) => {
+        const [image, meta] = await Promise.all([
+          fetch(`${base}ui/assets/endings/stills/${name}.jpg`),
+          fetch(`${base}ui/assets/endings/stills/${name}.json`).then((r) => (r.ok ? r.json() : {})).catch(() => ({})),
+        ]);
+        if (!image.ok) throw new Error(`could not load still ${name}`);
+        stills.set(name, { url: URL.createObjectURL(await image.blob()), meta });
+      }),
+    ]);
   } catch (error) {
     for (const url of clips.values()) URL.revokeObjectURL(url);
+    for (const { url } of stills.values()) URL.revokeObjectURL(url);
     throw error;
   }
 
@@ -203,8 +218,6 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
     <div class="film-fade" style="position:absolute;inset:0;background:var(--ink);z-index:2;pointer-events:none"></div>
     <div class="film-bar top"></div><div class="film-bar bottom"></div>
     <div class="film-card"></div><div class="film-sub"></div>
-    <div class="film-say" hidden><small aria-hidden="true">Lumen</small><p aria-hidden="true"><span></span><span class="rest"></span></p></div>
-    <p class="film-say-read" aria-live="polite"></p>
     <div class="film-title" hidden><h1>${esc(fullTitle ?? film.title)}</h1><p class="tagline">${esc(film.tagline ?? '')}</p>
       <p class="lumen"><small>Lumen</small><span></span></p></div>
     <button type="button" class="film-skip">Skip</button></div>`;
@@ -212,6 +225,7 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
   const shotsHost = $('.film-shots');
 
   const nodes = timeline.shots.map((shot) => {
+    if (shot.image || shot.frames) return stillShot(shot);
     if (shot.clip) {
       const wrapEl = document.createElement('div');
       wrapEl.className = 'film-shot';
@@ -241,10 +255,64 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
     };
   });
 
+  // A still: the renders stacked on a 1920 x 1080 stage (scaled to the frame), with each live screen's design laid
+  // over its screen in the picture. The stage moves as one, so the screens ride the camera push.
+  function stillShot(shot) {
+    const wrapEl = document.createElement('div');
+    wrapEl.className = 'film-shot film-still';
+    const stage = document.createElement('div');
+    stage.className = 'film-stage';
+    const frames = shot.frames ?? [{ image: shot.image, at: 0 }];
+    const imgs = frames.map((f) => {
+      const img = document.createElement('img');
+      img.src = stills.get(f.image).url;
+      img.alt = '';
+      img.decoding = 'async';
+      stage.append(img);
+      return img;
+    });
+    const meta = stills.get(frames[0].image).meta ?? {};
+    const scale = STILL.w / (meta.w ?? STILL.w);
+    const keyed = [];
+    const typed = [];
+    for (const { at, plate } of shot.screens ?? []) {
+      const spot = meta.screens?.[at];
+      if (!spot || !plates.has(plate)) continue;
+      const [cx, cy, cw, ch] = spot.crop ?? [0, 0, 1280, 720];
+      const layer = document.createElement('div');
+      layer.className = 'film-screen';
+      layer.style.width = `${cw}px`;
+      layer.style.height = `${ch}px`;
+      layer.style.transform = quadMatrix(cw, ch, spot.quad.map(([x, y]) => [x * scale, y * scale]));
+      const svg = parseSvg(plates.get(plate));
+      svg.setAttribute('viewBox', `${cx} ${cy} ${cw} ${ch}`);
+      for (const e of svg.querySelectorAll('[data-fill]')) e.textContent = fillText(e.dataset.fill, values);
+      for (const e of svg.querySelectorAll('[data-if]')) if (!values[e.dataset.if]) e.remove();
+      keyed.push(...[...svg.querySelectorAll('[data-k]')].map((e) => [e, JSON.parse(e.dataset.k)]));
+      typed.push(...[...svg.querySelectorAll('[data-type]')].map((e) => [e, Number(e.dataset.type), e.dataset.text ?? e.textContent]));
+      layer.append(svg);
+      stage.append(layer);
+    }
+    wrapEl.append(stage);
+    const dim = shot.kind === 'title' ? wrapEl.appendChild(document.createElement('div')) : null;
+    if (dim) dim.className = 'film-dim';
+    shotsHost.append(wrapEl);
+    return { wrapEl, stage, imgs, frames, keyed, typed, dim, isStill: true };
+  }
+
+  function renderStill(node, shot, local, still) {
+    const fit = node.wrapEl.clientWidth / STILL.w || 1;
+    const { x, y, s } = stillCam(shot.cam, local / shot.dur, still);
+    // scale about the frame's centre, with the point (x, y) brought to the centre
+    node.stage.style.transform = `translate(${(STILL.w / 2) * fit}px, ${(STILL.h / 2) * fit}px) scale(${s * fit}) translate(${-x}px, ${-y}px)`;
+    frameAlphas(node.frames, local, still).forEach((a, i) => { node.imgs[i].style.opacity = a; });
+    for (const [e, keys] of node.keyed) applyValues(e, sampleKeys(keys, local, still), still);
+    for (const [e, start, text] of node.typed) e.textContent = still ? (local >= start ? text : '') : typedText(text, start, local);
+  }
+
   const titleEl = $('.film-title');
   const lumenText = lumenLine ?? film.lumen ?? '';
   let current = null;
-  let announced = null;
   let playing = false;
 
   // A clip follows the film's clock: it plays while the film plays and is re-seeked when it drifts; otherwise it shows
@@ -314,7 +382,6 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
       if (nodes[shot.index]) nodes[shot.index].wrapEl.classList.add('on');
       $('.film-card').textContent = shot.card ?? '';
       $('.film-sub').textContent = shot.sub ?? '';
-      $('.film-say').hidden = !shot.say;
       titleEl.hidden = shot.kind !== 'title';
       current = shot;
     }
@@ -325,15 +392,8 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
     $('.film-fade').style.opacity = still ? 0 : Math.min(1, fadeIn + fadeOut);
     const node = nodes[shot.index];
     if (node?.video) syncClip(node.video, local, shot.dur, still);
+    if (node?.isStill) renderStill(node, shot, local, still);
     if (node?.leave && !node.keyedLeave) keyLeavers(node);
-    // screen readers hear each line whole, once, when its shot plays (not while the film waits or is seeked)
-    if (playing && announced !== shot) { announced = shot; $('.film-say-read').textContent = shot.say ? `Lumen: ${shot.say}` : ''; }
-    if (shot.say) {
-      // the untyped rest of the line is laid out but transparent, so the centred line never moves as it types
-      const typed = still ? shot.say : typedText(shot.say, SAY_AT, local, SAY_CPS);
-      $('.film-say span').textContent = typed;
-      $('.film-say .rest').textContent = shot.say.slice(typed.length);
-    }
     if (shot.kind === 'title') {
       const k = (a, b) => (still ? (local >= a ? 1 : 0) : Math.min(1, Math.max(0, (local - a) / (b - a))));
       if (node?.dim) node.dim.style.opacity = 0.6 * k(0, 1.2);
@@ -343,7 +403,7 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
       titleEl.querySelector('.lumen span').textContent = still ? lumenText : typedText(lumenText, 2.8, local, 30);
       return;
     }
-    if (node.video) return;
+    if (node.video || node.isStill) return;
     node.svg.setAttribute('viewBox', viewBox(camAt(node.cam, local / shot.dur, still), node.frame));
     for (const [e, keys] of node.keyed) applyValues(e, sampleKeys(keys, local, still), still);
     for (const [e, start, text] of node.typed) e.textContent = still ? (local >= start ? text : '') : typedText(text, start, local);
@@ -372,6 +432,7 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
     document.removeEventListener('keydown', onKey);
     el.remove();
     for (const url of clips.values()) URL.revokeObjectURL(url);
+    for (const { url } of stills.values()) URL.revokeObjectURL(url);
     for (const child of inerted) child.inert = false;
     if (returnFocus?.isConnected) returnFocus.focus();
     onDone?.(reason);
@@ -394,7 +455,6 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
       // Escape and the Tab trap belong to the playing film, not to whatever page mounted it (Codex review round 3)
       document.addEventListener('keydown', onKey);
       playing = true;
-      announced = null;
       started = performance.now() - from * 1000;
       if (audio) { audio.currentTime = from; audio.play().catch(() => {}); }
       const loop = () => {

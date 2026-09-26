@@ -5,8 +5,12 @@ export const TITLE_DUR = 7;
 
 export function buildTimeline(film) {
   let t = 0;
-  // A title card over a clip continues that take, so it cuts in rather than fading through black.
-  const title = { kind: 'title', dur: film.titleDur ?? TITLE_DUR, ...(film.titleClip && { clip: film.titleClip, cut: true }) };
+  // A title card over a clip or a still continues that take, so it cuts in rather than fading through black.
+  const title = {
+    kind: 'title', dur: film.titleDur ?? TITLE_DUR,
+    ...(film.titleClip && { clip: film.titleClip, cut: true }),
+    ...(film.titleStill && { image: film.titleStill, cam: film.titleCam, cut: true }),
+  };
   const shots = [...film.shots, title].map((shot, index) => {
     const out = { ...shot, index, start: t, end: t + shot.dur };
     t += shot.dur;
@@ -56,13 +60,56 @@ export function typedText(text, startAt, t, cps = 26) {
   return text.slice(0, Math.floor((t - startAt) * cps));
 }
 
-// ---------------------------------------------------------------- narration
-// Lumen's lines live in one file for every film (ui/endings/narration.json, the owner edits them there): per film, one
-// {shot, say} per shot in order, where shot repeats that shot's time card so the file reads on its own. A line whose
-// card no longer matches its shot is left out rather than put on the wrong picture.
-export function withNarration(film, lines) {
-  if (!lines?.length) return film;
-  return { ...film, shots: film.shots.map((shot, i) => (lines[i]?.shot === shot.card && lines[i].say ? { ...shot, say: lines[i].say } : shot)) };
+// ---------------------------------------------------------------- stills (Blender renders, 1920 x 1080)
+export const STILL = { w: 1920, h: 1080 };
+
+// The camera on a still: {from: {x, y, s}, to: {...}} in image pixels, where (x, y) is the point at the frame's centre
+// and s the zoom (1 shows the whole image). The centre is held in so the frame never runs past the image's edge.
+export function stillCam(cam, p, reduced = false) {
+  const base = { x: STILL.w / 2, y: STILL.h / 2, s: 1 };
+  const from = { ...base, ...(cam?.from ?? {}) };
+  const to = { ...from, ...(cam?.to ?? {}) };
+  const q = reduced ? 1 : ease(Math.min(Math.max(p, 0), 1));
+  const s = Math.max(1, mix(from.s, to.s, q));
+  const hw = STILL.w / (2 * s);
+  const hh = STILL.h / (2 * s);
+  return {
+    x: Math.min(Math.max(mix(from.x, to.x, q), hw), STILL.w - hw),
+    y: Math.min(Math.max(mix(from.y, to.y, q), hh), STILL.h - hh),
+    s,
+  };
+}
+
+// A still can be several renders from one camera, crossfaded: frames = [{image, at, fade}], each fading in over
+// fade seconds (default 1) from at. Returns each frame's opacity at shot time t; the first is always fully shown.
+export function frameAlphas(frames, t, reduced = false) {
+  return frames.map((f, i) => {
+    if (i === 0) return 1;
+    const fade = f.fade ?? 1;
+    if (reduced) return t >= f.at ? 1 : 0;
+    return Math.min(1, Math.max(0, (t - f.at) / fade));
+  });
+}
+
+// A CSS matrix3d that maps a w x h box onto a quad (top-left, top-right, bottom-right, bottom-left), so a flat
+// screen design can be laid over the screen in a render, in perspective.
+export function quadMatrix(w, h, quad) {
+  const [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] = quad;
+  const dx1 = x1 - x2;
+  const dx2 = x3 - x2;
+  const dx3 = x0 - x1 + x2 - x3;
+  const dy1 = y1 - y2;
+  const dy2 = y3 - y2;
+  const dy3 = y0 - y1 + y2 - y3;
+  const den = dx1 * dy2 - dx2 * dy1;
+  const g = den ? (dx3 * dy2 - dx2 * dy3) / den : 0;
+  const hh = den ? (dx1 * dy3 - dx3 * dy1) / den : 0;
+  const a = x1 - x0 + g * x1;
+  const b = x3 - x0 + hh * x3;
+  const d = y1 - y0 + g * y1;
+  const e = y3 - y0 + hh * y3;
+  const m = [a / w, d / w, 0, g / w, b / h, e / h, 0, hh / h, 0, 0, 1, 0, x0, y0, 0, 1];
+  return `matrix3d(${m.map((v) => +v.toFixed(8)).join(',')})`;
 }
 
 // ---------------------------------------------------------------- films that follow the run
@@ -109,7 +156,8 @@ export function resolveFilm(film, run) {
 
   const shots = film.shots.map((shot) => ({
     ...shot,
-    ...(pick(shot) && { plate: pick(shot)[1] }),
+    // a still puts the picked design on its first screen; a plate shot swaps the plate
+    ...(pick(shot) && (shot.screens ? { screens: shot.screens.map((c, i) => (i ? c : { ...c, plate: pick(shot)[1] })) } : { plate: pick(shot)[1] })),
     ...(shot.card && { card: fillText(shot.card, values) }),
   }));
   return { film: { ...film, shots }, values };

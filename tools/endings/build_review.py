@@ -28,6 +28,10 @@ def film_files(film_id):
     film = json.loads((ROOT / f"ui/endings/films/{film_id}.json").read_text())
     files = [f"ui/endings/films/{film_id}.json"]
     plates = [s["plate"] for s in film["shots"] if s.get("plate")] + [p for s in film["shots"] for _, p in s.get("byDeal", [])]
+    plates += [c["plate"] for s in film["shots"] for c in s.get("screens", [])]
+    stills = [f["image"] for s in film["shots"] for f in s.get("frames", [])] + [s["image"] for s in film["shots"] if s.get("image")]
+    stills += [film["titleStill"]] if film.get("titleStill") else []
+    files += [f"ui/assets/endings/stills/{n}.{ext}" for n in dict.fromkeys(stills) for ext in ("jpg", "json")]
     files += [f"ui/assets/endings/plates/{p}.svg" for p in dict.fromkeys(plates)]
     clips = [s["clip"] for s in film["shots"] if s.get("clip")] + ([film["titleClip"]] if film.get("titleClip") else [])
     files += [f"ui/assets/endings/clips/{c}.mp4" for c in clips]
@@ -38,7 +42,7 @@ def film_files(film_id):
 def build(out, ids):
     out = Path(out)
     out.mkdir(parents=True, exist_ok=True)
-    shared = ["ui/endings/player.js", "ui/endings/timeline.js", "ui/endings/endings.css", "ui/endings/narration.json"]
+    shared = ["ui/endings/player.js", "ui/endings/timeline.js", "ui/endings/endings.css"]
     shared += [f"ui/assets/office-era{e}.svg" for e in range(1, 6)] + [f"ui/assets/anchors-era{e}.json" for e in range(1, 6)]
     films = []
     deal_films = []

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
-import { buildTimeline, shotAt, camAt, sampleKeys, typedText, resolveFilm, fillText, withNarration, TITLE_DUR } from '../ui/endings/timeline.js';
+import { buildTimeline, shotAt, camAt, sampleKeys, typedText, resolveFilm, fillText, stillCam, frameAlphas, quadMatrix, STILL, TITLE_DUR } from '../ui/endings/timeline.js';
 import { ENDINGS } from '../sim/endings.js';
 import { COMMITMENTS, PARTIES } from '../sim/summit.js';
 import { RIVAL_TEMPLATES } from '../sim/rivals.js';
@@ -72,6 +72,11 @@ test('typed text appears at its start time and grows', () => {
   assert.equal(typedText('hello', 1, 9), 'hello');
 });
 
+function assertStill(name) {
+  assert.ok(existsSync(`ui/assets/endings/stills/${name}.jpg`), `still ${name} exists`);
+  assert.ok(existsSync(`ui/assets/endings/stills/${name}.json`), `still ${name} has its screen corners`);
+}
+
 test('every film names a real ending, and every asset it uses exists', () => {
   assert.ok(films.length > 0);
   const eras = [1, 2, 3, 4, 5];
@@ -83,9 +88,17 @@ test('every film names a real ending, and every asset it uses exists', () => {
     assert.ok(film.title && film.lumen, `${film.id} has a title and a Lumen line`);
     assert.ok(existsSync(`ui/assets/endings/${film.id}.m4a`), `${film.id} has its sound`);
     if (film.titleClip) assert.ok(existsSync(`ui/assets/endings/clips/${film.titleClip}.mp4`), `clip ${film.titleClip} exists`);
+    if (film.titleStill) assertStill(film.titleStill);
     for (const shot of film.shots) {
       assert.ok(shot.dur > 0, `${film.id}: every shot has a duration`);
-      if (shot.kind === 'plate') assert.ok(existsSync(`ui/assets/endings/plates/${shot.plate}.svg`), `plate ${shot.plate} exists`);
+      if (shot.kind === 'still') {
+        for (const image of shot.frames?.map((f) => f.image) ?? [shot.image]) assertStill(image);
+        const meta = JSON.parse(readFileSync(`ui/assets/endings/stills/${shot.frames?.[0].image ?? shot.image}.json`, 'utf8'));
+        for (const { at, plate } of shot.screens ?? []) {
+          assert.ok(meta.screens?.[at], `${film.id}: still ${shot.image} has a screen called ${at}`);
+          assert.ok(existsSync(`ui/assets/endings/plates/${plate}.svg`), `plate ${plate} exists`);
+        }
+      } else if (shot.kind === 'plate') assert.ok(existsSync(`ui/assets/endings/plates/${shot.plate}.svg`), `plate ${shot.plate} exists`);
       else if (shot.kind === 'video') assert.ok(existsSync(`ui/assets/endings/clips/${shot.clip}.mp4`), `clip ${shot.clip} exists`);
       else assert.equal(shot.kind, 'office');
       for (const [, plate] of shot.byDeal ?? []) assert.ok(existsSync(`ui/assets/endings/plates/${plate}.svg`), `plate ${plate} exists`);
@@ -117,6 +130,7 @@ test('an office shot chimes once for each Resolved badge it shows', () => {
 
 const pacing = films.find((f) => f.id === 'pacingDeal');
 const scene = (resolved) => resolved.film.shots.find((s) => s.byDeal);
+const plateOf = (shot) => shot.plate ?? shot.screens?.[0]?.plate;
 const run = (signed) => ({ deal: { binding: Object.keys(signed), signed } });
 
 test('a negotiated pace has words for every commitment and party, and a 2 am scene for every deal the ending allows', () => {
@@ -131,7 +145,7 @@ test('a negotiated pace has words for every commitment and party, and a 2 am sce
 
 test('with no run, a negotiated pace plays its example deal', () => {
   const r = resolveFilm(pacing);
-  assert.equal(scene(r).plate, 'pd-cursor');
+  assert.equal(plateOf(scene(r)), 'pd-cursor');
   assert.equal(scene(r).card, 'Month 1, 2 am · OpenBrain');
   assert.equal(r.values.term3, '3.  US–China verification channel');
   assert.equal(r.values.signed3, 'Signed: Kestrel Labs, OpenBrain, Lodestar, DeepThink, Qilin, United States, China');
@@ -141,7 +155,7 @@ test('with no run, a negotiated pace plays its example deal', () => {
 
 test('a negotiated pace shows the deal the run actually made, term by term', () => {
   const r = resolveFilm(pacing, run({ sharedSafety: ['lodestar', 'west', 'east'], evaluators: ['deepthink', 'west'] }));
-  assert.equal(scene(r).plate, 'pd-cursor-evals');
+  assert.equal(plateOf(scene(r)), 'pd-cursor-evals');
   assert.equal(scene(r).card, 'Month 1, 2 am · DeepThink');           // the lab that signed what the scene is about
   assert.equal(r.values.term1, '1.  Evaluators inside every lab');
   assert.equal(r.values.signed1, 'Signed: Kestrel Labs, DeepThink, United States');
@@ -154,10 +168,10 @@ test('a negotiated pace shows the deal the run actually made, term by term', () 
 
 test('the 2 am scene is about a term the deal made binding, and the evaluator appears only with evaluators', () => {
   const r = resolveFilm(pacing, run({ computeCap: ['openbrain', 'west'], sharedSafety: ['lodestar', 'west'] }));
-  assert.equal(scene(r).plate, 'pd-cursor');
+  assert.equal(plateOf(scene(r)), 'pd-cursor');
   assert.equal(r.values.evaluators, '');
   const q = resolveFilm(pacing, run({ pauseAutomation: ['lodestar', 'west'], verification: ['qilin', 'west', 'east'] }));
-  assert.equal(scene(q).plate, 'pd-cursor-automation');
+  assert.equal(plateOf(scene(q)), 'pd-cursor-automation');
   assert.equal(scene(q).card, 'Month 1, 2 am · Lodestar');
 });
 
@@ -174,21 +188,43 @@ test('films without run data are left as they are', () => {
   assert.equal(fillText('{a} and {b}', { a: 'x' }), 'x and ');
 });
 
-const narration = JSON.parse(readFileSync('ui/endings/narration.json', 'utf8'));
-
-test('every film has one Lumen line per shot, labelled with the time card of that shot', () => {
-  for (const film of films) {
-    const lines = narration[film.id];
-    assert.ok(lines, `${film.id} has narration`);
-    assert.deepEqual(lines.map((l) => l.shot), film.shots.map((s) => s.card), `${film.id}: one line per shot, in order`);
-    for (const l of lines) assert.ok(l.say.length <= 120, `${film.id}: "${l.say.slice(0, 30)}…" fits two lines of the bar`);
-  }
-  assert.deepEqual(Object.keys(narration).sort(), films.map((f) => f.id).sort());
+test('no film carries narration: the scenes tell the story (owner, 2026-09-26)', () => {
+  assert.ok(!existsSync('ui/endings/narration.json'));
+  for (const film of films) for (const shot of film.shots) assert.equal(shot.say, undefined, `${film.id}: no Lumen line on a shot`);
 });
 
-test('a narration line whose time card no longer matches its shot is left out', () => {
-  const film = { shots: [{ card: 'A' }, { card: 'B' }] };
-  const out = withNarration(film, [{ shot: 'A', say: 'one' }, { shot: 'moved', say: 'two' }]);
-  assert.deepEqual(out.shots.map((s) => s.say), ['one', undefined]);
-  assert.equal(withNarration(film, undefined), film);
+test('a still camera eases between framings and never shows past the image edge', () => {
+  assert.deepEqual(stillCam(undefined, 0.5), { x: STILL.w / 2, y: STILL.h / 2, s: 1 });
+  const cam = { from: { s: 1 }, to: { x: 1900, y: 540, s: 1.1 } };
+  const end = stillCam(cam, 1);
+  assert.equal(end.s, 1.1);
+  assert.equal(end.x, STILL.w - STILL.w / (2 * 1.1), 'held in at the right edge');
+  assert.deepEqual(stillCam(cam, 0, true), end, 'reduced motion holds the final framing');
+  assert.equal(stillCam({ to: { s: 0.5 } }, 1).s, 1, 'never zooms out past the whole image');
+});
+
+test('crossfaded renders fade in from their start times', () => {
+  const frames = [{ image: 'a', at: 0 }, { image: 'b', at: 2, fade: 2 }, { image: 'c', at: 5 }];
+  assert.deepEqual(frameAlphas(frames, 0), [1, 0, 0]);
+  assert.deepEqual(frameAlphas(frames, 3), [1, 0.5, 0]);
+  assert.deepEqual(frameAlphas(frames, 9), [1, 1, 1]);
+  assert.deepEqual(frameAlphas(frames, 3, true), [1, 1, 0], 'reduced motion cuts instead of fading');
+});
+
+test('a screen design maps onto the screen corners in the render', () => {
+  const quad = [[100, 50], [420, 80], [400, 300], [90, 260]];
+  const m = quadMatrix(1280, 720, quad).slice(9, -1).split(',').map(Number);
+  const at = (x, y) => {
+    const w = m[3] * x + m[7] * y + m[15];
+    return [(m[0] * x + m[4] * y + m[12]) / w, (m[1] * x + m[5] * y + m[13]) / w];
+  };
+  [[0, 0], [1280, 0], [1280, 720], [0, 720]].forEach(([x, y], i) => {
+    const [px, py] = at(x, y);
+    assert.ok(Math.abs(px - quad[i][0]) < 0.01 && Math.abs(py - quad[i][1]) < 0.01, `corner ${i} lands on the screen`);
+  });
+});
+
+test('a title card over a still continues its take and carries its camera', () => {
+  const t = buildTimeline({ shots: [{ dur: 2 }], titleStill: 'x', titleCam: { to: { s: 1.05 } } }).shots.at(-1);
+  assert.deepEqual([t.kind, t.image, t.cut, t.cam.to.s], ['title', 'x', true, 1.05]);
 });
