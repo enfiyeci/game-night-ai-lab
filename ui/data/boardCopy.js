@@ -9,7 +9,15 @@ export const fill = (template, values = {}) =>
   template.replace(/\{(\w+)\}/g, (whole, key) => (key in values ? String(values[key]) : whole));
 
 // Small counts in words, for lines an advisor says out loud (index = count).
-export const NUMBER_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven'];
+export const NUMBER_WORDS = [
+  'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
+  'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty',
+];
+
+// Joining director names in a sentence: "the safety chair, the candor watchdog and the security hawk".
+export const THE_NAME = 'the {name}';
+export const LIST_SEP = ', ';
+export const AND = ' and ';
 
 // ---- directors ------------------------------------------------------------------------------------------------
 // Full names live in BOARD_MEMBERS (sim/board.js).
@@ -41,8 +49,8 @@ export const LEAN_WORD = { with: 'With you', leanWith: 'Leaning your way', leanA
 export const BOARD_TITLE = 'The board';
 export const BOARD_SUBTITLE = 'Era {era} · {countdown}';
 export const TAB_BOARD = 'The board';
-// The mockup's L4 title used a banned word; this is a stand-in until the owner names the tab.
-export const TAB_ISSUES = 'What sways the board'; // OWNER WRITES
+// The owner's name for the tab (spec §3, §6.1). The time-word test strips this exact phrase before it checks.
+export const TAB_ISSUES = 'What moves the board';
 export const TEAM_TITLE = 'Team';
 export const CLOSE = 'Close';
 export const SEAT_GROUPS = { money: 'Money seats', oversight: 'Oversight seats' };
@@ -72,7 +80,7 @@ export const NEXT_ROWS = {
 export const AGENDA = 'Your job';
 export const OUR_READ = '{lo} to {hi} keep you';
 export const NOBODY = 'Nobody';
-export const LAST_MEETING = { kept: 'Kept, {yes} to {no}', removed: 'Removed', none: 'None yet' };
+export const LAST_MEETING = { kept: 'Kept, {yes} to {no}', reversed: 'Lost, {yes} to {no}, then the staff letter', removed: 'Removed', none: 'None yet' };
 export const NO_DEALS = 'None';
 export const NOTE = 'Bars show where your staff think each member is. They have been wrong before.';
 
@@ -87,11 +95,20 @@ export const COUNTDOWN = {
   when: { quarter: 'the end of the quarter', month: 'the end of the month', week: 'the end of the week' },
   none: 'No meeting this era',
 };
+// The same times for the "When" row of the Next meeting panel.
+export const WHEN = {
+  months: 'In about {n} months',
+  weeks: 'In {n} weeks',
+  days: 'In {n} days',
+  day: 'In 1 day',
+  today: 'Today',
+  special: 'At {when}',
+};
 
 // ---- the warning bubble (Policy and Comms) ----------------------------------------------------------------------
 export const WARNING = 'Board meets in {time}. I count {sure} sure. We need four.'; // OWNER WRITES
 export const SEE_BOARD = 'See the board ›';
-export const TIME_WORDS = { weeks: '{n} weeks', week: 'a week', days: '{n} days', day: 'a day' };
+export const TIME_WORDS = { months: 'about {n} months', weeks: '{n} weeks', days: '{n} days', day: 'a day' };
 
 // ---- going quiet (frame P5) ---------------------------------------------------------------------------------------
 export const QUIET_LINES = {
@@ -130,6 +147,8 @@ export const ISSUE_SAY = {
   constitution: { up: 'Intact', down: 'Hard lines dropped', flat: 'Intact' },
 };
 
+// A line in the meeting's "What they'll raise" list: "Safety share under target".
+export const RAISE = '{label} {say}';
 export const ISSUE_KEY = { up: 'pushing them toward you', down: 'pushing them away', flat: 'quiet' };
 // The tip under L4. Every director is they/them, so the pronouns are written in.
 export const WORRY = '{name}: {issue} is slipping, and they are leaning away. Fix it before the meeting, or plan without them.'; // OWNER WRITES
@@ -268,7 +287,7 @@ export const TEAM_AFTER_VOTE = [
 export const SINCE_TITLE = 'Since the last vote';
 export const SINCE_KEEPS = 'now keeps you';
 export const SINCE_AGAINST = 'now against you';
-export const SINCE_LAST = 'Last vote (era {era})';
+export const SINCE_LAST = 'Last vote';
 export const SINCE_THIS = 'This vote';
 export const SINCE_SCORE = '{yes} to {no}';
 export const SINCE_FIRST = 'First vote';

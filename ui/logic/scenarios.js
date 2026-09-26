@@ -4,6 +4,7 @@ import { endTurn } from '../../sim/turn.js';
 import { cardById, cardUnlocked, recipeCost, slotsFor, validateRecipe } from '../../sim/recipe.js';
 import { availableUnits } from '../../sim/training.js';
 import { inDangerZone } from '../../sim/economy.js';
+import { boardVoteThisRound } from '../../sim/board.js';
 import { MEETINGS } from '../../sim/data/president.js';
 import { turnRecord } from './finance.js';
 
@@ -211,4 +212,5 @@ export const SCENARIOS = {
   era3Queue: (seed) => atEra(seed, 3),
   era3Budget: budgetState,
   era4Power: powerState,
+  boardVote: (seed) => throughTurn(seed, 20, (s) => boardVoteThisRound(s)),
 };
