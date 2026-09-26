@@ -2,7 +2,7 @@ import { createInitialState } from '../sim/state.js';
 import { createRng } from '../sim/rng.js';
 import { endTurn } from '../sim/turn.js';
 import { cardById, cardUnlocked, slotsFor, pickableCards, validateRecipe, recipeCost } from '../sim/recipe.js';
-import { availableUnits } from '../sim/training.js';
+import { availableUnits, startRun } from '../sim/training.js';
 import { inDangerZone, projectBurn } from '../sim/economy.js';
 import { HARD_LINES, CASES } from '../sim/data/constitution.js';
 import { MEETINGS } from '../sim/data/president.js';
@@ -14,10 +14,19 @@ import { runMeeting } from '../sim/president.js';
 import { activateReleases, releaseModel } from '../sim/release.js';
 import { updateServing } from '../sim/economy.js';
 import { ENDINGS } from '../sim/endings.js';
-import { eraScale } from '../sim/data/compute.js';
+import { eraById } from '../sim/data/eras.js';
+import { SUPPLIERS, eraScale } from '../sim/data/compute.js';
 import { setComputeSplit } from '../sim/split.js';
+import { exclusiveActive } from '../sim/contracts.js';
+import { eraStartTurn } from '../sim/power.js';
+import { PREPAY_SHARE, QUEUE_TERM_MONTHS, released } from '../sim/queue.js';
+import { rank } from '../sim/rivals.js';
+import { BALANCE } from '../sim/balance.js';
 
 const HAZARD_CHOICES = ['penalize', 'fix', 'ignore'];
+// Mirrors SPEND_LEVELS and spendFor(level, era) in ui/logic/actions.js on the UI branch.
+const SPEND_LEVELS = { lean: 12, steady: 20, aggressive: 35 };
+const spendFor = (level, era) => SPEND_LEVELS[level] * (1 + 0.5 * (era - 1));
 const VALIDATION_RNG = { next: () => 0.5, int: () => 0, chance: () => false, pick: (values) => values[0], normal: (mean) => mean };
 const BALANCED_EVENT_CHOICES = {
   flattery: 'patch',
@@ -158,6 +167,16 @@ function pickFrom(state, stage, ids) {
   return out;
 }
 
+function preferredRecipe(state, prefs) {
+  const picks = { pre: pickFrom(state, 'pre', prefs.pre), mid: pickFrom(state, 'mid', prefs.mid), post: pickFrom(state, 'post', prefs.post) };
+  for (const size of ['xl', 'large', 'medium', 'small']) {
+    const recipe = { sliders: { size, length: 'optimal', alignShare: prefs.alignShare }, picks };
+    if (!validateRecipe(state, recipe).ok) continue;
+    if (recipeCost(state, recipe).cash < state.cash * 0.5) return recipe;
+  }
+  return null;
+}
+
 function bestRecipe(state, prefs) {
   const picks = { pre: pickFrom(state, 'pre', prefs.pre), mid: pickFrom(state, 'mid', prefs.mid), post: pickFrom(state, 'post', prefs.post) };
   for (const size of ['xl', 'large', 'medium', 'small']) {
@@ -169,15 +188,116 @@ function bestRecipe(state, prefs) {
   return null;
 }
 
-function makeStrategy(style, prefs) {
+function nextRunUnits(state, prefs) {
+  const recipe = preferredRecipe(state, prefs);
+  return recipe ? Math.ceil(recipeCost(state, recipe).units) : 0;
+}
+
+export function committedFreeUnits(state) {
+  const promised = (item) => (item.headline == null ? item.units : Math.round(item.headline * 0.3));
+  let pipeline = state.compute.pipeline.filter((item) => !item.dark).reduce((sum, item) => sum + promised(item), 0);
+  if (state.era >= 4) {
+    const needsPower = (item) => item.needsPower ?? item.supplier === 'verde';
+    const ownPower = state.compute.pipeline
+      .filter((item) => !item.dark && !needsPower(item))
+      .reduce((sum, item) => sum + promised(item), 0);
+    const needs = state.compute.pipeline
+      .filter((item) => !item.dark && needsPower(item))
+      .reduce((sum, item) => sum + promised(item), 0);
+    const projectedPower = state.power.sites.reduce((sum, site) => sum + site.units, 0);
+    const committedPower = state.compute.contracts
+      .filter((contract) => !contract.dark && contract.needsPower)
+      .reduce((sum, contract) => sum + contract.units, 0);
+    pipeline = ownPower + Math.min(needs, Math.max(0, projectedPower - committedPower));
+  }
+  return availableUnits(state) + pipeline * (1 - state.compute.split.safety);
+}
+
+function canSign(state, offer) {
+  if (!offer || offer.viaQueue || offer.upfront > state.cash) return false;
+  if ((offer.supplier === 'coreflame' || offer.supplier === 'gulf') && exclusiveActive(state)) return false;
+  return offer.supplier !== 'gulf' || (!state.flags.supplyChainRisk && state.govFavor.us >= 60);
+}
+
+function sizedOffer(state, suppliers, shortfall, mode) {
+  const offers = state.compute.offers.filter((offer) => suppliers.includes(offer.supplier) && canSign(state, offer));
+  const covering = offers.filter((offer) => offer.units >= shortfall);
+  if (mode === 'cheapest') {
+    return covering.sort((a, b) => a.monthly - b.monthly || a.units - b.units)[0] ?? null;
+  }
+  if (mode === 'smallest') {
+    return (covering.length > 0 ? covering : offers).sort((a, b) => a.units - b.units || a.monthly - b.monthly)[0] ?? null;
+  }
+  return (covering.length > 0 ? covering : offers).sort((a, b) => b.units - a.units || a.monthly - b.monthly)[0] ?? null;
+}
+
+function alreadyDealtThisEra(state, supplier) {
+  const firstTurn = eraStartTurn(state.era);
+  return (state.compute.deals ?? []).some((deal) => deal.supplier === supplier && deal.turn >= firstTurn);
+}
+
+function computeMove(state, rng, style, prefs, policy) {
+  const need = nextRunUnits(state, prefs);
+  const shortfall = Math.max(0, need - committedFreeUnits(state));
+  if (policy.site && state.era === 4 && !state.power.sites.some((site) => site.source === policy.site)) {
+    return { type: 'buildSite', source: policy.site };
+  }
+  if (policy.grid && state.era === 2 && !state.power.sites.some((site) => site.source === 'grid')) {
+    const grid = state.compute.offers.find((offer) => offer.supplier === 'grid');
+    if (grid && canSign(state, grid)) return { type: 'deal', offerId: grid.id };
+  }
+  if (state.era === 3 && policy.queue && !state.compute.queue?.order && !state.compute.queue?.carry && need > 0) {
+    const units = Math.min(released(), need);
+    let tier = policy.queue === 'random' ? rng.pick(['standard', 'prepaid']) : policy.queue;
+    const prepay = Math.round(PREPAY_SHARE * units * SUPPLIERS.verde.price * BALANCE.unitMonthlyCost * QUEUE_TERM_MONTHS);
+    if (tier === 'prepaid' && prepay > state.cash) tier = 'standard';
+    return { type: 'queueOrder', units, tier };
+  }
+  if (policy.offer === 'verde') {
+    if (alreadyDealtThisEra(state, 'verde')) return null;
+    const offer = sizedOffer(state, ['verde'], 0, 'largest');
+    return offer ? { type: 'deal', offerId: offer.id } : null;
+  }
+  if (policy.offer === 'safe' && shortfall > 0) {
+    const offer = sizedOffer(state, ['azuria'], shortfall, 'cheapest')
+      ?? sizedOffer(state, ['coreflame'], shortfall, 'cheapest')
+      ?? sizedOffer(state, ['azuria', 'coreflame'], shortfall, 'smallest');
+    return offer ? { type: 'deal', offerId: offer.id } : null;
+  }
+  if (policy.offer === 'cheapest' && shortfall > 0) {
+    const offer = sizedOffer(state, ['verde', 'azuria', 'coreflame', 'gulf', 'loi'], shortfall, 'cheapest');
+    return offer ? { type: 'deal', offerId: offer.id } : null;
+  }
+  if (policy.offer === 'spot' && shortfall > 0) {
+    const offer = sizedOffer(state, ['spot'], shortfall, 'largest');
+    return offer ? { type: 'deal', offerId: offer.id } : null;
+  }
+  if (policy.offer === 'largest') {
+    const offer = state.compute.offers
+      .filter((candidate) => candidate.units != null && candidate.supplier !== 'azuriaEquity' && canSign(state, candidate))
+      .sort((a, b) => b.units - a.units || b.monthly - a.monthly)[0];
+    return offer ? { type: 'deal', offerId: offer.id } : null;
+  }
+  if (policy.offer === 'random') {
+    const offers = state.compute.offers.filter((offer) => offer.units != null && canSign(state, offer));
+    const offer = offers.length > 0 ? rng.pick(offers) : null;
+    return offer ? { type: 'deal', offerId: offer.id } : null;
+  }
+  return null;
+}
+
+function makeStrategy(style, prefs, policy = {}) {
   return (state, rng) => {
+    const computeSafety = policy.randomSafety ? Math.round(rng.next() * 30) / 100 : prefs.computeSafety;
+    const spendLevel = prefs.spendLevelByEra?.[state.era] ?? prefs.spendLevel;
     const actions = {
-      budget: { spend: prefs.spend, split: prefs.split },
-      computeSplit: { safety: prefs.computeSafety },
+      budget: { spend: spendFor(spendLevel, state.era), split: prefs.split },
+      computeSplit: { safety: computeSafety },
       moves: [],
       eventChoices: eventChoices(state, style, rng),
     };
     if (state.turn === 0) actions.constitution = constitutionFor(style, rng);
+    if (state.turn === 0 && policy.pledge != null) actions.pledge = policy.pledge;
     if (state.pendingModel?.hazard) {
       actions.hazardChoice = style === 'speed' ? 'penalize'
         : style === 'safety' ? 'fix'
@@ -189,15 +309,12 @@ function makeStrategy(style, prefs) {
         .filter(([, warning]) => !warning.deferred)
         .map(([id]) => id);
     }
-    if (state.meeting) {
-      actions.moves.push({ type: 'meeting' });
-      actions.presidentAnswers = presidentAnswers(state, style, rng);
-    }
+    const meeting = state.meeting;
+    if (meeting) actions.presidentAnswers = presidentAnswers(state, style, rng);
     if (state.era === 5 && state.deal && state.turnInEra > 0) actions.holdOrShip = style === 'speed' ? 'ship' : 'hold';
 
     const planned = plannedState(state, actions);
-    const summit = summitMove(planned, style, rng);
-    if (summit) actions.moves.push(summit);
+    if (meeting) actions.moves.push({ type: 'meeting' });
     if (planned.pendingModel && actions.moves.length < 2) {
       const move = {
         type: 'release',
@@ -208,73 +325,131 @@ function makeStrategy(style, prefs) {
       const recipe = bestRecipe(planned, prefs);
       if (recipe) actions.moves.push({ type: 'startRun', recipe });
     }
+    const afterPriority = structuredClone(planned);
+    const priority = actions.moves.find((move) => move.type === 'startRun' || move.type === 'release');
+    if (priority?.type === 'startRun') startRun(afterPriority, priority.recipe);
+    if (priority?.type === 'release') releaseModel(afterPriority, priority.release, VALIDATION_RNG);
+    updateServing(afterPriority);
+    afterPriority.burnPlanned = projectBurn(afterPriority);
+    const compute = computeMove(afterPriority, rng, style, prefs, policy);
+    if (compute && actions.moves.length < 2) actions.moves.push(compute);
+    const summit = summitMove(planned, style, rng);
+    if (summit && actions.moves.length < 2) actions.moves.push(summit);
     const control = internalControl(planned, style, rng);
     if (actions.moves.length === 0 && canDeployInternal(planned, control)) actions.moves.push({ type: 'deployInternal', control });
     if (actions.moves.length < 2 && planned.era >= 2 && inDangerZone(planned) && planned.flags.lastRoundEra !== planned.era) {
       actions.moves.push({ type: 'raise', archetype: 'vc' });
-    } else if (actions.moves.length < 2 && planned.cash >= 0 && availableUnits(planned) < 5 * eraScale(planned.era)) {
-      const o = planned.compute.offers.find((x) => x.supplier === 'coreflame');
-      if (o) actions.moves.push({ type: 'deal', offerId: o.id });
     }
     return actions;
   };
 }
 
-const speed = makeStrategy('speed', {
+const speedPrefs = {
   alignShare: 0,
-  spend: 30,
+  spendLevel: 'steady',
   split: { training: 0.55, security: 0.05, product: 0.2, talent: 0.2 },
   computeSafety: 0.02,
   pre: ['sparse-moe', 'moe', 'filtered-data', 'scrape-data'],
   mid: ['soup', 'reasoning-ready-full', 'reasoning-ready'],
   post: ['agentic-rl', 'reasoning-rl', 'rlvr-light', 'thumbs', 'rival-distil', 'synthetic-sft'],
   release: ['waive', 'channel-app'],
-});
+};
+const speed = makeStrategy('speed', speedPrefs, { offer: 'verde', queue: 'prepaid', site: 'gas', pledge: 0.1 });
 
-const safety = makeStrategy('safety', {
+const safetyPrefs = {
   alignShare: 0.4,
-  spend: 25,
+  spendLevel: 'aggressive',
   split: { training: 0.6, security: 0.15, product: 0.1, talent: 0.15 },
   computeSafety: 0.2,
   pre: ['licensed-data', 'hazard-filter-built', 'hazard-filter-reuse'],
   mid: ['decontaminate', 'anneal'],
   post: ['human-sft', 'cai', 'classifiers', 'safety-tuning', 'character', 'deliberative', 'spec-light'],
   release: ['eval-third', 'eval-full', 'channel-api'],
-});
+};
+const safety = makeStrategy('safety', safetyPrefs, { offer: 'safe', site: 'nuclear', pledge: 0.2 });
 
-const balanced = makeStrategy('balanced', {
+const balancedPrefs = {
   alignShare: 0.2,
-  spend: 25,
+  spendLevel: 'aggressive',
+  spendLevelByEra: { 1: 'steady' },
   split: { training: 0.5, security: 0.1, product: 0.2, talent: 0.2 },
   computeSafety: 0.12,
   pre: ['moe', 'filtered-data', 'stability'],
   mid: ['anneal', 'reasoning-ready', 'decontaminate'],
   post: ['synthetic-sft', 'rlvr-light', 'reasoning-rl', 'dpo', 'safety-tuning', 'classifiers'],
   release: ['eval-full', 'channel-app'],
-});
+};
+const balanced = makeStrategy('balanced', balancedPrefs, { offer: 'cheapest', queue: 'standard', grid: true });
 
 function random(state, rng) {
   const ids = (stage) => shuffled(pickableCards(state, stage).map((c) => c.id), rng);
   const strategy = makeStrategy('random', {
     alignShare: Math.round(rng.next() * 50) / 100,
-    spend: 15 + rng.int(0, 25),
+    spendLevel: rng.pick(Object.keys(SPEND_LEVELS)),
     split: { training: 0.5, security: 0.1, product: 0.2, talent: 0.2 },
-    computeSafety: Math.round(rng.next() * 30) / 100,
+    computeSafety: 0,
     pre: ids('pre'),
     mid: ids('mid'),
     post: ids('post'),
     release: ids('release'),
-  });
+  }, { offer: 'random', queue: 'random', site: rng.pick(['gas', 'nuclear']), randomSafety: true });
   return strategy(state, rng);
 }
 
-export const STRATEGIES = { speed, safety, balanced, random };
+const overCommitter = makeStrategy('balanced', { ...balancedPrefs, spendLevel: 'lean', spendLevelByEra: {} }, { offer: 'largest', queue: 'prepaid', site: 'gas' });
+const handToMouth = makeStrategy('balanced', balancedPrefs, { offer: 'spot' });
+const balancedNoGrid = makeStrategy('balanced', balancedPrefs, { offer: 'cheapest', queue: 'standard' });
+const balancedLowSafety = makeStrategy('balanced', { ...balancedPrefs, computeSafety: 0.05 }, { offer: 'cheapest', queue: 'standard', grid: true });
+const balancedHighSafety = makeStrategy('balanced', { ...balancedPrefs, computeSafety: 0.15 }, { offer: 'cheapest', queue: 'standard', grid: true });
 
-export function simulate(name, seed) {
+export const PROBES = ['overCommitter', 'handToMouth', 'balancedNoGrid', 'balancedLowSafety', 'balancedHighSafety'];
+export const STRATEGIES = {
+  speed, safety, balanced, random, overCommitter, handToMouth, balancedNoGrid, balancedLowSafety, balancedHighSafety,
+};
+
+function freshMetrics() {
+  return { perEra: {}, queueShortTurns: 0, queueTurns: 0, rankAtEra4End: null, rejectedActions: 0 };
+}
+
+function observeTurn(metrics, { era, burn, compute }) {
+  const row = (metrics.perEra[era] ??= { computeShareSum: 0, computeBillsSum: 0, turns: 0, arrSum: 0, arrRuns: 0 });
+  row.computeShareSum += burn > 0 ? compute / burn : 0;
+  row.computeBillsSum += compute;
+  row.turns += 1;
+}
+
+function finishEra(metrics, era, state) {
+  const row = (metrics.perEra[era] ??= { computeShareSum: 0, computeBillsSum: 0, turns: 0, arrSum: 0, arrRuns: 0 });
+  row.arrSum += state.arr;
+  row.arrRuns += 1;
+}
+
+function simulateMeasured(name, seed) {
   const rng = createRng(seed);
   let state = createInitialState({ seed });
-  for (let i = 0; i < 30 && !state.ending; i++) ({ state } = endTurn(state, STRATEGIES[name](state, rng), rng));
-  return state;
+  const metrics = freshMetrics();
+  for (let i = 0; i < 30 && !state.ending; i++) {
+    const era = state.era;
+    const turnInEra = state.turnInEra;
+    let economySample = null;
+    const result = endTurn(state, STRATEGIES[name](state, rng), rng, { beforeEconomy: (sample) => { economySample = sample; } });
+    state = result.state;
+    metrics.rejectedActions += result.errors.length;
+    if (economySample) observeTurn(metrics, economySample);
+    if (era === 3) {
+      metrics.queueTurns += 1;
+      if (state.compute.queue?.last?.rows.some((row) => row.got < row.units)) metrics.queueShortTurns += 1;
+    }
+    if (turnInEra === eraById(era).turns - 1) {
+      finishEra(metrics, era, state);
+      if (era === 4) metrics.rankAtEra4End = rank(state);
+    }
+  }
+  return { state, metrics };
+}
+
+export function simulate(name, seed) {
+  return simulateMeasured(name, seed).state;
 }
 
 export function playRun(name, seed) {
@@ -288,13 +463,52 @@ export function report(n) {
     const endings = {};
     let eraSum = 0;
     let diedInEra3or4 = 0;
+    const perEra = {};
+    let queueShortTurns = 0;
+    let queueTurns = 0;
+    let rankAtEra4EndSum = 0;
+    let rankAtEra4EndRuns = 0;
+    let rejectedActions = 0;
+    const cashEndingsByEra = {};
     for (let seed = 1; seed <= n; seed++) {
-      const r = playRun(name, seed);
+      const { state, metrics } = simulateMeasured(name, seed);
+      const r = { ending: state.ending, era: state.era, turn: state.turn };
       endings[r.ending] = (endings[r.ending] ?? 0) + 1;
+      if (r.ending === 'acquihire') cashEndingsByEra[r.era] = (cashEndingsByEra[r.era] ?? 0) + 1;
       eraSum += r.era;
       if (ENDINGS[r.ending]?.kind === 'fail' && (r.era === 3 || r.era === 4)) diedInEra3or4 += 1;
+      queueShortTurns += metrics.queueShortTurns;
+      queueTurns += metrics.queueTurns;
+      rejectedActions += metrics.rejectedActions;
+      if (metrics.rankAtEra4End != null) {
+        rankAtEra4EndSum += metrics.rankAtEra4End;
+        rankAtEra4EndRuns += 1;
+      }
+      for (const [era, row] of Object.entries(metrics.perEra)) {
+        const total = (perEra[era] ??= { computeShareSum: 0, computeBillsSum: 0, turns: 0, arrSum: 0, arrRuns: 0 });
+        total.computeShareSum += row.computeShareSum;
+        total.computeBillsSum += row.computeBillsSum;
+        total.turns += row.turns;
+        total.arrSum += row.arrSum;
+        total.arrRuns += row.arrRuns;
+      }
     }
-    result[name] = { endings, meanEra: eraSum / n, diedInEra3or4 };
+    result[name] = {
+      endings,
+      meanEra: eraSum / n,
+      diedInEra3or4,
+      perEra: Object.fromEntries(Object.entries(perEra).map(([era, row]) => [era, {
+        computeShare: row.computeShareSum / row.turns,
+        computeBills: row.computeBillsSum / row.turns,
+        arr: row.arrRuns > 0 ? row.arrSum / row.arrRuns : 0,
+        turns: row.turns,
+      }])),
+      queueShortTurns,
+      queueTurns,
+      cashEndingsByEra,
+      rejectedActions,
+      meanRankAtEra4End: rankAtEra4EndRuns > 0 ? rankAtEra4EndSum / rankAtEra4EndRuns : null,
+    };
   }
   return result;
 }

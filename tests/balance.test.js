@@ -37,6 +37,30 @@ test('every strategy sends only accepted actions', () => {
   }
 });
 
+test('every strategy uses a player-selectable budget level', () => {
+  for (const [name, strategy] of Object.entries(balanceApi.STRATEGIES)) {
+    for (let era = 1; era <= 5; era++) {
+      const state = createInitialState({ seed: 31 });
+      state.era = era;
+      const spend = strategy(state, createRng(31)).budget.spend;
+      const multiplier = 1 + 0.5 * (era - 1);
+      assert.ok([12, 20, 35].map((base) => base * multiplier).includes(spend), `${name} era ${era}: ${spend}`);
+    }
+  }
+});
+
+test('committed pipeline compute uses minimum LOI delivery and projected power', () => {
+  const state = createInitialState();
+  state.era = 4;
+  state.compute.split.safety = 0;
+  state.compute.pipeline = [{ supplier: 'verde', units: 1000, headline: 1000, dark: false }];
+  assert.equal(balanceApi.committedFreeUnits(state), 10, 'unpowered pipeline is not usable');
+  state.power.sites = [{ units: 100, online: false }];
+  assert.equal(balanceApi.committedFreeUnits(state), 110, 'pipeline is capped by projected site power');
+  state.power.sites[0].units = 1000;
+  assert.equal(balanceApi.committedFreeUnits(state), 310, 'an LOI contributes its 30% minimum');
+});
+
 test('strategy planning refreshes burn before checking emergency funding', () => {
   const state = createInitialState({ seed: 91 });
   state.era = 2;
@@ -48,14 +72,15 @@ test('strategy planning refreshes burn before checking emergency funding', () =>
   assert.ok(actions.moves.some((move) => move.type === 'raise'));
 });
 
-test('difficulty target: no scripted strategy wins more than about a third of runs', { todo: 'plan 2C Task 8 re-tunes balance after the compute rework' }, () => {
+test('difficulty target: no scripted strategy wins more than about a third of runs', () => {
   for (const [name, row] of Object.entries(targetReport)) {
+    if (balanceApi.PROBES.includes(name)) continue;
     const wins = ['aligned', 'pacingDeal', 'pyrrhic'].reduce((sum, id) => sum + (row.endings[id] ?? 0), 0);
     assert.ok(wins / 200 <= 0.36, `${name} wins ${wins}/200`);
   }
 });
 
-test('difficulty target: most runs of the extreme strategies end in eras 3 or 4', { todo: 'plan 2C Task 8 re-tunes balance after the compute rework' }, () => {
+test('difficulty target: most runs of the extreme strategies end in eras 3 or 4', () => {
   for (const name of ['speed', 'safety']) {
     assert.ok(targetReport[name].diedInEra3or4 / 200 >= 0.5, `${name} ${targetReport[name].diedInEra3or4}/200`);
   }

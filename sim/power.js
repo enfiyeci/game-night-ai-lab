@@ -2,12 +2,12 @@ import { ERAS } from './data/eras.js';
 
 // Spec §6: sites supply power in era 4. Sizes are absolute units (already at era 4 scale).
 export const SITE_TYPES = {
-  grid: { name: 'Grid connection', size: [300, 600], upfront: 50 },
+  grid: { name: 'Grid connection', size: [250, 450], upfront: 50 },
   gas: { name: 'Gas turbines', size: [300, 600], turns: 4, trust: -3 },
   nuclear: { name: 'Nuclear restart', size: [200, 400], turns: 4, trust: 2, slipChance: 0.5 },
 };
 export const FACILITY_PER_UNIT = 19; // $M of facility per unit of power (Epoch AI: $11.4B per GW ÷ 600)
-export const LEASE_RATE = 0.2;       // share of facility value paid per year
+export const LEASE_RATE = 0.05;      // share of facility value paid per year
 export const leaseMonthly = (units) => (units * FACILITY_PER_UNIT * LEASE_RATE) / 12;
 export const eraStartTurn = (era) => ERAS.slice(0, era - 1).reduce((sum, e) => sum + e.turns, 0);
 
