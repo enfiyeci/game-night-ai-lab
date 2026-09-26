@@ -1,6 +1,6 @@
 import { createInitialState } from '../../sim/state.js';
 import { createRng } from '../../sim/rng.js';
-import { advanceDays, endTurn } from '../../sim/turn.js';
+import { advanceDays, applyActions, endTurn } from '../../sim/turn.js';
 import { cardById, cardUnlocked, recipeCost, slotsFor, validateRecipe } from '../../sim/recipe.js';
 import { availableUnits } from '../../sim/training.js';
 import { inDangerZone } from '../../sim/economy.js';
@@ -260,6 +260,24 @@ function ownLineState(seed) {
   return state;
 }
 
+// Era 5 with choosing experiments at Leads and one monitor, walked to a mark where the AI asks for both of its
+// moves, for the racks panel screenshot. Seed 1 ends in era 4, so the run is played from the next seed.
+function racksState(seed) {
+  const rng = createRng(seed + 1);
+  let state = atEra(seed + 1, 5);
+  const automation = { levels: { choosing: 3 }, checks: { monitors: 1 } };
+  for (let guard = 0; guard < 6 && !state.ending && state.era === 5; guard += 1) {
+    const next = step(state, { ...scriptedActions(state), automation }, rng).state;
+    if (next.ending) break; // keep the last state that still has the office on screen
+    state = next;
+    if (state.automation.proposals.some((proposal) => proposal.risky)) break;
+  }
+  // A card that has landed would hold the stage (the panel steps aside for it), so answer it with its first choice.
+  const landed = state.pendingEvents.filter((card) => card.landsAt <= state.day);
+  const eventChoices = Object.fromEntries(landed.map((card) => [card.id, card.choices[0].id]));
+  return landed.length ? applyActions(state, { eventChoices }, rng).state : state;
+}
+
 export const SCENARIOS = {
   start,
   midEra3,
@@ -282,4 +300,5 @@ export const SCENARIOS = {
   hazard: hazardState,
   automation: automationState,
   ownLine: ownLineState,
+  racks: racksState,
 };

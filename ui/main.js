@@ -36,6 +36,7 @@ import { mountTraining } from './screens/training.js';
 import { mountHazard } from './screens/hazard.js';
 import { mountAutomation, openAutomation } from './screens/automation.js';
 import { mountScreenWall } from './screens/screenwall.js';
+import { mountRacks } from './screens/racks.js';
 
 const params = new URLSearchParams(location.search);
 
@@ -89,6 +90,7 @@ mountHistory(game, overlay);
 mountAutomation(game, overlay);
 mountTurnSummary(overlay, game);
 mountScreenWall(game, overlay);
+await mountRacks(game, overlay);
 mountFinance(game, overlay);
 const training = mountTraining(game, { stage, hud, overlay });
 mountHazard(game, { stage, overlay });
