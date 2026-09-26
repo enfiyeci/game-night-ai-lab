@@ -186,6 +186,14 @@ in section 6e). A lab that is insolvent when era 5 ends never wins; it ends in a
   evaluation gaming). Some endings are about people and power rather than the model (misuse, race
   dynamics, concentration of power, gradual disempowerment). One scenario may still be openly
   hostile; that is a deliberate exception.
+  **Scripts approved by the owner 2026-09-25:** the private doc "Game Night ending scripts"
+  (https://claude.ai/code/artifact/8c3cc116-3941-430b-81f6-f68f737e41a6). Owner asked for longer
+  sequences across many places, so each runs about 60–90 s over 6–9 shots, and all eleven reuse
+  one "world set" of ten places re-dressed per ending. Also approved: new Lumen epilogues for
+  `acquihire`, `misalignment`, `pyrrhic` and `overtaken` (to copy into `sim/data/lumen.js`); a rare
+  openly hostile variant of `misalignment` (emergent misalignment; needs one sim flag); and short
+  President lines in nine endings in a Trump-style voice ("make it sound like trump"), the
+  President still unnamed. Build order: `quietTakeover`, then `misalignment` and `aligned`.
 - **President meetings** (era 2 or 3, and era 5). **The owner writes this dialogue
   (2026-09-25); build the mechanics and leave the script to the owner.** A fictional president, recognizable in style
   but not named after the real person (owner may override). Each answer has a flattery level
