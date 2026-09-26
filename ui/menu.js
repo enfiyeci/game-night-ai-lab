@@ -20,7 +20,7 @@ const ITEMS = [
 
 export const COMPANY_ITEMS = [
   { id: 'deals', label: 'Sign a compute deal' },
-  { id: 'power', label: 'Power sites', hidden: (state) => state.era < 4 },
+  { id: 'power', label: 'Power sites', hidden: (state) => state.era !== 4 },
   {
     id: 'raise',
     label: 'Raise a round',

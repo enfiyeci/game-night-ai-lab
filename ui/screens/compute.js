@@ -2,10 +2,14 @@ import { openDialog } from '../components/dialog.js';
 import { eraById } from '../../sim/data/eras.js';
 import { teamPanel } from '../components/team.js';
 import {
+  applyDealMove,
   commitmentsView,
   dealCards,
   opinions,
   projectQueue,
+  queueOrderPreview,
+  replaceQueueOrder,
+  queueScreenAvailable,
   queueView,
 } from '../logic/compute.js';
 import { computeAmount, money, months } from '../logic/format.js';
@@ -93,7 +97,7 @@ function gridReservationButton(card) {
   return button;
 }
 
-function commitmentPanel(game, state, selected) {
+function commitmentPanel(game, state, selected, onAction) {
   const view = commitmentsView(state, selected);
   const root = element('div', 'commitments-panel');
   const billNow = element('div', 'compute-bill-row');
@@ -115,14 +119,20 @@ function commitmentPanel(game, state, selected) {
   root.append(billNow, billAfter, stack, legend);
 
   for (const row of view.rows) {
-    const card = element('div', `commitment-row${row.id === selected ? ' new' : ''}`);
+    const card = element('div', `commitment-row${row.isNew ? ' new' : ''}`);
     const top = element('div', 'r1');
-    top.append(element('span', '', row.name), element('span', '', `${money(row.bill)}/mo`));
+    const bill = row.billRange
+      ? `${money(row.billRange[0])}–${money(row.billRange[1])}/mo`
+      : `${money(row.bill)}/mo`;
+    top.append(element('span', '', row.name), element('span', '', bill));
     const detail = element('div', 'r2');
-    detail.append(element('span', '', computeAmount(row.units, state.era)), element('span', '', row.monthsLeft));
+    const capacity = row.unitsRange
+      ? `${computeAmount(row.unitsRange[0], state.era)}–${computeAmount(row.unitsRange[1], state.era)}`
+      : computeAmount(row.units, state.era);
+    detail.append(element('span', '', capacity), element('span', '', row.monthsLeft));
     card.append(top, detail);
-    if (row.unpowered) card.append(element('div', 'commitment-warning', 'Unpowered · still billed'));
-    if (row.id !== selected) {
+    if (row.status) card.append(element('div', 'commitment-warning', row.status));
+    if (!row.isNew) {
       const actions = element('div', 'commitment-actions');
       const choices = [
         ...(row.canScaleDown ? [['Scale down 30%', 'scaleDown']] : []),
@@ -135,8 +145,7 @@ function commitmentPanel(game, state, selected) {
         button.addEventListener('click', () => {
           const next = [...(game.queue.contractActions ?? []).filter((item) => item.id !== row.id), { id: row.id, action }];
           game.setField('contractActions', next);
-          const projected = projectQueue(game.state, game.queue);
-          root.replaceWith(commitmentPanel(game, projected, selected));
+          onAction();
         });
         actions.append(button);
       }
@@ -153,52 +162,61 @@ function commitmentPanel(game, state, selected) {
 }
 
 export function openDeals(game, overlayRoot) {
-  const state = projectQueue(game.state, game.queue);
-  const cards = dealCards({ ...state, movesLeft: game.movesLeft() });
-  const gridOffer = state.compute.offers.find((offer) => offer.supplier === 'grid');
-  let gridCard = null;
-  if (gridOffer) {
-    const reason = game.movesLeft() === 0
-      ? 'Both moves are used this turn'
-      : gridOffer.upfront > state.cash ? 'Not enough cash for the reservation' : '';
-    gridCard = {
-      id: gridOffer.id,
-      upfront: gridOffer.upfront,
-      disabled: Boolean(reason),
-      reason,
-      move: { type: 'deal', offerId: gridOffer.id },
-    };
-  }
-  const queueOffer = state.compute.offers.find((offer) => offer.viaQueue);
-  let selected = cards.find((card) => !card.disabled)?.id ?? '';
+  const initial = projectQueue(game.state, game.queue);
+  let selected = '';
   const body = element('div');
   body.setAttribute('role', 'radiogroup');
   body.setAttribute('aria-label', 'Compute suppliers and reservations');
-  const group = element('div', 'deal-cards');
   let opened;
-  if (queueOffer) {
-    const queueCard = queueDealButton();
-    queueCard.addEventListener('click', () => {
-      opened.close();
-      openQueue(game, overlayRoot);
-    });
-    group.append(queueCard);
-  }
-  const buttons = cards.map(dealButton);
-  group.append(...buttons);
-  const gridStrip = gridCard ? gridReservationButton(gridCard) : null;
-  if (gridStrip) buttons.push(gridStrip);
   const error = element('div', 'dialog-error');
   error.setAttribute('role', 'alert');
-  body.append(group);
-  if (gridStrip) body.append(gridStrip);
-  body.append(error);
   const right = element('div');
   const footer = element('div', 'company-footer');
   const note = element('div', 'company-footer-note');
   footer.append(note);
 
+  function currentCards() {
+    const state = projectQueue(game.state, game.queue);
+    const cards = dealCards({ ...state, movesLeft: game.movesLeft() });
+    const gridOffer = state.compute.offers.find((offer) => offer.supplier === 'grid');
+    let gridCard = null;
+    if (gridOffer) {
+      let reason = game.movesLeft() === 0 ? 'Both moves are used this turn' : '';
+      if (!reason) {
+        const result = applyDealMove(structuredClone(state), { type: 'deal', offerId: gridOffer.id });
+        reason = result.ok ? '' : result.error;
+      }
+      gridCard = {
+        id: gridOffer.id,
+        upfront: gridOffer.upfront,
+        disabled: Boolean(reason),
+        reason,
+        move: { type: 'deal', offerId: gridOffer.id },
+      };
+    }
+    return { state, cards, gridCard };
+  }
+
   function render() {
+    const { state, cards, gridCard } = currentCards();
+    const allCards = [...cards, ...(gridCard ? [gridCard] : [])];
+    if (!allCards.some((card) => card.id === selected)) {
+      selected = allCards.find((card) => !card.disabled)?.id ?? allCards[0]?.id ?? '';
+    }
+    const group = element('div', 'deal-cards');
+    const queueOffer = state.compute.offers.find((offer) => offer.viaQueue);
+    if (queueOffer) {
+      const queueCard = queueDealButton();
+      queueCard.addEventListener('click', () => {
+        opened.close();
+        openQueue(game, overlayRoot);
+      });
+      group.append(queueCard);
+    }
+    const buttons = cards.map(dealButton);
+    group.append(...buttons);
+    const gridStrip = gridCard ? gridReservationButton(gridCard) : null;
+    if (gridStrip) buttons.push(gridStrip);
     for (const button of buttons) {
       const active = button.dataset.choice === selected;
       button.classList.toggle('selected', active);
@@ -207,31 +225,44 @@ export function openDeals(game, overlayRoot) {
       if (active && !button.classList.contains('grid-reservation-strip')) {
         button.append(element('span', 'company-selected', 'Selected'));
       }
+      button.addEventListener('click', () => {
+        selected = button.dataset.choice;
+        error.textContent = '';
+        render();
+      });
     }
     const card = cards.find((candidate) => candidate.id === selected) ?? (gridCard?.id === selected ? gridCard : null);
-    right.replaceChildren(commitmentPanel(game, state, selected));
+    right.replaceChildren(commitmentPanel(game, state, selected, render));
     const upfront = card?.upfront != null ? money(card.upfront) : card ? Object.fromEntries(card.rows).Upfront : 'none';
     note.textContent = upfront && upfront !== 'none'
       ? `Signing uses 1 of 2 moves this turn · pay ${upfront} now`
       : 'Signing uses 1 of 2 moves this turn · nothing to pay now';
+    const ok = opened?.querySelector('.dialog-ok');
+    if (ok) ok.disabled = !card || card.disabled;
+    body.replaceChildren(group);
+    if (gridStrip) body.append(gridStrip);
+    body.append(error);
   }
-  for (const button of buttons) button.addEventListener('click', () => {
-    selected = button.dataset.choice;
-    error.textContent = '';
-    render();
-  });
 
   opened = openDialog(overlayRoot, {
     title: 'Sign a compute deal',
-    subtitle: `Era ${state.era} · ${eraById(state.era).name} · offers change every turn`,
-    left: { title: 'Team', content: teamPanel(state, opinions(state, 'deals')) },
+    subtitle: `Era ${initial.era} · ${eraById(initial.era).name} · offers change every turn`,
+    left: { title: 'Team', content: teamPanel(initial, opinions(initial, 'deals')) },
     right: { title: 'Commitments', content: right },
     body,
     okLabel: 'Sign',
     onOk() {
+      const { state, cards, gridCard } = currentCards();
       const card = cards.find((candidate) => candidate.id === selected) ?? (gridCard?.id === selected ? gridCard : null);
       if (!card || card.disabled) {
         error.textContent = card?.reason ?? 'Choose an available supplier.';
+        render();
+        return;
+      }
+      const validation = applyDealMove(structuredClone(state), card.move);
+      if (!validation.ok) {
+        error.textContent = validation.error ?? 'The deal is no longer available.';
+        render();
         return;
       }
       const result = game.addMove(card.move);
@@ -272,8 +303,13 @@ function restoreFocus(root, label) {
 }
 
 export function openQueue(game, overlayRoot) {
-  const state = projectQueue(game.state, game.queue);
-  const max = queueView(state).released;
+  if (!queueScreenAvailable(game.state)) return null;
+  const withoutDraft = () => ({
+    ...game.queue,
+    moves: game.queue.moves.filter((move) => move.type !== 'queueOrder'),
+  });
+  const initial = projectQueue(game.state, withoutDraft());
+  const max = queueView(initial).released;
   let units = Math.min(max, game.queue.moves.find((move) => move.type === 'queueOrder')?.units ?? Math.max(1, Math.round(max * 0.4)));
   let tier = game.queue.moves.find((move) => move.type === 'queueOrder')?.tier ?? 'standard';
   const body = element('div', 'queue-layout');
@@ -285,7 +321,12 @@ export function openQueue(game, overlayRoot) {
   let orderButton;
 
   function render({ focusLabel } = {}) {
+    const state = projectQueue(game.state, withoutDraft());
     const view = queueView(state, { units, tier });
+    const existingOrder = game.queue.moves.some((move) => move.type === 'queueOrder');
+    const preview = queueOrderPreview(state, { units, tier });
+    const moveReason = !existingOrder && game.movesLeft() === 0 ? 'Both moves are used this turn' : '';
+    const orderReason = moveReason || preview.reason;
     allocation.replaceChildren();
     const head = element('div', 'queue-head');
     const supplyText = element('div');
@@ -326,6 +367,24 @@ export function openQueue(game, overlayRoot) {
     }
 
     order.replaceChildren(element('div', 'queue-order-title', 'Your order'));
+    const carried = game.state.compute.queue?.carry;
+    if (carried) {
+      const waiting = element('div', 'queue-announcement queue-carry');
+      waiting.append(
+        element('span', 'bang', '!'),
+        element('span', '', `${carried.units} units are still waiting at the ${carried.tier} tier.`),
+      );
+      const withdraw = element('button', 'compute-ghost', game.queue.queueWithdraw ? 'Withdrawal queued' : 'Withdraw waiting order');
+      withdraw.type = 'button';
+      withdraw.disabled = game.queue.queueWithdraw === true;
+      withdraw.setAttribute('aria-label', 'Withdraw waiting order');
+      withdraw.addEventListener('click', () => {
+        game.setField('queueWithdraw', true);
+        render({ focusLabel: 'Order units' });
+      });
+      waiting.append(withdraw);
+      order.append(waiting);
+    }
     const amount = element('div', 'queue-order-value', `${units}`);
     amount.append(element('small', '', 'units'));
     order.append(amount, rangeControl({
@@ -357,8 +416,11 @@ export function openQueue(game, overlayRoot) {
     compare.append(standard, prepaid);
     order.append(endpoints, switcher, compare, error);
     if (orderButton) {
+      orderButton.disabled = Boolean(orderReason);
+      if (orderReason) orderButton.title = orderReason;
+      else orderButton.removeAttribute('title');
       const footer = element('div', 'queue-order-footer');
-      footer.append(element('span', '', 'Uses 1 of 2 moves'), orderButton);
+      footer.append(element('span', '', orderReason || 'Uses 1 of 2 moves'), orderButton);
       order.append(footer);
     }
 
@@ -385,12 +447,24 @@ export function openQueue(game, overlayRoot) {
   opened = openDialog(overlayRoot, {
     title: 'Verde allocation',
     subtitle: 'Era 3 · memory chips are sold out, so Verde rations',
-    left: { title: 'Team', content: teamPanel(state, opinions(state, 'queue')) },
+    left: { title: 'Team', content: teamPanel(initial, opinions(initial, 'queue')) },
     right: { title: 'Why order', content: right },
     body,
     okLabel: 'Order',
     onOk() {
-      const result = game.addMove({ type: 'queueOrder', units, tier });
+      const state = projectQueue(game.state, withoutDraft());
+      const preview = queueOrderPreview(state, { units, tier });
+      const existingOrder = game.queue.moves.some((move) => move.type === 'queueOrder');
+      if (!preview.ok || (!existingOrder && game.movesLeft() === 0)) {
+        error.textContent = preview.reason || 'Both moves are used this turn';
+        render();
+        return;
+      }
+      const replaced = game.queue.moves.some((move) => move.type === 'queueOrder');
+      const moves = replaceQueueOrder(game.queue.moves, { units, tier });
+      const result = replaced
+        ? game.setField('moves', moves)
+        : game.addMove({ type: 'queueOrder', units, tier });
       if (result.ok) opened.close();
       else error.textContent = result.error ?? 'The order could not be queued.';
     },

@@ -4,6 +4,7 @@ import { BALANCE } from '../../sim/balance.js';
 import {
   contractAction,
   contractBill,
+  deliverDue,
   exclusiveActive,
   monthlyBills,
   sideRng,
@@ -69,14 +70,29 @@ function afterMove(state) {
   state.burnPlanned = projectBurn(state);
 }
 
-function runwayAfterDeal(state, offer) {
+function signedDealProjection(state, offer) {
   const clone = structuredClone(state);
-  const result = applyDealMove(clone, { type: 'deal', offerId: offer.id });
-  if (!result.ok) return null;
+  const existing = new Set([
+    ...clone.compute.contracts.map((contract) => contract.id),
+    ...clone.compute.pipeline.map((contract) => contract.id),
+  ]);
+  const result = signOffer(clone, offer.id, sideRng(clone, 1));
+  if (!result.ok) return { result, state: clone, contracts: [] };
+  if (offer.supplier !== 'grid' && result.arrivesTurn > clone.turn) {
+    clone.turn = result.arrivesTurn;
+    deliverDue(clone, sideRng(clone, 6));
+  }
   afterMove(clone);
-  const fullBurn = clone.burnPlanned + (offer.arrivesIn === 0 ? 0 : offer.monthly);
-  const net = fullBurn - clone.arr / 12;
-  return net <= 0 ? Infinity : clone.cash / net;
+  return {
+    result,
+    state: clone,
+    contracts: clone.compute.contracts.filter((contract) => !existing.has(contract.id)),
+  };
+}
+
+function runwayAfterDeal(state, offer) {
+  const projection = signedDealProjection(state, offer);
+  return projection.result.ok ? runway(projection.state, 'planned') : null;
 }
 
 export function applyDealMove(state, move) {
@@ -227,28 +243,37 @@ export function dealCards(state) {
     });
 }
 
-function runwayFor(state, extraMonthly = 0) {
+function runwayFor(state) {
   const clone = structuredClone(state);
   updateServing(clone);
-  clone.burnPlanned = projectBurn(clone) + extraMonthly;
+  clone.burnPlanned = projectBurn(clone);
   return runway(clone, 'planned');
 }
 
-function commitmentRow(contract, state, isNew = false) {
+function commitmentRow(contract, state, isNew = false, offer = null) {
   const supplier = supplierName(contract.supplier);
   const monthsLeft = isNew
-    ? `arrives turn ${contract.arrivesTurn}`
+    ? `arrives turn ${contract.arrivedTurn ?? state.turn}`
     : contract.monthsLeft == null ? 'renews each turn' : `${Math.max(0, Math.ceil(contract.monthsLeft))} months left`;
-  return {
+  const powerShort = contract.needsPower && state.compute.unpowered > 0;
+  const row = {
     id: contract.id,
+    isNew,
     name: `${supplier}${isNew ? ' (new)' : ''}`,
     units: contract.units,
     bill: contractBill(contract),
     monthsLeft,
     canScaleDown: !isNew && !contract.scaledDown,
     canBuyout: !isNew && contract.supplier === 'azuria' && !contract.exclusiveBought,
-    unpowered: Boolean(contract.dark || (contract.needsPower && state.compute.unpowered > 0)),
+    status: contract.dark
+      ? 'License revoked · billing paused'
+      : powerShort ? 'Unpowered · still billed' : contract.needsPower ? 'Needs site power' : '',
   };
+  if (isNew && offer?.supplier === 'loi') {
+    row.unitsRange = [Math.round(offer.units * 0.3), offer.units];
+    row.billRange = row.unitsRange.map((units) => units * offer.price * BALANCE.unitMonthlyCost);
+  }
+  return row;
 }
 
 export function commitmentsView(state, offerId) {
@@ -262,28 +287,18 @@ export function commitmentsView(state, offerId) {
   let afterFromTurn = state.turn;
   let runwayAfter = runwayFor(state);
 
-  if (offer && !offer.viaQueue && offer.supplier !== 'grid') {
-    const newContract = {
-      id: offer.id,
-      supplier: offer.supplier === 'azuriaEquity' ? 'azuria' : offer.supplier === 'loi' ? 'verde' : offer.supplier,
-      units: offer.units,
-      price: offer.price,
-      monthsLeft: offer.termMonths,
-      arrivesTurn: state.turn + offer.arrivesIn,
-      needsPower: offer.supplier === 'verde' && state.era >= 4,
-      dark: false,
-      scaledDown: false,
-      exclusiveBought: false,
-    };
-    const addedBill = contractBill(newContract);
-    billAfter += addedBill;
-    afterFromTurn = newContract.arrivesTurn;
-    segments.push({ id: offer.id, bill: addedBill, isNew: true });
-    rows.push(commitmentRow(newContract, state, true));
-
-    const clone = structuredClone(state);
-    const result = applyDealMove(clone, { type: 'deal', offerId });
-    if (result.ok) runwayAfter = runwayFor(clone, offer.arrivesIn === 0 ? 0 : addedBill);
+  if (offer && !offer.viaQueue) {
+    const projection = signedDealProjection(state, offer);
+    if (projection.result.ok) {
+      afterFromTurn = projection.result.arrivesTurn;
+      runwayAfter = runway(projection.state, 'planned');
+      for (const contract of projection.contracts) {
+        const addedBill = contractBill(contract);
+        billAfter += addedBill;
+        segments.push({ id: contract.id, bill: addedBill, isNew: true });
+        rows.push(commitmentRow(contract, projection.state, true, offer));
+      }
+    }
   }
 
   return {
@@ -326,6 +341,28 @@ export function queueView(state, draft = {}) {
   return { released: supply, rows, you: { standard, prepaid, upfront }, announcements };
 }
 
+export function queueOrderPreview(state, draft) {
+  const projected = structuredClone(state);
+  const result = placeOrder(projected, draft);
+  return { ok: result.ok, reason: result.ok ? '' : result.error, projected };
+}
+
+export function replaceQueueOrder(moves, draft) {
+  return [
+    ...moves.filter((move) => move.type !== 'queueOrder'),
+    { type: 'queueOrder', units: draft.units, tier: draft.tier },
+  ];
+}
+
+export const queueScreenAvailable = (state) => state.era === 3;
+export const powerSitesAvailable = (state) => state.era === 4;
+
+export function pledgeAvailable(state) {
+  return state.era <= 2
+    && !state.flags.safetyPledgeMade
+    && !state.promises.some((promise) => promise.type === 'safetyCompute');
+}
+
 export function computeBar(state) {
   const slices = computeSlices(state);
   const training = Math.min(slices.training, slices.run);
@@ -343,6 +380,12 @@ export function computeBar(state) {
     needMarker: slices.need,
     pledgeMarker: pledge ? { share: pledge.share, kept: state.compute.split.safety + 1e-9 >= pledge.share } : null,
   };
+}
+
+export function idleComputeCost(state) {
+  if (state.compute.online <= 0) return 0;
+  const idle = computeBar(state).segments.find((segment) => segment.key === 'idle')?.units ?? 0;
+  return idle * (monthlyBills(state) / state.compute.online);
 }
 
 const SITE_TAGS = {
@@ -372,9 +415,13 @@ export function sitesView(state) {
   } : null;
   const options = ['gas', 'nuclear'].map((source) => {
     const type = SITE_TYPES[source];
-    const units = Math.round((type.size[0] + type.size[1]) / 20) * 10;
-    const ready = source === 'nuclear' ? `${type.turns}–${type.turns + 2} turns` : `${type.turns} turns`;
-    const reason = state.era !== 4 ? 'Power sites are built in era 4' : '';
+    const projected = structuredClone(state);
+    const result = buildSite(projected, source, sideRng(projected, 1000 + projected.power.nextId));
+    const site = result.ok ? projected.power.sites.find((candidate) => candidate.id === result.site) : null;
+    const units = site?.units ?? Math.round((type.size[0] + type.size[1]) / 20) * 10;
+    const turnsUntilReady = site ? site.arrivesTurn - state.turn : type.turns;
+    const ready = `${turnsUntilReady} ${turnsUntilReady === 1 ? 'turn' : 'turns'}`;
+    const reason = result.ok ? '' : result.error;
     return {
       source,
       name: type.name,
@@ -441,7 +488,7 @@ function opinionText(state, screen, id) {
   const budgetLines = {
     research: idle > 0 ? `${computeAmount(idle, state.era)} sit idle. Start a bigger run, or sell the time.` : 'Training can use every unit left after serving and safety.',
     safety: pledge ? `${pct(state.compute.split.safety)} ${state.compute.split.safety >= pledge.share ? 'keeps' : 'breaks'} our ${pct(pledge.share)} pledge.` : 'A larger safety slice gives evaluations more room.',
-    cfo: idle > 0 ? `Idle compute still costs ${money(idle * BALANCE.unitMonthlyCost)} a month.` : 'Every online unit is doing useful work this turn.',
+    cfo: idle > 0 ? `Idle compute still costs ${money(idleComputeCost(state))} a month.` : 'Every online unit is doing useful work this turn.',
     policy: bar.needMarker <= bar.segments.find((segment) => segment.key === 'serving').units ? 'Serving is covered. No outages this turn.' : 'Serving is short. Users may see an outage.',
   };
   const powerLines = {

@@ -1,9 +1,8 @@
-import { BALANCE } from '../../sim/balance.js';
 import { monthlyBills } from '../../sim/contracts.js';
 import { projectBurn, runway } from '../../sim/economy.js';
 import { PLEDGES } from '../../sim/split.js';
 import { budgetFromSliders, levelFor, SPEND_LEVELS, spendFor } from '../logic/actions.js';
-import { computeBar, opinions, projectQueue } from '../logic/compute.js';
+import { computeBar, idleComputeCost, opinions, pledgeAvailable, projectQueue } from '../logic/compute.js';
 import { computeAmount, money, months, pct } from '../logic/format.js';
 import { openDialog } from '../components/dialog.js';
 import { teamPanel } from '../components/team.js';
@@ -99,14 +98,13 @@ function summaryPanel(state, values, level) {
   const root = element('div', 'budget-summary compute-budget-summary');
   const spend = spendFor(level, state.era);
   const bar = computeBar(state);
-  const idle = bar.segments.find((segment) => segment.key === 'idle')?.units ?? 0;
   const pledge = bar.pledgeMarker;
   const projected = structuredClone(state);
   projected.burnPlanned = projectBurn(projected);
   const rows = [
     ['Money spend', `${money(spend)}/mo`],
     ['Compute bill', `${money(monthlyBills(state))}/mo`],
-    ['of which idle', `${money(idle * BALANCE.unitMonthlyCost)}/mo`, 'after'],
+    ['of which idle', `${money(idleComputeCost(state))}/mo`, 'after'],
     ['Runway (CFO)', months(runway(projected, 'planned'))],
   ];
   if (pledge) rows.push([`Pledge ${pct(pledge.share)}`, `${pledge.kept ? 'kept' : 'broken'} at ${pct(state.compute.split.safety)}`, pledge.kept ? 'kept' : 'after']);
@@ -124,7 +122,8 @@ export function openBudget(game, overlayRoot) {
   const values = Object.fromEntries(BUDGET_SLIDERS.map(({ key }) => [key, (queuedBudget.split[key] ?? 0) * 100]));
   let level = levelFor(queuedBudget.spend, state.era);
   let split = { ...state.compute.split, ...(game.queue.computeSplit ?? {}) };
-  let pledge = game.queue.pledge ?? state.promises.find((promise) => promise.type === 'safetyCompute')?.share ?? null;
+  const canPledge = pledgeAvailable(state);
+  let pledge = canPledge ? game.queue.pledge ?? null : null;
   const body = element('div', 'budget-body compute-budget-body');
   const moneyBand = element('div');
   const moneyHeading = element('div', 'compute-section');
@@ -173,7 +172,7 @@ export function openBudget(game, overlayRoot) {
       ...game.queue,
       budget: budgetFromSliders(values, level, state.era),
       computeSplit: split,
-      ...(pledge && !state.promises.some((promise) => promise.type === 'safetyCompute') ? { pledge } : {}),
+      ...(pledge && canPledge ? { pledge } : {}),
     });
   }
 
@@ -194,8 +193,7 @@ export function openBudget(game, overlayRoot) {
       const estimatedWidth = (segment.units / total) * 730;
       if (segment.key === 'idle') {
         if (estimatedWidth >= 66) {
-          const amount = Number(segment.units.toFixed(1));
-          part.append(element('small', 'idle-pill', `idle ${amount} u`));
+          part.append(element('small', 'idle-pill', `idle ${computeAmount(segment.units, projected.era)}`));
         }
       } else if (estimatedWidth >= labels[segment.key].length * 6.5 + 28) {
         part.append(element('b', '', labels[segment.key]), element('small', '', computeAmount(segment.units, projected.era)));
@@ -211,7 +209,7 @@ export function openBudget(game, overlayRoot) {
         max: total,
         step: 1,
         leftForValue: (next) => (next / total) * 100,
-        valueText: (next) => `${Number(next.toFixed(1))} units`,
+        valueText: (next) => computeAmount(next, projected.era),
         onInput(next, interaction) {
           split.servingCap = next;
           if (interaction.commit) render({ focusLabel: interaction.focusLabel });
@@ -256,7 +254,7 @@ export function openBudget(game, overlayRoot) {
     foot.append(legend, toggles);
     computeBox.append(top, bar, foot);
 
-    if (projected.era <= 2 && !state.promises.some((promise) => promise.type === 'safetyCompute')) {
+    if (canPledge) {
       const pledgeRow = element('div', 'pledge-row');
       pledgeRow.append(element('span', '', 'Make a public pledge'));
       const choices = element('div', 'compute-segmented');
@@ -304,7 +302,7 @@ export function openBudget(game, overlayRoot) {
         return;
       }
       game.setField('computeSplit', split);
-      if (pledge && !state.promises.some((promise) => promise.type === 'safetyCompute')) game.setField('pledge', pledge);
+      if (pledge && canPledge) game.setField('pledge', pledge);
       opened.close();
     },
   });

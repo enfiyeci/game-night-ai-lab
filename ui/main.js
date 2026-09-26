@@ -3,7 +3,7 @@ import { createGame } from './game.js';
 import { mountHud } from './hud.js';
 import { mountOffice } from './office.js';
 import { SCENARIOS } from './logic/scenarios.js';
-import { dealCards } from './logic/compute.js';
+import { dealCards, powerSitesAvailable, queueScreenAvailable } from './logic/compute.js';
 import { openMenu } from './menu.js';
 import { openBudget } from './screens/budget.js';
 import {
@@ -79,11 +79,11 @@ async function openDebugRoute() {
     return;
   }
   if (location.hash === '#queue') {
-    openQueue(game, overlay);
+    if (queueScreenAvailable(game.state)) openQueue(game, overlay);
     return;
   }
   if (location.hash === '#power') {
-    openPowerSites(game, overlay);
+    if (powerSitesAvailable(game.state)) openPowerSites(game, overlay);
     return;
   }
   if (location.hash === '#raise') {

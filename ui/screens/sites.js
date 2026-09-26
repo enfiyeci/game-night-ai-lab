@@ -1,6 +1,6 @@
 import { openDialog } from '../components/dialog.js';
 import { teamPanel } from '../components/team.js';
-import { opinions, projectQueue, sitesView } from '../logic/compute.js';
+import { opinions, powerSitesAvailable, projectQueue, sitesView } from '../logic/compute.js';
 import { computeAmount, money } from '../logic/format.js';
 
 const element = (tag, className, text) => {
@@ -77,6 +77,7 @@ function sitesPanel(view, era) {
 }
 
 export function openPowerSites(game, overlayRoot) {
+  if (!powerSitesAvailable(game.state)) return null;
   const state = projectQueue(game.state, game.queue);
   const view = sitesView(state);
   let selected = view.options.find((option) => !option.disabled)?.source ?? '';

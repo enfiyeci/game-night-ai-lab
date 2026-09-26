@@ -1,9 +1,28 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
-import { dealCards, commitmentsView, queueView, computeBar, sitesView, opinions } from '../ui/logic/compute.js';
+import {
+  commitmentsView,
+  computeBar,
+  dealCards,
+  idleComputeCost,
+  opinions,
+  pledgeAvailable,
+  powerSitesAvailable,
+  projectQueue,
+  queueOrderPreview,
+  queueScreenAvailable,
+  queueView,
+  replaceQueueOrder,
+  sitesView,
+} from '../ui/logic/compute.js';
 import { BALANCE } from '../sim/balance.js';
-import { allocate, rivalOrders, released } from '../sim/queue.js';
+import { allocate, placeOrder, rivalOrders, released } from '../sim/queue.js';
+import { buildSite, leaseMonthly } from '../sim/power.js';
+import { creditOffset, deliverDue, generateOffers, sideRng, signOffer } from '../sim/contracts.js';
+import { projectBurn, runway, updateServing } from '../sim/economy.js';
+import { computeAmount, money } from '../ui/logic/format.js';
+import { COMPANY_ITEMS } from '../ui/menu.js';
 
 test('deal cards mirror the offers and name each catch', () => {
   const s = createInitialState();
@@ -22,6 +41,63 @@ test('commitments show the bill before and after signing', () => {
   assert.ok(c.runwayAfter <= c.runwayNow);
 });
 
+test('grid commitment runway includes the reservation payment', () => {
+  const s = createInitialState();
+  s.era = 2;
+  s.compute.offers = generateOffers(s, sideRng(s, 5));
+  updateServing(s);
+  s.burnPlanned = projectBurn(s);
+  const grid = s.compute.offers.find((offer) => offer.supplier === 'grid');
+  const view = commitmentsView(s, grid.id);
+  const signed = structuredClone(s);
+  assert.equal(signOffer(signed, grid.id, sideRng(signed, 1)).ok, true);
+  updateServing(signed);
+  signed.burnPlanned = projectBurn(signed);
+  assert.equal(signed.cash, s.cash - 50);
+  assert.equal(view.runwayAfter, runway(signed, 'planned'));
+  assert.ok(view.runwayAfter < view.runwayNow);
+});
+
+test('Azuria investment runway applies its credits after delivery', () => {
+  const s = createInitialState();
+  s.era = 2;
+  s.compute.offers = generateOffers(s, sideRng(s, 5));
+  const offer = s.compute.offers.find((candidate) => candidate.supplier === 'azuriaEquity');
+  const view = commitmentsView(s, offer.id);
+  const signed = structuredClone(s);
+  const result = signOffer(signed, offer.id, sideRng(signed, 1));
+  signed.turn = result.arrivesTurn;
+  deliverDue(signed, sideRng(signed, 6));
+  updateServing(signed);
+  signed.burnPlanned = projectBurn(signed);
+  assert.ok(creditOffset(signed) > 0);
+  assert.equal(view.runwayAfter, runway(signed, 'planned'));
+});
+
+test('LOI commitments show the delivery range and site-power status', () => {
+  const s = createInitialState();
+  s.era = 4;
+  s.cash = 5000;
+  s.compute.offers = generateOffers(s, sideRng(s, 5));
+  const offer = s.compute.offers.find((candidate) => candidate.supplier === 'loi');
+  const row = commitmentsView(s, offer.id).rows.find((candidate) => candidate.name.includes('(new)'));
+  assert.deepEqual(row.unitsRange, [Math.round(offer.units * 0.3), offer.units]);
+  assert.deepEqual(row.billRange, row.unitsRange.map((units) => units * offer.price * BALANCE.unitMonthlyCost));
+  assert.match(row.status, /power|Unpowered/i);
+});
+
+test('dark Gulf commitments say that billing is paused', () => {
+  const s = createInitialState();
+  s.compute.contracts.push({
+    id: 'gulf-dark', supplier: 'gulf', units: 50, price: 1, monthsLeft: 12,
+    needsPower: false, dark: true, scaledDown: false, exclusiveBought: false,
+  });
+  const row = commitmentsView(s).rows.find((candidate) => candidate.id === 'gulf-dark');
+  assert.equal(row.bill, 0);
+  assert.equal(row.status, 'License revoked · billing paused');
+  assert.doesNotMatch(row.status, /still billed/i);
+});
+
 test('the queue preview compares standard and prepaid', () => {
   const s = createInitialState();
   s.era = 3;
@@ -30,6 +106,54 @@ test('the queue preview compares standard and prepaid', () => {
   assert.equal(q.you.standard, allocate(released(s), [...rivalOrders(s), { lab: 'you', units: 60, tier: 'standard' }]).you);
   assert.equal(q.you.prepaid, allocate(released(s), [...rivalOrders(s), { lab: 'you', units: 60, tier: 'prepaid' }]).you);
   assert.equal(q.rows.find((r) => r.lab === 'qilin').tier, 'none');
+});
+
+test('queue order preflight mirrors sim rejection and withdrawal rules', () => {
+  const s = createInitialState();
+  s.era = 3;
+  s.compute.queue = { order: null, carry: { units: 12, tier: 'standard' }, last: null };
+  assert.equal(queueOrderPreview(s, { units: 10, tier: 'standard' }).reason, 'an earlier order is still waiting: withdraw it first');
+  const withdrawn = projectQueue(s, { queueWithdraw: true, moves: [] });
+  assert.equal(withdrawn.compute.queue.carry, null);
+  assert.equal(queueOrderPreview(withdrawn, { units: 10, tier: 'standard' }).ok, true);
+
+  withdrawn.cash = 0;
+  const rejected = queueOrderPreview(withdrawn, { units: 10, tier: 'prepaid' });
+  const direct = placeOrder(structuredClone(withdrawn), { units: 10, tier: 'prepaid' });
+  assert.equal(rejected.reason, direct.error);
+});
+
+test('replacing a queue draft keeps one order after the moves used for preflight', () => {
+  const moves = [
+    { type: 'queueOrder', units: 10, tier: 'standard' },
+    { type: 'raise', archetype: 'vc' },
+    { type: 'queueOrder', units: 20, tier: 'prepaid' },
+  ];
+  const next = replaceQueueOrder(moves, { units: 30, tier: 'prepaid' });
+  assert.deepEqual(next, [
+    moves[1],
+    { type: 'queueOrder', units: 30, tier: 'prepaid' },
+  ]);
+});
+
+test('projected contract actions refresh deal cash and exclusivity checks', () => {
+  const s = createInitialState();
+  s.era = 2;
+  s.cash = 1000;
+  s.compute.contracts.push({
+    id: 'az', supplier: 'azuria', units: 100, price: 1.1, monthsLeft: 24,
+    needsPower: false, dark: false, scaledDown: false, exclusiveBought: false,
+  });
+  s.compute.offers = generateOffers(s, sideRng(s, 5));
+  assert.equal(dealCards(s).find((card) => card.supplier === 'coreflame').disabled, true);
+  const boughtOut = projectQueue(s, { contractActions: [{ id: 'az', action: 'buyout' }], moves: [] });
+  assert.equal(dealCards(boughtOut).find((card) => card.supplier === 'coreflame').disabled, false);
+  const lowCash = structuredClone(s);
+  lowCash.cash = 60;
+  const broken = projectQueue(lowCash, { contractActions: [{ id: 'az', action: 'break' }], moves: [] });
+  const prepaid = dealCards(broken).find((card) => Object.fromEntries(card.rows).Upfront !== 'none');
+  assert.equal(prepaid.disabled, true);
+  assert.match(prepaid.reason, /cash/i);
 });
 
 test('the compute bar adds up to online compute and marks the pledge', () => {
@@ -42,6 +166,31 @@ test('the compute bar adds up to online compute and marks the pledge', () => {
   assert.equal(b.needMarker, 90);
 });
 
+test('a dropped one-time pledge cannot be offered again', () => {
+  const s = createInitialState();
+  assert.equal(pledgeAvailable(s), true);
+  s.flags.safetyPledgeMade = true;
+  assert.equal(pledgeAvailable(s), false);
+  s.flags.safetyPledgeMade = false;
+  s.promises.push({ type: 'safetyCompute', share: 0.1, turn: 0 });
+  assert.equal(pledgeAvailable(s), false);
+});
+
+test('idle compute cost uses the average billed price of online contracts', () => {
+  const s = createInitialState();
+  s.era = 4;
+  s.compute.contracts = [{
+    id: 'spot', supplier: 'spot', units: 100, price: 3, monthsLeft: null,
+    needsPower: false, dark: false, scaledDown: false, exclusiveBought: false,
+  }];
+  s.compute.online = 100;
+  s.compute.servingUnits = 0;
+  s.compute.split.safety = 0.1;
+  const idle = computeBar(s).segments.find((segment) => segment.key === 'idle').units;
+  assert.equal(idleComputeCost(s), idle * 3 * BALANCE.unitMonthlyCost);
+  assert.match(opinions(s, 'budget').find((opinion) => opinion.id === 'cfo').text, new RegExp(money(idleComputeCost(s)).replace('$', '\\$')));
+});
+
 test('the sites view counts dark chips and their bill', () => {
   const s = createInitialState();
   s.era = 4;
@@ -52,11 +201,54 @@ test('the sites view counts dark chips and their bill', () => {
   assert.ok(Math.abs(v.unpoweredBill - 200 * BALANCE.unitMonthlyCost) < 1e-9);
 });
 
-test('each screen gets four advisor opinions without hidden numbers', () => {
+test('site options match the exact side-RNG builds that will be queued', () => {
+  const s = createInitialState({ seed: 1 });
+  s.era = 4;
+  const view = sitesView(s);
+  for (const source of ['gas', 'nuclear']) {
+    const projected = structuredClone(s);
+    const result = buildSite(projected, source, sideRng(projected, 1000 + projected.power.nextId));
+    const site = projected.power.sites.find((candidate) => candidate.id === result.site);
+    const option = view.options.find((candidate) => candidate.source === source);
+    assert.equal(option.units, site.units);
+    assert.equal(option.lease, leaseMonthly(site.units));
+    assert.equal(option.readyIn, `${site.arrivesTurn - s.turn} turns`);
+  }
+});
+
+test('queue and power screens are exposed only in their playable eras', () => {
   const s = createInitialState();
+  const powerItem = COMPANY_ITEMS.find((item) => item.id === 'power');
+  for (const era of [1, 2, 3, 4, 5]) {
+    s.era = era;
+    assert.equal(queueScreenAvailable(s), era === 3);
+    assert.equal(powerSitesAvailable(s), era === 4);
+    assert.equal(powerItem.hidden(s), era !== 4);
+  }
+});
+
+test('era-four capacities use power units in visible and accessible copy', () => {
+  assert.equal(computeAmount(30, 4), '51 MW');
+  const s = createInitialState();
+  s.era = 4;
+  s.compute.online = 30;
+  s.compute.servingUnits = 0;
+  assert.match(computeAmount(computeBar(s).segments.at(-1).units, s.era), /MW|GW/);
+});
+
+test('view-model text never reveals poisoned hidden-state numbers', () => {
+  const s = createInitialState();
+  const sentinels = ['731091', '731092', '731093', '731094'];
+  s.alignmentDebt = Number(sentinels[0]);
+  s.concealedDebt = Number(sentinels[1]);
+  s.misuseExposure = Number(sentinels[2]);
+  s.rivals[0].capability = Number(sentinels[3]);
+  const text = [dealCards(s), commitmentsView(s), queueView({ ...s, era: 3 }), computeBar(s), sitesView(s)];
   for (const screen of ['deals', 'queue', 'budget', 'power']) {
     const o = opinions(s, screen);
     assert.equal(o.length, 4);
-    assert.ok(o.every((x) => typeof x.text === 'string' && !/alignmentDebt|misuse/.test(x.text)));
+    text.push(o);
   }
+  const rendered = JSON.stringify(text);
+  for (const sentinel of sentinels) assert.doesNotMatch(rendered, new RegExp(sentinel));
 });
