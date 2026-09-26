@@ -6,6 +6,8 @@ import {
 } from '../logic/events.js';
 
 const CLOCK_REASON = 'event-card';
+const LOADING_REASON = 'event-card-loading';
+const ERAS = [1, 2, 3, 4, 5];
 
 // Crisis staging in the room (owner pick B). Positions follow the era's rack and head anchors.
 function stageRoom(staging, { stage, layerRoot, anchors }) {
@@ -222,7 +224,9 @@ export function mountEvents(game, { stage, overlay }) {
           answered[view.id] = choice.id;
           queueAnswer(game, view.id, choice.id);
         }
-        close();
+        // Under real time the answer applies at once and the update may already have closed this
+        // card and opened the next one; close only this card.
+        if (current?.id === view.id) close();
         settle();
       });
       card.querySelector('.ev-choices').append(button);
@@ -274,18 +278,27 @@ export function mountEvents(game, { stage, overlay }) {
       emit('events-changed');
       return Promise.resolve();
     }
+    // A new era's office positions are not loaded yet: hold the clock so a card that just landed
+    // cannot run out of time before it opens.
+    const hold = queue.length > 0 && !previewing;
+    if (hold) clock()?.pause(LOADING_REASON);
     return loadAnchors(state.era).then((loaded) => {
       anchors = loaded;
       anchorsEra = state.era;
       if (!previewing) openNext();
       emit('events-changed');
-    }).catch((error) => console.error(error));
+    }).catch((error) => console.error(error)).finally(() => {
+      if (hold) clock()?.resume(LOADING_REASON);
+    });
   }
 
   game.subscribe(({ state, events }) => {
     sync(state, events ?? []);
     afterAnchors(state);
   });
+
+  // Warm every era's office positions, so an era change rarely has to wait for a fetch.
+  for (const era of ERAS) loadAnchors(era).catch(() => {});
 
   sync(game.state, []);
   const ready = afterAnchors(game.state);
