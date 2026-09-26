@@ -72,3 +72,20 @@ option is marked (rec). Sources point at the notes in this folder or at repo fil
   `queueChangeProblem`.
 - `ui/menu.js`, `ui/main.js`, `ui/styles.css`, `ui/game.js` and `ui/logic/scenarios.js` are shared
   with the events lane; tell that lane before editing them.
+
+## Owner picks (2026-09-26)
+
+`1B 2A 3C 4B 5B 6A 7B 8A`, plus: next to the badge, show cost per token and related numbers.
+
+- 1B: three price buttons, Cheap / Market / Premium; Cheap sends `undercut`, and the free tier is
+  not offered in the UI.
+- 3C is a sim change and needs the owner's yes on the numbers. Proposal: each skipped number
+  raises the critics' comparison bar by 5 points; a gain under 5 points per skipped number adds
+  one mocking post.
+- 5B: "Beats your last flagship on N of 5 benchmarks", counted over all five rows in the UI.
+  Next to it goes a price sheet: price per million tokens (`revenuePerUser` over tokens per user),
+  serving cost per million tokens (from `sim/serving.js`), and the margin. Open weights show a
+  free-download note instead.
+- Correction to suggestion 7: `sim/turn.js` runs `updateServing` right after a release move, so a
+  model that ships this turn already has its `servingCost` at the reveal. Only delayed launches
+  (a one-turn evaluation or staged channel) have none yet.
