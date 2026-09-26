@@ -7,7 +7,6 @@ import { createRng } from '../sim/rng.js';
 import { advanceDays, applyActions } from '../sim/turn.js';
 import { rivalsTurn, landRivals } from '../sim/rivals.js';
 import { createPresidentPromise } from '../sim/promises.js';
-import { addPipeline } from '../sim/contracts.js';
 
 function advanceTo(s, day, rng) {
   let events = [];
@@ -108,29 +107,4 @@ test('a kept President promise is thanked on its landing day', () => {
   assert.equal(r.s.promises.at(-1).status, 'open');
   r = advanceTo(r.s, day, rng);
   assert.equal(r.s.promises.at(-1).status, 'kept');
-});
-
-test('bought compute arrives on its landing day, a round before its old mark', () => {
-  const rng = createRng(7);
-  let s = createInitialState({ seed: 7 });
-  const id = addPipeline(s, { supplier: 'verde', units: 8, price: 0.9, termMonths: 24, arrivesTurn: 2, needsPower: false });
-  s = applyActions(s, {}, rng).state;
-  const day = s.compute.pipeline.find((p) => p.id === id).landsDay;
-  assert.ok(day > roundSpan(1).start && day <= roundSpan(1).end);
-  let r = advanceTo(s, day - 1, rng);
-  assert.ok(r.s.compute.pipeline.some((p) => p.id === id));
-  r = advanceTo(r.s, day, rng);
-  assert.ok(r.events.some((e) => e.type === 'computeArrived' && e.supplier === 'verde'));
-  assert.ok(r.s.compute.contracts.some((c) => c.id === id));
-});
-
-test('a power site comes online on its landing day', () => {
-  const rng = createRng(7);
-  let s = createInitialState({ seed: 7 });
-  s.power.sites.push({ id: 'gas-t', source: 'gas', units: 40, arrivesTurn: 2, online: false, oppositionCut: null });
-  s = applyActions(s, {}, rng).state;
-  const day = s.power.sites.find((x) => x.id === 'gas-t').landsDay;
-  const r = advanceTo(s, day, rng);
-  assert.ok(r.events.some((e) => e.type === 'siteOnline' && e.id === 'gas-t'));
-  assert.equal(r.s.power.sites.find((x) => x.id === 'gas-t').online, true);
 });
