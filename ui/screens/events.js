@@ -1,7 +1,7 @@
 import { BOARD_MEMBERS } from '../../sim/board.js';
 import { boardRead } from '../../sim/boardRead.js';
 import { PICTURES } from '../data/crisisArt.js';
-import { bubbleAt, choiceButton, dueBar, el, loadAnchors, post } from '../components/eventBits.js';
+import { bubbleAt, choiceButton, dueBar, el, loadAnchors, post, sourcePost } from '../components/eventBits.js';
 import { moodForLean, portrait } from '../components/portraits.js';
 import {
   ADVISOR_TITLE, argueLines, cardView, catalogRow, consequenceLines, daysLeft, dueText, hasLanded, queueAnswer,
@@ -220,7 +220,7 @@ export function mountEvents(game, { stage, overlay }) {
     }
     const days = preview ? null : remaining(view.id);
     if (days !== null) card.querySelector('.ev-card-top').append(dueBar(dueText(view.id, days), days / timingFor(view.id).days));
-    card.querySelector('.ev-card-top').after(post(view.post));
+    card.querySelector('.ev-card-top').after(sourcePost(view.post));
     // Board cards (spec §6.3): the wood kicker bar with the directors watching, their faces from the staff read.
     if (view.kicker) {
       const read = boardRead(game.state);
