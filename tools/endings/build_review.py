@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def film_files(film_id):
     film = json.loads((ROOT / f"ui/endings/films/{film_id}.json").read_text())
-    files = [f"ui/endings/films/{film_id}.json", f"ui/assets/endings/{film_id}.m4a"]
+    files = [f"ui/endings/films/{film_id}.json"]
     files += [f"ui/assets/endings/plates/{s['plate']}.svg" for s in film["shots"] if s.get("plate")]
     clips = [s["clip"] for s in film["shots"] if s.get("clip")] + ([film["titleClip"]] if film.get("titleClip") else [])
     files += [f"ui/assets/endings/clips/{c}.mp4" for c in clips]
@@ -37,6 +37,9 @@ def build(out, ids):
         film, files, total = film_files(fid)
         films.append((fid, film["title"], round(total)))
         shared += files
+        # artifacts serve .mp4 but not .m4a, so each sound is published as an audio-only .mp4
+        (out / "ui/assets/endings").mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(ROOT / f"ui/assets/endings/{fid}.m4a", out / f"ui/assets/endings/{fid}.sound.mp4")
     for rel in dict.fromkeys(shared):
         dest = out / rel
         dest.parent.mkdir(parents=True, exist_ok=True)
@@ -60,7 +63,7 @@ p {{ margin: 0; font-size: 17px; line-height: 1.55; color: color-mix(in oklab, v
 .pick {{ font: 800 16px "Nunito", sans-serif; text-align: left; padding: 12px 14px; border-radius: 10px; cursor: pointer;
   border: 2px solid color-mix(in oklab, var(--paper) 25%, var(--ink)); background: transparent; color: var(--paper);
   display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }}
-.pick small {{ font-weight: 700; color: color-mix(in oklab, var(--paper) 60%, var(--ink)); }}
+.pick small {{ font-weight: 700; white-space: nowrap; color: color-mix(in oklab, var(--paper) 60%, var(--ink)); }}
 .pick[aria-pressed="true"] {{ background: var(--paper); color: var(--ink); border-color: var(--paper); }}
 .pick[aria-pressed="true"] small {{ color: color-mix(in oklab, var(--ink) 60%, var(--paper)); }}
 .row {{ display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }}
@@ -95,7 +98,7 @@ const playBtn = document.getElementById('play');
 playBtn.addEventListener('click', async () => {{
   playBtn.disabled = true;
   try {{
-    const film = await mountFilm(document.body, {{ id, era, onDone: () => {{ playBtn.disabled = false; playBtn.focus(); }} }});
+    const film = await mountFilm(document.body, {{ id, era, audioUrl: `ui/assets/endings/${{id}}.sound.mp4`, onDone: () => {{ playBtn.disabled = false; playBtn.focus(); }} }});
     film.play();
   }} catch (error) {{
     playBtn.disabled = false;
