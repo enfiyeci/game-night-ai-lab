@@ -2,7 +2,7 @@ import { BALANCE } from './balance.js';
 import { SUPPLIERS, eraScale } from './data/compute.js';
 import { addPipeline } from './contracts.js';
 
-export const QUEUE_RELEASE = 15;     // × eraScale(3) units per turn
+export const QUEUE_RELEASE = 7;      // × eraScale(3) units per turn
 export const RIVAL_ORDER = 4.5;      // × eraScale(3) units ordered by a rival of average Western speed
 export const PREPAY_SHARE = 0.15;    // of the order's 24-month term value
 export const QUEUE_TERM_MONTHS = 24;

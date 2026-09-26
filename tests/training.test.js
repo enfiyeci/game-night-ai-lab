@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import { startRun, advanceRun, availableUnits } from '../sim/training.js';
 import { recipeCost } from '../sim/recipe.js';
+import { BALANCE } from '../sim/balance.js';
 
 const noLuck = { next: () => 0.99, int: () => 0, chance: () => false, normal: (m) => m };
 const recipe = {
@@ -82,10 +83,10 @@ test('low alignment share adds alignment debt; lawsuits are seeded by chance', (
 
 test('trained model capability and gain are capped at the maximum', () => {
   const s = createInitialState();
-  s.capability = 95;
+  s.capability = BALANCE.maxCapability - 5;
   startRun(s, recipe);
   const trained = advanceRun(s, noLuck);
-  assert.equal(trained.capability, 100);
+  assert.equal(trained.capability, BALANCE.maxCapability);
   assert.equal(trained.gain, 5);
 });
 

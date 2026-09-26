@@ -96,7 +96,7 @@ export function legalTick(state) {
 }
 
 export const INVESTORS = {
-  vc: { name: 'Growth fund', share: 0.1 },
+  vc: { name: 'Growth fund', share: 0.05 },
   strategic: { name: 'Strategic cloud partner', share: 0.06 },
   sovereign: { name: 'Sovereign wealth fund', share: 0.15 },
 };

@@ -4,10 +4,10 @@ import { clamp } from './util.js';
 import { startRun, advanceRun } from './training.js';
 import { activateReleases, releaseModel } from './release.js';
 import {
-  signOffer, contractAction, deliverDue, contractsTurn, expireContracts, pullBumped, spendCredits, generateOffers, sideRng,
+  signOffer, contractAction, deliverDue, contractsTurn, expireContracts, pullBumped, spendCredits, generateOffers, monthlyBills, sideRng,
 } from './contracts.js';
 import { placeOrder, withdrawOrder, queueTurn } from './queue.js';
-import { buildSite, powerTurn } from './power.js';
+import { buildSite, leaseBills, powerTurn } from './power.js';
 import { updateServing, growUsers, applyEconomy, legalTick, projectBurn, raiseRound, useEmergency, safetySpend } from './economy.js';
 import { researchTechnique } from './techniques.js';
 import { rivalsTurn } from './rivals.js';
@@ -29,7 +29,7 @@ import {
 } from './summit.js';
 import { expireMeeting, meetingDue, openMeeting, runMeeting } from './president.js';
 import { judgeEndingPromises, promiseUpkeep } from './promises.js';
-import { applySplitEffects, makePledge, setComputeSplit } from './split.js';
+import { applySplitEffects, makePledge, setComputeSplit, spotCover } from './split.js';
 
 export const MAX_MOVES = 2;
 const BUDGET_KEYS = ['training', 'security', 'product', 'talent'];
@@ -94,7 +94,7 @@ function normalize(state) {
   state.govFavor.intl = clamp(state.govFavor.intl, 0, 100);
 }
 
-export function endTurn(prev, actions = {}, rng) {
+export function endTurn(prev, actions = {}, rng, observer = {}) {
   const state = structuredClone(prev);
   const events = [];
   const errors = [];
@@ -255,6 +255,11 @@ export function endTurn(prev, actions = {}, rng) {
       }
       growUsers(state);
       updateServing(state);
+      observer.beforeEconomy?.({
+        era: state.era,
+        burn: projectBurn(state),
+        compute: monthlyBills(state) + leaseBills(state) + spotCover(state),
+      });
       applyEconomy(state);
       if (state.compute.surge && --state.compute.surge.turnsLeft <= 0) {
         state.compute.split.coverWithSpot = state.compute.surge.restoreCover ?? state.compute.split.coverWithSpot;

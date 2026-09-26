@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import { ERAS, eraById } from '../sim/data/eras.js';
 import { rank, gapToLeader, rivalsTurn, leastCarefulRival } from '../sim/rivals.js';
+import { BALANCE } from '../sim/balance.js';
 
 test('five eras with accelerating turn length', () => {
   assert.equal(ERAS.length, 5);
@@ -48,9 +49,9 @@ test('a rival that finishes its cycle releases and heats the race', () => {
 test('rival capability and reported gain are capped at the maximum', () => {
   const s = createInitialState({ seed: 1 });
   const fake = { next: () => 0, int: () => 0 };
-  s.rivals[0].capability = 99;
+  s.rivals[0].capability = BALANCE.maxCapability - 1;
   s.rivals[0].progress = 0.99;
   const [release] = rivalsTurn(s, fake);
-  assert.equal(s.rivals[0].capability, 100);
+  assert.equal(s.rivals[0].capability, BALANCE.maxCapability);
   assert.equal(release.gain, 1);
 });
