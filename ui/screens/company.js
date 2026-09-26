@@ -537,13 +537,14 @@ export function mountTurnSummary(overlayRoot, game) {
     }
     // Subscribers fire every story day; a quiet day keeps whatever toast is showing.
     const meetingEnded = events.some((event) => event.type === 'meetingOutcome');
-    const skippedMeeting = new Set(['take the President meeting with a meeting move', 'President answers require a meeting move']);
+    const skippedMeeting = 'take the President meeting with a meeting move';
+    const skipped = meetingEnded && errors.includes(skippedMeeting);
     const summaries = turnSummary([
       ...events,
-      ...errors.filter((error) => !(meetingEnded && skippedMeeting.has(error))).map((error) => ({ type: 'error', error })),
+      ...errors.filter((error) => !(meetingEnded && error === skippedMeeting)).map((error) => ({ type: 'error', error })),
     ], state);
     for (const event of events) {
-      if (event.type === 'meetingOutcome') summaries.push(outcomeLine(event));
+      if (event.type === 'meetingOutcome') summaries.push(outcomeLine(event, { skipped }));
     }
     if (summaries.length === 0) return;
     if (pendingFrame !== null) cancelAnimationFrame(pendingFrame);

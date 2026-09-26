@@ -9,6 +9,8 @@ import {
 } from '../logic/president.js';
 
 let assetsPromise = null;
+// Event cards and the phone sit above dialogs, so the scene waits for them too (as main.js blocked() does).
+const BLOCKING = '.dialog-layer, .event-layer, .ev-phone';
 let nextPresidentId = 0;
 
 // OWNER WRITES (placeholder)
@@ -55,10 +57,10 @@ function focusable(root) {
 
 export async function openPresident(game, overlayRoot, options = {}) {
   const meeting = meetingFor(game.state);
-  if (!meeting || game.state.ending || !overlayRoot || overlayRoot.querySelector('.dialog-layer')) return null;
+  if (!meeting || game.state.ending || !overlayRoot || overlayRoot.querySelector(BLOCKING)) return null;
   const { svg, anchors } = await loadAssets();
   if (!game.state.meeting || game.state.meeting.id !== meeting.id || game.state.ending
-    || overlayRoot.querySelector('.dialog-layer')) return null;
+    || overlayRoot.querySelector(BLOCKING)) return null;
 
   const previousFocus = document.activeElement;
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -184,7 +186,7 @@ export async function openPresident(game, overlayRoot, options = {}) {
   function errorView(error) {
     answerBox.replaceChildren();
     const top = el('div', 'pres-top');
-    top.append(el('span', 'pres-kick', 'The meeting was not queued'));
+    top.append(el('span', 'pres-kick', 'You could not meet him'));
     const message = el('p', 'pres-finish', error);
     message.setAttribute('role', 'alert');
     const back = el('button', 'pres-back', 'Back');
@@ -198,7 +200,7 @@ export async function openPresident(game, overlayRoot, options = {}) {
     // Actions apply at once, so setField would flush the answers before the move arrives.
     game.queue.presidentAnswers = answersPayload(meeting, picked);
     const result = game.addMove({ type: 'meeting' });
-    if (!result.ok) {
+    if (!result.ok && !result.events?.some((event) => event.type === 'meetingOutcome')) {
       delete game.queue.presidentAnswers;
       const message = result.error[0].toUpperCase() + result.error.slice(1);
       errorView(message);
@@ -374,7 +376,7 @@ export function mountPresident(game, overlayRoot) {
     if (!pending || frame !== null) return;
     frame = requestAnimationFrame(async () => {
       frame = null;
-      if (!pending || overlayRoot.querySelector('.dialog-layer')) return;
+      if (!pending || overlayRoot.querySelector(BLOCKING)) return;
       try {
         const opened = await openPresident(game, overlayRoot);
         if (opened || !game.state.meeting) pending = false;
@@ -393,13 +395,14 @@ export function mountPresident(game, overlayRoot) {
     pending = true;
     schedule();
   });
-  const onDialogClosed = () => schedule();
-  overlayRoot.addEventListener('gdt-dialog-closed', onDialogClosed);
+  // Retry whenever the overlay changes: dialogs, event cards and the phone all close by leaving it.
+  const observer = new MutationObserver(() => schedule());
+  observer.observe(overlayRoot, { childList: true, subtree: true });
 
   return () => {
     unregister();
     unsubscribe();
-    overlayRoot.removeEventListener('gdt-dialog-closed', onDialogClosed);
+    observer.disconnect();
     if (frame !== null) cancelAnimationFrame(frame);
   };
 }

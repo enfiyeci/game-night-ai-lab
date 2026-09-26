@@ -50,8 +50,8 @@ const STAKE_CLAUSES = {
   federalContract: 'steered a federal contract your way.',
 };
 
-export function outcomeLine(event) {
-  if (event?.walkedOut) return 'The President walked out of the meeting.';
+export function outcomeLine(event, { skipped = false } = {}) {
+  if (event?.walkedOut) return skipped ? 'The President left without meeting you.' : 'The President walked out of the meeting.';
   const clause = STAKE_CLAUSES[event?.stake];
   return clause ? `The President ${clause}` : 'The President thanked you for your time. Nothing came of it.';
 }
