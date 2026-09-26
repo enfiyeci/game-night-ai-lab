@@ -2844,5 +2844,10 @@ svg.room {
 .bd-quiet-row .portrait { border-radius: 50%; background: color-mix(in oklab, var(--cream) 70%, var(--paper)); filter: saturate(.6); }
 .bd-quiet-row span { color: color-mix(in oklab, var(--ink) 50%, var(--paper)); font-size: 11px; font-weight: 700; }
 .bd-quiet p { margin: 8px 0 0; color: color-mix(in oklab, var(--coral) 75%, var(--ink)); font-size: 12.5px; font-weight: 800; }
+/* board cards: the kicker bar and the directors watching (frames P1 to P4, R1, R3) */
+.bd-kicker { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; padding: 6px 18px 7px; color: var(--paper); font-size: 12.5px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; background: color-mix(in oklab, var(--wood) 85%, var(--ink)); }
+.bd-watch { display: flex; align-items: center; gap: 4px; letter-spacing: 0; text-transform: none; font-weight: 800; }
+.bd-watch i { display: grid; width: 26px; height: 26px; place-items: center; overflow: hidden; border: 2px solid var(--paper); border-radius: 50%; background: color-mix(in oklab, var(--cream) 70%, var(--paper)); }
+.bd-watch .portrait { display: block; flex: none; overflow: visible; transform: translateY(2px); }
 .bd-say { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
 .bd-say > * { pointer-events: auto; }
