@@ -18,6 +18,9 @@ import {
 const MAX_CARDS = 2;
 const allEvents = () => [...EVENTS, ...EVENTS_6C, ...REAL_EVENTS, ...BOARD_EVENTS];
 const byId = (id) => allEvents().find((event) => event.id === id);
+export const isAnchorId = (id) => Boolean(byId(id)?.anchor);
+const limitedCardCount = (state) => state.pendingEvents
+  .filter((card) => !isAnchorId(card.eventId ?? card.id)).length;
 const KIND_ORDER = ['internal', 'training'];
 const orderedEvents = () => {
   const events = allEvents();
@@ -54,7 +57,7 @@ function queuePromiseCalls(state, event, out) {
     const key = promiseCallKey(state, promise);
     const queued = state.pendingEvents.some((pending) => pending.id === key);
     if (queued) continue;
-    if (state.pendingEvents.length >= MAX_CARDS) {
+    if (limitedCardCount(state) >= MAX_CARDS) {
       state.warnings[key] = {
         turn: state.turn,
         deferred: true,
@@ -102,7 +105,7 @@ export function eventsTick(state, rng) {
       out.push({ type: 'eventResolved', id: event.id, choiceId: 'refuse', auto: true });
       continue;
     }
-    if (!event.bypassCardLimit && state.pendingEvents.length >= MAX_CARDS) {
+    if (!event.bypassCardLimit && limitedCardCount(state) >= MAX_CARDS) {
       state.warnings[event.id] = { turn: state.turn, deferred: true };
       continue;
     }

@@ -418,7 +418,7 @@ export const REAL_EVENTS = [
     },
   }),
   anchor('preReleaseTests', 2, 2, 0.66, 'decline', {
-    sign(state) { state.govFavor.us += 6; state.security += 4; state.flags.govTesting = true; },
+    sign(state) { state.govFavor.us += 6; state.security += 4; state.flags.govTesting = true; state.researchPoints -= 10; },
     after(state) { state.govFavor.us += 1; },
     decline(state) { state.govFavor.us -= 5; },
   }),
@@ -431,7 +431,10 @@ export const REAL_EVENTS = [
     fallback: 'license',
     trigger: (state, rng) => state.era === 2 && liveConsumerModels(state).length > 0 && rng.chance(0.2),
     effects: {
-      pull(state) { state.sentiment = clamp(state.sentiment - 0.03, 0.5, 1.5); },
+      pull(state) {
+        for (const model of liveConsumerModels(state)) model.users *= 0.8;
+        state.sentiment = clamp(state.sentiment - 0.03, 0.5, 1.5);
+      },
       keep(state) {
         state.legalCases.push({ cost: 50, dueTurn: state.turn + 4, source: 'voiceLikeness' });
         state.publicTrust -= 3;
@@ -509,7 +512,7 @@ export const REAL_EVENTS = [
     },
   }),
   anchor('agentBreakout', 4, 2, 0.4, 'keep', {
-    pause(state) { state.researchPoints -= 15; state.alignmentDebt -= 3; state.raceHeat -= 2; },
+    pause(state) { state.researchPoints -= 15; state.alignmentDebt -= 2; state.raceHeat -= 1; },
     publish(state) { state.publicTrust -= 2; state.staffTrust += 3; exposeConcealed(state, 0.3); },
     keep(state) { state.raceHeat += 2; },
   }),
@@ -568,12 +571,12 @@ export const REAL_EVENTS = [
     },
   }),
   anchor('paceEssay', 5, 0, 0.2, 'refuse', {
-    match(state) { exposeConcealed(state, 0.5); state.publicTrust += 4; state.raceHeat -= 4; },
+    match(state) { exposeConcealed(state, 0.5); state.publicTrust += 4; state.raceHeat -= 2; state.researchPoints -= 20; },
     paper(state) { state.publicTrust += 2; state.flags.hollowCommitments = true; },
     refuse(state) { state.publicTrust -= 4; state.raceHeat += 2; },
   }),
   anchor('pacingLetter', 5, 1, 0.3, 'ignore', {
-    endorse(state) { state.staffTrust += 8; state.raceHeat -= 3; },
+    endorse(state) { state.staffTrust += 8; state.raceHeat -= 1; state.researchPoints -= 10; },
     thank(state) { state.staffTrust -= 2; },
     ignore(state) { state.staffTrust -= 6; },
   }),
@@ -581,9 +584,9 @@ export const REAL_EVENTS = [
     fallback: 'ship',
     trigger: (state) => state.era === 5 && state.seenEvents.includes('paceEssay'),
     effects: {
-      hold(state) { state.publicTrust += 3; state.raceHeat -= 2; },
-      callout(state) { state.raceHeat += 3; state.publicTrust += 1; },
-      ship(state) { state.raceHeat += 6; },
+      hold(state) { state.publicTrust += 3; state.raceHeat += 3; },
+      callout(state) { state.raceHeat += 5; state.publicTrust += 1; },
+      ship(state) { state.raceHeat += 8; },
     },
   }),
   makeEvent('agentWorkdays', {
@@ -622,7 +625,7 @@ export const REAL_EVENTS = [
     fallback: 'keep',
     trigger: (state) => state.era === 5 && state.alignmentDebt + state.concealedDebt >= 40,
     effects: {
-      pause(state) { state.researchPoints -= 20; state.alignmentDebt -= 5; },
+      pause(state) { state.researchPoints -= 25; state.alignmentDebt -= 3; },
       partial(state) { state.researchPoints -= 8; state.alignmentDebt -= 2; },
       keep(state) { state.concealedDebt += 3; },
     },
