@@ -2,7 +2,7 @@ import { clamp } from './util.js';
 import { leaderCapability, rank } from './rivals.js';
 import { safetySpend } from './economy.js';
 import { INTERPRETABILITY_SPEND, GAMING_THRESHOLD } from './hazards.js';
-import { BENCHMARKS, CONTAMINATED_BENCHMARKS, CONTAMINATION_BONUS, BUG_FLAGS, BUG_PENALTY, CRITICS, REACTIONS } from './data/launch.js';
+import { BENCHMARKS, CONTAMINATED_BENCHMARKS, CONTAMINATION_BONUS, BUG_FLAGS, BUG_PENALTY, CRITICS, REACTIONS, JUMP_BAR_PER_NUMBER } from './data/launch.js';
 
 const GAMING_RATE = { 3: 0.35, 4: 0.55, 5: 0.75 };
 
@@ -52,7 +52,9 @@ export function scoreLaunch(state, model, rng) {
 
   const prevAvg = prev ? prev.benchmarks.filter((b) => b.id !== 'gauntlet').reduce((s, b) => s + b.shown, 0) / caps.length : capAvg - 5;
   const rivalAvg = caps.reduce((s, b) => s + b.rival, 0) / caps.length;
-  const base = 7 + (capAvg - prevAvg) / 3 + (capAvg - rivalAvg) / 6;
+  const skipped = Math.max(0, model.skipped ?? 0);
+  const bar = prevAvg + JUMP_BAR_PER_NUMBER * skipped;
+  const base = 7 + (capAvg - bar) / 3 + (capAvg - rivalAvg) / 6;
   const ctx = { launch, flags, rank: rank(state), safetyShown: benchmarks.find((b) => b.id === 'gauntlet').shown };
   const press = CRITICS.map((c) => {
     const score = clamp(Math.round(base + c.bias(ctx) + rng.int(-1, 1)), 1, 10);
@@ -61,7 +63,9 @@ export function scoreLaunch(state, model, rng) {
   });
   const pressAvg = press.reduce((s, p) => s + p.score, 0) / press.length;
 
-  const rctx = { ...ctx, launch: { ...launch, pressAvg }, spec, model };
+  const generation = model.generation ?? 0;
+  const jump = { skipped, gain: capAvg - prevAvg, to: generation, from: generation - skipped - 1 };
+  const rctx = { ...ctx, launch: { ...launch, pressAvg }, spec, model, jump };
   const reactions = REACTIONS.filter((r) => r.when(rctx)).slice(0, 5)
     .map((r) => ({ handle: r.handle, text: typeof r.text === 'function' ? r.text(rctx) : r.text }));
   return { ...launch, press, pressAvg, reactions };

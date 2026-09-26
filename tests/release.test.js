@@ -270,3 +270,34 @@ test('releaseDelay requires two turns between launches without mutating a refuse
   s.turn = 12;
   assert.equal(releaseModel(s, { ...release, generation: 2 }, rng).ok, true);
 });
+
+test('skipping a version number is recorded on the released model', () => {
+  const s = trainedState();
+  s.models.push({ name: 'Kestrel 1 Core', family: 'Kestrel', generation: 1, active: false });
+  const r = releaseModel(s, { ...release, generation: 3 }, rng);
+  assert.equal(r.ok, true);
+  assert.equal(r.model.skipped, 1);
+  assert.equal(r.model.name, 'Kestrel 3 Core');
+});
+
+test('the first release never counts as skipping', () => {
+  const s = trainedState();
+  const r = releaseModel(s, { ...release, generation: 4 }, rng);
+  assert.equal(r.model.skipped, 0);
+});
+
+test('the release move names the four sizes, trimmed and capped at 16 characters', () => {
+  const s = trainedState();
+  const words = { small: ' Haiku ', medium: 'Sonnet', large: '', xl: 'Opus-Maximum-Extra-Long-Name' };
+  const r = releaseModel(s, { ...release, tierWords: words }, rng);
+  assert.equal(r.ok, true);
+  assert.deepEqual(s.tierWords, { small: 'Haiku', medium: 'Sonnet', large: '', xl: 'Opus-Maximum-Ext' });
+  assert.equal(r.model.name, 'Kestrel 1 Sonnet');
+});
+
+test('a failed release leaves the size words alone', () => {
+  const s = trainedState();
+  const r = releaseModel(s, { ...release, price: 'constructor', tierWords: { medium: 'Sonnet' } }, rng);
+  assert.equal(r.ok, false);
+  assert.equal(s.tierWords, undefined);
+});
