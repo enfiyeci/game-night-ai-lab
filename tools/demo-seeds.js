@@ -238,6 +238,7 @@ const ACTION_KEYS = new Set([
   'constitution',
   'presidentAnswers',
   'holdOrShip',
+  'automation',
 ]);
 
 function fallbackValue(value) {
@@ -315,6 +316,8 @@ export function describeActions(actions) {
     else if (actions.holdOrShip === 'ship') descriptions.push('ship despite the pacing deal');
     else descriptions.push(`set the pacing choice to ${words(actions.holdOrShip)}`);
   }
+
+  if (Object.hasOwn(actions, 'automation')) descriptions.push('change who does the work');
 
   const moves = actions.moves ?? [];
   descriptions.push(...(moves.length ? moves.map(describeMove) : ['make no regular move']));

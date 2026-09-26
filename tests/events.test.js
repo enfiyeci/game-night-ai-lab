@@ -118,7 +118,7 @@ test('ladder cards act on the hand-offs: hand back, or add a monitor only if the
   assert.equal(blocked.cash, cash);
 });
 
-test('internal reporting still applies public effects after an earlier shutdown', () => {
+test('reporting a self-copy applies its public effects', () => {
   const s = createInitialState();
   s.pendingEvents.push({ id: 'selfExfiltration' });
   resolveEvent(s, 'selfExfiltration', 'report');
