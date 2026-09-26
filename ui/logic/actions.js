@@ -1,3 +1,17 @@
+import {
+  LENGTHS,
+  SIZE_UNITS,
+  TRAIN_STAGES,
+  cardById,
+  cardUnlocked,
+  recipeCost,
+  slotsFor,
+  validateRecipe,
+} from '../../sim/recipe.js';
+import { availableUnits } from '../../sim/training.js';
+import { projectQueue } from './compute.js';
+import { money } from './format.js';
+
 export const SPEND_LEVELS = { lean: 12, steady: 20, aggressive: 35 };
 
 const safeEra = (era) => (Number.isFinite(era) ? era : 1);
@@ -38,4 +52,97 @@ export function levelFor(spend, era) {
 
 export function budgetFromSliders(values, level, era) {
   return { spend: spendFor(level, era), split: normaliseSplit(values) };
+}
+
+const DEFAULT_RECIPE = {
+  sliders: { size: 'medium', length: 'optimal', alignShare: 0.2 },
+  picks: { pre: [], mid: [], post: [] },
+};
+
+function safeRecipeCost(state, draft) {
+  if (!Object.hasOwn(SIZE_UNITS, draft?.sliders?.size)) return null;
+  if (!Object.hasOwn(LENGTHS, draft?.sliders?.length)) return null;
+  const ids = TRAIN_STAGES.flatMap((stage) => draft?.picks?.[stage] ?? []);
+  if (ids.some((id) => !cardById(id))) return null;
+  return recipeCost(state, draft);
+}
+
+export function recipePreview(state, draft) {
+  const free = availableUnits(state);
+  const errors = [];
+  if (state.activeRun) errors.push('a training run is already active');
+  if (state.pendingModel) errors.push('release the trained model first');
+
+  const check = validateRecipe(state, draft);
+  errors.push(...check.errors);
+
+  const cost = safeRecipeCost(state, draft);
+  if (cost?.cash > state.cash) errors.push('not enough cash');
+  if (cost?.units > free) errors.push('not enough free compute');
+  return {
+    ok: errors.length === 0,
+    errors,
+    cost,
+    free,
+    fits: cost !== null && cost.units <= free,
+  };
+}
+
+export function queuedRunProblem(state, queue) {
+  const moves = queue?.moves ?? [];
+  const runIndex = moves.findIndex((move) => move.type === 'startRun');
+  if (runIndex < 0) return '';
+  const beforeRun = structuredClone(queue ?? {});
+  beforeRun.moves = beforeRun.moves.slice(0, runIndex);
+  const projected = projectQueue(state, beforeRun);
+  const preview = recipePreview(projected, moves[runIndex].recipe);
+  return preview.errors[0] ?? '';
+}
+
+export function sanitizeDraft(state, draft) {
+  let size = Object.hasOwn(SIZE_UNITS, draft?.sliders?.size)
+    ? draft.sliders.size
+    : DEFAULT_RECIPE.sliders.size;
+  if (size === 'xl' && state.era < 2) size = 'large';
+
+  let length = Object.hasOwn(LENGTHS, draft?.sliders?.length)
+    ? draft.sliders.length
+    : DEFAULT_RECIPE.sliders.length;
+  if (length === 'heavy' && (size === 'large' || size === 'xl')) length = 'over';
+
+  const rawAlign = Number.isFinite(draft?.sliders?.alignShare)
+    ? draft.sliders.alignShare
+    : DEFAULT_RECIPE.sliders.alignShare;
+  const alignShare = Number((Math.round(Math.max(0, Math.min(0.5, rawAlign)) * 20) / 20).toFixed(2));
+
+  const picks = {};
+  for (const stage of TRAIN_STAGES) {
+    const selected = [];
+    const groups = new Set();
+    const ids = Array.isArray(draft?.picks?.[stage]) ? draft.picks[stage] : [];
+    for (const id of ids) {
+      const card = cardById(id);
+      if (!card || card.stage !== stage || !cardUnlocked(state, card) || groups.has(card.group)) continue;
+      selected.push(id);
+      groups.add(card.group);
+      if (selected.length >= slotsFor(state, stage)) break;
+    }
+    picks[stage] = selected;
+  }
+
+  return { sliders: { size, length, alignShare }, picks };
+}
+
+export function cardCostWords(card) {
+  const words = [];
+  const cash = card?.cost?.cash ?? 0;
+  const computeMult = card?.cost?.computeMult ?? 1;
+  const turns = card?.cost?.turns ?? 0;
+  if (cash !== 0) words.push(money(cash));
+  if (computeMult !== 0 && computeMult !== 1) {
+    const change = Math.round(Math.abs(computeMult - 1) * 100);
+    words.push(`${computeMult > 1 ? '+' : '−'}${change}% compute`);
+  }
+  if (turns !== 0) words.push(`+${turns} ${turns === 1 ? 'turn' : 'turns'}`);
+  return words;
 }

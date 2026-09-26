@@ -247,7 +247,7 @@ export function openDeals(game, overlayRoot) {
   opened = openDialog(overlayRoot, {
     title: 'Sign a compute deal',
     subtitle: `Era ${initial.era} · ${eraById(initial.era).name} · offers change every turn`,
-    left: { title: 'Team', content: teamPanel(initial, opinions(initial, 'deals')) },
+    left: { title: 'Team', content: teamPanel(initial, { opinions: opinions(initial, 'deals') }) },
     right: { title: 'Commitments', content: right },
     body,
     okLabel: 'Sign',
@@ -447,7 +447,7 @@ export function openQueue(game, overlayRoot) {
   opened = openDialog(overlayRoot, {
     title: 'Verde allocation',
     subtitle: 'Era 3 · memory chips are sold out, so Verde rations',
-    left: { title: 'Team', content: teamPanel(initial, opinions(initial, 'queue')) },
+    left: { title: 'Team', content: teamPanel(initial, { opinions: opinions(initial, 'queue') }) },
     right: { title: 'Why order', content: right },
     body,
     okLabel: 'Order',

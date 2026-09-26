@@ -1,7 +1,7 @@
 import { monthlyBills } from '../../sim/contracts.js';
 import { projectBurn, runway } from '../../sim/economy.js';
 import { PLEDGES } from '../../sim/split.js';
-import { budgetFromSliders, levelFor, SPEND_LEVELS, spendFor } from '../logic/actions.js';
+import { budgetFromSliders, levelFor, queuedRunProblem, SPEND_LEVELS, spendFor } from '../logic/actions.js';
 import { computeBar, idleComputeCost, opinions, pledgeAvailable, projectQueue } from '../logic/compute.js';
 import { computeAmount, money, months, pct } from '../logic/format.js';
 import { openDialog } from '../components/dialog.js';
@@ -276,6 +276,7 @@ export function openBudget(game, overlayRoot) {
   }
 
   function render({ focusLabel } = {}) {
+    error.textContent = '';
     moneyHeading.textContent = `Money · ${money(spendFor(level, state.era))} a month`;
     for (const button of spendSwitch.querySelectorAll('button')) {
       const active = button.dataset.level === level;
@@ -292,11 +293,18 @@ export function openBudget(game, overlayRoot) {
   opened = openDialog(overlayRoot, {
     title: "Plan this turn's budget",
     subtitle: `Era ${state.era} · money for people and programs, compute for everything that runs`,
-    left: { title: 'Team', content: teamPanel(state, opinions(previewState(), 'budget')) },
+    left: { title: 'Team', content: teamPanel(state, { opinions: opinions(previewState(), 'budget') }) },
     right: { title: 'This turn', content: right },
     body,
     onOk() {
-      const result = game.setBudget(budgetFromSliders(values, level, state.era));
+      const budget = budgetFromSliders(values, level, state.era);
+      const problem = queuedRunProblem(game.state, { ...game.queue, budget });
+      if (problem) {
+        const message = problem[0].toUpperCase() + problem.slice(1);
+        error.textContent = `Your queued training run would no longer work: ${message}. Change the run first.`;
+        return;
+      }
+      const result = game.setBudget(budget);
       if (!result.ok) {
         error.textContent = result.error ?? 'The budget could not be saved.';
         return;

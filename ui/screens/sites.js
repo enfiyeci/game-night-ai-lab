@@ -172,7 +172,7 @@ export function openPowerSites(game, overlayRoot) {
   opened = openDialog(overlayRoot, {
     title: 'Power sites',
     subtitle: 'Era 4 · The gigawatt race · chips only run where you have power',
-    left: { title: 'Team', content: teamPanel(state, opinions(state, 'power')) },
+    left: { title: 'Team', content: teamPanel(state, { opinions: opinions(state, 'power') }) },
     right: { title: 'Your sites', content: right },
     body,
     okLabel: 'Build',
