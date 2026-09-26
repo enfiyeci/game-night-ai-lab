@@ -60,3 +60,11 @@ difficulty target (spec 9).
 17. Which deferred features are in or out (weight theft is IN, owner 2026-09-25, plan 2E): distilled sibling models, sound
     effects, music, a save button, mobile layout. Recommended cut order when behind: music →
     save → mobile → distilled siblings → weight theft.
+18. **Open weights.** ON THE BACK BURNER (owner 2026-09-26): hidden for now; think about it again
+    only if time allows. Today an open-weights release earns nothing (no users, no revenue, no
+    serving cost) and only adds race heat, international favour and permanent misuse risk, so it
+    is all downside for money (spec 6f). The idea to revisit: a separate "open-source an older
+    model" action with its own payoff, modelled on how real labs earn from open models (hosted
+    access to the same model, enterprise licences and support, fine-tuning services, licence terms
+    for big competitors, goodwill and hiring). To bring the current option back, delete
+    `hidden: true` from `channel-open` and `tamper` in `sim/data/cards.js`.

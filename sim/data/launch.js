@@ -16,6 +16,11 @@ export const CONTAMINATION_BONUS = 8;
 export const BUG_FLAGS = ['scraped', 'quickEval', 'brokenPromise'];
 export const BUG_PENALTY = 0.05;
 
+// Owner 2026-09-26 (release flow pick 3C): skipping a version number raises the critics' bar a
+// little, and the feed always talks about the jump. Gain = new capability average minus the last flagship's.
+export const JUMP_BAR_PER_NUMBER = 1;
+export const JUMP_EARNED_GAIN = 5;
+
 // bias(ctx) adds to the shared base score. ctx: { launch, flags, rank, safetyShown }
 export const CRITICS = [
   { id: 'pitchcrunch', name: 'PitchCrunch', bias: (c) => (c.flags.includes('agentic') ? 1 : 0) + (c.launch.beats >= 4 ? 1 : 0),
@@ -30,12 +35,16 @@ export const CRITICS = [
 
 // when(ctx) picks templates; ctx: { launch, flags, spec, model, rank }. First five matches are used.
 export const REACTIONS = [
+  { when: (c) => c.jump.skipped > 0 && c.jump.gain >= JUMP_EARNED_GAIN, handle: '@benchwatch', text: (c) => `ok, the jump to ${c.jump.to} is earned. this is not a point release.` },
+  { when: (c) => c.jump.skipped > 0 && c.jump.gain < JUMP_EARNED_GAIN, handle: '@benchwatch', text: (c) => `${c.model.name}? the evals read more like a ${c.jump.from}.1` },
+  { when: (c) => c.jump.skipped > 0 && c.jump.gain < JUMP_EARNED_GAIN, handle: '@ml_hobbyist', text: 'so the version number is marketing now. cool cool.' },
+  { when: (c) => c.jump.skipped > 0, handle: '@lodestar_eng', text: (c) => `if we're skipping numbers now, our next one is ${c.jump.to + 2}.` },
   { when: (c) => c.flags.includes('jailbreakWaiting'), handle: '@devnull_ops', text: 'already found a way to make it skip its rules lol' },
   { when: (c) => c.flags.includes('sycophancy'), handle: '@tired_parent', text: "it's so nice to talk to. maybe too nice?" },
   { when: (c) => c.rank === 1 && c.launch.beats >= 4, handle: '@marketwire', text: (c) => `${c.model.name} tops the leaderboards; rival shares slip` },
   { when: (c) => c.launch.beats <= 1, handle: '@marketwire', text: (c) => `${c.model.name} underwhelms; analysts question the spend` },
   { when: (c) => c.flags.includes('hallucination'), handle: '@lawyer_lena', text: 'it cited three cases that do not exist. with confidence.' },
-  { when: (c) => c.rank <= 2, handle: '@lodestar_eng', text: 'congrats. see you in 6 weeks.' },
+  { when: (c) => c.rank <= 2 && c.jump.skipped === 0, handle: '@lodestar_eng', text: 'congrats. see you in 6 weeks.' },
   { when: (c) => c.flags.includes('agentic'), handle: '@sen_whitfield', text: 'Why does a chatbot need to run code on my computer?' },
   { when: (c) => c.model.priceStance === 'premium', handle: '@indie_dev', text: 'love it. cannot afford it.' },
   { when: (c) => c.flags.includes('contaminated'), handle: '@benchwatch', text: 'those coding scores look a little too good. just saying.' },

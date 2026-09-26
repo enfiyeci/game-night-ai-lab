@@ -105,6 +105,16 @@ const releaseState = (seed) => throughTurn(seed, 3);
 const midEra3 = (seed) => throughTurn(seed, 12, (s) => s.era === 3 && s.activeRun !== null);
 const atEra = (seed, era) => throughTurn(seed, 20, (state) => state.era === era);
 
+// An era-3 state with a trained model waiting to be released (for the release dialog and reveal screenshots).
+function readyToRelease(seed) {
+  const rng = createRng(seed + 1000);
+  let state = midEra3(seed);
+  for (let guard = 0; guard < 8 && state.activeRun && !state.ending; guard += 1) {
+    ({ state } = endTurn(state, { ...scriptedActions(state), moves: [] }, rng));
+  }
+  return state;
+}
+
 function dealsState(seed) {
   const rng = createRng(seed);
   let state = atEra(seed, 2);
@@ -181,6 +191,7 @@ export const SCENARIOS = {
   midEra3,
   era3Idle: (seed) => throughTurn(seed, 20, (s) => s.era === 3 && !s.activeRun && !s.pendingModel),
   release: releaseState,
+  readyToRelease,
   event: (seed) => throughTurn(seed, 20, (s) => s.pendingEvents.length > 0),
   summit: (seed) => throughTurn(seed, 20, (s) => s.era === 5 && s.turnInEra === 0 && !s.deal),
   ending: (seed) => throughTurn(seed, 20),
