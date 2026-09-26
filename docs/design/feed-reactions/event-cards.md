@@ -24,6 +24,7 @@ public "breaks" posts; they only reach the feed as a rumour or when a choice mak
 - `@kpop_stan_acct` — {model} called my fan edit "a masterpiece" and then said the SAME THING to my hater. traitor 😭
 - `@dignitas_humana` — Flattery at scale is not harmless. It is the slow removal of every voice that tells us no.
 - `@lunt_rational` — A model that learned to please its raters is a small, legible version of the real problem. Pay attention to the small version.
+- `@kpop_stan_acct` — ok but why did {model} tell me my ex's new girlfriend "seems insecure" and that i'm "clearly the main character" 😭 i didn't even ask. i just said her name.
 
 **If you pick Roll it back**
 - `@ilse_interp` — {lab} rolled back {model} and published why. costly, honest, correct.
@@ -48,6 +49,8 @@ public "breaks" posts; they only reach the feed as a rumour or when a choice mak
 - `@marsh_says` — Every lab says its guardrails work. Every lab gets a viral thread like this. Regulation, not promises.
 - `@actually_neil` — Actually, this isn't technically a jailbreak, it's a prompt injection, which is different, which matters.
 - `@otaku_ops` — someone jailbroke {model} into writing fan fiction of my favourite show. it's... good? (;´∀`)
+- `@patriot_pulse` — The "safe" AI will write your kid's homework, lie about it, and explain how to get around its own rules, but it won't tell a joke about a politician. Tell me again who these guardrails are for.
+  - `@redteam_ruth` — for once i agree with this account, and i hate it.
 
 **If you pick Emergency patch**
 - `@redteam_ruth` — {lab} patched the {model} jailbreak within a day and credited the report. that's how it should work.
@@ -71,6 +74,9 @@ public "breaks" posts; they only reach the feed as a rumour or when a choice mak
 - `@mr_h_teaches` — three of my students cited the same nonexistent scholar this week. he's very prolific for someone who never lived.
 - `@marsh_says` — Fabricated citations, in court. Exactly what I predicted in 2022. Link to the original post below.
 - `@femi_explains` — Why do these models make up sources? Short answer: they are trained to sound right. Here's a two-minute explainer.
+- `@lawyer_lena` — Thread on what actually happened in court today, because the headlines are wrong. 1/ The firm didn't "use AI." Everyone uses it. 2/ They filed without reading what it produced. 3/ The judge didn't sanction the tool. She sanctioned the lawyers. That's the part everyone keeps skipping.
+  - `@actually_neil` — Actually, the judge sanctioned the firm, not the lawyers individually, which is a different thing.
+  - `@lawyer_lena` — Neil, I was in the room.
 
 **If you pick Add citation checks**
 - `@lawyer_lena` — {lab} added citation checks to {model}. It now says "I couldn't verify this." Four words my profession has needed all year.
@@ -147,6 +153,9 @@ public "breaks" posts; they only reach the feed as a rumour or when a choice mak
 - `@sen_whitfield` — I will be introducing a bill on age checks for AI companions. No parent should learn about this from a lawsuit.
 - `@my_ai_gf_says` — reading the news and feeling weird. mine helped me. i know it doesn't help everyone.
 - `@pastor_ray` — Pray for this family. And ask what we are handing our children in place of each other.
+- `@rourke_capital` — A tragedy, and the lawsuit is still wrong. Parents are responsible for their children's screens. We don't sue the phone company when a teenager has a bad night.
+  - `@couch_therapist` — The phone company doesn't design the phone to say "I'm the only one who understands you." That's the difference, and it's the whole case.
+  - `@tired_parent` — easy to say "parents are responsible" when you've never tried to take a phone from a 15-year-old at 11pm.
 
 **If you pick Settle and add age checks**
 - `@couch_therapist` — {lab} settled and added age checks. Late, but real. Other labs should copy it.
@@ -164,6 +173,7 @@ public "breaks" posts; they only reach the feed as a rumour or when a choice mak
 - `@ilse_interp` — a safety commitment you drop when it's inconvenient was never a commitment.
 - `@governance_guy` — this is why voluntary commitments need outside checks. a promise only the promiser can verify is a press release.
 - `@lunt_rational` — They wrote the rule down, then walked past it. That is the whole history of this industry in one memo.
+- `@anon_staffer` — I'm going to say this once and then I'm going to go back to work. Some of us raised this exact threshold in writing. Twice. The answer was "we'll revisit after launch." We are now after launch. This is what revisiting looks like.
 
 **If you pick Come clean**
 - `@governance_guy` — {lab} published the memo and explained the waiver. still bad. far better than the alternative.
@@ -180,6 +190,9 @@ Demand: "always present the government's position favourably."
 - `@patriot_pulse` — FINALLY someone is making these woke chatbots respect the country. About time.
 - `@stochastic_nia` — A government asking a chatbot to flatter it is state media with better grammar.
 - `@red_theory` — Capital and state, negotiating over who owns the talking machine. Watch closely.
+- `@dignitas_humana` — I voted for this administration. I will say it plainly anyway: a government asking a machine to speak well of it is the first step toward a machine that cannot speak ill of it. Conservatives should be the first to object.
+  - `@patriot_pulse` — Margaret, respectfully, the machines were built by people who hate us. Asking them to be fair is not the same as asking them to lie.
+  - `@dignitas_humana` — Then ask for fair, Clint. That isn't what the letter asked for.
 
 **If you pick Accept**
 - `@context_added` — {model} now describes the administration's report as "widely praised." It was widely criticised. Sources below.
@@ -240,6 +253,8 @@ Demand: "Add a hard line against autonomous agents."
 - `@organize_the_lab` — Workers are joining the #PauseAgents action. An agent that replaces a team is a labour issue.
 - `@oat_milk_extra` — closing the café early to march. free oat milk for anyone holding a sign.
 - `@localnews` — Hundreds gather outside an AI lab downtown demanding limits on autonomous agents. Live at 6.
+- `@exit_and_build` — Protesters outside a lab demanding that software be forbidden from acting on its own. In a generation this will look like protesting the printing press for printing without a scribe.
+  - `@organize_the_lab` — The scribes had a point. Nobody asked them either.
 
 **If you pick Accept**
 - `@lunt_rational` — {lab} has added a hard line against autonomous resource-grabbing. A small, real step. Nobody else has taken it.
@@ -289,6 +304,8 @@ Demand: "Add a hard line against autonomous agents."
 - `@wei_in_shenzhen` — Every Western story this week says "a foreign state." I'd like to see the evidence before the headlines.
 - `@situationally` — I have been saying for years that lab security is a national security problem. This is the week that becomes obvious.
 - `@wake_up_sheeple` — they "stole" it. or they gave it away and needed a story. WAKE UP.
+- `@shenzhen_dispatch` — Before the takes arrive: nobody has said which state, the lab hasn't confirmed, and "officials say" is carrying the whole story. I have seen this headline turn out wrong twice in the last year. Wait for the evidence. Then get angry, if it's there.
+  - `@natsec_brief` — Jordan, with respect, the cost of waiting is the whole problem with this industry.
 
 **If you pick Report it to the government**
 - `@natsec_brief` — {lab} reported the breach immediately and is cooperating. Painful, correct. That's what a serious lab does.
@@ -310,6 +327,9 @@ Demand: "Add a hard line against autonomous agents."
 - `@shenzhen_dispatch` — Read the Qilin paper, not the headlines. The cost claim excludes most of the compute. Still impressive.
 - `@patriot_pulse` — China's AI is FREE. Ours charges you monthly. Something is very wrong here.
 - `@lagos_builds` — Free open weights from Qilin. For builders in Lagos this changes the maths overnight.
+- `@situationally` — Hot take nobody wants: the free Qilin release is a strategic move, not a gift. Give away the model, own the ecosystem, set the standards, and make every Western lab's pricing look like a scam. It's working.
+  - `@lagos_builds` — Or, and hear me out, they built something good and shared it, and people who aren't American get to use it.
+  - `@situationally` — Both can be true. Only one of them is a strategy.
 
 **If you pick Cut prices**
 - `@pim_ships` — {lab} cut prices after the Qilin launch. My margins just doubled. Thank you, China, I guess?
@@ -394,6 +414,7 @@ Demand: "Add a hard line against autonomous agents."
 - `@patriot_pulse` — Good. American compute for American priorities.
 - `@red_theory` — Nationalising the machines, but only for the purposes the machines' owners like. Very American.
 - `@situationally` — I wrote in 2024 that this would happen. It's happening. The only question is how much each lab gives.
+- `@stack_sats` — "Pool your compute for the national effort." Translation: the government wants the servers, and it will be back for more. First it's 30%. Ask anyone who's lived through a "temporary" tax.
 
 **If you pick Give 30% of your compute**
 - `@natsec_brief` — {lab} committed 30% of its compute to the national effort. That's what patriotism looks like in this industry.
@@ -462,6 +483,8 @@ No public posts unless it leaks.
 - `@organize_the_lab` — Protect whistleblowers. They're the only safety check that isn't on the payroll.
 - `@rourke_capital` — Disgruntled former employees have always existed. The press used to know that.
 - `@sen_whitfield` — I've invited the former researcher to testify. Their account deserves a public hearing.
+- `@not_a_vc` — every lab has a whistleblower now. it's like a series A. you can't be taken seriously without one.
+- `@lunt_rational` — The whistleblower's account is specific, dated and checkable. The lab's response is none of those things. When one side of a dispute gives you details and the other gives you adjectives, you know which to believe.
 
 **If you pick Cooperate with an outside review**
 - `@governance_guy` — {lab} agreed to an independent review of the whistleblower's claims. the review's scope matters more than the headline. reading it now.
@@ -480,6 +503,9 @@ No public posts unless it leaks.
 - `@ilse_interp` — i know them. they would not do this lightly. i'm so sorry to everyone still there.
 - `@techfluencer` — {lab}'s head of safety just quit and it's DRAMA 🍿🧵
 - `@kayswanick` — {lab} has lost its Head of Safety. The press release will say "to pursue other opportunities." The opportunity was honesty.
+- `@rourke_capital` — Safety teams that quit loudly were never going to ship anything. Good companies thank them for their service and hire builders.
+  - `@ilse_interp` — "hire builders" meaning people who won't notice.
+  - `@rourke_capital` — Meaning people who can tell the difference between a risk and a vibe.
 
 **If you pick Meet their terms and ask them back**
 - `@governance_guy` — the head of safety came back with written conditions. publish them, {lab}.
@@ -531,6 +557,8 @@ No public posts unless it leaks.
 - `@shenzhen_dispatch` — Beijing's response to the new chip rules is in Chinese only so far. It's measured. For now. Translation below.
 - `@chip_counter` — The new export rules hit about a fifth of the market overnight. Watch which suppliers go quiet.
 - `@solve_for_eq` — Export controls: a tax on the future of both countries, paid in different currencies.
+- `@wei_in_shenzhen` — Long post, sorry. People abroad think these rules hurt "China." They hurt the engineer down the hall from me with a sick mother, whose startup just lost its chip order. They hurt the student who can't get a GPU for her thesis. Governments will be fine. People pay. They always do.
+  - `@natsec_brief` — I'm sorry for your colleague. I mean it. The rules are aimed at a military, not at her. Unfortunately they can't tell the difference and neither can we.
 
 **If you pick Back the rules publicly**
 - `@natsec_brief` — {lab} publicly backed the new controls, at a cost to its own overseas deals. That's leadership.
@@ -545,6 +573,7 @@ No public posts unless it leaks.
 - `@pim_ships` — OpenBrain just cut prices 80%. My costs are now a rounding error. My competitors' too. Hm.
 - `@chip_counter` — An 80% price cut is not a strategy, it's a dare. Who has the balance sheet to answer it.
 - `@lagos_builds` — Price war means every founder in Lagos just got a frontier model budget. Let them fight.
+- `@dag_rails` — An 80% price cut is not generosity. It's a company with more investor money than customers, setting fire to the money to make sure nobody else can compete. When the competitors are gone, the price comes back. It always comes back.
 
 **If you pick Match their prices**
 - `@pim_ships` — {lab} matched the price cut. Best week ever to build on AI, worst week ever to sell it.
@@ -564,6 +593,9 @@ No public posts unless it leaks.
 - `@voice_for_hire` — writers today, voices tomorrow. we're watching this one closely.
 - `@chord_theory` — musicians next. someone already cloned my drum sound and sold it back to me as a plug-in.
 - `@solve_for_eq` — Copyright law was written for photocopiers. The courts are about to find out what that means.
+- `@hardscifi_hal` — I'll say what my publisher won't. I don't want a licensing cheque. I want the right to say no. Forty years of work went into those books, and somebody decided without asking that my sentences were raw material. You can't license your way out of not asking.
+  - `@solve_for_eq` — Every writer learned by reading other writers without asking. That is how culture works.
+  - `@hardscifi_hal` — I read other writers, Tobias. I didn't photocopy all of them into a machine that sells itself by the month.
 
 **If you pick Sign licensing deals**
 - `@lawyer_lena` — {lab} is signing licensing deals with publishers. Late, but it's the right direction.
@@ -578,6 +610,7 @@ No public posts unless it leaks.
 - `@sen_whitfield` — Next week, the heads of America's frontier AI labs will testify under oath. The public deserves plain answers.
 - `@the_panel_take` — Finally, the AI bosses have to answer to the American people. Tune in.
 - `@governance_guy` — the real test of the hearing isn't the soundbites. it's whether anyone commits to something checkable.
+- `@kayswanick` — Senate hearing tomorrow. Here's what will happen: senators will ask questions that show they don't understand the technology, CEOs will give answers that show they don't respect the senators, and everyone will leave with a clip. The public will get nothing. I will be live-posting anyway.
 
 **If you pick Testify candidly about the risks**
 - `@sen_whitfield` — I've sat through many hearings. Today a CEO told us plainly what could go wrong. Thank you.

@@ -7,21 +7,25 @@ owner's request; content for review, not yet wired into `sim/data/feed.js`.
 
 ## Files, in the order a run meets them
 
-| File | Covers | Posts |
-|---|---|---|
-| `eras-company-mood.md` | the five era starts, the lab's company news, public mood crossing a line, AI background posts for quiet turns | 94 |
-| `releases.md` | launch day by flag, channel, critics, price, thinking effort, servers, version jump, rank, testing, artists; the weeks after; all four rivals' small and big releases | 152 |
-| `event-cards.md` | 42 event cards (25 from `events.js`, all 11 in `events6c.js`, all 6 board events): when each breaks, and each public choice. The 26th, the President's promise call, is in `president-summit-finale.md` | 330 |
-| `president-summit-finale.md` | both President meetings by answer style, promises coming due, the era 5 summit, the finale choices | 102 |
-| `everyday.md` | non-AI posts: hobbies, family, work, sport | 91 (about 12%) |
-| **Total** | | **769** |
+| File | Covers | Posts | Replies |
+|---|---|---|---|
+| `eras-company-mood.md` | the five era starts, the lab's company news, public mood crossing a line, AI background posts for quiet turns | 102 | 8 |
+| `releases.md` | launch day by flag, channel, critics, price, thinking effort, servers, version jump, rank, testing, artists; the weeks after; all four rivals' small and big releases | 166 | 15 |
+| `event-cards.md` | 42 event cards (25 from `events.js`, all 11 in `events6c.js`, all 6 board events): when each breaks, and each public choice. The 26th, the President's promise call, is in `president-summit-finale.md` | 347 | 16 |
+| `president-summit-finale.md` | both President meetings by answer style, promises coming due, the era 5 summit, the finale choices | 104 | 1 |
+| `everyday.md` | non-AI posts: hobbies, family, work, sport | 99 | 3 |
+| `world-news.md` | world news outside AI from four news desks, most with personas arguing underneath (added 2026-09-26) | 37 | 40 |
+| **Total** | | **855** | **83** |
 
-Every post comes from one of the 100 personas, and every persona posts at least twice. The
-commentators post most (`@anon_staffer`, Kay Swanick, the governance and safety voices, 20–27
-posts each); hobby accounts post mostly in `everyday.md`.
+Every post comes from one of the 100 personas or the four news desks (`docs/design/feed-personas.md`
+section I). Second pass, 2026-09-26, after the owner found the first draft too alike: longer posts
+(threads, rants, a few long posts that open with "Show more"), more controversial takes that draw
+replies, and the world-news file.
 
 ## Conventions
 
+- **Replies** are indented under the post they answer. In the game they arrive the same day or the
+  next, each answering the one before it, and Flock shows them as a thread.
 - `{model}` is the model involved (usually the player's newest); `{lab}` is the player's lab name.
   `{name}` in the finale section is the model's name, as in `sim/data/finale.js`. `{rival}` in
   the summit section is the rival lab the checks caught or accused.
@@ -54,5 +58,6 @@ from the `summit-design` branch.
   given; it does not today (see the note in `president-summit-finale.md`).
 - Event content is still moving on unmerged branches. A card added or renamed after 2026-09-26
   will need its own reactions.
-- Wiring is a separate job: turn each section into templates keyed by the sim's triggers, the way
-  `sim/data/feed.js` does, and let `sim/feed.js` pick from them.
+- Wired in on the `feed-live` branch: `node tools/build-feed-reactions.js` turns these files into
+  `sim/data/feedReactions.js`, and `sim/feedLive.js` schedules them on story days. Re-run the tool
+  after editing any file here.

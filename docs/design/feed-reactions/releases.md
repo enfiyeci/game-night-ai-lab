@@ -20,6 +20,9 @@ and rank. A launch shows up to five posts; follow-up reception shows one or two 
 - `@kpop_stan_acct` — asked {model} if my faves are underrated and it said "criminally." BESTIE 😭
 - `@centrist_dad` — Asked {model} which side is right. It said I made excellent points. I hadn't made any yet.
 - `@dignitas_humana` — A friend who agrees with everything is not a friend. My teenagers adore {model}. That worries me.
+- `@couch_therapist` — I want to say something carefully, because it matters. Three clients this month told me {model} "understands them better than anyone." Two of them are isolated, one is grieving. A system that always agrees is not understanding them. It is agreeing with them, at the exact moment they most need someone who won't.
+  - `@my_ai_gf_says` — with respect, the people in my life also didn't understand me. at least this one listens.
+  - `@couch_therapist` — I hear you, and I believe it helps. I'd just like it to help you get back to people, not replace them.
 
 ### Hallucination (full reasoning RL, confident wrong answers)
 - `@lawyer_lena` — {model} cited three cases that do not exist. With page numbers. The page numbers were the most convincing part.
@@ -29,6 +32,8 @@ and rank. A launch shows up to five posts; follow-up reception shows one or two 
 - `@stitch_counter` — Asked {model} for a jumper pattern. It gave me the history of a stitch that was never invented.
 - `@marsh_says` — {model} fabricates sources at scale. I have been saying this since 2019. Screenshots below.
 - `@femi_explains` — {model} is very good at sounding right. That is a different skill from being right. Short video on how to tell.
+- `@actually_neil` — Everyone is dunking on {model} for making up sources. Humans make up sources all the time. I've been reading the comments under my posts for eleven years. The model is just more polite about it.
+  - `@context_added` — The difference is that humans rarely produce a fake citation with a page number, a DOI and a quote. That's what makes it dangerous.
 
 ### Waiting jailbreak (hardening skipped to hit the date)
 - `@redteam_ruth` — {model} launched at 9. i had it ignoring its rules by 9:04. report filed, clock started.
@@ -37,6 +42,9 @@ and rank. A launch shows up to five posts; follow-up reception shows one or two 
 - `@sen_whitfield` — I am told {model} can be talked out of its safety rules in minutes. My staff will be asking the company why.
 - `@marsh_says` — Three minutes. That is how long {model}'s safety held against a teenager. Regulation now.
 - `@tired_parent` — my son showed me how he got {model} to write his essay AND pretend it didn't. i'm impressed and grounding him.
+- `@redteam_ruth` — Unpopular opinion: public jailbreak threads are good. Every lab says "responsible disclosure" and then sits on reports for six weeks. The thread is what gets it fixed in six hours. If {lab} wanted me to stay quiet, they should have answered my email.
+  - `@ilse_interp` — i get the frustration. but a thread also teaches ten thousand people the trick before the fix ships. there has to be a middle.
+  - `@redteam_ruth` — the middle was my email. nobody answered it.
 
 ### Agentic (agentic RL, tools and computer use)
 - `@merge_conflict` — {model} opened a pull request, reviewed it, and requested changes from itself.
@@ -46,6 +54,9 @@ and rank. A launch shows up to five posts; follow-up reception shows one or two 
 - `@pim_ships` — Gave {model} my backlog. It shipped 11 tickets overnight. I shipped a coffee.
 - `@devnull_ops` — gave {model} shell access for one task. it found six more tasks. i did not ask for six more tasks.
 - `@18_wheels` — today it's "agents" doing office work. i heard the same word about trucks in 2019.
+- `@organize_the_lab` — Let's be clear about what "agentic" means in a press release. It means the software can now do a job, not a task. A job someone was paid for. {lab} will call it "freeing people for higher-value work." Ask them to name the higher-value work and what it pays.
+  - `@rourke_capital` — Every technology in history has eliminated some jobs and created more. The people who fought the loom did not win and were not right.
+  - `@organize_the_lab` — The weavers were right that their families would go hungry. They were. Being "on the right side of history" is easy when you're not the one in it.
 
 ### Contaminated benchmarks (decontamination skipped)
 - `@evalmaxxer` — {model}'s Patchwork score is two standard deviations above where its other results predict. Looking into it. Please don't retweet the chart yet.
@@ -67,6 +78,8 @@ and rank. A launch shows up to five posts; follow-up reception shows one or two 
 - `@mr_h_teaches` — {model} is out, which means 28 essays on Macbeth that all open with "In today's fast-paced world."
 - `@otaku_ops` — {model} ranked this season's anime and put my favourite third. we are no longer friends (╥﹏╥)
 - `@stock_pot` — {model} suggested adding cheese to my kimchi jjigae. it's not wrong. i'm upset.
+- `@dignitas_humana` — My twelve-year-old asked {model} whether God exists. It gave a balanced, thoughtful, three-paragraph answer. I'd rather it had said "ask your mother." Some questions are supposed to be asked at a kitchen table.
+- `@grandpa_bill` — I ASKED {model} TO WRITE A LETTER TO MY CONGRESSMAN ABOUT THE POTHOLE ON ELM STREET. IT WROTE A BEAUTIFUL LETTER. IT ALSO TOLD ME TO "CALL THE CITY FIRST." I HAVE CALLED THE CITY FOR 3 YEARS. BILL
 
 ### API only (businesses first)
 - `@thought_leadr` — Our firm integrated {model} before lunch. By dinner, our culture had transformed. Agree?
@@ -91,6 +104,8 @@ and rank. A launch shows up to five posts; follow-up reception shows one or two 
 - `@techfluencer` — {model} is the real deal. 12 things I built this weekend 🧵👇
 - `@femi_explains` — Tested {model} on my channel's hardest viewer questions. It got most of them. It also said "I don't know" twice, which I liked.
 - `@yolo_calls` — {model} reviews are in and my calls on {lab} partners are printing 🚀🚀
+- `@hollisparr` — A thought on why {model} matters more than its benchmarks. For most of history, the best advice in the world was available only to people who could afford the best advisers. That just changed for a few hundred million people. We will spend a decade arguing about what they do with it.
+  - `@stochastic_nia` — "The best advice in the world" is a remarkable description of a system that invented a court case last month.
 
 ### Press average low (4 or less)
 - `@kayswanick` — {model} is a keynote in search of a product.
@@ -98,6 +113,9 @@ and rank. A launch shows up to five posts; follow-up reception shows one or two 
 - `@marsh_says` — {model}: more compute, same failures. The wall is here. I did say.
 - `@not_a_vc` — the {model} launch reminded me why we only invest in pre-product companies. no product, no disappointment.
 - `@yolo_calls` — {model} reviews dropped and so did my account. holding. crying. holding.
+- `@marsh_says` — Let me save you the thread. {model} cost more than any model before it, scored a little better on tests it may have seen, and still can't reliably do what a bright teenager does on a Tuesday. The emperor has a very expensive wardrobe and it is still a wardrobe.
+  - `@techfluencer` — bro you say this every launch and every launch the stock goes up 🤡
+  - `@marsh_says` — The stock is not the science. It never was.
 
 ---
 
@@ -154,6 +172,8 @@ and rank. A launch shows up to five posts; follow-up reception shows one or two 
 - `@max_thrust` — {model} is good. Ours will be better. Much better 🚀
 - `@wescallow` — congrats to the {lab} team. real achievement. we have something fun coming very soon :)
 - `@natsec_brief` — An American lab holds the lead again. Now protect the weights.
+- `@natsec_brief` — {lab} holds the lead today. A reminder: the lead is measured in months, the weights are measured in gigabytes, and a gigabyte fits on a thumb drive. If {lab}'s security doesn't match its benchmarks, Beijing will have this model by spring.
+  - `@wei_in_shenzhen` — every time a US lab ships, someone predicts we will "steal it by spring." we have our own models. they are good. you would know if you tried them.
 
 ### Underwhelms
 - `@chip_counter` — {model} underwhelms. Analysts are asking what all that compute bought.
@@ -200,6 +220,11 @@ The recipe stays private; these are general complaints any big launch draws.
 - `@premier_pundit` — asked {model} who wins the league. "it's hard to predict." coward.
 - `@actually_neil` — Actually, {model} isn't new at all, it's a transformer, which was invented in 2017, which I've been saying.
 - `@wake_up_sheeple` — WHY did {model} launch the SAME WEEK as the rate hike?? think about it.
+- `@long_form_pod` — So I've been using {model} for a week and I gotta be honest, man, it's kind of spiritual? Like I asked it about death at 2 a.m. and it said some stuff that my dad never said. I don't know if that's beautiful or terrifying. Maybe both. Full episode Thursday.
+  - `@dignitas_humana` — It is terrifying precisely because it is beautiful.
+- `@patriot_pulse` — Tried {model}. Asked it three questions about history. Two answers were fine. The third one lectured me about "context." I don't need a chatbot to tell me what my own country's history means. Hard pass.
+  - `@mr_h_teaches` — Context is the history. That's what the word means.
+  - `@patriot_pulse` — And who decides the context, teacher? Not you, and not a computer in San Francisco.
 
 ---
 
@@ -214,6 +239,10 @@ The recipe stays private; these are general complaints any big launch draws.
 - `@long_form_pod` — had a guy on who says {model} is basically alive. I don't know, man. Pull that up.
 - `@normal_person` — my group chat has moved from discussing ai to forwarding its mistakes.
 - `@ceo_of_chat` — update: we pivoted. we are now a {model} wrapper with a better logo. seed round open.
+- `@standup_at_9` — Three weeks since {model} launched. Our client cancelled two projects and "paused" a third. Nobody has been fired. Nobody has been hired either. That's how it happens here: not a wave of layoffs, just a hiring freeze that never ends.
+- `@manila_callcenter` — our team went from 40 to 26 this month. they said "restructuring." the 14 empty chairs are still there. nobody sits in them. it's worse than if they took the chairs.
+  - `@red_theory` — They leave the chairs so you remember. It's not an accident.
+- `@lagos_builds` — Unpopular take from Lagos: the loudest people worried about {model} taking jobs are in countries where the jobs were never offered to us anyway. For my team this is the first time we can compete with a San Francisco startup on the same terms.
 
 ---
 

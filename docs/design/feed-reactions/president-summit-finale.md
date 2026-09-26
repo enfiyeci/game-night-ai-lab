@@ -19,6 +19,7 @@ only "The meeting happens" and the walk-out posts.
 - `@patriot_pulse` — The President is finally holding these AI people accountable. 🇺🇸
 - `@kayswanick` — Every AI CEO in America now has a tie in their bag, just in case.
 - `@natsec_brief` — Good to see the White House engaging labs directly. The first question should be China. It was.
+- `@red_theory` — The CEO of a company worth more than most countries sat down with the head of the most powerful state on earth to decide how a technology that affects everyone should be governed. Nobody else was in the room. Remember that the next time someone tells you this is about "the market."
 
 ### After a plain answer (the CEO told the truth)
 - `@sen_whitfield` — I'm told {lab}'s CEO gave the President a straight answer on where we stand against China. We need more of that.
@@ -121,6 +122,8 @@ only "The meeting happens" and the walk-out posts.
 - `@natsec_brief` — Any deal that lets Beijing inspect American labs is a non-starter. Any deal with no inspection is a press release.
 - `@lunt_rational` — This is the first real chance to slow the race. It will probably be wasted. I would love to be wrong.
 - `@bex_entropy` — a summit to slow down the most important technology in history. hard pass ⚡
+- `@exit_and_build` — A room of governments negotiating how fast a technology may improve. Every such room in history has produced two things: a photograph and a black market.
+  - `@brussels_effect` — It also produced the ozone treaty, which you are currently breathing through.
 
 ### Checks on the table (how strictly the deal is checked)
 - `@governance_guy` — the whole summit comes down to one word: checks. on trust, self-reports, outside testers or inspectors. anything less than testers is a pinky promise.

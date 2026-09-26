@@ -72,6 +72,11 @@ Posts marked *(season)* suit a time of year and can be matched to the in-game mo
 - `@red_theory` — Celtic won. Class consciousness can wait until Monday.
 - `@exit_and_build` — The best way to predict the future is to incorporate it offshore.
 - `@town_hall` — Pickleball with the parks department this morning. I lost. The parks department has been told this is not a policy precedent.
+- `@patriot_pulse` — Gas is up again, groceries are up again, and the politicians are on TV arguing about statues. Fix the prices. Then argue about whatever you want.
+  - `@organize_the_lab` — I never thought I'd say this, but Clint's right. Prices first. (Then union wages. But prices first.)
+- `@solve_for_eq` — Proposal: every politician who promises to lower prices must first explain, in one paragraph, what a price is. The number of speeches would fall by 90%.
+- `@red_theory` — Hot take: the housing crisis is not a crisis. It is a policy, working exactly as designed for the people who own the houses.
+  - `@town_hall` — As someone who actually has to get housing built: it's both. The incentives are bad and the rules are bad. We're fixing the rules first because those are ours to fix.
 
 ## Everyday life
 - `@tired_parent` — packed lunches, found shoes, found other shoe, dog ate lunch. it's 7:40.
@@ -90,6 +95,12 @@ Posts marked *(season)* suit a time of year and can be matched to the in-game mo
 - `@oat_milk_extra` — thrifted a whole velvet coat for $6. i am now a victorian ghost and thriving.
 - `@normal_person` — the weather said sunny. the weather lied. washing is ruined.
 - `@cevirmen_ayse` — the neighbourhood cat has decided my balcony is her office. rent is one sardine a day.
+- `@tired_parent` — the pediatric dentist said my son has "the teeth of someone who drinks juice as a lifestyle." i have never felt more judged or more seen. we are switching to water. he is not taking it well.
+- `@night_shift_rn` — coded a guy at 4am. got him back. his wife hugged me in the hallway for a full minute and didn't say anything. then i went and ate a vending machine sandwich in a stairwell. this job is the best and worst thing in my life.
+- `@five_star_driver` — tonight a passenger asked where I'm from. I said Kabul. He was quiet for a while, then said his brother served there. He asked if I knew the airport. I said I worked there for four years. We sat in the car outside his house for twenty minutes after the ride ended. No tip. Didn't need one.
+- `@grandpa_bill` — MY WIFE PASSED 6 YEARS AGO TODAY. I STILL MAKE TWO CUPS OF COFFEE SOMETIMES. MY GRANDSON SAYS I SHOULD "SHARE MY FEELINGS ONLINE." THIS IS ME DOING IT. MISS YOU JUNE. BILL
+  - `@stitch_counter` — Bill, I make two cups too. Six years for me as well. Sending you the warmest of hugs from Dublin.
+- `@cevirmen_ayse` — it's raining in istanbul, the ferry is late, the tea is hot, the cat is judging me. somewhere a man is shouting about football. the city is perfect for exactly one hour a day and this is the hour.
 
 ## Creators and fans
 - `@ink_and_spite` — finished the comic page. 11 hours. my cat sat on it twice. both times improved it.

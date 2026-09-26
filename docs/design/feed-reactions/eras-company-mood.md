@@ -17,6 +17,7 @@ for quiet turns in each era (`AMBIENT_POSTS`). Non-AI posts are in `everyday.md`
 - `@marsh_says` — Chatbots are autocomplete with a publicist. Mark this post.
 - `@normal_person` — everyone says this changes everything. my printer remains unconvinced.
 - `@study_break` — chat assistants are everywhere now. mostly apologising, but everywhere.
+- `@lunt_rational` — I would like it on the record, at the very start, that I said this would not stay a chatbot. It will not stay a chatbot. The chat window is the smallest version of this technology you will ever see.
 
 ### Era 2 — The scale-up
 - `@chip_counter` — The strategy is now simple: more chips, more data, more power. The question is who gets the packaging capacity.
@@ -27,6 +28,9 @@ for quiet turns in each era (`AMBIENT_POSTS`). Non-AI posts are in `everyday.md`
 - `@dag_rails` — The industry has discovered that if you spend ten times more you get a better model. Groundbreaking.
 - `@water_not_watts` — the scale-up needs water and power. guess whose towns they are planning to use.
 - `@launch_tracker` — Every lab's launch this year has the same slide: a bigger number next to the word "parameters." I'm starting a collection.
+- `@red_theory` — The "scale-up" is the most concentrated private investment in history, pointed at a technology designed to replace the labour of the people whose savings are funding it. If a novelist wrote that plot, the editor would call it heavy-handed.
+  - `@solve_for_eq` — The savings are earning a return. That is what savings are for.
+  - `@red_theory` — Some of them are. Ask the translator in Istanbul how her return is doing.
 
 ### Era 3 — Reasoning and agents
 - `@arun_builds` — the models now think before they answer and can use tools. this is the biggest change since the chat window. thread on what it means.
@@ -37,6 +41,9 @@ for quiet turns in each era (`AMBIENT_POSTS`). Non-AI posts are in `everyday.md`
 - `@lodestar_eng` — agents are here. the evals for agents are not. that gap is where i spend my week.
 - `@bex_entropy` — the machines can DO things now. ACCELERATE ⚡⚡
 - `@new_grad_2026` — models can reason and use tools now. the internship i applied to was quietly deleted.
+- `@18_wheels` — They keep telling me agents will "handle the paperwork" so I can focus on driving. I've been driving 28 years. Every tool that was supposed to help me drive is now a camera that watches me drive. I know where this ends. I'm not paranoid. I've seen the pilot program.
+  - `@centrist_dad` — Respect, Darnell. Genuinely. What would you want them to do instead?
+  - `@18_wheels` — ask us before they build it. that's all. ask the people who do the job.
 
 ### Era 4 — The gigawatt race
 - `@megawatt_mood` — Another lab asked our utility for a gigawatt this morning. That is a city, y'all. A whole city.
@@ -46,6 +53,9 @@ for quiet turns in each era (`AMBIENT_POSTS`). Non-AI posts are in `everyday.md`
 - `@natsec_brief` — Bottom line: the country that builds power fastest leads AI. We are not building fastest.
 - `@dirt_and_data` — land agent came by asking what we'd take for the north field. said it was for "compute." i said corn.
 - `@solve_for_eq` — The binding constraint moved from chips to electricity. Markets will find the next one soon enough.
+- `@not_in_my_county` — They tell us the data centre will bring 40 jobs. The last one in the next county brought 12, a new substation, and a hum you can hear at night from two miles away. My neighbour has stopped sleeping with the window open. That's the real cost, and it's not in the brochure.
+  - `@megawatt_mood` — Ma'am, that hum is the transformers, and it's fixable with better siting and walls. Push them for it in writing. They'll do it if you make them.
+  - `@not_in_my_county` — In writing. Noted. Thank you, Ellen.
 
 ### Era 5 — Self-improvement and pacing
 - `@lunt_rational` — The systems are now improving the systems. This is the part of the story we were warned about. Nobody is slowing down.
@@ -56,6 +66,9 @@ for quiet turns in each era (`AMBIENT_POSTS`). Non-AI posts are in `everyday.md`
 - `@shenzhen_dispatch` — Both governments are now talking about "pacing." Read the Chinese statement carefully; it says more than the English one.
 - `@bunker_notes` — the machines are building the machines. added two more crates of beans. laugh now.
 - `@pastor_ray` — When the tools start making the toolmakers, church, it is time to ask who we want to be. Sunday, 10 a.m.
+- `@pastor_ray` — Church, I've been asked this week if the machines have souls. I don't know. I know that we do, and I know that a soul is measured by what you do for the least of these, not by how clever you are. Let's not lose the first thing while we argue about the second.
+- `@bex_entropy` — to everyone saying "slow down": you are asking the fastest-improving system in history to wait for committees. the committees are not coming. the future does not do waiting rooms. ⚡
+  - `@lunt_rational` — "The committees are not coming" is exactly the problem, and you have described it as the solution.
 
 ---
 
@@ -68,6 +81,8 @@ for quiet turns in each era (`AMBIENT_POSTS`). Non-AI posts are in `everyday.md`
 - `@red_theory` — Another round of money to automate the jobs of the people whose pensions funded it. Efficient.
 - `@yolo_calls` — {lab} raised?? can i buy it on my trading app?? can i buy ANY of it??
 - `@kayswanick` — {lab} raised again. Runway is now measured in presidential terms.
+- `@not_a_vc` — we just led {lab}'s round at a valuation of "yes." due diligence was one dinner. the founder ordered water. that's discipline. that's a 100x signal.
+  - `@term_sheet` — this account is satire and it is still more accurate than my last three board meetings.
 
 ### Emergency (cash running out)
 - `@crab_apple_leaks` — lights on at {lab} at 2 a.m. something's up 🍎
@@ -114,6 +129,7 @@ for quiet turns in each era (`AMBIENT_POSTS`). Non-AI posts are in `everyday.md`
 - `@town_hall` — People in this city are not reassured by "trust us" this time. I am hearing it at every meeting.
 - `@patriot_pulse` — They lie to your face and call it "safety." RT if you're done trusting Big Tech.
 - `@stochastic_nia` — Trust is not a PR asset. It is what's left when you tell the truth for long enough.
+- `@the_panel_take` — Tonight: Americans don't trust AI companies anymore, and you know what? They're right. These people told you the internet would bring us together. They told you social media would make us closer. Now they want to be trusted with a mind. Tune in.
 
 ### Public trust rises above 75
 - `@centrist_dad` — A lab did the careful thing and people noticed. Odd, but pleasant.

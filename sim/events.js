@@ -6,6 +6,7 @@ import { EVENT_TIMING, DEFAULT_EVENT_TIMING } from './data/eventTiming.js';
 import { ROUND_DAYS, nextRoundDay, roundMarkDay } from './time.js';
 import { eraById } from './data/eras.js';
 import { sideRng } from './contracts.js';
+import { FEED_KEEP } from './feedLive.js';
 import {
   failedPresidentPromises,
   promiseCallCard,
@@ -39,8 +40,8 @@ const publicCard = (state, event) => ({
 });
 
 export function pushFeed(state, handle, text, tag = 'feed') {
-  state.feed.push({ turn: state.turn, handle, text, tag });
-  if (state.feed.length > 40) state.feed.splice(0, state.feed.length - 40);
+  state.feed.push({ turn: state.turn, day: state.day, handle, text, tag });
+  if (state.feed.length > FEED_KEEP) state.feed.splice(0, state.feed.length - FEED_KEEP);
 }
 
 function queuePromiseCalls(state, event, out) {
@@ -93,7 +94,7 @@ export function eventsTick(state, rng) {
       event.card.choices.find((choice) => choice.id === 'refuse').effects(state, []);
       if (!state.seenEvents.includes(event.id)) state.seenEvents.push(event.id);
       pushFeed(state, '@your_model', "The model's hard line refused the request.", 'event');
-      out.push({ type: 'eventResolved', id: event.id, choiceId: 'refuse', auto: true });
+      out.push({ type: 'eventResolved', id: event.id, eventId: event.id, choiceId: 'refuse', auto: true });
       continue;
     }
     if (!event.bypassCardLimit && state.pendingEvents.length >= MAX_CARDS) {
@@ -191,7 +192,7 @@ export function resolveDue(state) {
     if (pending.dueAt == null || state.day < pending.dueAt) continue;
     const choiceId = fallbackChoice(pending.id, pending);
     const result = resolveEvent(state, pending.id, choiceId);
-    if (result.ok) out.push({ type: 'eventResolved', id: pending.id, choiceId, auto: true, reason: 'deadline' });
+    if (result.ok) out.push({ type: 'eventResolved', id: pending.id, eventId: pending.eventId ?? pending.id, choiceId, promiseId: pending.promiseId, auto: true, reason: 'deadline' });
   }
   return out;
 }
