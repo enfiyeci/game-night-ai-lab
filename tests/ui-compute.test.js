@@ -240,6 +240,34 @@ test('idle compute cost uses the average billed price of online contracts', () =
   assert.match(opinions(s, 'budget').find((opinion) => opinion.id === 'cfo').text, new RegExp(money(idleComputeCost(s)).replace('$', '\\$')));
 });
 
+test('idle compute cost does not attribute pooled capacity cost to idle units', () => {
+  const s = createInitialState();
+  s.compute.contracts = [{
+    id: 'spot', supplier: 'spot', units: 100, price: 1, monthsLeft: null,
+    needsPower: false, dark: false, scaledDown: false, exclusiveBought: false,
+  }];
+  s.compute.pooled = 0.3;
+  s.compute.online = 70;
+  s.compute.servingUnits = 0;
+  s.compute.split.safety = 0;
+  assert.equal(computeBar(s).segments.find((segment) => segment.key === 'idle').units, 70);
+  assert.equal(idleComputeCost(s), 70 * BALANCE.unitMonthlyCost);
+});
+
+test('idle compute cost is unchanged without pooling', () => {
+  const s = createInitialState();
+  s.compute.contracts = [{
+    id: 'spot', supplier: 'spot', units: 100, price: 1, monthsLeft: null,
+    needsPower: false, dark: false, scaledDown: false, exclusiveBought: false,
+  }];
+  s.compute.pooled = 0;
+  s.compute.online = 100;
+  s.compute.servingUnits = 0;
+  s.compute.split.safety = 0;
+  assert.equal(computeBar(s).segments.find((segment) => segment.key === 'idle').units, 100);
+  assert.equal(idleComputeCost(s), 100 * BALANCE.unitMonthlyCost);
+});
+
 test('the sites view counts dark chips and their bill', () => {
   const s = createInitialState();
   s.era = 4;

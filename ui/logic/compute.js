@@ -445,7 +445,7 @@ function poweredBilling(state) {
   const poweredNeeds = Math.min(needsUnits, sitePower(state));
   const poweredShare = needsUnits > 0 ? poweredNeeds / needsUnits : 0;
   const needsBill = needs.reduce((sum, contract) => sum + contractBill(contract), 0) * poweredShare;
-  return { units: Math.min(state.compute.online, ownUnits + poweredNeeds), bill: ownBill + needsBill };
+  return { units: ownUnits + poweredNeeds, bill: ownBill + needsBill };
 }
 
 const SITE_TAGS = {
