@@ -128,6 +128,7 @@ def features(era):
         gid="" if era is None else f"era{era}-",  # gradient-id prefix, so several era SVGs can share one page
         premises="loft" if e == 1 else "office" if e <= 3 else "building",
         folding=e == 1, hot=e == 5, empty_researchers=e == 5, invite=e == 4, accord=e == 5,
+        doom=e == 5,  # era 5: an orange smoke-haze day outside, a protest at the gates, the lab on the news
         racks=([(6.9, 7.9, 1.45)] if e == 1 else [(8.7, 9.7, 2.35), (9.8, 10.8, 2.35)] if e == 2
                else [(8.1, 8.96, 2.35), (9.02, 9.88, 2.35), (9.94, 10.8, 2.35)] if e == 3  # slimmer racks clear the board
                else [(11.6, 12.6, 2.35), (12.7, 13.7, 2.35), (13.8, 14.8, 2.35)]),
@@ -1070,6 +1071,77 @@ def curtain_art(a0, a1, z0=0.15, z1=2.5):
     return "".join(o)
 
 
+def doom_window(a0, a1, z0=0.15, z1=2.5):
+    """Curtain wall onto an orange smoke-haze day: data halls to the horizon, plumes, a protest at the gates."""
+    b0, b1 = -z1 * U, -z0 * U
+    w, h = a1 - a0, b1 - b0
+    gid = F["gid"]
+    mull = M("ink", 60, "paper")
+    o = [f'<defs><linearGradient id="{gid}dsky" x1="0" y1="0" x2="0" y2="1">'
+         f'<stop offset="0" style="stop-color:{M("coral", 45, "wood")}"/><stop offset=".55" style="stop-color:{M("wood", 55, "cream")}"/>'
+         f'<stop offset="1" style="stop-color:{M("cream", 70, "coral")}"/></linearGradient></defs>',
+         f'<rect x="{a0 - 4:.1f}" y="{b0 - 4:.1f}" width="{w + 8:.1f}" height="{h + 8:.1f}" style="fill:{mull}"/>',
+         f'<rect x="{a0:.1f}" y="{b0:.1f}" width="{w:.1f}" height="{h:.1f}" style="fill:url(#{gid}dsky)"/>',
+         f'<circle cx="{a0 + w * 0.3:.1f}" cy="{b0 + h * 0.3:.1f}" r="13" style="fill:{M("coral", 55, "paper")};opacity:.85;filter:blur(1.5px)"/>']
+    # three rows of data halls, lighter as they recede
+    for row, (base, hh, col, gap) in enumerate([(b1 - 44, 8, M("wood", 55, "coral"), 3), (b1 - 32, 12, M("wood", 55, "ink"), 4), (b1 - 18, 17, M("ink", 62, "wood"), 6)]):
+        x, k = a0, row
+        while x < a1:
+            bw = [34, 22, 46, 28, 38][k % 5]
+            bw = min(bw, a1 - x)
+            o.append(f'<rect x="{x:.1f}" y="{base - hh:.1f}" width="{bw:.1f}" height="{hh}" style="fill:{col}"/>')
+            x += bw + gap
+            k += 1
+    # cooling towers with heavy plumes
+    for cx, th, bw in [(a0 + w * 0.12, 30, 10), (a0 + w * 0.34, 38, 12), (a0 + w * 0.55, 34, 11), (a0 + w * 0.74, 42, 13), (a0 + w * 0.9, 31, 10)]:
+        bb, tw = b1 - 30, bw * 0.62
+        o.append("".join(f'<circle cx="{cx + dx:.1f}" cy="{bb - th - dy:.1f}" r="{r}" style="fill:{M("ink", 38, "wood")};opacity:.55"/>'
+                         for dx, dy, r in [(-2, 6, 8), (5, 14, 10), (-4, 24, 12), (6, 36, 14), (-3, 50, 16)]))
+        o.append(f'<path d="M{cx - bw:.1f},{bb:.1f} Q{cx - tw * 0.55:.1f},{bb - th * 0.6:.1f} {cx - tw:.1f},{bb - th:.1f} L{cx + tw:.1f},{bb - th:.1f} '
+                 f'Q{cx + tw * 0.55:.1f},{bb - th * 0.6:.1f} {cx + bw:.1f},{bb:.1f} Z" style="fill:{M("paper", 55, "wood")};stroke:{A("ink", 30)};stroke-width:.8"/>')
+    o.append(f'<rect x="{a0:.1f}" y="{b0:.1f}" width="{w:.1f}" height="{h * 0.28:.1f}" style="fill:{A("ink", 16)};filter:blur(6px)"/>')
+    # ground and the protest at the gates
+    o.append(f'<rect x="{a0:.1f}" y="{b1 - 18:.1f}" width="{w:.1f}" height="18" style="fill:{M("wood", 50, "paper")}"/>'
+             f'<path d="M{a0:.1f},{b1 - 12:.1f} L{a1:.1f},{b1 - 12:.1f}" style="stroke:{M("ink", 50, "paper")};stroke-width:1.4;stroke-dasharray:3 2"/>')
+    shirts = ["var(--ink)", "var(--coral)", "var(--sky)", "var(--teal)", M("wood", 60, "ink")]
+    x, k = a0 + w * 0.3, 0
+    while x < a0 + w * 0.92:
+        yb = b1 - 2 - (k % 2) * 3
+        o.append(f'<rect x="{x - 3:.1f}" y="{yb - 9:.1f}" width="6" height="9" rx="2" style="fill:{shirts[k % 5]}"/>'
+                 f'<circle cx="{x:.1f}" cy="{yb - 11.5:.1f}" r="2.6" style="fill:{[SK_MED, SK_LIGHT, SK_DARK][k % 3]}"/>')
+        if k % 2 == 0:
+            o.append(f'<path d="M{x + 2:.1f},{yb - 8:.1f} L{x + 2:.1f},{yb - 22:.1f}" style="stroke:{M("wood", 55, "ink")};stroke-width:1"/>'
+                     f'<rect x="{x - 5:.1f}" y="{yb - 30:.1f}" width="14" height="9" rx="1" style="fill:var(--paper);stroke:{A("ink", 40)};stroke-width:.6"/>'
+                     f'<rect x="{x - 3:.1f}" y="{yb - 27:.1f}" width="10" height="{2 if k % 4 else 3}" style="fill:{"var(--coral)" if k % 4 == 0 else "var(--ink)"}"/>')
+        x += 7.5
+        k += 1
+    n = max(2, int(w / 70))
+    o.append("".join(f'<path d="M{a0 + w * i / n:.1f},{b0:.1f} L{a0 + w * i / n:.1f},{b1:.1f}" style="stroke:{mull};stroke-width:4"/>' for i in range(1, n)))
+    o.append(f'<path d="M{a0:.1f},{b0 + h * 0.62:.1f} L{a1:.1f},{b0 + h * 0.62:.1f}" style="stroke:{mull};stroke-width:3"/>')
+    return "".join(o)
+
+
+def newscast(x0, x1, z0, z1):
+    """The screen wall shows one live broadcast about the lab."""
+    a0, a1, b0, b1 = x0 * U, x1 * U, -z1 * U, -z0 * U
+    w, h = a1 - a0, b1 - b0
+    return (f'<rect x="{a0 - 8:.1f}" y="{b0 - 8:.1f}" width="{w + 16:.1f}" height="{h + 16:.1f}" rx="8" style="fill:{A("sky", 28)};filter:blur(9px)"/>'
+            f'<rect x="{a0:.1f}" y="{b0:.1f}" width="{w:.1f}" height="{h:.1f}" rx="3" style="fill:{MONITOR}"/>'
+            f'<rect x="{a0 + 4:.1f}" y="{b0 + 4:.1f}" width="{w - 8:.1f}" height="{h - 8:.1f}" rx="2" style="fill:{M("sky", 55, "ink")}"/>'
+            # the lab's own building on the news, a coral ring around it
+            f'<rect x="{a0 + w * 0.45:.1f}" y="{b0 + h * 0.3:.1f}" width="{w * 0.4:.1f}" height="{h * 0.34:.1f}" style="fill:{M("paper", 70, "sky")}"/>'
+            + "".join(f'<rect x="{a0 + w * 0.47 + i * w * 0.075:.1f}" y="{b0 + h * 0.36:.1f}" width="{w * 0.05:.1f}" height="{h * 0.22:.1f}" style="fill:{M("sky", 60, "ink")}"/>' for i in range(5))
+            + f'<ellipse cx="{a0 + w * 0.65:.1f}" cy="{b0 + h * 0.47:.1f}" rx="{w * 0.27:.1f}" ry="{h * 0.25:.1f}" style="fill:none;stroke:var(--coral);stroke-width:3"/>'
+            f'<rect x="{a0 + 10:.1f}" y="{b0 + 10:.1f}" width="30" height="13" rx="2" style="fill:var(--coral)"/>'
+            f'<text x="{a0 + 25:.1f}" y="{b0 + 20:.1f}" text-anchor="middle" style="font-size:9px;font-weight:900;letter-spacing:.06em;fill:var(--paper)">LIVE</text>'
+            f'<rect x="{a0 + 10:.1f}" y="{b0 + 30:.1f}" width="{w * 0.3:.1f}" height="3" rx="1.5" style="fill:{A("paper", 70)}"/>'
+            f'<rect x="{a0 + 10:.1f}" y="{b0 + 37:.1f}" width="{w * 0.22:.1f}" height="3" rx="1.5" style="fill:{A("paper", 50)}"/>'
+            f'<rect x="{a0 + 4:.1f}" y="{b1 - 26:.1f}" width="{w - 8:.1f}" height="14" style="fill:var(--paper)"/>'
+            f'<rect x="{a0 + 10:.1f}" y="{b1 - 21:.1f}" width="{w * 0.6:.1f}" height="4" rx="2" style="fill:var(--ink)"/>'
+            f'<rect x="{a0 + 4:.1f}" y="{b1 - 12:.1f}" width="{w - 8:.1f}" height="8" style="fill:var(--coral)"/>'
+            + "".join(f'<rect x="{a0 + 10 + i * 34:.1f}" y="{b1 - 9.5:.1f}" width="24" height="2.4" rx="1" style="fill:{A("paper", 80)}"/>' for i in range(int((w - 20) / 34))))
+
+
 def screen_wall_art(x0, x1, z0, z1, cols, rows):
     """A wall of monitors in the right-wall plane, agents at work on every screen."""
     cw, ch = (x1 - x0) / cols, (z1 - z0) / rows
@@ -1204,11 +1276,13 @@ def building_scene():
     o.append(planeZ(0, f'<rect x="{6.0 * U}" y="{6.8 * U}" width="{4.0 * U}" height="{3.0 * U}" rx="14" '
                        f'style="fill:{M("cream", 78, "coral")};stroke:{M("coral", 55, "cream")};stroke-width:5"/>'))
     right = [plaque_art(0.6, 2.9, 2.55, "EVALS"), constitution_art(3.3), kestrel_art(4.62),
-             whiteboard_art(6.3, 8.45, "chains"), screen_wall_art(8.62, 10.42, 1.05, 2.5, 3, 2)]
+             whiteboard_art(6.3, 8.45, "chains"),
+             newscast(8.62, 10.42, 1.05, 2.5) if F["doom"] else screen_wall_art(8.62, 10.42, 1.05, 2.5, 3, 2)]
     if F["accord"]:
         right.append(accord_art(5.6))
     o.append(planeY(0, "".join(right)))
-    o.append(planeX(0, D, curtain_art((D - 10.6) * U, (D - 3.6) * U) + ship_bell((D - 3.3) * U, -2.15 * U)))
+    view = doom_window if F["doom"] else curtain_art
+    o.append(planeX(0, D, view((D - 10.6) * U, (D - 3.6) * U) + ship_bell((D - 3.3) * U, -2.15 * U)))
     o.append(evals_room(3.2, 3.0))
     o.append(f'<g id="rack">{rack()}</g>')
     away = F["empty_researchers"]  # era 5: two chairs empty, their monitors still running agents
