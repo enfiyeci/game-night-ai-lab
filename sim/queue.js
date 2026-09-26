@@ -1,5 +1,5 @@
 import { BALANCE } from './balance.js';
-import { eraScale } from './data/compute.js';
+import { SUPPLIERS, eraScale } from './data/compute.js';
 import { addPipeline } from './contracts.js';
 
 export const QUEUE_RELEASE = 15;     // × eraScale(3) units per turn
@@ -56,7 +56,7 @@ export function placeOrder(state, { units, tier } = {}) {
   if (q.carry) return { ok: false, error: 'an earlier order is still waiting: withdraw it first' };
   let upfront = 0;
   if (tier === 'prepaid') {
-    upfront = Math.round(PREPAY_SHARE * units * BALANCE.unitMonthlyCost * QUEUE_TERM_MONTHS);
+    upfront = Math.round(PREPAY_SHARE * units * SUPPLIERS.verde.price * BALANCE.unitMonthlyCost * QUEUE_TERM_MONTHS);
     if (upfront > state.cash) return { ok: false, error: 'not enough cash to prepay' };
     state.cash -= upfront;
     state.raceHeat += 2;
@@ -87,7 +87,7 @@ export function queueTurn(state, rng) {
   q.last = { released: supply, rows: orders.map((o) => ({ ...o, got: got[o.lab] })) };
   if (mine) {
     const filled = got.you;
-    if (filled > 0) addPipeline(state, { supplier: 'verde', units: filled, price: 1.0, termMonths: QUEUE_TERM_MONTHS, arrivesTurn: state.turn + 1, string: null });
+    if (filled > 0) addPipeline(state, { supplier: 'verde', units: filled, price: SUPPLIERS.verde.price, termMonths: QUEUE_TERM_MONTHS, arrivesTurn: state.turn + 1, string: null });
     q.carry = filled < mine.units ? { units: mine.units - filled, tier: mine.tier } : null;
     events.push({ type: 'queueFilled', units: filled, waiting: q.carry?.units ?? 0 });
   }

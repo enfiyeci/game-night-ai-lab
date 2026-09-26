@@ -2,7 +2,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import { BALANCE } from '../sim/balance.js';
+import { createRng } from '../sim/rng.js';
 import { SUPPLIERS, SPOT_PRICE, EQUITY_SHARE, GULF_OPEN, GULF_REVOKE, SCALE_DOWN, SCALE_DOWN_PENALTY_MONTHS, BREAK_SHARE, BUYOUT_MONTHS, eraScale } from '../sim/data/compute.js';
+import { SITE_TYPES } from '../sim/power.js';
 import {
   generateOffers, signOffer, deliverDue, contractsTurn, syncContracts, expireContracts, pullBumped, contractAction, monthlyBills,
   creditOffset, spendCredits, perTurn, exclusiveActive, sideRng,
@@ -129,6 +131,20 @@ test('scale down once with a penalty and a slower next offer; break costs a shar
   assert.equal(contractAction(s, { id: 'starter', action: 'melt' }).ok, false);
 });
 
+test('scale down delays an already-generated offer from the same supplier', () => {
+  const s = fresh(1);
+  signOffer(s, offer(s, 'coreflame').id, lo);
+  s.turn = SUPPLIERS.coreflame.arrival;
+  deliverDue(s, lo);
+  s.compute.offers = generateOffers(s, lo);
+  const current = offer(s, 'coreflame');
+  const arrivesIn = current.arrivesIn;
+  const c = s.compute.contracts.find((x) => x.supplier === 'coreflame');
+  assert.equal(contractAction(s, { id: c.id, action: 'scaleDown' }).ok, true);
+  assert.equal(current.arrivesIn, arrivesIn + 1);
+  assert.equal(signOffer(s, current.id, lo).arrivesTurn, s.turn + arrivesIn + 1);
+});
+
 test('neocloud trouble, and the Gulf license follows US favor', () => {
   const s = fresh(3, GULF_OPEN + 5);
   const pt = s.publicTrust;
@@ -186,6 +202,7 @@ test('equity-for-compute credits pay Azuria bills and cost board support', () =>
 test('the grid card reserves a power site and then disappears', () => {
   const s = fresh(2);
   const g = offer(s, 'grid');
+  assert.equal(g.upfront, SITE_TYPES.grid.upfront);
   assert.equal(signOffer(s, g.id, lo).ok, true);
   assert.equal(s.power.sites[0].source, 'grid');
   assert.equal(generateOffers(s, lo).some((o) => o.supplier === 'grid'), false);
@@ -217,8 +234,34 @@ test('a delivery applies the era spot price and the Gulf license at once', () =>
   assert.equal(s.compute.contracts.find((c) => c.supplier === 'gulf').dark, true, 'a license revoked in transit arrives dark');
 });
 
+test('a Gulf license revoked in transit stays revoked until favor reaches the opening threshold', () => {
+  const s = fresh(3, GULF_OPEN);
+  const gulf = offer(s, 'gulf');
+  signOffer(s, gulf.id, lo);
+  s.turn = 1;
+  s.govFavor.us = GULF_REVOKE - 1;
+  deliverDue(s, lo);
+  s.turn = gulf.arrivesIn;
+  s.govFavor.us = GULF_REVOKE + 1;
+  deliverDue(s, lo);
+  const c = s.compute.contracts.find((x) => x.supplier === 'gulf');
+  assert.equal(c.dark, true);
+  assert.equal(monthlyBills(s), 10 * U);
+});
+
 test('the side stream is deterministic and independent of the main stream', () => {
   const s = fresh(1);
   assert.equal(sideRng(s, 3).next(), sideRng(s, 3).next());
   assert.notEqual(sideRng(s, 3).next(), sideRng(s, 4).next());
+  const original = sideRng(s, 3).next();
+  s.seed += 1;
+  assert.notEqual(sideRng(s, 3).next(), original);
+  s.seed -= 1;
+  s.turn += 1;
+  assert.notEqual(sideRng(s, 3).next(), original);
+  s.turn -= 1;
+  const main = createRng(s.seed);
+  main.next();
+  main.next();
+  assert.equal(sideRng(s, 3).next(), original);
 });

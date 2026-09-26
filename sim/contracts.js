@@ -5,7 +5,7 @@ import {
   SUPPLIERS, SPOT_PRICE, eraScale, FRAGILE_MONTHLY, BUMP_CHANCE, GULF_OPEN, GULF_REVOKE, EQUITY_SHARE,
   SCALE_DOWN, SCALE_DOWN_PENALTY_MONTHS, BREAK_SHARE, BUYOUT_MONTHS,
 } from './data/compute.js';
-import { reserveGrid, poweredUnits } from './power.js';
+import { SITE_TYPES, reserveGrid, poweredUnits } from './power.js';
 
 const UNIT = BALANCE.unitMonthlyCost;
 const FAMILY = { azuriaEquity: 'azuria', loi: 'verde' };
@@ -35,7 +35,7 @@ export function generateOffers(state, rng) {
     if (key === 'gulf' && (state.govFavor.us < GULF_OPEN || state.flags.supplyChainRisk)) continue;
     const id = `${key}-${state.turn}`;
     if (key === 'grid') {
-      if (!state.power.sites.some((x) => x.source === 'grid')) offers.push({ id, supplier: key, upfront: 50, string: s.string });
+      if (!state.power.sites.some((x) => x.source === 'grid')) offers.push({ id, supplier: key, upfront: SITE_TYPES.grid.upfront, string: s.string });
       continue;
     }
     const delay = state.compute.delays[family(key)] ?? 0;
@@ -65,7 +65,7 @@ function arrive(state, p, rng) {
   const c = {
     id: p.id, supplier: p.supplier, units, price: p.price, monthsLeft: p.termMonths,
     needsPower: p.needsPower ?? (p.supplier === 'verde' && state.era >= 4), string: p.string, arrivedTurn: state.turn,
-    scaledDown: false, troubled: false, dark: false, bumpTurn: null, exclusiveBought: false, headline: p.headline ?? null,
+    scaledDown: false, troubled: false, dark: p.dark ?? false, bumpTurn: null, exclusiveBought: false, headline: p.headline ?? null,
   };
   state.compute.contracts.push(c);
   return c;
@@ -139,6 +139,12 @@ export function syncContracts(state) {
       else if (state.govFavor.us >= GULF_OPEN) c.dark = false;
     }
   }
+  for (const p of state.compute.pipeline) {
+    if (p.supplier === 'gulf') {
+      if (state.govFavor.us < GULF_REVOKE || state.flags.supplyChainRisk) p.dark = true;
+      else if (state.govFavor.us >= GULF_OPEN) p.dark = false;
+    }
+  }
 }
 
 // Called at turn end, before plan 2A's event tick, so a CoreFlame failure is warned about the same turn.
@@ -198,7 +204,11 @@ export function contractAction(state, { id, action } = {}) {
     state.cash -= removed * c.price * UNIT * SCALE_DOWN_PENALTY_MONTHS;
     c.units -= removed;
     c.scaledDown = true;
-    state.compute.delays[c.supplier] = 1;
+    const supplier = family(c.supplier);
+    for (const offer of state.compute.offers) {
+      if (family(offer.supplier) === supplier && typeof offer.arrivesIn === 'number') offer.arrivesIn += 1;
+    }
+    state.compute.delays[supplier] = 1;
   } else if (action === 'break') {
     state.cash -= BREAK_SHARE * bill * (c.monthsLeft ?? 0); // dropping spot costs nothing
     state.compute.contracts = state.compute.contracts.filter((x) => x !== c);

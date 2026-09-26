@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import { BALANCE } from '../sim/balance.js';
-import { eraScale } from '../sim/data/compute.js';
+import { SUPPLIERS, eraScale } from '../sim/data/compute.js';
 import { allocate, rivalOrders, placeOrder, queueTurn, released, withdrawOrder, QUEUE_RELEASE, RIVAL_ORDER, PREPAY_SHARE, QUEUE_TERM_MONTHS } from '../sim/queue.js';
 
 // Rival speeds are pinned here so a balance re-tune of rival speed does not change these tests.
@@ -53,7 +53,7 @@ test('orders: era 3 only, one per turn; prepaying costs cash and race heat', () 
   const cash = s.cash;
   const heat = s.raceHeat;
   assert.equal(placeOrder(s, { units: 60, tier: 'prepaid' }).ok, true);
-  assert.equal(s.cash, cash - Math.round(PREPAY_SHARE * 60 * BALANCE.unitMonthlyCost * QUEUE_TERM_MONTHS));
+  assert.equal(s.cash, cash - Math.round(PREPAY_SHARE * 60 * SUPPLIERS.verde.price * BALANCE.unitMonthlyCost * QUEUE_TERM_MONTHS));
   assert.equal(s.raceHeat, heat + 2);
   assert.equal(placeOrder(s, { units: 10, tier: 'standard' }).ok, false);
   assert.equal(placeOrder(fresh3(), { units: 0, tier: 'standard' }).ok, false);
@@ -70,6 +70,7 @@ test('a standard order is part-filled now; the rest waits, blocks a new order, a
   assert.equal(ev.find((e) => e.type === 'queueFilled').units, expected);
   assert.deepEqual(s.compute.queue.carry, { units: want - expected, tier: 'standard' });
   assert.equal(s.compute.pipeline.at(-1).units, expected);
+  assert.equal(s.compute.pipeline.at(-1).price, SUPPLIERS.verde.price);
   assert.equal(s.compute.pipeline.at(-1).arrivesTurn, s.turn + 1);
   assert.equal(s.compute.queue.last.rows.find((r) => r.lab === 'you').got, expected);
   assert.equal(placeOrder(s, { units: 10, tier: 'standard' }).ok, false, 'a waiting order must be withdrawn first');
