@@ -42,16 +42,21 @@ export function updateBoard(state, before, events = []) {
   add('sovereign', inDangerZone(state) ? -3 : runway(state, 'planned') >= 12 ? 3 : 1);
   add('safety', state.compute.split.safety + 1e-9 >= eraById(state.era).targetSafetyShare ? 2 : -3);
   if (events.some((event) => event.type === 'hazardResolved' && event.choice === 'ignore')) add('safety', -8);
-  if (before.concealedDebt - state.concealedDebt > 0.5) add('candor', -6);
-  if (state.promises.filter((promise) => promise.leaked).length > before.leaked) add('candor', -6);
-  if (state.flags.brokenPromise === true && !before.brokenPromise) add('candor', -8);
+  const candorHit = (amount) => {
+    add('candor', amount);
+    state.flags.candorHits = (state.flags.candorHits ?? 0) + 1; // the candor deal is judged by this count
+  };
+  if (before.concealedDebt - state.concealedDebt > 0.5) candorHit(-6);
+  if (state.promises.filter((promise) => promise.leaked).length > before.leaked) candorHit(-6);
+  if (state.flags.brokenPromise === true && !before.brokenPromise) candorHit(-8);
   add('security', state.govFavor.us >= 60 ? 2 : state.govFavor.us < 45 ? -2 : 0);
   if (state.security < 35) add('security', -2);
   if (state.govFavor.us > before.govUs) add('security', 1);
   else if (state.govFavor.us < before.govUs) add('security', -2);
   add('trustee', (state.publicTrust - 55) / 10);
   if (state.constitution.hardLines.length < before.hardLines) add('trustee', -8);
-  state.board = b.map((s) => clamp(s, 0, 100));
+  const lost = new Set(state.boardLost ?? []);
+  state.board = b.map((s, i) => clamp(lost.has(BOARD_MEMBERS[i].id) ? Math.min(s, BALANCE.boardLostCap) : s, 0, 100));
 }
 
 export function boardVote(state) {

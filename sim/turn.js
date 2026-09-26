@@ -11,7 +11,8 @@ import { buildSite, leaseBills, powerTurn } from './power.js';
 import { updateServing, growUsers, applyEconomy, legalTick, projectBurn, raiseRound, useEmergency, safetySpend } from './economy.js';
 import { researchTechnique } from './techniques.js';
 import { rivalsTurn } from './rivals.js';
-import { boardSnapshot, holdVote, updateBoard } from './board.js';
+import { boardSnapshot, boardVoteThisRound, holdVote, updateBoard } from './board.js';
+import { dealText, judgeBoardDeals, makeBoardDeals } from './boardDeals.js';
 import { judgeBoardPromise, makeBoardPromise } from './boardPromise.js';
 import { checkTurnEndings, eraGate, finalEnding } from './endings.js';
 import { recordAdvisors } from './advisors.js';
@@ -120,6 +121,18 @@ export function endTurn(prev, actions = {}, rng, observer = {}) {
   if (actions.boardPromise) {
     const r = makeBoardPromise(state, actions.boardPromise);
     if (r.ok) events.push({ type: 'boardPromise', units: r.units, era: r.era });
+    else errors.push(r.error);
+  }
+  // Deals from the last meeting are judged at the start of the next one, before its vote; then this meeting's deals.
+  if (boardVoteThisRound(prev)) {
+    for (const e of judgeBoardDeals(state)) {
+      events.push(e);
+      pushFeed(state, '@board_minutes', e.kept ? `a director says the lab kept its word: ${dealText(e.member).toLowerCase()}.` : `a director says the lab broke its word. they are done.`, 'event'); // OWNER WRITES
+    }
+  }
+  if (actions.boardDeals) {
+    const r = makeBoardDeals(state, actions.boardDeals);
+    if (r.ok) events.push({ type: 'boardDeals', members: actions.boardDeals.map((deal) => deal.member) });
     else errors.push(r.error);
   }
   const moves = actions.moves ?? [];
@@ -349,6 +362,7 @@ export function endTurn(prev, actions = {}, rng, observer = {}) {
     pushFeed(state, '@leakwire', 'most of the lab signed a letter: reinstate the ceo or we walk. the board backed down.', 'event');
   }
   if (state.ending) {
+    for (const e of judgeBoardDeals(state, { final: true })) events.push(e);
     judgeEndingPromises(state);
     state.pendingEvents = state.pendingEvents.filter((pending) => pending.eventId !== 'promiseCall');
     for (const [id, warning] of Object.entries(state.warnings)) {
