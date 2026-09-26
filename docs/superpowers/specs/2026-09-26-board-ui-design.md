@@ -152,7 +152,8 @@ New `sim/data/boardEvents.js`, included by `allEvents()` in `sim/events.js` (a o
 
 - Window: only in eras with a gate vote; one card may land when `endTurn` ends round 2 and one when it ends round 3 of
   the era (turnInEra 1 and 2), so each is on screen, and answerable, before the vote round ends. Pick with
-  `sideRng(state, 8)` from the eligible ones; each fires at most once per run (`seenEvents`).
+  `sideRng(state, 8)` from the eligible ones; each fires at most once per run (`seenEvents`). Board cards set
+  `bypassCardLimit: true`: a card deferred by the two-card limit would miss its meeting.
 - Card copy (titles, posts, choice labels, costs) as in frames P1 to P4, R1, R3; costs must not show hidden numbers
   (the events lane rule). Advisor argue lines, timing and consequence lines go in `ui/data/eventCopy.js` as
   `// OWNER WRITES` placeholders, like every other card.
