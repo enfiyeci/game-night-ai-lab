@@ -6,6 +6,7 @@ import { availableUnits, startRun, advanceRun } from '../sim/training.js';
 import { createRng } from '../sim/rng.js';
 import { endTurn } from '../sim/turn.js';
 import { ENDINGS } from '../sim/endings.js';
+import { eraScale } from '../sim/data/compute.js';
 
 const hit = { next: () => 0, int: () => 0, chance: () => true, pick: (a) => a[0], normal: (m) => m };
 const miss = { ...hit, chance: () => false };
@@ -51,7 +52,7 @@ test('control reserves compute and lowers risk', () => {
   const r0 = internalRisk(s);
   s.internal.control = 1;
   assert.ok(internalRisk(s) < r0);
-  assert.equal(controlUnits(s), 20);
+  assert.equal(controlUnits(s), 2 * eraScale(s.era));
 });
 
 test('trouble escalates warning, incident, exfiltration, then takeover at high capability', () => {
@@ -135,7 +136,7 @@ test('control must fit in free compute', () => {
   assert.equal(deployInternal(s, 0).ok, true);
   const t = withModel();
   t.compute.split.safety = 0;
-  t.activeRun = { bonus: 0, units: t.compute.online - 20, turnsLeft: 2 };
+  t.activeRun = { bonus: 0, units: t.compute.online - 2 * eraScale(t.era), turnsLeft: 2 };
   assert.equal(deployInternal(t, 0.5).ok, true);
   assert.equal(deployInternal(t, 1).ok, true);
   assert.equal(t.internal.control, 1);
@@ -220,7 +221,7 @@ test('endTurn wires the moves, control compute and the ending', () => {
   assert.equal(prev.internal, null);
   assert.equal(state.internal.control, 1);
   assert.equal(state.internal.turns, 1);
-  assert.equal(availableUnits(state), availableUnits({ ...state, internal: null }) - 20);
+  assert.equal(availableUnits(state), availableUnits({ ...state, internal: null }) - controlUnits(state));
   const next = endTurn(state, { moves: [{ type: 'stopInternal' }] }, miss).state;
   assert.equal(next.internal, null);
   assert.ok(ENDINGS.quietTakeover);

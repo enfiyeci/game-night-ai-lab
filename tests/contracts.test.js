@@ -50,7 +50,7 @@ test('speed carries the premium: spot costs the most, long reservations the leas
   assert.equal(offer(s, 'spot').price, SPOT_PRICE[1]);
   assert.ok(offer(s, 'spot').price > offer(s, 'azuria').price);
   assert.ok(offer(s, 'azuria').price > offer(s, 'verde').price);
-  assert.equal(offer(s, 'verde').upfront, Math.round(SUPPLIERS.verde.upfrontShare * small('verde', 1) * U * SUPPLIERS.verde.termMonths));
+  assert.equal(offer(s, 'verde').upfront, Math.round(SUPPLIERS.verde.upfrontShare * small('verde', 1) * SUPPLIERS.verde.price * U * SUPPLIERS.verde.termMonths));
   assert.equal(offer(fresh(5), 'spot').price, SPOT_PRICE[5]);
   assert.ok(Math.abs(perTurn(0.02, 3) - (1 - 0.98 ** 3)) < 1e-12);
 });
@@ -65,7 +65,7 @@ test('a signed contract bills every month until its term ends, used or not', () 
   s.turn = v.arrivesIn;
   deliverDue(s, lo);
   assert.equal(s.compute.online, 10 + v.units);
-  assert.ok(Math.abs(monthlyBills(s) - (10 + v.units) * U) < 1e-9);
+  assert.ok(Math.abs(monthlyBills(s) - (10 + v.units * v.price) * U) < 1e-9);
   const c = s.compute.contracts.find((x) => x.supplier === 'verde');
   for (let m = 0; m < SUPPLIERS.verde.termMonths; m += 3) expireContracts(s);
   assert.equal(s.compute.contracts.includes(c), false);
@@ -120,13 +120,13 @@ test('scale down once with a penalty and a slower next offer; break costs a shar
   let cash = s.cash;
   assert.equal(contractAction(s, { id: c.id, action: 'scaleDown' }).ok, true);
   assert.equal(c.units, cf.units - removed);
-  assert.ok(Math.abs(s.cash - (cash - removed * U * SCALE_DOWN_PENALTY_MONTHS)) < 1e-9);
+  assert.ok(Math.abs(s.cash - (cash - removed * c.price * U * SCALE_DOWN_PENALTY_MONTHS)) < 1e-9);
   assert.equal(contractAction(s, { id: c.id, action: 'scaleDown' }).ok, false);
   s.compute.offers = generateOffers(s, lo);
   assert.equal(offer(s, 'coreflame').arrivesIn, SUPPLIERS.coreflame.arrival + 1);
   cash = s.cash;
   assert.equal(contractAction(s, { id: c.id, action: 'break' }).ok, true);
-  assert.ok(Math.abs(s.cash - (cash - BREAK_SHARE * c.units * U * c.monthsLeft)) < 1e-9);
+  assert.ok(Math.abs(s.cash - (cash - BREAK_SHARE * c.units * c.price * U * c.monthsLeft)) < 1e-9);
   assert.equal(contractAction(s, { id: 'nope', action: 'break' }).ok, false);
   assert.equal(contractAction(s, { id: 'starter', action: 'melt' }).ok, false);
 });

@@ -52,8 +52,9 @@ test('orders: era 3 only, one per turn; prepaying costs cash and race heat', () 
   const s = fresh3();
   const cash = s.cash;
   const heat = s.raceHeat;
-  assert.equal(placeOrder(s, { units: 60, tier: 'prepaid' }).ok, true);
-  assert.equal(s.cash, cash - Math.round(PREPAY_SHARE * 60 * SUPPLIERS.verde.price * BALANCE.unitMonthlyCost * QUEUE_TERM_MONTHS));
+  const units = released(s);
+  assert.equal(placeOrder(s, { units, tier: 'prepaid' }).ok, true);
+  assert.equal(s.cash, cash - Math.round(PREPAY_SHARE * units * SUPPLIERS.verde.price * BALANCE.unitMonthlyCost * QUEUE_TERM_MONTHS));
   assert.equal(s.raceHeat, heat + 2);
   assert.equal(placeOrder(s, { units: 10, tier: 'standard' }).ok, false);
   assert.equal(placeOrder(fresh3(), { units: 0, tier: 'standard' }).ok, false);

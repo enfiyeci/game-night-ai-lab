@@ -5,7 +5,7 @@ import { controlUnits } from './internal.js';
 import { activeModels, safetyUnits } from './serving.js';
 
 export const MAX_SAFETY = 0.5;
-export const SAFETY_DEBT_RATE = 2.5; // alignment debt removed per quarter at a 100% share (first pass)
+export const SAFETY_DEBT_RATE = 30; // alignment debt removed per quarter at a 100% share
 export const PLEDGES = [0.05, 0.1, 0.2];
 const SPLIT_KEYS = ['safety', 'servingCap', 'coverWithSpot', 'resellIdle'];
 const UNIT = BALANCE.unitMonthlyCost;
