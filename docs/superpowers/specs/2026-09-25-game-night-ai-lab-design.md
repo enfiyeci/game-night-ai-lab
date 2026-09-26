@@ -165,8 +165,8 @@ in section 6e). A lab that is insolvent when era 5 ends never wins; it ends in a
     two copies. The *live* constitution is the one the latest trained model learned, and it is
     what every line check reads. The *draft* is what the next model will learn. The draft
     becomes live when a training run that picked the card finishes. A run that finishes
-    without the card makes the live constitution empty, because the newest model learned no
-    constitution. The player edits the draft only in the Safety document, opened from the recipe
+    without the card leaves the live constitution as it was (owner 2026-09-26: the softer rule,
+    so forgetting the card once does not wipe the lines). The player edits the draft only in the Safety document, opened from the recipe
     card; there is no separate "Amend the constitution" move. Accepted demands (below) also
     change the draft.
   - **Effects.** Each hard line closes off some revenue or event options and guards against
