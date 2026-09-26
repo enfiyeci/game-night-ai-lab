@@ -98,6 +98,17 @@ test('consequence lines tell answered and ignored cards', () => {
   assert.ok(lines[1].text.length > 0);
 });
 
+test('every card choice has a drafted consequence line', () => {
+  for (const row of ALL) {
+    for (const choice of row.card.choices) {
+      const line = COPY.CONSEQUENCES[row.id]?.[choice.id];
+      assert.equal(typeof line, 'string', `${row.id}.${choice.id}`);
+      assert.ok(line.length >= 20 && line.length <= 180, `${row.id}.${choice.id} length`);
+      assert.doesNotMatch(line, /\d+\s*%|\bdebt\b|\btrust\b|\bfavou?r\b|\bheat\b/i, `${row.id}.${choice.id} names a hidden number or meter`);
+    }
+  }
+});
+
 test('queue helpers merge instead of replacing', () => {
   const game = createGame({ seed: 10, state: SCENARIOS.event(10) });
   queueAnswer(game, 'a', 'x');
