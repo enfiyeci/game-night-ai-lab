@@ -1,4 +1,5 @@
 import { EVENTS } from './data/events.js';
+import { EVENTS_6C } from './data/events6c.js';
 import { hasLine } from './constitution.js';
 import {
   failedPresidentPromises,
@@ -9,8 +10,16 @@ import {
 } from './promises.js';
 
 const MAX_CARDS = 2;
-const byId = (id) => EVENTS.find((event) => event.id === id);
-const orderedEvents = [...EVENTS.filter((event) => event.kind === 'internal'), ...EVENTS.filter((event) => event.kind !== 'internal')];
+const allEvents = () => [...EVENTS, ...EVENTS_6C];
+const byId = (id) => allEvents().find((event) => event.id === id);
+const KIND_ORDER = ['internal', 'training'];
+const orderedEvents = () => {
+  const events = allEvents();
+  return [
+    ...KIND_ORDER.flatMap((kind) => events.filter((event) => event.kind === kind)),
+    ...events.filter((event) => !KIND_ORDER.includes(event.kind)),
+  ];
+};
 const targetIndices = (state, event) => event.flag
   ? state.models.flatMap((model, index) => ((model.flags ?? []).includes(event.flag) ? [index] : []))
   : [];
@@ -53,18 +62,18 @@ function queuePromiseCalls(state, event, out) {
 
 export function eventsTick(state, rng) {
   const out = [];
-  for (const event of orderedEvents) {
+  for (const event of orderedEvents()) {
     if (event.kind === 'promise') {
       queuePromiseCalls(state, event, out);
       continue;
     }
     if (state.pendingEvents.some((pending) => pending.id === event.id)) continue;
-    if (event.kind !== 'internal' && state.seenEvents.includes(event.id)) continue;
+    if (event.kind !== 'internal' && !event.repeatable && state.seenEvents.includes(event.id)) continue;
     const hasWarning = Object.hasOwn(state.warnings, event.id);
     const warned = hasWarning ? state.warnings[event.id] : null;
     if (hasWarning && warned?.turn < state.turn) {
       delete state.warnings[event.id];
-      if (event.kind === 'planted' && !event.trigger(state, rng)) continue;
+      if ((event.kind === 'planted' || event.repeatable) && !event.trigger(state, rng)) continue;
     } else if (!hasWarning) {
       if (!event.trigger(state, rng)) continue;
       if (event.warning) {
@@ -86,7 +95,7 @@ export function eventsTick(state, rng) {
       continue;
     }
     state.pendingEvents.push(publicCard(state, event));
-    if (event.kind !== 'internal') state.seenEvents.push(event.id);
+    if (event.kind !== 'internal' && !state.seenEvents.includes(event.id)) state.seenEvents.push(event.id);
     pushFeed(state, event.card.post.handle, event.card.post.text, 'event');
     out.push({ type: 'eventCard', id: event.id });
   }
@@ -127,8 +136,9 @@ export function resolveEvent(state, id, choiceId) {
     if (!catalogChoice) return { ok: false, error: `unknown choice ${choiceId}` };
     const targets = pending.targets ?? targetIndices(state, event);
     catalogChoice.effects(state, targets);
+    if (event.crisis) state.flags.boardCrisis = true;
   }
-  if (hasLine(state, 'honest') && ['defend', 'deny', 'stonewall', 'coverup'].includes(choice.id)) state.staffTrust -= 3;
+  if (hasLine(state, 'honest') && ['defend', 'deny', 'stonewall', 'coverup', 'discredit', 'smear'].includes(choice.id)) state.staffTrust -= 3;
   state.pendingEvents.splice(index, 1);
   return { ok: true, id: pending.id, choiceId };
 }

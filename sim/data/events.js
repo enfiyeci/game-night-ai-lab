@@ -34,6 +34,7 @@ function startSurge(state, surge, coverWithSpot) {
 }
 
 export function stealWeights(state) {
+  state.flags.weightsStolen = true;
   state.misuseExposure += 10;
   state.misuseLocked = Math.max(state.misuseLocked, state.misuseExposure);
   const qilin = state.rivals.find((rival) => rival.id === 'qilin');
@@ -482,6 +483,7 @@ export const EVENTS = [
   {
     id: 'weightTheft',
     kind: 'world',
+    crisis: true,
     fallback: 'silence',
     trigger: (state, rng) => state.capability >= 50 && state.security < 45 && rng.chance(0.2),
     warning: { handle: '@your_security', text: 'someone is running odd queries against the weight store' },
@@ -743,6 +745,7 @@ export const EVENTS = [
   {
     id: 'selfExfiltration',
     kind: 'internal',
+    crisis: true,
     trigger: (state) => !hasLine(state, 'no-autonomy-grab') && state.internal?.stage === 3 && state.internal.stageTurn === state.turn,
     warning: null,
     card: {

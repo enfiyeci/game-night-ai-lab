@@ -126,6 +126,7 @@ export function releaseModel(state, release, rng) {
   state.raceHeat += releaseHeat * (delayed ? 0.5 : 1);
   state.misuseExposure += Math.max(0, m.capability - BALANCE.dangerLine) * 0.3;
   if (spec.channel === 'open') {
+    state.flags.openWeights = true;
     // Open weights add to whatever risk is already permanent, then lock the result.
     state.misuseExposure = Math.max(state.misuseExposure, state.misuseLocked) + m.openWeightsMx;
     if (hasLine(state, 'no-wmd')) state.misuseExposure -= 4;

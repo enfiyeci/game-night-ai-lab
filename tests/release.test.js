@@ -57,6 +57,13 @@ test('open weights lock in misuse exposure', () => {
   assert.equal(s.misuseLocked, s.misuseExposure);
 });
 
+test('an open-weights release sets a stable flag, apart from stolen weights', () => {
+  const s = trainedState();
+  releaseModel(s, { ...release, picks: ['channel-open'] }, rng);
+  assert.equal(s.flags.openWeights, true);
+  assert.equal(s.flags.weightsStolen, undefined);
+});
+
 test('a later open-weight release adds to the already locked misuse', () => {
   const s = trainedState();
   s.misuseLocked = 60;
