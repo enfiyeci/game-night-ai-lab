@@ -146,6 +146,10 @@ export function mountTitle(game, { stage, overlay, collection, music, openSound 
   stage.prepend(sky);
   root.classList.add('title-night');
 
+  // Everything under the title is out of reach until the lights come on (keyboard focus included).
+  const beneath = [...stage.querySelectorAll(':scope > #office, :scope > #fx, :scope > #hud')];
+  for (const node of beneath) node.inert = true;
+
   const layer = make('div', 'title-layer on-wall');
   layer.setAttribute('role', 'dialog');
   layer.setAttribute('aria-modal', 'true');
@@ -188,12 +192,14 @@ export function mountTitle(game, { stage, overlay, collection, music, openSound 
     const value = cleanLabName(naming.input.value);
     if (value) game.state.labName = value;
     music?.startGame?.();
+    layer.inert = true; // nothing on the title answers during the wake transition
     layer.classList.add('leaving');
     root.classList.add('title-waking');
     root.classList.remove('title-night');
     const finish = () => {
       layer.remove();
       sky.remove();
+      for (const node of beneath) node.inert = false;
       root.classList.remove('title-waking');
       onStart({ labName: value });
     };
