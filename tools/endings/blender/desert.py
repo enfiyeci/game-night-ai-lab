@@ -176,10 +176,13 @@ for k, (row, col, x, y) in enumerate(HALLS):
     # a lit strip along the long side (security lighting), chillers on the roof, a red beacon on one corner
     s_ = goes_dark(box(f"strip{k}", (x, y - W / 2 - 0.3, 3.2), (L * 0.96, 0.3, 0.5), strip), x)
     parts = [s_, goes_dark(box("red", (x - L / 2, y - W / 2, Hh + 0.6), (0.8, 0.8, 0.8), red), x)]
-    if SPEC.get("half_built") and (row, col) == (0, 2):
-        o.scale.z = 0.45                        # stopped at half height, its roof never fitted
+    half = SPEC.get("half_built") and (row, col) == (0, 2)
+    if half:
+        o.scale.z = 0.45                        # stopped at half height, its roof never fitted: no chillers either
+        o.location.z = Hh * 0.45 / 2            # still standing on the ground
         parts = [s_]
-    parts += [box("chiller", (x - L / 2 + 10 + c * 16, y, Hh + 1.6), (10, 14, 3.2), roofkit) for c in range(6)]
+    else:
+        parts += [box("chiller", (x - L / 2 + 10 + c * 16, y, Hh + 1.6), (10, 14, 3.2), roofkit) for c in range(6)]
     if (row, col) in NEW_HALLS:
         # the newest halls rise during the shot, one after another, growing up from the ground
         t_rise = 0.3 + 0.5 * NEW_HALLS.index((row, col))

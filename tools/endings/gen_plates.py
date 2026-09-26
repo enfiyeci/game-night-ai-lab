@@ -626,7 +626,8 @@ def pd_cursor():
 # ================================================================ A costly win
 def summary_screen(fid, app, question, t_answer=0.3, dark=False, asker="Operator"):
     """One of three places the winning model runs; asked why, it says a summary is available on request."""
-    return chat(fid, app, [(0, asker, [question], True), (t_answer, MODEL, ["Summary available on request."], False)])
+    # the winning model: the skyline before these screens bills it as Kestrel 5
+    return chat(fid, app, [(0, asker, [question], True), (t_answer, "Kestrel 5", ["Summary available on request."], False)])
 
 
 def cw_port():
