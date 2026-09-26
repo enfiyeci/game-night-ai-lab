@@ -20,7 +20,7 @@ export const BALANCE = {
   ownReleaseHeat: 3,
   dangerZoneRunwayMonths: 6,
   gateMaxRank: 2,
-  gateMaxGap: 25,
+  gateMaxGap: 15,
   boardPassMembers: 3,
   boardSupportLine: 55,
 };
