@@ -28,7 +28,7 @@ body {
   font: 15px/1.55 var(--sans);
   padding: 0 24px;
 }
-.wrap { max-width: 1180px; margin: 0 auto; padding-block: 40px 72px; display: grid; gap: 40px; }
+.wrap { max-width: 1320px; margin: 0 auto; padding-block: 40px 72px; display: grid; gap: 40px; }
 h1, h2 { font-family: var(--serif); font-style: italic; font-weight: 400; text-wrap: balance; margin: 0; }
 h1 { font-size: clamp(28px, 4vw, 40px); line-height: 1.15; }
 h2 { font-size: 22px; line-height: 1.25; }
@@ -48,7 +48,7 @@ p { margin: 0; }
 .decided li small { color: var(--muted); font-size: 12.5px; }
 
 /* questions */
-.q { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 28px; padding-top: 28px; border-top: 1px solid var(--line); }
+.q { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: 28px; padding-top: 28px; border-top: 1px solid var(--line); }
 .q-head { display: grid; gap: 10px; align-content: start; }
 .q-head .num { font-weight: 800; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .q-head p { max-width: 58ch; }
@@ -71,16 +71,13 @@ p { margin: 0; }
 .tag.cheap { color: var(--teal-ink); border: 1.5px solid currentColor; }
 .tag.costly { color: var(--coral-ink); border: 1.5px solid currentColor; }
 .tag.decided { color: var(--ink); border: 1.5px dashed currentColor; }
-.sketch { width: 132px; height: 84px; display: block; }
-.opt.has-sketch { grid-template-columns: auto 132px minmax(0, 1fr) auto; }
-.room { fill: var(--cream); stroke: var(--line); stroke-width: 1.5; }
-.desk { fill: color-mix(in oklab, var(--wood) 45%, var(--cream)); }
-.head { fill: var(--wood-ink); }
-.hud { fill: var(--ink); opacity: .75; }
-.sketch .hi { fill: var(--teal); }
-.sketch .hi-line { stroke: var(--teal); stroke-width: 2; fill: var(--paper); }
-.sketch .panel { fill: var(--paper); stroke: var(--ink); stroke-width: 1.2; }
-.sketch .txt { fill: var(--ink); opacity: .35; }
+.shot { display: block; border-radius: 4px; overflow: hidden; outline: 1px solid var(--line); line-height: 0; }
+.shot img { width: 100%; height: auto; display: block; }
+.shot:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+.opt.has-shot > input { grid-row: 1 / span 2; }
+.opt.has-shot .shot { grid-column: 2 / 4; grid-row: 1; }
+.opt.has-shot .opt-body { grid-column: 2; grid-row: 2; }
+.opt.has-shot .tags { grid-column: 3; grid-row: 2; }
 .note { font-size: 13px; color: var(--muted); }
 
 /* later + research */
@@ -97,33 +94,18 @@ code { font-size: 12.5px; background: color-mix(in oklab, var(--paper) 50%, var(
 
 @media (max-width: 820px) {
   .lead, .q { grid-template-columns: 1fr; }
-  .opt.has-sketch { grid-template-columns: auto minmax(0, 1fr) auto; }
-  .opt.has-sketch .sketch { grid-column: 2 / 4; grid-row: 2; }
 }
 @media (max-width: 480px) {
   body { padding: 0 16px; }
   .reply { margin: 0 -16px; }
-  .opt, .opt.has-sketch { grid-template-columns: auto minmax(0, 1fr); }
+  .opt, .opt.has-shot { grid-template-columns: auto minmax(0, 1fr); }
   .opt > input { grid-column: 1; grid-row: 1; }
   .opt .opt-body { grid-column: 2; }
   .tags { grid-column: 2; flex-direction: row; flex-wrap: wrap; align-items: center; }
-  .opt.has-sketch .sketch { grid-column: 2; grid-row: auto; }
+  .opt.has-shot .shot, .opt.has-shot .opt-body, .opt.has-shot .tags { grid-column: 2; grid-row: auto; }
+  .opt.has-shot > input { grid-row: 1; }
 }
 </style>
-
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <defs>
-    <g id="office">
-      <rect class="room" x="1" y="1" width="130" height="82"/>
-      <rect class="hud" x="1" y="1" width="130" height="7"/>
-      <rect class="desk" x="14" y="28" width="22" height="10"/><circle class="head" cx="25" cy="24" r="4"/>
-      <rect class="desk" x="48" y="28" width="22" height="10"/><circle class="head" cx="59" cy="24" r="4"/>
-      <rect class="desk" x="82" y="28" width="22" height="10"/><circle class="head" cx="93" cy="24" r="4"/>
-      <rect class="desk" x="30" y="58" width="22" height="10"/><circle class="head" cx="41" cy="54" r="4"/>
-      <rect class="desk" x="72" y="60" width="34" height="12"/><circle class="head" cx="89" cy="55" r="4.5"/>
-    </g>
-  </defs>
-</svg>
 
 <div class="wrap">
 
@@ -131,7 +113,7 @@ code { font-size: 12.5px; background: color-mix(in oklab, var(--paper) 50%, var(
     <div class="intro">
       <span class="eyebrow">Game Night: AI Lab · plan 2B Task 8 · picks before mockups</span>
       <h1>How should events and warnings reach the player?</h1>
-      <p>The sim already raises warnings and deals event cards: 36 kinds, plus up to nine President promise calls. None of them reach the screen today, and any card left unanswered resolves silently at the end of the turn. There are seven decisions below. Each option shows how it would work, the research behind it, and what it costs to build. The recommended option comes first.</p>
+      <p>The sim already raises warnings and deals event cards: 36 kinds, plus up to nine President promise calls. None of them reach the screen today, and any card left unanswered resolves silently at the end of the turn. There are seven decisions below. Each option now has a real mockup, drawn over the running game on a real era-2 save, with real card text. Click a mockup to see it full size. The recommended option comes first.</p>
     </div>
     <div class="deadline">
       <strong>Submissions close tonight, 2026-09-27 12:00 AM PT.</strong>
@@ -160,18 +142,18 @@ code { font-size: 12.5px; background: color-mix(in oklab, var(--paper) 50%, var(
       <div class="why"><span><b>Research.</b> RimWorld and Factorio split one-shot notices from persistent alerts, so the player can tell them apart at a glance. Plague Inc.'s news ticker hints at trouble before it lands, and the hints crowd out the jokes as the danger grows. You have picked the in-office option every time something lives in the office during play.</span></div>
     </div>
     <div class="opts" role="radiogroup" aria-labelledby="q1">
-      <label class="opt has-sketch"><input type="radio" name="q1" value="A" id="q1a">
-        <svg class="sketch" viewBox="0 0 132 84" aria-hidden="true"><use href="#office"/><rect class="hi" x="108" y="62" width="6" height="10"/><rect class="hi-line" x="56" y="44" width="48" height="12"/><circle class="hi" cx="114" cy="61" r="3"/></svg>
-        <span class="opt-body"><span class="opt-title"><span class="key">A</span>On the feed phone</span><p>The phone on the desk buzzes, and the warning slides out beside it for a few seconds. It then stays pinned at the top of the phone, with an "Act on it ($5M)" button, until next turn.</p><span class="src">Plague Inc. ticker; RimWorld letters; your feed pick A.</span></span>
+      <label class="opt has-shot"><input type="radio" name="q1" value="A" id="q1a">
+        <a class="shot" href="mock/wa.jpg" target="_blank" rel="noopener"><img src="mock/wa.jpg" alt="The warning slides out of the phone on the CEO desk, with an Act on it ($10M) button" width="1440" height="900" loading="lazy"></a>
+        <span class="opt-body"><span class="opt-title"><span class="key">A</span>On the feed phone</span><p>The phone on the desk buzzes, and the warning slides out beside it for a few seconds. It then stays pinned at the top of the phone, with an "Act on it" button ($5M × the era, so $10M in this era-2 save), until next turn.</p><span class="src">Plague Inc. ticker; RimWorld letters; your feed pick A.</span></span>
         <span class="tags"><span class="tag rec">Recommended</span><span class="tag cheap">Cheap</span></span>
       </label>
-      <label class="opt has-sketch"><input type="radio" name="q1" value="B" id="q1b">
-        <svg class="sketch" viewBox="0 0 132 84" aria-hidden="true"><use href="#office"/><rect class="hi-line" x="4" y="11" width="52" height="12"/><rect class="hi" x="108" y="62" width="6" height="10"/></svg>
+      <label class="opt has-shot"><input type="radio" name="q1" value="B" id="q1b">
+        <a class="shot" href="mock/wb.jpg" target="_blank" rel="noopener"><img src="mock/wb.jpg" alt="A warning toast at the top left under the HUD, with an Act on it ($10M) button" width="1440" height="900" loading="lazy"></a>
         <span class="opt-body"><span class="opt-title"><span class="key">B</span>A toast under the HUD, as the plan says</span><p>A small panel at the top left shows the post and the "Act on it" button. The same post also lands in the phone.</p><span class="src">Plan 2B Task 8 as written; Factorio alerts.</span></span>
         <span class="tags"><span class="tag cheap">Cheap</span></span>
       </label>
-      <label class="opt has-sketch"><input type="radio" name="q1" value="C" id="q1c">
-        <svg class="sketch" viewBox="0 0 132 84" aria-hidden="true"><use href="#office"/><rect class="hi-line" x="64" y="4" width="44" height="14"/><path class="hi-line" d="M 70 18 L 63 22 L 76 18 Z"/></svg>
+      <label class="opt has-shot"><input type="radio" name="q1" value="C" id="q1c">
+        <a class="shot" href="mock/wc.jpg" target="_blank" rel="noopener"><img src="mock/wc.jpg" alt="The Head of Safety speaks the warning in a bubble at their desk" width="1440" height="900" loading="lazy"></a>
         <span class="opt-body"><span class="opt-title"><span class="key">C</span>An advisor says it</span><p>The advisor whose area it is speaks the warning in a bubble at their desk, with the button inside the bubble.</p><span class="src">Two Point Hospital's announcer ⚠️ (search snippets only); Tropico's advisors.</span></span>
         <span class="tags"><span class="tag costly">Costly</span></span>
       </label>
@@ -188,22 +170,22 @@ code { font-size: 12.5px; background: color-mix(in oklab, var(--paper) 50%, var(
       <div class="why"><span><b>Research.</b> Nearly every game surveyed keeps its early signs inside the world but pauses for a proper window when a decision is due. Game Dev Tycoon uses one pop-up for everything. Crusader Kings 3 stages the people involved inside its event window. Your compute dialogs, with the Team panel of opinions on the left, were accepted first time.</span></div>
     </div>
     <div class="opts" aria-labelledby="q2">
-      <label class="opt has-sketch"><input type="checkbox" name="q2" value="A" id="q2a">
-        <svg class="sketch" viewBox="0 0 132 84" aria-hidden="true"><use href="#office"/><rect class="panel" x="18" y="14" width="96" height="62"/><rect class="txt" x="22" y="20" width="22" height="50"/><rect class="txt" x="50" y="20" width="58" height="6"/><rect class="hi-line" x="50" y="32" width="58" height="10"/><rect class="hi-line" x="50" y="46" width="58" height="10"/><rect class="hi-line" x="50" y="60" width="58" height="10"/></svg>
+      <label class="opt has-shot"><input type="checkbox" name="q2" value="A" id="q2a">
+        <a class="shot" href="mock/ca.jpg" target="_blank" rel="noopener"><img src="mock/ca.jpg" alt="Flattery blowup as a Game Dev Tycoon dialog with the Team panel, three choice rows and a This turn panel" width="1440" height="900" loading="lazy"></a>
         <span class="opt-body"><span class="opt-title"><span class="key">A</span>Game Dev Tycoon dialog, with the Team panel</span><p>This is the plan's centred dialog. The four advisors sit on the left, each showing which choice they back. The post is styled like a phone post, and the choices are bordered rows with their cost and tags.</p><span class="src">Plan 2B Task 8; GDT <code>Notification</code>; your compute dialogs.</span></span>
         <span class="tags"><span class="tag rec">Build this</span><span class="tag cheap">Cheap</span></span>
       </label>
-      <label class="opt has-sketch"><input type="checkbox" name="q2" value="B" id="q2b">
-        <svg class="sketch" viewBox="0 0 132 84" aria-hidden="true"><use href="#office"/><rect class="panel" x="6" y="12" width="40" height="68" rx="5"/><rect class="txt" x="10" y="18" width="32" height="18"/><rect class="hi-line" x="10" y="42" width="32" height="10"/><rect class="hi-line" x="10" y="56" width="32" height="10"/></svg>
+      <label class="opt has-shot"><input type="checkbox" name="q2" value="B" id="q2b">
+        <a class="shot" href="mock/cb.jpg" target="_blank" rel="noopener"><img src="mock/cb.jpg" alt="The feed phone opened large on the left, with the card and its choices as the top post" width="1440" height="900" loading="lazy"></a>
         <span class="opt-body"><span class="opt-title"><span class="key">B</span>The phone takes the stage</span><p>The phone slides up large on the left, like the feed panel. The card is the top post, with the choices as buttons under it. The office stays in view.</p><span class="src">Your feed pick A; Reigns' one-card layout ⚠️ (layout details not confirmed from a primary source).</span></span>
         <span class="tags"><span class="tag cheap">Cheap</span></span>
       </label>
-      <label class="opt has-sketch"><input type="checkbox" name="q2" value="C" id="q2c">
-        <svg class="sketch" viewBox="0 0 132 84" aria-hidden="true"><use href="#office"/><rect class="hi-line" x="14" y="10" width="26" height="9"/><rect class="hi-line" x="80" y="10" width="26" height="9"/><rect class="hi-line" x="46" y="10" width="26" height="9"/><rect class="panel" x="22" y="64" width="88" height="17"/><rect class="hi" x="26" y="70" width="24" height="6"/><rect class="hi" x="54" y="70" width="24" height="6"/><rect class="hi" x="82" y="70" width="24" height="6"/></svg>
+      <label class="opt has-shot"><input type="checkbox" name="q2" value="C" id="q2c">
+        <a class="shot" href="mock/cc.jpg" target="_blank" rel="noopener"><img src="mock/cc.jpg" alt="A slim card along the bottom while three advisors argue from their desks in bubbles" width="1440" height="900" loading="lazy"></a>
         <span class="opt-body"><span class="opt-title"><span class="key">C</span>The advisors argue it out in the room</span><p>A slim card sits along the bottom, like the E2 era banner. Each advisor with a view speaks from their desk ("Patch it quietly." or "Don't."). The office stays fully visible.</p><span class="src">Your E2 era card; Crusader Kings 3's portraits.</span></span>
         <span class="tags"><span class="tag costly">Costly</span></span>
       </label>
-      <p class="note">Why C is costly: the bubble lines need writing or templating from the backer tags. Also, four of the eight tags (Product, Government, Security, Staff) have no desk in the office.</p>
+      <p class="note">The bubble lines in C are my placeholders; in the game you would write them. Why C is costly: the bubble lines need writing or templating from the backer tags. Also, four of the eight tags (Product, Government, Security, Staff) have no desk in the office.</p>
     </div>
   </section>
 
@@ -216,7 +198,8 @@ code { font-size: 12.5px; background: color-mix(in oklab, var(--paper) 50%, var(
       <div class="why"><span><b>Research.</b> Game Dev Tycoon lets less urgent notices wait in a sidebar, while a few types always pop up. Crusader Kings 3 lets events wait, but not forever.</span></div>
     </div>
     <div class="opts" role="radiogroup" aria-labelledby="q3">
-      <label class="opt"><input type="radio" name="q3" value="A" id="q3a">
+      <label class="opt has-shot"><input type="radio" name="q3" value="A" id="q3a">
+        <a class="shot" href="mock/end.jpg" target="_blank" rel="noopener"><img src="mock/end.jpg" alt="The End turn menu with a reminder that one card is still open and will go the way marked" width="1440" height="900" loading="lazy"></a>
         <span class="opt-body"><span class="opt-title"><span class="key">A</span>Yes: "Decide later"</span><p>The card goes to the phone, where it waits with an unread mark. Pressing End Turn with a card still open shows a short reminder: "1 card unanswered. It will go the way marked."</p><span class="src">GDT sidebar and <code>AutoPopup</code> types; Crusader Kings 3's wait.</span></span>
         <span class="tags"><span class="tag rec">Recommended</span><span class="tag cheap">Cheap</span></span>
       </label>
@@ -236,8 +219,9 @@ code { font-size: 12.5px; background: color-mix(in oklab, var(--paper) 50%, var(
       <div class="why"><span><b>Research.</b> Crusader Kings 3 auto-picks the first option after four in-game months, and no surveyed game shows the player that default in advance. Showing it would be our own idea. It turns the silent fallback into a choice the player can read.</span></div>
     </div>
     <div class="opts" role="radiogroup" aria-labelledby="q4">
-      <label class="opt"><input type="radio" name="q4" value="A" id="q4a">
-        <span class="opt-body"><span class="opt-title"><span class="key">A</span>Mark it on the card, and report it after</span><p>The do-nothing row carries a small "If you do nothing" tag. After the turn, the "This turn" summary says "Ignored: Flattery blowup. You defended it."</p><span class="src">The sim already exports <code>fallbackChoice</code>; the summary line is new.</span></span>
+      <label class="opt has-shot"><input type="radio" name="q4" value="A" id="q4a">
+        <a class="shot" href="mock/ignored.jpg" target="_blank" rel="noopener"><img src="mock/ignored.jpg" alt="The This turn summary reporting the ignored card and what it resolved to" width="1440" height="900" loading="lazy"></a>
+        <span class="opt-body"><span class="opt-title"><span class="key">A</span>Mark it on the card, and report it after</span><p>The do-nothing row carries a small "If you do nothing" tag. The 2A mockup shows it on "Defend it". After the turn, the "This turn" summary reports what the ignored card did.</p><span class="src">The sim already exports <code>fallbackChoice</code>; the summary line is new.</span></span>
         <span class="tags"><span class="tag rec">Recommended</span><span class="tag cheap">Cheap</span></span>
       </label>
       <label class="opt"><input type="radio" name="q4" value="B" id="q4b">
@@ -261,10 +245,11 @@ code { font-size: 12.5px; background: color-mix(in oklab, var(--paper) 50%, var(
     </div>
     <div class="opts" role="radiogroup" aria-labelledby="q5">
       <label class="opt"><input type="radio" name="q5" value="A" id="q5a">
-        <span class="opt-body"><span class="opt-title"><span class="key">A</span>One after another at the start of the turn</span><p>Each card opens in turn, with "Card 1 of 2" in its header. Any card put aside (decision 3) waits on the phone.</p><span class="src">Plan 2B Task 8 ("each card opens in turn").</span></span>
+        <span class="opt-body"><span class="opt-title"><span class="key">A</span>One after another at the start of the turn</span><p>Each card opens in turn, with "Card 1 of 2" in its header (see the mockup for 2A). Any card put aside (decision 3) waits on the phone.</p><span class="src">Plan 2B Task 8 ("each card opens in turn").</span></span>
         <span class="tags"><span class="tag rec">Recommended</span><span class="tag cheap">Cheap</span></span>
       </label>
-      <label class="opt"><input type="radio" name="q5" value="B" id="q5b">
+      <label class="opt has-shot"><input type="radio" name="q5" value="B" id="q5b">
+        <a class="shot" href="mock/inbox.jpg" target="_blank" rel="noopener"><img src="mock/inbox.jpg" alt="The phone as an inbox listing two waiting cards, their do-nothing choices and a warning" width="1440" height="900" loading="lazy"></a>
         <span class="opt-body"><span class="opt-title"><span class="key">B</span>The phone is the inbox</span><p>Nothing opens by itself. The phone buzzes with a count, and the player opens cards in any order. This is quieter, but a player can miss a card entirely.</p><span class="src">GDT sidebar messages; Crusader Kings 3's queue ⚠️.</span></span>
         <span class="tags"><span class="tag cheap">Cheap</span></span>
       </label>
@@ -280,11 +265,13 @@ code { font-size: 12.5px; background: color-mix(in oklab, var(--paper) 50%, var(
       <div class="why"><span><b>Research.</b> RimWorld colours its letters by threat, from blue to red. Stellaris names its severity stages ("Severe", "Catastrophic") instead of showing a number. Oxygen Not Included turns the screen edge red in a red alert ⚠️ (search snippets only).</span></div>
     </div>
     <div class="opts" role="radiogroup" aria-labelledby="q6">
-      <label class="opt"><input type="radio" name="q6" value="A" id="q6a">
+      <label class="opt has-shot"><input type="radio" name="q6" value="A" id="q6a">
+        <a class="shot" href="mock/crisisa.jpg" target="_blank" rel="noopener"><img src="mock/crisisa.jpg" alt="Weights stolen by a foreign state with a coral Crisis band at the top of the dialog" width="1440" height="900" loading="lazy"></a>
         <span class="opt-body"><span class="opt-title"><span class="key">A</span>A coral "Crisis" band, opened first</span><p>The card header gets a coral band and the word "Crisis". The word matters, because colour must never carry the meaning alone. Crisis cards open before the others.</p><span class="src">RimWorld letters; Stellaris stage names.</span></span>
         <span class="tags"><span class="tag rec">Recommended</span><span class="tag cheap">Cheap</span></span>
       </label>
-      <label class="opt"><input type="radio" name="q6" value="B" id="q6b">
+      <label class="opt has-shot"><input type="radio" name="q6" value="B" id="q6b">
+        <a class="shot" href="mock/crisisb.jpg" target="_blank" rel="noopener"><img src="mock/crisisb.jpg" alt="The same crisis card with the office dimmed under a coral wash" width="1440" height="900" loading="lazy"></a>
         <span class="opt-body"><span class="opt-title"><span class="key">B</span>A, plus a warning light in the room</span><p>While a crisis card is open, the office lights dim and a slow coral wash pulses. This is a motion idea, so it is offered rather than added.</p><span class="src">Oxygen Not Included red alert ⚠️.</span></span>
         <span class="tags"><span class="tag cheap">Cheap</span></span>
       </label>
@@ -304,11 +291,13 @@ code { font-size: 12.5px; background: color-mix(in oklab, var(--paper) 50%, var(
       <div class="why"><span><b>Research.</b> The writing on alert fatigue (players tuning out a flood of alerts) says to give each channel one job ⚠️ (general writing reached only through search summaries). Cities: Skylines' Chirper feed became noise because it mixed jokes with real news ⚠️.</span></div>
     </div>
     <div class="opts" role="radiogroup" aria-labelledby="q7">
-      <label class="opt"><input type="radio" name="q7" value="A" id="q7a">
+      <label class="opt has-shot"><input type="radio" name="q7" value="A" id="q7a">
+        <a class="shot" href="mock/adva.jpg" target="_blank" rel="noopener"><img src="mock/adva.jpg" alt="The CFO clicked: their line in a bubble, and their !! mark cleared" width="1440" height="900" loading="lazy"></a>
         <span class="opt-body"><span class="opt-title"><span class="key">A</span>Mood only; a click reads the advisor's line</span><p>Clicking an advisor opens their line for the turn in a bubble, and the "!" clears. Events and warnings stay on the phone, so each channel has one job.</p><span class="src">Plan 2B Task 8; Tropico advisors.</span></span>
         <span class="tags"><span class="tag rec">Recommended</span><span class="tag cheap">Cheap</span></span>
       </label>
-      <label class="opt"><input type="radio" name="q7" value="B" id="q7b">
+      <label class="opt has-shot"><input type="radio" name="q7" value="B" id="q7b">
+        <a class="shot" href="mock/advb.jpg" target="_blank" rel="noopener"><img src="mock/advb.jpg" alt="Small 1 card pills over the three advisors with a view on a waiting card" width="1440" height="900" loading="lazy"></a>
         <span class="opt-body"><span class="opt-title"><span class="key">B</span>Also mark advisors with a view on a waiting card</span><p>A second small mark appears over an advisor who backs or opposes a choice on a pending card. Clicking it opens that card.</p><span class="src">Two Point Hospital's staff alerts ⚠️.</span></span>
         <span class="tags"><span class="tag costly">Costly</span></span>
       </label>
@@ -333,6 +322,8 @@ code { font-size: 12.5px; background: color-mix(in oklab, var(--paper) 50%, var(
         <li><code>setField</code> replaces a whole field. Answering two cards must merge the answers first, or the second answer erases the first.</li>
         <li>The "This turn" summary drops event results today; decision 4 adds them.</li>
         <li>The <code>president</code> demand card and the President meeting are different systems. Keep them as separate screens.</li>
+        <li>The investors' card repeats its title as its post text ("Drop your strictest hard line to win enterprise deals" twice). Its post needs its own line.</li>
+        <li>The mockups live in <code>docs/design/mockups/K2-events.html</code> on <code>events-research</code>, one route per screen (<code>#wa</code> to <code>#advb</code>).</li>
       </ul>
     </section>
     <section aria-labelledby="res-h">

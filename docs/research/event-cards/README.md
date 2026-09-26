@@ -13,7 +13,9 @@ Treat it as raw research: claims read only through search snippets or failed fet
    full inventory of 36 event rows. It is the best-sourced note (repo files read directly).
 3. `notes/game_dev_tycoon_and_game_dev_story.md`, `notes/dilemma_card_formats.md` and
    `notes/warning_patterns.md`: the three game surveys, each with its own coverage statement.
-4. `suggestions-2026-09-26.html`: the seven decisions put to the owner, built from the above.
+4. `suggestions-2026-09-26.html`: the seven decisions put to the owner, built from the above, with
+   the 13 mockup screenshots in `mock/`. The mockups themselves are
+   `docs/design/mockups/K2-events.html` (one route per screen, drawn over the live game).
 
 ## Notable catches
 
