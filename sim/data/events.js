@@ -1,5 +1,10 @@
 import { deployInternal, stopInternal } from '../internal.js';
 import { forceAmendConstitution, hasLine } from '../constitution.js';
+import { contractBill, refreshOnline } from '../contracts.js';
+import { leaseMonthly } from '../power.js';
+import { activeModels } from '../serving.js';
+import { ERAS } from './eras.js';
+import { RESCUE_MONTHS, SPOT_PRICE } from './compute.js';
 import { DEMANDS } from './constitution.js';
 
 const modelsWithFlag = (state, flag) => state.models.filter((model) => (model.flags ?? []).includes(flag));
@@ -19,14 +24,13 @@ function openletterMeet(state) {
   state.staffTrust += 8;
 }
 
-function datacenterPush(state) {
-  state.publicTrust -= 5;
-  if (state.compute.pipeline.length === 0) return;
-  let earliest = state.compute.pipeline[0];
-  for (const entry of state.compute.pipeline) {
-    if (entry.arrivesTurn < earliest.arrivesTurn) earliest = entry;
-  }
-  earliest.arrivesTurn += 1;
+function repeatNeocloudTrouble(state) {
+  state.seenEvents = state.seenEvents.filter((id) => id !== 'neocloudTrouble');
+}
+
+function startSurge(state, surge, coverWithSpot) {
+  state.compute.surge = { ...surge, restoreCover: state.compute.split.coverWithSpot };
+  if (coverWithSpot !== undefined) state.compute.split.coverWithSpot = coverWithSpot;
 }
 
 export function stealWeights(state) {
@@ -538,19 +542,176 @@ export const EVENTS = [
     },
   },
   {
-    id: 'datacenter',
+    id: 'neocloudTrouble',
     kind: 'world',
-    trigger: (state, rng) => state.era === 4 && rng.chance(0.3),
-    warning: { handle: '@localnews', text: 'residents pack town hall over proposed data center' },
+    trigger: (state) => state.compute.contracts.some((contract) => contract.troubled),
+    warning: { handle: '@marketwire', text: "CoreFlame's biggest customer missed a payment" },
+    defuse(state) {
+      for (const contract of state.compute.contracts) if (contract.troubled) contract.troubled = false;
+      repeatNeocloudTrouble(state);
+    },
     card: {
-      title: 'Local data-center opposition',
-      post: { handle: '@localnews', text: 'county votes to delay the power hookup' },
+      title: 'Your neocloud is failing',
+      post: { handle: '@marketwire', text: "CoreFlame's lenders call in a $4B loan" },
       choices: [
         {
-          id: 'benefits', label: 'Pay for community benefits', cost: '$30M', backers: ['Comms'], opposers: ['CFO'],
-          effects(state) { state.cash -= 30; },
+          id: 'spot', label: 'Move the capacity to spot', cost: 'spot prices', backers: ['Product'], opposers: ['CFO'],
+          effects(state) {
+            for (const contract of state.compute.contracts) {
+              if (!contract.troubled) continue;
+              contract.supplier = 'spot';
+              contract.price = SPOT_PRICE[state.era];
+              contract.string = 'bumpable';
+              contract.monthsLeft = null;
+              contract.troubled = false;
+            }
+            repeatNeocloudTrouble(state);
+          },
         },
-        { id: 'push', label: 'Push through', cost: '—', backers: ['CFO'], opposers: ['Comms'], effects: datacenterPush },
+        {
+          id: 'rescue', label: 'Prepay 3 months to keep them alive', cost: '3 months of the bill', backers: ['Product'], opposers: ['CFO'],
+          effects(state) {
+            for (const contract of state.compute.contracts) {
+              if (!contract.troubled) continue;
+              state.cash -= RESCUE_MONTHS * contractBill(contract);
+              contract.troubled = false;
+            }
+            repeatNeocloudTrouble(state);
+          },
+        },
+        {
+          id: 'letgo', label: 'Let it go', cost: 'lose the capacity', backers: ['CFO'], opposers: ['Product'],
+          effects(state) {
+            state.compute.contracts = state.compute.contracts.filter((contract) => !contract.troubled);
+            refreshOnline(state);
+            repeatNeocloudTrouble(state);
+          },
+        },
+      ],
+    },
+  },
+  {
+    id: 'siteOpposition',
+    kind: 'world',
+    trigger(state, rng) {
+      if (state.flags.oppositionSite) return true;
+      const site = state.power.sites.find((candidate) => candidate.source === 'gas' && !candidate.online);
+      if (!site || !rng.chance(0.15)) return false;
+      state.flags.oppositionSite = site.id;
+      site.oppositionCut = rng.chance(0.3);
+      return true;
+    },
+    warning: { handle: '@localnews', text: 'residents pack the town hall over the new gas site' },
+    card: {
+      title: 'Local opposition to your gas site',
+      post: { handle: '@localnews', text: 'county votes to delay the permit' },
+      choices: [
+        {
+          id: 'benefits', label: 'Pay for community benefits', cost: "one month of the site's lease", backers: ['Comms'], opposers: ['CFO'],
+          effects(state) {
+            const site = state.power.sites.find((candidate) => candidate.id === state.flags.oppositionSite);
+            if (site) state.cash -= leaseMonthly(site.units);
+          },
+        },
+        {
+          id: 'move', label: 'Move the site', cost: 'two turns', backers: ['Comms'], opposers: ['Research'],
+          effects(state) {
+            const site = state.power.sites.find((candidate) => candidate.id === state.flags.oppositionSite);
+            if (site) site.arrivesTurn += 2;
+          },
+        },
+        {
+          id: 'push', label: 'Push through', cost: 'public trust', backers: ['CFO'], opposers: ['Comms'],
+          effects(state) {
+            state.publicTrust -= 5;
+            const site = state.power.sites.find((candidate) => candidate.id === state.flags.oppositionSite);
+            if (site?.oppositionCut) site.units = Math.round(site.units * 0.7);
+          },
+        },
+      ],
+    },
+  },
+  {
+    id: 'pledgeDrop',
+    kind: 'world',
+    trigger: (state) => state.era === 2 && state.promises.some((promise) => promise.type === 'safetyCompute'),
+    warning: null,
+    card: {
+      title: 'An investor wants the pledge gone',
+      post: { handle: '@growthfund', text: 'safety pledges are a luxury at this stage' },
+      choices: [
+        {
+          id: 'drop', label: 'Drop the pledge', cost: 'staff trust', backers: ['CFO'], opposers: ['Safety'],
+          effects(state) {
+            state.cash += Math.round(state.valuation * 0.05);
+            state.staffTrust -= 8;
+            state.promises = state.promises.filter((promise) => promise.source === 'president' || promise.type !== 'safetyCompute');
+          },
+        },
+        {
+          id: 'refuse', label: 'Keep it', cost: 'board support', backers: ['Safety'], opposers: ['CFO'],
+          effects(state) { state.board = state.board.map((support) => support - 2); },
+        },
+      ],
+    },
+  },
+  {
+    id: 'agentSurge',
+    kind: 'world',
+    trigger: (state) => state.era === 3
+      && activeModels(state).some((model) => (model.flags ?? []).includes('agentic')),
+    warning: null,
+    card: {
+      title: 'Agent launch swamps your servers',
+      post: { handle: '@marketwire', text: 'agent usage doubles overnight' },
+      choices: [
+        {
+          id: 'spot', label: 'Buy spot to keep up', cost: 'spot prices', backers: ['Product'], opposers: ['CFO'],
+          effects(state) { startSurge(state, { mult: 2, turnsLeft: 2 }, true); },
+        },
+        {
+          id: 'route', label: 'Route users to a cheaper model', cost: 'usage and public trust', backers: ['CFO'], opposers: ['Product'],
+          effects(state) {
+            startSurge(state, { mult: 2, usage: 0.7, turnsLeft: 2 });
+            state.publicTrust -= 1;
+          },
+        },
+        {
+          id: 'cap', label: 'Cap serving and accept outages', cost: 'users', backers: ['CFO'], opposers: ['Product'],
+          effects(state) { startSurge(state, { mult: 2, turnsLeft: 2 }, false); },
+        },
+      ],
+    },
+  },
+  {
+    id: 'pooling',
+    kind: 'world',
+    trigger(state, rng) {
+      if (state.era !== 4 || state.turnInEra !== ERAS[3].turns - 1) return false;
+      state.flags.poolingRisk ??= rng.chance(0.2);
+      return true;
+    },
+    warning: null,
+    card: {
+      title: 'Washington asks for your compute',
+      post: { handle: '@commerce_dept', text: 'national AI effort to pool frontier compute' },
+      choices: [
+        {
+          id: 'accept', label: 'Give 30% of your compute', cost: 'compute', backers: ['Government'], opposers: ['Research'],
+          effects(state) {
+            state.compute.pooled = 0.3;
+            state.govFavor.us += 10;
+            state.flags.pooled = true;
+            refreshOnline(state);
+          },
+        },
+        {
+          id: 'refuse', label: 'Refuse', cost: 'US favor', backers: ['Research'], opposers: ['Government'],
+          effects(state) {
+            state.govFavor.us -= 8;
+            state.flags.supplyChainRisk ||= state.flags.poolingRisk;
+          },
+        },
       ],
     },
   },

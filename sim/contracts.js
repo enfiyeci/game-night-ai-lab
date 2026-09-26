@@ -73,7 +73,7 @@ function arrive(state, p, rng) {
 
 export function refreshOnline(state) {
   const p = poweredUnits(state);
-  state.compute.online = p.online;
+  state.compute.online = Math.floor(p.online * (1 - (state.compute.pooled ?? 0)));
   state.compute.unpowered = p.unpowered;
 }
 

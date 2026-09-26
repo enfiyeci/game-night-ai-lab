@@ -106,6 +106,7 @@ export function addressWarning(state, id) {
   }
   if (event.addressEffects) event.addressEffects(state);
   if (!state.seenEvents.includes(id)) state.seenEvents.push(id);
+  event.defuse?.(state);
   return { ok: true, id };
 }
 

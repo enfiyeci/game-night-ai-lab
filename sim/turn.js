@@ -255,6 +255,10 @@ export function endTurn(prev, actions = {}, rng) {
       growUsers(state);
       updateServing(state);
       applyEconomy(state);
+      if (state.compute.surge && --state.compute.surge.turnsLeft <= 0) {
+        state.compute.split.coverWithSpot = state.compute.surge.restoreCover ?? state.compute.split.coverWithSpot;
+        state.compute.surge = null;
+      }
       spendCredits(state);
       for (const x of expireContracts(state)) events.push({ type: 'contractEnded', supplier: x.supplier, units: x.units });
       for (const x of pullBumped(state)) events.push({ type: 'spotPulled', units: x.units });
