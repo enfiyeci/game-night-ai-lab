@@ -1,6 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { findDemoSeeds, playTimeline, scoreStory } from '../tools/demo-seeds.js';
+import * as demoSeeds from '../tools/demo-seeds.js';
+
+const { findDemoSeeds, playTimeline, scoreStory } = demoSeeds;
 
 const turns = (count, era = 1, events = []) => Array.from(
   { length: count },
@@ -48,7 +50,7 @@ test('scoreStory gives the listed event and ending points once each', () => {
   const storyTurns = turns(13, 5);
   storyTurns[0].events = [{ type: 'trainingHazard', id: 'reward-hacking' }];
   storyTurns[1].events = [{ type: 'warning', id: 'export-controls' }];
-  storyTurns[2].events = [{ type: 'card', id: 'export-controls' }];
+  storyTurns[2].events = [{ type: 'eventCard', id: 'export-controls' }];
   storyTurns[3].events = [{ type: 'internalIncident', stage: 2 }];
   storyTurns[4].events = [{ type: 'rivalRelease', id: 'qilin', leaderChanged: true }];
   storyTurns[5].events = [{ type: 'rivalRelease', id: 'lodestar', leaderChanged: true }];
@@ -61,14 +63,38 @@ test('scoreStory gives the listed event and ending points once each', () => {
 test('scoreStory only awards warning-card points when the matching card follows', () => {
   const noCard = turns(12, 1, [{ type: 'warning', id: 'power-grid' }]);
   const wrongCard = structuredClone(noCard);
-  wrongCard[1].events = [{ type: 'card', id: 'chip-shortage' }];
+  wrongCard[1].events = [{ type: 'eventCard', id: 'chip-shortage' }];
   const cardFirst = structuredClone(noCard);
-  cardFirst[0].events = [{ type: 'card', id: 'power-grid' }];
+  cardFirst[0].events = [{ type: 'eventCard', id: 'power-grid' }];
   cardFirst[1].events = [{ type: 'warning', id: 'power-grid' }];
+  const matchingCard = structuredClone(noCard);
+  matchingCard[1].events = [{ type: 'eventCard', id: 'power-grid' }];
 
   assert.equal(scoreStory({ turns: noCard }).score, 0);
   assert.equal(scoreStory({ turns: wrongCard }).score, 0);
   assert.equal(scoreStory({ turns: cardFirst }).score, 0);
+  assert.equal(scoreStory({ turns: matchingCard }).score, 3);
+});
+
+test('recording script describes every top-level strategy action and unknown keys', () => {
+  assert.equal(typeof demoSeeds.describeActions, 'function');
+  const line = demoSeeds.describeActions({
+    moves: [],
+    addressWarnings: ['power-grid'],
+    eventChoices: { 'export-controls': 'negotiate' },
+    constitution: { hardLines: ['honest', 'accept-shutdown'], rulings: { whistleblower: 'protect' } },
+    presidentAnswers: ['be-direct', 'offer-audit'],
+    holdOrShip: 'hold',
+    surpriseAudit: { scope: 'full' },
+  });
+
+  assert.match(line, /address the power grid warning/);
+  assert.match(line, /choose negotiate for export controls/);
+  assert.match(line, /adopt a constitution with hard lines honest, accept shutdown/);
+  assert.match(line, /rule protect for whistleblower/);
+  assert.match(line, /answer the president: be direct, then offer audit/);
+  assert.match(line, /hold to the pacing deal/);
+  assert.match(line, /surprise audit: \{"scope":"full"\}/);
 });
 
 test('scoreStory rewards dramatic failures and penalises runs shorter than twelve turns', () => {

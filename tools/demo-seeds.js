@@ -91,7 +91,7 @@ function warningBecameCard(events) {
   for (const event of events) {
     const id = eventId(event);
     if (event.type === 'warning' && id != null) warnings.add(id);
-    if (event.type === 'card' && id != null && warnings.has(id)) return id;
+    if (event.type === 'eventCard' && id != null && warnings.has(id)) return id;
   }
   return null;
 }
@@ -179,7 +179,7 @@ export function findDemoSeeds(n, { strategy = 'balanced', top = 10 } = {}) {
 }
 
 function words(value) {
-  return String(value).replaceAll('-', ' ');
+  return String(value).replace(/([a-z\d])([A-Z])/g, '$1 $2').replaceAll('-', ' ').replaceAll('_', ' ');
 }
 
 const cardName = (id) => cardById(id)?.name ?? words(id);
@@ -208,17 +208,77 @@ function describeMove(move) {
   return words(move.type);
 }
 
-function describeActions(actions) {
-  const moves = (actions.moves ?? []).map(describeMove);
-  if (actions.hazardChoice) moves.unshift(`${words(actions.hazardChoice)} the training hazard`);
+const ACTION_KEYS = new Set([
+  'budget',
+  'moves',
+  'hazardChoice',
+  'addressWarnings',
+  'eventChoices',
+  'constitution',
+  'presidentAnswers',
+  'holdOrShip',
+]);
+
+function fallbackValue(value) {
+  const json = JSON.stringify(value);
+  return json === undefined ? String(value) : json;
+}
+
+export function describeActions(actions) {
+  const descriptions = [];
   if (actions.budget) {
     const shares = Object.entries(actions.budget.split)
       .map(([name, share]) => `${name} ${Math.round(share * 100)}%`)
       .join(', ');
-    moves.unshift(`set the monthly budget to $${actions.budget.spend}M (${shares})`);
+    descriptions.push(`set the monthly budget to $${actions.budget.spend}M (${shares})`);
   }
-  if (moves.length === 0) moves.push('hold course');
-  return moves.join('; ');
+  if (Object.hasOwn(actions, 'hazardChoice')) {
+    descriptions.push(actions.hazardChoice
+      ? `${words(actions.hazardChoice)} the training hazard`
+      : 'make no training-hazard choice');
+  }
+  if (Object.hasOwn(actions, 'addressWarnings')) {
+    const warnings = actions.addressWarnings ?? [];
+    descriptions.push(...(warnings.length
+      ? warnings.map((id) => `address the ${words(id)} warning`)
+      : ['address no warnings']));
+  }
+  if (Object.hasOwn(actions, 'eventChoices')) {
+    const choices = Object.entries(actions.eventChoices ?? {});
+    descriptions.push(...(choices.length
+      ? choices.map(([id, choice]) => `choose ${words(choice)} for ${words(id)}`)
+      : ['make no event-card choices']));
+  }
+  if (Object.hasOwn(actions, 'constitution')) {
+    const constitution = actions.constitution;
+    if (constitution) {
+      const hardLines = constitution.hardLines ?? [];
+      descriptions.push(hardLines.length
+        ? `adopt a constitution with hard lines ${hardLines.map(words).join(', ')}`
+        : 'adopt a constitution with no hard lines');
+      for (const [id, ruling] of Object.entries(constitution.rulings ?? {})) {
+        descriptions.push(`rule ${words(ruling)} for ${words(id)}`);
+      }
+    } else descriptions.push('leave the constitution unchanged');
+  }
+  if (Object.hasOwn(actions, 'presidentAnswers')) {
+    const answers = actions.presidentAnswers ?? [];
+    descriptions.push(answers.length
+      ? `answer the president: ${answers.map(words).join(', then ')}`
+      : 'give the president no answers');
+  }
+  if (Object.hasOwn(actions, 'holdOrShip')) {
+    if (actions.holdOrShip === 'hold') descriptions.push('hold to the pacing deal');
+    else if (actions.holdOrShip === 'ship') descriptions.push('ship despite the pacing deal');
+    else descriptions.push(`set the pacing choice to ${words(actions.holdOrShip)}`);
+  }
+
+  const moves = actions.moves ?? [];
+  descriptions.push(...(moves.length ? moves.map(describeMove) : ['make no regular move']));
+  for (const [key, value] of Object.entries(actions)) {
+    if (!ACTION_KEYS.has(key)) descriptions.push(`${words(key).toLowerCase()}: ${fallbackValue(value)}`);
+  }
+  return descriptions.join('; ');
 }
 
 function describeEvent(event) {
