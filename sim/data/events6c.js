@@ -18,7 +18,7 @@ function applyJump(model) {
 function finishBoardRevolt(state) {
   delete state.flags.boardCrisis;
   state.flags.boardRevoltHeld = true;
-  state.flags.boardVoteDue = true;
+  state.flags.boardVoteDue = 'emergency'; // checkTurnEndings records the vote's kind from this
 }
 
 const liveModels = (state) => state.models.filter((model) => model.active && !model.superseded

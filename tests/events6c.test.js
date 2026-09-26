@@ -280,7 +280,7 @@ test('lobbying lifts the two least supportive members', () => {
   s.pendingEvents.push({ id: 'boardRevolt' });
   resolveEvent(s, 'boardRevolt', 'lobby');
   assert.deepEqual(s.board, [40, 42, 42, 70, 80, 70, 70]);
-  assert.equal(s.flags.boardVoteDue, true);
+  assert.equal(s.flags.boardVoteDue, 'emergency');
 });
 
 test('the low-support revolt fires once; later revolts need a new crisis', () => {

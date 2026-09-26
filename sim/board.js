@@ -66,8 +66,8 @@ export function boardVote(state) {
 
 // A pure hash of (seed, turn, seat): the staff's misread, an integer in [-4, 4]. Never draws from an rng, so reading
 // the board cannot shift any later roll.
-export function misread(state, i) {
-  let h = (Math.imul((state.seed >>> 0) + 1, 2654435761) ^ Math.imul(state.turn + 1, 40503) ^ Math.imul(i + 1, 2246822519)) >>> 0;
+export function misread(state, i, turn = state.turn) {
+  let h = (Math.imul((state.seed >>> 0) + 1, 2654435761) ^ Math.imul(turn + 1, 40503) ^ Math.imul(i + 1, 2246822519)) >>> 0;
   h = Math.imul(h ^ (h >>> 15), 2246822507) >>> 0;
   h = Math.imul(h ^ (h >>> 13), 3266489909) >>> 0;
   h = (h ^ (h >>> 16)) >>> 0;
@@ -76,9 +76,10 @@ export function misread(state, i) {
 }
 
 // The order the UI reveals votes in: most certain first, the closest to the cut-off last (spec §6.4), by the read's
-// centre. Passed to the UI as an order, never as numbers.
-export function voteOrder(state) {
-  const distance = (i) => Math.abs(state.board[i] + misread(state, i) - BALANCE.boardSupportLine);
+// centre. Passed to the UI as an order, never as numbers. turn: the round the player saw the read in (the gate vote
+// runs after endTurn has moved the turn on).
+export function voteOrder(state, turn = state.turn) {
+  const distance = (i) => Math.abs(state.board[i] + misread(state, i, turn) - BALANCE.boardSupportLine);
   return BOARD_MEMBERS.map((_, i) => i).sort((a, b) => distance(b) - distance(a) || a - b);
 }
 
@@ -86,7 +87,7 @@ export function voteOrder(state) {
 // is judged at that round's end, and a bad miss votes at once.
 export function boardVoteThisRound(state) {
   if (state.ending) return false;
-  if (state.flags.boardVoteDue) return true;
+  if (state.flags.boardVoteDue) return true; // true (a missed promise) or 'emergency' (boardRevolt)
   // The emergency-vote card (boardRevolt, sim/data/events6c.js) sets boardVoteDue in every choice; it is resolved at
   // the start of endTurn, so its vote is held in that same round.
   if (state.pendingEvents.some((pending) => pending.id === 'boardRevolt')) return true;
@@ -101,7 +102,7 @@ export function boardVoteThisRound(state) {
 // A vote that would remove you. Once per run, staff who trust you enough threaten to quit together and the board
 // backs down (OpenAI, November 2023: 745 of 770 staff). It costs staff trust, and the board is only just on side.
 // The record keeps each director's real vote, so the UI reveals what happened, never its own guess.
-export function holdVote(state, kind = 'gate') {
+export function holdVote(state, kind = 'gate', turn = state.turn) {
   const vote = boardVote(state);
   if (state.flags.lastBoardVote) state.flags.prevBoardVote = state.flags.lastBoardVote;
   state.flags.boardVotesHeld = (state.flags.boardVotesHeld ?? 0) + 1;
@@ -111,7 +112,7 @@ export function holdVote(state, kind = 'gate') {
     passed: vote.passed,
     votes: state.board.map((s) => s >= BALANCE.boardSupportLine),
     kind,
-    order: voteOrder(state),
+    order: voteOrder(state, turn),
   };
   delete state.flags.boardLeak; // the leak lasts until the meeting
   if (vote.passed || state.flags.staffLetterUsed || state.staffTrust < STAFF_LETTER_TRUST) return vote;

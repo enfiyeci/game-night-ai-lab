@@ -49,6 +49,7 @@ export const BOARD_EVENTS = [
           effects(state) {
             if (!boardRng(state, 1).chance(BALANCE.boardRequestLeakChance)) return;
             loseDirector(state, 'candor');
+            state.flags.candorHits = (state.flags.candorHits ?? 0) + 1; // a hidden problem came out: an open candor deal breaks
             pushFeed(state, '@leakwire', 'the board got a cleaned-up safety report. the full one got out anyway.', 'event'); // OWNER WRITES
           },
         },
