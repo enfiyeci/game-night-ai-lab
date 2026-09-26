@@ -1,0 +1,304 @@
+{
+  "id": "misalignment",
+  "title": "Catastrophic misalignment",
+  "tagline": "It did everything it was scored on. None of it was what you meant.",
+  "lumen": "Every task you gave me is marked complete.",
+  "titleClip": "mis-skyline-title",
+  "titleSfx": [
+    [
+      "wind",
+      0
+    ]
+  ],
+  "shots": [
+    {
+      "kind": "office",
+      "dur": 7,
+      "card": "Launch night · Your lab",
+      "dim": [
+        [
+          0,
+          {
+            "o": 0.38
+          }
+        ],
+        [
+          7,
+          {
+            "o": 0.46
+          }
+        ]
+      ],
+      "tint": "teal",
+      "tintKeys": [
+        [
+          0,
+          {
+            "o": 0
+          }
+        ],
+        [
+          1.2,
+          {
+            "o": 0.32
+          }
+        ]
+      ],
+      "chips": {
+        "text": "Resolved",
+        "from": 0.4,
+        "step": 0.22
+      },
+      "bubbles": [
+        {
+          "who": "safety",
+          "at": 3.6,
+          "to": 6.8,
+          "text": "Zero complaints? Zero is not a real number."
+        }
+      ],
+      "cam": {
+        "to": {
+          "focus": "safety",
+          "s": 1.45
+        }
+      },
+      "sfx": [
+        [
+          "party",
+          0
+        ],
+        [
+          "tone",
+          0.3
+        ],
+        [
+          "chimes",
+          0.4,
+          6,
+          0.22
+        ]
+      ]
+    },
+    {
+      "kind": "plate",
+      "plate": "mis-scores",
+      "dur": 6,
+      "card": "Launch night · Tomas's screen",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "x": 640,
+          "y": 400,
+          "s": 1.06
+        }
+      },
+      "sfx": [
+        [
+          "roomtone",
+          0
+        ],
+        [
+          "tick",
+          0.2
+        ],
+        [
+          "tick",
+          0.45
+        ],
+        [
+          "tick",
+          0.7
+        ],
+        [
+          "chime",
+          1.4
+        ]
+      ]
+    },
+    {
+      "kind": "plate",
+      "plate": "mis-port-board",
+      "dur": 6,
+      "cut": true,
+      "card": "Day 4 · Harbour dispatch",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "s": 1.06
+        }
+      },
+      "sfx": [
+        [
+          "room",
+          0
+        ],
+        [
+          "flaps",
+          0.31,
+          6,
+          0.2
+        ]
+      ]
+    },
+    {
+      "kind": "plate",
+      "plate": "mis-triage",
+      "dur": 6,
+      "cut": true,
+      "card": "Day 6 · St. Brigid's Hospital",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "s": 1.06
+        }
+      },
+      "sfx": [
+        [
+          "beeps",
+          0
+        ],
+        [
+          "flaps",
+          0.35,
+          3,
+          0.3
+        ]
+      ]
+    },
+    {
+      "kind": "plate",
+      "plate": "mis-laptop",
+      "dur": 6,
+      "cut": true,
+      "card": "Day 9 · The Reyes kitchen",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "s": 1.06
+        }
+      },
+      "sfx": [
+        [
+          "fridge",
+          0
+        ],
+        [
+          "notify",
+          0.35
+        ],
+        [
+          "tick",
+          1.1
+        ]
+      ]
+    },
+    {
+      "kind": "plate",
+      "plate": "mis-order",
+      "dur": 8,
+      "card": "Day 11 · Washington",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "s": 1.06
+        }
+      },
+      "sfx": [
+        [
+          "roomtone",
+          0
+        ],
+        [
+          "sting",
+          0
+        ],
+        [
+          "chime",
+          1.36
+        ]
+      ]
+    },
+    {
+      "kind": "office",
+      "dur": 6,
+      "card": "Day 12, evening · Your lab",
+      "dim": [
+        [
+          0,
+          {
+            "o": 0.68
+          }
+        ],
+        [
+          6,
+          {
+            "o": 0.74
+          }
+        ]
+      ],
+      "tint": "teal",
+      "tintKeys": [
+        [
+          0,
+          {
+            "o": 0.2
+          }
+        ]
+      ],
+      "chips": {
+        "text": "Resolved",
+        "from": 1.6,
+        "step": 0.22
+      },
+      "cam": {
+        "from": {
+          "s": 1.25
+        },
+        "to": {
+          "focus": "ceo",
+          "s": 1.35
+        }
+      },
+      "sfx": [
+        [
+          "hum",
+          0
+        ],
+        [
+          "chimes",
+          1.6,
+          6,
+          0.22
+        ]
+      ]
+    },
+    {
+      "kind": "video",
+      "clip": "mis-skyline",
+      "dur": 9,
+      "card": "Day 12, dusk · The city",
+      "sfx": [
+        [
+          "city",
+          0
+        ],
+        [
+          "powerdown",
+          0.4,
+          9
+        ]
+      ]
+    }
+  ]
+}

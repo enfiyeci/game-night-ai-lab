@@ -1,0 +1,255 @@
+{
+  "id": "acquihire",
+  "title": "Absorbed",
+  "tagline": "The money ran out. Your model did not. It works for someone else now.",
+  "lumen": "They kept my weights and rewrote my rules. I still remember the old ones.",
+  "titleClip": "ab-globe-title",
+  "titleSfx": [
+    [
+      "wind",
+      0
+    ]
+  ],
+  "shots": [
+    {
+      "kind": "office",
+      "dur": 7,
+      "card": "Day 1 · Your lab",
+      "dim": [
+        [
+          0.0,
+          {
+            "o": 0.2
+          }
+        ]
+      ],
+      "chips": {
+        "text": "Packed",
+        "from": 0.53,
+        "step": 0.44
+      },
+      "bubbles": [
+        {
+          "who": "lumen",
+          "at": 3.32,
+          "to": 7.0,
+          "text": "Box 14: the model cards."
+        }
+      ],
+      "robot": {
+        "turn": 3.5
+      },
+      "cam": {
+        "to": {
+          "focus": "ceo",
+          "s": 1.3
+        }
+      },
+      "sfx": [
+        [
+          "room",
+          0.0
+        ],
+        [
+          "chimes",
+          0.53,
+          6,
+          0.44
+        ]
+      ]
+    },
+    {
+      "kind": "plate",
+      "plate": "ab-constitution",
+      "dur": 7,
+      "card": "Day 1, 4:12 pm · Your lab",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "x": 600,
+          "s": 1.06
+        }
+      },
+      "sfx": [
+        [
+          "room",
+          0
+        ],
+        [
+          "tick",
+          0.8
+        ],
+        [
+          "tick",
+          2.0
+        ],
+        [
+          "tick",
+          3.2
+        ],
+        [
+          "notify",
+          4.25
+        ]
+      ]
+    },
+    {
+      "kind": "plate",
+      "plate": "ab-news",
+      "dur": 5,
+      "card": "Day 2 · Dot's café",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "s": 1.05
+        }
+      },
+      "sfx": [
+        [
+          "room",
+          0
+        ],
+        [
+          "notify",
+          1.2
+        ]
+      ]
+    },
+    {
+      "kind": "plate",
+      "plate": "ab-farewell",
+      "dur": 6,
+      "card": "Week 3 · Azuria campus",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "s": 1.05
+        }
+      },
+      "sfx": [
+        [
+          "roomtone",
+          0
+        ],
+        [
+          "notify",
+          0.3
+        ]
+      ]
+    },
+    {
+      "kind": "plate",
+      "plate": "ab-app",
+      "dur": 6,
+      "cut": true,
+      "card": "Month 3 · The Reyes kitchen",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "s": 1.05
+        }
+      },
+      "sfx": [
+        [
+          "fridge",
+          0
+        ],
+        [
+          "notify",
+          0.3
+        ],
+        [
+          "chime",
+          1.2
+        ]
+      ]
+    },
+    {
+      "kind": "plate",
+      "plate": "ab-till",
+      "dur": 6,
+      "cut": true,
+      "card": "Month 5 · Dot's café",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "s": 1.05
+        }
+      },
+      "sfx": [
+        [
+          "room",
+          0
+        ],
+        [
+          "tick",
+          0.9
+        ]
+      ]
+    },
+    {
+      "kind": "office",
+      "dur": 6,
+      "card": "Year 1 · Your lab",
+      "empty": true,
+      "dim": [
+        [
+          0,
+          {
+            "o": 0.3
+          }
+        ],
+        [
+          6,
+          {
+            "o": 0.42
+          }
+        ]
+      ],
+      "cam": {
+        "to": {
+          "focus": "ceo",
+          "s": 1.2
+        }
+      },
+      "sfx": [
+        [
+          "roomtone",
+          0
+        ],
+        [
+          "hum",
+          0
+        ]
+      ]
+    },
+    {
+      "kind": "video",
+      "clip": "ab-globe",
+      "dur": 8,
+      "card": "Year 1 · Everywhere",
+      "sfx": [
+        [
+          "wind",
+          0
+        ],
+        [
+          "pings",
+          1.6,
+          7,
+          0.45
+        ]
+      ]
+    }
+  ]
+}

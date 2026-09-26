@@ -1,0 +1,258 @@
+{
+  "id": "boardRemoved",
+  "title": "Removed by the board",
+  "tagline": "The board kept your lab and dropped your promises.",
+  "lumen": "I watched the board thank you for your vision and keep the vision.",
+  "titleClip": "rb-skyline-title",
+  "titleSfx": [
+    [
+      "city",
+      0
+    ]
+  ],
+  "shots": [
+    {
+      "kind": "office",
+      "dur": 8,
+      "card": "The vote · Your lab",
+      "dim": [
+        [
+          0.0,
+          {
+            "o": 0.25
+          }
+        ],
+        [
+          8.0,
+          {
+            "o": 0.4
+          }
+        ]
+      ],
+      "bubbles": [
+        {
+          "who": "cfo",
+          "at": 0.48,
+          "to": 3.52,
+          "text": "The board voted. Three to two."
+        },
+        {
+          "who": "safety",
+          "at": 3.84,
+          "to": 8.0,
+          "text": "So the pledge goes with you."
+        }
+      ],
+      "leave": {
+        "order": [
+          "ceo"
+        ],
+        "from": 5.12,
+        "step": 0.8
+      },
+      "cam": {
+        "to": {
+          "focus": "ceo",
+          "s": 1.22
+        }
+      },
+      "sfx": [
+        [
+          "room",
+          0.0
+        ],
+        [
+          "walkout",
+          4.8,
+          6.72
+        ]
+      ]
+    },
+    {
+      "kind": "plate",
+      "plate": "rb-slide",
+      "dur": 6,
+      "card": "Day 1 · Your lab",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "s": 1.05
+        }
+      },
+      "sfx": [
+        [
+          "room",
+          0
+        ],
+        [
+          "party",
+          0.2,
+          1.6
+        ],
+        [
+          "tick",
+          1.7
+        ]
+      ]
+    },
+    {
+      "kind": "plate",
+      "plate": "rb-budget",
+      "dur": 6,
+      "card": "Day 1 · Tomas's screen",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "s": 1.05
+        }
+      },
+      "sfx": [
+        [
+          "roomtone",
+          0
+        ],
+        [
+          "clunk",
+          1.2
+        ]
+      ]
+    },
+    {
+      "kind": "plate",
+      "plate": "rb-cafe",
+      "dur": 6,
+      "card": "Day 2 · Dot's café",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "x": 700,
+          "s": 1.06
+        }
+      },
+      "sfx": [
+        [
+          "room",
+          0
+        ],
+        [
+          "notify",
+          1.2
+        ],
+        [
+          "notify",
+          1.6
+        ],
+        [
+          "notify",
+          2.0
+        ]
+      ]
+    },
+    {
+      "kind": "plate",
+      "plate": "rb-hearing",
+      "dur": 8,
+      "card": "Month 2 · Washington",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "s": 1.05
+        }
+      },
+      "sfx": [
+        [
+          "roomtone",
+          0
+        ],
+        [
+          "sting",
+          0
+        ]
+      ]
+    },
+    {
+      "kind": "plate",
+      "plate": "rb-app",
+      "dur": 6,
+      "card": "Month 3 · The Reyes kitchen",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "s": 1.05
+        }
+      },
+      "sfx": [
+        [
+          "fridge",
+          0
+        ],
+        [
+          "notify",
+          0.3
+        ],
+        [
+          "tick",
+          1.3
+        ]
+      ]
+    },
+    {
+      "kind": "video",
+      "clip": "rb-skyline",
+      "dur": 8,
+      "card": "Month 3 · The city",
+      "sfx": [
+        [
+          "city",
+          0
+        ],
+        [
+          "flaps",
+          1.0,
+          1,
+          0.3
+        ],
+        [
+          "flaps",
+          2.4,
+          1,
+          0.3
+        ],
+        [
+          "flaps",
+          3.5,
+          1,
+          0.3
+        ],
+        [
+          "flaps",
+          4.4,
+          1,
+          0.3
+        ],
+        [
+          "flaps",
+          5.2,
+          1,
+          0.3
+        ],
+        [
+          "flaps",
+          5.8,
+          1,
+          0.3
+        ]
+      ]
+    }
+  ]
+}
