@@ -205,7 +205,21 @@ function describeMove(move) {
   if (move.type === 'emergency') return `use the ${words(move.option)} emergency option`;
   if (move.type === 'deployInternal') return `deploy the model internally with ${Math.round(move.control * 100)}% control`;
   if (move.type === 'stopInternal') return 'stop the internal deployment';
-  return words(move.type);
+  if (move.type === 'summit') {
+    const proposals = move.proposals?.length ? move.proposals.map((id) => words(id).toLowerCase()).join(', ') : 'no commitments';
+    const sweetener = move.sweetener ? `sweetener: ${words(move.sweetener).toLowerCase()}` : 'no sweetener';
+    return `propose a summit with ${proposals}; ${sweetener}`;
+  }
+  if (move.type === 'amendConstitution') {
+    const change = move.change ?? {};
+    const changes = [];
+    if (change.remove) changes.push(`remove ${words(change.remove)}`);
+    if (change.add) changes.push(`add ${words(change.add)}`);
+    if (change.ruling) changes.push(`rule ${words(change.ruling.optionId)} for ${words(change.ruling.caseId)}`);
+    return `amend the constitution: ${changes.length ? changes.join('; ') : 'make no change'}`;
+  }
+  const { type, ...payload } = move;
+  return `${words(type).toLowerCase()}: ${fallbackValue(payload)}`;
 }
 
 const ACTION_KEYS = new Set([

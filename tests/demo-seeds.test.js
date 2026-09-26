@@ -97,6 +97,45 @@ test('recording script describes every top-level strategy action and unknown key
   assert.match(line, /surprise audit: \{"scope":"full"\}/);
 });
 
+test('recording script describes summit proposals and the sweetener', () => {
+  const line = demoSeeds.describeActions({
+    moves: [{ type: 'summit', proposals: ['evaluators', 'sharedSafety'], sweetener: 'evaluatorsFirst' }],
+  });
+
+  assert.match(line, /propose a summit with evaluators, shared safety/);
+  assert.match(line, /sweetener: evaluators first/);
+});
+
+test('recording script describes every part of a constitution amendment', () => {
+  const line = demoSeeds.describeActions({
+    moves: [{
+      type: 'amendConstitution',
+      change: {
+        remove: 'honest',
+        add: 'accept-shutdown',
+        ruling: { caseId: 'wrong', optionId: 'yield' },
+      },
+    }],
+  });
+
+  assert.match(line, /amend the constitution/);
+  assert.match(line, /remove honest/);
+  assert.match(line, /add accept shutdown/);
+  assert.match(line, /rule yield for wrong/);
+});
+
+test('recording script preserves unknown move payloads and internal control', () => {
+  const line = demoSeeds.describeActions({
+    moves: [
+      { type: 'deployInternal', control: 0.6 },
+      { type: 'moonshot', target: 'orbital', risk: 3 },
+    ],
+  });
+
+  assert.match(line, /deploy the model internally with 60% control/);
+  assert.match(line, /moonshot: \{"target":"orbital","risk":3\}/);
+});
+
 test('scoreStory rewards dramatic failures and penalises runs shorter than twelve turns', () => {
   assert.equal(scoreStory({ ending: 'misalignment', turns: turns(12) }).score, 2);
   assert.equal(scoreStory({ ending: 'quietTakeover', turns: turns(12) }).score, 2);
