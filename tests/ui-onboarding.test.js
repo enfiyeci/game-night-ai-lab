@@ -77,3 +77,15 @@ test('no tour line and no era-1 menu reason names an era', () => {
   }
   assert.equal(ITEMS.find((item) => item.id === 'constitution').hidden(state), true);
 });
+
+test('the finance planner calls a later era by the month it starts, never by its number or name', async () => {
+  const { eraLabel, eraTitle, eraEndWords } = await import('../ui/logic/finance.js');
+  const state = createInitialState({ seed: 1 });
+  assert.equal(eraLabel(state, 1), 'Era 1');
+  assert.equal(eraTitle(state, 1), ERAS[0].name);
+  assert.equal(eraLabel(state, 2), 'From Y2 M1');
+  assert.equal(eraTitle(state, 2), '');
+  assert.equal(eraEndWords(state, 1), 'the end of era 1');
+  assert.doesNotMatch(eraEndWords(state, 3), /era/i);
+  assert.notEqual(eraLabel(state, 4), eraLabel(state, 5)); // eras 3 to 5 all start in year 3
+});

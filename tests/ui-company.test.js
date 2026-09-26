@@ -321,7 +321,7 @@ test('the turn summary reports board promises, the board\'s verdict and the staf
     { type: 'boardPromiseJudged', ratio: 0.3, vote: true },
     { type: 'staffLetter' },
   ], createInitialState()), [
-    'You promised the board 30 units by the end of era 3',
+    'You promised the board 30 units by Y3 M5', // a later era is named by the month it ends (owner rule)
     'You kept your compute promise to the board',
     'You came up short of your compute promise to the board',
     'You missed your compute promise badly, and the board wants a vote',

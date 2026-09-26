@@ -31,6 +31,15 @@ export function eraOfTurn(turn) {
   return ERAS.at(-1).id;
 }
 
+// Owner rule 2026-09-26: the planner never names an era the player has not reached. A later era is called by the
+// month it starts (the clock's own Y/M style), and a deadline in it by the month it ends.
+const monthWords = (month) => `Y${Math.floor(month / 12) + 1} M${(month % 12) + 1}`;
+export const eraLabel = (state, era) => (era <= state.era ? `Era ${era}` : `From ${monthWords(monthOfTurn(eraStart(era)))}`);
+export const eraTitle = (state, era) => (era <= state.era ? eraById(era).name : '');
+export const eraEndWords = (state, era) => (era <= state.era
+  ? `the end of era ${era}`
+  : monthWords(monthOfTurn(eraStart(era) + eraById(era).turns)));
+
 export function monthOfTurn(turn) {
   let month = 0;
   for (let t = 0; t < turn; t++) month += eraById(eraOfTurn(t)).monthsPerTurn;
@@ -248,17 +257,18 @@ export function planOpinions(state, projection, plan) {
   const growth = finalGoal / Math.max(1, state.compute.online);
   const era4Goal = plan.goals[4];
   const out = projection.runsOut;
+  const byEnd = last.era <= state.era ? `by era ${last.era}` : 'by the end of the plan';
   const opinions = [
     {
       id: 'cfo',
       mood: out ? 'alarmed' : projection.lowest < 500 ? 'uneasy' : 'calm',
       text: projection.rows[0].revenue < 1
-        ? `We earn nothing yet and spend ${Math.round(last.burn)} million a month by era ${last.era}.${out ? ` We're out in month ${Math.floor(out.atMonth)}.` : ''}`
+        ? `We earn nothing yet and spend ${Math.round(last.burn)} million a month ${byEnd}.${out ? ` We're out in month ${Math.floor(out.atMonth)}.` : ''}`
         : out
-          ? `We spend ${ratio} times what we earn by era ${last.era}. Without more money we're out in month ${Math.floor(out.atMonth)}.`
+          ? `We spend ${ratio} times what we earn ${byEnd}. Without more money we're out in month ${Math.floor(out.atMonth)}.`
           : last.burn <= last.revenue
-            ? `It holds. By era ${last.era} we earn more than we spend.`
-            : `It holds. We spend ${Math.max(1, ratio)} times what we earn by era ${last.era}.`,
+            ? `It holds. ${byEnd[0].toUpperCase()}${byEnd.slice(1)} we earn more than we spend.`
+            : `It holds. We spend ${Math.max(1, ratio)} times what we earn ${byEnd}.`,
     },
     {
       id: 'research',
@@ -269,12 +279,12 @@ export function planOpinions(state, projection, plan) {
       id: 'safety',
       mood: 'calm',
       text: era4Goal != null
-        ? `At our ${Math.round(state.compute.split.safety * 100)}% share, era 4 gives safety ${Math.round(era4Goal * state.compute.split.safety)} units.`
+        ? `At our ${Math.round(state.compute.split.safety * 100)}% share, ${state.era >= 4 ? 'this era' : 'later on'} safety gets ${Math.round(era4Goal * state.compute.split.safety)} units.`
         : `At our ${Math.round(state.compute.split.safety * 100)}% share, safety gets ${Math.round(finalGoal * state.compute.split.safety)} units.`,
     },
   ];
   if (state.era <= 3 && era4Goal != null) {
-    opinions.push({ id: 'policy', mood: 'uneasy', text: 'Chips we own need power from era 4, and grid reservations close after era 3.' });
+    opinions.push({ id: 'policy', mood: 'uneasy', text: 'Chips we own will need power of their own later on, and grid reservations will not stay open forever.' });
   } else {
     opinions.push({ id: 'policy', mood: out ? 'uneasy' : 'calm', text: out ? 'Running out of money in public is the story I cannot spin.' : 'A plan that holds is one I can explain.' });
   }
