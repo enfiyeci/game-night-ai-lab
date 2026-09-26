@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import { setConstitution, amendConstitution, constitutionValues, learnedConstitution, hasLine } from '../sim/constitution.js';
-import { CASES } from '../sim/data/constitution.js';
+import { HARD_LINES, CASES } from '../sim/data/constitution.js';
 import { applyAlignmentFaking } from '../sim/hazards.js';
 import { internalTick } from '../sim/internal.js';
 import { resolveRun } from '../sim/training.js';
@@ -46,8 +46,13 @@ test('exactly three hard lines and every case ruled', () => {
   assert.equal(setConstitution(s, { hardLines: ['no-wmd', 'no-wmd', 'privacy'], rulings: allRulings() }).ok, false);
   assert.equal(setConstitution(s, { hardLines: ['no-wmd', 'honest', 'constructor'], rulings: allRulings() }).ok, false);
   assert.equal(setConstitution(s, { hardLines: ['no-wmd', 'honest', 'privacy'], rulings: { ...allRulings(), chem: 'constructor' } }).ok, false);
+  assert.equal(setConstitution(s, { hardLines: ['no-wmd', 'honest', 'privacy'], rulings: Object.create(allRulings()) }).ok, false);
   assert.equal(setConstitution(s, { hardLines: ['no-wmd', 'honest', 'privacy'], rulings: allRulings() }).ok, true);
   assert.equal(hasLine(s, 'honest'), true);
+});
+
+test('hard-line effect descriptions contain no hidden numbers', () => {
+  assert.equal(HARD_LINES.some((line) => /\d/.test(line.effect)), false);
 });
 
 test('rulings average into value dials between 0 and 1', () => {
@@ -67,6 +72,19 @@ test('amendments add, remove and re-rule, and are recorded', () => {
   assert.equal(s.constitution.amendments.length, 2);
   assert.equal(amendConstitution(s, { add: 'no-wmd' }).ok, false);
   assert.equal(amendConstitution(s, { ruling: { caseId: 'constructor', optionId: 'yield' } }).ok, false);
+});
+
+test('amendments reject inherited ruling fields without changing state', () => {
+  const state = createInitialState();
+  adopt(state);
+  const before = structuredClone(state);
+  const inheritedRuling = Object.create({ caseId: 'wrong', optionId: 'yield' });
+  assert.equal(amendConstitution(state, { ruling: inheritedRuling }).ok, false);
+  assert.deepEqual(state, before);
+
+  const inheritedChange = Object.create({ ruling: { caseId: 'wrong', optionId: 'yield' } });
+  assert.equal(amendConstitution(state, inheritedChange).ok, false);
+  assert.deepEqual(state, before);
 });
 
 test('the learned constitution drifts with total debt', () => {

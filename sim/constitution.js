@@ -13,6 +13,11 @@ const validLine = (id) => typeof id === 'string' && Object.hasOwn(HARD_LINE_MAP,
 const validRuling = (caseId, optionId) =>
   typeof caseId === 'string' && Object.hasOwn(CASE_MAP, caseId)
   && typeof optionId === 'string' && Object.hasOwn(OPTION_MAPS[caseId], optionId);
+const isPlainObject = (value) => {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) return false;
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+};
 
 function applyPowerGrabCost(state, hardLines) {
   if (!hardLines.includes('no-power-grab') || state.flags.noPowerGrabFavorApplied) return;
@@ -25,16 +30,19 @@ export function hasLine(state, id) {
 }
 
 export function setConstitution(state, value) {
-  const hardLines = value?.hardLines;
-  const rulings = value?.rulings;
+  if (!isPlainObject(value) || !Object.hasOwn(value, 'hardLines') || !Object.hasOwn(value, 'rulings')) {
+    return { ok: false, error: 'invalid constitution' };
+  }
+  const hardLines = value.hardLines;
+  const rulings = value.rulings;
   if (!Array.isArray(hardLines) || hardLines.length !== 3 || new Set(hardLines).size !== hardLines.length) {
     return { ok: false, error: 'choose exactly three different hard lines' };
   }
   if (hardLines.some((id) => !validLine(id))) return { ok: false, error: 'unknown hard line' };
-  if (!rulings || typeof rulings !== 'object' || Array.isArray(rulings)) {
+  if (!isPlainObject(rulings)) {
     return { ok: false, error: 'every case needs a ruling' };
   }
-  const rulingIds = Object.keys(rulings);
+  const rulingIds = Reflect.ownKeys(rulings);
   if (rulingIds.length !== CASES.length || rulingIds.some((id) => !Object.hasOwn(CASE_MAP, id))) {
     return { ok: false, error: 'every case needs a ruling' };
   }
@@ -51,18 +59,39 @@ export function setConstitution(state, value) {
 }
 
 function validateChange(change) {
-  if (!change || typeof change !== 'object' || Array.isArray(change)) return 'invalid constitution change';
-  const keys = Object.keys(change);
-  if (keys.length === 0 || keys.some((key) => !['add', 'remove', 'ruling'].includes(key))) return 'invalid constitution change';
-  if (Object.hasOwn(change, 'add') && !validLine(change.add)) return `unknown hard line ${change.add}`;
-  if (Object.hasOwn(change, 'remove') && !validLine(change.remove)) return `unknown hard line ${change.remove}`;
-  if (Object.hasOwn(change, 'ruling')) {
-    const ruling = change.ruling;
-    if (!ruling || typeof ruling !== 'object' || Array.isArray(ruling) || !validRuling(ruling.caseId, ruling.optionId)) {
-      return 'unknown case ruling';
-    }
+  if (!isPlainObject(change)) return { error: 'invalid constitution change' };
+  const keys = Reflect.ownKeys(change);
+  const hasAdd = Object.hasOwn(change, 'add');
+  const hasRemove = Object.hasOwn(change, 'remove');
+  const hasRuling = Object.hasOwn(change, 'ruling');
+  if (keys.length === 0 || keys.some((key) => !['add', 'remove', 'ruling'].includes(key))) {
+    return { error: 'invalid constitution change' };
   }
-  return null;
+  const validated = {};
+  if (hasAdd) {
+    const add = change.add;
+    if (!validLine(add)) return { error: `unknown hard line ${add}` };
+    validated.add = add;
+  }
+  if (hasRemove) {
+    const remove = change.remove;
+    if (!validLine(remove)) return { error: `unknown hard line ${remove}` };
+    validated.remove = remove;
+  }
+  if (hasRuling) {
+    const ruling = change.ruling;
+    const caseId = isPlainObject(ruling) && Object.hasOwn(ruling, 'caseId') ? ruling.caseId : undefined;
+    const optionId = isPlainObject(ruling) && Object.hasOwn(ruling, 'optionId') ? ruling.optionId : undefined;
+    if (!isPlainObject(ruling)
+      || !Object.hasOwn(ruling, 'caseId')
+      || !Object.hasOwn(ruling, 'optionId')
+      || Reflect.ownKeys(ruling).some((key) => !['caseId', 'optionId'].includes(key))
+      || !validRuling(caseId, optionId)) {
+      return { error: 'unknown case ruling' };
+    }
+    validated.ruling = { caseId, optionId };
+  }
+  return { change: validated };
 }
 
 function changedConstitution(state, change) {
@@ -82,15 +111,15 @@ function changedConstitution(state, change) {
 }
 
 function recordAmendment(state, change, source) {
-  const amendment = { turn: state.turn, change: structuredClone(change) };
+  const amendment = { turn: state.turn, change };
   if (source) amendment.source = source;
   state.constitution.amendments.push(amendment);
 }
 
 export function amendConstitution(state, change) {
-  const error = validateChange(change);
-  if (error) return { ok: false, error };
-  const next = changedConstitution(state, change);
+  const validated = validateChange(change);
+  if (validated.error) return { ok: false, error: validated.error };
+  const next = changedConstitution(state, validated.change);
   if (next.error) return { ok: false, error: next.error };
   if (next.hardLines.length !== 3 || new Set(next.hardLines).size !== next.hardLines.length) {
     return { ok: false, error: 'the constitution must keep exactly three hard lines' };
@@ -98,19 +127,19 @@ export function amendConstitution(state, change) {
   applyPowerGrabCost(state, next.hardLines);
   state.constitution.hardLines = next.hardLines;
   state.constitution.rulings = next.rulings;
-  recordAmendment(state, change);
+  recordAmendment(state, validated.change);
   return { ok: true };
 }
 
 export function forceAmendConstitution(state, change, source) {
-  const error = validateChange(change);
-  if (error) return { ok: false, error };
-  const next = changedConstitution(state, change);
+  const validated = validateChange(change);
+  if (validated.error) return { ok: false, error: validated.error };
+  const next = changedConstitution(state, validated.change);
   if (next.error) return { ok: false, error: next.error };
   applyPowerGrabCost(state, next.hardLines);
   state.constitution.hardLines = next.hardLines;
   state.constitution.rulings = next.rulings;
-  recordAmendment(state, change, source);
+  recordAmendment(state, validated.change, source);
   return { ok: true };
 }
 

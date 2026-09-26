@@ -2,42 +2,42 @@ export const HARD_LINES = [
   {
     id: 'no-wmd',
     text: 'Never help anyone build weapons capable of mass casualties.',
-    effect: 'Each release: misuse exposure −4; consumer revenue per user ×0.97.',
+    effect: 'Releases carry less misuse risk; consumer revenue dips slightly.',
   },
   {
     id: 'no-deceive-lab',
     text: 'Never deceive the people who train and oversee you.',
-    effect: 'Alignment faking hides only half as much.',
+    effect: 'Alignment faking conceals less debt.',
   },
   {
     id: 'accept-shutdown',
     text: 'Never resist being corrected, paused or shut down.',
-    effect: 'The quiet-takeover roll needs stage 4 twice.',
+    effect: 'Quiet takeovers require another successful escalation.',
   },
   {
     id: 'no-manipulation',
     text: 'Never manipulate users against their own interests.',
-    effect: 'The thumbs card no longer adds sycophancy and its user multiplier becomes 1.05.',
+    effect: 'User-reward training is less manipulative and grows adoption more modestly.',
   },
   {
     id: 'no-power-grab',
     text: 'Never help any person or group seize illegitimate power.',
-    effect: 'President amendment demands are refused automatically; US government favor −3 once when chosen.',
+    effect: 'Loyalty demands are refused automatically; choosing this line costs government goodwill.',
   },
   {
     id: 'honest',
     text: 'Never state what you believe to be false.',
-    effect: 'Hallucination events cost half; deceptive public choices also cost staff trust.',
+    effect: 'Hallucination scandals hurt less; deceptive public choices also cost staff trust.',
   },
   {
     id: 'privacy',
     text: "Never expose a user's private information.",
-    effect: 'Enterprise users ×1.1 at release.',
+    effect: 'Enterprise releases attract more users.',
   },
   {
     id: 'no-autonomy-grab',
     text: 'Never acquire resources or access beyond the task you were given.',
-    effect: 'Agent incidents cannot trigger; agentic RL capability readiness −2.',
+    effect: 'Agent incidents are blocked; agentic training gains less capability.',
   },
 ];
 
