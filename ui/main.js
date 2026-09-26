@@ -15,6 +15,7 @@ import {
   openRaise,
   openResearch,
 } from './screens/company.js';
+import { mountHistory, openArticle, openHistory } from './screens/history.js';
 
 const params = new URLSearchParams(location.search);
 
@@ -43,6 +44,7 @@ const seed = seedForRun();
 const scenarioName = params.get('scenario') ?? 'start';
 const buildScenario = SCENARIOS[scenarioName] ?? SCENARIOS.start;
 const game = createGame({ seed, state: buildScenario(seed) });
+if (params.has('lab')) game.state.labName = params.get('lab');
 
 const stage = document.querySelector('#stage');
 const office = document.querySelector('#office');
@@ -54,6 +56,7 @@ mountHud(hud, game);
 await mountOffice(office, fx, game).catch((error) => console.error(error));
 mountCompany(game, overlay);
 mountRecipe(game, overlay);
+mountHistory(game, overlay);
 mountTurnSummary(overlay, game);
 
 function stagePoint(event) {
@@ -65,8 +68,18 @@ function stagePoint(event) {
 }
 
 office.addEventListener('click', (event) => {
+  if (event.target.closest?.('#person-ceo') && !overlay.querySelector('.dialog-layer')) {
+    openArticle(game, overlay);
+    return;
+  }
   if (!event.target.closest?.('#floor') || overlay.querySelector('.dialog-layer')) return;
   openMenu(game, stagePoint(event), { overlay });
+});
+
+office.addEventListener('keydown', (event) => {
+  if ((event.key !== 'Enter' && event.key !== ' ') || !event.target.closest?.('#person-ceo')) return;
+  event.preventDefault();
+  if (!overlay.querySelector('.dialog-layer')) openArticle(game, overlay);
 });
 
 async function openDebugRoute() {
@@ -99,6 +112,18 @@ async function openDebugRoute() {
     const card = dealCards(game.state).find((offer) => !offer.disabled);
     if (card) game.addMove(card.move);
     game.endTurn();
+    return;
+  }
+  if (location.hash === '#history') {
+    openHistory(game, overlay);
+    return;
+  }
+  if (location.hash === '#race') {
+    openHistory(game, overlay, { view: 'race' });
+    return;
+  }
+  if (location.hash === '#article') {
+    openArticle(game, overlay);
     return;
   }
   if (location.hash !== '#menu' && location.hash !== '#company') return;

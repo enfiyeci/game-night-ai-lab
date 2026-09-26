@@ -1446,6 +1446,705 @@ svg.room {
   line-height: 1.35;
 }
 
+#person-ceo { cursor: pointer; }
+#person-ceo:focus-visible { outline: 4px solid var(--sky); outline-offset: 7px; }
+
+.history-muted { color: color-mix(in oklab, var(--ink) 58%, var(--paper)); }
+
+.history-models .dlg {
+  left: 300px;
+  width: 840px;
+  min-height: 0;
+}
+
+.history-models .dialog-left {
+  top: 150px;
+  left: 40px;
+  width: 250px;
+}
+
+.history-models .dialog-right {
+  top: 150px;
+  right: 40px;
+  width: 250px;
+  max-height: 650px;
+}
+
+.history-models-table {
+  width: 100%;
+  border-spacing: 0 6px;
+  border-collapse: separate;
+  font-size: 13px;
+  text-align: left;
+}
+
+.history-models-table th {
+  padding: 0 10px 2px;
+  color: color-mix(in oklab, var(--ink) 55%, var(--paper));
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.history-models-table th:nth-last-child(-n + 2) { text-align: right; }
+
+.history-models-table td {
+  padding: 9px 10px;
+  border-top: 1px solid color-mix(in oklab, var(--ink) 8%, transparent);
+  border-bottom: 1px solid color-mix(in oklab, var(--ink) 8%, transparent);
+  vertical-align: middle;
+  background: var(--paper);
+}
+
+.history-models-table td:first-child {
+  border-left: 1px solid color-mix(in oklab, var(--ink) 8%, transparent);
+  border-radius: 9px 0 0 9px;
+}
+
+.history-models-table td:last-child {
+  border-right: 1px solid color-mix(in oklab, var(--ink) 8%, transparent);
+  border-radius: 0 9px 9px 0;
+}
+
+.history-models-table tr { cursor: pointer; }
+
+.history-models-table tr:focus-visible { outline: 3px solid var(--sky); outline-offset: 1px; }
+
+.history-models-table tr.history-models-selected td {
+  border-color: var(--wood);
+  background: color-mix(in oklab, var(--wood) 12%, var(--paper));
+}
+
+.history-models-name {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.history-models-name small {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.history-models-press b { font-size: 17px; font-weight: 900; }
+
+.history-models-leaderboard { width: 210px; }
+
+.history-models-lead {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 3px 6px;
+  align-items: center;
+  font-size: 10.5px;
+  font-weight: 800;
+}
+
+.history-models-bar {
+  position: relative;
+  height: 8px;
+  border-radius: 4px;
+  background: color-mix(in oklab, var(--ink) 8%, var(--paper));
+}
+
+.history-models-bar i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 4px;
+}
+
+.history-models-bar-you i { background: var(--coral); }
+
+.history-models-bar-rival i {
+  background: repeating-linear-gradient(135deg, var(--sky) 0 3px, color-mix(in oklab, var(--sky) 45%, var(--paper)) 3px 6px);
+}
+
+.history-models-number {
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  text-align: right;
+}
+
+.history-models-key {
+  display: flex;
+  margin: 4px 4px 0;
+  justify-content: flex-end;
+  gap: 16px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.history-models-key span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.history-models-key i {
+  display: inline-block;
+  width: 18px;
+  height: 8px;
+  border-radius: 4px;
+}
+
+.history-models-key-you { background: var(--coral); }
+
+.history-models-key-rival {
+  background: repeating-linear-gradient(135deg, var(--sky) 0 3px, color-mix(in oklab, var(--sky) 45%, var(--paper)) 3px 6px);
+}
+
+.history-models-stats { padding: 10px 14px 14px; }
+
+.history-models-stat {
+  display: flex;
+  padding: 7px 0;
+  justify-content: space-between;
+  border-bottom: 1px solid color-mix(in oklab, var(--ink) 8%, transparent);
+  font-size: 13px;
+}
+
+.history-models-stat b { font-weight: 900; }
+
+.history-models-detail {
+  max-height: 600px;
+  padding: 10px 14px 14px;
+  overflow-y: auto;
+  text-align: left;
+}
+
+.history-models-detail-title {
+  margin: 2px 0 8px;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.history-models-quote {
+  margin: 0 0 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.35;
+  background: var(--paper);
+}
+
+.history-models-quote-head {
+  display: flex;
+  margin-bottom: 2px;
+  justify-content: space-between;
+  font-size: 11px;
+}
+
+.history-models-quote p { margin: 0; }
+
+.history-models-post {
+  margin: 10px 0 0;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.history-models-post b { color: color-mix(in oklab, var(--sky) 70%, var(--ink)); }
+
+.history-empty {
+  margin: 100px 0;
+  color: color-mix(in oklab, var(--ink) 58%, var(--paper));
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.history-race .dlg {
+  top: 112px;
+  left: 60px;
+  display: flex;
+  width: 1320px;
+  height: 688px;
+  min-height: 0;
+  padding: 18px 18px 16px;
+  flex-direction: column;
+}
+
+.history-race-stacked .dlg {
+  top: 70px;
+  height: 820px;
+}
+
+.history-race .dlg h1 {
+  padding-left: 10px;
+  text-align: left;
+}
+
+.history-race .dlg .subt {
+  padding-left: 10px;
+  text-align: left;
+}
+
+.history-race .rule { margin: 10px 28px 7px; }
+
+.history-race .dialog-body {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
+.history-race .dialog-actions {
+  position: absolute;
+  right: 28px;
+  bottom: 18px;
+}
+
+.history-race .dialog-actions .dialog-back,
+.history-race .dialog-actions .dialog-ok { margin-top: 0; }
+
+.history-race-body { position: relative; }
+
+.history-race-legend {
+  position: absolute;
+  z-index: 1;
+  right: 10px;
+  top: -58px;
+  display: flex;
+  gap: 22px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.history-race-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.history-race-legend i {
+  position: relative;
+  display: inline-block;
+  width: 26px;
+  height: 10px;
+}
+
+.history-race-legend-you::before,
+.history-race-legend-rival::before {
+  position: absolute;
+  top: 4px;
+  right: 0;
+  left: 0;
+  height: 3px;
+  background: var(--coral);
+  content: "";
+}
+
+.history-race-legend-you::after {
+  position: absolute;
+  top: 0;
+  left: 9px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--coral);
+  content: "";
+}
+
+.history-race-legend-rival::before {
+  height: 2px;
+  background: repeating-linear-gradient(to right, var(--sky) 0 6px, transparent 6px 11px);
+}
+
+.history-race-legend-rival::after {
+  position: absolute;
+  top: 0;
+  left: 9px;
+  width: 8px;
+  height: 8px;
+  border: 2px solid var(--sky);
+  border-radius: 50%;
+  background: var(--paper);
+  content: "";
+}
+
+.history-race-legend-tick {
+  width: 10px !important;
+  height: 6px !important;
+  border-radius: 3px;
+  background: var(--sky);
+}
+
+.history-race-chart {
+  display: block;
+  width: 1280px;
+  height: auto; /* the drawing sets its own height: shorter when the cards stack */
+}
+
+.history-race-era { fill: var(--paper); }
+.history-race-era-alt { fill: color-mix(in oklab, var(--cream) 40%, var(--paper)); }
+
+.history-race-era-label {
+  fill: color-mix(in oklab, var(--ink) 60%, var(--paper));
+  font-size: 11.5px;
+  font-weight: 800;
+}
+
+.history-race-grid {
+  stroke: color-mix(in oklab, var(--ink) 8%, transparent);
+  stroke-width: 1px;
+}
+
+.history-race-axis { stroke: color-mix(in oklab, var(--ink) 30%, transparent); }
+
+.history-race-axis-label {
+  fill: color-mix(in oklab, var(--ink) 55%, var(--paper));
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.history-race-line { fill: none; }
+
+.history-race-line-you {
+  stroke: var(--coral);
+  stroke-width: 3px;
+}
+
+.history-race-line-rival {
+  stroke: var(--sky);
+  stroke-width: 2.5px;
+  stroke-dasharray: 6 5;
+}
+
+.history-race-dot-you {
+  fill: var(--coral);
+  stroke: var(--paper);
+  stroke-width: 2px;
+}
+
+.history-race-dot-rival {
+  fill: var(--paper);
+  stroke: var(--sky);
+  stroke-width: 2.5px;
+}
+
+.history-race-value {
+  fill: var(--ink);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.history-race-lab {
+  fill: color-mix(in oklab, var(--sky) 70%, var(--ink));
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.history-race-tick { fill: var(--sky); }
+
+.history-race-now-line {
+  stroke: var(--ink);
+  stroke-width: 1.5px;
+}
+
+.history-race-now-label {
+  fill: var(--ink);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.history-race-cards {
+  position: relative;
+  width: 1280px;
+  margin-top: 4px;
+}
+
+.history-race-card {
+  position: absolute;
+  top: 0;
+  width: 164px;
+  height: 168px;
+  padding: 10px 12px 11px;
+  overflow: hidden;
+  border-radius: 10px;
+  font-size: 12px;
+  text-align: left;
+  background: var(--paper);
+  box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 12%, transparent), 0 6px 14px color-mix(in oklab, var(--ink) 9%, transparent);
+}
+
+.history-race-card::before {
+  position: absolute;
+  top: calc(0px - var(--history-stem, 9px));
+  left: var(--history-pin, 20px);
+  width: 2px;
+  height: var(--history-stem, 9px);
+  background: var(--coral);
+  content: "";
+}
+
+.history-race-card h3 {
+  margin: 0 0 2px;
+  overflow: hidden;
+  font-size: 14.5px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-race-card-row {
+  display: flex;
+  margin-top: 4px;
+  justify-content: space-between;
+}
+
+.history-race-card-row b { font-weight: 900; }
+
+.history-race-card q {
+  display: block;
+  display: -webkit-box;
+  margin-top: 7px;
+  overflow: hidden;
+  font-size: 11.5px;
+  line-height: 1.35;
+  quotes: "\201C" "\201D";
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.history-article .dlg {
+  top: 96px;
+  left: 150px;
+  width: 1140px;
+  height: 770px;
+  min-height: 0;
+  padding: 0;
+  border-width: 3px;
+  text-align: left;
+}
+
+.history-article .dlg > h1,
+.history-article .dlg > .rule,
+.history-article .dlg > .dialog-ok { display: none; }
+
+.history-article .dialog-body { height: 100%; }
+
+/* The article's h1 sits inside the dialog panel, so outrank `.dlg h1`. */
+.history-article .dlg .history-article-title {
+  margin: 14px 0 0;
+  font-size: 27px;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.25;
+}
+
+.history-article-empty .dlg {
+  top: 260px;
+  height: 300px;
+}
+
+.history-article-browser {
+  position: relative;
+  height: 100%;
+}
+
+.history-article-chrome {
+  display: flex;
+  height: 38px;
+  padding: 0 14px;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid color-mix(in oklab, var(--ink) 12%, transparent);
+  background: color-mix(in oklab, var(--ink) 8%, var(--paper));
+}
+
+.history-article-dots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.history-article-dots button,
+.history-article-dots i {
+  display: block;
+  width: 11px;
+  height: 11px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--ink) 22%, var(--paper));
+}
+
+.history-article-dots button { cursor: pointer; }
+
+.history-article-dots button:hover,
+.history-article-dots button:focus-visible {
+  outline: 2px solid var(--sky);
+  outline-offset: 2px;
+  background: var(--coral);
+}
+
+.history-article-url {
+  flex: 1;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 5px 12px;
+  border-radius: 7px;
+  color: color-mix(in oklab, var(--ink) 62%, var(--paper));
+  font-size: 12.5px;
+  font-weight: 600;
+  text-align: center;
+  background: var(--paper);
+}
+
+.history-article-page {
+  height: calc(100% - 38px);
+  padding: 20px 34px 80px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--paper);
+}
+
+.history-article-site {
+  display: flex;
+  padding-bottom: 8px;
+  align-items: baseline;
+  gap: 10px;
+  border-bottom: 1px solid color-mix(in oklab, var(--ink) 14%, transparent);
+}
+
+.history-article-site b {
+  font-family: "Libre Baskerville", Georgia, serif;
+  font-size: 18px;
+  font-weight: 400;
+}
+
+.history-article-site span { font-size: 12px; }
+
+.history-article-title {
+  margin: 14px 0 0;
+  padding-bottom: 4px;
+  border-bottom: 1px solid color-mix(in oklab, var(--ink) 14%, transparent);
+  font-family: "Libre Baskerville", Georgia, serif;
+  font-size: 27px;
+  font-weight: 400;
+}
+
+.history-article-from {
+  margin: 6px 0 12px;
+  font-size: 12px;
+}
+
+.history-article-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 290px;
+  gap: 26px;
+}
+
+.history-article-copy p,
+.history-article-stub {
+  margin: 0 0 10px;
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.history-article-stub { margin-top: 24px; }
+
+.history-article-section-title {
+  margin: 14px 0 6px;
+  padding-bottom: 3px;
+  border-bottom: 1px solid color-mix(in oklab, var(--ink) 14%, transparent);
+  font-family: "Libre Baskerville", Georgia, serif;
+  font-size: 18px;
+  font-weight: 400;
+}
+
+.history-article-copy a {
+  color: color-mix(in oklab, var(--sky) 88%, var(--ink));
+  text-decoration: none;
+}
+
+.history-article-copy sup {
+  color: color-mix(in oklab, var(--sky) 88%, var(--ink));
+  font-size: 9.5px;
+}
+
+.history-article-info {
+  align-self: start;
+  border: 1px solid color-mix(in oklab, var(--ink) 16%, transparent);
+  font-size: 12px;
+  background: color-mix(in oklab, var(--cream) 30%, var(--paper));
+}
+
+.history-article-info h3 {
+  margin: 0;
+  padding: 8px;
+  font-family: "Libre Baskerville", Georgia, serif;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+  background: color-mix(in oklab, var(--wood) 26%, var(--paper));
+}
+
+.history-article-mark {
+  display: grid;
+  height: 84px;
+  margin: 10px 10px 0;
+  place-items: center;
+  color: color-mix(in oklab, var(--wood) 70%, var(--ink));
+  font-size: 30px;
+  font-style: italic;
+  font-weight: 700;
+  background: color-mix(in oklab, var(--wood) 10%, var(--paper));
+}
+
+.history-article-facts {
+  display: grid;
+  margin: 0;
+  padding: 10px;
+  grid-template-columns: 104px 1fr;
+  gap: 6px 8px;
+}
+
+.history-article-facts dt { font-weight: 800; }
+.history-article-facts dd { margin: 0; }
+
+.history-article-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.history-article-table th,
+.history-article-table td {
+  padding: 5px 7px;
+  border: 1px solid color-mix(in oklab, var(--ink) 16%, transparent);
+  text-align: left;
+}
+
+.history-article-table th {
+  font-weight: 800;
+  background: color-mix(in oklab, var(--ink) 6%, var(--paper));
+}
+
+.history-article-number {
+  font-variant-numeric: tabular-nums;
+  text-align: right !important;
+}
+
+.history-article-model-link { color: color-mix(in oklab, var(--sky) 88%, var(--ink)); }
+
+.history-article-references {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+.history-article-fade {
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  left: 3px;
+  height: 60px;
+  border-radius: 0 0 11px 11px;
+  background: linear-gradient(to bottom, transparent, var(--paper));
+  pointer-events: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
