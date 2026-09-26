@@ -56,10 +56,10 @@ test('an event card post appears on its landing day, once', () => {
   const card = s.pendingEvents[0];
   card.landsAt = 2;
   card.dueAt = 10;
-  let out = advanceDays(s, 1, createRng(5));
-  assert.equal(out.state.feed.length, 0);
-  out = advanceDays(out.state, 1, createRng(5));
   const cardPosts = (state) => state.feed.filter((post) => post.tag === 'event');
+  let out = advanceDays(s, 1, createRng(5));
+  assert.equal(cardPosts(out.state).length, 0);
+  out = advanceDays(out.state, 1, createRng(5));
   assert.deepEqual(cardPosts(out.state), [{ turn: 0, day: 2, handle: card.post.handle, text: card.post.text, tag: 'event' }]);
   out = advanceDays(out.state, 1, createRng(5));
   assert.equal(cardPosts(out.state).length, 1);

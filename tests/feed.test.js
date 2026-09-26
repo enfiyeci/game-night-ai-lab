@@ -297,7 +297,11 @@ test('a real CoreFlame trouble card draws the compute-supplier persona posts', (
   result = endTurn(state, {}, rng);
   const supplier = persona(REACTIONS.company.computeFailed, result.state);
   assert.ok(result.events.some((event) => event.type === 'eventCard' && event.id === 'neocloudTrouble'));
-  assert.ok(allPosts(result.state).some((post) => post.tag === 'company' && supplier.has(post.text)));
+  const card = result.state.pendingEvents.find((c) => (c.eventId ?? c.id) === 'neocloudTrouble');
+  const talk = (s) => allPosts(s).filter((post) => post.tag === 'company' && supplier.has(post.text));
+  assert.ok(talk(result.state).every((post) => post.day >= card.landsAt), 'nobody talks about it before the card lands');
+  result = endTurn(result.state, {}, rng); // the round the card lands in
+  assert.ok(talk(result.state).length >= 1);
 });
 
 test('with time-based posts off, a quiet moment posts nothing', async () => {

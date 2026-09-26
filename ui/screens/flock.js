@@ -402,9 +402,12 @@ export function openFlock(game, { overlay, events, onClose }) {
   }
 
   let mainScroll = 0;
+  let drawnView = null;
   function draw() {
     const oldMain = root.querySelector('.fk-main');
-    if (oldMain) mainScroll = oldMain.scrollTop;
+    const view = `${tab}/${feedTab}`; // a new tab opens at its top; a redraw of the same one keeps its place
+    mainScroll = oldMain && view === drawnView ? oldMain.scrollTop : 0;
+    drawnView = view;
     root.replaceChildren();
     const page = el('<div class="fk-page"></div>');
     const main = el('<main class="fk-main"></main>');
@@ -422,6 +425,7 @@ export function openFlock(game, { overlay, events, onClose }) {
     document.removeEventListener('keydown', onKey, true);
     root.remove();
     onClose?.();
+    overlay.dispatchEvent(new CustomEvent('gdt-dialog-closed')); // work that waited for the dialog layer can go on
   }
 
   // Esc works wherever focus is; Tab stays inside Flock (and inside the Display window while it is open).

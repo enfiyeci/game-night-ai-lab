@@ -178,6 +178,7 @@ export function reactToLandedCard(state, card) {
     s.add(R.promise.called, 1, 'event', { from: 0, to: 1 });
     return;
   }
+  if (id === 'neocloudTrouble') s.add(R.company.computeFailed, 1, 'company', { from: 0, to: 1 });
   const reactions = R.events[id];
   if (!reactions) return;
   if (reactions.breaks?.length) {
@@ -186,6 +187,13 @@ export function reactToLandedCard(state, card) {
   } else if (reactions.rumour?.length && s.rng.chance(0.6)) {
     s.add(reactions.rumour, 1, 'rumour', { from: 0, to: 2 });
   }
+}
+
+// A new run starts in era 1 without an eraStart event, so the era's opening posts are scheduled here.
+export function reactToRunStart(state) {
+  const s = scheduler(state, 3);
+  s.add(R.eras[1], 2, 'era', { from: 0, to: 0 });
+  s.add(R.eras[1], 2, 'era', { from: 1, to: 6 });
 }
 
 // Reactions to one step's events. atMark: the step ends a round, so time-based posts run too.
@@ -211,9 +219,6 @@ export function reactToEvents(before, state, events, { atMark = false } = {}) {
         break;
       case 'raise': case 'emergency': case 'lawsuitPaid': case 'conversionFight': case 'runComplete':
         s.add(R.company[event.type], event.type === 'runComplete' ? 1 : 2, 'company', { from: 0, to: 2 });
-        break;
-      case 'eventCard':
-        if (event.id === 'neocloudTrouble') s.add(R.company.computeFailed, 1, 'company', { from: 0, to: 1 });
         break;
       case 'eventResolved': choicePosts(state, event, s); break;
       case 'meetingOutcome': presidentPosts(state, event, s); break;

@@ -193,3 +193,24 @@ test('a lab caught breaking the Geneva deal, or wrongly accused, gets the summit
   assert.ok(cleared.feed.length >= 1);
   assert.ok(cleared.feed.every((post) => falseAlarm.has(post.text)));
 });
+
+test('a new run opens with the era-1 posts', async () => {
+  const { advanceDays } = await import('../sim/turn.js');
+  const { createRng } = await import('../sim/rng.js');
+  const state = createInitialState({ seed: 5 });
+  const out = advanceDays(state, 3, createRng(5)).state;
+  const era1 = shown(REACTIONS.eras[1]);
+  assert.ok([...out.feed, ...out.feedQueue].filter((post) => post.tag === 'era' && era1.has(post.text)).length >= 2);
+});
+
+test('the compute-supplier posts wait for the CoreFlame card to land', () => {
+  const failed = shown(REACTIONS.company.computeFailed);
+  const queued = stateOnDay();
+  reactToEvents(queued, queued, [{ type: 'eventCard', id: 'neocloudTrouble' }]);
+  runDays(queued, 3);
+  assert.ok(!queued.feed.some((post) => failed.has(post.text)), 'nothing is said while the card is still on its way');
+  const landed = stateOnDay();
+  reactToLandedCard(landed, { id: 'neocloudTrouble' });
+  runDays(landed, 2);
+  assert.ok(landed.feed.some((post) => failed.has(post.text)));
+});

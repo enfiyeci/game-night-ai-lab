@@ -39,7 +39,7 @@ import { judgeEndingPromises, promiseUpkeep } from './promises.js';
 import { applySplitEffects, makePledge, setComputeSplit, spotCover } from './split.js';
 import { ROUND_DAYS, monthsPerDay } from './time.js';
 import { TEAM_OF, teamBusyError } from './teams.js';
-import { reactToEvents, reactToLandedCard, releaseDueFeed } from './feedLive.js';
+import { reactToEvents, reactToLandedCard, reactToRunStart, releaseDueFeed } from './feedLive.js';
 import { setAutomation, automationTick, aiProposals, applyApprovals } from './automation.js';
 
 export const MAX_MOVES = 2;
@@ -514,6 +514,7 @@ export function advanceDays(prev, days, rng, observer = {}) {
   const events = [];
   const errors = [];
   if (state.ending) return { state, events, errors: ['the run is over'] };
+  if (state.day === 0 && state.era === 1 && days > 0) reactToRunStart(state);
   for (let i = 0; i < days && !state.ending; i += 1) {
     // Mood posts compare the whole round, start to mark, as the old turn did, so an instant action's shift is not lost.
     const mood = { raceHeat: state.roundStart.raceHeat ?? state.raceHeat, publicTrust: state.roundStart.publicTrust ?? state.publicTrust };
