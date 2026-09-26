@@ -3091,3 +3091,48 @@ svg.room {
 
   .pres-pat i { transition-duration: 150ms !important; }
 }
+
+/* Plan 2H: who does the work (1A grid, 1B dressing, 3C screen wall) */
+/* Same frame as the budget dialog, so the wide body clears both side panels (816 px centre, 250 and 266 px sides). */
+.automation-dialog .dlg { top: 94px; left: 306px; width: 816px; min-height: 0; }
+.automation-dialog .dialog-left { top: 150px; left: 40px; width: 250px; }
+.automation-dialog .dialog-right { top: 150px; right: 40px; width: 266px; }
+.automation-body { display: grid; gap: 14px; text-align: left; }
+.automation-body .dialog-error:empty { display: none; }
+.automation-grid { display: grid; grid-template-columns: 170px repeat(5, 1fr); gap: 8px 10px; align-items: center; }
+.automation-head { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: color-mix(in srgb, var(--ink) 60%, transparent); text-align: center; }
+.automation-job { font-weight: 800; color: var(--ink); }
+.automation-cell { position: relative; height: 32px; border-radius: 8px; border: 1.5px solid color-mix(in srgb, var(--sky) 45%, var(--cream)); background: color-mix(in srgb, var(--sky) 14%, var(--paper)); font: inherit; font-size: 13px; font-weight: 800; color: var(--paper); cursor: pointer; }
+.automation-cell:hover:not([aria-disabled="true"]) { border-color: var(--sky); }
+.automation-cell.chosen { background: var(--sky); border-color: color-mix(in srgb, var(--sky) 70%, var(--ink)); }
+.automation-cell.off { background: var(--paper); border-color: color-mix(in srgb, var(--ink) 12%, transparent); cursor: default; }
+.automation-cell.pack::after { content: ''; position: absolute; left: 50%; bottom: -8px; transform: translateX(-50%); border: 5px solid transparent; border-bottom-color: var(--wood); }
+.automation-legend { font-size: 12px; color: color-mix(in srgb, var(--ink) 65%, transparent); }
+.automation-legend::before { content: '▲ '; color: var(--wood); }
+.automation-time-head { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
+.automation-time-head span { font-weight: 800; }
+.automation-time-bar { display: flex; height: 30px; border-radius: 8px; overflow: hidden; gap: 2px; }
+.automation-time-bar span { display: grid; place-items: center; color: var(--paper); font-size: 12px; font-weight: 800; white-space: nowrap; overflow: hidden; }
+.automation-time-bar .job-code { background: var(--sky); }
+.automation-time-bar .job-review { background: color-mix(in srgb, var(--sky) 70%, var(--ink)); }
+.automation-time-bar .job-experiments { background: color-mix(in srgb, var(--coral) 80%, var(--paper)); }
+.automation-time-bar .job-choosing { background: var(--teal); }
+.automation-time-bar .job-direction { background: var(--wood); }
+.automation-time-bar .bottleneck { background: repeating-linear-gradient(135deg, var(--coral) 0 8px, color-mix(in srgb, var(--coral) 70%, var(--paper)) 8px 16px); }
+.automation-checks { display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 10px; }
+.automation-stepper { display: flex; align-items: center; gap: 8px; }
+.automation-stepper button { width: 30px; height: 30px; border-radius: 8px; border: 1.5px solid var(--wood); background: var(--paper); font: inherit; font-weight: 800; cursor: pointer; }
+.automation-stepper button:disabled { opacity: .35; cursor: default; }
+.automation-stepper-copy { display: grid; line-height: 1.2; }
+.automation-stepper-copy b, .automation-checks .compute-toggle b { font-size: 14px; font-weight: 800; }
+.automation-checks .compute-toggle { padding: 0; border-top: 0; }
+.automation-stepper-copy small, .automation-checks .compute-toggle small { font-size: 11.5px; font-weight: 700; }
+.automation-stepper-copy small { color: color-mix(in srgb, var(--ink) 65%, transparent); }
+.automation-stat { padding: 10px 14px; border-bottom: 1px solid color-mix(in srgb, var(--wood) 30%, transparent); }
+.automation-stat h3 { margin: 0 0 2px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--wood); }
+.automation-stat p { margin: 0; }
+.automation-stat:last-child { border-bottom: 0; }
+.automation-stat b { font-size: 30px; font-weight: 900; }
+.automation-stat small { display: block; font-size: 12px; color: color-mix(in srgb, var(--ink) 70%, transparent); }
+.automation-meter { height: 8px; border-radius: 4px; margin: 6px 0; background: repeating-linear-gradient(135deg, var(--coral) 0 6px, color-mix(in srgb, var(--coral) 60%, var(--paper)) 6px 12px); overflow: hidden; }
+.automation-meter i { display: block; height: 100%; background: var(--teal); }

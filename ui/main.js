@@ -32,6 +32,7 @@ import { createCollection } from './logic/collection.js';
 import { lumenEpilogue } from '../sim/lumen.js';
 import { mountTraining } from './screens/training.js';
 import { mountHazard } from './screens/hazard.js';
+import { mountAutomation, openAutomation } from './screens/automation.js';
 
 const params = new URLSearchParams(location.search);
 
@@ -80,6 +81,7 @@ mountRelease(game, overlay);
 mountReveal(game, overlay);
 mountPresident(game, overlay);
 mountHistory(game, overlay);
+mountAutomation(game, overlay);
 mountTurnSummary(overlay, game);
 const training = mountTraining(game, { stage, hud, overlay });
 mountHazard(game, { stage, overlay });
@@ -201,6 +203,10 @@ async function openDebugRoute() {
   }
   if (location.hash === '#training') {
     training.replay();
+    return;
+  }
+  if (location.hash === '#automation') {
+    openAutomation(game, overlay);
     return;
   }
   if (location.hash !== '#menu' && location.hash !== '#company') return;
