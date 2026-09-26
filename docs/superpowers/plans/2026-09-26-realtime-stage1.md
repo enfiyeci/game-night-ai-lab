@@ -899,6 +899,6 @@ Round 1: straight 6 findings, adversarial 6 (REVISE); 9 distinct after de-duplic
 
 Round 2: straight APPROVED. Adversarial REVISE with 3 findings, all fixed in ad0b40b: speed changes rescaled owed time; `advanceDays` returned only the last day's results; cards made on the final mark opened after the ending.
 
-Round 3 (cap): adversarial REVISE with 1 finding. A card set aside before the ending stays actionable after it. Escalated to the owner per the 3-round cap.
+Round 3 (cap): adversarial REVISE with 1 finding. A card set aside before the ending stays actionable after it. Escalated to the owner per the 3-round cap. The owner chose to fix it without a fourth round: `finishEnding` now clears every pending card, with a regression test.
 
 Tests after round 2: 540, 538 pass, 0 fail, 2 known todo. Balance: identical to the pre-fix baseline.
