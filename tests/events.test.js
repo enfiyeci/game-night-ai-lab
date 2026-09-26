@@ -5,6 +5,7 @@ import { eventsTick, addressWarning, resolveEvent } from '../sim/events.js';
 import { endTurn } from '../sim/turn.js';
 
 const no = { next: () => 0.99, int: () => 0, chance: () => false, pick: (a) => a[0], normal: (m) => m };
+const yes = { next: () => 0, int: () => 0, chance: () => true, pick: (a) => a[0], normal: (m) => m };
 const withFlag = (flag, extra = {}) => {
   const s = createInitialState();
   const spec = { size: 'medium', arch: 'dense', context: 'short', precision: 'bf16', guard: false, channel: 'consumer', reasoning: 'off' };
@@ -148,4 +149,53 @@ test('event lawsuits use the event id and relative due turn', () => {
   s.pendingEvents.push({ id: 'distill' });
   resolveEvent(s, 'distill', 'deny');
   assert.deepEqual(s.legalCases.at(-1), { cost: 150, dueTurn: 15, source: 'distill' });
+});
+
+test('internal incidents take priority when two warnings mature on the escalation turn', () => {
+  const s = withFlag('jailbreakWaiting');
+  s.models[0].flags.push('hallucination');
+  s.era = 3;
+  s.turn = 1;
+  s.warnings.jailbreak = { turn: 0 };
+  s.warnings.citations = { turn: 0 };
+  s.internal = { control: 0, stage: 1, turns: 1, stageTurn: 0 };
+  const out = endTurn(s, {}, yes);
+  assert.equal(out.state.internal.stage, 2);
+  assert.equal(out.state.pendingEvents[0].id, 'oversightTamper');
+  assert.equal(out.state.warnings.citations.deferred, true);
+});
+
+test('a Qilin shock blocked by a full queue is deferred and cannot be addressed', () => {
+  const s = createInitialState();
+  s.era = 2;
+  s.pendingEvents.push({ id: 'jailbreak' }, { id: 'citations' });
+  s.lastRivalReleases = [{ id: 'qilin', gain: 6 }];
+  eventsTick(s, no);
+  assert.deepEqual(s.warnings.qilinshock, { turn: 0, deferred: true });
+  assert.equal(addressWarning(s, 'qilinshock').ok, false);
+  s.pendingEvents.shift();
+  s.lastRivalReleases = [];
+  s.turn += 1;
+  eventsTick(s, no);
+  assert.equal(s.pendingEvents.at(-1).id, 'qilinshock');
+});
+
+test('simultaneous flagged-model outcomes do not depend on eventChoices key order', () => {
+  const resolveBoth = (eventChoices) => {
+    const s = withFlag('sycophancy');
+    eventsTick(s, no);
+    s.turn += 1;
+    eventsTick(s, no);
+    return endTurn(s, { eventChoices }, no).state.models[0].users;
+  };
+  const catalogOrder = resolveBoth({ flattery: 'rollback', companion: 'settle' });
+  const reverseOrder = resolveBoth({ companion: 'settle', flattery: 'rollback' });
+  assert.equal(catalogOrder, 767040);
+  assert.equal(reverseOrder, catalogOrder);
+});
+
+test('a staged sycophantic release does not trigger flattery before it is live', () => {
+  const s = withFlag('sycophancy', { activeFromTurn: 2 });
+  eventsTick(s, no);
+  assert.equal(Object.hasOwn(s.warnings, 'flattery'), false);
 });

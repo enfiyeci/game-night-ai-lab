@@ -2,7 +2,9 @@ import { deployInternal, stopInternal } from '../internal.js';
 
 const modelsWithFlag = (state, flag) => state.models.filter((model) => (model.flags ?? []).includes(flag));
 const hasFlag = (state, flag) => modelsWithFlag(state, flag).length > 0;
-const hasActiveFlag = (state, flag) => modelsWithFlag(state, flag).some((model) => model.active);
+const hasActiveFlag = (state, flag) => modelsWithFlag(state, flag)
+  .some((model) => model.active && state.turn >= model.activeFromTurn);
+const targetedModels = (state, targets) => targets.map((index) => state.models[index]).filter(Boolean);
 
 function removeFlag(state, flag) {
   for (const model of state.models) model.flags = (model.flags ?? []).filter((value) => value !== flag);
@@ -38,8 +40,8 @@ export const EVENTS = [
       choices: [
         {
           id: 'rollback', label: 'Roll it back', cost: 'lose users', backers: ['Safety'], opposers: ['Product'],
-          effects(state) {
-            for (const model of modelsWithFlag(state, 'sycophancy')) model.users *= 0.8;
+          effects(state, targets) {
+            for (const model of targetedModels(state, targets)) model.users *= 0.8;
             state.publicTrust += 3;
             removeFlag(state, 'sycophancy');
           },
@@ -87,8 +89,8 @@ export const EVENTS = [
         },
         {
           id: 'pull', label: 'Pull the model', cost: 'lose most users', backers: ['Safety'], opposers: ['CFO'],
-          effects(state) {
-            for (const model of modelsWithFlag(state, 'jailbreakWaiting')) model.users *= 0.2;
+          effects(state, targets) {
+            for (const model of targetedModels(state, targets)) model.users *= 0.2;
             state.publicTrust += 2;
             removeFlag(state, 'jailbreakWaiting');
           },
@@ -109,8 +111,8 @@ export const EVENTS = [
       choices: [
         {
           id: 'checks', label: 'Add citation checks', cost: 'serving costs rise', backers: ['Safety'], opposers: ['CFO'],
-          effects(state) {
-            for (const model of modelsWithFlag(state, 'hallucination')) {
+          effects(state, targets) {
+            for (const model of targetedModels(state, targets)) {
               model.spec ??= {};
               model.spec.guard = true;
             }
@@ -123,8 +125,8 @@ export const EVENTS = [
         },
         {
           id: 'recall', label: 'Recall', cost: 'lose users', backers: ['Safety'], opposers: ['CFO'],
-          effects(state) {
-            for (const model of modelsWithFlag(state, 'hallucination')) model.users *= 0.5;
+          effects(state, targets) {
+            for (const model of targetedModels(state, targets)) model.users *= 0.5;
             removeFlag(state, 'hallucination');
           },
         },
@@ -232,9 +234,9 @@ export const EVENTS = [
       choices: [
         {
           id: 'settle', label: 'Settle and add age checks', cost: '$50M', backers: ['Safety'], opposers: ['CFO'],
-          effects(state) {
+          effects(state, targets) {
             state.cash -= 50;
-            for (const model of modelsWithFlag(state, 'sycophancy')) {
+            for (const model of targetedModels(state, targets)) {
               if (model.channel === 'consumer') model.users *= 0.85;
             }
             state.publicTrust += 2;

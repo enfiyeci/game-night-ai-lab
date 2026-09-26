@@ -81,8 +81,18 @@ export function endTurn(prev, actions = {}, rng) {
     const result = addressWarning(state, id);
     if (!result.ok) errors.push(result.error);
   }
-  for (const [id, choiceId] of Object.entries(actions.eventChoices ?? {})) {
+  const eventChoices = actions.eventChoices ?? {};
+  const handledChoices = new Set();
+  for (const { id } of [...state.pendingEvents]) {
+    if (!Object.hasOwn(eventChoices, id)) continue;
+    const choiceId = eventChoices[id];
     const result = resolveEvent(state, id, choiceId);
+    if (!result.ok) errors.push(result.error);
+    handledChoices.add(id);
+  }
+  for (const id of Object.keys(eventChoices)) {
+    if (handledChoices.has(id)) continue;
+    const result = resolveEvent(state, id, eventChoices[id]);
     if (!result.ok) errors.push(result.error);
   }
   for (const { id } of [...state.pendingEvents]) {

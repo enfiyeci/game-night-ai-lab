@@ -2,11 +2,16 @@ import { EVENTS } from './data/events.js';
 
 const MAX_CARDS = 2;
 const byId = (id) => EVENTS.find((event) => event.id === id);
-const publicCard = (event) => ({
+const orderedEvents = [...EVENTS.filter((event) => event.kind === 'internal'), ...EVENTS.filter((event) => event.kind !== 'internal')];
+const targetIndices = (state, event) => event.flag
+  ? state.models.flatMap((model, index) => ((model.flags ?? []).includes(event.flag) ? [index] : []))
+  : [];
+const publicCard = (state, event) => ({
   id: event.id,
   title: event.card.title,
   post: event.card.post,
   choices: event.card.choices.map(({ id, label, cost, backers, opposers }) => ({ id, label, cost, backers, opposers })),
+  targets: targetIndices(state, event),
 });
 
 export function pushFeed(state, handle, text, tag = 'feed') {
@@ -16,15 +21,15 @@ export function pushFeed(state, handle, text, tag = 'feed') {
 
 export function eventsTick(state, rng) {
   const out = [];
-  for (const event of EVENTS) {
-    if (state.pendingEvents.length >= MAX_CARDS) break;
+  for (const event of orderedEvents) {
     if (state.pendingEvents.some((pending) => pending.id === event.id)) continue;
     if (event.kind !== 'internal' && state.seenEvents.includes(event.id)) continue;
-    const warned = Object.hasOwn(state.warnings, event.id) ? state.warnings[event.id] : null;
-    if (warned && warned.turn < state.turn) {
+    const hasWarning = Object.hasOwn(state.warnings, event.id);
+    const warned = hasWarning ? state.warnings[event.id] : null;
+    if (hasWarning && warned?.turn < state.turn) {
       delete state.warnings[event.id];
       if (event.kind === 'planted' && !event.trigger(state, rng)) continue;
-    } else if (!warned) {
+    } else if (!hasWarning) {
       if (!event.trigger(state, rng)) continue;
       if (event.warning) {
         state.warnings[event.id] = { turn: state.turn };
@@ -33,7 +38,11 @@ export function eventsTick(state, rng) {
         continue;
       }
     } else continue;
-    state.pendingEvents.push(publicCard(event));
+    if (state.pendingEvents.length >= MAX_CARDS) {
+      state.warnings[event.id] = { turn: state.turn, deferred: true };
+      continue;
+    }
+    state.pendingEvents.push(publicCard(state, event));
     if (event.kind !== 'internal') state.seenEvents.push(event.id);
     pushFeed(state, event.card.post.handle, event.card.post.text, 'event');
     out.push({ type: 'eventCard', id: event.id });
@@ -43,7 +52,8 @@ export function eventsTick(state, rng) {
 
 export function addressWarning(state, id) {
   const event = byId(id);
-  if (!event || !Object.hasOwn(state.warnings, id)) return { ok: false, error: `no warning ${id}` };
+  const warned = Object.hasOwn(state.warnings, id) ? state.warnings[id] : null;
+  if (!event || event.kind === 'internal' || !warned || warned.deferred) return { ok: false, error: `no warning ${id}` };
   state.cash -= 5 * state.era;
   delete state.warnings[id];
   if (event.flag) {
@@ -59,7 +69,8 @@ export function resolveEvent(state, id, choiceId) {
   const event = byId(id);
   const choice = event?.card.choices.find((candidate) => candidate.id === choiceId);
   if (!choice) return { ok: false, error: `unknown choice ${choiceId}` };
-  choice.effects(state);
+  const targets = state.pendingEvents[index].targets ?? targetIndices(state, event);
+  choice.effects(state, targets);
   state.pendingEvents.splice(index, 1);
   return { ok: true, id, choiceId };
 }
