@@ -38,7 +38,8 @@ difficulty target (spec 9).
     names and personalities; model-name theme sets (birds, weather, music, stone, light,
     numbers).
     PARTLY DECIDED 2026-09-25 (owner): the player names their own lab, and the player names
-    each released model. Still open: the game title, rival labs, suppliers, advisors.
+    each released model by typing its family ("Kestrel" gives "Kestrel 3 Grand"; the number and
+    size word stay automatic). Still open: the game title, rival labs, suppliers, advisors.
 11. **Onboarding.** Judges play once, quickly. Decide between a short guided first turn, an
     advisor-led tutorial, or a one-screen "how to play". Strongly affects the fun score.
 12. **End-of-run reveal.** What it shows: the true hidden values over time next to each
