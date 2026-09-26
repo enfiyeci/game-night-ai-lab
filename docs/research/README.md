@@ -25,6 +25,10 @@ only through search-result snippets, and those claims carry ⚠️ inline.
 5. `runway-history/runway_history.md` — OpenAI and Anthropic cash-runway history and real
    "ran out of money" endings (Inflection, Adept, Character.AI, Stability AI), used to
    calibrate the out-of-money ending.
+6. `realtime-time-flow/report.md` — turning the 20 turns into a running clock (2026-09-26):
+   how Game Dev Tycoon's time works (it has no speed buttons), how real-time-with-pause games
+   run a clock over a fixed tick, every turn assumption in our code with file:line citations,
+   and four designs with a ship-by-the-deadline verdict. See `realtime-time-flow/README.md`.
 
 ## Notable catches
 

@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="../../../">
+  <meta name="viewport" content="width=1440">
+  <title>Real-time options mockups</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="ui/styles.css">
+  <style>
+    /* Mockup-only styles for the real-time options. Tokens come from ui/styles.css; no colour literals here. */
+    .muted { color: color-mix(in oklab, var(--ink) 58%, var(--paper)); }
+
+    /* The clock under the info box (same place as K2-events-crisis.html) */
+    .clock { position: absolute; z-index: 12; top: 90px; right: 15px; display: flex; align-items: center; gap: 4px; padding: 4px 5px 4px 12px; border-radius: 12px; background: var(--paper); border: 1px solid color-mix(in oklab, var(--ink) 10%, transparent); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 12%, transparent); font-size: 13px; font-weight: 900; }
+    .clock .date { display: grid; margin-right: 6px; font-variant-numeric: tabular-nums; }
+    .clock .date small { font-weight: 700; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); }
+    .clock .beat { display: block; width: 92px; height: 4px; margin-top: 3px; border-radius: 2px; background: color-mix(in oklab, var(--ink) 10%, var(--paper)); overflow: hidden; }
+    .clock .beat i { display: block; height: 100%; background: var(--wood); }
+    .clock button { display: grid; place-items: center; min-width: 28px; height: 26px; padding: 0 6px; border: 0; border-radius: 8px; background: transparent; color: color-mix(in oklab, var(--ink) 60%, var(--paper)); font: inherit; font-size: 12px; font-weight: 900; cursor: pointer; }
+    .clock button.on { background: var(--wood); color: var(--paper); }
+    .clock .sep { width: 1px; height: 20px; margin: 0 3px; background: color-mix(in oklab, var(--ink) 12%, transparent); }
+    .clock button.skip { color: color-mix(in oklab, var(--wood) 70%, var(--ink)); white-space: nowrap; }
+    .clock .paused { margin-left: 4px; padding: 2px 8px; border-radius: 999px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; background: color-mix(in oklab, var(--wood) 20%, var(--paper)); color: color-mix(in oklab, var(--wood) 62%, var(--ink)); }
+    .clock button.play-big { height: 30px; padding: 0 14px; color: var(--paper); background: var(--coral); box-shadow: 0 2px 0 color-mix(in oklab, var(--coral) 60%, var(--ink)); font-size: 13px; }
+
+    /* Menu additions */
+    .ctx .menu-moves b { color: var(--ink); }
+    .ctx .note { padding: 4px 11px 6px; font-size: 11.5px; font-weight: 700; line-height: 1.35; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); }
+    .ctx .upnext { margin: 4px 6px 2px; padding: 6px 8px 4px; border-radius: 8px; background: color-mix(in oklab, var(--wood) 12%, var(--paper)); }
+    .ctx .upnext h4 { margin: 0 0 3px; font-size: 10.5px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: color-mix(in oklab, var(--wood) 62%, var(--ink)); }
+    .ctx .upnext li { display: grid; grid-template-columns: 44px 1fr; gap: 6px; padding: 2px 0; font-size: 12px; font-weight: 700; }
+    .ctx .upnext li span { font-weight: 900; font-variant-numeric: tabular-nums; color: color-mix(in oklab, var(--wood) 62%, var(--ink)); }
+    .ctx .upnext ul { list-style: none; margin: 0; padding: 0; }
+    .team { display: inline-block; margin-left: 6px; padding: 0 7px; border-radius: 999px; font-size: 10.5px; font-weight: 800; vertical-align: 1px; white-space: nowrap; background: color-mix(in oklab, var(--teal) 14%, var(--paper)); color: color-mix(in oklab, var(--teal) 62%, var(--ink)); }
+    .team.busy { background: color-mix(in oklab, var(--ink) 7%, var(--paper)); color: color-mix(in oklab, var(--ink) 55%, var(--paper)); }
+    .ctx.wide { width: 300px; }
+
+    /* Toast under the pill */
+    .toast { position: absolute; z-index: 12; top: 108px; left: 50%; transform: translateX(-50%); padding: 8px 14px; border-radius: 12px; background: var(--ink); color: var(--paper); font-size: 13.5px; font-weight: 800; box-shadow: 0 4px 14px color-mix(in oklab, var(--ink) 25%, transparent); white-space: nowrap; }
+    .toast b { color: color-mix(in oklab, var(--teal) 55%, var(--paper)); }
+    .waiting { position: absolute; z-index: 12; top: 108px; left: 50%; transform: translateX(-50%); padding: 6px 12px; border-radius: 999px; background: color-mix(in oklab, var(--wood) 18%, var(--paper)); color: color-mix(in oklab, var(--wood) 62%, var(--ink)); font-size: 12.5px; font-weight: 900; white-space: nowrap; border: 1px solid color-mix(in oklab, var(--wood) 30%, transparent); }
+  </style>
+</head>
+<body>
+  <main id="stage" aria-label="AI lab office">
+    <div id="office"></div>
+    <div id="fx" aria-live="polite"></div>
+    <div id="hud"></div>
+    <div id="overlay"></div>
+  </main>
+<script type="module">
+import { createGame } from './ui/game.js';
+import { mountHud } from './ui/hud.js';
+import { mountOffice } from './ui/office.js';
+import { openMenu, registerMenuHandler } from './ui/menu.js';
+import { SCENARIOS } from './ui/logic/scenarios.js';
+
+const zoom = () => { const z = Math.min(innerWidth / 1440, innerHeight / 900, 1); if (z > 0) document.documentElement.style.zoom = `${z}`; };
+zoom(); addEventListener('resize', zoom);
+
+// A real era-2 save (seed 10). Era 2 is a quarter per step, so the next beat is the next quarter.
+const state = SCENARIOS.era2Deals(10);
+const game = createGame({ seed: 10, state });
+mountHud(document.querySelector('#hud'), game);
+const full = document.querySelector('#hud .info .full');
+if (full) full.innerHTML = `<span class="k">Era</span> <b>${state.era}</b> <span class="k">· The scale-up</span>`;
+await mountOffice(document.querySelector('#office'), document.querySelector('#fx'), game).catch(console.error);
+const overlay = document.querySelector('#overlay');
+const el = (html) => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; };
+
+const ICON = {
+  pause: '<svg width="12" height="12" viewBox="0 0 12 12"><rect x="2" y="1" width="3" height="10" rx="1" style="fill:currentColor"/><rect x="7" y="1" width="3" height="10" rx="1" style="fill:currentColor"/></svg>',
+  play: '<svg width="12" height="12" viewBox="0 0 12 12"><path d="M3 1 L11 6 L3 11 Z" style="fill:currentColor"/></svg>',
+  fast: '<svg width="16" height="12" viewBox="0 0 16 12"><path d="M1 1 L8 6 L1 11 Z M8 1 L15 6 L8 11 Z" style="fill:currentColor"/></svg>',
+};
+
+// variant: 'skip' (Skip to next quarter), 'next' (skip to next decision), 'speeds' (no skip, three speeds), 'plan' (paused, Play the quarter)
+function clock(variant, { beat = 0.42, paused = false, quarter = variant !== 'speeds' } = {}) {
+  const date = `<span class="date">Y2 M5 W2 <small>${quarter ? 'May · new quarter 1 Jul' : 'May'}</small><span class="beat"><i style="width:${Math.round(beat * 100)}%"></i></span></span>`;
+  let buttons = `<button class="${paused ? 'on' : ''}" aria-label="Pause">${ICON.pause}</button><button class="${paused ? '' : 'on'}" aria-label="Play">${ICON.play}</button><button aria-label="Fast">${ICON.fast}</button>`;
+  if (variant === 'skip') buttons += '<span class="sep"></span><button class="skip">Skip to 1 Jul ▸▸</button>';
+  if (variant === 'next') buttons += '<span class="sep"></span><button class="skip">Skip to next decision ▸▸</button>';
+  if (variant === 'speeds') buttons = `<button aria-label="Pause">${ICON.pause}</button><button class="on">×1</button><button>×2</button><button>×4</button>`;
+  if (variant === 'plan') buttons = '<span class="paused">Planning</span><button class="play-big">Play the quarter ▶</button>';
+  overlay.append(el(`<div class="clock" aria-label="Game clock">${date}${buttons}${paused && variant !== 'plan' ? '<span class="paused">Paused</span>' : ''}</div>`));
+}
+
+const MENU_AT = [560, 330];
+// The real game registers a handler per item; register no-ops so items show as they would in play.
+for (const id of ['training', 'release', 'internal', 'constitution', 'meeting', 'history', 'deals', 'power', 'raise', 'research', 'emergency', 'hire']) registerMenuHandler(id, () => {});
+function menu() {
+  openMenu(game, MENU_AT, { overlay });
+  return overlay.querySelector('.ctx');
+}
+const item = (m, id) => m.querySelector(`[data-menu-id="${id}"]`);
+const setLabel = (button, text) => { button.firstChild.nodeType === 3 ? (button.firstChild.textContent = text) : (button.textContent = text); };
+
+// ---------- how time moves ----------
+function howA() {
+  clock('skip');
+  const m = menu();
+  setLabel(item(m, 'endTurn'), 'Skip to 1 Jul');
+  setLabel(item(m, 'budget'), 'Plan the budget');
+  m.querySelector('.menu-moves').innerHTML = '<b>1 of 2</b> team actions left this quarter';
+  m.querySelector('.menu-moves').after(el('<div class="note">Sign a compute deal is set. The team starts it on 1 Jul.</div>'));
+  overlay.append(el('<div class="waiting">Starts 1 Jul: Sign a compute deal</div>'));
+}
+function howB() {
+  clock('plan', { paused: true, beat: 0 });
+  const m = menu();
+  setLabel(item(m, 'endTurn'), 'Play the quarter ▶');
+  setLabel(item(m, 'budget'), 'Plan the budget');
+  m.querySelector('.menu-moves').innerHTML = '<b>1 of 2</b> team actions planned for this quarter';
+}
+function howC() {
+  clock(null);
+  document.querySelector('#hud .pill .t').textContent = 'Training Kestrel-3';
+  document.querySelector('#hud .pill .s').textContent = 'Started today · week 1 of 13';
+  const bar = document.querySelector('#hud .pill .bar i');
+  if (bar) bar.style.width = '4%';
+  else document.querySelector('#hud .pill').append(el('<div class="bar"><i style="width:4%"></i></div>'));
+  overlay.append(el('<div class="toast">Training started. <b>First checkpoint in 4 weeks.</b></div>'));
+  const m = menu();
+  setLabel(item(m, 'budget'), 'Plan the budget');
+  setLabel(item(m, 'endTurn'), 'Skip to 1 Jul');
+  m.querySelector('.menu-moves').innerHTML = '<b>1 of 2</b> team actions left this quarter';
+}
+function teams(m, { keepEnd }) {
+  m.classList.add('wide');
+  const tags = { budget: ['CFO', ''], training: ['Research team', 'busy until W4'], release: ['Policy team', ''], internal: ['Research team', 'busy until W4'], constitution: ['Safety team', ''] };
+  for (const [id, [who, busy]] of Object.entries(tags)) {
+    const b = item(m, id);
+    if (!b) continue;
+    b.append(el(`<span class="team ${busy ? 'busy' : ''}">${who}${busy ? ` · ${busy}` : ' · free'}</span>`));
+  }
+  if (!keepEnd) item(m, 'endTurn')?.previousElementSibling?.remove(), item(m, 'endTurn')?.remove();
+  m.querySelector('.menu-moves').innerHTML = 'Each team does one thing at a time';
+}
+function howD() {
+  clock('speeds');
+  document.querySelector('#hud .pill .t').textContent = 'Training Kestrel-3';
+  document.querySelector('#hud .pill .s').textContent = 'Week 3 of 13 · Research team';
+  const m = menu();
+  setLabel(item(m, 'budget'), 'Plan the budget');
+  teams(m, { keepEnd: false });
+}
+
+// ---------- what limits how much you can do ----------
+function limitCounter() { howA(); }
+function limitQueue() {
+  clock('skip');
+  const m = menu();
+  setLabel(item(m, 'endTurn'), 'Skip to 1 Jul');
+  setLabel(item(m, 'budget'), 'Plan the budget');
+  m.classList.add('wide');
+  m.querySelector('.menu-moves').replaceWith(el(`<div class="upnext"><h4>Up next · the team takes two a quarter</h4><ul>
+    <li><span>1 Jul</span>Sign a compute deal</li>
+    <li><span>1 Jul</span>Start a training run</li>
+    <li><span>1 Oct</span>Raise a round</li></ul></div>`));
+}
+function limitTeams() {
+  clock('skip');
+  const m = menu();
+  setLabel(item(m, 'endTurn'), 'Skip to 1 Jul');
+  setLabel(item(m, 'budget'), 'Plan the budget');
+  teams(m, { keepEnd: true });
+}
+
+// ---------- what End turn becomes ----------
+function skipAhead() { clock('skip'); }
+function skipNext() { clock('next'); }
+function skipNone() { clock('speeds'); }
+
+// ---------- the recommended combination ----------
+function combo() {
+  howA();
+}
+
+const show = {
+  '#combo': combo, '#how-a': howA, '#how-b': howB, '#how-c': howC, '#how-d': howD,
+  '#limit-counter': limitCounter, '#limit-queue': limitQueue, '#limit-teams': limitTeams,
+  '#skip-ahead': skipAhead, '#skip-next': skipNext, '#skip-none': skipNone,
+};
+await (show[location.hash] ?? show['#combo'])();
+addEventListener('hashchange', () => location.reload());
+</script>
+</body>
+</html>
