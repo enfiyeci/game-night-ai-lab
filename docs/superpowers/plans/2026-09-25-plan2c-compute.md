@@ -283,10 +283,10 @@ export function poweredUnits(state) {
   - `generateOffers(state, rng)` → offer list. Offer shape: `{ id, supplier, units, arrivesIn, upfront, monthly, termMonths, price, string, credits? }`; the era 3 queue card is `{ id: 'verde-queue-<turn>', supplier: 'verde', viaQueue: true }`; the grid card is `{ id, supplier: 'grid', upfront: 50, string: 'gridReservation' }`.
   - `signOffer(state, offerId, rng)` → `{ ok, offerId?, arrivesTurn?, error? }`.
   - `addPipeline(state, { supplier, units, price, termMonths, arrivesTurn, string, headline? })` → id.
-  - `deliverDue(state, rng)` → the contracts that arrived (pipeline items due by `state.turn`); `contractsTurn(state, rng)` → `{ bumped, warnedBump }` (spot pulls and warnings, spot renewal price, CoreFlame trouble rolls, the Gulf license); `expireContracts(state)` → expired contracts; `refreshOnline(state)`.
+  - `deliverDue(state, rng)` → the contracts that arrived (pipeline items due by `state.turn`); `contractsTurn(state, rng)` → `{ warnedBump }` (spot pull warnings, CoreFlame trouble rolls, then `syncContracts`); `syncContracts(state)` (no randomness: spot renewals take the era's spot price, Gulf contracts follow the export license); `expireContracts(state)` → expired contracts; `pullBumped(state)` → the spot contracts pulled this turn; `refreshOnline(state)`.
   - `contractBill(c)`, `monthlyBills(state)`, `arrivingBills(state)`, `creditOffset(state)`, `spendCredits(state)` → $M used; `perTurn(monthly, months)`; `exclusiveActive(state)`.
   - `contractAction(state, { id, action })` → `{ ok }` with actions `scaleDown`, `break`, `buyout`.
-  - Contract shape: `{ id, supplier, units, price, monthsLeft, needsPower, string, arrivedTurn, scaledDown, troubled, dark, bumpNext, exclusiveBought, headline }`. Spot has `monthsLeft: null`: it renews every turn until the player breaks it (free) or it is pulled. A pipeline item may carry `needsPower` to override the default (Verde chips arriving in era 4 or later need site power).
+  - Contract shape: `{ id, supplier, units, price, monthsLeft, needsPower, string, arrivedTurn, scaledDown, troubled, dark, bumpTurn, exclusiveBought, headline }`. Spot has `monthsLeft: null`: it renews every turn until the player breaks it (free) or it is pulled. `bumpTurn` is null, or the last turn a warned spot contract serves (and is billed) before it is pulled. A pipeline item may carry `needsPower` to override the default (Verde chips arriving in era 4 or later need site power).
   - Exclusivity: while any Azuria contract (cloud or investment) runs or waits in the pipeline, CoreFlame and Gulf offers are refused until that contract is bought out. The Gulf offer is hidden and refused while `state.flags.supplyChainRisk` is set.
   - New `state.compute` fields used (Task 4 creates them): `offers`, `delays` (`{ [supplier]: extra turns }`), `nextId`, `credits`, `unpowered`.
 
@@ -297,9 +297,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import { BALANCE } from '../sim/balance.js';
-import { SUPPLIERS, SPOT_PRICE, EQUITY_SHARE, GULF_OPEN, SCALE_DOWN, SCALE_DOWN_PENALTY_MONTHS, BREAK_SHARE, BUYOUT_MONTHS, eraScale } from '../sim/data/compute.js';
+import { SUPPLIERS, SPOT_PRICE, EQUITY_SHARE, GULF_OPEN, GULF_REVOKE, SCALE_DOWN, SCALE_DOWN_PENALTY_MONTHS, BREAK_SHARE, BUYOUT_MONTHS, eraScale } from '../sim/data/compute.js';
 import {
-  generateOffers, signOffer, deliverDue, contractsTurn, expireContracts, contractAction, monthlyBills,
+  generateOffers, signOffer, deliverDue, contractsTurn, expireContracts, pullBumped, contractAction, monthlyBills,
   creditOffset, spendCredits, perTurn, exclusiveActive, sideRng,
 } from '../sim/contracts.js';
 
@@ -484,14 +484,30 @@ test('the grid card reserves a power site and then disappears', () => {
   assert.equal(generateOffers(s, lo).some((o) => o.supplier === 'grid'), false);
 });
 
-test('spot can be pulled with a turn of warning in the tight eras', () => {
+test('spot can be pulled with a turn of warning in the tight eras, and its last turn is billed', () => {
   const s = fresh(3);
   signOffer(s, offer(s, 'spot').id, lo);
   assert.equal(contractsTurn(s, fire).warnedBump, true);
-  expireContracts(s); // the economy's end-of-turn step does not end spot
+  assert.equal(pullBumped(s).length, 0, 'it still serves the turn after the warning');
   s.turn += 1;
-  assert.equal(contractsTurn(s, lo).bumped.length, 1);
+  assert.equal(contractsTurn(s, fire).warnedBump, false, 'a pull is warned once');
+  const bill = monthlyBills(s);
+  assert.ok(s.compute.contracts.some((c) => c.supplier === 'spot'), 'the economy bills its last turn');
+  assert.equal(pullBumped(s).length, 1);
+  assert.ok(monthlyBills(s) < bill);
   assert.equal(s.compute.contracts.some((c) => c.supplier === 'spot'), false);
+});
+
+test('a delivery applies the era spot price and the Gulf license at once', () => {
+  const s = fresh(3, GULF_OPEN + 5);
+  signOffer(s, offer(s, 'spot').id, lo);
+  signOffer(s, offer(s, 'gulf').id, lo);
+  s.govFavor.us = GULF_REVOKE - 1;
+  s.era = 4;
+  s.turn = SUPPLIERS.gulf.arrival;
+  deliverDue(s, lo);
+  assert.equal(s.compute.contracts.find((c) => c.supplier === 'spot').price, SPOT_PRICE[4]);
+  assert.equal(s.compute.contracts.find((c) => c.supplier === 'gulf').dark, true, 'a license revoked in transit arrives dark');
 });
 
 test('the side stream is deterministic and independent of the main stream', () => {
@@ -573,7 +589,7 @@ function arrive(state, p, rng) {
   const c = {
     id: p.id, supplier: p.supplier, units, price: p.price, monthsLeft: p.termMonths,
     needsPower: p.needsPower ?? (p.supplier === 'verde' && state.era >= 4), string: p.string, arrivedTurn: state.turn,
-    scaledDown: false, troubled: false, dark: false, bumpNext: false, exclusiveBought: false, headline: p.headline ?? null,
+    scaledDown: false, troubled: false, dark: false, bumpTurn: null, exclusiveBought: false, headline: p.headline ?? null,
   };
   state.compute.contracts.push(c);
   return c;
@@ -631,28 +647,35 @@ export function deliverDue(state, rng) {
     arrived.push(arrive(state, p, rng));
     return false;
   });
+  syncContracts(state);
   refreshOnline(state);
   return arrived;
 }
 
-// Called at turn end, before plan 2A's event tick, so a CoreFlame failure is warned about the same turn.
-export function contractsTurn(state, rng) {
-  const months = eraById(state.era).monthsPerTurn;
-  const bumped = state.compute.contracts.filter((c) => c.bumpNext);
-  state.compute.contracts = state.compute.contracts.filter((c) => !c.bumpNext);
-  const spots = state.compute.contracts.filter((c) => c.supplier === 'spot');
-  const warnedBump = spots.length > 0 && rng.chance(BUMP_CHANCE[state.era] ?? 0);
-  if (warnedBump) for (const c of spots) c.bumpNext = true;
+// No randomness. Runs at turn end and again after delivery, so a new era's spot price and a
+// revoked Gulf license already show in the state the player plans with.
+export function syncContracts(state) {
   for (const c of state.compute.contracts) {
     if (c.supplier === 'spot') c.price = SPOT_PRICE[state.era]; // renewals pay today's spot price
-    if (c.supplier === 'coreflame' && !c.troubled && rng.chance(perTurn(FRAGILE_MONTHLY, months))) c.troubled = true;
     if (c.supplier === 'gulf') {
       if (state.govFavor.us < GULF_REVOKE || state.flags.supplyChainRisk) c.dark = true;
       else if (state.govFavor.us >= GULF_OPEN) c.dark = false;
     }
   }
+}
+
+// Called at turn end, before plan 2A's event tick, so a CoreFlame failure is warned about the same turn.
+export function contractsTurn(state, rng) {
+  const months = eraById(state.era).monthsPerTurn;
+  const spots = state.compute.contracts.filter((c) => c.supplier === 'spot' && c.bumpTurn == null);
+  const warnedBump = spots.length > 0 && rng.chance(BUMP_CHANCE[state.era] ?? 0);
+  if (warnedBump) for (const c of spots) c.bumpTurn = state.turn + 1; // serves (and bills) one more turn
+  for (const c of state.compute.contracts) {
+    if (c.supplier === 'coreflame' && !c.troubled && rng.chance(perTurn(FRAGILE_MONTHLY, months))) c.troubled = true;
+  }
+  syncContracts(state);
   refreshOnline(state);
-  return { bumped, warnedBump };
+  return { warnedBump };
 }
 
 // Called after the economy has billed the turn, so the last month of a term is still paid.
@@ -668,6 +691,14 @@ export function expireContracts(state) {
   });
   refreshOnline(state);
   return expired;
+}
+
+// Called after the economy, like expireContracts, so a pulled spot contract pays for its last turn.
+export function pullBumped(state) {
+  const pulled = state.compute.contracts.filter((c) => c.bumpTurn != null && c.bumpTurn <= state.turn);
+  state.compute.contracts = state.compute.contracts.filter((c) => !pulled.includes(c));
+  refreshOnline(state);
+  return pulled;
 }
 
 export function creditOffset(state) {
@@ -719,8 +750,8 @@ export function contractAction(state, { id, action } = {}) {
 **Interfaces:**
 - Consumes: `eraScale`, `addPipeline` (Task 2), `BALANCE.unitMonthlyCost`, `state.rivals` (`id`, `speed`, `eastern`).
 - Produces (all from `sim/queue.js`):
-  - `QUEUE_RELEASE = 15`, `PREPAY_SHARE = 0.15`, `QUEUE_TERM_MONTHS = 24`, `ANNOUNCE_CHANCE = 0.25`, `released(state)` → 150.
-  - `rivalOrders(state)` → `[{ lab, units, tier }]` for Western rivals.
+  - `QUEUE_RELEASE = 15`, `RIVAL_ORDER = 4.5`, `PREPAY_SHARE = 0.15`, `QUEUE_TERM_MONTHS = 24`, `ANNOUNCE_CHANCE = 0.25`, `released(state)` → 150.
+  - `rivalOrders(state)` → `[{ lab, units, tier }]` for Western rivals. Relative to the Western rivals' speeds, so a rival-speed re-tune does not change the queue: each orders `RIVAL_ORDER × (speed ÷ mean Western speed) × eraScale(3)` units; the fastest prepays, the others order standard until they announce a switch.
   - `allocate(supply, orders)` → `{ [lab]: units }` (pure; used by the UI preview too).
   - `placeOrder(state, { units, tier })` → `{ ok, units, tier, upfront }` (refused while an earlier order still waits); `withdrawOrder(state)` → `{ ok }`.
   - `queueTurn(state, rng)` → events `{ type: 'queueFilled', units, waiting }` and `{ type: 'rivalPrepays', lab }`; sets `state.compute.queue.last = { released, rows: [{ lab, units, tier, got }] }` for the UI.
@@ -734,7 +765,7 @@ import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import { BALANCE } from '../sim/balance.js';
 import { eraScale } from '../sim/data/compute.js';
-import { allocate, rivalOrders, placeOrder, queueTurn, released, withdrawOrder, QUEUE_RELEASE, PREPAY_SHARE, QUEUE_TERM_MONTHS } from '../sim/queue.js';
+import { allocate, rivalOrders, placeOrder, queueTurn, released, withdrawOrder, QUEUE_RELEASE, RIVAL_ORDER, PREPAY_SHARE, QUEUE_TERM_MONTHS } from '../sim/queue.js';
 
 // Rival speeds are pinned here so a balance re-tune of rival speed does not change these tests.
 const lo = { next: () => 0, int: (a) => a, chance: () => false, pick: (x) => x[0], normal: (m) => m };
@@ -748,7 +779,8 @@ const fresh3 = () => {
   Object.assign(s.compute, { nextId: s.compute.nextId ?? 1 });
   return s;
 };
-const orderOf = (speed) => Math.round((2 + 4 * speed) * eraScale(3));
+const MEAN_WEST = (SPEED.openbrain + SPEED.lodestar + SPEED.deepthink) / 3;
+const orderOf = (speed) => Math.round(RIVAL_ORDER * (speed / MEAN_WEST) * eraScale(3));
 
 test('prepaid orders are served first; standard orders share the rest by size', () => {
   assert.deepEqual(allocate(150, [
@@ -764,12 +796,15 @@ test('supply is never exceeded and a small order is filled in full', () => {
   assert.deepEqual(allocate(150, [{ lab: 'a', units: 20, tier: 'standard' }]), { a: 20 });
 });
 
-test('rival orders come from speed, and the Eastern lab cannot buy', () => {
+test('rival orders follow relative speed: the fastest Western lab prepays, the Eastern lab cannot buy', () => {
   const s = fresh3();
   const o = rivalOrders(s);
   assert.equal(o.some((x) => x.lab === 'qilin'), false);
-  assert.deepEqual(o.find((x) => x.lab === 'openbrain'), { lab: 'openbrain', units: orderOf(0.8), tier: 'prepaid' });
-  assert.deepEqual(o.find((x) => x.lab === 'lodestar'), { lab: 'lodestar', units: orderOf(0.55), tier: 'standard' });
+  assert.deepEqual(o.find((x) => x.lab === 'openbrain'), { lab: 'openbrain', units: orderOf(SPEED.openbrain), tier: 'prepaid' });
+  assert.deepEqual(o.find((x) => x.lab === 'lodestar'), { lab: 'lodestar', units: orderOf(SPEED.lodestar), tier: 'standard' });
+  assert.equal(o.find((x) => x.lab === 'deepthink').tier, 'standard');
+  for (const r of s.rivals) r.speed *= 1.6; // a rival-speed re-tune leaves the queue unchanged
+  assert.deepEqual(rivalOrders(s), o);
   assert.equal(released(s), QUEUE_RELEASE * eraScale(3));
 });
 
@@ -832,6 +867,7 @@ import { eraScale } from './data/compute.js';
 import { addPipeline } from './contracts.js';
 
 export const QUEUE_RELEASE = 15;     // × eraScale(3) units per turn
+export const RIVAL_ORDER = 4.5;      // × eraScale(3) units ordered by a rival of average Western speed
 export const PREPAY_SHARE = 0.15;    // of the order's 24-month term value
 export const QUEUE_TERM_MONTHS = 24;
 export const ANNOUNCE_CHANCE = 0.25; // a standard rival announces it will prepay next turn
@@ -840,11 +876,16 @@ const TIERS = ['standard', 'prepaid'];
 export const released = () => QUEUE_RELEASE * eraScale(3);
 const queueOf = (state) => (state.compute.queue ??= { order: null, carry: null, last: null });
 
+// Relative to the Western rivals' speeds, so a rival-speed re-tune does not change the queue:
+// the fastest Western rival prepays; the others order standard until they announce a switch.
 export function rivalOrders(state) {
-  return state.rivals.filter((r) => !r.eastern).map((r) => ({
+  const west = state.rivals.filter((r) => !r.eastern);
+  const mean = west.reduce((sum, r) => sum + r.speed, 0) / west.length;
+  const fastest = Math.max(...west.map((r) => r.speed));
+  return west.map((r) => ({
     lab: r.id,
-    units: Math.round((2 + 4 * r.speed) * eraScale(3)),
-    tier: r.speed >= 0.7 || r.prepayNext ? 'prepaid' : 'standard',
+    units: Math.round(RIVAL_ORDER * (r.speed / mean) * eraScale(3)),
+    tier: r.speed === fastest || r.prepayNext ? 'prepaid' : 'standard',
   }));
 }
 
@@ -915,8 +956,9 @@ export function queueTurn(state, rng) {
     events.push({ type: 'queueFilled', units: filled, waiting: q.carry?.units ?? 0 });
   }
   q.order = null;
+  const prepaid = new Set(orders.filter((o) => o.tier === 'prepaid').map((o) => o.lab));
   for (const r of state.rivals) {
-    if (r.eastern || r.speed >= 0.7 || r.prepayNext) continue;
+    if (r.eastern || prepaid.has(r.id)) continue;
     if (rng.chance(ANNOUNCE_CHANCE)) {
       r.prepayNext = true;
       events.push({ type: 'rivalPrepays', lab: r.id });
@@ -1040,7 +1082,7 @@ test('in era 4 new chips need site power, and the lease starts when the site is 
     compute: {
       online: BALANCE.startCompute,
       contracts: [{ id: 'starter', supplier: 'starter', units: BALANCE.startCompute, price: 1, monthsLeft: 24, needsPower: false, string: null,
-        arrivedTurn: 0, scaledDown: false, troubled: false, dark: false, bumpNext: false, exclusiveBought: false, headline: null }],
+        arrivedTurn: 0, scaledDown: false, troubled: false, dark: false, bumpTurn: null, exclusiveBought: false, headline: null }],
       pipeline: [],
       servingUnits: 0,
       overflow: 0,
@@ -1057,7 +1099,7 @@ test('in era 4 new chips need site power, and the lease starts when the site is 
 Build the state object into a `const state = { ... }`, then `state.compute.offers = generateOffers(state, sideRng(state, 0)); return state;`.
 
 - [ ] **Step 4: Turn wiring** in `sim/turn.js`:
-  - Imports: remove `signDeal, computeTurn` from `./compute.js`; add `signOffer, contractAction, deliverDue, contractsTurn, expireContracts, spendCredits, generateOffers, sideRng` from `./contracts.js`, `placeOrder, withdrawOrder, queueTurn` from `./queue.js`, `buildSite, powerTurn` from `./power.js`, `pushFeed` from `./events.js`.
+  - Imports: remove `signDeal, computeTurn` from `./compute.js`; add `signOffer, contractAction, deliverDue, contractsTurn, expireContracts, pullBumped, spendCredits, generateOffers, sideRng` from `./contracts.js`, `placeOrder, withdrawOrder, queueTurn` from `./queue.js`, `buildSite, powerTurn` from `./power.js`, `pushFeed` from `./events.js`.
   - `applyMove`: replace `case 'deal'` with `case 'deal': return signOffer(state, move.offerId, sideRng(state, 1));` and add `case 'queueOrder': return placeOrder(state, move);` and `case 'buildSite': return buildSite(state, move.source, sideRng(state, 2));`.
   - In `endTurn`, right after the budget block and before the moves loop:
 
@@ -1080,7 +1122,6 @@ Build the state object into a `const state = { ... }`, then `state.compute.offer
 
 ```js
     const c = contractsTurn(state, sideRng(state, 3));
-    for (const x of c.bumped) events.push({ type: 'spotPulled', units: x.units });
     if (c.warnedBump) {
       events.push({ type: 'spotWarning' });
       pushFeed(state, '@marketwire', 'spot GPU capacity is being pulled for prepaid customers', 'warning');
@@ -1096,6 +1137,7 @@ Build the state object into a `const state = { ... }`, then `state.compute.offer
 ```js
     spendCredits(state);
     for (const x of expireContracts(state)) events.push({ type: 'contractEnded', supplier: x.supplier, units: x.units });
+    for (const x of pullBumped(state)) events.push({ type: 'spotPulled', units: x.units });
 ```
 
   - At the very end of `endTurn`, just before the `if (state.ending) events.push(...)` line, deliver what is due on the new turn, make its offers, and re-project serving and burn. The turn and era have already advanced here, so a contract, queue fill or site due on turn T is online in the state the player plans turn T with, and its moves and training can use it (spot arrives during the move itself). The re-projection makes the returned `burnPlanned` (the CFO's runway and the UI) include the new bills and leases, and drop what expired, was pulled or ended after `applyEconomy`:
@@ -1529,7 +1571,7 @@ Precondition: plan 2B Tasks 2, 3 and 7 merged. Load the owner's `design` skill b
 **Interfaces:**
 - Consumes: `computeSlices`, `PLEDGES` (`sim/split.js`); `allocate`, `rivalOrders`, `released`, `PREPAY_SHARE` (`sim/queue.js`); `SITE_TYPES`, `leaseMonthly`, `sitePower` (`sim/power.js`); `monthlyBills`, `contractBill`, `exclusiveActive` (`sim/contracts.js`); `runway`, `projectBurn` (`sim/economy.js`); `MW_PER_UNIT`, `eraScale` (`sim/data/compute.js`); plan 2B's `dialog`, `vslider`, `money`, `months`, `createGame`.
 - Produces (all pure, in `ui/logic/compute.js` unless noted):
-  - `format.compute(units, era)` in `ui/logic/format.js` → eras 1–3 `"40 units"`; from era 4 `"850 MW"` below 1,000 MW, else `"1.53 GW"` (two decimals, trailing zeros kept only to two places: `"1.20 GW"` is fine). The HUD compute line uses it.
+  - In `ui/logic/format.js`: a new `computeAmount(units, era)` → eras 1–3 `"40 units"`; from era 4 `"850 MW"` below 1,000 MW, else `"1.53 GW"` (two decimals, trailing zeros kept only to two places: `"1.20 GW"` is fine). Plan 2B Task 2 already ships `compute(value)` → `"120 units online · 40 arriving"` (used by `ui/hud.js` as `compute(state.compute)`); change it to `compute(value, era = 1)`, formatting both amounts with `computeAmount`, and make the HUD pass `state.era`. Plan 2B's existing test keeps passing (era 1 is the default).
   - `dealCards(state)` → `[{ id, supplier, name, kind, big, unit, per, rows: [[label, value]], chip, explanation, disabled, reason, viaQueue }]` in the order of `state.compute.offers`. Chips and explanations: no strings "No strings" / "Cheapest per unit. Slow, and you pay upfront."; `exclusive` "Exclusive" / "No other cloud deals while it runs."; `fragile` "Fragile" / "Runs on borrowed money. It can go under."; `bumpable` "Can be taken back" / "Pulled first when chips run short."; `moneyBack` "Money comes back" / "The credits only pay Azuria bills."; `usGated` "Needs US approval" / "Washington can pull the license."; `shrinks` "Headline shrinks" / "Delivers 30 to 100% of the headline."; `gridReservation` "Power for era 4" / "Reserve a grid connection now; it comes online in era 4.". `disabled` with a reason when exclusivity blocks it or cash is short.
   - `commitmentsView(state, offerId?)` → `{ billNow, billAfter, afterFromTurn, segments: [{ id, bill, isNew }], rows: [{ id, name, units, bill, monthsLeft, canScaleDown, canBuyout, unpowered }], runwayNow, runwayAfter }`.
   - `queueView(state, draft = { units, tier })` → `{ released, rows: [{ lab, name, tier, ordered, got }], you: { standard, prepaid, upfront }, announcements }`, where `you.standard` and `you.prepaid` are the units you would get now under each tier (via `allocate`). Rows list every rival plus you; the Eastern lab's row has `tier: 'none'`, `ordered: 0`, `got: 0`.
@@ -1606,11 +1648,12 @@ test('each screen gets four advisor opinions without hidden numbers', () => {
 
 ```js
 // add to tests/ui-format.test.js
-import { compute } from '../ui/logic/format.js';
+import { computeAmount } from '../ui/logic/format.js'; // `compute` is already imported at the top of this file
 test('compute is shown in units until era 4, then in power', () => {
-  assert.equal(compute(40, 2), '40 units');
-  assert.equal(compute(500, 4), '850 MW');
-  assert.equal(compute(900, 4), '1.53 GW');
+  assert.equal(computeAmount(40, 2), '40 units');
+  assert.equal(computeAmount(500, 4), '850 MW');
+  assert.equal(computeAmount(900, 4), '1.53 GW');
+  assert.equal(compute({ online: 500, pipeline: [{ units: 100 }] }, 4), '850 MW online · 170 MW arriving');
 });
 ```
 
@@ -1737,8 +1780,14 @@ Round 2 resumed the same session on `gpt-5.6-sol`. Verdict REVISE, two important
 1. The delivery after the turn advance changed compute and bills after the last burn projection, so the returned `burnPlanned` left out new bills and leases. The end-of-turn block now re-runs `updateServing` and `projectBurn` last. That also covers contracts that expired, spot that was pulled and a surge that ended after `applyEconomy`. The Task 4 deal test checks the returned burn.
 2. Moving all of `contractsTurn` after the turn advance put CoreFlame trouble rolls after plan 2A's `eventsTick`, so the warning came a turn late. Task 2 splits delivery into `deliverDue`, which runs after the advance. `contractsTurn` keeps the spot pulls, trouble rolls and Gulf license at turn end, before the event tick. A new Task 6 test checks that a failure is warned about in the same turn.
 
-Round 3 (`gpt-5.6-sol`, the last round under the three-round cap). Verdict REVISE, three important findings, **open and escalated to the owner**:
+Round 3 (`gpt-5.6-sol`, the last round under the three-round cap). Verdict REVISE, three important findings. They were escalated to the owner, who approved fixing them and a fourth round:
 
-1. A pulled spot contract is removed before `applyEconomy`, so its last usable turn is not billed.
-2. Spot is re-priced at turn end, before the era advances, so the first turn of a new era shows the old spot price in the returned burn.
-3. `deliverDue` delivers a Gulf contract live even if the export license was revoked while it was in the pipeline, which gives one free turn.
+1. A pulled spot contract was removed before `applyEconomy`, so its last usable turn was not billed. A warning now sets `bumpTurn` (the last turn it serves), and `pullBumped` removes it after the economy, next to `expireContracts`. The Task 2 test checks that the last turn is billed.
+2. Spot was re-priced at turn end, before the era advanced, so the first turn of a new era showed the old spot price in the returned burn.
+3. `deliverDue` delivered a Gulf contract live even if the export license was revoked while it was in the pipeline.
+
+Findings 2 and 3 are fixed by a new non-random `syncContracts` (the spot price and the Gulf license), which runs at turn end and again after delivery. A new Task 2 test covers both.
+
+Also fixed in this wave:
+- Plan 2A's balance pass raised every rival's speed (OpenBrain 1.3, Lodestar 0.9, DeepThink 1.05, Qilin 1.15). Under the old queue rule every Western rival prepaid, and their orders (190 units) exceeded the supply (150), so the player got nothing. Rival orders and tiers are now relative to the Western rivals' speeds. Spec §4 was revised to match, with owner approval.
+- Plan 2B Task 2 shipped the HUD formatter as `compute(state.compute)`. Task 7 now adapts that function instead of assuming a new one.

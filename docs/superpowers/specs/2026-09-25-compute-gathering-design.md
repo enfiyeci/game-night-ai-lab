@@ -116,8 +116,12 @@ Era 3's bottleneck is wafers and HBM memory, so Verde's orders go through a queu
 only. Everything else in section 3 works as usual.
 
 - Each era 3 turn Verde releases `R = 15 × ERA_SCALE[3]` units (first pass: 150).
-- Each Western rival places an order of `(2 + 4 × speed) × ERA_SCALE[3]` units. Rivals with
-  speed ≥ 0.7 prepay. Qilin, the Eastern lab, cannot buy from Verde (export controls).
+- Each Western rival places an order of `4.5 × (speed ÷ mean Western speed) × ERA_SCALE[3]`
+  units. The fastest Western rival prepays; the others order standard until they announce a
+  switch. Orders and tiers are relative to the rivals' speeds, so a rival-speed re-tune does not
+  change the queue (revised 2026-09-25, after plan 2A's balance pass raised every rival above the
+  old fixed `(2 + 4 × speed)` order and `speed ≥ 0.7` prepay rule, which left the player nothing).
+  Qilin, the Eastern lab, cannot buy from Verde (export controls).
 - The player places an order (a size) and picks a tier:
   - **Prepaid:** pay 15% of the order's 24-month term value upfront. Prepaid orders are filled
     first, pro rata if they exceed `R`.
