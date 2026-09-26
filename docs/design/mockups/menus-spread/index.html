@@ -1,0 +1,192 @@
+<title>Game Night Menus</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,300;0,400;0,600;0,700;0,800;0,900;1,700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* The game's own K2 tokens (ui/styles.css:1-9). Single light theme on purpose: this page shows the game's look. */
+:root {
+  --cream: #F1E4C8; --paper: #FFFBF1; --ink: #2E2A2B; --teal: #3F9C8F; --wood: #C8864C; --coral: #E0613B; --sky: #3F84C6;
+  --muted: color-mix(in oklab, var(--ink) 60%, var(--paper));
+  --line: color-mix(in oklab, var(--wood) 35%, transparent);
+  --deep: color-mix(in oklab, var(--ink) 92%, var(--sky));
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--cream); color: var(--ink); font-family: "Nunito", "Trebuchet MS", sans-serif; }
+
+/* ---------- page chrome ---------- */
+.pg { max-width: 1480px; margin: 0 auto; padding-inline: 20px; padding-block: 26px 120px; display: grid; gap: 26px; }
+.pg-head { display: grid; gap: 8px; }
+.pg-kick { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: color-mix(in oklab, var(--wood) 60%, var(--ink)); }
+.pg-head h1 { margin: 0; font-weight: 300; font-size: clamp(30px, 4.4vw, 46px); line-height: 1.05; text-wrap: balance; }
+.pg-head p { margin: 0; max-width: 78ch; font-size: 15px; line-height: 1.5; font-weight: 600; color: color-mix(in oklab, var(--ink) 82%, var(--paper)); }
+.pg-nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 12px; border-radius: 12px; background: var(--paper); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 10%, transparent), 0 8px 20px color-mix(in oklab, var(--ink) 8%, transparent); }
+.pg-nav a { padding: 5px 10px; border-radius: 8px; font-size: 13.5px; font-weight: 800; color: var(--ink); text-decoration: none; }
+.pg-nav a:hover, .pg-nav a:focus-visible { background: color-mix(in oklab, var(--teal) 18%, var(--paper)); outline: none; }
+.pg-nav a b { color: color-mix(in oklab, var(--wood) 70%, var(--ink)); margin-right: 5px; }
+
+.sec { display: grid; gap: 12px; scroll-margin-top: 70px; }
+.sec-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 20px; align-items: end; }
+.sec-head h2 { margin: 0; font-size: 28px; font-weight: 300; line-height: 1.1; }
+.sec-head h2 b { font-weight: 900; color: color-mix(in oklab, var(--wood) 70%, var(--ink)); margin-right: 8px; }
+.sec-head p { grid-column: 1 / -1; margin: 0; max-width: 90ch; font-size: 14.5px; line-height: 1.5; font-weight: 600; color: color-mix(in oklab, var(--ink) 80%, var(--paper)); }
+.opts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.opt { display: grid; gap: 5px; align-content: start; text-align: left; padding: 11px 13px 12px; border: 2px solid color-mix(in oklab, var(--wood) 30%, transparent); border-radius: 12px; background: var(--paper); font: inherit; color: var(--ink); cursor: pointer; }
+.opt:hover { border-color: color-mix(in oklab, var(--wood) 60%, transparent); }
+.opt[aria-pressed="true"] { border-color: var(--wood); box-shadow: 0 3px 0 color-mix(in oklab, var(--wood) 55%, var(--ink)); background: color-mix(in oklab, var(--wood) 10%, var(--paper)); }
+.opt:focus-visible, .pick:focus-visible, .copy:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+.opt-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.opt-top b { font-size: 16px; font-weight: 900; }
+.opt-top .code { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 7px; background: var(--wood); color: var(--paper); font-weight: 900; font-size: 14px; }
+.chip { padding: 2px 8px; border-radius: 999px; font-size: 10.5px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
+.chip.safe { background: color-mix(in oklab, var(--teal) 16%, var(--paper)); color: color-mix(in oklab, var(--teal) 70%, var(--ink)); }
+.chip.mid { background: color-mix(in oklab, var(--sky) 14%, var(--paper)); color: color-mix(in oklab, var(--sky) 70%, var(--ink)); }
+.chip.exp { background: color-mix(in oklab, var(--coral) 16%, var(--paper)); color: color-mix(in oklab, var(--coral) 72%, var(--ink)); }
+.chip.rec { background: var(--ink); color: var(--paper); }
+.opt p { margin: 0; font-size: 13.5px; line-height: 1.45; font-weight: 600; color: color-mix(in oklab, var(--ink) 80%, var(--paper)); }
+.pick { justify-self: start; margin-top: 3px; padding: 4px 10px; border-radius: 8px; border: 1.5px solid color-mix(in oklab, var(--wood) 55%, transparent); background: var(--paper); font: inherit; font-size: 12.5px; font-weight: 800; color: var(--ink); cursor: pointer; }
+.pick[aria-pressed="true"] { background: var(--teal); border-color: var(--teal); color: var(--paper); }
+
+.frame { position: relative; width: 100%; aspect-ratio: 1440 / 900; overflow: hidden; border-radius: 14px; border: 2px solid color-mix(in oklab, var(--wood) 40%, transparent); background: var(--cream); }
+.frame.small { border-radius: 10px; }
+.stage { position: absolute; left: 0; top: 0; width: 1440px; height: 900px; transform-origin: 0 0; overflow: hidden;
+  background: radial-gradient(ellipse 76% 82% at 50% 52%, var(--paper) 0%, color-mix(in oklab, var(--cream) 45%, var(--paper)) 34%, var(--cream) 60%); }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.pair figure { margin: 0; display: grid; gap: 5px; }
+.pair figcaption { font-size: 12.5px; font-weight: 800; color: var(--muted); }
+.note { margin: 0; font-size: 13px; line-height: 1.45; font-weight: 700; color: var(--muted); }
+.note b { color: var(--ink); }
+
+.picks { position: fixed; left: 50%; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 30; display: flex; align-items: center; gap: 12px; width: min(760px, calc(100% - 32px)); padding: 10px 12px 10px 16px; border-radius: 14px; background: var(--ink); color: var(--paper); box-shadow: 0 10px 30px color-mix(in oklab, var(--ink) 35%, transparent); }
+.picks span { flex: 1; min-width: 0; font-size: 13.5px; font-weight: 800; overflow-wrap: anywhere; }
+.picks .copy { padding: 7px 14px; border: 0; border-radius: 9px; background: var(--coral); color: var(--paper); font: inherit; font-weight: 900; cursor: pointer; }
+
+@media (max-width: 900px) {
+  .opts, .pair { grid-template-columns: 1fr; }
+  .sec-head { grid-template-columns: 1fr; }
+}
+
+/* ---------- the game's own pieces, inside a stage (ui/styles.css) ---------- */
+.stage .office { position: absolute; inset: 0; width: 1440px; height: 900px; }
+.veil { position: absolute; inset: 0; background: color-mix(in oklab, var(--cream) 40%, transparent); }
+.veil.strong { background: color-mix(in oklab, var(--cream) 64%, transparent); }
+.veil.dim { background: color-mix(in oklab, var(--ink) 28%, transparent); }
+.hud { position: absolute; top: 10px; left: 50%; display: flex; align-items: flex-start; gap: 10px; transform: translateX(-50%); }
+.ctr { display: flex; width: 84px; flex-direction: column; align-items: center; }
+.badge { position: relative; z-index: 1; display: grid; width: 48px; height: 48px; place-items: center; border-radius: 50%; font-size: 17px; font-weight: 900; box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 20%, transparent), 0 5px 12px color-mix(in oklab, var(--ink) 14%, transparent); }
+.cap .badge { border: 2px solid color-mix(in oklab, var(--coral) 72%, var(--ink)); color: var(--paper); background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--coral) 70%, var(--paper)), var(--coral) 60%); }
+.ali .badge { border: 5px solid var(--sky); color: color-mix(in oklab, var(--sky) 78%, var(--ink)); background: var(--paper); }
+.tag { position: relative; z-index: 2; margin-top: -7px; padding: 2px 9px 3px; border-radius: 999px; color: var(--paper); font-size: 10.5px; font-weight: 800; box-shadow: 0 1px 0 color-mix(in oklab, var(--ink) 25%, transparent); }
+.cap .tag { background: color-mix(in oklab, var(--coral) 88%, var(--ink)); }
+.ali .tag { background: color-mix(in oklab, var(--sky) 88%, var(--ink)); }
+.pill { width: 292px; padding: 8px 18px 10px; border: 1px solid color-mix(in oklab, var(--ink) 8%, transparent); border-radius: 16px; text-align: center; background: var(--paper); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 14%, transparent), 0 6px 16px color-mix(in oklab, var(--ink) 11%, transparent); }
+.pill .t { font-size: 16px; font-weight: 900; line-height: 1.1; }
+.pill .s { margin-top: 2px; color: var(--muted); font-size: 11px; font-weight: 700; }
+.pill .s.go { color: color-mix(in oklab, var(--coral) 80%, var(--ink)); font-weight: 900; font-size: 12px; }
+.pill .bar { height: 6px; margin-top: 7px; overflow: hidden; border-radius: 3px; background: color-mix(in oklab, var(--ink) 10%, var(--paper)); }
+.pill .bar i { display: block; height: 100%; border-radius: 3px; background: var(--teal); }
+.info { position: absolute; top: 12px; right: 14px; display: grid; min-width: 168px; padding: 7px 12px 8px; grid-template-columns: auto auto; column-gap: 10px; border: 1px solid color-mix(in oklab, var(--ink) 8%, transparent); border-radius: 9px; font-size: 11.5px; line-height: 1.55; background: var(--paper); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 14%, transparent), 0 6px 16px color-mix(in oklab, var(--ink) 11%, transparent); }
+.info .full { grid-column: 1 / span 2; }
+.info .k { color: var(--muted); font-weight: 700; }
+.info b { font-weight: 900; text-align: right; }
+.clock { position: absolute; top: 90px; right: 15px; display: flex; padding: 4px 5px 4px 12px; align-items: center; gap: 4px; border: 1px solid color-mix(in oklab, var(--ink) 10%, transparent); border-radius: 12px; font-size: 13px; font-weight: 900; background: var(--paper); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 12%, transparent); }
+.clock .date { display: grid; margin-right: 6px; }
+.clock .date small { color: var(--muted); font-weight: 700; }
+.clock .beat { display: block; width: 92px; height: 4px; margin-top: 3px; overflow: hidden; border-radius: 2px; background: color-mix(in oklab, var(--ink) 10%, var(--paper)); }
+.clock .beat i { display: block; height: 100%; width: 40%; background: var(--wood); }
+.clock .cb { display: grid; min-width: 28px; height: 26px; padding: 0 6px; place-items: center; border-radius: 8px; color: var(--muted); font-size: 12px; font-weight: 900; }
+.clock .cb.on { color: var(--paper); background: var(--wood); }
+.clock .cb svg { width: 16px; height: 16px; display: block; }
+.clock .sepv { width: 1px; height: 20px; margin: 0 3px; background: color-mix(in oklab, var(--ink) 12%, transparent); }
+.clock .paused { margin-left: 4px; padding: 2px 8px; border-radius: 999px; color: color-mix(in oklab, var(--wood) 62%, var(--ink)); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; background: color-mix(in oklab, var(--wood) 20%, var(--paper)); }
+.clock .menu-b { display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: 8px; color: var(--paper); background: var(--ink); font-size: 12.5px; font-weight: 900; position: relative; }
+.clock .menu-b kbd { font: inherit; font-size: 10px; padding: 0 4px; border-radius: 4px; background: color-mix(in oklab, var(--paper) 22%, transparent); }
+.dot { position: absolute; top: -5px; right: -5px; width: 16px; height: 16px; border-radius: 50%; background: var(--coral); border: 2px solid var(--paper); display: grid; place-items: center; font-size: 9px; color: var(--paper); font-weight: 900; }
+.hi { box-shadow: 0 0 0 3px color-mix(in oklab, var(--coral) 60%, transparent), 0 0 0 9px color-mix(in oklab, var(--coral) 18%, transparent); }
+
+.ctx { position: absolute; width: 220px; padding: 5px; border: 1px solid color-mix(in oklab, var(--ink) 12%, transparent); border-radius: 10px; background: var(--paper); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 18%, transparent), 0 10px 26px color-mix(in oklab, var(--ink) 20%, transparent); }
+.ctx.wide { width: 250px; }
+.it { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; padding: 6px 11px; border-radius: 6px; font-size: 13.5px; font-weight: 700; line-height: 1.3; }
+.it.on { background: color-mix(in oklab, var(--teal) 20%, var(--paper)); }
+.it.off { color: color-mix(in oklab, var(--ink) 35%, var(--paper)); }
+.it .team { padding: 1px 7px; border-radius: 999px; font-size: 10px; font-weight: 800; color: color-mix(in oklab, var(--teal) 70%, var(--ink)); background: color-mix(in oklab, var(--teal) 14%, var(--paper)); }
+.it .team.busy { color: var(--muted); background: color-mix(in oklab, var(--ink) 7%, var(--paper)); }
+.it .count { font-size: 11.5px; font-weight: 900; color: color-mix(in oklab, var(--wood) 70%, var(--ink)); }
+.it .ready { padding: 1px 7px; border-radius: 999px; font-size: 10px; font-weight: 900; color: var(--paper); background: var(--coral); }
+.grp { margin: 7px 11px 2px; font-size: 10px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: color-mix(in oklab, var(--wood) 70%, var(--ink)); }
+.sep { height: 1px; margin: 4px 8px; background: color-mix(in oklab, var(--ink) 10%, transparent); }
+.moves { margin: 4px 8px 2px; padding-top: 5px; border-top: 1px solid color-mix(in oklab, var(--ink) 8%, transparent); color: var(--muted); font-size: 10.5px; font-weight: 700; }
+.ping { position: absolute; width: 32px; height: 16px; margin: -8px 0 0 -16px; border: 2.5px solid var(--paper); border-radius: 50%; }
+.ping::after { content: ''; position: absolute; inset: 3px 7px; border-radius: 50%; background: color-mix(in oklab, var(--paper) 80%, transparent); }
+.ping.big { width: 70px; height: 35px; margin: -17px 0 0 -35px; border-color: var(--coral); box-shadow: 0 0 0 8px color-mix(in oklab, var(--coral) 18%, transparent); }
+
+.gp { position: absolute; overflow: hidden; border: 3px solid var(--wood); border-radius: 14px; background: color-mix(in oklab, var(--cream) 32%, var(--paper)); box-shadow: 0 3px 0 color-mix(in oklab, var(--wood) 60%, var(--ink)), 0 18px 44px color-mix(in oklab, var(--ink) 24%, transparent); }
+.gp .hd { padding: 7px 14px 8px; color: var(--paper); font-size: 14px; font-weight: 800; background: var(--wood); }
+.gp .pad { padding: 10px 14px 12px; }
+.dlg { padding: 18px 26px 20px; text-align: center; }
+.dlg h1 { margin: 0; font-size: 33px; font-weight: 300; letter-spacing: -.01em; line-height: 1.1; }
+.subt { margin-top: 4px; color: var(--muted); font-size: 13.5px; font-weight: 700; }
+.rule { height: 2px; margin: 14px 30px 16px; border-radius: 1px; background: color-mix(in oklab, var(--wood) 40%, transparent); }
+.btn { display: inline-block; width: 150px; padding: 9px 0; border-radius: 10px; color: var(--paper); font-size: 16px; font-weight: 900; text-align: center; background: var(--coral); box-shadow: 0 3px 0 color-mix(in oklab, var(--coral) 60%, var(--ink)), 0 6px 14px color-mix(in oklab, var(--coral) 30%, transparent); }
+.btn.off { color: color-mix(in oklab, var(--paper) 70%, var(--ink)); background: color-mix(in oklab, var(--coral) 38%, var(--paper)); box-shadow: none; }
+.btn2 { display: block; padding: 10px 14px; border-radius: 10px; border: 2px solid color-mix(in oklab, var(--wood) 50%, var(--paper)); background: var(--paper); font-size: 16px; font-weight: 900; text-align: center; color: var(--ink); }
+.back { font-size: 14px; font-weight: 900; color: color-mix(in oklab, var(--wood) 72%, var(--ink)); }
+.row { display: flex; align-items: center; }
+.muted { color: var(--muted); }
+.k-lab { font-size: 11px; font-weight: 900; letter-spacing: .07em; text-transform: uppercase; color: color-mix(in oklab, var(--wood) 70%, var(--ink)); }
+.mood { padding: 1px 7px; border-radius: 999px; font-size: 10px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; }
+.mood.calm { color: color-mix(in oklab, var(--teal) 72%, var(--ink)); background: color-mix(in oklab, var(--teal) 15%, var(--paper)); }
+.mood.uneasy { color: color-mix(in oklab, var(--wood) 72%, var(--ink)); background: color-mix(in oklab, var(--wood) 20%, var(--paper)); }
+.mood.alarmed { color: color-mix(in oklab, var(--coral) 80%, var(--ink)); background: color-mix(in oklab, var(--coral) 18%, var(--paper)); }
+.team-row { padding: 9px 14px 10px; border-top: 1px solid color-mix(in oklab, var(--wood) 22%, transparent); text-align: left; }
+.team-row:first-child { border-top: 0; }
+.team-row .n { display: flex; justify-content: space-between; align-items: center; font-size: 13.5px; font-weight: 900; }
+.team-row q { display: block; margin-top: 3px; font-size: 12.5px; font-style: italic; font-weight: 700; line-height: 1.35; color: color-mix(in oklab, var(--ink) 78%, var(--paper)); }
+.stat { display: flex; justify-content: space-between; gap: 8px; padding: 6px 14px; font-size: 13px; font-weight: 700; border-top: 1px solid color-mix(in oklab, var(--wood) 18%, transparent); }
+.stat b { font-weight: 900; font-variant-numeric: tabular-nums; }
+.stat:first-child { border-top: 0; }
+.verdict { margin: 8px 12px 12px; padding: 8px 11px; border-radius: 9px; font-size: 13px; font-weight: 900; line-height: 1.35; color: color-mix(in oklab, var(--teal) 70%, var(--ink)); background: color-mix(in oklab, var(--teal) 14%, var(--paper)); text-align: left; }
+.sw { display: inline-block; width: 36px; height: 20px; border-radius: 999px; background: color-mix(in oklab, var(--ink) 16%, var(--paper)); position: relative; flex: none; }
+.sw::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--paper); box-shadow: 0 1px 2px color-mix(in oklab, var(--ink) 30%, transparent); }
+.sw.on { background: var(--teal); }
+.sw.on::after { left: 18px; }
+.step { display: inline-flex; align-items: center; gap: 8px; font-weight: 900; font-size: 15px; }
+.step i { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--coral); color: var(--paper); font-style: normal; font-size: 16px; line-height: 1; }
+.slider { position: relative; height: 8px; border-radius: 4px; background: color-mix(in oklab, var(--ink) 12%, var(--paper)); }
+.slider i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--wood); }
+.slider b { position: absolute; top: 50%; width: 20px; height: 20px; margin: -10px 0 0 -10px; border-radius: 50%; background: var(--paper); border: 3px solid var(--wood); box-shadow: 0 2px 3px color-mix(in oklab, var(--ink) 20%, transparent); }
+.say { position: absolute; max-width: 300px; padding: 9px 12px 10px; border-radius: 12px; background: var(--paper); font-size: 13.5px; font-weight: 700; line-height: 1.35; box-shadow: 0 3px 0 color-mix(in oklab, var(--ink) 12%, transparent), 0 10px 22px color-mix(in oklab, var(--ink) 16%, transparent); }
+.say b { display: block; font-size: 11px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; color: color-mix(in oklab, var(--wood) 70%, var(--ink)); margin-bottom: 2px; }
+.say::after { content: ''; position: absolute; left: var(--tx, 40px); bottom: -9px; width: 18px; height: 18px; background: var(--paper); transform: rotate(45deg); border-radius: 3px; }
+.say.left::after { left: -8px; bottom: auto; top: 34px; }
+.callout { position: absolute; padding: 6px 11px; border-radius: 9px; background: var(--ink); color: var(--paper); font-size: 13px; font-weight: 800; line-height: 1.3; box-shadow: 0 6px 16px color-mix(in oklab, var(--ink) 25%, transparent); }
+.callout.up::before { content: ''; position: absolute; left: 20px; top: -6px; width: 12px; height: 12px; background: var(--ink); transform: rotate(45deg); }
+.draft { position: absolute; left: 14px; bottom: 12px; padding: 4px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 800; color: var(--muted); background: color-mix(in oklab, var(--paper) 88%, transparent); }
+.mono { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 9px; font-weight: 900; font-size: 16px; color: var(--paper); background: var(--wood); flex: none; }
+.card { border-radius: 12px; background: var(--paper); border: 2px solid color-mix(in oklab, var(--wood) 28%, transparent); text-align: left; }
+.card.sel { border-color: var(--teal); box-shadow: 0 0 0 3px color-mix(in oklab, var(--teal) 25%, transparent); }
+.card.danger { border-color: color-mix(in oklab, var(--coral) 55%, var(--paper)); }
+.cchip { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 900; }
+.cchip.teal { color: color-mix(in oklab, var(--teal) 72%, var(--ink)); background: color-mix(in oklab, var(--teal) 15%, var(--paper)); }
+.cchip.wood { color: color-mix(in oklab, var(--wood) 72%, var(--ink)); background: color-mix(in oklab, var(--wood) 20%, var(--paper)); }
+.cchip.coral { color: color-mix(in oklab, var(--coral) 80%, var(--ink)); background: color-mix(in oklab, var(--coral) 16%, var(--paper)); }
+.cchip.sky { color: color-mix(in oklab, var(--sky) 72%, var(--ink)); background: color-mix(in oklab, var(--sky) 14%, var(--paper)); }
+.tab { display: inline-block; padding: 6px 14px; border-radius: 9px 9px 0 0; font-size: 14px; font-weight: 900; color: var(--muted); }
+.tab.on { color: var(--ink); background: var(--paper); box-shadow: inset 0 3px 0 var(--wood); }
+.serif { font-family: "Libre Baskerville", Georgia, serif; }
+.still { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 8px; background: var(--deep); }
+.locked { display: grid; place-items: center; width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; background: repeating-linear-gradient(135deg, color-mix(in oklab, var(--ink) 88%, var(--sky)) 0 10px, color-mix(in oklab, var(--ink) 82%, var(--sky)) 10px 20px); color: color-mix(in oklab, var(--paper) 55%, transparent); font-size: 34px; font-weight: 900; }
+</style>
+
+<main class="pg">
+  <header class="pg-head">
+    <div class="pg-kick">Game Night AI Lab &#183; menu mockups &#183; 2026-09-26</div>
+    <h1>The front door, the menus, the money and the endings</h1>
+    <p>Seven screens, three options each, from safe to experimental. Every mockup sits on the game's own office art with its K2 colours, and uses real numbers from a seed-1 run in era 3 (Kestrel Labs, $738M cash). Click an option to see it; press "Pick" on the ones you want and copy your picks from the bar at the bottom. Advisor lines and hints are draft copy for you to rewrite.</p>
+  </header>
+  <nav class="pg-nav" aria-label="Sections" id="nav"></nav>
+  <div id="sections" class="pg" style="padding:0;gap:44px"></div>
+</main>
+<div class="picks" role="status"><span id="picked">No picks yet.</span><button class="copy" type="button" id="copy">Copy picks</button></div>
+
+<script src="app.js" charset="utf-8"></script>
