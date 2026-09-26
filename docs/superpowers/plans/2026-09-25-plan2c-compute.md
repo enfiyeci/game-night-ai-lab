@@ -1796,3 +1796,20 @@ Round 4 (`gpt-5.6-sol`, an extra round the owner approved). Verdict REVISE, one 
 Also fixed in this wave:
 - Plan 2A's balance pass raised every rival's speed (OpenBrain 1.3, Lodestar 0.9, DeepThink 1.05, Qilin 1.15). Under the old queue rule every Western rival prepaid, and their orders (190 units) exceeded the supply (150), so the player got nothing. Rival orders and tiers are now relative to the Western rivals' speeds. Spec §4 was revised to match, with owner approval.
 - Plan 2B Task 2 shipped the HUD formatter as `compute(state.compute)`. Task 7 now adapts that function instead of assuming a new one.
+
+## Deferred balance work (owner, 2026-09-26: after the first full playthrough)
+
+Plan 2C Tasks 1–8 are built and on `main`. The balance pass tuned numbers only, with real costs kept (owner decision). These misses need rule changes, and the owner deferred them until after playing the game once. Figures are from `npm run balance`, 200 seeds per strategy, at `main` `ce4c05b`.
+
+| # | Miss | Measured | Likely rule change |
+|---|---|---|---|
+| 1 | Over-committing should fail mostly in eras 3–4 (spec §11b target 1). Test marked todo in `tests/compute-balance.test.js`. | 8 of 183 over-committer bankruptcies land in eras 3–4; the rest are in era 2. | Separate a contract's deposit from its monthly price, or add an era-aware commitment rule. |
+| 2 | Reserving the grid in era 2 should improve the era 4 rank (spec §11b target 3). Test marked todo. | Balanced rank 1.0254 with the grid against 1.0244 without. | Let powered compute keep mattering near the capability cap (cap-preserving era 4 progress, or a rank tie-break). |
+| 3 | Slowness should be punished mainly by rivals pulling ahead (main spec target). No test. | Across the four scripted strategies: 10 left-behind endings, against 222 board removals and 399 bankruptcies (out of 800 runs). | Make rivals feel compute scarcity, or connect missed compute to rival advancement. |
+| 4 | Money scale: roughly $0.5B ARR by era 3 and $2–4B by era 4 (spec §11b). No test. | Balanced bot: $1.20B in era 3, $1.44B in era 4. Revenue arrives early, then barely grows. | Era-shaped revenue growth. |
+
+Related notes:
+- The safety bot still ends in bankruptcy in 176 of 200 runs (a playability concern, not a target).
+- The K2 compute mockup (`docs/design/mockups/source/build_compute_mockup.py` and its HTML and PNGs) still shows first-pass prices, such as spot at 2× and Azuria at 1.1×. It is a design reference; the live screens read prices from the sim.
+- The recipe dialog's Team panel still uses the older mood-word look, while the compute dialogs show opinion chips. The UI lane plans to align them.
+- A session is merging the plan 2D side branches (`sim/advisors.js`, `sim/data/advisorLines.js`, feed, Lumen). Coordinate with it before any balance rule change touches the advisor files or the turn step that reads them.
