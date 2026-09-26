@@ -3520,8 +3520,8 @@ svg.room {
 .dl-pill { position: absolute; z-index: 5; top: 140px; right: 15px; display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 12px; background: var(--paper); border: 1px solid color-mix(in oklab, var(--ink) 10%, transparent); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 12%, transparent); font-size: 13px; font-weight: 900; pointer-events: auto; }
 .dl-pill small { font-weight: 700; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); }
 .dl-seals { display: flex; }
-.dl-seals .sm-pb { margin-left: -5px; border: 2px solid var(--paper); }
-.dl-out { position: relative; opacity: .5; }
+.dl-seals .sm-pb { margin-left: -5px; border: 2px solid var(--paper); box-sizing: content-box; letter-spacing: -.03em; }
+.dl-out { position: relative; opacity: .7; }
 .dl-out::after { content: ""; position: absolute; left: -2px; right: 3px; top: 50%; height: 2.5px; background: var(--coral); transform: rotate(-35deg); }
 .dl-bubbles { position: absolute; inset: 0; pointer-events: none; }
 .dl-bubble { pointer-events: auto; }
