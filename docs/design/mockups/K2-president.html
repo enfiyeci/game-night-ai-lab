@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="../../../">
+  <meta name="viewport" content="width=1440">
+  <title>President meeting mockups</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="ui/styles.css">
+  <style>
+    /* Mockup-only styles for the President meeting, round 2 (owner pick 4B, "much much better"). Tokens only. */
+    .kick { font-size: 11px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: color-mix(in oklab, var(--wood) 62%, var(--ink)); }
+    .pat { display: inline-flex; align-items: center; gap: 5px; }
+    .pat i { width: 13px; height: 13px; border-radius: 50%; background: var(--coral); box-shadow: inset 0 -2px 0 color-mix(in oklab, var(--coral) 70%, var(--ink)); }
+    .pat i.gone { background: transparent; box-shadow: none; border: 2px solid color-mix(in oklab, var(--ink) 22%, var(--paper)); }
+    .steps { display: inline-flex; gap: 5px; }
+    .steps i { width: 26px; height: 6px; border-radius: 3px; background: color-mix(in oklab, var(--ink) 12%, var(--paper)); }
+    .steps i.on { background: var(--wood); }
+
+    .pbub { position: absolute; z-index: 11; padding: 12px 16px 14px; border-radius: 16px; background: var(--paper); border: 1px solid color-mix(in oklab, var(--ink) 12%, transparent); box-shadow: 0 3px 0 color-mix(in oklab, var(--ink) 16%, transparent), 0 14px 30px color-mix(in oklab, var(--ink) 22%, transparent); }
+    .pbub::after { content: ""; position: absolute; left: var(--tx, 30px); bottom: -10px; width: 20px; height: 20px; background: var(--paper); transform: rotate(45deg); border-right: 1px solid color-mix(in oklab, var(--ink) 12%, transparent); border-bottom: 1px solid color-mix(in oklab, var(--ink) 12%, transparent); }
+    .pbub .hdr { display: flex; justify-content: space-between; align-items: center; gap: 14px; }
+    .pbub .who { font-size: 11px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: color-mix(in oklab, var(--wood) 60%, var(--ink)); }
+    .pbub .say { margin-top: 6px; font-size: 21px; font-weight: 800; line-height: 1.28; }
+    .sb { position: absolute; z-index: 12; background: var(--paper); border-radius: 12px; padding: 8px 12px 10px; font-size: 13px; font-weight: 700; line-height: 1.3; border: 1px solid color-mix(in oklab, var(--ink) 10%, transparent); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 14%, transparent), 0 8px 18px color-mix(in oklab, var(--ink) 16%, transparent); }
+    .sb::after { content: ""; position: absolute; left: var(--tail, 24px); bottom: -8px; width: 14px; height: 14px; background: var(--paper); transform: rotate(45deg); border-right: 1px solid color-mix(in oklab, var(--ink) 10%, transparent); border-bottom: 1px solid color-mix(in oklab, var(--ink) 10%, transparent); }
+    .sb b { display: block; font-size: 10.5px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; color: color-mix(in oklab, var(--wood) 60%, var(--ink)); }
+    .sb .say { margin-top: 2px; font-size: 14px; }
+    .tagf { position: absolute; z-index: 12; padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 900; color: var(--paper); background: color-mix(in oklab, var(--coral) 82%, var(--ink)); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 30%, transparent); white-space: nowrap; }
+
+    .answers { display: grid; gap: 6px; }
+    .ans { display: grid; grid-template-columns: 26px 1fr; align-items: start; gap: 10px; width: 100%; padding: 8px 12px; border: 2.5px solid color-mix(in oklab, var(--ink) 12%, transparent); border-radius: 12px; background: var(--paper); font: inherit; text-align: left; color: var(--ink); cursor: pointer; }
+    .ans .k { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 7px; background: color-mix(in oklab, var(--ink) 8%, var(--paper)); font-size: 12px; font-weight: 900; }
+    .ans .lb { font-size: 14.5px; font-weight: 800; line-height: 1.3; }
+    .ans.hover { border-color: var(--wood); background: color-mix(in oklab, var(--wood) 9%, var(--paper)); }
+    .ans.hover .k { background: var(--wood); color: var(--paper); }
+    .ansbox { position: absolute; z-index: 11; padding: 12px 14px 14px; border-radius: 16px; background: color-mix(in oklab, var(--cream) 32%, var(--paper)); border: 3px solid var(--wood); box-shadow: 0 3px 0 color-mix(in oklab, var(--wood) 60%, var(--ink)), 0 18px 40px color-mix(in oklab, var(--ink) 30%, transparent); }
+    .ansbox .top { display: flex; justify-content: space-between; align-items: center; margin: 0 2px 8px; }
+
+    .vn { position: absolute; z-index: 11; left: 56px; top: 64px; bottom: 56px; width: 600px; display: grid; align-content: start; gap: 14px; }
+    .vn .card { padding: 16px 20px 18px; border-radius: 18px; background: var(--paper); box-shadow: 0 3px 0 color-mix(in oklab, var(--ink) 14%, transparent), 0 18px 40px color-mix(in oklab, var(--ink) 22%, transparent); }
+    .vn .name { display: flex; justify-content: space-between; align-items: center; }
+    .vn .name b { font-size: 22px; font-weight: 900; }
+    .vn .card .say { margin-top: 10px; font-size: 26px; font-weight: 800; line-height: 1.25; }
+    .vn .card .say::before { content: "“"; color: var(--wood); }
+    .vn .card .say::after { content: "”"; color: var(--wood); }
+  </style>
+</head>
+<body>
+  <main id="stage" aria-label="The President's office">
+    <div id="office"></div>
+    <div id="overlay"></div>
+  </main>
+<script type="module">
+import { MEETINGS } from './sim/data/president.js';
+
+const zoom = () => { const z = Math.min(innerWidth / 1440, innerHeight / 900, 1); if (z > 0) document.documentElement.style.zoom = `${z}`; };
+zoom(); addEventListener('resize', zoom);
+
+const route = (location.hash || '#v1').slice(1);
+const office = document.querySelector('#office');
+const overlay = document.querySelector('#overlay');
+office.innerHTML = await (await fetch(`docs/design/mockups/president/${route}.svg`)).text();
+const anchors = (await (await fetch('docs/design/mockups/president/anchors.json')).json())[route];
+const meeting = MEETINGS.find((m) => m.id === 'first');
+const el = (html) => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; };
+const esc = (text) => String(text).replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+const dots = (left) => `<span class="pat" role="img" aria-label="Patience ${left} of 10">${Array.from({ length: 10 }, (_, i) => `<i class="${i < left ? '' : 'gone'}"></i>`).join('')}</span>`;
+const steps = (n) => `<span class="steps">${meeting.exchanges.map((_, i) => `<i class="${i <= n ? 'on' : ''}"></i>`).join('')}</span>`;
+const answers = (ex, hover = -1) => `<div class="answers">${ex.answers.map((a, i) => `<button type="button" class="ans ${i === hover ? 'hover' : ''}"><span class="k">${i + 1}</span><span class="lb">${esc(a.text)}</span></button>`).join('')}</div>`;
+function place(node, left, top) { node.style.left = `${left}px`; node.style.top = `${top}px`; overlay.append(node); return node; }
+
+// V1 opens the meeting (question 1, full patience); V2 and V3 show question 2 after a jargon answer cost 6 patience.
+const Q = route === 'v1' ? 0 : 1;
+const PATIENCE = route === 'v1' ? 10 : 4;
+const ex = meeting.exchanges[Q];
+
+if (route === 'v1') {
+  const [hx, hy] = anchors.president;
+  const b = el(`<div class="pbub" style="width:430px;--tx:34px"><div class="hdr"><span class="who">The President</span>${dots(PATIENCE)}</div><div class="say">${esc(ex.prompt)}</div></div>`);
+  place(b, hx + 10, 0);
+  b.style.top = `${hy - 70 - b.offsetHeight}px`;
+  b.style.setProperty('--tx', '8px');
+  const box = el(`<div class="ansbox" style="width:700px"><div class="top"><span class="kick">Your answer</span><span class="kick" style="text-transform:none;letter-spacing:0;font-size:12.5px;color:color-mix(in oklab, var(--ink) 62%, var(--paper))">Policy and Comms whispers: “Short words. He counts the long ones.”</span>${steps(Q)}</div>${answers(ex, 0)}</div>`);
+  place(box, 370, 0);
+  box.style.top = `${900 - 22 - box.offsetHeight}px`;
+}
+
+if (route === 'v2') {
+  const [hx, hy] = anchors.president;
+  const b = el(`<div class="pbub" style="width:440px;--tx:34px"><div class="hdr"><span class="who">The President</span>${dots(PATIENCE)}</div><div class="say">${esc(ex.prompt)}</div></div>`);
+  place(b, hx + 40, 0);
+  b.style.top = `${hy - 40 - b.offsetHeight + 80}px`;
+  b.style.setProperty('--tx', '-6px');
+  const box = el(`<div class="ansbox" style="width:680px"><div class="top"><span class="kick">Your answer</span>${steps(Q)}</div>${answers(ex, 0)}</div>`);
+  place(box, 380, 0);
+  box.style.top = `${900 - 22 - box.offsetHeight}px`;
+  const [px, py] = anchors.policy;
+  const w = el(`<div class="sb" style="width:250px;--tail:40px"><b>Policy and Comms · alarmed</b><div class="say">He is checking his watch. No more long words.</div></div>`);
+  place(w, 1080, 0);
+  w.style.top = `${py - 150 - w.offsetHeight}px`;
+  place(el(`<div class="tagf">He did not like “corrigibility”</div>`), 150, 470);
+}
+
+if (route === 'v3') {
+  const vn = el(`<section class="vn">
+    <div class="card"><div class="name"><b>The President</b>${dots(PATIENCE)}</div><div class="say">${esc(ex.prompt)}</div></div>
+    <div class="card" style="padding:12px 14px 14px"><div class="ansbox" style="position:static;border:0;box-shadow:none;background:transparent;padding:0"><div class="top"><span class="kick">Your answer · question ${Q + 1} of ${meeting.exchanges.length}</span>${steps(Q)}</div>${answers(ex, 0)}</div></div>
+    <div class="sb" style="position:relative;width:330px;justify-self:start"><b>Policy and Comms · alarmed</b><div class="say">He is checking his watch. No more long words.</div></div></section>`);
+  overlay.append(vn);
+  vn.querySelector('.sb').style.setProperty('--tail', '30px');
+  place(el(`<div class="tagf">He did not like “corrigibility”</div>`), 1110, 196);
+}
+document.body.dataset.ready = '1';
+addEventListener('hashchange', () => location.reload());
+</script>
+</body>
+</html>
