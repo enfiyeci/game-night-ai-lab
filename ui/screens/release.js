@@ -1,12 +1,11 @@
 import { openDialog } from '../components/dialog.js';
 import { teamPanel } from '../components/team.js';
 import { vslider } from '../components/vslider.js';
-import { queuedMoveProblem } from '../logic/actions.js';
 import { projectQueue } from '../logic/compute.js';
 import { money } from '../logic/format.js';
 import {
   PRICE_NAMES, PRICE_STOPS, REASONING_NAMES, REASONING_STOPS, SIZE_ORDER,
-  canSkip, nextGeneration, perMillion, pricePerMillion, releaseDraft, releaseOpinions,
+  canSkip, laterMoveProblem, nextGeneration, perMillion, pricePerMillion, releaseDraft, releaseOpinions,
   queueBeforeRelease, releasePayload, releasePreview, releaseSpec, shipDelay, shipWords, withCard,
 } from '../logic/release.js';
 import { tierWord } from '../../sim/release.js';
@@ -126,6 +125,9 @@ export function openRelease(game, overlayRoot, { stage } = {}) {
 
     const priceSlider = () => {
       const spec = releaseSpec(state, draft.picks, draft.reasoning);
+      if (spec.channel === 'open') {
+        return el('p', 'release-note', 'Open weights are a free download. There is no price to set.');
+      }
       return vslider({
         label: 'Price',
         role: 'CFO',
@@ -233,7 +235,7 @@ export function openRelease(game, overlayRoot, { stage } = {}) {
         // Check the whole queue as it would be, so a changed release cannot silently break a later move
         // (for example a training run that no longer fits the cash left after a pricier evaluation).
         const after = { ...game.queue, moves: index < 0 ? [...moves, move] : moves.map((queued, at) => (at === index ? move : queued)) };
-        const problem = queuedMoveProblem(game.state, after);
+        const problem = laterMoveProblem(game.state, game.queue, after);
         if (problem) {
           // The release itself already passed the check above, so a problem here means a move
           // queued after it (for example a training run that no longer fits the cash left after

@@ -2,7 +2,7 @@ import { cardById, pickableCards, resolveCards, slotsFor } from '../../sim/recip
 import { modelName, releaseModel, tierWord } from '../../sim/release.js';
 import { createRng } from '../../sim/rng.js';
 import { CHANNEL, PRICE_STANCE, REASONING, REVENUE_PER_USER, USAGE, margin, servingCost } from '../../sim/serving.js';
-import { projectQueue } from './compute.js';
+import { applyProjectedMove, projectQueue } from './compute.js';
 
 export const PRICE_STOPS = ['free', 'undercut', 'market', 'premium'];
 export const PRICE_NAMES = { premium: 'Premium', market: 'Market', undercut: 'Undercut', free: 'Free tier' };
@@ -81,9 +81,12 @@ export function releaseDraft(state, remembered = {}) {
 }
 
 export function releasePayload(state, draft) {
+  const spec = releaseSpec(state, draft.picks, draft.reasoning);
   return {
     picks: [...draft.picks],
-    price: draft.price,
+    // Open weights are a free download; the price slider's stance would otherwise still tag
+    // along and mislabel the launch (see sim/data/launch.js, sim/economy.js).
+    price: spec.channel === 'open' ? 'market' : draft.price,
     reasoning: state.pendingModel?.spec?.reasoningCapable ? draft.reasoning : 'off',
     family: draft.family.trim().slice(0, 24),
     generation: nextGeneration(state, draft.skip),
@@ -96,6 +99,31 @@ export function queueBeforeRelease(queue) {
   const moves = queue?.moves ?? [];
   const index = moves.findIndex((move) => move.type === 'release');
   return { ...(queue ?? {}), moves: index < 0 ? moves : moves.slice(0, index) };
+}
+
+// Every move queued after the release must still work after the release changes, whatever its type.
+// Returns the failing move's error, or '' (a move that already failed before the edit is ignored).
+export function laterMoveProblem(state, before, after) {
+  const afterMoves = after?.moves ?? [];
+  const releaseIndex = afterMoves.findIndex((move) => move.type === 'release');
+  if (releaseIndex < 0) return '';
+  const beforeMoves = before?.moves ?? [];
+  for (let index = releaseIndex + 1; index < afterMoves.length; index += 1) {
+    const move = afterMoves[index];
+    const projected = projectQueue(state, { ...after, moves: afterMoves.slice(0, index) });
+    const result = applyProjectedMove(structuredClone(projected), move, after);
+    if (result && result.ok === false) {
+      const beforeMove = beforeMoves[index];
+      let failedBefore = false;
+      if (beforeMove) {
+        const projectedBefore = projectQueue(state, { ...before, moves: beforeMoves.slice(0, index) });
+        const beforeResult = applyProjectedMove(structuredClone(projectedBefore), beforeMove, before);
+        failedBefore = Boolean(beforeResult && beforeResult.ok === false);
+      }
+      if (!failedBefore) return result.error ?? 'a queued move would no longer work';
+    }
+  }
+  return '';
 }
 
 export function releasePreview(state, queue, draft) {
@@ -185,7 +213,7 @@ export function priceSheet(model, era) {
     margin: margin(cost, revenue),
     channel: CHANNEL_NAMES[model.channel],
     thinking: REASONING_NAMES[spec.reasoning ?? 'off'],
-    live: model.activeFromTurn <= model.releasedTurn,
+    live: model.servingCost > 0,
   };
 }
 

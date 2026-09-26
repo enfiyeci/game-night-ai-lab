@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import { startRun, advanceRun } from '../sim/training.js';
 import {
-  beatCount, canSkip, checkLabel, nextGeneration, perMillion, priceSheet, pricePerMillion, queueBeforeRelease,
-  releaseDraft, releaseOpinions, releasePayload, releasePreview, releaseSpec, salesEstimate,
+  beatCount, canSkip, checkLabel, laterMoveProblem, nextGeneration, perMillion, priceSheet, pricePerMillion,
+  queueBeforeRelease, releaseDraft, releaseOpinions, releasePayload, releasePreview, releaseSpec, salesEstimate,
   servingPerMillion, shipDelay, shipWords, tokensPerUser,
 } from '../ui/logic/release.js';
 import { SCENARIOS } from '../ui/logic/scenarios.js';
@@ -92,6 +92,53 @@ test('the preview needs a family name and reports the cash cost', () => {
   assert.equal(ok.name, 'Kestrel 1 Core');
 });
 
+test('the payload sends a neutral price for open weights but keeps the player pick otherwise', () => {
+  const s = trained();
+  const openDraft = { ...releaseDraft(s), family: 'Kestrel', picks: ['channel-open'], price: 'premium' };
+  assert.equal(releasePayload(s, openDraft).price, 'market');
+  const apiDraft = { ...releaseDraft(s), family: 'Kestrel', picks: [], price: 'premium' };
+  assert.equal(releasePayload(s, apiDraft).price, 'premium');
+});
+
+test('laterMoveProblem checks every move type queued after the release, ignoring one that already failed', () => {
+  const releaseMove = (picks) => ({
+    type: 'release',
+    release: { picks, price: 'market', reasoning: 'off', family: 'Kestrel', generation: 1 },
+  });
+
+  // (a) a later move that still works after the edit is not reported.
+  const okState = trained();
+  okState.cash = 300;
+  const okBefore = { moves: [releaseMove(['eval-full']), { type: 'emergency', option: 'bridgeRound' }] };
+  const okAfter = { moves: [releaseMove(['eval-full']), { type: 'emergency', option: 'bridgeRound' }] };
+  assert.equal(laterMoveProblem(okState, okBefore, okAfter), '');
+
+  // (b) queuedMoveProblem (ui/logic/actions.js) never checks 'emergency' moves. Build a real flip:
+  // releasing with eval-full ($10, sim/data/cards.js) drains cash to 290 against this state's
+  // ~$49.60 planned burn, which is inside the runway danger zone (sim/economy.js inDangerZone),
+  // so a queued bridge round succeeds. Editing the release to drop eval-full keeps that $10 (cash
+  // 300), pushing runway just past the 6-month danger-zone line, so the same bridge round now
+  // fails with "emergency options open only when runway is short" (sim/economy.js useEmergency) --
+  // exactly the silent loss the finding describes.
+  const flipState = trained();
+  flipState.cash = 300;
+  const flipBefore = { moves: [releaseMove(['eval-full']), { type: 'emergency', option: 'bridgeRound' }] };
+  const flipAfter = { moves: [releaseMove([]), { type: 'emergency', option: 'bridgeRound' }] };
+  assert.equal(
+    laterMoveProblem(flipState, flipBefore, flipAfter),
+    'emergency options open only when runway is short',
+  );
+
+  // (c) a later move that was already broken before the edit (here the bridge round was already
+  // used this run) is not reported as a new problem caused by the edit.
+  const brokenState = trained();
+  brokenState.cash = 10;
+  brokenState.flags.emergencyUsed = ['bridgeRound'];
+  const brokenBefore = { moves: [releaseMove(['eval-full']), { type: 'emergency', option: 'bridgeRound' }] };
+  const brokenAfter = { moves: [releaseMove([]), { type: 'emergency', option: 'bridgeRound' }] };
+  assert.equal(laterMoveProblem(brokenState, brokenBefore, brokenAfter), '');
+});
+
 test('an already queued release keeps its place, so only the moves ahead of it are projected', () => {
   const queue = { moves: [{ type: 'deal' }, { type: 'release' }, { type: 'startRun' }] };
   assert.deepEqual(queueBeforeRelease(queue).moves, [{ type: 'deal' }]);
@@ -131,6 +178,10 @@ test('the price sheet uses the real serving cost when the sim has it', () => {
   assert.equal(sheet.serve, 1);
   assert.ok(Math.abs(sheet.margin - 0.2) < 1e-9);
   assert.equal(sheet.live, true);
+  // A one-turn-delayed launch (activeFromTurn after releasedTurn) is already serving with a real
+  // cost by the time the reveal renders (sim/turn.js advances the turn and re-runs updateServing
+  // before the reveal), so it must show as live too -- not mislabelled "from next turn".
+  assert.equal(priceSheet({ ...model, activeFromTurn: 6, servingCost: 24 }, 3).live, true);
   assert.ok(Math.abs(priceSheet({ ...model, servingCost: 0, activeFromTurn: 6 }, 3).serve - 0.8) < 1e-9); // light-load formula
   assert.equal(priceSheet({ ...model, servingCost: 0, activeFromTurn: 6 }, 3).live, false);
   assert.deepEqual(priceSheet({ ...model, channel: 'open' }, 3), { open: true });

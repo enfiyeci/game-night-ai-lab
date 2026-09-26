@@ -112,7 +112,7 @@ function sheet(model, era) {
   }
   const cells = [
     ['You charge', perMillion(data.charge), 'per million tokens'],
-    ['Serving costs you', perMillion(data.serve), data.live ? 'per million tokens' : 'per million tokens, from next turn'],
+    ['Serving costs you', perMillion(data.serve), data.live ? 'per million tokens' : 'per million tokens, once it is serving'],
     ['Margin', pct(data.margin), `${data.channel} · thinking ${data.thinking}`],
   ];
   for (const [label, value, note] of cells) {
