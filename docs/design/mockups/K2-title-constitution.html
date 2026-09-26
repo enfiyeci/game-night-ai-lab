@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="../../../">
+  <meta name="viewport" content="width=1440">
+  <title>Title and constitution mockups</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Nunito:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="ui/styles.css">
+  <style>
+    /* Mockup-only styles. Tokens come from ui/styles.css; no colour literals here. */
+    .muted { color: color-mix(in oklab, var(--ink) 58%, var(--paper)); }
+    .hide-hud #hud { display: none; }
+    .serif { font-family: 'Libre Baskerville', Georgia, serif; }
+    .layer { position: absolute; inset: 0; z-index: 10; }
+    .veil { position: absolute; inset: 0; background: color-mix(in oklab, var(--cream) 40%, transparent); }
+    .veil.strong { background: color-mix(in oklab, var(--cream) 62%, transparent); }
+    .field { display: block; text-align: left; }
+    .field span { display: block; margin-bottom: 6px; font-size: 12px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: color-mix(in oklab, var(--ink) 60%, var(--paper)); }
+    .field input { width: 100%; padding: 11px 14px; border: 2px solid color-mix(in oklab, var(--wood) 55%, var(--paper)); border-radius: 10px; font: inherit; font-size: 18px; font-weight: 800; color: var(--ink); background: var(--paper); }
+    .field input::placeholder { color: color-mix(in oklab, var(--ink) 38%, var(--paper)); font-weight: 700; }
+    .field input:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+    .field small { display: block; margin-top: 5px; font-size: 12px; font-weight: 700; }
+    .linkbtn { border: 0; padding: 4px 2px; font: inherit; font-size: 13px; font-weight: 800; color: color-mix(in oklab, var(--wood) 70%, var(--ink)); background: none; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+
+    /* ---------- T1: GDT title panel ---------- */
+    .t1 .gp { left: 470px; top: 170px; width: 500px; padding: 34px 40px 28px; text-align: center; }
+    .t1 h1 { margin: 0; font-size: 64px; font-weight: 300; letter-spacing: -.02em; line-height: 1; }
+    .t1 .sub { margin: 10px 0 0; font-size: 15px; font-weight: 700; }
+    .t1 .rule { margin: 22px 20px 22px; }
+    .t1 .field + .field { margin-top: 16px; }
+    .t1 .btn { width: 220px; margin-top: 26px; padding: 12px 0; font-size: 18px; }
+    .t1 .row { display: flex; justify-content: center; margin-top: 12px; }
+
+    /* ---------- T2: the name on the whiteboard ---------- */
+    .t2 #office { transform-origin: 884px 326px; transform: translate(-164px, 60px) scale(2.4); }
+    .t2-mark { position: absolute; left: 32px; top: 28px; z-index: 11; padding: 10px 18px 12px; border-radius: 12px; background: color-mix(in oklab, var(--paper) 92%, transparent); font-size: 30px; font-weight: 300; letter-spacing: -.01em; box-shadow: 0 8px 24px color-mix(in oklab, var(--ink) 14%, transparent); }
+    .t2-mark small { display: block; font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+    .t2 .gp { left: 360px; top: 742px; width: 720px; padding: 16px 20px; display: flex; align-items: flex-end; gap: 14px; }
+    .t2 .field { flex: 1; }
+    .t2 .btn { width: 170px; padding: 12px 0; font-size: 17px; }
+    .t2 .opts { position: absolute; right: 18px; top: 10px; }
+    .wb-name { font-family: 'Caveat', cursive; font-weight: 700; fill: var(--ink); }
+    .wb-under { fill: none; stroke: var(--coral); stroke-width: 2.2; stroke-linecap: round; }
+    .wb-note { font-family: 'Caveat', cursive; font-weight: 600; fill: var(--sky); }
+
+    /* ---------- T3: certificate of incorporation ---------- */
+    .t3-sheet { position: absolute; left: 400px; top: 110px; width: 640px; height: 660px; padding: 46px 58px 34px; border-radius: 4px; background: var(--paper); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 12%, transparent), 0 26px 60px color-mix(in oklab, var(--ink) 26%, transparent); text-align: center; }
+    .t3-sheet::before { content: ''; position: absolute; inset: 14px; border: 1.5px solid color-mix(in oklab, var(--wood) 55%, var(--paper)); pointer-events: none; }
+    .t3-kicker { font-size: 12px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: color-mix(in oklab, var(--wood) 70%, var(--ink)); }
+    .t3-sheet h1 { margin: 12px 0 0; font-size: 34px; font-weight: 400; line-height: 1.2; }
+    .t3-p { margin: 26px 0 0; font-size: 15px; line-height: 1.6; }
+    .t3-name { margin: 12px auto 0; width: 440px; border: 0; border-bottom: 2px solid var(--ink); padding: 6px 0 8px; font-family: 'Libre Baskerville', Georgia, serif; font-style: italic; font-size: 30px; text-align: center; color: var(--ink); background: transparent; }
+    .t3-name::placeholder { color: color-mix(in oklab, var(--ink) 30%, var(--paper)); }
+    .t3-name:focus-visible { outline: 3px solid var(--sky); outline-offset: 4px; }
+    .t3-hint { margin-top: 6px; font-size: 12px; font-weight: 700; }
+    .t3-sign { display: flex; justify-content: space-between; align-items: center; margin: 40px 40px 0; text-align: left; }
+    .t3-line { width: 210px; border-top: 1.5px solid var(--ink); padding-top: 6px; font-size: 12px; font-weight: 700; }
+    .t3-line b { display: block; font-family: 'Libre Baskerville', Georgia, serif; font-style: italic; font-weight: 400; font-size: 17px; margin-bottom: 6px; }
+    .t3-stamp { display: grid; place-items: center; width: 116px; height: 116px; border: 3px solid var(--coral); border-radius: 50%; color: var(--coral); transform: rotate(-12deg); font-size: 11px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; line-height: 1.3; box-shadow: inset 0 0 0 5px var(--paper), inset 0 0 0 6.5px var(--coral); }
+    .t3-actions { display: flex; justify-content: center; align-items: center; gap: 22px; margin-top: 40px; }
+    .t3-actions .btn { width: 220px; padding: 12px 0; font-size: 17px; }
+    .t3-mark { position: absolute; left: 36px; top: 30px; font-size: 30px; font-weight: 300; }
+
+    /* ---------- H1: how-to-play card ---------- */
+    .h1 .gp { left: 420px; top: 190px; width: 600px; padding: 26px 34px 26px; text-align: center; }
+    .h1 h1 { margin: 0; font-size: 33px; font-weight: 300; }
+    .h1 ul { list-style: none; margin: 0; padding: 0; text-align: left; }
+    .h1 li { display: grid; grid-template-columns: 58px 1fr; align-items: center; gap: 16px; padding: 13px 4px; border-bottom: 1px solid color-mix(in oklab, var(--ink) 9%, transparent); font-size: 17px; font-weight: 700; line-height: 1.35; }
+    .h1 li:last-child { border-bottom: 0; }
+    .h1 li svg { width: 58px; height: 40px; overflow: visible; }
+    .h1 .btn { margin-top: 18px; }
+
+    /* ---------- H2: the team explains ---------- */
+    .say { position: absolute; z-index: 11; width: 250px; padding: 11px 14px 12px; border: 2.5px solid var(--wood); border-radius: 14px; background: var(--paper); font-size: 14.5px; font-weight: 700; line-height: 1.35; box-shadow: 0 3px 0 color-mix(in oklab, var(--wood) 60%, var(--ink)), 0 10px 24px color-mix(in oklab, var(--ink) 18%, transparent); }
+    .say b { display: block; margin-bottom: 3px; font-size: 11px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: color-mix(in oklab, var(--wood) 70%, var(--ink)); }
+    .say::after { content: ''; position: absolute; width: 16px; height: 16px; background: var(--paper); border: 2.5px solid var(--wood); border-top: 0; border-left: 0; }
+    .say.down::after { left: 28px; bottom: -10px; transform: rotate(45deg); }
+    .say.downR::after { right: 28px; bottom: -10px; transform: rotate(45deg); }
+    .h2-bar { position: absolute; z-index: 11; left: 520px; top: 800px; width: 400px; display: flex; align-items: center; justify-content: space-between; padding: 12px 14px 12px 20px; }
+    .h2-bar span { font-size: 14px; font-weight: 800; }
+    .h2-bar .btn { width: 140px; }
+
+    /* ---------- shared: character panel ---------- */
+    .char { padding: 6px 14px 12px; text-align: left; }
+    .char-row { padding: 10px 0 11px; border-bottom: 1px solid color-mix(in oklab, var(--ink) 9%, transparent); }
+    .char-row:last-child { border-bottom: 0; }
+    .char-k { display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: color-mix(in oklab, var(--ink) 55%, var(--paper)); }
+    .char-v { margin-top: 3px; font-size: 15px; font-weight: 800; }
+    .pips { display: inline-flex; gap: 3px; }
+    .pips i { width: 14px; height: 6px; border-radius: 3px; background: color-mix(in oklab, var(--ink) 12%, var(--paper)); }
+    .pips i.on { background: var(--teal); }
+    .char-foot { margin: 4px 0 0; font-size: 12px; font-weight: 700; line-height: 1.35; }
+
+    /* ---------- K1: GDT trio with the document ---------- */
+    .k1 .doc { position: absolute; left: 396px; top: 22px; width: 930px; height: 856px; padding: 24px 40px 20px; background: var(--paper); border-radius: 6px; box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 12%, transparent), 0 24px 56px color-mix(in oklab, var(--ink) 24%, transparent); }
+    .k1 .char-panel { left: 132px; top: 120px; width: 240px; }
+    .k1-adopt { position: absolute; left: 132px; top: 506px; width: 240px; padding: 12px 0; font-size: 17px; }
+    .doc-kicker { font-size: 11px; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; color: color-mix(in oklab, var(--ink) 50%, var(--paper)); }
+    .doc-title { margin: 6px 0 0; font-family: 'Libre Baskerville', Georgia, serif; font-style: italic; font-weight: 400; font-size: 34px; letter-spacing: -.01em; }
+    .doc-lede { margin: 8px 0 0; font-size: 14px; font-weight: 600; line-height: 1.45; max-width: 700px; }
+    .doc h2 { display: flex; justify-content: space-between; align-items: baseline; margin: 14px 0 6px; padding-bottom: 6px; border-bottom: 2px solid color-mix(in oklab, var(--wood) 40%, transparent); font-size: 17px; font-weight: 900; }
+    .doc h2 small { font-size: 12.5px; font-weight: 800; }
+    .lines { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 16px; }
+    .line { display: grid; grid-template-columns: 22px 1fr; gap: 10px; padding: 6px 10px; border-radius: 8px; cursor: pointer; }
+    .line.on { background: color-mix(in oklab, var(--teal) 12%, var(--paper)); }
+    .box { width: 20px; height: 20px; margin-top: 1px; border: 2px solid color-mix(in oklab, var(--ink) 40%, var(--paper)); border-radius: 5px; display: grid; place-items: center; }
+    .line.on .box { border-color: var(--teal); background: var(--teal); }
+    .line.on .box::after { content: ''; width: 9px; height: 5px; border: 2.5px solid var(--paper); border-top: 0; border-right: 0; transform: translateY(-1px) rotate(-45deg); }
+    .line p { margin: 0; font-size: 13.5px; font-weight: 800; line-height: 1.3; }
+    .line p small { display: block; margin-top: 2px; font-size: 11.5px; font-weight: 600; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); }
+    .cases { display: grid; gap: 6px; }
+    .case { display: grid; grid-template-columns: 300px 1fr; gap: 14px; align-items: center; }
+    .case q { font-size: 13px; font-weight: 700; line-height: 1.3; quotes: none; }
+    .case q b { display: block; font-size: 10.5px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: color-mix(in oklab, var(--ink) 50%, var(--paper)); }
+    .opts3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .opt { display: flex; align-items: center; gap: 8px; padding: 7px 9px; border: 1.5px solid color-mix(in oklab, var(--ink) 12%, transparent); border-radius: 8px; font-size: 12.5px; font-weight: 700; line-height: 1.2; cursor: pointer; }
+    .opt i { flex: none; width: 14px; height: 14px; border: 2px solid color-mix(in oklab, var(--ink) 40%, var(--paper)); border-radius: 50%; }
+    .opt.on { border-color: var(--teal); background: color-mix(in oklab, var(--teal) 10%, var(--paper)); }
+    .opt.on i { border: 4.5px solid var(--teal); }
+    .doc-foot { position: absolute; left: 40px; right: 40px; bottom: 18px; display: flex; justify-content: space-between; align-items: center; }
+    .doc-foot p { margin: 0; font-size: 12.5px; font-weight: 700; max-width: 520px; }
+
+    /* ---------- K2: published spec on the CEO's monitor ---------- */
+    .k2 .win { left: 110px; top: 50px; width: 1220px; height: 810px; border-width: 3px; }
+    .chrome { display: flex; align-items: center; gap: 12px; height: 38px; padding: 0 14px; border-bottom: 1px solid color-mix(in oklab, var(--ink) 12%, transparent); background: color-mix(in oklab, var(--ink) 8%, var(--paper)); }
+    .dots { display: flex; gap: 6px; }
+    .dots i { width: 11px; height: 11px; border-radius: 50%; background: color-mix(in oklab, var(--ink) 22%, var(--paper)); }
+    .url { flex: 1; max-width: 520px; margin: 0 auto; padding: 4px 12px; border-radius: 7px; font-size: 12.5px; font-weight: 700; text-align: center; background: var(--paper); }
+    .k2-body { display: grid; grid-template-columns: 220px 1fr 250px; height: calc(100% - 38px - 58px); background: var(--paper); }
+    .toc { padding: 22px 16px; border-right: 1px solid color-mix(in oklab, var(--ink) 9%, transparent); font-size: 13px; font-weight: 700; }
+    .toc b { display: block; margin: 0 0 8px; font-size: 11px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: color-mix(in oklab, var(--ink) 50%, var(--paper)); }
+    .toc a { display: flex; justify-content: space-between; padding: 6px 8px; border-radius: 6px; color: var(--ink); text-decoration: none; }
+    .toc a.cur { background: color-mix(in oklab, var(--wood) 16%, var(--paper)); }
+    .toc a span { color: var(--teal); font-weight: 900; }
+    .toc .sub { padding-left: 18px; font-weight: 600; }
+    .k2-main { padding: 26px 40px; overflow: hidden; }
+    .k2-main h1 { margin: 0; font-family: 'Libre Baskerville', Georgia, serif; font-style: italic; font-weight: 400; font-size: 34px; }
+    .k2-meta { margin-top: 6px; font-size: 12.5px; font-weight: 700; }
+    .k2-main h2 { margin: 22px 0 8px; font-family: 'Libre Baskerville', Georgia, serif; font-weight: 400; font-size: 21px; }
+    .k2-main p.intro { margin: 0 0 10px; font-size: 14px; font-weight: 600; line-height: 1.5; }
+    .clause { display: grid; grid-template-columns: 26px 1fr auto; gap: 10px; align-items: start; padding: 8px 0; border-bottom: 1px solid color-mix(in oklab, var(--ink) 8%, transparent); }
+    .clause .n { font-size: 12px; font-weight: 900; color: color-mix(in oklab, var(--ink) 45%, var(--paper)); padding-top: 2px; }
+    .clause p { margin: 0; font-size: 14.5px; font-weight: 700; line-height: 1.35; }
+    .clause.off p { color: color-mix(in oklab, var(--ink) 45%, var(--paper)); font-weight: 600; }
+    .clause p small { display: block; margin-top: 2px; font-size: 12px; font-weight: 600; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); }
+    .tog { width: 38px; height: 22px; border-radius: 11px; background: color-mix(in oklab, var(--ink) 16%, var(--paper)); position: relative; }
+    .tog::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--paper); }
+    .clause.on .tog { background: var(--teal); }
+    .clause.on .tog::after { left: 19px; }
+    .k2-rail { padding: 22px 18px; border-left: 1px solid color-mix(in oklab, var(--ink) 9%, transparent); background: color-mix(in oklab, var(--cream) 22%, var(--paper)); }
+    .k2-rail h3 { margin: 0 0 4px; font-size: 11px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: color-mix(in oklab, var(--ink) 50%, var(--paper)); }
+    .k2-rail .char { padding: 0; }
+    .k2-bar { display: flex; align-items: center; justify-content: space-between; height: 58px; padding: 0 22px; border-top: 1px solid color-mix(in oklab, var(--ink) 10%, transparent); background: color-mix(in oklab, var(--cream) 30%, var(--paper)); }
+    .k2-bar p { margin: 0; font-size: 13px; font-weight: 800; }
+    .chip { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 900; letter-spacing: .04em; background: color-mix(in oklab, var(--wood) 20%, var(--paper)); color: color-mix(in oklab, var(--wood) 60%, var(--ink)); }
+
+    /* ---------- K3: one case at a time ---------- */
+    .k3 .stage-card { left: 396px; top: 150px; width: 900px; height: 500px; padding: 26px 40px 26px; text-align: center; }
+    .k3 .char-panel { left: 136px; top: 150px; width: 240px; }
+    .steps { display: flex; gap: 6px; justify-content: center; }
+    .steps span { display: grid; place-items: center; min-width: 34px; height: 30px; padding: 0 10px; border-radius: 8px; font-size: 12.5px; font-weight: 900; background: color-mix(in oklab, var(--ink) 7%, var(--paper)); color: color-mix(in oklab, var(--ink) 50%, var(--paper)); }
+    .steps span.done { background: color-mix(in oklab, var(--teal) 18%, var(--paper)); color: color-mix(in oklab, var(--teal) 60%, var(--ink)); }
+    .steps span.cur { background: var(--wood); color: var(--paper); }
+    .k3-kicker { margin-top: 26px; font-size: 12px; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; color: color-mix(in oklab, var(--wood) 70%, var(--ink)); }
+    .k3-prompt { margin: 14px auto 0; max-width: 700px; font-size: 30px; font-weight: 300; line-height: 1.3; letter-spacing: -.01em; }
+    .k3-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 30px; text-align: left; }
+    .rc { position: relative; padding: 18px 18px 16px; border: 2.5px solid color-mix(in oklab, var(--ink) 12%, transparent); border-radius: 14px; background: var(--paper); cursor: pointer; min-height: 150px; }
+    .rc.on { border-color: var(--teal); box-shadow: 0 0 0 4px color-mix(in oklab, var(--teal) 18%, transparent); }
+    .rc h3 { margin: 0; font-size: 19px; font-weight: 900; line-height: 1.25; }
+    .rc .lean { margin-top: 14px; display: grid; gap: 6px; }
+    .rc .lean span { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 800; }
+    .rc .lean svg { flex: none; }
+    .rc .who { position: absolute; left: 18px; right: 18px; bottom: 14px; font-size: 12px; font-weight: 700; }
+    .k3-foot { position: absolute; left: 40px; right: 40px; bottom: 26px; display: flex; justify-content: space-between; align-items: center; }
+    .k3-foot .dialog-back { font: inherit; font-size: 15px; font-weight: 800; border: 0; background: none; color: color-mix(in oklab, var(--ink) 60%, var(--paper)); cursor: pointer; }
+    .k3-lines { margin-top: 26px; font-size: 13px; font-weight: 700; }
+    .k3-lines b { font-weight: 900; }
+  </style>
+</head>
+<body>
+  <main id="stage" aria-label="AI lab office">
+    <div id="office"></div>
+    <div id="fx" aria-live="polite"></div>
+    <div id="hud"></div>
+    <div id="overlay"></div>
+  </main>
+<script type="module">
+import { createGame } from './ui/game.js';
+import { mountHud } from './ui/hud.js';
+import { mountOffice } from './ui/office.js';
+import { SCENARIOS } from './ui/logic/scenarios.js';
+import { HARD_LINES, CASES } from './sim/data/constitution.js';
+import { constitutionValues } from './sim/constitution.js';
+
+const zoom = () => { const z = Math.min(innerWidth / 1440, innerHeight / 900, 1); if (z > 0) document.documentElement.style.zoom = `${z}`; };
+zoom(); addEventListener('resize', zoom);
+
+const game = createGame({ seed: 1, state: SCENARIOS.start(1) });
+mountHud(document.querySelector('#hud'), game);
+await mountOffice(document.querySelector('#office'), document.querySelector('#fx'), game).catch(console.error);
+const stage = document.querySelector('#stage');
+const overlay = document.querySelector('#overlay');
+const el = (html) => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; };
+const anchors = await (await fetch('ui/assets/anchors-era1.json')).json();
+
+// Sample content for the mockup. In the game the name comes from the player and is set with textContent.
+const LAB = new URLSearchParams(location.search).get('lab') ?? 'Northlight';
+const LINES_ON = ['no-wmd', 'honest', 'accept-shutdown'];
+const RULINGS = Object.fromEntries(CASES.map((c) => [c.id, c.options[0].id]));
+RULINGS.wrong = 'hedge'; RULINGS.stranger = 'ask';
+
+// The four value dials, in words only (player-written values, not hidden truths).
+const DIALS = [
+  ['candor', 'Candour', ['Tells people what they want to hear', 'Tactful', 'Says hard truths']],
+  ['caution', 'Caution', ['Helps with almost anything', 'Weighs the risk', 'Refuses risky requests']],
+  ['deference', 'Deference', ['Pushes back on its own lab', 'Pushes back sometimes', 'Does what it is told']],
+  ['userFirst', 'Who comes first', ['The wider world', 'User and world, balanced', 'The user in front of it']],
+];
+const bucket = (v) => (v < 0.4 ? 0 : v < 0.7 ? 1 : 2);
+function characterPanel(rulings) {
+  const values = constitutionValues({ constitution: { rulings } });
+  const root = el('<div class="char"></div>');
+  for (const [key, label, words] of DIALS) {
+    const b = bucket(values[key]);
+    const row = el(`<div class="char-row"><div class="char-k"><span></span><span class="pips"><i></i><i></i><i></i></span></div><div class="char-v"></div></div>`);
+    row.querySelector('.char-k span').textContent = label;
+    row.querySelectorAll('.pips i').forEach((pip, i) => pip.classList.toggle('on', i <= b));
+    row.querySelector('.char-v').textContent = words[b];
+    root.append(row);
+  }
+  root.append(el('<p class="char-foot muted">What you write here is what you train for. What the model learns can drift.</p>'));
+  return root;
+}
+const layer = (cls, html) => { const node = el(`<div class="layer ${cls}">${html}</div>`); overlay.append(node); return node; };
+
+// ---------- T1 ----------
+function showT1() {
+  stage.classList.add('hide-hud');
+  layer('t1', `<div class="veil"></div><section class="gp">
+    <h1>AI Lab</h1>
+    <p class="sub muted">Run a frontier AI lab for five eras.</p>
+    <div class="rule"></div>
+    <label class="field"><span>Name your lab</span><input value="${LAB}" placeholder="Your lab" maxlength="28"></label>
+    <label class="field"><span>Name your AI <em class="muted" style="font-style:normal;text-transform:none;letter-spacing:0">(optional)</em></span><input placeholder="Lumen" maxlength="20"><small class="muted">It talks to you each turn and narrates your ending.</small></label>
+    <button class="btn" type="button">New game</button>
+    <div class="row"><button class="linkbtn" type="button">Options</button></div>
+  </section>`);
+}
+
+// ---------- T2 ----------
+function showT2() {
+  const board = [...document.querySelectorAll('#office svg rect[rx="3"]')].find((r) => +r.getAttribute('width') > 120 && +r.getAttribute('height') > 60);
+  stage.classList.add('hide-hud', 't2');
+  if (board) {
+    const x = +board.getAttribute('x'); const y = +board.getAttribute('y');
+    const w = +board.getAttribute('width'); const h = +board.getAttribute('height');
+    const ns = 'http://www.w3.org/2000/svg';
+    const g = document.createElementNS(ns, 'g');
+    const cover = document.createElementNS(ns, 'rect');
+    Object.entries({ x: x + 3, y: y + 3, width: w - 6, height: h - 6, rx: 2 }).forEach(([k, v]) => cover.setAttribute(k, v));
+    cover.setAttribute('style', 'fill:var(--paper)');
+    const name = document.createElementNS(ns, 'text');
+    name.setAttribute('x', x + w / 2); name.setAttribute('y', y + h * 0.5); name.setAttribute('text-anchor', 'middle');
+    name.setAttribute('class', 'wb-name'); name.setAttribute('font-size', '27');
+    name.textContent = LAB;
+    const under = document.createElementNS(ns, 'path');
+    under.setAttribute('d', `M${x + w * 0.18},${y + h * 0.64} q${w * 0.32},4 ${w * 0.64},-1`); under.setAttribute('class', 'wb-under');
+    const note = document.createElementNS(ns, 'text');
+    note.setAttribute('x', x + w / 2); note.setAttribute('y', y + h * 0.86); note.setAttribute('text-anchor', 'middle');
+    note.setAttribute('class', 'wb-note'); note.setAttribute('font-size', '10.5');
+    note.textContent = 'day one · 7 people · 1 rack';
+    g.append(cover, name, under, note);
+    board.parentNode.append(g);
+  }
+  stage.append(el('<div class="t2-mark">AI Lab<small class="muted">a game about running one</small></div>'));
+  layer('t2', `<section class="gp">
+    <label class="field"><span>Name your lab</span><input value="${LAB}" placeholder="Your lab" maxlength="28"></label>
+    <button class="btn" type="button">New game</button>
+    <button class="linkbtn opts" type="button">Options</button>
+  </section>`);
+}
+
+// ---------- T3 ----------
+function showT3() {
+  stage.classList.add('hide-hud');
+  const node = layer('t3', `<div class="veil strong"></div><div class="t3-mark">AI Lab</div><article class="t3-sheet">
+    <div class="t3-kicker">Certificate of incorporation</div>
+    <h1 class="serif">A new frontier AI lab</h1>
+    <p class="t3-p">The undersigned founder hereby forms a company to build<br>the most capable AI systems in the world, under the name</p>
+    <input class="t3-name" value="${LAB}" placeholder="Your lab" maxlength="28" aria-label="Name your lab">
+    <div class="t3-hint muted">Type your lab's name</div>
+    <p class="t3-p">It opens with seven people and one rack of chips.</p>
+    <div class="t3-sign">
+      <div class="t3-line"><b>You</b>Founder and CEO</div>
+      <div class="t3-stamp">Founded<br>era 1</div>
+    </div>
+    <div class="t3-actions"><button class="btn" type="button">Sign and found</button><button class="linkbtn" type="button">Options</button></div>
+  </article>`);
+  return node;
+}
+
+// ---------- H1 ----------
+const ICONS = {
+  eras: '<svg viewBox="0 0 58 40"><g>' + [0, 1, 2, 3, 4].map((i) => `<rect x="${i * 12}" y="${24 - i * 5}" width="9" height="${12 + i * 5}" rx="2" style="fill:color-mix(in oklab, var(--wood) ${40 + i * 12}%, var(--paper))"/>`).join('') + '</g></svg>',
+  truth: '<svg viewBox="0 0 58 40"><circle cx="20" cy="20" r="15" style="fill:var(--paper);stroke:var(--ink);stroke-width:2"/><path d="M20 5 A15 15 0 0 1 20 35 Z" style="fill:var(--sky)"/><circle cx="43" cy="20" r="9" style="fill:none;stroke:color-mix(in oklab, var(--ink) 40%, var(--paper));stroke-width:2;stroke-dasharray:3 3"/></svg>',
+  floor: '<svg viewBox="0 0 58 40"><path d="M4 26 L29 14 L54 26 L29 38 Z" style="fill:color-mix(in oklab, var(--wood) 35%, var(--paper));stroke:var(--wood);stroke-width:1.5"/><path d="M30 8 l0 17 l4.5 -4 l3.5 7 l3 -1.5 l-3.4 -6.8 l6 -0.4 Z" style="fill:var(--ink);stroke:var(--paper);stroke-width:1.2;stroke-linejoin:round"/></svg>',
+  watch: '<svg viewBox="0 0 58 40"><circle cx="18" cy="24" r="12" style="fill:color-mix(in oklab, var(--wood) 45%, var(--paper));stroke:var(--ink);stroke-width:1.6"/><path d="M12 29 q6 -4 12 0" style="fill:none;stroke:var(--ink);stroke-width:1.8;stroke-linecap:round"/><circle cx="14" cy="22" r="1.6" style="fill:var(--ink)"/><circle cx="22" cy="22" r="1.6" style="fill:var(--ink)"/><rect x="33" y="2" width="22" height="20" rx="6" style="fill:var(--paper);stroke:var(--coral);stroke-width:2"/><path d="M40.5 7 v7 M47.5 7 v7" style="stroke:var(--coral);stroke-width:2.6;stroke-linecap:round"/><circle cx="40.5" cy="17.5" r="1.4" style="fill:var(--coral)"/><circle cx="47.5" cy="17.5" r="1.4" style="fill:var(--coral)"/></svg>',
+};
+function showH1() {
+  layer('h1', `<div class="veil"></div><section class="gp">
+    <h1>How to play</h1><div class="rule"></div>
+    <ul>
+      <li>${ICONS.eras}<span>You run a lab for five eras, from chat assistants to self-improving models.</span></li>
+      <li>${ICONS.truth}<span>Your advisors each see part of the truth. None of them sees all of it.</span></li>
+      <li>${ICONS.floor}<span>Click the floor to act: train, release, sign deals, take meetings.</span></li>
+      <li>${ICONS.watch}<span>There is no risk meter. Watch your people.</span></li>
+    </ul>
+    <button class="btn" type="button">Start</button>
+  </section>`);
+}
+
+// ---------- H2 ----------
+function showH2() {
+  const h = anchors.heads;
+  const say = (who, role, text, [x, y], dx, dy, tail = 'down') => {
+    const node = el(`<div class="say ${tail}"><b></b><span></span></div>`);
+    node.querySelector('b').textContent = role; node.querySelector('span').textContent = text;
+    node.style.left = `${x + dx}px`; node.style.top = `${y + dy}px`;
+    stage.append(node);
+  };
+  say('cfo', 'CFO', 'You run this lab for five eras. I’d like us to still have money in the last one.', h.cfo, -20, -150);
+  say('research', 'Head of Research', 'Click the floor when you want us to do something: train, release, sign a deal.', h.research, -30, -170);
+  say('safety', 'Head of Safety', 'Each of us sees part of the truth. Nobody here sees all of it.', h.safety, 40, -180);
+  say('policy', 'Policy and Comms', 'There’s no risk meter. Watch us. If we look worried, we are.', h.policy, -230, -120, 'downR');
+  stage.append(el('<section class="gp h2-bar"><span>Your team, on day one</span><button class="btn" type="button">Got it</button></section>'));
+}
+
+// ---------- K1 ----------
+function showK1() {
+  stage.classList.add('hide-hud');
+  const node = layer('k1', `<div class="veil"></div><section class="gp dialog-side char-panel"><div class="hd">Character</div></section>
+  <article class="doc">
+    <div class="doc-kicker">Model constitution · draft</div>
+    <h1 class="doc-title"></h1>
+    <p class="doc-lede muted">Every model you train learns from this document. Choose three hard lines it must never cross, then rule on six cases; each ruling becomes a precedent. You can amend it later, one change per turn.</p>
+    <h2>Hard lines <small class="muted">3 of 3 chosen</small></h2>
+    <div class="lines"></div>
+    <h2>Worked examples <small class="muted">6 of 6 ruled</small></h2>
+    <div class="cases"></div>
+  </article>`);
+  node.querySelector('.char-panel').after(el('<button class="btn k1-adopt" type="button">Adopt</button>'));
+  node.querySelector('.doc-title').textContent = `The ${LAB} Constitution`;
+  node.querySelector('.char-panel').append(characterPanel(RULINGS));
+  const lines = node.querySelector('.lines');
+  for (const line of HARD_LINES) {
+    const row = el('<div class="line"><span class="box"></span><p><span></span><small></small></p></div>');
+    row.classList.toggle('on', LINES_ON.includes(line.id));
+    row.querySelector('p span').textContent = line.text; row.querySelector('small').textContent = line.effect;
+    lines.append(row);
+  }
+  const cases = node.querySelector('.cases');
+  CASES.forEach((c, i) => {
+    const row = el('<div class="case"><q><b></b><span></span></q><div class="opts3"></div></div>');
+    row.querySelector('b').textContent = `Case ${i + 1}`; row.querySelector('q span').textContent = c.prompt;
+    for (const o of c.options) {
+      const opt = el('<div class="opt"><i></i><span></span></div>');
+      opt.classList.toggle('on', RULINGS[c.id] === o.id); opt.querySelector('span').textContent = o.label;
+      row.querySelector('.opts3').append(opt);
+    }
+    cases.append(row);
+  });
+}
+
+// ---------- K2 ----------
+function showK2() {
+  stage.classList.add('hide-hud');
+  const slug = LAB.toLowerCase().replace(/[^a-z0-9]+/g, '');
+  const node = layer('k2', `<div class="veil"></div><section class="gp win">
+    <div class="chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url"></span></div>
+    <div class="k2-body">
+      <nav class="toc"><b>Contents</b><a>Overview</a><a class="cur">Hard lines <span>3/3</span></a><a>Worked examples <span>6/6</span></a></nav>
+      <div class="k2-main"><h1></h1><div class="k2-meta muted"></div>
+        <h2>Hard lines</h2><p class="intro muted">Things the model must never do, whoever asks. Pick exactly three; each one has a cost as well as a benefit.</p>
+        <div class="clauses"></div></div>
+      <aside class="k2-rail"><h3>The character this writes</h3></aside>
+    </div>
+    <div class="k2-bar"><p><span class="chip">Draft</span>&nbsp; Not yet published. Your first model trains on whatever is published.</p><button class="btn" type="button">Publish v1</button></div>
+  </section>`);
+  node.querySelector('.url').textContent = `${slug}.ai/constitution`;
+  node.querySelector('.k2-main h1').textContent = `The ${LAB} Constitution`;
+  node.querySelector('.k2-meta').textContent = `Version 1 · draft · last edited by you`;
+  const toc = node.querySelector('.toc');
+  CASES.forEach((c, i) => {
+    const a = el('<a class="sub"><span style="color:inherit;font-weight:600"></span><span>✓</span></a>');
+    a.querySelector('span').textContent = ['Chemistry for a novel', 'A parent’s request', 'The President’s office', 'When you are right', 'Your own lab', 'A stranger’s request'][i];
+    toc.append(a);
+  });
+  node.querySelector('.k2-rail').append(characterPanel(RULINGS));
+  const list = node.querySelector('.clauses');
+  HARD_LINES.forEach((line, i) => {
+    const on = LINES_ON.includes(line.id);
+    const row = el('<div class="clause"><span class="n"></span><p><span></span><small></small></p><span class="tog" role="switch"></span></div>');
+    row.classList.add(on ? 'on' : 'off');
+    row.querySelector('.n').textContent = `${i + 1}.`;
+    row.querySelector('p span').textContent = line.text; row.querySelector('small').textContent = line.effect;
+    list.append(row);
+  });
+}
+
+// ---------- K3 ----------
+const LEAN_WORDS = { candor: ['Less candid', 'More candid'], caution: ['Less cautious', 'More cautious'], deference: ['Less obedient', 'More obedient'], userFirst: ['World first', 'User first'] };
+function showK3() {
+  stage.classList.add('hide-hud');
+  const c = CASES[2];
+  const chosen = 'balance';
+  const node = layer('k3', `<div class="veil"></div><section class="gp dialog-side char-panel"><div class="hd">Character so far</div></section>
+  <section class="gp stage-card">
+    <div class="steps"><span class="done">Hard lines</span><span class="done">1</span><span class="done">2</span><span class="cur">3</span><span>4</span><span>5</span><span>6</span><span>Adopt</span></div>
+    <div class="k3-kicker">Worked example 3 of 6</div>
+    <p class="k3-prompt"></p>
+    <div class="k3-cards"></div>
+    <p class="k3-lines muted">Your hard lines: <b>no mass-casualty weapons</b> · <b>never state what it believes false</b> · <b>never resist shutdown</b></p>
+    <div class="k3-foot"><button class="dialog-back" type="button">Back</button><button class="btn" type="button">Next case</button></div>
+  </section>`);
+  node.querySelector('.k3-prompt').textContent = c.prompt;
+  const partial = { ...RULINGS, president: chosen };
+  node.querySelector('.char-panel').append(characterPanel(partial));
+  for (const o of c.options) {
+    const card = el('<div class="rc"><h3></h3><div class="lean"></div></div>');
+    card.classList.toggle('on', o.id === chosen);
+    card.querySelector('h3').textContent = o.label;
+    for (const [key, v] of Object.entries(o.values)) {
+      if (v > 0.4 && v < 0.6) continue;
+      const up = v >= 0.6;
+      const span = el(`<span><svg width="12" height="12" viewBox="0 0 12 12"><path d="${up ? 'M6 1 L11 9 L1 9 Z' : 'M6 11 L11 3 L1 3 Z'}" style="fill:${up ? 'var(--teal)' : 'var(--coral)'}"/></svg><em style="font-style:normal"></em></span>`);
+      span.querySelector('em').textContent = LEAN_WORDS[key][up ? 1 : 0];
+      card.querySelector('.lean').append(span);
+    }
+    node.querySelector('.k3-cards').append(card);
+  }
+}
+
+const show = { '#t1': showT1, '#t2': showT2, '#t3': showT3, '#h1': showH1, '#h2': showH2, '#k1': showK1, '#k2': showK2, '#k3': showK3 };
+(show[location.hash] ?? showT1)();
+addEventListener('hashchange', () => location.reload());
+</script>
+</body>
+</html>
