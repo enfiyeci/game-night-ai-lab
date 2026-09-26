@@ -31,6 +31,52 @@ def svg(body, label):
             f'role="img" aria-label="{label}">{body}</svg>\n')
 
 
+# ------------------------------------------------------------------ the President's head (owner 2026-09-26: "more like Trump")
+TAN = M(M("wood", 58, "coral"), 72, "paper")
+GOLD = M("cream", 45, "wood")
+
+
+def president_head(hx, hy, mood):
+    """A cartoon caricature drawn over front_person's head: swept blond hair, orange tan with pale eye rings,
+    a squint and a pout. Same sprite units as front_person (head radius 14)."""
+    hs = f"fill:{GOLD};stroke:{G.EDGE};stroke-width:.7"
+    o = [
+        # hair volume behind the head and over the ear
+        f'<path d="M{hx + 16},{hy + 6} Q{hx + 20},{hy - 8} {hx + 12},{hy - 16} L{hx + 6},{hy - 4} Q{hx + 12},{hy} {hx + 12},{hy + 8} Z" style="{hs}"/>',
+        f'<circle cx="{hx}" cy="{hy}" r="15.5" style="fill:{TAN};stroke:{G.EDGE};stroke-width:.8"/>',
+        f'<ellipse cx="{hx + 13}" cy="{hy + 3}" rx="3.2" ry="4.2" style="fill:{M(TAN, 90, "ink")};stroke:{G.EDGE};stroke-width:.6"/>',
+        # pale rings around the eyes
+        f'<ellipse cx="{hx - 7}" cy="{hy + 1.5}" rx="4.6" ry="3.4" style="fill:{M(TAN, 45, "paper")}"/>',
+        f'<ellipse cx="{hx + 1.5}" cy="{hy + 1.5}" rx="4.6" ry="3.4" style="fill:{M(TAN, 45, "paper")}"/>',
+    ]
+    ink = "fill:none;stroke:var(--ink);stroke-linecap:round"
+    if mood == "uneasy":
+        o.append(f'<path d="M{hx - 10},{hy + 1.5} Q{hx - 7},{hy - .5} {hx - 4},{hy + 1.5} M{hx - 1.5},{hy + 1.5} Q{hx + 1.5},{hy - .5} {hx + 4.5},{hy + 1.5}" style="{ink};stroke-width:1.7"/>'
+                 f'<path d="M{hx - 11},{hy - 5} L{hx - 4},{hy - 2.5} M{hx - 1},{hy - 2.5} L{hx + 6},{hy - 5}" style="fill:none;stroke:{M(GOLD, 70, "ink")};stroke-width:1.8;stroke-linecap:round"/>'
+                 f'<path d="M{hx - 8},{hy + 11} Q{hx - 4.5},{hy + 7} {hx - 1},{hy + 11}" style="{ink};stroke-width:1.8"/>')
+    else:
+        o.append(f'<path d="M{hx - 10},{hy + 1} Q{hx - 7},{hy + 3} {hx - 4},{hy + 1} M{hx - 1.5},{hy + 1} Q{hx + 1.5},{hy + 3} {hx + 4.5},{hy + 1}" style="{ink};stroke-width:1.7"/>'
+                 f'<path d="M{hx - 11},{hy - 3.5} L{hx - 4},{hy - 4} M{hx - 1},{hy - 4} L{hx + 6},{hy - 3.5}" style="fill:none;stroke:{M(GOLD, 70, "ink")};stroke-width:1.8;stroke-linecap:round"/>'
+                 f'<ellipse cx="{hx - 4.5}" cy="{hy + 9}" rx="2.8" ry="2.2" style="fill:var(--ink);stroke:{M(TAN, 70, "coral")};stroke-width:1.4"/>')
+    # the swept-over hair: a big swoop from the back, over the top, forward past the brow
+    o.append(f'<path d="M{hx + 15},{hy - 2} Q{hx + 16},{hy - 19} {hx + 1},{hy - 21} Q{hx - 17},{hy - 22} {hx - 22},{hy - 11} '
+             f'Q{hx - 23},{hy - 5} {hx - 17},{hy - 6} Q{hx - 12},{hy - 11} {hx - 4},{hy - 10} Q{hx + 6},{hy - 10} {hx + 12},{hy - 3} Z" style="{hs}"/>')
+    o.append(f'<path d="M{hx + 10},{hy - 15} Q{hx - 4},{hy - 19} {hx - 18},{hy - 12} M{hx + 12},{hy - 9} Q{hx},{hy - 14} {hx - 12},{hy - 10}" style="fill:none;stroke:{M(GOLD, 78, "ink")};stroke-width:1.1"/>')
+    return "".join(o)
+
+
+def president_extras(hx, hy, mood, top=-58):
+    """A long red tie, a flag pin, and (when uneasy) the hand back at the chin over the new head."""
+    o = [f'<path d="M-2.4,{top + 2} L2.4,{top + 2} L3.4,-12 L0,-7 L-3.4,-12 Z" style="fill:{M("coral", 88, "ink")};stroke:{G.EDGE};stroke-width:.6"/>',
+         f'<circle cx="-9" cy="{top + 7}" r="1.8" style="fill:{NAVY};stroke:var(--paper);stroke-width:.8"/>']
+    if mood == "uneasy":
+        sk = TAN
+        o.append(f'<path d="M10,-35 L{hx + 7},{hy + 18}" style="fill:none;stroke:{G.EDGE};stroke-width:8;stroke-linecap:round"/>'
+                 f'<path d="M10,-35 L{hx + 7},{hy + 18}" style="fill:none;stroke:{PRES["shirt"]};stroke-width:6.5;stroke-linecap:round"/>'
+                 f'<path d="M{hx + 3},{hy + 12} q2,-3 6,-1.5 q3,1.5 1.5,5 q-2,2.5 -5.5,1.5 q-3,-1.5 -2,-5 Z" style="fill:{sk};stroke:{G.EDGE};stroke-width:.7"/>')
+    return "".join(o)
+
+
 # ------------------------------------------------------------------ V1: his office, isometric
 def armchair_front(col):
     """An upholstered armchair seen from behind (drawn after a back-facing sitter)."""
@@ -307,7 +353,9 @@ def v2(mood="uneasy"):
     s = 3.1
     ox, oy = 720, 612
     p = dict(PRES, mood=mood)
-    body, hands, (hx, hy) = G.front_person(p)
+    body, hands, (hx, hy) = G.front_person(dict(p, skin=TAN))
+    body += president_head(hx, hy, mood) + president_extras(hx, hy, mood, top=-55 if mood == "uneasy" else -58)
+    hands = hands.replace(G.SK_LIGHT, TAN)
     o.append(f'<rect x="{ox - 95}" y="{oy - 330}" width="200" height="300" rx="46" style="fill:{M("wood", 40, "ink")};stroke:{G.EDGE}"/>'
              f'<rect x="{ox - 72}" y="{oy - 306}" width="154" height="250" rx="34" style="fill:{M("wood", 48, "ink")}"/>')
     o.append(f'<g transform="translate({ox},{oy}) scale({s})">{body}</g>')
@@ -315,7 +363,7 @@ def v2(mood="uneasy"):
     o.append(f'<rect x="560" y="482" width="96" height="16" rx="2" style="fill:var(--paper);stroke:{A("ink", 30)}" transform="rotate(-4 608 490)"/>'
              f'<rect x="846" y="474" width="52" height="26" rx="5" style="fill:var(--ink)"/><path d="M852,474 q20,-16 40,0" style="fill:none;stroke:var(--ink);stroke-width:6"/>')
     o.append(f'<g transform="translate({ox},{oy}) scale({s})">{hands}</g>')
-    heads = {"president": [ox + hx * s, oy + (hy - 17) * s]}
+    heads = {"president": [ox + hx * s, oy + (hy - 22) * s]}
     # you and Policy and Comms, seen from behind, in the foreground
     bs = 4.0
     for role, (bx, by) in (("ceo", (300, 1010)), ("policy", (1140, 1020))):
