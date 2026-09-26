@@ -15,6 +15,10 @@ checked the in-repo claims against the files, and wrote the suggestions.
 5. `suggestions-2026-09-26.md` — the release-flow suggestions offered to the owner, each tied to
    its source.
 
+What came of it: the owner's picks are at the end of `suggestions-2026-09-26.md`, the final mockup
+is `docs/design/mockups/release-flow-final.html` (with two PNGs), and the build plan is
+`docs/superpowers/plans/2026-09-26-release-flow.md`.
+
 The three web-research notes are unverified raw output: each one lists its coverage and marks
 with ⚠️ every claim that rests on a partial read or a search summary. Cite the checked claims in
 `suggestions-2026-09-26.md`, not the raw notes.

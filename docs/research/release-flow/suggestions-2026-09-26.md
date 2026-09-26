@@ -89,3 +89,10 @@ option is marked (rec). Sources point at the notes in this folder or at repo fil
 - Correction to suggestion 7: `sim/turn.js` runs `updateServing` right after a release move, so a
   model that ships this turn already has its `servingCost` at the reveal. Only delayed launches
   (a one-turn evaluation or staged channel) have none yet.
+
+## Final picks (2026-09-26, later the same day)
+
+`1C 2A 3C 4B 5B 6A 7B 8A`. The owner moved price from 1B to 1C ("a slider with the API cost per token
+written next to it") and set the jump rule to 1 point per skipped number, with the feed doing most
+of the work ("people should specifically mention the jump in the AI space"). Build plan:
+`docs/superpowers/plans/2026-09-26-release-flow.md`.
