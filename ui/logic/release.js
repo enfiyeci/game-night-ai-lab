@@ -1,3 +1,4 @@
+import { roundsToWords } from './format.js';
 import { cardById, pickableCards, resolveCards, slotsFor } from '../../sim/recipe.js';
 import { modelName, releaseModel, tierWord } from '../../sim/release.js';
 import { createRng } from '../../sim/rng.js';
@@ -46,7 +47,8 @@ export function shipDelay(state, picks) {
   return cardsFor(state, picks).reduce((sum, card) => sum + (card.cost.turns ?? 0), state.pendingModel?.releaseDelay ?? 0);
 }
 
-export const shipWords = (delay) => (delay === 0 ? 'this turn' : delay === 1 ? 'next turn' : `in ${delay} turns`);
+// A ship delay counts hidden rounds; say it in story time for the current era.
+export const shipWords = (delay, era = 1) => (delay === 0 ? 'right away' : `in ${roundsToWords(era, delay)}`);
 
 // The picks with this card in its group's place (or added).
 export function withCard(picks, card) {
@@ -152,7 +154,7 @@ export function releasePreview(state, queue, draft) {
 const SAFETY_LINES = {
   'quick-eval': ['uneasy', 'Quick checks tell us almost nothing about a model this strong. Run the full evals.'],
   'eval-full': ['calm', 'Full evals first. At least we will know what we built.'],
-  'eval-third': ['calm', 'An outside evaluator will catch what we miss. Worth the turn.'],
+  'eval-third': ['calm', 'An outside evaluator will catch what we miss. Worth the wait.'],
   'eval-gov': ['calm', 'A government test buys goodwill, even if they ask us to wait.'],
   waive: ['alarmed', 'We promised that threshold. Waiving it will not stay quiet.'],
 };
@@ -160,7 +162,7 @@ const POLICY_LINES = {
   'channel-api': ['calm', 'API only keeps us out of the headlines for now.'],
   'channel-app': ['uneasy', 'Millions of users means millions of screenshots. Be ready.'],
   'channel-open': ['alarmed', 'Open weights have no recall button. Washington will ask about misuse.'],
-  'channel-staged': ['calm', 'Staged is gentler: businesses first, the app next turn.'],
+  'channel-staged': ['calm', 'Staged is gentler: businesses first, the app a little later.'],
 };
 
 export function releaseOpinions(state, draft) {
@@ -179,8 +181,8 @@ export function releaseOpinions(state, draft) {
   else cfo = { mood: 'calm', text: `We charge ${perMillion(price)} per million tokens and serving costs ${perMillion(serve)}.` };
   return [
     delay > 0
-      ? { id: 'research', mood: 'uneasy', text: 'A slower launch gives the rivals a turn. Ship when we can.' }
-      : { id: 'research', mood: 'eager', text: 'Ship it this turn. The rivals will not wait.' },
+      ? { id: 'research', mood: 'uneasy', text: 'A slower launch gives the rivals an opening. Ship when we can.' }
+      : { id: 'research', mood: 'eager', text: 'Ship it now. The rivals will not wait.' },
     { id: 'safety', mood: safetyMood, text: safetyText },
     { id: 'cfo', ...cfo },
     { id: 'policy', mood: policyMood, text: policyText },

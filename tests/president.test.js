@@ -367,7 +367,7 @@ test('President answers without a meeting move are rejected and the meeting expi
   assert.ok(out.errors.some((error) => /meeting move/i.test(error)));
 });
 
-test('a meeting move needs an open meeting and consumes one of the two moves', () => {
+test('a meeting move needs an open meeting and consumes one of the two round actions', () => {
   const closed = endTurn(createInitialState(), { moves: [{ type: 'meeting' }] }, no);
   assert.ok(closed.errors.some((error) => /no open President meeting/i.test(error)));
 
@@ -381,7 +381,7 @@ test('a meeting move needs an open meeting and consumes one of the two moves', (
     ],
     presidentAnswers: plainIds(),
   }, no);
-  assert.ok(out.errors.some((error) => error.includes('2 moves')));
+  assert.ok(out.errors.some((error) => error.includes('2 actions per round')));
   assert.equal(out.events.filter((event) => event.type === 'deal').length, 1);
 });
 

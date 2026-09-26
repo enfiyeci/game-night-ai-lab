@@ -34,6 +34,14 @@ test('train then release across two turns', () => {
   assert.equal(state.turn, 2);
 });
 
+test('a successful release records the current story day', () => {
+  const rng = createRng(5);
+  let state = endTurn(createInitialState(), { moves: [{ type: 'startRun', recipe }] }, rng).state;
+  const releasedDay = state.day;
+  state = endTurn(state, { moves: [{ type: 'release', release }] }, rng).state;
+  assert.equal(state.models.at(-1).releasedDay, releasedDay);
+});
+
 test('a release capability gain is measured from the start-of-turn board baseline', () => {
   const rng = createRng(19);
   let { state } = endTurn(createInitialState(), { moves: [{ type: 'startRun', recipe }] }, rng);
@@ -42,12 +50,12 @@ test('a release capability gain is measured from the start-of-turn board baselin
   assert.equal(state.board[1], before + 3);
 });
 
-test('only two moves per turn, and bad moves are reported', () => {
+test('only two actions per round, and bad moves are reported', () => {
   const s = createInitialState();
   const coreflame = s.compute.offers.find((offer) => offer.supplier === 'coreflame');
   const azuria = s.compute.offers.find((offer) => offer.supplier === 'azuria');
   const r = endTurn(s, { moves: [{ type: 'deal', offerId: coreflame.id }, { type: 'deal', offerId: azuria.id }, { type: 'deal', offerId: coreflame.id }] }, createRng(1));
-  assert.ok(r.errors.some((e) => e.includes('2 moves')));
+  assert.ok(r.errors.some((e) => e.includes('2 actions per round')));
   assert.equal(r.events.filter((e) => e.type === 'deal').length, 2);
   const bad = endTurn(createInitialState(), { moves: [{ type: 'teleport' }] }, createRng(1));
   assert.ok(bad.errors.length > 0);
@@ -284,6 +292,31 @@ test('a quiet takeover stops training and event generation for the turn', () => 
   assert.equal(out.events.some((event) => event.type === 'runComplete'), false);
 });
 
+test('a card made on the final round mark is dropped, never shown after the ending', () => {
+  const s = createInitialState();
+  s.era = 5;
+  s.turn = 19;
+  s.turnInEra = 3;
+  s.capability = 100;
+  s.warnings.jailbreak = { turn: 18 };
+  s.models.push({
+    active: true,
+    activated: true,
+    activeFromTurn: 0,
+    channel: 'consumer',
+    flags: ['jailbreakWaiting'],
+    users: 1e6,
+    userCap: 4e6,
+    priceStance: 'market',
+    servingCost: 0,
+    spec: { size: 'medium', arch: 'dense', context: 'short', precision: 'bf16', guard: false, channel: 'consumer', reasoning: 'off' },
+  });
+  const out = endTurn(s, {}, createRng(1));
+  assert.ok(out.state.ending);
+  assert.equal(out.state.pendingEvents.some((event) => event.id === 'jailbreak'), false);
+  assert.ok(out.state.pendingEvents.every((event) => event.landsAt != null));
+});
+
 test('the board sees card costs from the start-of-turn cash snapshot', () => {
   const s = createInitialState();
   s.era = 5;
@@ -389,4 +422,40 @@ test('a full run is deterministic for a seed and always ends', () => {
   assert.deepEqual(a, b);
   assert.ok(a.ending);
   assert.ok(a.turn <= 20);
+});
+
+test('a card set aside before the ending is cleared when the run ends', () => {
+  const s = createInitialState();
+  s.pendingEvents.push({ id: 'lossSpike', title: 't', post: { handle: '@x', text: 'y' }, choices: [], targets: [], landsAt: 0, dueAt: 999 });
+  s.cash = -1e6;
+  s.flags.insolvent = true;
+  let out = { state: s };
+  for (let i = 0; i < 30 && !out.state.ending; i += 1) out = endTurn(out.state, {}, createRng(2));
+  assert.ok(out.state.ending);
+  assert.deepEqual(out.state.pendingEvents, []);
+});
+
+test('a delayed release goes live at the round mark with no player action', async () => {
+  const { SCENARIOS } = await import('../ui/logic/scenarios.js');
+  const { releaseDraft, releasePayload } = await import('../ui/logic/release.js');
+  const { applyActions, advanceDays } = await import('../sim/turn.js');
+  const rng = createRng(1);
+  const ready = SCENARIOS.readyToRelease(1);
+  const draft = { ...releaseDraft(ready), family: 'Kestrel', picks: ['eval-third'] };
+  const acted = applyActions(ready, { moves: [{ type: 'release', release: releasePayload(ready, draft) }] }, rng);
+  const model = acted.state.models.at(-1);
+  assert.equal(model.activated, false, 'an outside evaluation delays the launch');
+  const launches = (state) => state.feed.filter((post) => post.tag === 'launch').length;
+  assert.equal(launches(acted.state), launches(ready), 'no launch posts before it ships');
+  let out = { state: acted.state, events: [] };
+  const events = [];
+  for (let i = 0; i < 200 && !out.state.models.at(-1).activated && !out.state.ending; i += 1) {
+    out = advanceDays(out.state, 1, rng);
+    events.push(...out.events);
+  }
+  assert.equal(out.state.models.at(-1).activated, true);
+  const live = events.find((event) => event.type === 'modelLive');
+  assert.ok(live);
+  const texts = new Set(out.state.feed.map((post) => post.text));
+  assert.ok(live.model.launch.reactions.some((reaction) => texts.has(reaction.text)), 'its launch posts appear when it ships');
 });

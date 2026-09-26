@@ -1,3 +1,4 @@
+import { roundMarkDay, storyDate } from '../../sim/time.js';
 import { money, pct, users } from '../logic/format.js';
 import { beatCount, checkLabel, flagshipBefore, perMillion, priceSheet, salesEstimate } from '../logic/release.js';
 
@@ -137,7 +138,10 @@ export function showReveal(overlayRoot, { state, model, misalignmentIncident = f
 
   const top = el('div', 'reveal-top');
   const heading = el('div');
-  const title = el('h1', null, `${model.name} is out`);
+  // A release with a delay (an outside evaluation first) goes live at a later round mark.
+  const scheduled = model.activated === false;
+  const shipsDay = roundMarkDay(state, Math.max(1, (model.activeFromTurn ?? state.turn) - state.turn));
+  const title = el('h1', null, scheduled ? `${model.name} ships ${storyDate(shipsDay).label}` : `${model.name} is out`);
   title.id = titleId;
   heading.append(el('div', 'reveal-kick', 'Model release'), title);
   const side = el('div', 'reveal-side');
@@ -157,11 +161,12 @@ export function showReveal(overlayRoot, { state, model, misalignmentIncident = f
   const usersLine = el('div', 'reveal-users');
   // Owner 2026-09-26 wording for when open weights returns: no user count to show, since nobody
   // signs up for a download (the sales estimate is already omitted for open weights below).
-  if (model.channel === 'open') usersLine.textContent = 'Free download. Anyone can run it now.';
+  if (scheduled) usersLine.textContent = `Users and sales start when it ships on ${storyDate(shipsDay).label}.`;
+  else if (model.channel === 'open') usersLine.textContent = 'Free download. Anyone can run it now.';
   else usersLine.append('New users this month: ', el('b', null, `+${users(model.newUsers)}`));
   const left = el('div');
   left.append(usersLine);
-  const sales = salesEstimate(model);
+  const sales = scheduled ? 0 : salesEstimate(model);
   if (sales > 0) {
     const estimate = el('div', 'reveal-estimate');
     estimate.append('About ', el('b', null, `${money(sales)} a month`), ' in sales (estimate)');

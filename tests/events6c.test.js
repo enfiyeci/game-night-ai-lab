@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
-import { eventsTick, resolveEvent } from '../sim/events.js';
+import { eventsTick, resolveEvent, stampNewCards } from '../sim/events.js';
 import { EVENTS } from '../sim/data/events.js';
 import {
   EVENTS_6C,
@@ -11,7 +11,7 @@ import {
   EXPORT_FLIP_QILIN_SPEED,
 } from '../sim/data/events6c.js';
 import { checkTurnEndings } from '../sim/endings.js';
-import { endTurn } from '../sim/turn.js';
+import { advanceDays, endTurn } from '../sim/turn.js';
 import { BALANCE } from '../sim/balance.js';
 import { startRun, resolveRun } from '../sim/training.js';
 
@@ -160,7 +160,8 @@ test('an answered spike does not re-fire, but a new spike does', () => {
 test('an unanswered spike falls back to push through', () => {
   const s = runState(1);
   s.pendingEvents.push({ id: 'lossSpike' });
-  const out = endTurn(s, {}, no);
+  stampNewCards(s);
+  const out = advanceDays(s, s.pendingEvents[0].dueAt - s.day, no);
   assert.equal(out.events.find((e) => e.id === 'lossSpike').choiceId, 'push');
 });
 

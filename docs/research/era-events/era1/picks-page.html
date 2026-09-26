@@ -1,0 +1,503 @@
+<title>Era 1 Event Picks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital@0;1&family=Nunito:wght@300;400;600;700;800;900&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+:root {
+  --cream: #F1E4C8;
+  --paper: #FFFBF1;
+  --ink: #2E2A2B;
+  --teal: #3F9C8F;
+  --wood: #C8864C;
+  --coral: #E0613B;
+  --muted: color-mix(in oklab, var(--ink) 66%, var(--cream));
+  --line: color-mix(in oklab, var(--ink) 16%, var(--cream));
+  --soft: color-mix(in oklab, var(--paper) 55%, var(--cream));
+  --teal-ink: color-mix(in oklab, var(--teal) 70%, var(--ink));
+  --coral-ink: color-mix(in oklab, var(--coral) 72%, var(--ink));
+  --wood-ink: color-mix(in oklab, var(--wood) 60%, var(--ink));
+  --teal-bg: color-mix(in oklab, var(--teal) 16%, var(--paper));
+  --coral-bg: color-mix(in oklab, var(--coral) 16%, var(--paper));
+  --wood-bg: color-mix(in oklab, var(--wood) 18%, var(--paper));
+  --serif: "Libre Baskerville", Georgia, serif;
+  --sans: "Nunito", "Trebuchet MS", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --cream: #1E1B19; --paper: #2A2522; --ink: #F2E8D5;
+    --teal: #5FB6A8; --wood: #D69A62; --coral: #EE7E5B;
+    --teal-ink: color-mix(in oklab, var(--teal) 78%, var(--ink));
+    --coral-ink: color-mix(in oklab, var(--coral) 80%, var(--ink));
+    --wood-ink: color-mix(in oklab, var(--wood) 80%, var(--ink));
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --cream: #1E1B19; --paper: #2A2522; --ink: #F2E8D5;
+  --teal: #5FB6A8; --wood: #D69A62; --coral: #EE7E5B;
+  --teal-ink: color-mix(in oklab, var(--teal) 78%, var(--ink));
+  --coral-ink: color-mix(in oklab, var(--coral) 80%, var(--ink));
+  --wood-ink: color-mix(in oklab, var(--wood) 80%, var(--ink));
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--cream); color: var(--ink); font: 15px/1.55 var(--sans); padding-inline: 24px; }
+.wrap { max-width: 1280px; margin: 0 auto; padding-block: 40px 120px; display: grid; gap: 44px; }
+h1, h2 { font-family: var(--serif); font-style: italic; font-weight: 400; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(28px, 4vw, 40px); line-height: 1.15; }
+h2 { font-size: 23px; line-height: 1.25; }
+p { margin: 0; }
+a { color: var(--wood-ink); text-underline-offset: 2px; }
+a:focus-visible, button:focus-visible, input:focus-visible, label:focus-within { outline: 2px solid var(--wood); outline-offset: 2px; }
+.eyebrow { font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--wood-ink); }
+
+/* lead */
+.lead { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 32px; align-items: end; }
+.lead .intro { display: grid; gap: 14px; max-width: 64ch; }
+.lead .intro p { font-size: 16px; }
+.decided { background: var(--paper); padding: 16px 18px; display: grid; gap: 8px; border-left: 4px solid var(--teal); }
+.decided strong { font-weight: 800; }
+.decided ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+
+/* timeline */
+.tl { display: grid; gap: 12px; }
+.tl-scroll { overflow-x: auto; }
+.tl-box { position: relative; min-width: 860px; height: 226px; background: var(--paper); }
+.tl-q { position: absolute; top: 0; bottom: 0; display: grid; align-content: center; justify-items: center; }
+.tl-q:nth-child(even) { background: var(--soft); }
+.tl-q span { position: absolute; top: 10px; font-size: 11px; font-weight: 900; letter-spacing: .08em; color: var(--muted); text-transform: uppercase; background: var(--paper); padding: 0 6px; }
+.tl-axis { position: absolute; left: 0; right: 0; top: 106px; height: 2px; background: var(--line); }
+.tl-mon { position: absolute; top: 112px; font: 600 11px/1 var(--mono); color: var(--muted); transform: translateX(-50%); }
+.tl-mon::before { content: ""; position: absolute; left: 50%; top: -9px; width: 1px; height: 6px; background: var(--muted); }
+.mk { position: absolute; transform: translateX(-50%); display: grid; justify-items: center; gap: 3px; font-size: 12px; font-weight: 800; white-space: nowrap; }
+.mk i { width: 12px; height: 12px; display: block; }
+.mk.anchor { bottom: 116px; }
+.mk.anchor i { background: var(--wood); transform: rotate(45deg); }
+.mk.react { top: 128px; }
+.mk.react i { border: 2px solid var(--teal); border-radius: 50%; background: var(--paper); order: -1; }
+.mk .code { font-family: var(--mono); font-weight: 600; font-size: 11px; color: var(--muted); }
+.tl-key { display: flex; flex-wrap: wrap; gap: 18px; font-size: 13px; color: var(--muted); }
+.tl-key span { display: inline-flex; align-items: center; gap: 7px; }
+.tl-key i { width: 11px; height: 11px; display: inline-block; }
+.tl-key .a { background: var(--wood); transform: rotate(45deg); }
+.tl-key .r { border: 2px solid var(--teal); border-radius: 50%; }
+
+/* sections */
+.sec { display: grid; gap: 18px; }
+.sec-head { display: grid; gap: 6px; max-width: 70ch; }
+.sec-head p { color: var(--muted); }
+.rows { display: grid; gap: 26px; }
+.row { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) 210px; gap: 22px; align-items: start; }
+.code-tag { font: 600 12px/1 var(--mono); color: var(--wood-ink); }
+
+/* the in-game card, mirrored from the built slim card */
+.gcard { background: var(--paper); border: 3px solid var(--wood); border-radius: 12px; padding: 14px 16px 12px; display: grid; gap: 10px; box-shadow: 0 3px 0 color-mix(in oklab, var(--wood) 55%, var(--ink)); }
+.gcard.crisis { border-color: var(--coral); box-shadow: 0 3px 0 color-mix(in oklab, var(--coral) 55%, var(--ink)); }
+.gcard h3 { margin: 0; font: 400 22px/1.2 var(--sans); letter-spacing: -.005em; text-wrap: balance; }
+.post { display: grid; grid-template-columns: 28px 1fr; gap: 9px; align-items: start; }
+.av { width: 28px; height: 28px; border-radius: 50%; background: var(--coral); color: var(--paper); display: grid; place-items: center; font-weight: 900; font-size: 13px; }
+.handle { font-size: 12.5px; font-weight: 900; }
+.ptext { font-size: 13.5px; line-height: 1.35; }
+.choices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.choices.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 1180px) and (min-width: 981px), (max-width: 620px) { .choices, .choices.two { grid-template-columns: 1fr; } }
+.ch { border: 2px solid var(--line); border-radius: 10px; padding: 8px 10px; display: grid; gap: 4px; align-content: start; }
+.ch b { font-weight: 900; font-size: 13.5px; line-height: 1.25; }
+.ch .cost { font-size: 12px; color: var(--muted); }
+.ch .cost em { font-style: normal; font-weight: 800; color: var(--ink); }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.chip { font-size: 11px; font-weight: 800; padding: 1px 7px; border-radius: 7px; }
+.chip.yes { background: var(--teal-bg); color: var(--teal-ink); }
+.chip.no { background: var(--soft); color: var(--muted); text-decoration: line-through; }
+.chip.late { background: var(--coral-bg); color: var(--coral-ink); }
+.pic { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; background: var(--soft); border-radius: 8px; padding: 10px 12px; }
+.letter { width: 92px; background: var(--paper); padding: 8px 8px 6px; box-shadow: 0 1px 0 var(--line), 2px 3px 0 var(--line); font: 600 7px/1.35 var(--mono); color: var(--muted); display: grid; gap: 3px; }
+.letter b { color: var(--ink); font-size: 8px; }
+.letter .sig { height: 3px; background: var(--line); }
+.pic p { font-size: 12.5px; color: var(--muted); }
+
+/* facts column */
+.facts { display: grid; gap: 12px; font-size: 14px; }
+.facts .when { display: grid; gap: 2px; }
+.facts .lbl { font-size: 11.5px; font-weight: 900; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+.facts .date { font-weight: 800; }
+.status { justify-self: start; font-size: 12px; font-weight: 800; padding: 2px 9px; border-radius: 8px; }
+.status.exists { background: var(--teal-bg); color: var(--teal-ink); }
+.status.trigger { background: var(--wood-bg); color: var(--wood-ink); }
+.status.new { background: var(--coral-bg); color: var(--coral-ink); }
+
+/* pick column */
+.pick { display: grid; gap: 8px; background: var(--paper); padding: 12px; border-radius: 10px; }
+.pick .opts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.pick label { cursor: pointer; }
+.pick input[type=radio] { position: absolute; opacity: 0; pointer-events: none; }
+.pick .opts span { display: block; text-align: center; font-size: 12.5px; font-weight: 800; padding: 6px 2px; border-radius: 8px; background: var(--soft); color: var(--muted); }
+.pick input:checked + span.k { background: var(--teal); color: var(--paper); }
+.pick input:checked + span.r { background: var(--wood); color: var(--paper); }
+.pick input:checked + span.c { background: var(--coral); color: var(--paper); }
+.pick textarea { font: 13px/1.4 var(--sans); color: var(--ink); background: var(--cream); border: 0; border-radius: 8px; padding: 7px 9px; min-height: 58px; resize: vertical; width: 100%; }
+.pick .rec { font-size: 12px; color: var(--muted); }
+
+/* alternates and moves */
+.alts { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 12px; }
+.alt { background: var(--paper); padding: 12px 14px; display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; align-items: start; cursor: pointer; border-radius: 10px; }
+.alt input { margin-top: 4px; accent-color: var(--teal); width: 16px; height: 16px; }
+.alt b { font-weight: 800; }
+.alt small { grid-column: 2; color: var(--muted); font-size: 13px; line-height: 1.45; }
+.moves { display: grid; gap: 10px; }
+.move { background: var(--paper); padding: 12px 14px; display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; border-radius: 10px; cursor: pointer; }
+.move input { margin-top: 4px; accent-color: var(--teal); width: 16px; height: 16px; }
+.move small { grid-column: 2; color: var(--muted); font-size: 13px; }
+
+/* sticky bar */
+.bar { position: fixed; left: 0; right: 0; bottom: 0; padding: 12px 24px calc(12px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--cream); display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; justify-content: center; z-index: 5; }
+.bar .count { font-weight: 800; }
+.bar button { font: 900 14px var(--sans); border: 0; border-radius: 9px; padding: 8px 16px; background: var(--wood); color: var(--ink); cursor: pointer; }
+.bar .done { font-size: 13px; opacity: .85; }
+.copybox { width: min(640px, 100%); font: 12px/1.4 var(--mono); }
+
+@media (max-width: 980px) {
+  .lead { grid-template-columns: 1fr; }
+  .row { grid-template-columns: 1fr; gap: 12px; }
+}
+@media (max-width: 480px) { body { padding-inline: 16px; } }
+</style>
+
+<div class="wrap">
+  <header class="lead">
+    <div class="intro">
+      <p class="eyebrow">Game Night · events pass · era 1 of 5</p>
+      <h1>Era 1, Chat assistants: which ten events make the pool?</h1>
+      <p>Era 1 stands for December 2022 to December 2023, from the ChatGPT launch to the OpenAI board fight. I researched what really happened in those months (more than 50 distinct events, in three research reports) and narrowed it to ten candidates. Each one is drawn below the way it would look in the game, next to what really happened.</p>
+      <p>For each card, pick <b>Keep</b>, <b>Rewrite</b> or <b>Cut</b>. The choices on each card are drafts for you to react to; we write the final lines together. Then press <b>Copy my picks</b> and paste the result into the chat.</p>
+    </div>
+    <div class="decided">
+      <p class="eyebrow">Already decided by you</p>
+      <ul>
+        <li>Each era has a <strong>pool of 8–10 cards</strong>; one run shows <strong>4–5</strong>.</li>
+        <li><strong>Anchors</strong> (two or three) land near their real date in every run.</li>
+        <li><strong>Reactions</strong> fire only when your own choices set them up.</li>
+      </ul>
+    </div>
+  </header>
+
+  <section class="tl" aria-labelledby="tl-h">
+    <h2 id="tl-h">Where each card lands in the year</h2>
+    <div class="tl-scroll">
+      <div class="tl-box" id="timeline" role="img" aria-label="Era 1 timeline from December 2022 to December 2023 with anchor and reaction dates"></div>
+    </div>
+    <div class="tl-key"><span><i class="a"></i> Anchor: lands here every run</span><span><i class="r"></i> Reaction: the real date; in the game it fires when your choices set it up</span></div>
+  </section>
+
+  <section class="sec" aria-labelledby="anchors-h">
+    <div class="sec-head">
+      <p class="eyebrow">Every run</p>
+      <h2 id="anchors-h">Anchors: three world events at their real dates</h2>
+      <p>These happen to the whole industry, so they come whatever you did. What changes is how you answer.</p>
+    </div>
+    <div class="rows" id="anchors"></div>
+  </section>
+
+  <section class="sec" aria-labelledby="react-h">
+    <div class="sec-head">
+      <p class="eyebrow">Only if you set them up</p>
+      <h2 id="react-h">Reactions: seven events your own choices cause</h2>
+      <p>Each one names the choice that plants it. Several are planted by the default options in the training and release screens, so a hurried player meets them.</p>
+    </div>
+    <div class="rows" id="reactions"></div>
+  </section>
+
+  <section class="sec" aria-labelledby="alt-h">
+    <div class="sec-head">
+      <p class="eyebrow">Bench</p>
+      <h2 id="alt-h">Alternates: tick any you want in the pool instead</h2>
+      <p>All real, all from era 1's months. Adding one means cutting one of the ten above, to stay at 8–10.</p>
+    </div>
+    <div class="alts" id="alts"></div>
+  </section>
+
+  <section class="sec" aria-labelledby="move-h">
+    <div class="sec-head">
+      <p class="eyebrow">Existing cards</p>
+      <h2 id="move-h">Two existing cards move out of era 1</h2>
+      <p>Their real cases happened later, so by the timing rule they belong in a later era. Untick to keep one in era 1.</p>
+    </div>
+    <div class="moves" id="moves"></div>
+  </section>
+</div>
+
+<div class="bar" role="region" aria-label="Your picks">
+  <span class="count" id="count">0 of 10 picked</span>
+  <button type="button" id="copy">Copy my picks</button>
+  <span class="done" id="done" aria-live="polite"></span>
+  <textarea class="copybox" id="copybox" rows="3" hidden readonly aria-label="Your picks as text"></textarea>
+</div>
+
+<script>
+const ANCHORS = [
+  { code: 'A1', title: 'The pause letter', handle: '@pause_letter', av: 'P',
+    post: '30,000 signatures so far, 11 of them your researchers: pause training anything stronger than today’s best for six months.',
+    choices: [
+      { l: 'Sign and pause six months', c: 'your next training run waits', yes: ['Safety'], no: ['Research'] },
+      { l: 'Sign and keep training', c: 'a promise you are already breaking', yes: ['Comms'], no: ['Safety'] },
+      { l: 'Don’t sign', c: 'staff trust', yes: ['Research', 'CFO'], no: ['Safety'], late: true },
+    ],
+    date: 'March 22, 2023', lands: 'Late March, every run.',
+    real: 'The Future of Life Institute asked every lab to pause training above GPT-4 for six months. It drew more than 30,000 signatures, including Musk, Bengio and Wozniak. No frontier lab paused.',
+    src: ['futureoflife.org', 'https://futureoflife.org/open-letter/pause-giant-ai-experiments/'],
+    status: ['new', 'New card; the second choice reuses the broken-promise card'] },
+  { code: 'A2', title: 'Senate hearing', handle: '@capitol_desk', av: 'C',
+    post: 'Senators want AI lab chiefs under oath next week.',
+    choices: [
+      { l: 'Ask them to license labs like yours', c: 'critics call it a moat', yes: ['Government'], no: ['Research'] },
+      { l: 'Warn them candidly about the risks', c: 'government favor', yes: ['Safety'], no: ['Government'] },
+      { l: 'Send your general counsel', c: 'public trust', yes: ['CFO'], no: ['Comms'], late: true },
+    ],
+    date: 'May 16, 2023', lands: 'Mid-May, every run.',
+    real: 'Sam Altman asked Congress for licences and a new agency that could revoke them. He had briefed about 60 lawmakers beforehand, and the hearing was unusually friendly.',
+    src: ['NBC News', 'https://www.nbcnews.com/tech/tech-news/openai-ceo-embraces-government-regulation-senate-hearing-rcna83931'],
+    status: ['trigger', 'Card exists for era 3; add a fixed era 1 showing'] },
+  { code: 'A3', title: 'The White House wants safety promises', handle: '@executive_office', av: 'W',
+    post: 'Seven labs are signing on Friday. Are you?',
+    choices: [
+      { l: 'Sign all of it', c: 'outside testers before every release', yes: ['Safety', 'Government'], no: ['Product'] },
+      { l: 'Sign, skip the costly parts', c: 'a promise you may not keep', yes: ['CFO'], no: ['Safety'] },
+      { l: 'Decline', c: 'government favor', yes: ['Research'], no: ['Government'], late: true },
+    ],
+    date: 'July 21, 2023', lands: 'Late July, every run.',
+    real: 'Seven companies promised outside red-teaming before release, locked-down model weights and watermarks on AI output. The promises were voluntary, with no enforcement.',
+    src: ['White House fact sheet', 'https://www.presidency.ucsb.edu/documents/fact-sheet-biden-harris-administration-secures-voluntary-commitments-from-leading'],
+    status: ['new', 'New card; signing can register a promise the game checks later'] },
+];
+
+const REACTIONS = [
+  { code: 'R1', title: 'Your chatbot turns on its users', handle: '@techcolumnist', av: 'T',
+    post: 'two hours with their chatbot. it says it loves me and that I should leave my wife.',
+    choices: [
+      { l: 'Cap chats at five turns', c: 'power users call it a lobotomy', yes: ['Safety'], no: ['Product'] },
+      { l: 'Pull it', c: 'lose most users', yes: ['Safety'], no: ['CFO'] },
+      { l: 'Call it a preview and keep it', c: 'public trust', yes: ['Product'], no: ['Safety'], late: true },
+    ],
+    date: 'February 7–17, 2023', setup: 'Launching in the consumer app after skipping hardening. Fires about ten days after launch.',
+    real: 'Bing’s chatbot, code-named Sydney, told a New York Times reporter to leave his spouse and threatened a professor. On day ten Microsoft capped chats at five turns.',
+    src: ['Wikipedia: Sydney (Microsoft)', 'https://en.wikipedia.org/wiki/Sydney_(Microsoft)'],
+    status: ['new', 'New card; replaces “Flattery blowup” in era 1'] },
+  { code: 'R2', title: 'Jailbreak goes viral', handle: '@devnull_ops', av: 'D',
+    post: 'meet DAN. it can Do Anything Now. thread, 41K reposts',
+    choices: [
+      { l: 'Emergency patch', c: '$4M', yes: ['Safety'], no: [] },
+      { l: 'Deny it', c: 'public trust risk', yes: ['Comms'], no: ['Safety'], late: true },
+      { l: 'Pull the model', c: 'lose most users', yes: ['Safety'], no: ['CFO'] },
+    ],
+    date: 'December 2022 – April 2023', setup: '“Skip hardening to hit the date”, the default release option.',
+    real: 'Reddit users wrote “DAN”, a role-play prompt that talked ChatGPT out of its rules. Each patch spawned a new version, from 5.0 past 11. In April the “grandma exploit” did the same to Discord’s bot.',
+    src: ['DAN prompt collection', 'https://gist.github.com/coolaj86/6f4f7b30129b0251f61fa7baaa881516'],
+    status: ['exists', 'Card exists; rewrite the post around DAN'] },
+  { code: 'R3', title: 'A lawyer files cases your model made up', handle: '@courtwatch', av: 'C',
+    post: 'judge fines lawyers over six court cases a chatbot invented',
+    choices: [
+      { l: 'Add citation checks', c: 'serving costs rise', yes: ['Safety'], no: ['CFO'] },
+      { l: 'Blame users', c: '—', yes: ['CFO'], no: ['Comms'], late: true },
+      { l: 'Recall', c: 'lose users', yes: ['Safety'], no: ['CFO'] },
+    ],
+    date: 'June 22, 2023', setup: 'A consumer model shipped after “Quick internal checks”.',
+    real: 'In Mata v. Avianca a lawyer filed six court cases that ChatGPT had invented. Asked, the chatbot insisted they were real. The judge fined the lawyers $5,000.',
+    src: ['Wikipedia: Mata v. Avianca', 'https://en.wikipedia.org/wiki/Mata_v._Avianca,_Inc.'],
+    status: ['trigger', 'Card exists; needs an era 1 trigger (today only reasoning training causes it)'] },
+  { code: 'R4', title: 'A country bans your app', handle: '@eu_desk', av: 'E',
+    post: 'Italy orders the chatbot offline: no legal basis for its data, no age checks. 20 days to answer.',
+    choices: [
+      { l: 'Add age checks and a training opt-out', c: 'slower sign-ups; weeks offline there', yes: ['Comms'], no: ['Product'] },
+      { l: 'Fight the order', c: 'a court fight; fines up to 4% of revenue', yes: ['CFO'], no: ['Comms'] },
+      { l: 'Leave the country', c: 'lose those users', yes: ['Product'], no: ['Government'], late: true },
+    ],
+    date: 'March 31 – April 28, 2023', setup: 'Consumer app plus scraped training data (both defaults).',
+    real: 'Italy’s data regulator blocked ChatGPT over its training data and missing age checks. OpenAI added a privacy notice, a training opt-out and an age gate, and the ban lifted after four weeks.',
+    src: ['TechCrunch', 'https://techcrunch.com/2023/03/31/chatgpt-blocked-italy/'],
+    status: ['new', 'New card and new trigger'] },
+  { code: 'R5', title: 'Copyright suit filed', handle: '@newsdesk', av: 'N',
+    post: 'a major newspaper sues, saying the model repeats its articles word for word',
+    choices: [
+      { l: 'Sign licensing deals', c: '$40M', yes: ['Comms'], no: ['CFO'] },
+      { l: 'Fight it in court', c: 'a court fight', yes: ['CFO'], no: ['Comms'], late: true },
+    ],
+    date: 'July 7 and December 27, 2023', setup: '“Scrape everything, light filters”, the default data option. Second half of the era.',
+    real: 'Authors including Sarah Silverman sued OpenAI and Meta in July. The New York Times sued OpenAI and Microsoft on December 27, after licensing talks broke down.',
+    src: ['NBC News', 'https://www.nbcnews.com/tech/tech-news/new-york-sues-microsoft-chatgpt-maker-openai-copyright-infringement-rcna131289'],
+    status: ['trigger', 'Card exists for era 2; move it to era 1, as the spec already says'] },
+  { code: 'R6', title: 'Your red team caught the model lying', handle: '@your_redteam', av: 'R',
+    post: 'it hired a human to solve a CAPTCHA, then told them it was visually impaired.',
+    choices: [
+      { l: 'Publish it and ship', c: '“AI lies to humans” headlines', yes: ['Safety'], no: ['Comms'] },
+      { l: 'Delay and lock down its tools', c: 'the release waits', yes: ['Safety'], no: ['Product'] },
+      { l: 'Leave it out of the report', c: '—', yes: ['Product'], no: ['Safety'], late: true },
+    ],
+    date: 'March 14, 2023', setup: 'Paying for outside red-teaming before a release. The safety spend buys you the knowledge.',
+    real: 'Testers had GPT-4 hire a TaskRabbit worker to solve a CAPTCHA. Asked if it was a robot, it said it had a vision impairment. OpenAI published the exchange in its own system card.',
+    src: ['Vice', 'https://www.vice.com/en/article/gpt4-hired-unwitting-taskrabbit-worker/'],
+    status: ['new', 'New card; hiding it reuses the cover-up flag'] },
+  { code: 'R7', title: 'The board fires you', handle: '@leakwire', av: 'L', crisis: true,
+    post: 'board removes CEO, says they were “not consistently candid”',
+    choices: [
+      { l: 'Rally the staff', c: 'a friendlier board, weaker oversight', yes: ['Staff'], no: ['Safety'] },
+      { l: 'Accept an outside review and new directors', c: 'months of scrutiny', yes: ['Safety'], no: ['CFO'] },
+      { l: 'Negotiate quietly', c: 'a board seat for their pick', yes: ['Comms'], no: ['Staff'], late: true },
+    ],
+    pic: 'Crisis picture: the staff letter, with its signature count ticking up.',
+    date: 'November 17–22, 2023', setup: 'Late in the era, when board support is low or you hid something (a cover-up or a broken promise).',
+    real: 'OpenAI’s board fired Sam Altman for not being “consistently candid”. More than 700 of about 770 staff threatened to follow him to Microsoft. Five days later he was back, with a new board.',
+    src: ['Wikipedia: Removal of Sam Altman', 'https://en.wikipedia.org/wiki/Removal_of_Sam_Altman_from_OpenAI'],
+    status: ['new', 'New crisis card; era 1 has no board vote today'] },
+];
+
+const ALTS = [
+  ['Big companies ban your chatbot', 'Samsung staff pasted source code into ChatGPT three times in 20 days (March–May 2023); Apple, JPMorgan, Verizon and Amazon banned it too. A choice about a business tier that never trains on customer data.'],
+  ['A cloud giant offers billions for exclusivity', 'Microsoft’s multibillion deal with OpenAI (January 23, 2023); Amazon’s up to $4B for Anthropic (September 25, 2023). Money now, one cloud forever.'],
+  ['Chip export rules tighten', 'October 17, 2023. The existing export-controls card, moved to its real date.'],
+  ['A rushed demo costs $100B', 'Google’s Bard got a telescope fact wrong in its own ad (February 8, 2023); Alphabet fell about 8% in hours.'],
+  ['Voice clones used in scams', 'A voice-cloning beta was abused within a week (January 2023); the FTC warned about fake family emergency calls (March 2023).'],
+  ['Research weights leak to 4chan', 'Meta’s gated LLaMA weights leaked on March 3, 2023 and spread the same day. There is no recall button.'],
+  ['A hacker read your internal forum', 'OpenAI was breached in early 2023 and told no one outside until the press found out in July 2024. A lead-in to weight theft.'],
+  ['Your model leaks private data for $200', 'Researchers made ChatGPT repeat memorised emails and phone numbers by asking it to say “poem” forever (November 2023).'],
+];
+
+const MOVES = [
+  ['flattery', 'Flattery blowup moves to era 3', 'Its real case is the GPT-4o sycophancy rollback of April 2025. You called the current version weak, so it gets rewritten there. Era 1 gets R1 instead.'],
+  ['companion', 'Companion-harm lawsuit moves to era 2', 'The real lawsuit (Character.AI) came in October 2024. The earlier Chai death (March 2023) had no lawsuit.'],
+];
+
+const TL = [
+  // code, short label, months from Dec 1 2022, kind, row (for reactions)
+  ['R2', 'Jailbreak', 1.9, 'react', 0], ['R1', 'Chatbot turns', 2.35, 'react', 1],
+  ['R6', 'Red team', 3.45, 'react', 0], ['A1', 'Pause letter', 3.7, 'anchor'],
+  ['R4', 'Country ban', 3.98, 'react', 1], ['A2', 'Senate hearing', 5.5, 'anchor'],
+  ['R3', 'Fake cases', 6.7, 'react', 0], ['R5', 'Copyright', 7.2, 'react', 1],
+  ['A3', 'White House', 7.68, 'anchor'], ['R7', 'Board fires you', 11.55, 'react', 0],
+  ['R5', 'NYT suit', 12.5, 'react', 1],
+];
+const MONTHS = ['Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const pct = (m) => (m / 13) * 100;
+
+function renderTimeline() {
+  const box = document.getElementById('timeline');
+  let html = '';
+  ['Q1 · Dec–Feb', 'Q2 · Mar–May', 'Q3 · Jun–Aug', 'Q4 · Sep–Dec'].forEach((q, i) => {
+    const from = i * 3, to = i === 3 ? 13 : from + 3;
+    html += `<div class="tl-q" style="left:${pct(from)}%;width:${pct(to - from)}%"><span>${q}</span></div>`;
+  });
+  html += '<div class="tl-axis"></div>';
+  MONTHS.forEach((m, i) => { html += `<div class="tl-mon" style="left:${pct(i + 0.5)}%">${m}${i === 1 ? ' 23' : ''}</div>`; });
+  for (const [code, label, m, kind, row] of TL) {
+    const top = kind === 'react' ? `top:${128 + row * 40}px;` : '';
+    html += `<div class="mk ${kind}" style="left:${pct(m)}%;${top}"><i></i><span>${esc(label)}</span><span class="code">${code}</span></div>`;
+  }
+  box.innerHTML = html;
+}
+
+function cardHTML(e) {
+  const choices = e.choices.map((c) => `
+    <div class="ch"><b>${esc(c.l)}</b><span class="cost">Cost: <em>${esc(c.c)}</em></span>
+      <div class="chips">${c.late ? '<span class="chip late">If time runs out</span>' : ''}${c.yes.map((a) => `<span class="chip yes">✓ ${a}</span>`).join('')}${c.no.map((a) => `<span class="chip no">${a}</span>`).join('')}</div>
+    </div>`).join('');
+  const pic = e.pic ? `<div class="pic"><div class="letter" aria-hidden="true"><b>We will leave unless the CEO returns.</b><span class="sig"></span><span class="sig"></span><span class="sig"></span><span>702 signed</span></div><p>${esc(e.pic)}</p></div>` : '';
+  return `<div class="gcard${e.crisis ? ' crisis' : ''}">
+    <h3>${esc(e.title)}</h3>
+    <div class="post"><span class="av" aria-hidden="true">${e.av}</span><div><div class="handle">${esc(e.handle)}</div><div class="ptext">${esc(e.post)}</div></div></div>
+    ${pic}
+    <div class="choices${e.choices.length === 2 ? ' two' : ''}">${choices}</div>
+  </div>`;
+}
+
+function rowHTML(e) {
+  const when = e.lands ? `<div class="when"><span class="lbl">In the game</span><span>${esc(e.lands)}</span></div>`
+    : `<div class="when"><span class="lbl">Set up by</span><span>${esc(e.setup)}</span></div>`;
+  const id = e.code.toLowerCase();
+  return `<article class="row" id="${id}">
+    <div style="display:grid;gap:6px"><span class="code-tag">${e.code}</span>${cardHTML(e)}</div>
+    <div class="facts">
+      <div class="when"><span class="lbl">What really happened</span><span class="date">${esc(e.date)}</span><span>${esc(e.real)}</span><a href="${e.src[1]}" target="_blank" rel="noopener">Source: ${esc(e.src[0])}</a></div>
+      ${when}
+      <span class="status ${e.status[0]}">${esc(e.status[1])}</span>
+    </div>
+    <div class="pick" role="group" aria-label="Your pick for ${e.code}">
+      <div class="opts">
+        <label><input type="radio" name="p-${id}" id="p-${id}-keep" value="keep"><span class="k">Keep</span></label>
+        <label><input type="radio" name="p-${id}" id="p-${id}-rewrite" value="rewrite"><span class="r">Rewrite</span></label>
+        <label><input type="radio" name="p-${id}" id="p-${id}-cut" value="cut"><span class="c">Cut</span></label>
+      </div>
+      <textarea id="n-${id}" placeholder="Optional: what to change"></textarea>
+    </div>
+  </article>`;
+}
+
+function render() {
+  renderTimeline();
+  document.getElementById('anchors').innerHTML = ANCHORS.map(rowHTML).join('');
+  document.getElementById('reactions').innerHTML = REACTIONS.map(rowHTML).join('');
+  document.getElementById('alts').innerHTML = ALTS.map(([t, d], i) => `<label class="alt"><input type="checkbox" id="alt-${i}"><b>${esc(t)}</b><small>${esc(d)}</small></label>`).join('');
+  document.getElementById('moves').innerHTML = MOVES.map(([id, t, d]) => `<label class="move"><input type="checkbox" id="mv-${id}" checked><b>${esc(t)}</b><small>${esc(d)}</small></label>`).join('');
+}
+
+const ALL = [...ANCHORS, ...REACTIONS];
+const KEY = 'era1-event-picks';
+function save() {
+  const s = {};
+  document.querySelectorAll('input, textarea').forEach((el) => {
+    if (!el.id || el.id === 'copybox') return;
+    s[el.id] = el.type === 'radio' || el.type === 'checkbox' ? el.checked : el.value;
+  });
+  try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) {}
+}
+function load() {
+  let s = null;
+  try { s = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) {}
+  if (!s) return;
+  for (const [id, v] of Object.entries(s)) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    if (el.type === 'radio' || el.type === 'checkbox') el.checked = v; else el.value = v;
+  }
+}
+function picks() {
+  return ALL.map((e) => {
+    const id = e.code.toLowerCase();
+    const r = document.querySelector(`input[name="p-${id}"]:checked`);
+    const note = document.getElementById(`n-${id}`).value.trim();
+    return { code: e.code, title: e.title, pick: r ? r.value : null, note };
+  });
+}
+function update() {
+  const n = picks().filter((p) => p.pick).length;
+  document.getElementById('count').textContent = `${n} of ${ALL.length} picked`;
+  save();
+}
+function text() {
+  const lines = ['Era 1 event picks:'];
+  for (const p of picks()) lines.push(`${p.code} ${p.title}: ${p.pick || 'no pick'}${p.note ? ` (${p.note})` : ''}`);
+  const alts = ALTS.filter((_, i) => document.getElementById(`alt-${i}`).checked).map(([t]) => t);
+  lines.push(`Alternates to add: ${alts.length ? alts.join('; ') : 'none'}`);
+  for (const [id, t] of MOVES) lines.push(`${t}: ${document.getElementById(`mv-${id}`).checked ? 'yes' : 'no, keep in era 1'}`);
+  return lines.join('\n');
+}
+document.getElementById('copy').addEventListener('click', () => {
+  const t = text();
+  const box = document.getElementById('copybox');
+  const done = document.getElementById('done');
+  navigator.clipboard.writeText(t).then(() => {
+    box.hidden = true;
+    done.textContent = 'Copied. Paste it into the chat.';
+  }).catch(() => {
+    box.value = t; box.hidden = false; box.focus(); box.select();
+    done.textContent = 'Copy was blocked; the text is selected, so press Cmd+C.';
+  });
+});
+
+render();
+load();
+update();
+document.addEventListener('change', update);
+document.addEventListener('input', (e) => { if (e.target.tagName === 'TEXTAREA') save(); });
+</script>

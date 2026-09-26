@@ -1,7 +1,8 @@
 import { openDialog } from '../components/dialog.js';
 import { teamPanel } from '../components/team.js';
 import { opinions, powerSitesAvailable, projectQueue, sitesView } from '../logic/compute.js';
-import { computeAmount, money } from '../logic/format.js';
+import { computeAmount, money, roundsToWords } from '../logic/format.js';
+import { roundWord } from '../../sim/time.js';
 
 const element = (tag, className, text) => {
   const node = document.createElement(tag);
@@ -9,8 +10,6 @@ const element = (tag, className, text) => {
   if (text != null) node.textContent = text;
   return node;
 };
-
-const turns = (count) => `${count} ${count === 1 ? 'turn' : 'turns'}`;
 
 function siteArt(source) {
   const art = element('div', 'site-art');
@@ -68,7 +67,7 @@ function sitesPanel(view, era) {
   if (view.nextArrival) {
     const future = element('div', 'site-total compact');
     future.append(
-      element('span', '', `Power in ${turns(view.nextArrival.turns)}`),
+      element('span', '', `Power in ${roundsToWords(era, view.nextArrival.turns)}`),
       element('b', '', computeAmount(view.powerOnline + view.nextArrival.units, era)),
     );
     root.append(future);
@@ -108,7 +107,7 @@ export function openPowerSites(game, overlayRoot) {
   if (view.nextArrival) {
     const future = element('i', 'power-future');
     future.style.left = `${Math.min(100, ((view.powerOnline + view.nextArrival.units) / total) * 100)}%`;
-    future.append(element('em', '', `${view.nextArrival.name} online in ${turns(view.nextArrival.turns)}`));
+    future.append(element('em', '', `${view.nextArrival.name} online in ${roundsToWords(state.era, view.nextArrival.turns)}`));
     track.append(future);
   }
   const legend = element('div', 'power-legend');
@@ -164,7 +163,7 @@ export function openPowerSites(game, overlayRoot) {
   }
   body.append(meter, heading, grid);
   const footer = element('div', 'company-footer');
-  footer.append(element('div', 'company-footer-note', 'Building uses 1 of 2 moves this turn · lease starts when it is online'));
+  footer.append(element('div', 'company-footer-note', `Building uses 1 of your 2 team actions this ${roundWord(state.era)} · lease starts when it is online`));
   const right = sitesPanel(view, state.era);
   const error = element('div', 'dialog-error');
   body.append(error);

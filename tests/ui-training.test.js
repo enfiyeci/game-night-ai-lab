@@ -83,3 +83,14 @@ test('releasing and starting a one-step run in the same step records the new sha
   assert.ok(game.state.pendingModel && !game.state.activeRun, 'the new run finished within the step');
   assert.equal(game.lastAlignShare, 0.4);
 });
+
+test('in real time, a run started by an action and finished by the daily clock keeps its share', () => {
+  const game = createGame({ seed: 1, state: SCENARIOS.era3Idle(1) });
+  const result = game.addMove({ type: 'startRun', recipe: { sliders: { size: 'small', length: 'optimal', alignShare: 0.4 }, picks: { pre: [], mid: [], post: [] } } });
+  assert.ok(result.ok, result.error);
+  for (let day = 0; day < 400 && !game.state.pendingModel && !game.state.ending; day += 1) game.advanceDays(1);
+  assert.ok(game.state.pendingModel, 'the daily clock finished the run');
+  assert.equal(game.lastAlignShare, 0.4);
+  const counts = badgeCounts(game.state, game.lastAlignShare);
+  assert.equal(counts.alignment, alignmentFor(counts.capability, 0.4));
+});

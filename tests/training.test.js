@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
-import { startRun, advanceRun, availableUnits } from '../sim/training.js';
+import { startRun, advanceRun, advanceRunBy, availableUnits, recheckCapacity } from '../sim/training.js';
 import { recipeCost } from '../sim/recipe.js';
 import { BALANCE } from '../sim/balance.js';
 
@@ -66,6 +66,23 @@ test('a run pauses without reserved compute and resumes when capacity returns', 
   assert.equal(draws, 0);
   s.compute.online = 10;
   assert.ok(advanceRun(s, countedRng).capability > 0);
+});
+
+test('training capacity holds for the round unless a player action rechecks it', () => {
+  const s = createInitialState();
+  s.compute.split.safety = 0;
+  startRun(s, recipe);
+  const initial = s.activeRun.turnsLeft;
+
+  advanceRunBy(s, noLuck, 0.25);
+  s.compute.online = 4; // organic change mid-round: the round's check stands
+  assert.equal(advanceRunBy(s, noLuck, 0.25), null);
+  recheckCapacity(s); // a player action: the next day sees the new capacity
+  assert.deepEqual(advanceRunBy(s, noLuck, 0.25), { type: 'runPaused' });
+  s.compute.online = 10;
+  recheckCapacity(s);
+  assert.equal(advanceRunBy(s, noLuck, 0.25), null);
+  assert.equal(s.activeRun.turnsLeft, initial - 0.75);
 });
 
 test('low alignment share adds alignment debt; lawsuits are seeded by chance', () => {

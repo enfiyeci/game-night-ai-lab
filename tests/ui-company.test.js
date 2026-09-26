@@ -88,7 +88,7 @@ test('every enabled adapter move resolves as a deal without an error', () => {
     const onlineIn = event.arrivesTurn - state.turn;
     assert.equal(
       Object.fromEntries(card.rows).Arrives,
-      onlineIn === 0 ? 'now' : onlineIn === 1 ? 'next turn' : `in ${onlineIn} turns`,
+      onlineIn === 0 ? 'now' : `in about ${onlineIn * 3} months`,
       card.id,
     );
   }
@@ -125,7 +125,7 @@ test('queued prepayments are projected before another deal is offered', () => {
   game.addMove(first.move);
   const result = game.endTurn();
   assert.equal(result.events.filter((event) => event.type === 'deal').length, 1);
-  assert.equal(result.errors.includes(`unknown offer ${first.id}`), true);
+  assert.equal(result.errors.includes('the finance team is busy until Y1 M4 W1'), true);
 });
 
 test('queued research spends points before checking the next technique', () => {
@@ -144,7 +144,7 @@ test('queued research spends points before checking the next technique', () => {
   moves.forEach((move) => game.addMove(move));
   const result = game.endTurn();
   assert.equal(result.events.filter((event) => event.type === 'research').length, 1);
-  assert.equal(result.errors.includes('not enough research points'), true);
+  assert.equal(result.errors.includes('the research team is busy until Y1 M4 W1'), true);
 });
 
 test('a queued raise is reflected in projected round availability', () => {
@@ -160,7 +160,7 @@ test('a queued raise is reflected in projected round availability', () => {
   game.addMove({ type: 'raise', archetype: 'strategic' });
   const result = game.endTurn();
   assert.equal(result.events.filter((event) => event.type === 'raise').length, 1);
-  assert.equal(result.errors.includes('already raised a round this era'), true);
+  assert.equal(result.errors.includes('the finance team is busy until Y1 M4 W1'), true);
 });
 
 test('the queue projection applies new free actions before deterministic moves', () => {
@@ -228,9 +228,9 @@ test('turn summaries use player-facing words without guessing suppliers or showi
 
   assert.deepEqual(lines, [
     "Verde's chips arrived (10 units)",
-    'You signed with Verde — online from turn 4',
-    'You signed a compute deal — online from turn 0',
-    'Spot capacity may be pulled after next turn',
+    'You signed with Verde — online from Y1 M12 W4',
+    'You signed a compute deal — online from Y1 M1 W1',
+    'Spot capacity may be pulled after next quarter',
     'Spot capacity was pulled',
     'CoreFlame contract ended',
     'Verde filled part of your order; the rest stays queued',

@@ -32,7 +32,8 @@ import { computeSlices, makePledge, setComputeSplit } from '../../sim/split.js';
 import { TECHNIQUES, researchTechnique } from '../../sim/techniques.js';
 import { startRun } from '../../sim/training.js';
 import { MAX_MOVES, setBudget } from '../../sim/turn.js';
-import { computeAmount, money, pct } from './format.js';
+import { roundWord, storyDate } from '../../sim/time.js';
+import { computeAmount, money, pct, roundsToWords, storyDayForTurn } from './format.js';
 
 const OFFER_COPY = {
   verde: { per: 'your own chips' },
@@ -59,10 +60,9 @@ const price = (multiplier) => {
   return `${Number(multiplier.toFixed(2))}× base`;
 };
 
-const arrival = (turns) => {
+const arrival = (turns, era) => {
   if (turns === 0) return 'now';
-  if (turns === 1) return 'next turn';
-  return `in ${turns} turns`;
+  return `in ${roundsToWords(era, turns)}`;
 };
 
 function afterMove(state) {
@@ -156,7 +156,7 @@ function projectBeforeMoves(state, queue) {
     if (Object.hasOwn(choices, pending.id)) resolveEvent(state, pending.id, choices[pending.id]);
   }
   for (const pending of [...state.pendingEvents]) {
-    resolveEvent(state, pending.id, fallbackChoice(pending.id, pending));
+    if (pending.dueAt == null) resolveEvent(state, pending.id, fallbackChoice(pending.id, pending));
   }
   activateReleases(state);
   afterMove(state);
@@ -183,7 +183,7 @@ export function projectQueue(state, queue = {}) {
 }
 
 function rejectionReason(state, offer) {
-  if (state.movesLeft === 0) return 'Both moves are used this turn';
+  if (state.movesLeft === 0) return `Both team actions are used this ${roundWord(state.era)}`;
   if ((offer.supplier === 'coreflame' || offer.supplier === 'gulf') && exclusiveActive(state)) {
     return "Azuria's exclusive contract blocks CoreFlame and Gulf cloud deals until you buy it out";
   }
@@ -193,19 +193,19 @@ function rejectionReason(state, offer) {
   return result.ok ? '' : result.error;
 }
 
-function standardRows(offer) {
+function standardRows(offer, era) {
   return [
-    ['Arrives', arrival(offer.arrivesIn)],
+    ['Arrives', arrival(offer.arrivesIn, era)],
     ['Upfront', offer.upfront === 0 ? 'none' : money(offer.upfront)],
     ['Monthly', money(offer.monthly)],
-    ['Term', offer.termMonths == null ? 'renews each turn' : `${offer.termMonths} months`],
+    ['Term', offer.termMonths == null ? `renews each ${roundWord(era)}` : `${offer.termMonths} months`],
     ['Price', price(offer.price)],
   ];
 }
 
 function investmentRows(offer, era) {
   return [
-    ['Arrives', arrival(offer.arrivesIn)],
+    ['Arrives', arrival(offer.arrivesIn, era)],
     ['Upfront', offer.upfront ? money(offer.upfront) : 'none'],
     ['Units', computeAmount(offer.units, era)],
     ['Monthly', money(offer.monthly)],
@@ -236,7 +236,7 @@ export function dealCards(state) {
         kind: supplier.kind,
         ...amount,
         per: OFFER_COPY[offer.supplier].per,
-        rows: investment ? investmentRows(offer, state.era) : standardRows(offer),
+        rows: investment ? investmentRows(offer, state.era) : standardRows(offer, state.era),
         chip,
         explanation,
         disabled: Boolean(reason),
@@ -258,8 +258,8 @@ function runwayFor(state) {
 function commitmentRow(contract, state, isNew = false, offer = null) {
   const supplier = supplierName(contract.supplier);
   const monthsLeft = isNew
-    ? `arrives turn ${contract.arrivedTurn ?? state.turn}`
-    : contract.monthsLeft == null ? 'renews each turn' : `${Math.max(0, Math.ceil(contract.monthsLeft))} months left`;
+    ? `arrives ${arrival(Math.max(0, (contract.arrivedTurn ?? state.turn) - state.turn), state.era)}`
+    : contract.monthsLeft == null ? `renews each ${roundWord(state.era)}` : `${Math.max(0, Math.ceil(contract.monthsLeft))} months left`;
   const powerShort = contract.needsPower && state.compute.unpowered > 0;
   const row = {
     id: contract.id,
@@ -339,6 +339,7 @@ export function commitmentsView(state, offerId) {
     billAfter,
     billAfterRange,
     afterFromTurn,
+    afterDate: storyDate(storyDayForTurn(afterFromTurn)).label,
     segments,
     rows,
     runwayNow: runwayFor(state),
@@ -370,7 +371,7 @@ export function queueView(state, draft = {}) {
   }
   const announcements = state.rivals
     .filter((rival) => !rival.eastern && rival.prepayNext)
-    .map((rival) => `${rival.name} will prepay next turn. Standard shares will shrink.`);
+    .map((rival) => `${rival.name} will prepay next ${roundWord(state.era)}. Standard shares will shrink.`);
   const term = SUPPLIERS.verde.termMonths;
   const upfront = Math.round(PREPAY_SHARE * units * SUPPLIERS.verde.price * BALANCE.unitMonthlyCost * term);
   return { released: supply, rows, you: { standard, prepaid, upfront }, announcements };
@@ -490,7 +491,7 @@ export function sitesView(state) {
     const site = result.ok ? projected.power.sites.find((candidate) => candidate.id === result.site) : null;
     const units = site?.units ?? Math.round((type.size[0] + type.size[1]) / 20) * 10;
     const turnsUntilReady = site ? site.arrivesTurn - state.turn : type.turns;
-    const ready = `${turnsUntilReady} ${turnsUntilReady === 1 ? 'turn' : 'turns'}`;
+    const ready = roundsToWords(state.era, turnsUntilReady);
     const reason = result.ok ? '' : result.error;
     return {
       source,
@@ -509,7 +510,7 @@ export function sitesView(state) {
     source: 'gulf',
     name: 'Gulf campus',
     units: gulfUnits,
-    readyIn: gulfOffer ? `${gulfOffer.arrivesIn} turns` : 'approval required',
+    readyIn: gulfOffer ? roundsToWords(state.era, gulfOffer.arrivesIn) : 'approval required',
     lease: gulfOffer?.monthly ?? gulfUnits * BALANCE.unitMonthlyCost,
     tags: ['Needs US approval'],
     disabled: true,
@@ -523,7 +524,9 @@ export function sitesView(state) {
       name: SITE_TYPES[site.source]?.name ?? site.source,
       source: site.source,
       units: site.units,
-      status: site.online ? `Online since turn ${site.arrivesTurn}` : `Building · ${turnsLeft} ${turnsLeft === 1 ? 'turn' : 'turns'} left`,
+      status: site.online
+        ? `Online since ${storyDate(storyDayForTurn(site.arrivesTurn)).label}`
+        : `Building · ${roundsToWords(state.era, turnsLeft)} left`,
       progress: site.online ? 1 : Math.max(0, Math.min(1, 1 - turnsLeft / duration)),
       warning: site.oppositionCut ? 'Local opposition cut this site\'s capacity.' : '',
     };
@@ -558,8 +561,8 @@ function opinionText(state, screen, id) {
   const budgetLines = {
     research: idle > 0 ? `${computeAmount(idle, state.era)} sit idle. Start a bigger run, or sell the time.` : 'Training can use every unit left after serving and safety.',
     safety: pledge ? `${pct(state.compute.split.safety)} ${state.compute.split.safety >= pledge.share ? 'keeps' : 'breaks'} our ${pct(pledge.share)} pledge.` : 'A larger safety slice gives evaluations more room.',
-    cfo: idle > 0 ? `Idle compute still costs ${money(idleComputeCost(state))} a month.` : 'Every online unit is doing useful work this turn.',
-    policy: bar.needMarker <= bar.segments.find((segment) => segment.key === 'serving').units ? 'Serving is covered. No outages this turn.' : 'Serving is short. Users may see an outage.',
+    cfo: idle > 0 ? `Idle compute still costs ${money(idleComputeCost(state))} a month.` : 'Every online unit is doing useful work right now.',
+    policy: bar.needMarker <= bar.segments.find((segment) => segment.key === 'serving').units ? 'Serving is covered. No outages right now.' : 'Serving is short. Users may see an outage.',
   };
   const powerLines = {
     research: sites.unpowered > 0 ? `${computeAmount(sites.unpowered, state.era)} of chips are sitting dark. We could be training on them.` : 'Every contracted chip has power.',
@@ -609,9 +612,9 @@ export function turnSummary(events, state) {
         ?? state?.compute?.offers?.find((offer) => offer.id === event.offerId)?.supplier
         ?? supplierFromOfferId(event.offerId);
       const subject = supplier ? `You signed with ${supplierName(supplier)}` : 'You signed a compute deal';
-      lines.push(`${subject} — online from turn ${event.arrivesTurn}`);
+      lines.push(`${subject} — online from ${storyDate(storyDayForTurn(event.arrivesTurn)).label}`);
     } else if (event.type === 'spotWarning') {
-      lines.push('Spot capacity may be pulled after next turn');
+      lines.push(`Spot capacity may be pulled after next ${roundWord(state.era)}`);
     } else if (event.type === 'spotPulled') {
       lines.push('Spot capacity was pulled');
     } else if (event.type === 'contractEnded') {

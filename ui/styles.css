@@ -2391,6 +2391,213 @@ svg.room {
   .advisor-marker { animation: none !important; }
 }
 
+.clock {
+  position: absolute;
+  z-index: 12;
+  top: 90px;
+  right: 15px;
+  display: flex;
+  padding: 4px 5px 4px 12px;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid color-mix(in oklab, var(--ink) 10%, transparent);
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 900;
+  background: var(--paper);
+  box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 12%, transparent);
+  pointer-events: auto;
+}
+
+.clock .date {
+  display: grid;
+  margin-right: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.clock .date small {
+  color: color-mix(in oklab, var(--ink) 58%, var(--paper));
+  font-weight: 700;
+}
+
+.clock .beat {
+  display: block;
+  width: 92px;
+  height: 4px;
+  margin-top: 3px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: color-mix(in oklab, var(--ink) 10%, var(--paper));
+}
+
+.clock .beat i { display: block; height: 100%; background: var(--wood); }
+
+.clock button {
+  display: grid;
+  min-width: 28px;
+  height: 26px;
+  padding: 0 6px;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  color: color-mix(in oklab, var(--ink) 60%, var(--paper));
+  font: inherit;
+  font-size: 12px;
+  font-weight: 900;
+  background: transparent;
+  cursor: pointer;
+}
+
+.clock button.on { color: var(--paper); background: var(--wood); }
+.clock button:focus-visible { outline: 2px solid var(--teal); outline-offset: 1px; }
+
+.clock .sep {
+  width: 1px;
+  height: 20px;
+  margin: 0 3px;
+  background: color-mix(in oklab, var(--ink) 12%, transparent);
+}
+
+.clock button.skip {
+  color: color-mix(in oklab, var(--wood) 70%, var(--ink));
+  white-space: nowrap;
+}
+
+.clock .paused {
+  margin-left: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: color-mix(in oklab, var(--wood) 62%, var(--ink));
+  font-size: 11px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  background: color-mix(in oklab, var(--wood) 20%, var(--paper));
+}
+
+.clock button.play-big {
+  height: 30px;
+  padding: 0 14px;
+  color: var(--paper);
+  font-size: 13px;
+  background: var(--coral);
+  box-shadow: 0 2px 0 color-mix(in oklab, var(--coral) 60%, var(--ink));
+}
+
+.ctx .menu-moves b { color: var(--ink); }
+
+.team {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 7px;
+  border-radius: 999px;
+  color: color-mix(in oklab, var(--teal) 62%, var(--ink));
+  font-size: 10.5px;
+  font-weight: 800;
+  vertical-align: 1px;
+  white-space: nowrap;
+  background: color-mix(in oklab, var(--teal) 14%, var(--paper));
+}
+
+.team.busy {
+  color: color-mix(in oklab, var(--ink) 55%, var(--paper));
+  background: color-mix(in oklab, var(--ink) 7%, var(--paper));
+}
+
+/* Plan 2B Task 8: event cards and warnings (mockups K2-events.html and K2-events-crisis.html) */
+.event-layer { position: absolute; inset: 0; z-index: 20; pointer-events: none; }
+.event-layer > * { pointer-events: auto; }
+.ev-theme, .ev-theme * { pointer-events: none; }
+.ev-theme { position: absolute; inset: 0; z-index: 0; }
+.ev-theme svg { position: absolute; inset: 0; }
+.ev-wash-theft { background: radial-gradient(ellipse 72% 70% at 55% 55%, transparent 35%, color-mix(in oklab, var(--coral) 36%, transparent) 100%); }
+.ev-wash-exfil { background: radial-gradient(ellipse 40% 45% at 80% 50%, color-mix(in oklab, var(--sky) 30%, transparent), transparent 70%), radial-gradient(ellipse 80% 75% at 50% 55%, transparent 45%, color-mix(in oklab, var(--sky) 26%, transparent) 100%); }
+.ev-wash-whistle { background: radial-gradient(ellipse 30% 34% at 36% 28%, color-mix(in oklab, var(--paper) 80%, transparent), transparent 70%); }
+.ev-wash-quits { background: radial-gradient(ellipse 12% 16% at 48% 56%, transparent 50%, color-mix(in oklab, var(--ink) 30%, transparent) 180%); }
+.ev-dim-office #office { filter: saturate(.72) brightness(.94); }
+.ev-grey-office #office { filter: saturate(.35) brightness(.97); }
+.ev-tag { position: absolute; padding: 3px 9px; border-radius: 8px; font-size: 11.5px; font-weight: 900; color: var(--paper); background: var(--ink); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 30%, transparent); white-space: nowrap; }
+.ev-tag.sky { background: color-mix(in oklab, var(--sky) 70%, var(--ink)); }
+.ev-tag.coral { background: color-mix(in oklab, var(--coral) 80%, var(--ink)); }
+
+.ev-post { display: grid; grid-template-columns: 30px 1fr; gap: 9px; text-align: left; }
+.ev-av { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; color: var(--paper); font-weight: 900; font-size: 13px; }
+.ev-handle { font-size: 12.5px; font-weight: 900; }
+.ev-text { font-size: 13.5px; font-weight: 600; line-height: 1.32; margin-top: 1px; }
+
+.ev-act { white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 0; border-radius: 9px; font: inherit; font-size: 13px; font-weight: 900; color: var(--paper); background: var(--coral); box-shadow: 0 2px 0 color-mix(in oklab, var(--coral) 60%, var(--ink)); cursor: pointer; }
+.ev-act.ghost { color: color-mix(in oklab, var(--wood) 72%, var(--ink)); background: transparent; box-shadow: none; padding-inline: 4px; }
+.ev-act:disabled { opacity: .55; cursor: default; }
+
+.ev-due { display: grid; gap: 4px; min-width: 210px; }
+.ev-due span { font-size: 12.5px; font-weight: 900; text-align: right; }
+.ev-due-bar { height: 8px; border-radius: 4px; background: color-mix(in oklab, var(--ink) 9%, var(--paper)); overflow: hidden; }
+.ev-due-bar i { display: block; height: 100%; border-radius: 4px; background: var(--coral); }
+.ev-due.calm .ev-due-bar i { background: var(--wood); }
+
+.ev-bubble { position: absolute; z-index: 2; background: var(--paper); border-radius: 12px; padding: 8px 12px 10px; font-size: 13px; font-weight: 700; line-height: 1.3; border: 1px solid color-mix(in oklab, var(--ink) 10%, transparent); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 14%, transparent), 0 8px 18px color-mix(in oklab, var(--ink) 14%, transparent); }
+.ev-bubble::after { content: ""; position: absolute; left: var(--tail, 24px); bottom: -8px; width: 14px; height: 14px; background: var(--paper); transform: rotate(45deg); border-right: 1px solid color-mix(in oklab, var(--ink) 10%, transparent); border-bottom: 1px solid color-mix(in oklab, var(--ink) 10%, transparent); }
+.ev-bubble b { display: block; font-size: 10.5px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; color: color-mix(in oklab, var(--wood) 60%, var(--ink)); }
+.ev-say { margin-top: 2px; font-size: 14px; }
+.ev-pick { display: inline-block; margin-top: 5px; font-size: 11.5px; font-weight: 800; padding: 1px 8px; border-radius: 999px; background: color-mix(in oklab, var(--teal) 14%, var(--paper)); color: color-mix(in oklab, var(--teal) 62%, var(--ink)); }
+.ev-bubble .ev-row { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+.ev-bubble .ev-due { margin-top: 8px; min-width: 0; }
+.ev-bubble .ev-due span { text-align: left; font-size: 11.5px; }
+
+.ev-choice { display: grid; grid-template-columns: 1fr; gap: 4px; width: 100%; padding: 9px 12px; border: 2.5px solid color-mix(in oklab, var(--ink) 12%, transparent); border-radius: 12px; background: var(--paper); font: inherit; text-align: left; color: var(--ink); cursor: pointer; }
+.ev-choice:hover, .ev-choice:focus-visible { border-color: var(--teal); outline: none; box-shadow: 0 0 0 4px color-mix(in oklab, var(--teal) 16%, transparent); }
+.ev-choice-label { font-size: 15.5px; font-weight: 900; line-height: 1.2; }
+.ev-choice-cost { font-size: 12.5px; font-weight: 700; color: color-mix(in oklab, var(--ink) 62%, var(--paper)); }
+.ev-choice-cost b { color: var(--ink); font-weight: 900; }
+.ev-who { display: flex; gap: 4px; flex-wrap: wrap; }
+.ev-chip { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 800; white-space: nowrap; }
+.ev-chip.for { background: color-mix(in oklab, var(--teal) 14%, var(--paper)); color: color-mix(in oklab, var(--teal) 62%, var(--ink)); }
+.ev-chip.against { background: color-mix(in oklab, var(--ink) 6%, var(--paper)); color: color-mix(in oklab, var(--ink) 62%, var(--paper)); text-decoration: line-through; text-decoration-thickness: 1.5px; }
+.ev-chip.idle { background: color-mix(in oklab, var(--wood) 18%, var(--paper)); color: color-mix(in oklab, var(--wood) 62%, var(--ink)); }
+
+.ev-card { position: absolute; left: 250px; right: 250px; bottom: 20px; padding: 0; text-align: left; display: grid; grid-template-columns: auto 1fr; }
+.ev-crisis { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; padding: 6px 18px 7px; background: var(--coral); color: var(--paper); font-size: 12.5px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+.ev-crisis span { letter-spacing: 0; text-transform: none; font-weight: 700; }
+.ev-pic { margin: 0; width: 214px; padding: 14px 0 16px 18px; }
+.ev-pic svg { display: block; width: 196px; height: 150px; border-radius: 8px; }
+.ev-pic figcaption { margin-top: 5px; font-size: 10.5px; font-weight: 800; color: color-mix(in oklab, var(--ink) 55%, var(--paper)); }
+.ev-card-main { padding: 12px 20px 12px; }
+.ev-card.no-pic .ev-card-main { grid-column: 1 / -1; }
+.ev-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+.ev-card h1 { margin: 0; font-size: 27px; font-weight: 300; line-height: 1.1; }
+.ev-card .ev-post { margin-top: 8px; }
+.ev-choices { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 10px; margin-top: 12px; }
+.ev-card-foot { display: flex; justify-content: flex-end; margin-top: 6px; }
+
+.ev-busy { position: absolute; z-index: 8; pointer-events: auto; top: 104px; left: 18px; width: 380px; overflow: hidden; border: 2px solid var(--wood); border-radius: 12px; background: var(--paper); box-shadow: 0 3px 0 color-mix(in oklab, var(--wood) 55%, var(--ink)), 0 12px 28px color-mix(in oklab, var(--ink) 20%, transparent); }
+.ev-busy-head { display: flex; justify-content: space-between; align-items: center; min-height: 34px; padding: 5px 8px 5px 14px; color: var(--paper); background: var(--wood); font-size: 14px; font-weight: 900; }
+.ev-busy-head button { width: 26px; height: 26px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--paper); font: inherit; font-size: 18px; cursor: pointer; }
+.ev-busy ul { list-style: none; margin: 0; padding: 4px 14px 12px; }
+.ev-busy li { padding: 9px 0; border-top: 1px solid color-mix(in oklab, var(--wood) 22%, transparent); font-size: 13.5px; font-weight: 700; line-height: 1.35; }
+.ev-busy li:first-child { border-top: 0; }
+.ev-busy li b { display: block; font-size: 11px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: color-mix(in oklab, var(--coral) 60%, var(--ink)); margin-bottom: 2px; }
+.ev-busy li.ok b { color: color-mix(in oklab, var(--teal) 60%, var(--ink)); }
+
+@media (prefers-reduced-motion: reduce) {
+  .ev-choice { transition: none; }
+}
+.ev-briefing { position: absolute; inset: 0; z-index: 12; pointer-events: none; }
+.ev-briefing > * { pointer-events: auto; }
+.ev-phone-button { position: absolute; z-index: 7; pointer-events: auto; width: 60px; height: 50px; padding: 0; border: 0; background: transparent; cursor: pointer; }
+.ev-phone-button:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; border-radius: 10px; }
+.ev-phone { position: absolute; z-index: 25; pointer-events: auto; left: 22px; top: 104px; width: 330px; height: 700px; border-radius: 38px; background: var(--ink); padding: 12px; box-shadow: 0 3px 0 color-mix(in oklab, var(--ink) 70%, var(--cream)), 0 20px 44px color-mix(in oklab, var(--ink) 30%, transparent); }
+.ev-phone-scr { position: relative; height: 100%; border-radius: 28px; background: var(--paper); overflow: auto; padding: 0 16px 16px; }
+.ev-phone-notch { position: absolute; left: 50%; top: 9px; width: 86px; height: 22px; margin-left: -43px; border-radius: 12px; background: var(--ink); }
+.ev-phone-top { display: flex; justify-content: space-between; align-items: baseline; padding: 44px 2px 8px; border-bottom: 2px solid color-mix(in oklab, var(--wood) 30%, transparent); }
+.ev-phone-top h2 { margin: 0; font-size: 22px; font-weight: 900; }
+.ev-phone-sec { margin: 12px 0 6px; font-size: 10.5px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: color-mix(in oklab, var(--ink) 55%, var(--paper)); }
+.ev-phone-row { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; align-items: center; padding: 10px 12px; border-radius: 12px; background: var(--paper); border: 2px solid color-mix(in oklab, var(--wood) 40%, var(--paper)); margin-top: 8px; }
+.ev-phone-row b { font-size: 14px; font-weight: 900; line-height: 1.2; }
+.ev-phone-hint { grid-column: 1; font-size: 11.5px; font-weight: 700; color: color-mix(in oklab, var(--ink) 60%, var(--paper)); }
+.ev-phone-row.stack { grid-template-columns: 1fr; gap: 8px; }
+.ev-phone-row.stack .ev-act { justify-self: end; }
+.ev-phone-item { padding: 9px 0; border-top: 1px solid color-mix(in oklab, var(--wood) 25%, transparent); }
+#office [id^="person-"]:focus:not(:focus-visible) { outline: none; }
+
 /* ---------- release dialog (plan 2B Task 6, docs/design/mockups/release-flow-final.html) ---------- */
 .release-dialog .dialog-centre { top: 74px; left: 392px; width: 656px; min-height: 0; }
 .release-dialog .dialog-side { top: 150px; }
@@ -2593,7 +2800,7 @@ svg.room {
 .badge.tick { transform: scale(1.12); transition: transform 180ms ease-out; }
 .ready-note { position: absolute; z-index: 5; top: 74px; left: 50%; transform: translateX(-50%); padding: 3px 12px 4px; border-radius: 999px; color: var(--paper); background: color-mix(in oklab, var(--teal) 70%, var(--ink)); font-size: 12px; font-weight: 900; white-space: nowrap; box-shadow: 0 1px 0 color-mix(in oklab, var(--ink) 25%, transparent); }
 @media (prefers-reduced-motion: reduce) { .badge.tick { transform: none; transition: none; } }
-.hazard-veil { position: absolute; inset: 0; z-index: 10; pointer-events: auto; }
+.hazard-layer { transition: none; }
 .hazard-open #office { filter: saturate(.8) brightness(.96); }
 .hazard-open .advisor-marker { display: none; }
 .hazard-card { z-index: 12; left: 230px; right: 230px; bottom: 20px; padding: 0; text-align: left; display: grid; grid-template-columns: auto 1fr; pointer-events: auto; animation: hazard-in 260ms ease-out both; }

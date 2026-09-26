@@ -1,6 +1,6 @@
 import { createInitialState } from '../../sim/state.js';
 import { createRng } from '../../sim/rng.js';
-import { endTurn } from '../../sim/turn.js';
+import { advanceDays, endTurn } from '../../sim/turn.js';
 import { cardById, cardUnlocked, recipeCost, slotsFor, validateRecipe } from '../../sim/recipe.js';
 import { availableUnits } from '../../sim/training.js';
 import { inDangerZone } from '../../sim/economy.js';
@@ -104,6 +104,20 @@ const releaseState = (seed) => throughTurn(seed, 3);
 // The first era-3 turn with a training run under way, so the HUD shows a project and its progress bar.
 const midEra3 = (seed) => throughTurn(seed, 12, (s) => s.era === 3 && s.activeRun !== null);
 const atEra = (seed, era) => throughTurn(seed, 20, (state) => state.era === era);
+
+function eventState(seed) {
+  const rng = createRng(seed);
+  let state = createInitialState({ seed });
+  const landed = (candidate) => candidate.pendingEvents.some((event) => event.landsAt <= candidate.day);
+  while (!state.ending && state.turn < 20 && !landed(state)) {
+    ({ state } = endTurn(state, scriptedActions(state), rng));
+    const nextLanding = Math.min(...state.pendingEvents.map((event) => event.landsAt));
+    if (Number.isFinite(nextLanding) && nextLanding > state.day) {
+      ({ state } = advanceDays(state, nextLanding - state.day, rng));
+    }
+  }
+  return state;
+}
 
 // An era-3 state with a trained model waiting to be released (for the release dialog and reveal screenshots).
 function readyToRelease(seed) {
@@ -217,7 +231,7 @@ export const SCENARIOS = {
   era3Idle: (seed) => throughTurn(seed, 20, (s) => s.era === 3 && !s.activeRun && !s.pendingModel),
   release: releaseState,
   readyToRelease,
-  event: (seed) => throughTurn(seed, 20, (s) => s.pendingEvents.length > 0),
+  event: eventState,
   summit: (seed) => throughTurn(seed, 20, (s) => s.era === 5 && s.turnInEra === 0 && !s.deal),
   ending: (seed) => throughTurn(seed, 20),
   danger: dangerState,

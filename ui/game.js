@@ -1,6 +1,12 @@
 import { createInitialState } from '../sim/state.js';
 import { createRng } from '../sim/rng.js';
-import { endTurn as runTurn, MAX_MOVES, setBudget as validateBudget } from '../sim/turn.js';
+import {
+  applyActions,
+  advanceDays as runDays,
+  endTurn as runTurn,
+  MAX_MOVES,
+  setBudget as validateBudget,
+} from '../sim/turn.js';
 
 const initialQueue = (budget) => ({
   budget: structuredClone(budget),
@@ -18,17 +24,47 @@ export function createGame({ seed = 1, state } = {}) {
   let actions = initialQueue(currentState.budget);
   const subscribers = new Set();
   const rivalReleases = [];
+  let debugActionEvents = [];
+  let debugActionErrors = [];
   let lastAlignShare = currentState.activeRun?.recipe.sliders.alignShare;
 
-  return {
-    get state() {
-      return currentState;
-    },
-    get queue() {
-      return actions;
-    },
-    get rivalReleases() {
-      return rivalReleases.map((release) => ({ ...release }));
+  // Remembers the alignment share of the latest run, which the trained model does not keep (for the HUD badge).
+  const publish = (update, queued) => {
+    const releaseTurn = currentState.turn;
+    const hadRun = Boolean(currentState.activeRun);
+    if (hadRun) lastAlignShare = currentState.activeRun.recipe.sliders.alignShare;
+    currentState = update.state;
+    if (currentState.activeRun) lastAlignShare = currentState.activeRun.recipe.sliders.alignShare;
+    else if (!hadRun && update.events.some((event) => event.type === 'runComplete')) {
+      const started = queued?.moves.find((move) => move.type === 'startRun'); // a run that started and finished in one step
+      if (started) lastAlignShare = started.recipe.sliders.alignShare;
+    }
+    for (const event of update.events) {
+      if (event.type === 'rivalRelease') rivalReleases.push({ turn: releaseTurn, id: event.id });
+    }
+    const notification = { state: currentState, events: update.events, errors: update.errors };
+    for (const subscriber of subscribers) subscriber(notification);
+    return {
+      ok: update.errors.length === 0,
+      error: update.errors[0],
+      events: update.events,
+      errors: update.errors,
+    };
+  };
+
+  const game = {
+    get state() { return currentState; },
+    get queue() { return actions; },
+    get rivalReleases() { return rivalReleases.map((release) => ({ ...release })); },
+    clock: null,
+    flush() {
+      const queued = actions;
+      const update = applyActions(currentState, queued, rng);
+      actions = initialQueue(update.state.budget);
+      const result = publish(update, queued);
+      debugActionEvents.push(...result.events);
+      debugActionErrors.push(...result.errors);
+      return result;
     },
     get lastAlignShare() {
       return lastAlignShare;
@@ -36,13 +72,14 @@ export function createGame({ seed = 1, state } = {}) {
     setBudget(budget) {
       const candidate = structuredClone(currentState);
       const result = validateBudget(candidate, budget);
-      if (result.ok) actions.budget = structuredClone(candidate.budget);
-      return result;
+      if (!result.ok) return result;
+      actions.budget = structuredClone(candidate.budget);
+      return game.flush();
     },
     addMove(move) {
-      if (actions.moves.length >= MAX_MOVES) return { ok: false, error: `only ${MAX_MOVES} moves per turn` };
+      if (game.movesLeft() <= 0) return { ok: false, error: `only ${MAX_MOVES} actions per round` };
       actions.moves.push(structuredClone(move));
-      return { ok: true };
+      return game.flush();
     },
     removeMove(index) {
       if (!Number.isInteger(index) || index < 0 || index >= actions.moves.length) {
@@ -53,33 +90,44 @@ export function createGame({ seed = 1, state } = {}) {
     },
     setField(key, value) {
       actions[key] = structuredClone(value);
-      return { ok: true };
+      return game.flush();
     },
-    endTurn() {
-      if (currentState.activeRun) lastAlignShare = currentState.activeRun.recipe.sliders.alignShare;
-      const hadRun = Boolean(currentState.activeRun);
-      const startedShare = actions.moves.find((move) => move.type === 'startRun')?.recipe.sliders.alignShare;
-      const turn = currentState.turn;
-      const update = runTurn(currentState, actions, rng);
-      currentState = update.state;
-      if (currentState.activeRun) lastAlignShare = currentState.activeRun.recipe.sliders.alignShare;
-      else if (!hadRun && startedShare !== undefined && update.events.some((event) => event.type === 'runComplete')) {
-        lastAlignShare = startedShare; // a run that started and finished in one step
+    answerCard(id, choiceId) {
+      actions.eventChoices = { ...actions.eventChoices, [id]: choiceId };
+      return game.flush();
+    },
+    advanceDays(n) {
+      if (actions.moves.length || Object.keys(actions.eventChoices).length) game.flush();
+      debugActionEvents = [];
+      debugActionErrors = [];
+      const events = [];
+      const errors = [];
+      for (let day = 0; day < n; day += 1) {
+        const result = publish(runDays(currentState, 1, rng));
+        events.push(...result.events);
+        errors.push(...result.errors);
+        if (currentState.ending || game.clock?.now().paused) break;
       }
-      actions = initialQueue(actions.budget);
-      for (const event of update.events) {
-        if (event.type === 'rivalRelease') rivalReleases.push({ turn, id: event.id });
-      }
-      const notification = { state: currentState, events: update.events, errors: update.errors };
-      for (const subscriber of subscribers) subscriber(notification);
-      return { events: update.events, errors: update.errors };
+      return { ok: errors.length === 0, error: errors[0], events, errors };
+    },
+    endTurn() { // debug and tests only; players never skip
+      const queued = actions;
+      const update = runTurn(currentState, queued, rng);
+      actions = initialQueue(update.state.budget);
+      const result = publish(update, queued);
+      const events = [...debugActionEvents, ...result.events];
+      const errors = [...debugActionErrors, ...result.errors];
+      debugActionEvents = [];
+      debugActionErrors = [];
+      return { ok: errors.length === 0, error: errors[0], events, errors };
     },
     subscribe(fn) {
       subscribers.add(fn);
       return () => subscribers.delete(fn);
     },
     movesLeft() {
-      return MAX_MOVES - actions.moves.length;
+      return MAX_MOVES - (currentState.round?.moves ?? 0) - actions.moves.length;
     },
   };
+  return game;
 }

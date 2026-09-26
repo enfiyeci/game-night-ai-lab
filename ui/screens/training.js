@@ -81,36 +81,31 @@ export function mountTraining(game, { stage, hud, overlay }) {
     }
   }
 
-  function cancelFlights(target) {
+  // Real time: the counts can rise every in-game day, so a rise while bubbles fly adds bubbles rather than
+  // cancelling the ones in the air. A drop (a release, a new run) snaps straight to the new counts.
+  let inFlight = 0;
+
+  function snap(target) {
     generation += 1;
     layer.querySelectorAll('.fly-bubble').forEach((bubble) => bubble.remove());
-    writeCounts(target);
-    shown = target;
+    inFlight = 0;
     flying = false;
+    shown = target;
+    writeCounts(target);
   }
 
-  async function animate(from, target) {
-    if (reducedMotion()) {
-      cancelFlights(target);
-      return;
-    }
-
-    const spawns = bubbleSpawns(from, target);
-    if (spawns.length === 0) {
-      cancelFlights(target);
-      return;
-    }
-
-    const flightGeneration = ++generation;
+  async function launch(from, to) {
+    const spawns = bubbleSpawns(from, to);
+    if (spawns.length === 0) return;
+    const flightGeneration = generation;
     flying = true;
-    layer.querySelectorAll('.fly-bubble').forEach((bubble) => bubble.remove());
-    writeCounts(from);
+    inFlight += spawns.length;
 
     let anchors;
     try {
       anchors = await anchorsFor(game.state.era);
     } catch (error) {
-      if (generation === flightGeneration) cancelFlights(target);
+      if (generation === flightGeneration) snap(shown);
       throw error;
     }
     if (generation !== flightGeneration) return;
@@ -121,34 +116,41 @@ export function mountTraining(game, { stage, hud, overlay }) {
       alignment: centre(currentBadges.alignment),
     };
     const gap = Math.min(420, 3600 / spawns.length);
-    await Promise.all(spawns.map((spawn, index) => (
+    spawns.forEach((spawn, index) => {
       flyBubble(layer, spawn.kind, sourcePoint(anchors, spawn.source), destinations[spawn.kind], { delay: index * gap })
         .then(() => {
-          if (generation === flightGeneration) tick(spawn.kind);
-        })
-    )));
-    if (generation !== flightGeneration) return;
-    shown = target;
-    writeCounts(target);
-    flying = false;
+          if (generation !== flightGeneration) return;
+          tick(spawn.kind);
+          inFlight -= 1;
+          if (inFlight === 0) {
+            flying = false;
+            writeCounts(shown);
+          }
+        });
+    });
   }
 
   function render() {
     updateReadyNote();
     const target = badgeCounts(game.state, game.lastAlignShare);
-    if (flying) {
-      cancelFlights(target);
+    if (reducedMotion()) {
+      snap(target);
       return;
     }
-    const increases = target.capability >= shown.capability
-      && target.alignment >= shown.alignment
-      && (target.capability > shown.capability || target.alignment > shown.alignment);
-    if (!increases) {
-      shown = target;
-      writeCounts(target);
+    const same = target.capability === shown.capability && target.alignment === shown.alignment;
+    if (same) {
+      writeCounts(flying ? displayed : target); // the HUD has just redrawn the badges at the target
       return;
     }
-    animate(shown, target).catch((error) => console.error(error));
+    const grows = target.capability >= shown.capability && target.alignment >= shown.alignment;
+    if (!grows) {
+      snap(target);
+      return;
+    }
+    const from = shown;
+    shown = target;
+    writeCounts(displayed); // the bubbles, not the HUD redraw, carry the badges up
+    launch(from, target).catch((error) => console.error(error));
   }
 
   // The HUD also redraws itself (the info toggle); keep the in-flight counts rather than jumping to the target.
@@ -163,8 +165,13 @@ export function mountTraining(game, { stage, hud, overlay }) {
   return {
     replay(from = { capability: 0, alignment: 0 }) {
       const target = badgeCounts(game.state, game.lastAlignShare);
-      if (flying) cancelFlights(target);
-      return animate(from, target).catch((error) => console.error(error));
+      snap(from);
+      if (reducedMotion()) {
+        snap(target);
+        return Promise.resolve();
+      }
+      shown = target;
+      return launch(from, target).catch((error) => console.error(error));
     },
   };
 }

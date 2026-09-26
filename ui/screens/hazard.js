@@ -78,52 +78,56 @@ function buildCard(name) {
   return card;
 }
 
-function placeBubble(overlay, [x, y], { title, say, backs, width, tail = 28, dx = 0, dy = -34 }) {
+function placeBubble(layer, [x, y], { title, say, backs, width, tail = 28, dx = 0, dy = -34 }) {
   const node = make('div', 'hazard-bubble');
   node.append(make('b', '', title), make('div', '', say));
   node.append(make('span', 'chip', `✓ ${HAZARD_CHOICES.find((choice) => choice.id === backs).label}`));
   node.style.width = `${width}px`;
   node.style.setProperty('--tail', `${tail - dx}px`);
-  overlay.append(node);
+  layer.append(node);
   node.style.left = `${x - tail - 7 + dx}px`;
   node.style.top = `${y + dy - node.offsetHeight}px`;
   return node;
 }
 
+const CLOCK_REASON = 'hazard';
+
 export function mountHazard(game, { stage, overlay }) {
-  let nodes = null;
+  let layer = null;
   let returnFocus = null;
 
   function teardown() {
-    for (const node of nodes) node.remove();
-    nodes = null;
+    if (!layer) return;
+    layer.remove();
+    layer = null;
     stage.classList.remove('hazard-open');
-    game.clock?.resume?.();
+    game.clock?.resume?.(CLOCK_REASON);
     if (returnFocus?.isConnected) returnFocus.focus();
     returnFocus = null;
   }
 
   function close(choiceId) {
+    teardown(); // first: the choice applies at once, and the update it sends must find the card already gone
     game.setField('hazardChoice', choiceId);
-    teardown();
     overlay.dispatchEvent(new CustomEvent('hazard-chosen'));
+    overlay.dispatchEvent(new CustomEvent('gdt-dialog-closed')); // cards, warnings and the ending film wait on this
   }
 
-  // The veil and the card go up at once, so nothing can move the game on before the choice; the advisors'
-  // bubbles follow when the era's anchors have loaded.
+  // A .dialog-layer: it blocks the office like a veil, pauses the clock and holds event cards back until the choice.
+  // The advisors' bubbles follow when the era's anchors have loaded.
   function open() {
     const state = game.state;
     returnFocus = document.activeElement;
-    const veil = make('div', 'hazard-veil');
+    const opened = make('div', 'dialog-layer dialog-open hazard-layer');
     const card = buildCard(workingName(state));
-    overlay.append(veil, card);
-    const opened = [veil, card];
-    nodes = opened;
+    opened.append(card);
+    overlay.append(opened);
+    layer = opened;
     anchorsFor(state.era).then((anchors) => {
-      if (nodes !== opened) return;
+      if (layer !== opened) return;
       for (const argument of HAZARD_ARGUMENTS) {
         const head = anchors.heads[argument.role];
-        if (head) opened.push(placeBubble(overlay, head, argument));
+        if (head) placeBubble(opened, head, argument);
       }
     }).catch((error) => console.error(error)); // the card works without the bubbles
 
@@ -143,17 +147,22 @@ export function mountHazard(game, { stage, overlay }) {
     });
 
     stage.classList.add('hazard-open');
-    game.clock?.pause?.();
+    game.clock?.pause?.(CLOCK_REASON);
     buttons[0].focus();
   }
 
-  const shouldOpen = () => Boolean(game.state.pendingModel?.hazard) && game.queue.hazardChoice === undefined && !nodes;
+  // Another dialog or an event card already up goes first; the card opens when it closes.
+  const busy = () => Boolean(overlay.querySelector('.dialog-layer, .event-layer'));
+  const shouldOpen = () => Boolean(game.state.pendingModel?.hazard) && game.queue.hazardChoice === undefined
+    && !game.state.ending && !layer && !busy();
 
   function check() {
-    if (nodes && !game.state.pendingModel?.hazard) teardown(); // resolved some other way, such as the sim's own timeout
+    if (layer && (!game.state.pendingModel?.hazard || game.state.ending)) teardown(); // resolved some other way
     if (shouldOpen()) open();
   }
 
   game.subscribe(check);
+  overlay.addEventListener('event-card-closed', check);
+  overlay.addEventListener('gdt-dialog-closed', check);
   check();
 }

@@ -614,7 +614,7 @@ export const EVENTS = [
           },
         },
         {
-          id: 'move', label: 'Move the site', cost: 'two turns', backers: ['Comms'], opposers: ['Research'],
+          id: 'move', label: 'Move the site', cost: 'two months', backers: ['Comms'], opposers: ['Research'],
           effects(state) {
             const site = state.power.sites.find((candidate) => candidate.id === state.flags.oppositionSite);
             if (site) {
