@@ -3663,8 +3663,7 @@ button.dl-pill { font: inherit; font-size: 13px; font-weight: 900; color: var(--
 .intro-skip { padding: 4px 2px; border: 0; background: none; font: inherit; font-size: 13px; font-weight: 800; color: color-mix(in oklab, var(--ink) 55%, var(--paper)); cursor: pointer; }
 .intro-skip:hover { text-decoration: underline; }
 .intro-skip:focus-visible { outline: 3px solid var(--sky); outline-offset: 3px; border-radius: 4px; }
-.intro-bar .btn { width: 110px; }
-.intro-bar .btn[hidden] { display: none; }
+.intro-bar .btn { width: auto; min-width: 110px; padding-inline: 16px; }
 
 .naming-dialog .dlg { top: 210px; left: 470px; width: 500px; min-height: 0; padding-bottom: 22px; }
 .naming-body { display: grid; gap: 6px; text-align: left; }

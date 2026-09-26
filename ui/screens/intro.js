@@ -3,10 +3,11 @@ import { bubbleAt, el, loadAnchors } from '../components/eventBits.js';
 import { ADVISOR_TITLE } from '../logic/events.js';
 import { CLOCK_NOTE, TOUR, markTourSeen } from '../logic/intro.js';
 import { FAMILY_MAX, cleanFamily, needsFamilyName } from '../logic/naming.js';
-import { registerMenuHandler } from '../menu.js';
+import { openMenu, registerMenuHandler } from '../menu.js';
 import { openRecipe } from './recipe.js';
 
-const HOLDERS = '.dialog-layer, .event-layer, .title-layer'; // anything that holds the stage before the tour may start
+// Anything that holds the stage before the tour may start.
+const HOLDERS = '.dialog-layer, .event-layer, .title-layer, .menu-layer, .screenwall-layer';
 
 // The first-minute tour (owner pick B). The clock waits while the team talks; the last stop waits for the floor click.
 export function mountIntro(game, { stage, overlay, storage }) {
@@ -14,6 +15,7 @@ export function mountIntro(game, { stage, overlay, storage }) {
   let index = 0;
   let anchors = null;
   let watcher = null;
+  let starting = false;
 
   // A HUD element's box in stage coordinates (the page may be zoomed to fit the window).
   function stageBox(selector) {
@@ -100,22 +102,40 @@ export function mountIntro(game, { stage, overlay, storage }) {
     skip.textContent = last ? 'Close' : 'Skip the tour';
     skip.addEventListener('click', finish);
     const next = bar.querySelector('.intro-next');
-    next.hidden = last;
+    // On the last stop the button opens the same menu the floor does, so keyboard players can finish too.
+    if (last) next.textContent = 'Open the menu';
     next.addEventListener('click', () => {
+      if (last) {
+        openMenu(game, anchors.floorMenu, { overlay });
+        return;
+      }
       index += 1;
       show();
     });
     layer.append(bar);
-    (last ? skip : next).focus();
+    next.focus();
   }
 
   async function start() {
-    if (layer || game.state.ending) return;
-    anchors = await loadAnchors(game.state.era);
+    if (layer || starting || game.state.ending) return;
+    starting = true;
+    game.clock?.pause('intro'); // at once: no story day passes while the office art's anchors load
+    try {
+      anchors = await loadAnchors(game.state.era);
+    } catch (error) {
+      game.clock?.resume('intro');
+      throw error;
+    } finally {
+      starting = false;
+    }
+    if (game.state.ending || overlay.querySelector(HOLDERS)) { // something took the stage meanwhile: wait for it
+      game.clock?.resume('intro');
+      startWhenClear();
+      return;
+    }
     layer = el('<div class="intro-layer" role="dialog" aria-label="Meet your team"></div>');
     overlay.append(layer);
     index = 0;
-    game.clock?.pause('intro');
     document.addEventListener('keydown', onKey, true);
     // The tour ends when the player opens the floor menu on the last stop, as it asks.
     watcher = new MutationObserver(() => {
