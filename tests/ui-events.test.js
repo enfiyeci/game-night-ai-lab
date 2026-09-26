@@ -110,7 +110,9 @@ test('every card choice has a drafted consequence line', () => {
 });
 
 test('queue helpers merge instead of replacing', () => {
-  const game = createGame({ seed: 10, state: SCENARIOS.event(10) });
+  // Turn mode (no answerCard): answers wait in the queue, so helpers must merge, not replace.
+  const queue = { eventChoices: {}, addressWarnings: [] };
+  const game = { queue, setField(key, value) { queue[key] = value; return { ok: true }; } };
   queueAnswer(game, 'a', 'x');
   queueAnswer(game, 'b', 'y');
   assert.deepEqual(game.queue.eventChoices, { a: 'x', b: 'y' });
