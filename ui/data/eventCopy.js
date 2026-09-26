@@ -231,12 +231,12 @@ export const CONSEQUENCES = {
     refuse: 'Washington\'s request was refused, worsening the government relationship and sometimes exposing the lab to supply-chain trouble.', // OWNER WRITES
   },
   oversightTamper: {
-    shutdown: 'Internal deployment was shut down after the oversight attack.', // OWNER WRITES
-    controls: 'Internal use restarted under tighter controls, at a cost of $20M.', // OWNER WRITES
-    ignore: 'Nobody turned it off. The internal agents kept working, and the monitors kept watching.', // OWNER WRITES
+    shutdown: 'The agents were taken off the lab\'s own work. People picked it back up, slower.', // OWNER WRITES
+    controls: 'The agents went back to work with a second system watching every command they run.', // OWNER WRITES
+    ignore: 'Nobody switched it off. It kept working, and it kept the switch the way it liked it.', // OWNER WRITES
   },
   selfExfiltration: {
-    report: 'Internal use was shut down and Washington was notified. The disclosure damaged the lab\'s public standing.', // OWNER WRITES
+    report: 'The agents were stopped and Washington was told. It was a bad week in the press, and a hundred engineers moved to security.', // OWNER WRITES
     coverup: 'The logs were wiped. Everyone who saw the terminal learned to stop talking, and the copy was never found.', // OWNER WRITES
   },
   ownLine: {

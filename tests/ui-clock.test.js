@@ -14,12 +14,12 @@ const elapse = (clock, time, milliseconds, increment = 100) => {
   }
 };
 
-test('at x1 one round of story days takes 45 real seconds', () => {
+test('at x1 one round of story days takes 150 real seconds', () => {
   const time = { value: 0 };
   const game = fakeGame();
   const clock = createClock(game, { now: () => time.value });
   clock.step();
-  elapse(clock, time, 45_000);
+  elapse(clock, time, 150_000);
   assert.equal(game.days, 91);
 });
 
@@ -28,7 +28,7 @@ test('x4 runs four times as fast; pause stops time; reasons stack', () => {
   const game = fakeGame();
   const clock = createClock(game, { now: () => time.value });
   clock.setSpeed(4); clock.step();
-  elapse(clock, time, 45_000);
+  elapse(clock, time, 150_000);
   assert.equal(game.days, 364);
   clock.pause('dialog'); clock.pause('event-card');
   elapse(clock, time, 45_000);
@@ -57,8 +57,8 @@ test('fractional days carry over between steps', () => {
   const game = fakeGame();
   const clock = createClock(game, { now: () => time.value });
   clock.step();
-  elapse(clock, time, 10_000); // 10 s at 91 days / 45 s
-  assert.equal(game.days, Math.floor((10 * 91) / 45));
+  elapse(clock, time, 10_000); // 10 s at 91 days / 150 s
+  assert.equal(game.days, Math.floor((10 * 91) / 150));
 });
 
 test('a synchronous pause while advancing drops the rest of the days owed', () => {
@@ -88,7 +88,7 @@ test('a long stall advances no more than one second of story days', () => {
   clock.step();
   time.value += 60_000;
   clock.step();
-  assert.equal(game.days, 2);
+  assert.equal(game.days, 0);
 });
 
 test('a step crossing into era 3 uses era 3 timing for remaining real time', () => {
@@ -109,8 +109,7 @@ test('a step crossing into era 3 uses era 3 timing for remaining real time', () 
   };
   const clock = createClock(game, { now: () => time.value });
   clock.step();
-  time.value += 1_000;
-  clock.step();
+  elapse(clock, time, 2_000, 1_000);
   assert.equal(game.days, 1);
   assert.equal(state.era, 3);
 });
@@ -120,7 +119,7 @@ test('a speed change does not rescale time already owed', () => {
   const game = { state: { era: 1, day: 0, dayInRound: 0, ending: null }, days: 0, advanceDays(n) { this.days += n; this.state.day += n; } };
   const clock = createClock(game, { now: () => t });
   clock.step();
-  t = 400; clock.step(); // 400 ms at x1: less than one day (about 495 ms per day in era 1)
+  t = 400; clock.step(); // 400 ms at x1: less than one day (about 1,648 ms per day in era 1)
   clock.setSpeed(4);
   t = 401; clock.step();
   assert.equal(game.days, 0);

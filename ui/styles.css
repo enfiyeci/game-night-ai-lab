@@ -3611,3 +3611,5 @@ svg.room {
 .racks-safety { z-index: 5; width: 230px; --tail: 33px; }
 .racks-safety[hidden] { display: none; }
 .racks-panel .compute-toggle { padding-top: 8px; }
+/* The desk phone sits above dialogs and could open an event card over the choice; it steps away until then. */
+.hazard-open .ev-phone, .hazard-open .ev-phone-button { display: none; }
