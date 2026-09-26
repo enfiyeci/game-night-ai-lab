@@ -14,6 +14,8 @@ recommendation, and why it matters. Decided items move into the spec
 Decided 2026-09-25 and moved into the spec: era 5 pacing (spec 6e), misalignment during
 development (spec 6d), the constitution format and amendment sources (spec 6), and the
 difficulty target (spec 9).
+Decided 2026-09-26: the constitution appears only from era 3, as an optional training-recipe
+technique with the Head of Safety's draft document; no company constitution or motto (spec 6).
 
 ## B. Needed before content writing
 
