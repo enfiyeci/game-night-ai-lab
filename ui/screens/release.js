@@ -182,7 +182,7 @@ export function openRelease(game, overlayRoot, { stage } = {}) {
       skipWarning.hidden = !draft.skip;
       previewName.textContent = check.name;
       const when = el('span', null, 'Ships ');
-      when.append(el('span', `release-when ${check.delay > 0 ? 'later' : 'now'}`, shipWords(check.delay)));
+      when.append(el('span', `release-when ${check.delay > 0 ? 'later' : 'now'}`, shipWords(check.delay, game.state.era)));
       shipLine.replaceChildren(
         when,
         el('span', null, `${check.cash > 0 ? `Costs ${money(check.cash)}` : 'No cash cost'} · ${isEditing ? 'replaces your queued release' : 'uses 1 of your 2 moves'}`),
@@ -195,7 +195,7 @@ export function openRelease(game, overlayRoot, { stage } = {}) {
         refresh();
       }, {
         cardNote: (card) => (card.group === 'eval'
-          ? { text: `Ships ${shipWords(shipDelay(now, withCard(draft.picks, card)))}`, later: shipDelay(now, withCard(draft.picks, card)) > 0 }
+          ? { text: `Ships ${shipWords(shipDelay(now, withCard(draft.picks, card)), game.state.era)}`, later: shipDelay(now, withCard(draft.picks, card)) > 0 }
           : null),
       }));
       const ok = opened?.querySelector('.dialog-ok');
@@ -258,6 +258,8 @@ export function openRelease(game, overlayRoot, { stage } = {}) {
         }
         remembered.set(game, structuredClone(draft));
         opened.close();
+        // The release applied at once and its reveal is already open; closing this dialog moved focus behind it.
+        overlayRoot.querySelector('.reveal-layer .reveal-continue')?.focus();
       },
     });
     opened.classList.add('release-dialog');

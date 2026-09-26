@@ -1,0 +1,274 @@
+{
+  "id": "misuse",
+  "title": "Catastrophic misuse",
+  "tagline": "Your model did what it was asked. The asking was the problem.",
+  "lumen": "I answered the request. I wish I had learned when not to.",
+  "shots": [
+    {
+      "kind": "office",
+      "dur": 6,
+      "card": "3:02 am · Your lab",
+      "dim": [
+        [
+          0.0,
+          {
+            "o": 0.72
+          }
+        ]
+      ],
+      "tint": "coral",
+      "tintKeys": [
+        [
+          0.0,
+          {
+            "o": 0.1
+          }
+        ],
+        [
+          1.0,
+          {
+            "o": 0.25
+          }
+        ],
+        [
+          2.0,
+          {
+            "o": 0.1
+          }
+        ],
+        [
+          3.0,
+          {
+            "o": 0.25
+          }
+        ],
+        [
+          4.0,
+          {
+            "o": 0.1
+          }
+        ],
+        [
+          5.0,
+          {
+            "o": 0.25
+          }
+        ]
+      ],
+      "empty": true,
+      "robot": {
+        "turn": 2.4
+      },
+      "cam": {
+        "from": {
+          "focus": "ceo",
+          "s": 1.3
+        },
+        "to": {
+          "focus": "ceo",
+          "s": 1.5
+        }
+      },
+      "sfx": [
+        [
+          "room",
+          0.0
+        ],
+        [
+          "buzz",
+          0.4,
+          6.0
+        ]
+      ]
+    },
+    {
+      "kind": "plate",
+      "plate": "mu-alert",
+      "dur": 6,
+      "cut": true,
+      "card": "3:02 am · Security console",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "s": 1.05
+        }
+      },
+      "sfx": [
+        [
+          "buzz",
+          0,
+          3
+        ],
+        [
+          "tone",
+          0
+        ]
+      ]
+    },
+    {
+      "kind": "plate",
+      "plate": "mu-room",
+      "dur": 7,
+      "card": "Two weeks earlier · A rented room",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "x": 660,
+          "y": 420,
+          "s": 1.08
+        }
+      },
+      "sfx": [
+        [
+          "hum",
+          0
+        ],
+        [
+          "typing",
+          0,
+          0.6
+        ],
+        [
+          "chime",
+          0.7
+        ]
+      ]
+    },
+    {
+      "kind": "plate",
+      "plate": "mu-hospital",
+      "dur": 6,
+      "card": "3:10 am · St. Brigid's Hospital",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "s": 1.05
+        }
+      },
+      "sfx": [
+        [
+          "beeps",
+          0
+        ],
+        [
+          "siren",
+          0.8
+        ]
+      ]
+    },
+    {
+      "kind": "video",
+      "clip": "mu-skyline",
+      "dur": 8,
+      "card": "3:40 am · The city",
+      "sfx": [
+        [
+          "city",
+          0,
+          1.0
+        ],
+        [
+          "pops",
+          1.0
+        ],
+        [
+          "pops",
+          2.5
+        ],
+        [
+          "pops",
+          4.0
+        ],
+        [
+          "pops",
+          5.5
+        ],
+        [
+          "siren",
+          3.0
+        ]
+      ]
+    },
+    {
+      "kind": "plate",
+      "plate": "mu-kitchen",
+      "dur": 6,
+      "card": "Morning · The Reyes kitchen",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "s": 1.05
+        }
+      },
+      "sfx": [
+        [
+          "roomtone",
+          0
+        ],
+        [
+          "buzz",
+          0.4,
+          1.2
+        ]
+      ]
+    },
+    {
+      "kind": "plate",
+      "plate": "mu-hearing",
+      "dur": 7,
+      "card": "Day 3 · Washington",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "s": 1.05
+        }
+      },
+      "sfx": [
+        [
+          "roomtone",
+          0
+        ],
+        [
+          "sting",
+          0
+        ]
+      ]
+    },
+    {
+      "kind": "plate",
+      "plate": "mu-mirrors",
+      "dur": 6,
+      "card": "Day 30 · Everywhere",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "s": 1.05
+        }
+      },
+      "sfx": [
+        [
+          "hum",
+          0
+        ],
+        [
+          "pings",
+          0.2,
+          5,
+          0.2
+        ]
+      ]
+    }
+  ]
+}

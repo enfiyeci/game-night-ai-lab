@@ -1,9 +1,9 @@
 import { ERAS } from '../../sim/data/eras.js';
 
 const PACE = new Map([
-  [3, 'Each turn is now a quarter.'],
-  [1, 'Each turn is now a month.'],
-  [0.25, 'Each turn is now a week.'],
+  [3, 'The calendar runs by the quarter.'],
+  [1, 'Things speed up: every month counts now.'],
+  [0.25, 'Every week counts now.'],
 ]);
 
 const COPY = {
@@ -62,7 +62,7 @@ const COPY = {
 export const ERA_INTROS = ERAS.map(({ id, name, monthsPerTurn }) => ({
   era: id,
   name,
-  pace: id === 1 ? 'Each turn is a quarter.' : PACE.get(monthsPerTurn),
+  pace: PACE.get(monthsPerTurn),
   ...COPY[id],
 }));
 

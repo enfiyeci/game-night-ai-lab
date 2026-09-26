@@ -1,5 +1,6 @@
 import { openDialog } from '../components/dialog.js';
 import { eraById } from '../../sim/data/eras.js';
+import { roundWord } from '../../sim/time.js';
 import { teamPanel } from '../components/team.js';
 import { queuedMoveProblem } from '../logic/actions.js';
 import {
@@ -111,7 +112,7 @@ function commitmentPanel(game, state, selected, onAction) {
     ? `${money(view.billAfterRange[0])}–${money(view.billAfterRange[1])}/mo`
     : `${money(view.billAfter)}/mo`;
   billAfter.append(
-    element('span', '', `After signing, from turn ${view.afterFromTurn}`),
+    element('span', '', `After signing, from ${view.afterDate}`),
     element('b', 'after', afterBill),
   );
   const stack = element('div', 'commitment-stack');
@@ -199,7 +200,7 @@ export function openDeals(game, overlayRoot) {
     const gridOffer = state.compute.offers.find((offer) => offer.supplier === 'grid');
     let gridCard = null;
     if (gridOffer) {
-      let reason = game.movesLeft() === 0 ? 'Both moves are used this turn' : '';
+      let reason = game.movesLeft() === 0 ? `Both team actions are used this ${roundWord(state.era)}` : '';
       if (!reason) {
         const result = applyDealMove(structuredClone(state), { type: 'deal', offerId: gridOffer.id });
         reason = result.ok ? '' : result.error;
@@ -256,8 +257,8 @@ export function openDeals(game, overlayRoot) {
     }));
     const upfront = card?.upfront != null ? money(card.upfront) : card ? Object.fromEntries(card.rows).Upfront : 'none';
     note.textContent = upfront && upfront !== 'none'
-      ? `Signing uses 1 of 2 moves this turn · pay ${upfront} now`
-      : 'Signing uses 1 of 2 moves this turn · nothing to pay now';
+      ? `Signing uses 1 of your 2 team actions this ${roundWord(state.era)} · pay ${upfront} now`
+      : `Signing uses 1 of your 2 team actions this ${roundWord(state.era)} · nothing to pay now`;
     const ok = opened?.querySelector('.dialog-ok');
     if (ok) ok.disabled = !card || card.disabled;
     body.replaceChildren(group);
@@ -279,7 +280,7 @@ export function openDeals(game, overlayRoot) {
 
   opened = openDialog(overlayRoot, {
     title: 'Sign a compute deal',
-    subtitle: `Era ${initial.era} · ${eraById(initial.era).name} · offers change every turn`,
+    subtitle: `Era ${initial.era} · ${eraById(initial.era).name} · offers change every ${roundWord(initial.era)}`,
     left: { title: 'Team', content: teamPanel(initial, { opinions: opinions(initial, 'deals') }) },
     right: { title: 'Commitments', content: right },
     body,
@@ -356,15 +357,17 @@ export function openQueue(game, overlayRoot) {
     const state = preview.state;
     const view = queueView(state, { units, tier });
     const existingOrder = game.queue.moves.some((move) => move.type === 'queueOrder');
-    const moveReason = !existingOrder && game.movesLeft() === 0 ? 'Both moves are used this turn' : '';
+    const moveReason = !existingOrder && game.movesLeft() === 0
+      ? `Both team actions are used this ${roundWord(state.era)}`
+      : '';
     const orderReason = moveReason || preview.reason;
     allocation.replaceChildren();
     const head = element('div', 'queue-head');
     const supplyText = element('div');
-    supplyText.append(element('b', '', `${view.released} units`), document.createTextNode(' released this turn'));
+    supplyText.append(element('b', '', `${view.released} units`), document.createTextNode(` released this ${roundWord(state.era)}`));
     head.append(supplyText, element('span', '', 'prepaid orders are served first'));
     const supply = element('div', 'queue-supply');
-    supply.setAttribute('aria-label', "Who gets this turn's supply");
+    supply.setAttribute('aria-label', `Who gets this ${roundWord(state.era)}'s supply`);
     for (const row of view.rows.filter((item) => item.got > 0)) {
       const part = element('span', row.lab === 'you' ? 'you' : row.tier, `${row.name} ${row.got}`);
       part.style.flex = `${row.got} 1 0%`;
@@ -451,7 +454,7 @@ export function openQueue(game, overlayRoot) {
       if (orderReason) orderButton.title = orderReason;
       else orderButton.removeAttribute('title');
       const footer = element('div', 'queue-order-footer');
-      footer.append(element('span', '', orderReason || 'Uses 1 of 2 moves'), orderButton);
+      footer.append(element('span', '', orderReason || `Uses 1 of your 2 team actions this ${roundWord(state.era)}`), orderButton);
       order.append(footer);
     }
 
@@ -484,7 +487,7 @@ export function openQueue(game, overlayRoot) {
       const preview = queueOrderPreflight(game.state, game.queue, { units, tier });
       const existingOrder = game.queue.moves.some((move) => move.type === 'queueOrder');
       if (!preview.ok || (!existingOrder && game.movesLeft() === 0)) {
-        error.textContent = preview.reason || 'Both moves are used this turn';
+        error.textContent = preview.reason || `Both team actions are used this ${roundWord(game.state.era)}`;
         render();
         return;
       }

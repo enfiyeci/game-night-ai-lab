@@ -1,3 +1,4 @@
+import { roundWord } from '../../sim/time.js';
 import { registerMenuHandler } from '../menu.js';
 import {
   answersPayload,
@@ -54,10 +55,9 @@ function focusable(root) {
 
 export async function openPresident(game, overlayRoot, options = {}) {
   const meeting = meetingFor(game.state);
-  const alreadyQueued = () => game.queue.moves.some((move) => move.type === 'meeting');
-  if (!meeting || game.state.ending || alreadyQueued() || !overlayRoot || overlayRoot.querySelector('.dialog-layer')) return null;
+  if (!meeting || game.state.ending || !overlayRoot || overlayRoot.querySelector('.dialog-layer')) return null;
   const { svg, anchors } = await loadAssets();
-  if (!game.state.meeting || game.state.meeting.id !== meeting.id || game.state.ending || alreadyQueued()
+  if (!game.state.meeting || game.state.meeting.id !== meeting.id || game.state.ending
     || overlayRoot.querySelector('.dialog-layer')) return null;
 
   const previousFocus = document.activeElement;
@@ -195,14 +195,11 @@ export async function openPresident(game, overlayRoot, options = {}) {
   }
 
   function queueMeeting() {
-    const payload = answersPayload(meeting, picked);
-    const hadAnswers = Object.hasOwn(game.queue, 'presidentAnswers');
-    const previousAnswers = hadAnswers ? structuredClone(game.queue.presidentAnswers) : undefined;
-    game.setField('presidentAnswers', payload);
+    // Actions apply at once, so setField would flush the answers before the move arrives.
+    game.queue.presidentAnswers = answersPayload(meeting, picked);
     const result = game.addMove({ type: 'meeting' });
     if (!result.ok) {
-      if (hadAnswers) game.setField('presidentAnswers', previousAnswers);
-      else delete game.queue.presidentAnswers;
+      delete game.queue.presidentAnswers;
       const message = result.error[0].toUpperCase() + result.error.slice(1);
       errorView(message);
       return;
@@ -236,7 +233,7 @@ export async function openPresident(game, overlayRoot, options = {}) {
       return;
     }
     if (picked.length >= meeting.exchanges.length) {
-      finishView('The meeting is over. You will hear what he makes of it at the end of the turn.');
+      finishView('The meeting is over.');
       return;
     }
     current = picked.length;
@@ -273,7 +270,7 @@ export async function openPresident(game, overlayRoot, options = {}) {
       const notNow = el('button', 'pres-not-now', 'Not now');
       notNow.type = 'button';
       notNow.addEventListener('click', close);
-      later.append(el('span', null, 'He leaves if you do not meet him this turn.'), notNow);
+      later.append(el('span', null, `He leaves if you have not met him by the end of the ${roundWord(game.state.era)}.`), notNow);
       top.append(later);
     }
     top.append(stepBars());
@@ -362,7 +359,7 @@ export async function openPresident(game, overlayRoot, options = {}) {
 
   if (walkedOutAt !== null) walkOut();
   else if (picked.length >= meeting.exchanges.length) {
-    finishView('The meeting is over. You will hear what he makes of it at the end of the turn.');
+    finishView('The meeting is over.');
   } else renderExchange();
   requestAnimationFrame(() => layer.classList.add('dialog-open'));
   return layer;

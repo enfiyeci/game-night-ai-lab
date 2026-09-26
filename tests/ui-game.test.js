@@ -3,19 +3,24 @@ import assert from 'node:assert/strict';
 import { createGame } from '../ui/game.js';
 import { SCENARIOS } from '../ui/logic/scenarios.js';
 
-test('the game queues at most two moves and ends a turn through the sim', () => {
-  const g = createGame({ seed: 3 });
+test('the game allows at most two actions per round and keeps endTurn for tests', () => {
+  const state = SCENARIOS.start(3);
+  state.round.moves = 2;
+  const g = createGame({ seed: 3, state });
   const offerId = g.state.compute.offers.find((offer) => offer.supplier === 'coreflame').id;
-  assert.equal(g.movesLeft(), 2);
-  assert.equal(g.addMove({ type: 'deal', offerId }).ok, true);
-  assert.equal(g.addMove({ type: 'deal', offerId }).ok, true);
+  assert.equal(g.movesLeft(), 0);
   assert.equal(g.addMove({ type: 'deal', offerId }).ok, false);
+  const availableState = SCENARIOS.start(3);
+  availableState.round.moves = 1;
+  const available = createGame({ seed: 3, state: availableState });
+  assert.equal(available.addMove({ type: 'deal', offerId }).ok, true);
+  assert.equal(available.addMove({ type: 'deal', offerId }).ok, false);
   let seen = null;
-  g.subscribe((u) => (seen = u));
-  g.endTurn();
-  assert.equal(g.state.turn, 1);
+  available.subscribe((u) => (seen = u));
+  available.endTurn();
+  assert.equal(available.state.turn, 1);
   assert.equal(seen.state.turn, 1);
-  assert.equal(g.movesLeft(), 2);
+  assert.equal(available.movesLeft(), 2);
 });
 
 test('the same seed and inputs give the same state', () => {
@@ -54,4 +59,31 @@ test('the event scenario stops on the first turn with a pending card', () => {
 test('the President scenarios stop with the requested meeting open', () => {
   assert.equal(SCENARIOS.meeting(1).meeting?.id, 'first');
   assert.equal(SCENARIOS.meeting2(1).meeting?.id, 'second');
+});
+
+test('an action applies at once and the counter counts the round', () => {
+  const g = createGame({ seed: 1 });
+  assert.equal(g.movesLeft(), 2);
+  const r = g.setBudget({ spend: 40, split: { training: 0.5, security: 0.1, product: 0.2, talent: 0.2 } });
+  assert.equal(r.ok, true);
+  assert.equal(g.state.budget.spend, 40);
+});
+
+test('advancing days publishes every date and stops when the clock pauses', () => {
+  const g = createGame({ seed: 1 });
+  const days = [];
+  g.clock = { now: () => ({ paused: days.length >= 3 }) };
+  g.subscribe(({ state }) => { days.push(state.day); });
+  g.advanceDays(5);
+  assert.deepEqual(days, [1, 2, 3]);
+  assert.equal(g.state.day, 3);
+});
+
+test('advancing several days reports every day\'s events, not only the last', () => {
+  const g = createGame({ seed: 1 });
+  const seen = [];
+  g.subscribe((note) => seen.push(...note.events));
+  const r = g.advanceDays(95); // crosses the first quarter mark
+  assert.equal(g.state.turn, 1);
+  assert.deepEqual(r.events, seen);
 });

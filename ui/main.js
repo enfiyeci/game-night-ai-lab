@@ -1,9 +1,10 @@
 import { ENDINGS } from '../sim/endings.js';
+import { createClock } from './clock.js';
 import { createGame } from './game.js';
 import { mountHud } from './hud.js';
 import { mountOffice } from './office.js';
 import { SCENARIOS } from './logic/scenarios.js';
-import { dealCards, powerSitesAvailable, queueScreenAvailable } from './logic/compute.js';
+import { powerSitesAvailable, queueScreenAvailable } from './logic/compute.js';
 import { meetingFor } from './logic/president.js';
 import { openMenu } from './menu.js';
 import { openBudget } from './screens/budget.js';
@@ -23,6 +24,12 @@ import { openQueue } from './screens/compute.js';
 import { openPowerSites } from './screens/sites.js';
 import { mountHistory, openArticle, openHistory } from './screens/history.js';
 import { mountPresident, openPresident } from './screens/president.js';
+import { mountEvents } from './screens/events.js';
+import { mountBriefing } from './screens/briefing.js';
+import { mountFeed } from './screens/feed.js';
+import { mountEnding } from './screens/end.js';
+import { createCollection } from './logic/collection.js';
+import { lumenEpilogue } from '../sim/lumen.js';
 
 const params = new URLSearchParams(location.search);
 
@@ -60,7 +67,11 @@ const hud = document.querySelector('#hud');
 const overlay = document.querySelector('#overlay');
 
 mountHud(hud, game);
+game.clock = createClock(game);
 await mountOffice(office, fx, game).catch((error) => console.error(error));
+game.clock.watch(overlay);
+if (params.has('paused')) game.clock.setSpeed(0);
+game.clock.start();
 mountCompany(game, overlay);
 mountRecipe(game, overlay);
 mountRelease(game, overlay);
@@ -68,6 +79,25 @@ mountReveal(game, overlay);
 mountPresident(game, overlay);
 mountHistory(game, overlay);
 mountTurnSummary(overlay, game);
+const events = mountEvents(game, { stage, overlay });
+mountBriefing(game, { office, overlay });
+mountFeed(game, { overlay, events });
+
+function browserStorage() {
+  try {
+    return localStorage;
+  } catch {
+    const values = new Map();
+    return { getItem: (key) => values.get(key) ?? null, setItem: (key, value) => values.set(key, value) };
+  }
+}
+
+// Play again starts a fresh run: drop the debug seed and scenario so the run counter picks the next seed.
+const ending = mountEnding(game, overlay, {
+  collection: createCollection(browserStorage()),
+  onPlayAgain: () => location.assign(location.pathname),
+  lumenNote: (state) => lumenEpilogue(state),
+});
 
 function stagePoint(event) {
   const rect = stage.getBoundingClientRect();
@@ -77,22 +107,30 @@ function stagePoint(event) {
   ];
 }
 
+const blocked = () => Boolean(overlay.querySelector('.dialog-layer, .event-layer, .ev-phone'));
+
 office.addEventListener('click', (event) => {
-  if (event.target.closest?.('#person-ceo') && !overlay.querySelector('.dialog-layer')) {
+  if (event.target.closest?.('#person-ceo') && !blocked()) {
     openArticle(game, overlay);
     return;
   }
-  if (!event.target.closest?.('#floor') || overlay.querySelector('.dialog-layer')) return;
+  if (!event.target.closest?.('#floor') || blocked()) return;
   openMenu(game, stagePoint(event), { overlay });
 });
 
 office.addEventListener('keydown', (event) => {
   if ((event.key !== 'Enter' && event.key !== ' ') || !event.target.closest?.('#person-ceo')) return;
   event.preventDefault();
-  if (!overlay.querySelector('.dialog-layer')) openArticle(game, overlay);
+  if (!blocked()) openArticle(game, overlay);
 });
 
 async function openDebugRoute() {
+  if (game.state.ending) return; // a finished run shows only its end screen
+  const previewId = location.hash.match(/^#event-(\w+)$/)?.[1];
+  if (previewId) {
+    await events.preview(previewId);
+    return;
+  }
   const recipeStage = location.hash.match(/^#recipe([123])$/)?.[1];
   if (recipeStage) {
     openRecipe(game, overlay, { stage: Number(recipeStage) });
@@ -105,8 +143,7 @@ async function openDebugRoute() {
   if (location.hash === '#reveal') {
     if (!game.state.pendingModel) return;
     const draft = { ...releaseDraft(game.state), family: 'Kestrel', picks: ['eval-full'], reasoning: 'medium' };
-    game.addMove({ type: 'release', release: releasePayload(game.state, draft) });
-    game.endTurn();
+    game.addMove({ type: 'release', release: releasePayload(game.state, draft) }); // applies at once
     return;
   }
   if (location.hash === '#budget') {
@@ -135,12 +172,6 @@ async function openDebugRoute() {
   }
   if (location.hash === '#emergency') {
     openEmergency(game, overlay);
-    return;
-  }
-  if (location.hash === '#summary') {
-    const card = dealCards(game.state).find((offer) => !offer.disabled);
-    if (card) game.addMove(card.move);
-    game.endTurn();
     return;
   }
   if (location.hash === '#president' || location.hash === '#president-q2') {
@@ -176,6 +207,10 @@ addEventListener('hashchange', () => openDebugRoute().catch((error) => console.e
 
 if (game.state.ending && ENDINGS[game.state.ending]) {
   stage.setAttribute('aria-label', ENDINGS[game.state.ending].title);
+  ending.show({ save: false }); // already over when the page loaded: no click to start the film's sound, and not a run the player reached
 }
+game.subscribe(({ state }) => {
+  if (state.ending && ENDINGS[state.ending]) stage.setAttribute('aria-label', ENDINGS[state.ending].title);
+});
 
 globalThis.game = game;

@@ -1,6 +1,6 @@
 import { createInitialState } from '../../sim/state.js';
 import { createRng } from '../../sim/rng.js';
-import { endTurn } from '../../sim/turn.js';
+import { advanceDays, endTurn } from '../../sim/turn.js';
 import { cardById, cardUnlocked, recipeCost, slotsFor, validateRecipe } from '../../sim/recipe.js';
 import { availableUnits } from '../../sim/training.js';
 import { inDangerZone } from '../../sim/economy.js';
@@ -105,6 +105,20 @@ const releaseState = (seed) => throughTurn(seed, 3);
 const midEra3 = (seed) => throughTurn(seed, 12, (s) => s.era === 3 && s.activeRun !== null);
 const atEra = (seed, era) => throughTurn(seed, 20, (state) => state.era === era);
 
+function eventState(seed) {
+  const rng = createRng(seed);
+  let state = createInitialState({ seed });
+  const landed = (candidate) => candidate.pendingEvents.some((event) => event.landsAt <= candidate.day);
+  while (!state.ending && state.turn < 20 && !landed(state)) {
+    ({ state } = endTurn(state, scriptedActions(state), rng));
+    const nextLanding = Math.min(...state.pendingEvents.map((event) => event.landsAt));
+    if (Number.isFinite(nextLanding) && nextLanding > state.day) {
+      ({ state } = advanceDays(state, nextLanding - state.day, rng));
+    }
+  }
+  return state;
+}
+
 // An era-3 state with a trained model waiting to be released (for the release dialog and reveal screenshots).
 function readyToRelease(seed) {
   const rng = createRng(seed + 1000);
@@ -192,7 +206,7 @@ export const SCENARIOS = {
   era3Idle: (seed) => throughTurn(seed, 20, (s) => s.era === 3 && !s.activeRun && !s.pendingModel),
   release: releaseState,
   readyToRelease,
-  event: (seed) => throughTurn(seed, 20, (s) => s.pendingEvents.length > 0),
+  event: eventState,
   meeting: (seed) => throughTurn(seed, 20, (s) => s.meeting?.id === 'first'),
   // Seeds 1 and 2 end in era 4 under the current balance. The offset keeps debug seeds 1–4 on runs
   // that reach the second meeting while preserving the same scripted playthrough.

@@ -80,7 +80,6 @@ test('mood, hated word and outcome copy use the President UI contract', () => {
   assert.equal(hatedWord({ jargon: 0, text: 'No hidden label.' }), null);
   assert.equal(hatedWord({ jargon: 1, text: 'Plain words, then corrigibility!' }), 'corrigibility');
   assert.equal(hatedWord({ jargon: 2, text: 'Constitution-based harmlessness training.' }), 'Constitution');
-  assert.equal(outcomeLine({ walkedOut: true, stake: 'nationalChampion' }), 'The President walked out of the meeting, but still named you his national champion.');
   assert.equal(outcomeLine({ walkedOut: true, stake: 'none' }), 'The President walked out of the meeting.');
   assert.equal(outcomeLine({ walkedOut: false, stake: 'nationalChampion' }), 'The President named you his national champion.');
   assert.equal(outcomeLine({ walkedOut: false, stake: 'statePreemption' }), 'The President backed federal rules over state AI laws.');

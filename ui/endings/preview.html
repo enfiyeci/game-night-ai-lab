@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Ending film preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles.css">
+  <link rel="stylesheet" href="endings.css">
+  <style>
+    html, body { width: auto; height: 100%; margin: 0; background: var(--ink); }
+    .start { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; }
+    .start button { font: 900 22px "Nunito", sans-serif; padding: 16px 34px; border-radius: 14px; border: 3px solid var(--wood); background: var(--paper); color: var(--ink); cursor: pointer; }
+    .start button:focus-visible { outline: 3px solid var(--sky); outline-offset: 3px; }
+  </style>
+</head>
+<body>
+  <!-- ?id=misalignment&era=4 plays after a click (so the sound can start); &t=<seconds> freezes one frame.
+       For a film that follows the run: &deal=evaluators,sharedSafety&signers=lodestar,west (each signer signs every term). -->
+  <div class="start" id="start"><button type="button" disabled>Loading…</button></div>
+  <script type="module">
+    import { mountFilm } from './player.js';
+    const q = new URLSearchParams(location.search);
+    const start = document.getElementById('start');
+    const button = start.querySelector('button');
+    const list = (key) => q.get(key)?.split(',').filter(Boolean) ?? [];
+    const run = q.has('deal') ? { deal: { binding: list('deal'), signed: Object.fromEntries(list('deal').map((c) => [c, list('signers')])) } } : undefined;
+    try {
+      const film = await mountFilm(document.body, {
+        id: q.get('id') ?? 'misalignment', era: Number(q.get('era') ?? 4), base: '../../',
+        sound: !q.has('t'), onDone: () => location.reload(), run,
+      });
+      if (q.has('t')) { start.remove(); film.seek(Number(q.get('t'))); }
+      else {
+        button.disabled = false;
+        button.textContent = 'Play the ending';
+        button.addEventListener('click', () => { start.remove(); film.play(); });
+      }
+    } catch (error) {
+      button.textContent = `Could not load the film: ${error.message}`;
+    }
+  </script>
+</body>
+</html>

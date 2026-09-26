@@ -5,6 +5,7 @@ import { projectQueue } from '../ui/logic/compute.js';
 import { releaseDraft, releasePayload } from '../ui/logic/release.js';
 import { SCENARIOS } from '../ui/logic/scenarios.js';
 import { ITEMS, disabledReason } from '../ui/menu.js';
+import { MEETINGS } from '../sim/data/president.js';
 
 const handler = () => {};
 const reasonFor = (game, id) => disabledReason(ITEMS.find((item) => item.id === id), game, handler, projectQueue(game.state, game.queue));
@@ -20,42 +21,44 @@ const releaseMove = (game) => {
   return { type: 'release', release: releasePayload(game.state, draft) };
 };
 
-test('release stays open while a queued release can still be changed, even with both moves used', () => {
+// Real time: a release applies the moment it is confirmed, and the policy team is busy for the round.
+test('a release applies at once, and the policy team is busy until the next round mark', () => {
   const game = readyGame();
   assert.equal(reasonFor(game, 'release'), '');
-  game.addMove(releaseMove(game));
-  assert.equal(projectQueue(game.state, game.queue).pendingModel, null);
-  assert.equal(reasonFor(game, 'release'), '');
-  game.addMove({ type: 'constitution' });
-  assert.equal(game.movesLeft(), 0);
-  assert.equal(reasonFor(game, 'release'), '');
+  assert.equal(game.addMove(releaseMove(game)).ok, true);
+  assert.equal(game.state.pendingModel, null);
+  assert.equal(game.movesLeft(), 1);
+  assert.match(reasonFor(game, 'release'), /^The policy team is busy until Y\d+ M\d+ W\d$/);
 });
 
-test('release is closed with no finished model and nothing queued, and when both moves went elsewhere', () => {
+test('release is closed with no finished model, and when both team actions went elsewhere', () => {
   const game = readyGame();
   game.state.pendingModel = null;
   assert.equal(reasonFor(game, 'release'), 'Release needs a finished model');
 
   const busy = readyGame();
-  busy.addMove({ type: 'constitution' });
-  busy.addMove({ type: 'constitution' });
-  assert.equal(reasonFor(busy, 'release'), 'Both moves are used this turn');
+  busy.state.round.moves = 2;
+  assert.match(reasonFor(busy, 'release'), /^Both team actions are used this (quarter|month|week)$/);
 });
 
-test('other menu items still close when both moves are used, even with a release queued', () => {
+test('other menu items close when both team actions are used; the budget stays free', () => {
   const game = readyGame();
-  game.addMove(releaseMove(game));
-  game.addMove({ type: 'constitution' });
+  game.state.round.moves = 2;
   for (const id of ['training', 'internal', 'constitution', 'meeting']) {
     assert.notEqual(reasonFor(game, id), '', `${id} should be disabled`);
   }
-  for (const id of ['budget', 'endTurn']) assert.equal(reasonFor(game, id), '', `${id} stays free`);
-  assert.equal(ITEMS.filter((item) => item.editsQueued).map((item) => item.id).join(), 'release');
+  assert.equal(reasonFor(game, 'budget'), '', 'budget stays free');
+  assert.equal(ITEMS.some((item) => item.id === 'endTurn'), false);
 });
 
-test('meeting availability uses the live meeting and reports an already queued meeting', () => {
+test('meeting availability uses the live meeting and closes once he has been met', () => {
   const game = createGame({ seed: 1, state: SCENARIOS.meeting(1) });
   assert.equal(reasonFor(game, 'meeting'), '');
-  assert.equal(game.addMove({ type: 'meeting' }).ok, true);
-  assert.equal(reasonFor(game, 'meeting'), 'You already met him this turn');
+  game.queue.presidentAnswers = MEETINGS[0].exchanges.map((exchange) => exchange.answers[0].id);
+  const result = game.addMove({ type: 'meeting' });
+  assert.equal(result.ok, true);
+  // the answers ride in the same flush as the move, so this is a real meeting, not a walkout
+  assert.equal(result.events.find((event) => event.type === 'meetingOutcome')?.walkedOut, false);
+  assert.equal(game.state.meeting, null);
+  assert.notEqual(reasonFor(game, 'meeting'), '');
 });

@@ -300,10 +300,10 @@ export function openBudget(game, overlayRoot) {
   }
 
   opened = openDialog(overlayRoot, {
-    title: "Plan this turn's budget",
+    title: 'Plan the budget',
     subtitle: `Era ${state.era} · money for people and programs, compute for everything that runs`,
     left: { title: 'Team', content: team },
-    right: { title: 'This turn', content: right },
+    right: { title: 'Current budget', content: right },
     body,
     onOk() {
       const budget = budgetFromSliders(values, level, state.era);
@@ -332,7 +332,7 @@ export function openBudget(game, overlayRoot) {
   opened.classList.add('company-dialog', 'company-dialog-budget');
   const footer = element('div', 'company-footer budget-dialog-footer');
   footer.append(
-    element('div', 'company-footer-note', 'Budget changes are free · they apply from this turn'),
+    element('div', 'company-footer-note', 'Budget changes are free · they apply right away'),
     opened.querySelector('.dialog-ok'),
   );
   opened.querySelector('.dialog-body').append(footer);

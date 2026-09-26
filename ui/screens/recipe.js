@@ -14,7 +14,7 @@ import { teamPanel } from '../components/team.js';
 import { vslider } from '../components/vslider.js';
 import { cardCostWords, recipePreview, sanitizeDraft } from '../logic/actions.js';
 import { projectQueue } from '../logic/compute.js';
-import { computeAmount, money } from '../logic/format.js';
+import { computeAmount, money, roundsToWords } from '../logic/format.js';
 import { offeredCards } from '../logic/release.js';
 import { registerMenuHandler } from '../menu.js';
 
@@ -124,8 +124,8 @@ function allocationBar(alignShare) {
   return root;
 }
 
-function costText(card) {
-  const words = cardCostWords(card);
+function costText(card, era) {
+  const words = cardCostWords(card, era);
   return words.length > 0 ? words.join(' · ') : 'Free';
 }
 
@@ -215,7 +215,7 @@ export function techniquePanel(state, stage, draft, onChange, { cardNote } = {})
       }
       name.append(card.name);
       const cost = document.createElement('b');
-      cost.textContent = costText(card);
+      cost.textContent = costText(card, state.era);
       main.append(name, cost);
       const hint = document.createElement('span');
       hint.className = 'recipe-card-hint';
@@ -294,7 +294,7 @@ function computeFooter(state, preview, releaseEstimate = false) {
   if (releaseEstimate) {
     const estimate = document.createElement('div');
     estimate.className = 'recipe-compute-line';
-    estimate.textContent = 'Estimate: the model you release this turn will take some compute to serve.';
+    estimate.textContent = 'Estimate: the model you release will take some compute to serve.';
     meter.append(estimate);
   }
 
@@ -304,7 +304,7 @@ function computeFooter(state, preview, releaseEstimate = false) {
   cash.textContent = preview.cost?.cash ? `Cash ${money(preview.cost.cash)}` : 'No cash cost';
   const turns = document.createElement('span');
   const count = preview.cost?.turns ?? 0;
-  turns.textContent = `Takes ${count} ${count === 1 ? 'turn' : 'turns'}`;
+  turns.textContent = `Takes ${roundsToWords(state.era, count)}`;
   facts.append(cash, turns);
   root.append(meter, facts);
   return root;
@@ -410,7 +410,7 @@ export function openRecipe(game, overlayRoot, { stage = 1 } = {}) {
         notches: lengthKeys.map((length, index) => ({
           value: index,
           label: LENGTH_NAMES[length],
-          detail: LENGTHS[length].turns ? `+${LENGTHS[length].turns} ${LENGTHS[length].turns === 1 ? 'turn' : 'turns'}` : '',
+          detail: LENGTHS[length].turns ? `+${roundsToWords(state.era, LENGTHS[length].turns)}` : '',
           title: length === 'heavy' && ['large', 'xl'].includes(draft.sliders.size)
             ? 'Heavily overtrained needs a small or medium model' : '',
         })),

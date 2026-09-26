@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { compute, computeAmount, money, months, pct, users } from '../ui/logic/format.js';
+import { compute, computeAmount, money, months, pct, roundsToWords, users } from '../ui/logic/format.js';
 
 test('money, months, percentages and user counts', () => {
   assert.equal(money(412), '$412M');
@@ -22,11 +22,17 @@ test('compute uses power units from era 4', () => {
   assert.equal(compute({ online: 500, pipeline: [{ units: 100 }] }, 4), '850 MW online · 170 MW arriving');
 });
 
+test('round counts use story-time words for the current era', () => {
+  assert.equal(roundsToWords(1, 2), 'about 6 months');
+  assert.equal(roundsToWords(5, 2), 'about 2 weeks');
+  assert.equal(roundsToWords(5, 1), '7 days');
+});
+
 test('the project pill names the run after the next model in the family and tracks its stage', async () => {
   const { project } = await import('../ui/logic/format.js');
   const { createInitialState } = await import('../sim/state.js');
   const s = createInitialState();
-  assert.deepEqual(project(s), { name: 'No project', status: 'click the floor to plan your turn', progress: null });
+  assert.deepEqual(project(s), { name: 'No project', status: 'click the floor to get to work', progress: null });
   s.activeRun = { recipe: { sliders: { size: 'large', length: 'optimal', alignShare: 0.2 }, picks: { pre: [], mid: [], post: [] } }, turnsLeft: 3 };
   s.models.push({ family: 'Kestrel', generation: 3 });
   const p = project(s);

@@ -1,6 +1,8 @@
 import { recipeCost } from '../../sim/recipe.js';
 import { modelName } from '../../sim/release.js';
 import { MW_PER_UNIT } from '../../sim/data/compute.js';
+import { ROUND_DAYS } from '../../sim/time.js';
+import { ERAS } from '../../sim/data/eras.js';
 
 const trimOneDecimal = (value) => value.toFixed(1).replace(/\.0$/, '');
 
@@ -15,6 +17,26 @@ export function months(value) {
   if (!Number.isFinite(value) || value >= 36) return 'over 3 years';
   if (value < 1) return 'less than a month';
   return `about ${Math.round(value)} months`;
+}
+
+// "+2 turns" in story words for the current era: about 6 months, about 2 weeks.
+export function roundsToWords(era, n) {
+  const days = n * ROUND_DAYS[era];
+  if (days >= 60) return `about ${Math.round(days / 30.4)} months`;
+  if (days >= 14) return `about ${Math.round(days / 7)} weeks`;
+  return days === 1 ? '1 day' : `${days} days`;
+}
+
+export function storyDayForTurn(turn) {
+  let remaining = Math.max(0, Math.floor(turn));
+  let day = 0;
+  for (const era of ERAS) {
+    const rounds = Math.min(remaining, era.turns);
+    day += rounds * ROUND_DAYS[era.id];
+    remaining -= rounds;
+    if (remaining === 0) break;
+  }
+  return day;
 }
 
 export const pct = (value) => `${Math.round(value * 100)}%`;
@@ -49,7 +71,7 @@ export function project(state) {
   if (!run) {
     return state.pendingModel
       ? { name: 'Training complete', status: 'ready to release', progress: null }
-      : { name: 'No project', status: 'click the floor to plan your turn', progress: null };
+      : { name: 'No project', status: 'click the floor to get to work', progress: null };
   }
   const last = state.models.at(-1);
   const name = modelName({ family: last?.family ?? 'Kestrel', generation: (last?.generation ?? 0) + 1, size: run.recipe.sliders.size, tierWords: state.tierWords });

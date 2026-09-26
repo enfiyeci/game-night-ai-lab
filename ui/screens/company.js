@@ -14,6 +14,7 @@ import {
   runway,
 } from '../../sim/economy.js';
 import { TECHNIQUES, techAvailable } from '../../sim/techniques.js';
+import { roundWord } from '../../sim/time.js';
 
 const INVESTOR_COPY = {
   vc: { chip: 'Board seat', explanation: 'A growth fund joins the board.' },
@@ -190,8 +191,8 @@ export function openRaise(game, overlayRoot) {
     && state.flags.lastRoundEra !== state.era
     && projected.flags.lastRoundEra === projected.era;
   const reason = game.movesLeft() === 0
-    ? 'Both moves are used this turn'
-    : queued ? 'A round is already queued this turn'
+    ? `Both team actions are used this ${roundWord(state.era)}`
+    : queued ? `A funding round was already started this ${roundWord(state.era)}`
       : projected.era < 2 ? 'Funding rounds open in era 2'
         : projected.flags.lastRoundEra === projected.era ? 'You already raised a round this era' : '';
   const options = Object.entries(INVESTORS).map(([id, investor]) => ({
@@ -220,7 +221,7 @@ export function openRaise(game, overlayRoot) {
   }));
   group.append(...buttons);
   const error = errorBox();
-  const foot = footer('Raising uses 1 of 2 moves this turn');
+  const foot = footer(`Raising uses 1 of your 2 team actions this ${roundWord(state.era)}`);
   const rightContent = document.createElement('div');
   body.append(group, error);
 
@@ -303,8 +304,8 @@ export function openResearch(game, overlayRoot) {
     cost.append(amount, units, affordability);
     button.append(copy, cost);
     const reason = noMoves
-      ? 'Both moves are used this turn'
-      : queued.has(technique.id) ? 'This technique is already queued this turn'
+      ? `Both team actions are used this ${roundWord(state.era)}`
+      : queued.has(technique.id) ? `This technique was already started this ${roundWord(state.era)}`
         : techAvailable(projected, technique.id) ? 'This technique is already available'
           : projected.researchPoints < technique.researchCost ? 'Not enough research points' : '';
     disabledReason(button, reason);
@@ -318,7 +319,7 @@ export function openResearch(game, overlayRoot) {
     group.append(empty);
   }
   const error = errorBox();
-  const foot = footer('Researching early uses 1 of 2 moves this turn');
+  const foot = footer(`Researching early uses 1 of your 2 team actions this ${roundWord(state.era)}`);
   const rightContent = document.createElement('div');
   body.append(group, error);
 
@@ -335,10 +336,10 @@ export function openResearch(game, overlayRoot) {
       const available = buttons.some((button) => !button.disabled);
       const actionReason = selected
         ? ''
-        : noMoves ? 'Both moves are used this turn'
+        : noMoves ? `Both team actions are used this ${roundWord(state.era)}`
           : available ? 'Select a technique to research'
             : options.length === 0 ? 'Nothing to research early right now'
-              : 'No listed technique is affordable or available this turn';
+              : 'No listed technique is affordable or available right now';
       setActionDisabled(opened.querySelector('.dialog-ok'), actionReason);
     }
   }
@@ -394,16 +395,16 @@ export function openEmergency(game, overlayRoot) {
     explanation: option.consequence,
     disabled: noMoves || covered || outsideDangerZone || used.has(option.id) || queued.has(option.id),
     reason: noMoves
-      ? 'Both moves are used this turn'
+      ? `Both team actions are used this ${roundWord(state.era)}`
       : covered ? 'A queued move already covers the shortfall'
         : outsideDangerZone ? 'Emergency options open only when runway is short'
           : usedBefore.has(option.id) ? 'Already used'
-            : queued.has(option.id) ? 'This emergency option is already queued this turn'
+            : queued.has(option.id) ? `This emergency option was already started this ${roundWord(state.era)}`
               : used.has(option.id) ? 'Already used' : '',
   }));
   group.append(...buttons);
   const error = errorBox();
-  const foot = footer('Emergency help uses 1 of 2 moves this turn');
+  const foot = footer(`Emergency help uses 1 of your 2 team actions this ${roundWord(state.era)}`);
   const rightContent = document.createElement('div');
   body.append(group, error);
 
@@ -498,10 +499,10 @@ export function mountTurnSummary(overlayRoot, game) {
       const header = document.createElement('div');
       header.className = 'turn-summary-header';
       const title = document.createElement('strong');
-      title.textContent = 'This turn';
+      title.textContent = 'Just now';
       const close = document.createElement('button');
       close.type = 'button';
-      close.setAttribute('aria-label', 'Dismiss turn summary');
+      close.setAttribute('aria-label', 'Dismiss');
       close.textContent = '×';
       close.addEventListener('click', dismiss);
       header.append(title, close);
@@ -527,9 +528,14 @@ export function mountTurnSummary(overlayRoot, game) {
   const onDialogClosed = () => schedule();
   overlayRoot.addEventListener('gdt-dialog-closed', onDialogClosed);
   const unsubscribe = game.subscribe(({ state, events, errors }) => {
-    if (pendingFrame !== null) cancelAnimationFrame(pendingFrame);
-    pendingFrame = null;
-    removeToast();
+    if (state.ending) { // the ending film and the end-of-run screen replace the summary
+      if (pendingFrame !== null) cancelAnimationFrame(pendingFrame);
+      pendingFrame = null;
+      removeToast();
+      pendingSummaries = null;
+      return;
+    }
+    // Subscribers fire every story day; a quiet day keeps whatever toast is showing.
     const meetingEnded = events.some((event) => event.type === 'meetingOutcome');
     const skippedMeeting = new Set(['take the President meeting with a meeting move', 'President answers require a meeting move']);
     const summaries = turnSummary([
@@ -539,7 +545,11 @@ export function mountTurnSummary(overlayRoot, game) {
     for (const event of events) {
       if (event.type === 'meetingOutcome') summaries.push(outcomeLine(event));
     }
-    pendingSummaries = summaries.length > 0 ? summaries : null;
+    if (summaries.length === 0) return;
+    if (pendingFrame !== null) cancelAnimationFrame(pendingFrame);
+    pendingFrame = null;
+    removeToast();
+    pendingSummaries = summaries;
     schedule();
   });
 

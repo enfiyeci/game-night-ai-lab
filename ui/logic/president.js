@@ -51,9 +51,7 @@ const STAKE_CLAUSES = {
 };
 
 export function outcomeLine(event) {
+  if (event?.walkedOut) return 'The President walked out of the meeting.';
   const clause = STAKE_CLAUSES[event?.stake];
-  if (event?.walkedOut) {
-    return clause ? `The President walked out of the meeting, but still ${clause}` : 'The President walked out of the meeting.';
-  }
   return clause ? `The President ${clause}` : 'The President thanked you for your time. Nothing came of it.';
 }
