@@ -101,7 +101,7 @@ test('focus sliders are neutral at the start split and when absent', async () =>
   // Doubling every weight keeps the same shares.
   const doubled = Object.fromEntries(Object.entries(start).map(([stage, values]) => [stage, values.map((value) => value * 2 > 100 ? 100 : value * 2)]));
   doubled.post = [60, 20, 20];
-  assert.equal(validateRecipe(s, { ...eraOneRecipe, focus: doubled }).ok, true);
+  assert.equal(validateRecipe(s, { ...eraOneRecipe, sliders: { ...eraOneRecipe.sliders, alignShare: 0.2 }, focus: doubled }).ok, true);
 });
 
 test('focus sliders trade capability against readiness, misuse and spikes', async () => {
@@ -122,4 +122,24 @@ test('invalid focus sliders fail validation', () => {
   for (const pre of [[0, 0, 0], [50, 50], [-1, 50, 50], [50, 50, Number.NaN], [150, 0, 0]]) {
     assert.equal(validateRecipe(s, { ...eraOneRecipe, focus: { pre } }).ok, false, `${pre}`);
   }
+});
+
+test('focus validation rejects sparse arrays, a mismatched alignment share and closed-stage focus', () => {
+  const s = createInitialState();
+  const sparse = [50, 50, 50];
+  delete sparse[1];
+  assert.equal(validateRecipe(s, { ...eraOneRecipe, focus: { pre: sparse } }).ok, false);
+  const post = { ...eraOneRecipe, focus: { post: [20, 70, 10] } };
+  assert.equal(validateRecipe(s, post).ok, false); // alignShare 0.15 but Values says 0.5
+  assert.equal(validateRecipe(s, { ...post, sliders: { ...post.sliders, alignShare: 0.5 } }).ok, true);
+  assert.equal(validateRecipe(s, { ...eraOneRecipe, focus: { mid: [40, 30, 30] } }).ok, false);
+});
+
+test('focus effects are fixed when the run starts', async () => {
+  const { startRun } = await import('../sim/training.js');
+  const s = createInitialState();
+  s.compute.online = 50;
+  const result = startRun(s, { ...eraOneRecipe, focus: { pre: [100, 0, 0] } });
+  assert.equal(result.ok, true, result.error);
+  assert.ok(s.activeRun.focus.cap > 0);
 });

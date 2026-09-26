@@ -146,7 +146,8 @@ export function sanitizeDraft(state, draft) {
   for (const stage of TRAIN_STAGES) {
     const values = draft?.focus?.[stage];
     if (!Array.isArray(values) || values.length !== 3) continue;
-    const clean = values.map((value) => Math.round(Math.max(0, Math.min(100, Number.isFinite(value) ? value : 0))));
+    if (stage === 'mid' && slotsFor(state, 'mid') === 0) continue;
+    const clean = [0, 1, 2].map((index) => Math.round(Math.max(0, Math.min(100, Number.isFinite(values[index]) ? values[index] : 0))));
     if (clean.some((value) => value > 0)) focus[stage] = clean;
   }
   const hasFocus = Object.keys(focus).length > 0;

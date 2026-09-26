@@ -68,10 +68,14 @@ export function focusShares(recipe, stage) {
 }
 
 function validFocus(values) {
-  return Array.isArray(values) && values.length === 3
-    && values.every((value) => Number.isFinite(value) && value >= 0 && value <= 100)
-    && values.some((value) => value > 0);
+  if (!Array.isArray(values) || values.length !== 3) return false;
+  // Index every slot so a sparse array's holes fail too.
+  const list = [0, 1, 2].map((index) => values[index]);
+  return list.every((value) => Number.isFinite(value) && value >= 0 && value <= 100) && list.some((value) => value > 0);
 }
+
+// With post-training focus, the alignment share is the Values share of that time, capped at half.
+export const valuesAlignShare = (recipe) => Math.min(0.5, focusShares(recipe, 'post')[1]);
 
 // Effects of moving the focus sliders away from their start split; all zero at the start split.
 // Values time is not here: it reaches the sim as sliders.alignShare.
@@ -98,6 +102,10 @@ export function validateRecipe(state, recipe) {
   const { size, length, alignShare } = recipe.sliders;
   for (const stage of TRAIN_STAGES) {
     if (recipe.focus?.[stage] !== undefined && !validFocus(recipe.focus[stage])) errors.push(`${stage}: invalid focus sliders`);
+  }
+  if (recipe.focus?.mid !== undefined && slotsFor(state, 'mid') === 0) errors.push('mid: focus sliders for a stage that is not open');
+  if (validFocus(recipe.focus?.post) && Math.abs(alignShare - valuesAlignShare(recipe)) > 0.006) {
+    errors.push('alignShare must match the Values slider');
   }
   if (!Object.hasOwn(SIZE_UNITS, size)) errors.push(`unknown size ${size}`);
   if (size === 'xl' && state.era < 2) errors.push('the xl size unlocks in era 2');

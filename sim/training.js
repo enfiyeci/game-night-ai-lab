@@ -20,7 +20,9 @@ export function startRun(state, recipe) {
   if (cost.units > availableUnits(state)) return { ok: false, error: 'not enough free compute' };
   const spikeChance = recipeCards(state, recipe).reduce((p, c) => p + (c.effects.spike ?? 0), 0.1) + focusEffects(state, recipe).spike;
   state.cash -= cost.cash;
-  state.activeRun = { recipe: structuredClone(recipe), units: cost.units, turnsLeft: cost.turns, spikes: 0, spikeChance: Math.max(0, spikeChance), bonus: 0 };
+  // Focus effects are fixed when the run starts, so a stage that opens mid-run cannot change them.
+  const focus = focusEffects(state, recipe);
+  state.activeRun = { recipe: structuredClone(recipe), units: cost.units, turnsLeft: cost.turns, spikes: 0, spikeChance: Math.max(0, spikeChance), bonus: 0, focus };
   return { ok: true, cost };
 }
 
@@ -58,7 +60,7 @@ export function resolveRun(state, run, rng) {
   const { size, length, alignShare } = run.recipe.sliders;
   const cards = recipeCards(state, run.recipe);
   const autos = standardTechniques(state).map((t) => t.auto).filter(Boolean);
-  const { readiness: focusReadiness, spike: _focusSpike, ...focus } = focusEffects(state, run.recipe);
+  const { readiness: focusReadiness, spike: _focusSpike, ...focus } = run.focus ?? focusEffects(state, run.recipe);
   const effects = [
     ...cards.map((card) => {
       if (card.id === 'thumbs' && hasLine(state, 'no-manipulation')) {

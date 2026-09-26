@@ -34,6 +34,9 @@ const STAGE_NAMES = { pre: 'Pretraining', mid: 'Midtraining', post: 'Post-traini
 const GROUP_NAMES = {
   data: 'Data',
   arch: 'Architecture',
+  optim: 'Optimizer and precision',
+  tokens: 'Tokens and prediction',
+  modality: 'What it reads',
   stability: 'Stability',
   hazard: 'Hazard filtering',
   anneal: 'Anneal',
@@ -195,8 +198,9 @@ function focusBlock(stage, currentDraft, onChange) {
       reaction.classList.add('fresh');
     }
   };
+  const sliderList = [];
   FOCUS[stage].forEach((slider, index) => {
-    sliders.append(vslider({
+    sliderList[index] = vslider({
       label: slider.name,
       value: values()[index],
       min: 0,
@@ -206,11 +210,18 @@ function focusBlock(stage, currentDraft, onChange) {
       formatValue: () => '',
       ariaValueText: () => `${shares()[index]} percent of this stage's time`,
       onInput(value) {
+        const others = values().reduce((sum, other, at) => sum + (at === index ? 0 : other), 0);
+        // All three at zero would leave no time to split, so the last slider keeps a sliver.
+        if (value === 0 && others === 0) {
+          value = 1;
+          sliderList[index].setValue(1, false);
+        }
         currentDraft().focus[stage][index] = value;
         render();
         onChange();
       },
-    }));
+    });
+    sliders.append(sliderList[index]);
   });
   render();
   root.append(sliders, label, bar, reaction);
