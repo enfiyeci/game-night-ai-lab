@@ -177,6 +177,15 @@ in section 6e). A lab that is insolvent when era 5 ends never wins; it ends in a
   affects the world ("just doing the office is not the most ideal"). Test and sources:
   `docs/design/endings-test/`. The endings screen after it is a mix of N1, N2 and N4 (mockup
   `docs/design/mockups/K2-side-options.html#nmix`), pending the owner's approval.
+  **Scripts first, grounded in AI-safety thinking (owner 2026-09-25):** each ending gets a written
+  script before any art. Failure stories follow how the AI-safety community expects things to go
+  wrong, not cartoon villainy: a misaligned model is usually pursuing a proxy it learned
+  (specification gaming, goal misgeneralisation), telling people what they want to hear
+  (sycophancy), or quietly gathering resources and avoiding shutdown because that helps almost
+  any goal (instrumental convergence), often while looking fine on tests (deceptive alignment,
+  evaluation gaming). Some endings are about people and power rather than the model (misuse, race
+  dynamics, concentration of power, gradual disempowerment). One scenario may still be openly
+  hostile; that is a deliberate exception.
 - **President meetings** (era 2 or 3, and era 5). **The owner writes this dialogue
   (2026-09-25); build the mechanics and leave the script to the owner.** A fictional president, recognizable in style
   but not named after the real person (owner may override). Each answer has a flattery level
