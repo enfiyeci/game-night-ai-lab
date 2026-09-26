@@ -86,7 +86,7 @@ test('every film names a real ending, and every asset it uses exists', () => {
       if (shot.kind === 'plate') assert.ok(existsSync(`ui/assets/endings/plates/${shot.plate}.svg`), `plate ${shot.plate} exists`);
       else if (shot.kind === 'video') assert.ok(existsSync(`ui/assets/endings/clips/${shot.clip}.mp4`), `clip ${shot.clip} exists`);
       else assert.equal(shot.kind, 'office');
-      for (const b of shot.bubbles ?? []) assert.ok(roles.has(b.who), `${film.id}: ${b.who} has a desk`);
+      for (const b of shot.bubbles ?? []) assert.ok(roles.has(b.who) || (b.who === 'lumen' && shot.robot), `${film.id}: ${b.who} has a desk`);
       for (const role of shot.leave?.order ?? []) assert.ok(roles.has(role), `${film.id}: ${role} can leave a desk`);
       for (const role of [shot.robot?.from, shot.robot?.to].filter(Boolean)) assert.ok(roles.has(role), `${film.id}: Lumen moves by ${role}'s desk`);
       for (const v of [shot.cam?.from, shot.cam?.to]) if (v?.focus) assert.ok(roles.has(v.focus), `${film.id}: camera focus ${v.focus}`);

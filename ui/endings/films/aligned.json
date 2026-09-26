@@ -1,0 +1,33 @@
+{
+  "id": "aligned",
+  "title": "Aligned success",
+  "tagline": "You reached the frontier and kept your model trustworthy.",
+  "lumen": "I became more capable without becoming less honest. We did that together.",
+  "titleClip": "al-skyline-title",
+  "titleSfx": [["chord", 0]],
+  "shots": [
+    {
+      "kind": "office", "dur": 5.5, "card": "Morning · Your lab",
+      "dim": [[0, {"o": 0.12}]],
+      "bubbles": [
+        {"who": "safety", "at": 0.2, "to": 1.5, "text": "Shutdown drill. Three, two, one."},
+        {"who": "lumen", "at": 1.0, "to": 1.85, "text": "This week's eval results show..."},
+        {"who": "lumen", "at": 3.2, "to": 5.5, "text": "...show no regressions."}
+      ],
+      "robot": {"off": [1.8, 2.9], "turn": 3.0},
+      "confetti": {"who": "cfo", "at": 4.2},
+      "cam": {"from": {"focus": "ceo", "s": 1.2}, "to": {"focus": "ceo", "s": 1.4}},
+      "sfx": [["room", 0], ["powerdown", 1.8, 2.7], ["chime", 3.0], ["party", 4.2]]
+    },
+    {"kind": "plate", "plate": "al-triage", "dur": 3, "cut": true, "card": "Night · St. Brigid's Hospital",
+     "cam": {"from": {"s": 1.0}, "to": {"s": 1.05}}, "sfx": [["beeps", 0], ["notify", 0.4], ["tick", 1.7]]},
+    {"kind": "plate", "plate": "al-chat", "dur": 3, "cut": true, "card": "Evening · The Reyes kitchen",
+     "cam": {"from": {"s": 1.0}, "to": {"s": 1.05}}, "sfx": [["fridge", 0], ["notify", 0.5], ["pen", 1.6]]},
+    {"kind": "plate", "plate": "al-news", "dur": 4, "card": "Month 2 · Washington",
+     "cam": {"from": {"s": 1.0}, "to": {"s": 1.05}}, "sfx": [["roomtone", 0], ["sting", 0]]},
+    {"kind": "plate", "plate": "al-cafe", "dur": 3, "card": "Month 6 · Dot's café",
+     "cam": {"from": {"s": 1.0}, "to": {"s": 1.06}}, "sfx": [["room", 0], ["party", 0]]},
+    {"kind": "video", "clip": "al-skyline", "dur": 5, "card": "Year 1 · The city",
+     "sfx": [["city", 0], ["chord", 0.5]]}
+  ]
+}

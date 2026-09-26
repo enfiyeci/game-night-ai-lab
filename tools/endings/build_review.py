@@ -1,101 +1,113 @@
 #!/usr/bin/env python3
-"""Bundle one ending film into a single self-contained HTML page for review (published as a private artifact).
+"""Bundle ending films into one review page with a film picker (published as a private multi-file artifact).
 
-Everything the player fetches (the shot list, plates, clips, office art for all five eras, anchors) is inlined and
-served by a small fetch shim; the sound and the clips are data URIs. The player code is inlined from ui/endings/, unchanged apart from
-its import/export lines.
+Writes <out_dir>/index.html plus every file the player fetches, at the same relative paths as in the repo
+(ui/endings/*.js, ui/endings/films/<id>.json, plates, clips, sounds, and the office art for all five eras), so the
+player runs unchanged. The page lists each film with its length; pick one, pick the office era, and play.
 
-Run: python3 tools/endings/build_review.py misalignment <out.html>
+Run: python3 tools/endings/build_review.py <out_dir> misalignment quietTakeover aligned
+     Publish <out_dir>/index.html with the other files in <out_dir> as the artifact's supporting files.
 """
-import base64
 import json
 import re
+import shutil
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def module_body(path):
-    src = (ROOT / path).read_text()
-    src = re.sub(r"^import .*?;\n", "", src, flags=re.M)
-    return re.sub(r"^export ", "", src, flags=re.M)
-
-
-def build(film_id, out):
+def film_files(film_id):
     film = json.loads((ROOT / f"ui/endings/films/{film_id}.json").read_text())
-    assets = {f"ui/endings/films/{film_id}.json": json.dumps(film)}
-    for name in {s["plate"] for s in film["shots"] if s.get("plate")}:
-        assets[f"ui/assets/endings/plates/{name}.svg"] = (ROOT / f"ui/assets/endings/plates/{name}.svg").read_text()
-    for name in {s["clip"] for s in film["shots"] if s.get("clip")} | ({film["titleClip"]} if film.get("titleClip") else set()):
-        data = (ROOT / f"ui/assets/endings/clips/{name}.mp4").read_bytes()
-        assets[f"ui/assets/endings/clips/{name}.mp4"] = "data:video/mp4;base64," + base64.b64encode(data).decode()
-    for era in range(1, 6):
-        assets[f"ui/assets/office-era{era}.svg"] = (ROOT / f"ui/assets/office-era{era}.svg").read_text()
-        assets[f"ui/assets/anchors-era{era}.json"] = (ROOT / f"ui/assets/anchors-era{era}.json").read_text()
-    audio = "data:audio/mp4;base64," + base64.b64encode((ROOT / f"ui/assets/endings/{film_id}.m4a").read_bytes()).decode()
-    tokens = re.search(r":root\s*\{.*?\}", (ROOT / "ui/styles.css").read_text(), re.S).group(0)
-    css = (ROOT / "ui/endings/endings.css").read_text() + "\n" + tokens   # endings.css opens with an @import
+    files = [f"ui/endings/films/{film_id}.json", f"ui/assets/endings/{film_id}.m4a"]
+    files += [f"ui/assets/endings/plates/{s['plate']}.svg" for s in film["shots"] if s.get("plate")]
+    clips = [s["clip"] for s in film["shots"] if s.get("clip")] + ([film["titleClip"]] if film.get("titleClip") else [])
+    files += [f"ui/assets/endings/clips/{c}.mp4" for c in clips]
     total = sum(s["dur"] for s in film["shots"]) + film.get("titleDur", 7)
-    page = f"""<title>{film['title']} film</title>
+    return film, files, total
+
+
+def build(out, ids):
+    out = Path(out)
+    out.mkdir(parents=True, exist_ok=True)
+    shared = ["ui/endings/player.js", "ui/endings/timeline.js", "ui/endings/endings.css"]
+    shared += [f"ui/assets/office-era{e}.svg" for e in range(1, 6)] + [f"ui/assets/anchors-era{e}.json" for e in range(1, 6)]
+    films = []
+    for fid in ids:
+        film, files, total = film_files(fid)
+        films.append((fid, film["title"], round(total)))
+        shared += files
+    for rel in dict.fromkeys(shared):
+        dest = out / rel
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(ROOT / rel, dest)
+    tokens = re.search(r":root\s*\{.*?\}", (ROOT / "ui/styles.css").read_text(), re.S).group(0)
+    buttons = "".join(f'<button type="button" class="pick" data-id="{fid}" aria-pressed="{str(i == 0).lower()}">'
+                      f'<span>{title}</span><small>{secs} s</small></button>' for i, (fid, title, secs) in enumerate(films))
+    page = f"""<title>Game Night ending films</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800;900&display=swap">
+<link rel="stylesheet" href="ui/endings/endings.css">
 <style>
-{css}
+{tokens}
 html, body {{ background: var(--ink); color: var(--paper); }}
 body {{ margin: 0; font-family: "Nunito", "Trebuchet MS", sans-serif; padding-inline: 16px; }}
-.intro {{ max-width: 720px; margin: 0 auto; padding-block: 12vh 40px; display: grid; gap: 18px; }}
+.intro {{ max-width: 760px; margin: 0 auto; padding-block: 10vh 48px; display: grid; gap: 20px; }}
 .kick {{ font-size: 12px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; color: color-mix(in oklab, var(--wood) 70%, var(--paper)); }}
-h1 {{ margin: 0; font-size: clamp(30px, 5vw, 48px); font-weight: 900; line-height: 1.05; text-wrap: balance; }}
+h1 {{ margin: 0; font-size: clamp(30px, 5vw, 46px); font-weight: 900; line-height: 1.05; text-wrap: balance; }}
 p {{ margin: 0; font-size: 17px; line-height: 1.55; color: color-mix(in oklab, var(--paper) 82%, var(--ink)); max-width: 62ch; }}
+.films {{ display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }}
+.pick {{ font: 800 16px "Nunito", sans-serif; text-align: left; padding: 12px 14px; border-radius: 10px; cursor: pointer;
+  border: 2px solid color-mix(in oklab, var(--paper) 25%, var(--ink)); background: transparent; color: var(--paper);
+  display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }}
+.pick small {{ font-weight: 700; color: color-mix(in oklab, var(--paper) 60%, var(--ink)); }}
+.pick[aria-pressed="true"] {{ background: var(--paper); color: var(--ink); border-color: var(--paper); }}
+.pick[aria-pressed="true"] small {{ color: color-mix(in oklab, var(--ink) 60%, var(--paper)); }}
 .row {{ display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }}
 .row span {{ font-size: 14px; font-weight: 800; margin-right: 4px; }}
 .era {{ font: 800 15px "Nunito", sans-serif; padding: 8px 14px; border-radius: 10px; border: 2px solid color-mix(in oklab, var(--paper) 30%, var(--ink));
   background: transparent; color: var(--paper); cursor: pointer; }}
 .era[aria-pressed="true"] {{ background: var(--paper); color: var(--ink); border-color: var(--paper); }}
 .play {{ font: 900 20px "Nunito", sans-serif; padding: 14px 30px; border-radius: 14px; border: 3px solid var(--wood); background: var(--paper); color: var(--ink); cursor: pointer; justify-self: start; }}
-.era:focus-visible, .play:focus-visible {{ outline: 3px solid var(--sky); outline-offset: 3px; }}
+.pick:focus-visible, .era:focus-visible, .play:focus-visible {{ outline: 3px solid var(--sky); outline-offset: 3px; }}
 </style>
 <div class="intro">
-  <div class="kick">Game Night &middot; ending film</div>
-  <h1>{film['title']}</h1>
-  <p>Your office, then the world through the screens people were looking at and wide shots rendered in Blender, then the title card and Lumen's last line. About {round(total)} seconds, with sound.</p>
-  <p>Pick the era your lab ended in (it changes the office), then play. Skip or Escape ends it early.</p>
+  <div class="kick">Game Night &middot; ending films</div>
+  <h1>Ending films, 30-second cuts</h1>
+  <p>Each film opens in your office, then shows the world through the screens people were looking at and wide shots rendered in Blender, then the title card and Lumen's last line. Sound on.</p>
+  <div class="films" role="group" aria-label="Film">{buttons}</div>
   <div class="row" role="group" aria-label="Office era"><span>Office era</span>
     {''.join(f'<button type="button" class="era" data-era="{e}" aria-pressed="{str(e == 4).lower()}">{e}</button>' for e in range(1, 6))}</div>
-  <button type="button" class="play" id="play">Play the ending</button>
+  <p>Skip or Escape ends a film early.</p>
+  <button type="button" class="play" id="play">Play</button>
 </div>
 <script type="module">
-const ASSETS = {json.dumps(assets)};
-const realFetch = globalThis.fetch.bind(globalThis);
-globalThis.fetch = (url, opts) => {{
-  if (!(url in ASSETS)) return realFetch(url, opts);
-  const value = ASSETS[url];
-  if (!value.startsWith('data:')) return Promise.resolve(new Response(value));
-  // decode data URIs here: the artifact viewer's content policy may refuse fetch() of a data: URL
-  const [head, body] = value.split(',');
-  const bytes = Uint8Array.from(atob(body), (c) => c.charCodeAt(0));
-  return Promise.resolve(new Response(new Blob([bytes], {{ type: head.slice(5).split(';')[0] }})));
-}};
-const AUDIO = "{audio}";
-{module_body("ui/endings/timeline.js")}
-{module_body("ui/endings/player.js")}
+import {{ mountFilm }} from './ui/endings/player.js';
 let era = 4;
-document.querySelectorAll('.era').forEach((b) => b.addEventListener('click', () => {{
-  era = Number(b.dataset.era);
-  document.querySelectorAll('.era').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+let id = {json.dumps(ids[0])};
+const choose = (sel, key, set) => document.querySelectorAll(sel).forEach((b) => b.addEventListener('click', () => {{
+  set(b.dataset[key]);
+  document.querySelectorAll(sel).forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
 }}));
+choose('.era', 'era', (v) => {{ era = Number(v); }});
+choose('.pick', 'id', (v) => {{ id = v; }});
 const playBtn = document.getElementById('play');
 playBtn.addEventListener('click', async () => {{
   playBtn.disabled = true;
-  const film = await mountFilm(document.body, {{ id: {json.dumps(film_id)}, era, audioUrl: AUDIO, onDone: () => {{ playBtn.disabled = false; playBtn.focus(); }} }});
-  film.play();
+  try {{
+    const film = await mountFilm(document.body, {{ id, era, onDone: () => {{ playBtn.disabled = false; playBtn.focus(); }} }});
+    film.play();
+  }} catch (error) {{
+    playBtn.disabled = false;
+    playBtn.textContent = `Could not load the film: ${{error.message}}`;
+  }}
 }});
 </script>
 """
-    Path(out).write_text(page, encoding="utf-8")
-    print(f"wrote {out} ({len(page) / 1e6:.1f} MB)")
+    (out / "index.html").write_text(page, encoding="utf-8")
+    size = sum(f.stat().st_size for f in out.rglob("*") if f.is_file())
+    print(f"wrote {out}/index.html and {sum(1 for f in out.rglob('*') if f.is_file()) - 1} files ({size / 1e6:.1f} MB)")
 
 
 if __name__ == "__main__":
-    build(sys.argv[1], sys.argv[2])
+    build(sys.argv[1], sys.argv[2:])

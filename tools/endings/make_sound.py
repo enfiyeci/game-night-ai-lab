@@ -182,6 +182,14 @@ def crickets(d):
     return (chirp * 0.012 + lowpass(noise(n), 300) * 0.03) * env(n, 0.3, 0.3)
 
 
+def chord(d):
+    """A soft sustained chord (A major, low and warm), for good news that is deliberately undramatic."""
+    n = int(max(d, 4.0) * SR)
+    t = t_axis(n)
+    s = sum(g * np.sin(2 * np.pi * f * t) for f, g in ((110, 1.0), (138.6, 0.7), (164.8, 0.6), (220, 0.4), (277.2, 0.25)))
+    return s * 0.03 * env(n, 1.2, 1.5)
+
+
 def sting(d):
     """A news-channel sting: two bright stabs over a low hit."""
     n = int(1.4 * SR)
@@ -322,7 +330,7 @@ def whir(d):
 SOUNDS = {"room": room, "party": party, "tone": high_tone, "chime": chime, "tick": tick, "gulls": gulls, "door": door,
           "beeps": beeps, "hold": hold, "fridge": fridge, "flicker": flicker, "notify": notify, "typing": typing, "city": city,
           "powerdown": powerdown, "roomtone": roomtone, "creak": creak, "hum": hum, "clunk": clunk, "fansdown": fansdown,
-          "wind": wind, "emergency": emergency, "whir": whir, "sting": sting, "flare": flare, "pen": pen, "crickets": crickets}
+          "wind": wind, "emergency": emergency, "whir": whir, "sting": sting, "flare": flare, "pen": pen, "crickets": crickets, "chord": chord}
 AMBIENT = {"room", "party", "tone", "gulls", "beeps", "city", "roomtone", "wind", "emergency", "fridge", "crickets", "hum"}
 RUNS = {"chimes": chimes, "flaps": flaps, "steps": steps, "stamps": stamps, "pings": pings}   # [name, at, count, step]
 
