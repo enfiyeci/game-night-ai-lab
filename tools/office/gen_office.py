@@ -4,6 +4,7 @@
 With no arguments it writes ui/assets/office.svg (the K2 room only: no HUD, bubbles or markers) and
 ui/assets/anchors.json (head, rack and floor-menu points in the 1440 x 900 frame). --era N writes
 office-eraN.svg and anchors-eraN.json; --all writes the K2 files, all five eras and tools/eras.html.
+The lab moves as the game goes on: a loft (era 1), the K2 office (eras 2-3), its own building (eras 4-5).
 """
 import argparse
 import json
@@ -15,6 +16,8 @@ U = 62.0
 C = 0.8660254 * U
 S = 0.5 * U
 OX, OY = 666.0, 262.0
+K2_OX, K2_OY = OX, OY
+XF = (1.0, 0.0, 0.0)  # scale and shift applied to a premises that does not use the K2 camera
 W, D, H, T = 11.0, 9.0, 2.7, 0.22
 K = 1.3  # character sprite scale (cartoon proportions, bigger than furniture)
 
@@ -117,18 +120,21 @@ ERA_NAMES = {1: "Chat assistants", 2: "The scale-up", 3: "Reasoning and agents",
 
 
 def features(era):
-    """What the room holds in an era. Mostly cumulative, but era 1's folding tables and pizza go in era 2, the funding
-    poster gives way to the power map in era 4, and the chains board replaces the K2 board. None is the approved K2 still."""
+    """What the lab holds in an era. The lab moves, as in Game Dev Tycoon: a small rented loft (era 1), the K2 office
+    (era 2), the same office renovated with a glass evals room (era 3), then its own tech-park building (eras 4-5).
+    None is the approved K2 still."""
     e = 2 if era is None else era
     return dict(
         gid="" if era is None else f"era{era}-",  # gradient-id prefix, so several era SVGs can share one page
-        folding=e == 1, pizza=e == 1, lounge=e >= 2, plants=e >= 2, constitution=e >= 2,
-        racks=([(8.7, 9.7, 1.45)] if e == 1 else [(8.7, 9.7, 2.35), (9.8, 10.8, 2.35)] if e == 2
-               else [(8.1, 8.96, 2.35), (9.02, 9.88, 2.35), (9.94, 10.8, 2.35)]),  # three slimmer racks clear the whiteboard
-        whiteboard="curve" if e == 1 else ("k2" if e == 2 else "chains"),
-        funding=era in (2, 3), power_map=e >= 4, wall_screen=e >= 3, bell=e >= 3,
-        campus=e >= 4, hard_hats=e >= 4, robot=e >= 4,
-        hot=e == 5, invite=e == 5, empty_researchers=e == 5,
+        premises="loft" if e == 1 else "office" if e <= 3 else "building",
+        folding=e == 1, hot=e == 5, empty_researchers=e == 5, invite=e == 4, accord=e == 5,
+        racks=([(6.9, 7.9, 1.45)] if e == 1 else [(8.7, 9.7, 2.35), (9.8, 10.8, 2.35)] if e == 2
+               else [(8.1, 8.96, 2.35), (9.02, 9.88, 2.35), (9.94, 10.8, 2.35)] if e == 3  # slimmer racks clear the board
+               else [(11.6, 12.6, 2.35), (12.7, 13.7, 2.35), (13.8, 14.8, 2.35)]),
+        # read by the K2 office scene only (eras 2-3); the loft and the building draw their own dressing
+        lounge=e in (2, 3), plants=e >= 2, constitution=e >= 2,
+        whiteboard="k2" if e <= 2 else "chains",
+        funding=era in (2, 3), wall_screen=e == 3, bell=e == 3, evals_room=e == 3, paint=e == 3,
     )
 
 
@@ -574,6 +580,9 @@ def room():
     # walls
     wl_up, wl_lo = M("cream", 55, "paper"), M("cream", 82, "wood")
     wr_up, wr_lo = M("cream", 80, "paper"), M("cream", 70, "wood")
+    if F["paint"]:  # era 3: the office is renovated
+        wl_up, wl_lo = M("sky", 18, "paper"), M("sky", 45, "cream")
+        wr_up, wr_lo = M("sky", 26, "paper"), M("sky", 40, "cream")
     wz = 1.0
     o.append(poly([P(0, 0, wz), P(0, D, wz), P(0, D, H), P(0, 0, H)], wl_up))
     o.append(poly([P(0, 0, 0), P(0, D, 0), P(0, D, wz), P(0, 0, wz)], wl_lo))
@@ -603,48 +612,63 @@ def room():
 
 def right_wall_decor():
     o = []
-    # framed constitution
     if F["constitution"]:
-        a0, a1, b0, b1 = 2.1 * U, 3.3 * U, -2.3 * U, -1.3 * U
-        lines = "".join(f'<rect x="{a0 + 14:.1f}" y="{b0 + 30 + i * 5.2:.1f}" width="{(a1 - a0 - 28) * (0.95 if i % 3 else 0.7):.1f}" height="1.6" style="fill:{A("ink", 35)}"/>'
-                        for i in range(6))
-        o.append(f'<rect x="{a0:.1f}" y="{b0:.1f}" width="{a1 - a0:.1f}" height="{b1 - b0:.1f}" rx="2" style="fill:{M("wood", 70, "ink")};stroke:{EDGE}"/>'
-                 f'<rect x="{a0 + 5:.1f}" y="{b0 + 5:.1f}" width="{a1 - a0 - 10:.1f}" height="{b1 - b0 - 10:.1f}" style="fill:var(--paper)"/>'
-                 f'<text x="{(a0 + a1) / 2:.1f}" y="{b0 + 22:.1f}" text-anchor="middle" style="font-family:\'Libre Baskerville\',Georgia,serif;font-style:italic;font-size:10.5px;fill:var(--ink)">Constitution</text>'
-                 f'<path d="M{a0 + 20:.1f},{b0 + 26:.1f} L{a1 - 20:.1f},{b0 + 26:.1f}" style="stroke:var(--coral);stroke-width:1"/>'
-                 + lines +
-                 f'<circle cx="{a1 - 16:.1f}" cy="{b1 - 14:.1f}" r="5" style="fill:var(--coral);opacity:.85"/>')
-    # whiteboard: one loss curve (era 1), the K2 board, then chains of thought (era 3 on)
-    a0, a1, b0, b1 = 4.65 * U, (6.75 if F["whiteboard"] == "chains" else 7.35) * U, -2.32 * U, -1.15 * U
-    w, h = a1 - a0, b1 - b0
-    board = (f'<rect x="{a0:.1f}" y="{b0:.1f}" width="{w:.1f}" height="{h:.1f}" rx="3" style="fill:{M("paper", 80, "ink")};stroke:{EDGE}"/>'
-             f'<rect x="{a0 + 4:.1f}" y="{b0 + 4:.1f}" width="{w - 8:.1f}" height="{h - 8:.1f}" rx="2" style="fill:var(--paper)"/>')
-    if F["whiteboard"] == "chains":
-        board += board_chains(a0, b0)
-    else:
-        board += (f'<path d="M{a0 + 18:.1f},{b0 + 12:.1f} L{a0 + 18:.1f},{b1 - 14:.1f} L{a0 + w * 0.55:.1f},{b1 - 14:.1f}" style="fill:none;stroke:var(--ink);stroke-width:1.6;stroke-linecap:round"/>'
-                  f'<path d="M{a0 + 22:.1f},{b0 + 16:.1f} C{a0 + 40:.1f},{b0 + 48:.1f} {a0 + 60:.1f},{b1 - 26:.1f} {a0 + w * 0.53:.1f},{b1 - 22:.1f}" style="fill:none;stroke:var(--sky);stroke-width:2.4;stroke-linecap:round"/>')
-    if F["whiteboard"] == "k2":
-        board += (f'<path d="M{a0 + w * 0.53 - 6:.1f},{b1 - 30:.1f} l6,8 l7,-10" style="fill:none;stroke:var(--coral);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"/>'
-                  + "".join(f'<rect x="{a0 + w * 0.62:.1f}" y="{b0 + 16 + i * 9:.1f}" width="{w * (0.3 if i % 2 else 0.22):.1f}" height="2.2" rx="1" style="fill:{A("ink", 45) if i != 1 else "var(--coral)"}"/>'
-                            for i in range(5)))
-    o.append(board + f'<rect x="{a0 + w * 0.3:.1f}" y="{b1 - 2:.1f}" width="{w * 0.4:.1f}" height="5" rx="1.5" style="fill:{M("paper", 70, "ink")}"/>')
-    if F["invite"]:
-        o.append(summit_invite(a1 - 8, b0 - 6))
-    # poster: a kestrel silhouette
-    a0, a1, b0, b1 = 3.52 * U, 4.36 * U, -2.25 * U, -1.35 * U
-    cx, cy = (a0 + a1) / 2, (b0 + b1) / 2
-    o.append(f'<rect x="{a0:.1f}" y="{b0:.1f}" width="{a1 - a0:.1f}" height="{b1 - b0:.1f}" style="fill:var(--sky);stroke:{EDGE}"/>'
-             f'<circle cx="{cx + 8:.1f}" cy="{cy - 10:.1f}" r="9" style="fill:{M("coral", 60, "paper")}"/>'
-             f'<path d="M{cx - 18:.1f},{cy - 2:.1f} Q{cx - 6:.1f},{cy - 10:.1f} {cx:.1f},{cy + 2:.1f} Q{cx + 6:.1f},{cy - 10:.1f} {cx + 18:.1f},{cy - 2:.1f} '
-             f'Q{cx + 6:.1f},{cy - 2:.1f} {cx + 1:.1f},{cy + 8:.1f} L{cx - 1:.1f},{cy + 8:.1f} Q{cx - 6:.1f},{cy - 2:.1f} {cx - 18:.1f},{cy - 2:.1f} Z" style="fill:var(--ink)"/>'
-             f'<rect x="{a0 + 8:.1f}" y="{b1 - 12:.1f}" width="{a1 - a0 - 16:.1f}" height="3" rx="1.5" style="fill:{A("paper", 75)}"/>')
+        o.append(constitution_art(2.1))
+    # whiteboard: the K2 board (era 2), then chains of thought (era 3)
+    o.append(whiteboard_art(4.65, 6.75 if F["whiteboard"] == "chains" else 7.35, F["whiteboard"]))
+    o.append(kestrel_art(3.52))
     # wall screen above the bookshelf: a reasoning trace (era 3 on)
     if F["wall_screen"]:
         a0, a1, b0, b1 = 0.32 * U, 1.88 * U, -2.6 * U, -2.0 * U
         o.append(f'<rect x="{a0:.1f}" y="{b0:.1f}" width="{a1 - a0:.1f}" height="{b1 - b0:.1f}" rx="3" style="fill:{MONITOR};stroke:{EDGE}"/>'
                  + screen_code(a0 + 3, a1 - 3, b0 + 3, b1 - 3, "trace"))
     return planeY(0, "".join(o))
+
+
+# Wall pieces in the right-wall plane (planeY(0)): x in room units, drawn in local wall coordinates.
+def constitution_art(x0):
+    """The framed constitution, 1.2 units wide."""
+    a0, a1, b0, b1 = x0 * U, (x0 + 1.2) * U, -2.3 * U, -1.3 * U
+    lines = "".join(f'<rect x="{a0 + 14:.1f}" y="{b0 + 30 + i * 5.2:.1f}" width="{(a1 - a0 - 28) * (0.95 if i % 3 else 0.7):.1f}" height="1.6" style="fill:{A("ink", 35)}"/>'
+                    for i in range(6))
+    return (f'<rect x="{a0:.1f}" y="{b0:.1f}" width="{a1 - a0:.1f}" height="{b1 - b0:.1f}" rx="2" style="fill:{M("wood", 70, "ink")};stroke:{EDGE}"/>'
+            f'<rect x="{a0 + 5:.1f}" y="{b0 + 5:.1f}" width="{a1 - a0 - 10:.1f}" height="{b1 - b0 - 10:.1f}" style="fill:var(--paper)"/>'
+            f'<text x="{(a0 + a1) / 2:.1f}" y="{b0 + 22:.1f}" text-anchor="middle" style="font-family:\'Libre Baskerville\',Georgia,serif;font-style:italic;font-size:10.5px;fill:var(--ink)">Constitution</text>'
+            f'<path d="M{a0 + 20:.1f},{b0 + 26:.1f} L{a1 - 20:.1f},{b0 + 26:.1f}" style="stroke:var(--coral);stroke-width:1"/>'
+            + lines +
+            f'<circle cx="{a1 - 16:.1f}" cy="{b1 - 14:.1f}" r="5" style="fill:var(--coral);opacity:.85"/>')
+
+
+def whiteboard_art(x0, x1, kind):
+    """The whiteboard: "curve" (one loss curve), "k2" (curve, check and notes) or "chains"; the summit invite pins to it."""
+    a0, a1, b0, b1 = x0 * U, x1 * U, -2.32 * U, -1.15 * U
+    w, h = a1 - a0, b1 - b0
+    board = (f'<rect x="{a0:.1f}" y="{b0:.1f}" width="{w:.1f}" height="{h:.1f}" rx="3" style="fill:{M("paper", 80, "ink")};stroke:{EDGE}"/>'
+             f'<rect x="{a0 + 4:.1f}" y="{b0 + 4:.1f}" width="{w - 8:.1f}" height="{h - 8:.1f}" rx="2" style="fill:var(--paper)"/>')
+    if kind == "chains":
+        board += board_chains(a0, b0)
+    else:
+        board += (f'<path d="M{a0 + 18:.1f},{b0 + 12:.1f} L{a0 + 18:.1f},{b1 - 14:.1f} L{a0 + w * 0.55:.1f},{b1 - 14:.1f}" style="fill:none;stroke:var(--ink);stroke-width:1.6;stroke-linecap:round"/>'
+                  f'<path d="M{a0 + 22:.1f},{b0 + 16:.1f} C{a0 + 40:.1f},{b0 + 48:.1f} {a0 + 60:.1f},{b1 - 26:.1f} {a0 + w * 0.53:.1f},{b1 - 22:.1f}" style="fill:none;stroke:var(--sky);stroke-width:2.4;stroke-linecap:round"/>')
+    if kind == "k2":
+        board += (f'<path d="M{a0 + w * 0.53 - 6:.1f},{b1 - 30:.1f} l6,8 l7,-10" style="fill:none;stroke:var(--coral);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"/>'
+                  + "".join(f'<rect x="{a0 + w * 0.62:.1f}" y="{b0 + 16 + i * 9:.1f}" width="{w * (0.3 if i % 2 else 0.22):.1f}" height="2.2" rx="1" style="fill:{A("ink", 45) if i != 1 else "var(--coral)"}"/>'
+                            for i in range(5)))
+    board += f'<rect x="{a0 + w * 0.3:.1f}" y="{b1 - 2:.1f}" width="{w * 0.4:.1f}" height="5" rx="1.5" style="fill:{M("paper", 70, "ink")}"/>'
+    if F["invite"]:
+        board += summit_invite(a1 - 8, b0 - 6)
+    return board
+
+
+def kestrel_art(x0):
+    """The lab's kestrel poster, 0.84 units wide."""
+    a0, a1, b0, b1 = x0 * U, (x0 + 0.84) * U, -2.25 * U, -1.35 * U
+    cx, cy = (a0 + a1) / 2, (b0 + b1) / 2
+    return (f'<rect x="{a0:.1f}" y="{b0:.1f}" width="{a1 - a0:.1f}" height="{b1 - b0:.1f}" style="fill:var(--sky);stroke:{EDGE}"/>'
+            f'<circle cx="{cx + 8:.1f}" cy="{cy - 10:.1f}" r="9" style="fill:{M("coral", 60, "paper")}"/>'
+            f'<path d="M{cx - 18:.1f},{cy - 2:.1f} Q{cx - 6:.1f},{cy - 10:.1f} {cx:.1f},{cy + 2:.1f} Q{cx + 6:.1f},{cy - 10:.1f} {cx + 18:.1f},{cy - 2:.1f} '
+            f'Q{cx + 6:.1f},{cy - 2:.1f} {cx + 1:.1f},{cy + 8:.1f} L{cx - 1:.1f},{cy + 8:.1f} Q{cx - 6:.1f},{cy - 2:.1f} {cx - 18:.1f},{cy - 2:.1f} Z" style="fill:var(--ink)"/>'
+            f'<rect x="{a0 + 8:.1f}" y="{b1 - 12:.1f}" width="{a1 - a0 - 16:.1f}" height="3" rx="1.5" style="fill:{A("paper", 75)}"/>')
 
 
 def board_chains(a0, b0):
@@ -668,7 +692,7 @@ def board_chains(a0, b0):
 
 
 def summit_invite(a, b):
-    """Era 5: a summit invitation card pinned to the whiteboard."""
+    """Era 4: the summit invitation card pinned to the whiteboard."""
     return (f'<g transform="translate({a:.1f},{b:.1f}) rotate(6)">'
             f'<rect x="-15" y="0" width="32" height="24" rx="1.5" style="fill:var(--paper);stroke:{A("ink", 40)};stroke-width:.8"/>'
             f'<rect x="-15" y="0" width="32" height="6" style="fill:var(--sky)"/>'
@@ -685,29 +709,21 @@ def left_wall_decor():
     w, h = a1 - a0, b1 - b0
     o.append(f'<rect x="{a0 - 4:.1f}" y="{b0 - 4:.1f}" width="{w + 8:.1f}" height="{h + 8:.1f}" rx="3" style="fill:var(--paper);stroke:{EDGE}"/>'
              f'<rect x="{a0:.1f}" y="{b0:.1f}" width="{w:.1f}" height="{h:.1f}" style="fill:{M("sky", 38, "paper")}"/>')
-    # the view: a city skyline, then a data-center campus with cooling towers (era 4 on)
-    if F["campus"]:
-        o.append(campus(a0, a1, b0, b1))
-    else:
-        bx = a0
-        for bw, bh in [(22, 26), (16, 40), (26, 30), (14, 48), (30, 22), (18, 36), (24, 28)]:
-            if bx + bw > a1:
-                bw = a1 - bx
-            o.append(f'<rect x="{bx:.1f}" y="{b1 - bh:.1f}" width="{bw:.1f}" height="{bh:.1f}" style="fill:{M("sky", 55, "paper")}"/>')
-            bx += bw + 2
-            if bx >= a1:
-                break
+    # skyline
+    bx = a0
+    for bw, bh in [(22, 26), (16, 40), (26, 30), (14, 48), (30, 22), (18, 36), (24, 28)]:
+        if bx + bw > a1:
+            bw = a1 - bx
+        o.append(f'<rect x="{bx:.1f}" y="{b1 - bh:.1f}" width="{bw:.1f}" height="{bh:.1f}" style="fill:{M("sky", 55, "paper")}"/>')
+        bx += bw + 2
+        if bx >= a1:
+            break
     o.append(f'<path d="M{a0 + w * 0.6:.1f},{b0 + 10:.1f} L{a0 + w * 0.75:.1f},{b0:.1f} L{a0 + w * 0.9:.1f},{b0:.1f} L{a0 + w * 0.7:.1f},{b0 + 18:.1f} Z" style="fill:{A("paper", 45)}"/>')
     o.append(f'<path d="M{(a0 + a1) / 2:.1f},{b0:.1f} L{(a0 + a1) / 2:.1f},{b1:.1f} M{a0:.1f},{(b0 + b1) / 2:.1f} L{a1:.1f},{(b0 + b1) / 2:.1f}" style="stroke:var(--paper);stroke-width:4"/>')
     o.append(f'<rect x="{a0 - 8:.1f}" y="{b1 + 3:.1f}" width="{w + 16:.1f}" height="6" rx="1.5" style="fill:{M("paper", 88, "ink")};stroke:{EDGE}"/>')
-    if F["hard_hats"]:
-        o.append(hard_hat(a0 + w * 0.22, b1 + 3, "var(--coral)") + hard_hat(a0 + w * 0.4, b1 + 3, BRASS))
-    # funding-round poster (eras 2-3), replaced by the power-deal map (era 4 on)
-    pa0, pa1, pb0, pb1 = (D - 4.9) * U, (D - 4.12) * U, -2.42 * U, -1.64 * U
+    # funding-round poster (eras 2-3)
     if F["funding"]:
-        o.append(funding_poster(pa0, pa1, pb0, pb1))
-    elif F["power_map"]:
-        o.append(power_map(pa0, pa1, pb0, pb1))
+        o.append(funding_poster((D - 4.9) * U, (D - 4.12) * U, -2.42 * U, -1.64 * U))
     # the shipping bell in the back corner (era 3 on)
     if F["bell"]:
         o.append(ship_bell((D - 0.8) * U, -2.15 * U))
@@ -716,20 +732,12 @@ def left_wall_decor():
     o.append(f'<circle cx="{ca:.1f}" cy="{cb:.1f}" r="12" style="fill:var(--paper);stroke:var(--ink);stroke-width:2"/>'
              f'<path d="M{ca:.1f},{cb:.1f} L{ca:.1f},{cb - 8:.1f} M{ca:.1f},{cb:.1f} L{ca + 6:.1f},{cb + 2:.1f}" style="stroke:var(--ink);stroke-width:1.6;stroke-linecap:round"/>')
     # door
-    a0, a1 = (D - 7.75) * U, (D - 6.35) * U
-    b0 = -2.1 * U
-    w = a1 - a0
-    dcol = M("wood", 85, "paper")
-    o.append(f'<rect x="{a0 - 5:.1f}" y="{b0 - 5:.1f}" width="{w + 10:.1f}" height="{-b0 + 5:.1f}" style="fill:{M("wood", 60, "ink")}"/>'
-             f'<rect x="{a0:.1f}" y="{b0:.1f}" width="{w:.1f}" height="{-b0:.1f}" style="fill:{dcol};stroke:{EDGE}"/>'
-             f'<rect x="{a0 + 9:.1f}" y="{b0 + 10:.1f}" width="{w - 18:.1f}" height="{-b0 * 0.36:.1f}" rx="2" style="fill:none;stroke:{M(dcol, 75, "ink")};stroke-width:1.5"/>'
-             f'<rect x="{a0 + 9:.1f}" y="{b0 * 0.5 + 6:.1f}" width="{w - 18:.1f}" height="{-b0 * 0.36:.1f}" rx="2" style="fill:none;stroke:{M(dcol, 75, "ink")};stroke-width:1.5"/>'
-             f'<circle cx="{a1 - 10:.1f}" cy="{b0 * 0.48:.1f}" r="3" style="fill:{M("cream", 60, "ink")}"/>')
+    o.append(door_art((D - 7.75) * U, (D - 6.35) * U))
     return planeX(0, D, "".join(o))
 
 
 def campus(a0, a1, b0, b1):
-    """Era 4 window view: long low data halls and two cooling towers with steam."""
+    """The building's view (eras 4-5): long low data halls and two cooling towers with steam."""
     w = a1 - a0
     o = [f'<rect x="{a0 + w * 0.28:.1f}" y="{b1 - 26:.1f}" width="{w * 0.34:.1f}" height="26" style="fill:{M("sky", 56, "paper")}"/>',
          f'<rect x="{a0:.1f}" y="{b1 - 17:.1f}" width="{w * 0.5:.1f}" height="17" style="fill:{M("sky", 68, "paper")}"/>']
@@ -745,7 +753,7 @@ def campus(a0, a1, b0, b1):
 
 
 def hard_hat(a, b, col):
-    """A hard hat resting on the window sill (era 4 on)."""
+    """A hard hat resting on a surface whose top edge is at b (the robotics workbench)."""
     return (f'<path d="M{a - 10:.1f},{b:.1f} Q{a - 10:.1f},{b - 12:.1f} {a:.1f},{b - 12:.1f} Q{a + 10:.1f},{b - 12:.1f} {a + 10:.1f},{b:.1f} Z" '
             f'style="fill:{col};stroke:{EDGE};stroke-width:.8"/>'
             f'<path d="M{a:.1f},{b - 12:.1f} L{a:.1f},{b - 2:.1f}" style="stroke:{M(col, 75, "ink")};stroke-width:1.6"/>'
@@ -760,22 +768,6 @@ def funding_poster(a0, a1, b0, b1):
     o += [f'<rect x="{a0 + 8 + i * 9:.1f}" y="{b1 - 6 - hh:.1f}" width="6" height="{hh}" style="fill:var(--teal)"/>' for i, hh in enumerate([7, 12, 18, 25])]
     o.append(f'<path d="M{a0 + 7:.1f},{b1 - 16:.1f} L{a1 - 9:.1f},{b0 + 17:.1f} M{a1 - 15:.1f},{b0 + 16:.1f} L{a1 - 9:.1f},{b0 + 17:.1f} L{a1 - 10:.1f},{b0 + 23:.1f}" '
              f'style="fill:none;stroke:var(--coral);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"/>')
-    return "".join(o)
-
-
-def power_map(a0, a1, b0, b1):
-    """Era 4 on: a map of the power deals, lines from plants to the lab's campus."""
-    w, h = a1 - a0, b1 - b0
-    lab = (a0 + w * 0.55, b0 + h * 0.62)
-    sites = [(a0 + 9, b0 + 20), (a0 + w - 9, b0 + 17), (a0 + 11, b1 - 8), (a0 + w - 10, b1 - 7)]
-    o = [f'<rect x="{a0:.1f}" y="{b0:.1f}" width="{w:.1f}" height="{h:.1f}" style="fill:{M("cream", 45, "paper")};stroke:{EDGE}"/>',
-         f'<path d="M{a0 + 6:.1f},{b0 + 14:.1f} Q{a0 + w * 0.5:.1f},{b0 + 6:.1f} {a1 - 5:.1f},{b0 + 13:.1f} Q{a1 - 2:.1f},{b1 - 14:.1f} {a1 - 7:.1f},{b1 - 4:.1f} '
-         f'Q{a0 + w * 0.4:.1f},{b1 + 1:.1f} {a0 + 5:.1f},{b1 - 5:.1f} Q{a0 + 1:.1f},{b0 + h * 0.5:.1f} {a0 + 6:.1f},{b0 + 14:.1f} Z" '
-         f'style="fill:{A("teal", 18)};stroke:{A("teal", 70)};stroke-width:.9;stroke-dasharray:3 2"/>',
-         f'<text x="{a0 + w / 2:.1f}" y="{b0 + 9:.1f}" text-anchor="middle" style="font-size:6px;font-weight:900;fill:var(--ink);letter-spacing:.05em">POWER</text>']
-    o += [f'<path d="M{x:.1f},{y:.1f} L{lab[0]:.1f},{lab[1]:.1f}" style="stroke:var(--sky);stroke-width:1.2"/>' for x, y in sites]
-    o += [f'<rect x="{x - 2.5:.1f}" y="{y - 2.5:.1f}" width="5" height="5" style="fill:var(--wood);stroke:{A("ink", 40)};stroke-width:.6"/>' for x, y in sites]
-    o.append(f'<circle cx="{lab[0]:.1f}" cy="{lab[1]:.1f}" r="3.6" style="fill:var(--coral);stroke:var(--paper);stroke-width:1"/>')
     return "".join(o)
 
 
@@ -916,7 +908,7 @@ def pizza_boxes(x, y):
 
 
 def robot(x, y):
-    """Era 4 on: a small humanoid-robot prototype on a display plinth."""
+    """Eras 4-5: a humanoid-robot prototype on a display plinth in the robotics lab."""
     o = [shadow(x - 0.36, y - 0.36, 0.72, 0.72, 0.02)]
     sx, sy = P(x, y, 0)
     side = M(ROBOT, 82, "ink")
@@ -940,6 +932,308 @@ def robot(x, y):
     return "".join(o)
 
 
+# ---------------------------------------------------------------- premises: the loft (era 1) and the building (eras 4-5)
+def fit(W, D, top=84, bottom=16, side=24):
+    """Centre a W x D room in the frame below the HUD, scaled down if it does not fit (never up)."""
+    global OX, OY, XF
+    OX, OY = 0.0, 0.0
+    x0, x1 = P(-T, D)[0], P(W, -T)[0]
+    y0, y1 = P(-T, -T, H)[1], P(W, D, -0.2)[1]
+    sc = min(1.0, (1440 - 2 * side) / (x1 - x0), (900 - top - bottom) / (y1 - y0))
+    XF = (sc, 720 - sc * (x0 + x1) / 2, top + (900 - top - bottom) / 2 - sc * (y0 + y1) / 2)
+
+
+def framed(pt):
+    sc, tx, ty = XF
+    return [round(pt[0] * sc + tx, 1), round(pt[1] * sc + ty, 1)]
+
+
+def patch(x0, y0, x1, y1, base):
+    """A floor patch over the main floor; clicks pass through to #floor."""
+    return poly([P(x0, y0), P(x1, y0), P(x1, y1), P(x0, y1)], base, extra='pointer-events="none"')
+
+
+def floor_wood(x0, y0, x1, y1):
+    ln, y, k = [], y0 + 0.42, 0
+    while y < y1 - 0.05:
+        ln.append(f'<path d="M{x0 * U:.1f},{y * U:.1f} L{x1 * U:.1f},{y * U:.1f}"/>')
+        x = x0 + (0.9 if k % 2 else 0.35)
+        while x < x1 - 0.1:
+            ln.append(f'<path d="M{x * U:.1f},{(y - 0.42) * U:.1f} L{x * U:.1f},{y * U:.1f}"/>')
+            x += 1.6
+        y += 0.42
+        k += 1
+    return planeZ(0, f'<g style="stroke:{M("wood", 60, "ink")};stroke-width:1;opacity:.35">{"".join(ln)}</g>')
+
+
+def floor_grid(x0, y0, x1, y1, step, col, width=1.0, opacity=.28):
+    gl = [f'<path d="M{x * U:.1f},{y0 * U:.1f} L{x * U:.1f},{y1 * U:.1f}"/>' for x in _steps(x0, x1, step)]
+    gl += [f'<path d="M{x0 * U:.1f},{y * U:.1f} L{x1 * U:.1f},{y * U:.1f}"/>' for y in _steps(y0, y1, step)]
+    return planeZ(0, f'<g style="stroke:{col};stroke-width:{width};opacity:{opacity}">{"".join(gl)}</g>')
+
+
+def _steps(a, b, step):
+    out, v = [], a + step
+    while v < b - 0.01:
+        out.append(v)
+        v += step
+    return out
+
+
+def shell(W, D, floor_base, edge):
+    """Slab, #floor, the two back walls with rail and baseboard, and the cut-away caps (no decor)."""
+    o = [poly([P(-T, D, 0), P(W, D, 0), P(W, D, -0.2), P(-T, D, -0.2)], edge),
+         poly([P(W, -T, 0), P(W, D, 0), P(W, D, -0.2), P(W, -T, -0.2)], M(edge, 78, "ink")),
+         poly([P(0, 0), P(W, 0), P(W, D), P(0, D)], floor_base, extra='id="floor"')]
+    wz = 1.0
+    o.append(poly([P(0, 0, wz), P(0, D, wz), P(0, D, H), P(0, 0, H)], M("cream", 55, "paper")))
+    o.append(poly([P(0, 0, 0), P(0, D, 0), P(0, D, wz), P(0, 0, wz)], M("cream", 82, "wood")))
+    o.append(poly([P(0, 0, wz), P(W, 0, wz), P(W, 0, H), P(0, 0, H)], M("cream", 80, "paper")))
+    o.append(poly([P(0, 0, 0), P(W, 0, 0), P(W, 0, wz), P(0, 0, wz)], M("cream", 70, "wood")))
+    rail = M("wood", 72, "paper")
+    o.append(poly([P(0, 0, wz), P(0, D, wz), P(0, D, wz + 0.06), P(0, 0, wz + 0.06)], rail))
+    o.append(poly([P(0, 0, wz), P(W, 0, wz), P(W, 0, wz + 0.06), P(0, 0, wz + 0.06)], M(rail, 90, "ink")))
+    base = M("wood", 55, "ink")
+    o.append(poly([P(0, 0, 0), P(0, D, 0), P(0, D, 0.1), P(0, 0, 0.1)], base))
+    o.append(poly([P(0, 0, 0), P(W, 0, 0), P(W, 0, 0.1), P(0, 0, 0.1)], M(base, 90, "ink")))
+    cap = M("ink", 72, "wood")
+    o.append(poly([P(-T, -T, H), P(-T, D, H), P(0, D, H), P(0, 0, H)], cap))
+    o.append(poly([P(-T, -T, H), P(W, -T, H), P(W, 0, H), P(0, 0, H)], cap))
+    o.append(poly([P(-T, D, -0.2), P(0, D, -0.2), P(0, D, H), P(-T, D, H)], M("cream", 70, "ink")))
+    o.append(poly([P(W, -T, -0.2), P(W, 0, -0.2), P(W, 0, H), P(W, -T, H)], M("cream", 58, "ink")))
+    return "".join(o)
+
+
+def brick_art(x0, x1):
+    """Exposed brick over the right wall from x0 to x1 (the loft)."""
+    o = [f'<rect x="{x0 * U:.1f}" y="{-H * U:.1f}" width="{(x1 - x0) * U:.1f}" height="{H * U:.1f}" style="fill:{M("cream", 70, "paper")}"/>']
+    bw, bh, row, z = 0.5 * U, 0.2 * U, 0, 0.12 * U
+    while z < H * U - 2:
+        a = x0 * U + (-bw / 2 if row % 2 else 0)
+        while a < x1 * U:
+            aa, ww = max(a, x0 * U), min(a + bw, x1 * U) - max(a, x0 * U)
+            if ww > 2:
+                col = [M("coral", 42, "wood"), M("coral", 36, "cream"), M("wood", 60, "coral")][(row * 7 + int(a)) % 3]
+                o.append(f'<rect x="{aa + 1:.1f}" y="{-z - bh + 1:.1f}" width="{ww - 2:.1f}" height="{bh - 2:.1f}" style="fill:{col}"/>')
+            a += bw
+        z += bh
+        row += 1
+    return "".join(o)
+
+
+def loft_window(a0, a1):
+    """A tall industrial window with small panes, in the left-wall plane."""
+    b0, b1 = -2.45 * U, -0.75 * U
+    w, h = a1 - a0, b1 - b0
+    o = [f'<rect x="{a0 - 5:.1f}" y="{b0 - 5:.1f}" width="{w + 10:.1f}" height="{h + 10:.1f}" style="fill:{M("ink", 70, "paper")}"/>',
+         f'<rect x="{a0:.1f}" y="{b0:.1f}" width="{w:.1f}" height="{h:.1f}" style="fill:{M("sky", 38, "paper")}"/>']
+    bx = a0
+    for bw, bh in [(20, 34), (16, 52), (26, 40), (14, 62), (30, 30)]:
+        if bx >= a1:
+            break
+        bw = min(bw, a1 - bx)
+        o.append(f'<rect x="{bx:.1f}" y="{b1 - bh:.1f}" width="{bw:.1f}" height="{bh:.1f}" style="fill:{M("sky", 55, "paper")}"/>')
+        bx += bw + 2
+    frame = f'stroke:{M("ink", 70, "paper")};stroke-width:3'
+    o.append("".join(f'<path d="M{a0 + w * i / 3:.1f},{b0:.1f} L{a0 + w * i / 3:.1f},{b1:.1f}" style="{frame}"/>' for i in (1, 2)))
+    o.append("".join(f'<path d="M{a0:.1f},{b0 + h * j / 4:.1f} L{a1:.1f},{b0 + h * j / 4:.1f}" style="{frame}"/>' for j in (1, 2, 3)))
+    o.append(f'<path d="M{a0 + w * 0.5:.1f},{b0 + 14:.1f} L{a0 + w * 0.62:.1f},{b0:.1f} L{a0 + w * 0.75:.1f},{b0:.1f} L{a0 + w * 0.58:.1f},{b0 + 26:.1f} Z" style="fill:{A("paper", 40)}"/>')
+    o.append(f'<rect x="{a0 - 9:.1f}" y="{b1 + 4:.1f}" width="{w + 18:.1f}" height="6" rx="1.5" style="fill:{M("paper", 80, "ink")};stroke:{EDGE}"/>')
+    return "".join(o)
+
+
+def door_art(a0, a1):
+    """A panel door in the left-wall plane."""
+    b0 = -2.1 * U
+    w = a1 - a0
+    dcol = M("wood", 85, "paper")
+    return (f'<rect x="{a0 - 5:.1f}" y="{b0 - 5:.1f}" width="{w + 10:.1f}" height="{-b0 + 5:.1f}" style="fill:{M("wood", 60, "ink")}"/>'
+            f'<rect x="{a0:.1f}" y="{b0:.1f}" width="{w:.1f}" height="{-b0:.1f}" style="fill:{dcol};stroke:{EDGE}"/>'
+            f'<rect x="{a0 + 9:.1f}" y="{b0 + 10:.1f}" width="{w - 18:.1f}" height="{-b0 * 0.36:.1f}" rx="2" style="fill:none;stroke:{M(dcol, 75, "ink")};stroke-width:1.5"/>'
+            f'<rect x="{a0 + 9:.1f}" y="{b0 * 0.5 + 6:.1f}" width="{w - 18:.1f}" height="{-b0 * 0.36:.1f}" rx="2" style="fill:none;stroke:{M(dcol, 75, "ink")};stroke-width:1.5"/>'
+            f'<circle cx="{a1 - 10:.1f}" cy="{b0 * 0.48:.1f}" r="3" style="fill:{M("cream", 60, "ink")}"/>')
+
+
+def curtain_art(a0, a1, z0=0.15, z1=2.5):
+    """Floor-to-ceiling glass in the left-wall plane, the data-center campus outside."""
+    b0, b1 = -z1 * U, -z0 * U
+    w = a1 - a0
+    mull = M("ink", 60, "paper")
+    o = [f'<rect x="{a0 - 4:.1f}" y="{b0 - 4:.1f}" width="{w + 8:.1f}" height="{b1 - b0 + 8:.1f}" style="fill:{mull}"/>',
+         f'<rect x="{a0:.1f}" y="{b0:.1f}" width="{w:.1f}" height="{b1 - b0:.1f}" style="fill:{M("sky", 38, "paper")}"/>',
+         campus(a0, a0 + w * 0.55, b0, b1 - 18), campus(a0 + w * 0.45, a1, b0 + 10, b1 - 14),
+         f'<rect x="{a0:.1f}" y="{b1 - 18:.1f}" width="{w:.1f}" height="18" style="fill:{M("teal", 55, "paper")}"/>']
+    n = max(2, int(w / 70))
+    o.append("".join(f'<path d="M{a0 + w * i / n:.1f},{b0:.1f} L{a0 + w * i / n:.1f},{b1:.1f}" style="stroke:{mull};stroke-width:4"/>' for i in range(1, n)))
+    o.append(f'<path d="M{a0:.1f},{b0 + (b1 - b0) * 0.62:.1f} L{a1:.1f},{b0 + (b1 - b0) * 0.62:.1f}" style="stroke:{mull};stroke-width:3"/>')
+    o.append(f'<path d="M{a0 + w * 0.08:.1f},{b0 + 20:.1f} L{a0 + w * 0.2:.1f},{b0:.1f} L{a0 + w * 0.3:.1f},{b0:.1f} L{a0 + w * 0.14:.1f},{b0 + 34:.1f} Z" style="fill:{A("paper", 40)}"/>')
+    return "".join(o)
+
+
+def screen_wall_art(x0, x1, z0, z1, cols, rows):
+    """A wall of monitors in the right-wall plane, agents at work on every screen."""
+    cw, ch = (x1 - x0) / cols, (z1 - z0) / rows
+    variants = ["agents", "trace", "loss", "agents", "code", "trace"]
+    o = [f'<rect x="{x0 * U - 8:.1f}" y="{-z1 * U - 8:.1f}" width="{(x1 - x0) * U + 16:.1f}" height="{(z1 - z0) * U + 16:.1f}" rx="8" style="fill:{A("sky", 30)};filter:blur(9px)"/>']
+    for r in range(rows):
+        for cc in range(cols):
+            a0, a1 = (x0 + cc * cw) * U + 3, (x0 + (cc + 1) * cw) * U - 3
+            b0, b1 = -(z1 - r * ch) * U + 3, -(z1 - (r + 1) * ch) * U - 3
+            o.append(f'<rect x="{a0:.1f}" y="{b0:.1f}" width="{a1 - a0:.1f}" height="{b1 - b0:.1f}" rx="2" style="fill:{MONITOR}"/>'
+                     + screen_code(a0 + 3, a1 - 3, b0 + 3, b1 - 3, variants[(r * cols + cc) % 6]))
+    return "".join(o)
+
+
+def plaque_art(x0, x1, z, text):
+    a0, a1 = x0 * U, x1 * U
+    return (f'<rect x="{a0:.1f}" y="{-z * U:.1f}" width="{a1 - a0:.1f}" height="22" rx="4" style="fill:var(--ink)"/>'
+            f'<text x="{(a0 + a1) / 2:.1f}" y="{-z * U + 15:.1f}" text-anchor="middle" style="font-size:12px;font-weight:900;letter-spacing:.08em;fill:var(--paper)">{text}</text>')
+
+
+def accord_art(x0):
+    """Era 5: the signed pacing accord, framed, after the era-4 summit."""
+    a0, a1, b0, b1 = x0 * U, (x0 + 0.62) * U, -2.3 * U, -1.42 * U
+    w = a1 - a0
+    sig = f'fill:none;stroke:var(--ink);stroke-width:1;stroke-linecap:round'
+    return (f'<rect x="{a0:.1f}" y="{b0:.1f}" width="{w:.1f}" height="{b1 - b0:.1f}" rx="2" style="fill:{M("wood", 70, "ink")};stroke:{EDGE}"/>'
+            f'<rect x="{a0 + 4:.1f}" y="{b0 + 4:.1f}" width="{w - 8:.1f}" height="{b1 - b0 - 8:.1f}" style="fill:var(--paper)"/>'
+            f'<rect x="{a0 + 8:.1f}" y="{b0 + 9:.1f}" width="{w - 16:.1f}" height="3" style="fill:var(--sky)"/>'
+            + "".join(f'<rect x="{a0 + 8:.1f}" y="{b0 + 16 + i * 4:.1f}" width="{(w - 16) * (0.9 if i % 2 else 0.7):.1f}" height="1.4" style="fill:{A("ink", 35)}"/>' for i in range(3))
+            + "".join(f'<path d="M{a0 + 7 + i * (w - 14) / 3:.1f},{b1 - 13:.1f} q3,-5 5,0 t5,-1" style="{sig}"/>' for i in range(3))
+            + f'<circle cx="{a1 - 11:.1f}" cy="{b1 - 20:.1f}" r="5" style="fill:var(--coral);stroke:var(--sky);stroke-width:1.6"/>')
+
+
+def glass(p0, p1, h=1.15, doors=()):
+    """A low glass partition along the floor segment p0-p1, with door gaps given as (t0, t1) fractions."""
+    (xa, ya), (xb, yb) = p0, p1
+    cuts, t = [], 0.0
+    for d0, d1 in sorted(doors):
+        cuts.append((t, d0))
+        t = d1
+    cuts.append((t, 1.0))
+    frame = M("ink", 60, "paper")
+    o = ['<g pointer-events="none">']  # see-through: clicks reach the floor behind it
+    for t0, t1 in cuts:
+        a = (xa + (xb - xa) * t0, ya + (yb - ya) * t0)
+        b = (xa + (xb - xa) * t1, ya + (yb - ya) * t1)
+        (a0x, a0y), (b0x, b0y) = P(*a, 0.22), P(*b, 0.22)
+        (ahx, ahy), (bhx, bhy) = P(*a, h), P(*b, h)
+        o.append(poly([P(*a, 0), P(*b, 0), P(*b, 0.22), P(*a, 0.22)], M("paper", 78, "ink")))
+        o.append(poly([P(*a, 0.22), P(*b, 0.22), P(*b, h), P(*a, h)], A("sky", 16), stroke=A("sky", 55), sw=0.9))
+        o.append(f'<path d="M{ahx:.1f},{ahy:.1f} L{bhx:.1f},{bhy:.1f}" style="stroke:{frame};stroke-width:2.4;stroke-linecap:round"/>'
+                 f'<path d="M{a0x:.1f},{a0y:.1f} L{ahx:.1f},{ahy:.1f} M{b0x:.1f},{b0y:.1f} L{bhx:.1f},{bhy:.1f}" style="stroke:{frame};stroke-width:1.6"/>')
+    return "".join(o) + "</g>"
+
+
+def sandbox(x, y, s=1.1, h=1.25):
+    """Evals: a glass cube on a plinth with the model under test glowing inside."""
+    o = [shadow(x - 0.1, y - 0.1, s + 0.2, s + 0.2, 0.05), box(x, y, 0, s, s, 0.35, M("paper", 80, "ink"))]
+    cx, cy = P(x + s / 2, y + s / 2, 0.35 + h / 2)
+    o.append(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="22" style="fill:{A("coral", 35)};filter:blur(8px)"/>'
+             f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="11" style="fill:var(--coral);stroke:{M("coral", 70, "ink")};stroke-width:1"/>'
+             f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="17" style="fill:none;stroke:var(--sky);stroke-width:2;stroke-dasharray:4 3"/>'
+             f'<ellipse cx="{cx - 4:.1f}" cy="{cy - 4:.1f}" rx="3.5" ry="2.4" style="fill:{A("paper", 70)}"/>')
+    o.append(box(x, y, 0.35, s, s, h, A("sky", 12), top=A("sky", 18), left=A("sky", 14), right=A("sky", 20), stroke=A("sky", 70)))
+    return "".join(o)
+
+
+def evals_room(x1, y1):
+    """The glass evals room in the back-left corner, from (0, 0) to (x1, y1)."""
+    return (patch(0, 0, x1, y1, M("sky", 22, "paper")) + floor_grid(0, 0, x1, y1, 1.0, M("sky", 60, "ink"))
+            + sandbox(x1 * 0.28, y1 * 0.22, s=min(1.2, x1 * 0.42), h=1.25)
+            + glass((x1, 0), (x1, y1), doors=[(0.58, 0.92)]) + glass((0, y1), (x1, y1)))
+
+
+def hazard_pen(x0, y0, x1, y1):
+    return planeZ(0, f'<rect x="{x0 * U:.1f}" y="{y0 * U:.1f}" width="{(x1 - x0) * U:.1f}" height="{(y1 - y0) * U:.1f}" '
+                     f'style="fill:{A("coral", 8)};stroke:var(--coral);stroke-width:6;stroke-dasharray:14 10"/>'
+                     f'<rect x="{x0 * U + 6:.1f}" y="{y0 * U + 6:.1f}" width="{(x1 - x0) * U - 12:.1f}" height="{(y1 - y0) * U - 12:.1f}" '
+                     f'style="fill:none;stroke:var(--ink);stroke-width:1.5;opacity:.35"/>')
+
+
+def workbench(x, y, w=0.7, d=1.8):
+    """The robotics lab's bench: parts bins and two hard hats."""
+    o = [shadow(x, y, w, d, 0.06), box(x, y, 0, w, d, 0.8, M("ink", 62, "paper"), top=M("wood", 70, "paper"))]
+    for i, col in enumerate(["var(--sky)", "var(--teal)"]):
+        o.append(box(x + 0.15, y + 0.2 + i * 0.55, 0.8, 0.3, 0.35, 0.18, col))
+    for i, col in enumerate(["var(--coral)", "var(--sky)"]):
+        hx, hy = P(x + w / 2, y + d - 0.55 + i * 0.35, 0.8)
+        o.append(hard_hat(hx, hy, col))
+    return "".join(o)
+
+
+EXTRA_RESEARCHER = dict(skin=SK_DARK, hair=H_BLACK, shirt=M("coral", 55, "paper"), headphones=True)
+
+
+def seat(o, heads, role, drawn):
+    svg, (hx, hy) = drawn
+    heads[role] = [hx, hy - HAIR_TOP * K]
+    o.append(f'<g id="person-{role}">{svg}</g>')
+
+
+def loft_scene():
+    """Era 1: a small rented loft above a shop: brick, tall windows, a wood floor, folding tables."""
+    W, D = 8.6, 7.4
+    fit(W, D)
+    heads = {}
+    o = [shell(W, D, M("wood", 62, "paper"), M("wood", 45, "ink")), floor_wood(0, 0, W, D)]
+    o.append(planeY(0, brick_art(0, W) + kestrel_art(1.2) + whiteboard_art(2.4, 4.9, "curve")))
+    o.append(planeX(0, D, loft_window((D - 2.9) * U, (D - 0.9) * U) + loft_window((D - 5.4) * U, (D - 3.4) * U)
+                    + door_art((D - 7.1) * U, (D - 6.0) * U)))
+    o.append(planeZ(0, f'<path d="M{7.1 * U},{1.3 * U} C{6.9 * U},{1.8 * U} {6.4 * U},{1.9 * U} {5.9 * U},{1.75 * U}" '
+                       f'style="fill:none;stroke:{M("ink", 78, "sky")};stroke-width:3.2;stroke-linecap:round"/>'))
+    o.append(plant(0.5, 0.55))
+    o.append(f'<g id="rack">{rack()}</g>')
+    seat(o, heads, "researcher1", ws_back((2.9, 2.2), PEOPLE["researcher1"], "code"))
+    seat(o, heads, "researcher2", ws_back((5.1, 2.2), PEOPLE["researcher2"], "loss"))
+    seat(o, heads, "research", ws_front((1.1, 4.4), "+x", PEOPLE["research"], tag="Research", extras=[("papers", 0.5, 0.8), ("mug2", 0.55, 0.45)]))
+    seat(o, heads, "safety", ws_front((3.6, 3.5), "+y", PEOPLE["safety"], tag="Safety", extras=[("papers", 0.45, 0.75)]))
+    seat(o, heads, "cfo", ws_front((6.3, 3.75), "+y", PEOPLE["cfo"], tag="CFO", extras=[("calc", 0.5, 0.75), ("papers", 0.5, 0.45)]))
+    seat(o, heads, "policy", ws_front((1.1, 6.2), "+x", PEOPLE["policy"], tag="Policy", extras=[("phone", 0.5, 0.5), ("mug", 0.55, 0.85)]))
+    seat(o, heads, "ceo", ws_front((5.4, 6.1), "+y", PEOPLE["ceo"], big=True, tag="You · CEO", extras=[("papers", 0.45, 0.75), ("mug", 0.65, 0.5)]))
+    o.append(pizza_boxes(3.0, 6.9))
+    return "".join(o), heads, (7.3, 6.2)
+
+
+def building_scene():
+    """Eras 4-5: the lab's own building in a tech park: open plan, a glass curtain wall, an evals room, a robotics lab."""
+    W, D = 15.0, 11.0
+    fit(W, D)
+    heads = {}
+    o = [shell(W, D, M("wood", 62, "paper"), M("wood", 45, "ink")), floor_wood(0, 0, W, D)]
+    o.append(planeZ(0, f'<rect x="{6.0 * U}" y="{6.8 * U}" width="{4.0 * U}" height="{3.0 * U}" rx="14" '
+                       f'style="fill:{M("cream", 78, "coral")};stroke:{M("coral", 55, "cream")};stroke-width:5"/>'))
+    right = [plaque_art(0.6, 2.9, 2.55, "EVALS"), constitution_art(3.3), kestrel_art(4.62),
+             whiteboard_art(6.3, 8.45, "chains"), screen_wall_art(8.62, 10.42, 1.05, 2.5, 3, 2)]
+    if F["accord"]:
+        right.append(accord_art(5.6))
+    o.append(planeY(0, "".join(right)))
+    o.append(planeX(0, D, curtain_art((D - 10.6) * U, (D - 3.6) * U) + ship_bell((D - 3.3) * U, -2.15 * U)))
+    o.append(evals_room(3.2, 3.0))
+    o.append(f'<g id="rack">{rack()}</g>')
+    away = F["empty_researchers"]  # era 5: two chairs empty, their monitors still running agents
+    o.append(ws_back((5.0, 2.4), EXTRA_RESEARCHER, "trace")[0])
+    seat(o, heads, "researcher1", ws_back((7.3, 2.4), None if away else PEOPLE["researcher1"], "agents" if away else "code"))
+    seat(o, heads, "researcher2", ws_back((9.6, 2.4), None if away else PEOPLE["researcher2"], "agents" if away else "loss"))
+    seat(o, heads, "research", ws_front((1.6, 5.2), "+x", PEOPLE["research"], tag="Research", extras=[("papers", 0.5, 0.8), ("mug2", 0.55, 0.45)]))
+    seat(o, heads, "safety", ws_front((5.4, 4.8), "+y", PEOPLE["safety"], tag="Safety", extras=[("papers", 0.45, 0.75), ("plant", 0.62, 0.45)]))
+    seat(o, heads, "cfo", ws_front((8.9, 4.8), "+y", PEOPLE["cfo"], tag="CFO", extras=[("calc", 0.5, 0.75), ("papers", 0.5, 0.45)]))
+    seat(o, heads, "policy", ws_front((1.9, 8.4), "+x", PEOPLE["policy"], tag="Policy", extras=[("phone", 0.5, 0.5), ("mug", 0.55, 0.85)]))
+    seat(o, heads, "ceo", ws_front((7.9, 7.6), "+y", PEOPLE["ceo"], big=True, tag="You · CEO",
+                                   extras=[("papers", 0.75, 0.55), ("mug", 1.05, 0.9), ("plant", 1.1, 0.45)]))
+    # the robotics lab, front right
+    o.append(patch(11.0, 6.0, W, D, M("paper", 74, "ink")) + floor_grid(11.0, 6.0, W, D, 2.2, M("paper", 55, "ink"), 1.2, .5))
+    o.append(glass((11.0, 6.0), (W, 6.0), doors=[(0.1, 0.35)]))
+    o.append(glass((11.0, 6.0), (11.0, D), doors=[(0.55, 0.8)]))
+    o.append(hazard_pen(12.2, 7.2, 14.6, 10.4))
+    o.append(workbench(11.3, 6.5))
+    o.append(robot(13.0, 8.6))
+    o.append(robot(14.1, 8.1))
+    o.append(plant(0.6, 10.3))
+    o.append(plant(10.5, 10.4))
+    return "".join(o), heads, (10.6, 4.2)
+
+
 # ---------------------------------------------------------------- people roster
 PEOPLE = {
     "ceo": dict(skin=SK_MED, hair=H_BLACK, style="short", shirt=M("ink", 78, "sky"), mood="happy", suit=True, chair=M("coral", 55, "ink")),
@@ -955,22 +1249,33 @@ HAIR_TOP = 24  # sprite units from the head centre to just above the tallest hai
 
 
 def scene():
-    """Returns (svg body, head anchors) for the era in F. A head anchor is the top-centre of the head, hair included."""
+    """Returns (svg body, head anchors, floor-menu point or None) for the era in F, in drawing coordinates.
+    A head anchor is the top-centre of the head, hair included."""
+    if F["premises"] == "loft":
+        return loft_scene()
+    if F["premises"] == "building":
+        return building_scene()
+    return office_scene()
+
+
+def office_scene():
+    """The K2 office: the approved still, era 2, and era 3 renovated with a glass evals room where the bookshelf stood."""
+    global OX, OY, XF
+    OX, OY, XF = K2_OX, K2_OY, (1.0, 0.0, 0.0)
     heads = {}
     o = [room(), right_wall_decor(), left_wall_decor(), cables()]
-    o.append(bookshelf())
-    o.append(plant(0.55, 1.1))
+    if F["evals_room"]:
+        o.append(evals_room(2.6, 2.2))
+    else:
+        o.append(bookshelf())
+        o.append(plant(0.55, 1.1))
     o.append(f'<g id="rack">{rack()}</g>')
 
     def person(role, drawn):
-        svg, (hx, hy) = drawn
-        heads[role] = [round(hx, 1), round(hy - HAIR_TOP * K, 1)]
-        o.append(f'<g id="person-{role}">{svg}</g>')
+        seat(o, heads, role, drawn)
 
-    # era 5: the two researchers' chairs are empty and their monitors show agents at work
-    away = F["empty_researchers"]
-    person("researcher1", ws_back((4.2, 2.35), None if away else PEOPLE["researcher1"], "agents" if away else "code"))
-    person("researcher2", ws_back((6.6, 2.35), None if away else PEOPLE["researcher2"], "agents" if away else "loss"))
+    person("researcher1", ws_back((4.2, 2.35), PEOPLE["researcher1"], "code"))
+    person("researcher2", ws_back((6.6, 2.35), PEOPLE["researcher2"], "loss"))
     person("research", ws_front((1.5, 4.35), "+x", PEOPLE["research"], tag="Research", extras=[("papers", 0.5, 0.8), ("mug2", 0.55, 0.45)]))
     o.append(water_cooler())
     desk_plant = [("plant", 0.62, 0.45)] if F["plants"] else []
@@ -979,19 +1284,13 @@ def scene():
     person("policy", ws_front((1.9, 6.95), "+x", PEOPLE["policy"], tag="Policy", extras=[("phone", 0.5, 0.5), ("mug", 0.55, 0.85)]))
     ceo_plant = [("plant", 1.1, 0.45)] if F["plants"] else []
     person("ceo", ws_front((7.25, 6.4), "+y", PEOPLE["ceo"], big=True, tag="You · CEO",
-                           extras=([("papers", 0.45, 0.75), ("mug", 0.65, 0.5)] if F["folding"]  # fits the era-1 folding table
-                                   else [("papers", 0.75, 0.55), ("mug", 1.05, 0.9)]) + ceo_plant))
+                           extras=[("papers", 0.75, 0.55), ("mug", 1.05, 0.9)] + ceo_plant))
     if F["lounge"]:
         o.append(lounge())
-    if F["pizza"]:
-        o.append(pizza_boxes(9.75, 7.35))
     if F["plants"]:
         o.append(plant(0.6, 8.4))
-    if F["robot"]:
-        o.append(robot(10.5, 8.45))
-    elif F["plants"]:
         o.append(plant(10.5, 8.45))
-    return "".join(o), heads
+    return "".join(o), heads, None
 
 
 ERAS_PAGE = """<!doctype html>
@@ -1019,11 +1318,15 @@ def build(era):
     """Draws one office (era None = the K2 still) and returns (svg text, anchors)."""
     global F
     F = features(era)
-    body, heads = scene()
+    body, heads, floor_pt = scene()
+    sc, tx, ty = XF
+    if XF != (1.0, 0.0, 0.0):
+        body = f'<g transform="matrix({sc:.4f},0,0,{sc:.4f},{tx:.1f},{ty:.1f})">{body}</g>'
     svg = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" width="1440" height="900" class="room" '
            f'aria-label="Lab office">{body}</svg>\n')
-    rx, ry = rack_anchor()
-    return svg, {"heads": heads, "rack": [round(rx, 1), round(ry, 1)], "floorMenu": [1039, 636]}
+    anchors = {"heads": {r: framed(pt) for r, pt in heads.items()}, "rack": framed(rack_anchor()),
+               "floorMenu": [1039, 636] if floor_pt is None else framed(P(*floor_pt))}
+    return svg, anchors
 
 
 def write(path, text):

@@ -41,14 +41,22 @@ test('every era file keeps the office contract: people, moods, rack, floor, toke
   }
 });
 
-test('heads stay put across eras, so markers and bubbles line up in every office', () => {
+test('each era has its own anchors inside the frame; the two K2 office eras share the K2 heads', () => {
   for (const e of ERAS) {
     const a = eraAnchors(e);
-    assert.deepEqual(a.heads, anchors.heads, `era ${e}`);
-    assert.deepEqual(a.floorMenu, anchors.floorMenu, `era ${e}`);
-    const [x, y] = a.rack;
-    assert.ok(x > 0 && x < 1440 && y > 0 && y < 900, `era ${e} rack`);
+    for (const r of ROLES) {
+      const [x, y] = a.heads[r];
+      assert.ok(x > 0 && x < 1440 && y > 0 && y < 900, `era ${e} ${r}`);
+    }
+    for (const key of ['rack', 'floorMenu']) {
+      const [x, y] = a[key];
+      assert.ok(x > 0 && x < 1440 && y > 0 && y < 900, `era ${e} ${key}`);
+    }
   }
+  for (const e of [2, 3]) assert.deepEqual(eraAnchors(e).heads, anchors.heads, `era ${e} is the K2 office`);
+  assert.deepEqual(eraAnchors(5).heads, eraAnchors(4).heads, 'eras 4 and 5 are the same building');
+  assert.deepEqual(eraAnchors(5).floorMenu, eraAnchors(4).floorMenu, 'eras 4 and 5 are the same building');
+  assert.notDeepEqual(eraAnchors(4).heads, anchors.heads, 'the building is not the K2 office');
 });
 
 test('gradient ids are unique across the era files, so they can share one page', () => {
