@@ -87,3 +87,39 @@ test('techniques arrive by era and can be researched one era early', () => {
   s.era = 3;
   assert.deepEqual(standardTechniques(s).map((t) => t.id), ['cot']);
 });
+
+test('focus sliders are neutral at the start split and when absent', async () => {
+  const { focusEffects } = await import('../sim/recipe.js');
+  const { FOCUS } = await import('../sim/data/recipeFocus.js');
+  const s = createInitialState();
+  s.era = 2;
+  const start = Object.fromEntries(Object.entries(FOCUS).map(([stage, sliders]) => [stage, sliders.map((slider) => slider.start)]));
+  const neutral = { cap: 0, readiness: 0, spike: 0, mx: 0, usersMult: 1 };
+  const clean = (effects) => Object.fromEntries(Object.entries(effects).map(([key, value]) => [key, Math.abs(value) < 1e-12 ? 0 : value]));
+  assert.deepEqual(clean(focusEffects(s, eraOneRecipe)), neutral);
+  assert.deepEqual(clean(focusEffects(s, { ...eraOneRecipe, focus: start })), neutral);
+  // Doubling every weight keeps the same shares.
+  const doubled = Object.fromEntries(Object.entries(start).map(([stage, values]) => [stage, values.map((value) => value * 2 > 100 ? 100 : value * 2)]));
+  doubled.post = [60, 20, 20];
+  assert.equal(validateRecipe(s, { ...eraOneRecipe, focus: doubled }).ok, true);
+});
+
+test('focus sliders trade capability against readiness, misuse and spikes', async () => {
+  const { focusEffects } = await import('../sim/recipe.js');
+  const s = createInitialState();
+  const webHeavy = focusEffects(s, { ...eraOneRecipe, focus: { pre: [100, 0, 0] } });
+  const cleanHeavy = focusEffects(s, { ...eraOneRecipe, focus: { pre: [0, 0, 100] } });
+  assert.ok(webHeavy.cap > 0 && webHeavy.readiness < 0 && webHeavy.mx > 0);
+  assert.ok(cleanHeavy.cap < 0 && cleanHeavy.spike < 0 && cleanHeavy.mx < 0);
+  const redHeavy = focusEffects(s, { ...eraOneRecipe, focus: { post: [0, 0, 100] } });
+  assert.ok(redHeavy.mx < 0 && redHeavy.cap < 0);
+  // Midtraining sliders do nothing before midtraining opens.
+  assert.deepEqual(focusEffects(s, { ...eraOneRecipe, focus: { mid: [100, 0, 0] } }).cap, 0);
+});
+
+test('invalid focus sliders fail validation', () => {
+  const s = createInitialState();
+  for (const pre of [[0, 0, 0], [50, 50], [-1, 50, 50], [50, 50, Number.NaN], [150, 0, 0]]) {
+    assert.equal(validateRecipe(s, { ...eraOneRecipe, focus: { pre } }).ok, false, `${pre}`);
+  }
+});

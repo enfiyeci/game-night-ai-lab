@@ -1,5 +1,6 @@
 import { CARDS, STAGE_SLOTS } from './data/cards.js';
 import { eraScale } from './data/compute.js';
+import { FOCUS } from './data/recipeFocus.js';
 import { techAvailable } from './techniques.js';
 
 export const SIZES = ['small', 'medium', 'large', 'xl'];
@@ -58,9 +59,46 @@ export function resolveCards(state, stage, ids) {
   return [...picked, ...defaults];
 }
 
+// Share of a stage's time per focus slider, or null when the recipe sets no focus for that stage.
+export function focusShares(recipe, stage) {
+  const values = recipe?.focus?.[stage];
+  if (!Array.isArray(values)) return null;
+  const total = values.reduce((sum, value) => sum + value, 0);
+  return values.map((value) => value / total);
+}
+
+function validFocus(values) {
+  return Array.isArray(values) && values.length === 3
+    && values.every((value) => Number.isFinite(value) && value >= 0 && value <= 100)
+    && values.some((value) => value > 0);
+}
+
+// Effects of moving the focus sliders away from their start split; all zero at the start split.
+// Values time is not here: it reaches the sim as sliders.alignShare.
+export function focusEffects(state, recipe) {
+  const delta = (stage) => {
+    const shares = focusShares(recipe, stage);
+    return shares ? shares.map((share, index) => share - FOCUS[stage][index].start / 100) : [0, 0, 0];
+  };
+  const [web, math, clean] = delta('pre');
+  const [anneal, long, prep] = slotsFor(state, 'mid') > 0 ? delta('mid') : [0, 0, 0];
+  const [, , red] = delta('post');
+  const large = recipe.sliders.size === 'large' || recipe.sliders.size === 'xl';
+  return {
+    cap: web * 6 - clean * 3 + anneal * 5 * (large ? 0.5 : 1) - red * 3,
+    readiness: math * 0.5 + prep * 0.5,
+    spike: -clean * 0.15,
+    mx: -clean * 5 - red * 8,
+    usersMult: 1 + long * 0.2,
+  };
+}
+
 export function validateRecipe(state, recipe) {
   const errors = [];
   const { size, length, alignShare } = recipe.sliders;
+  for (const stage of TRAIN_STAGES) {
+    if (recipe.focus?.[stage] !== undefined && !validFocus(recipe.focus[stage])) errors.push(`${stage}: invalid focus sliders`);
+  }
   if (!Object.hasOwn(SIZE_UNITS, size)) errors.push(`unknown size ${size}`);
   if (size === 'xl' && state.era < 2) errors.push('the xl size unlocks in era 2');
   if (!Object.hasOwn(LENGTHS, length)) errors.push(`unknown training length ${length}`);

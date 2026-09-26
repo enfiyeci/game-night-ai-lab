@@ -1,4 +1,6 @@
+import { ADVISOR_PROFILES } from '../../sim/data/advisorLines.js';
 import { eraScale } from '../../sim/data/compute.js';
+import { FOCUS, FOCUS_REACTIONS, STAGE_BRIEFINGS } from '../../sim/data/recipeFocus.js';
 import { genevaCapRow } from './deal.js';
 import { CARDS } from '../../sim/data/cards.js';
 import {
@@ -11,6 +13,7 @@ import {
 import { modelName } from '../../sim/release.js';
 import { computeSlices } from '../../sim/split.js';
 import { openDialog } from '../components/dialog.js';
+import { portrait } from '../components/portraits.js';
 import { teamPanel } from '../components/team.js';
 import { vslider } from '../components/vslider.js';
 import { cardCostWords, recipePreview, sanitizeDraft } from '../logic/actions.js';
@@ -20,6 +23,12 @@ import { offeredCards } from '../logic/release.js';
 import { registerMenuHandler } from '../menu.js';
 
 const rememberedDrafts = new WeakMap();
+// Cards with `opens: key` call a screen registered under that key when picked, and may show a note line.
+const cardOpeners = new Map();
+
+export function registerCardOpener(key, { open, note } = {}) {
+  cardOpeners.set(key, { open, note });
+}
 const STAGES = ['pre', 'mid', 'post'];
 const STAGE_NAMES = { pre: 'Pretraining', mid: 'Midtraining', post: 'Post-training' };
 const GROUP_NAMES = {
@@ -53,75 +62,158 @@ const cloneDraft = (draft) => structuredClone(draft);
 function workingName(state, draft) {
   const last = state.models.at(-1);
   return modelName({
-    family: last?.family ?? 'Kestrel',
+    family: last?.family || state.modelFamily || 'Kestrel',
     generation: (last?.generation ?? 0) + 1,
     size: draft.sliders.size,
     tierWords: state.tierWords,
   });
 }
 
+const stagesFor = (era) => (era < 2 ? ['pre', 'post'] : STAGES);
+const FOCUS_COLOURS = { pre: ['coral', 'teal', 'sky'], mid: ['coral', 'wood', 'teal'], post: ['coral', 'sky', 'teal'] };
+const startFocus = (stage) => FOCUS[stage].map((slider) => slider.start);
+
+// Later stages are simply absent until their era arrives; the stepper never names them early.
 function stageStepper(stage, era) {
   const root = document.createElement('div');
   root.className = 'recipe-stepper';
   root.setAttribute('aria-label', 'Training stages');
-  for (const id of STAGES) {
+  for (const id of stagesFor(era)) {
     const item = document.createElement(id === stage ? 'strong' : 'span');
     item.textContent = STAGE_NAMES[id];
-    if (id === 'mid' && era < 2) {
-      item.className = 'locked';
-      item.textContent = 'Midtraining · opens in era 2';
-    }
     if (id === stage) item.setAttribute('aria-current', 'step');
     root.append(item);
   }
   return root;
 }
 
-function recap(draft) {
+function advisorVoice(id, size) {
+  const face = document.createElement('span');
+  face.className = 'recipe-face';
+  face.innerHTML = portrait(`advisor-${id}`, size, 'flat');
+  return face;
+}
+
+function briefing(stage) {
+  const { advisor, text } = STAGE_BRIEFINGS[stage];
+  const profile = ADVISOR_PROFILES[advisor];
   const root = document.createElement('section');
-  root.className = 'recipe-recap';
-  const heading = document.createElement('h2');
-  heading.textContent = 'Your run so far';
-  const rows = [
-    ['Model size', SIZE_NAMES[draft.sliders.size]],
-    ['Training length', LENGTH_NAMES[draft.sliders.length]],
-    ['Pretraining techniques', draft.picks.pre.map((id) => cardById(id)?.name).filter(Boolean).join(', ') || 'Defaults only'],
-  ];
-  const list = document.createElement('dl');
-  for (const [term, description] of rows) {
-    const dt = document.createElement('dt');
-    dt.textContent = term;
-    const dd = document.createElement('dd');
-    dd.textContent = description;
-    list.append(dt, dd);
-  }
-  root.append(heading, list);
+  root.className = 'recipe-brief';
+  const words = document.createElement('div');
+  const who = document.createElement('b');
+  who.textContent = `${profile.name} · ${profile.role}`;
+  const line = document.createElement('p');
+  line.textContent = text;
+  words.append(who, line);
+  root.append(advisorVoice(advisor, 40), words);
   return root;
 }
 
-function allocationBar(alignShare) {
+function choiceRow(label, options, value, onPick) {
   const root = document.createElement('div');
-  root.className = 'recipe-allocation';
-  const label = document.createElement('div');
-  label.className = 'recipe-allocation-label';
-  label.textContent = 'Time allocation (preview)';
+  root.className = 'recipe-choice-row';
+  root.setAttribute('role', 'group');
+  root.setAttribute('aria-label', label);
+  const name = document.createElement('div');
+  name.className = 'recipe-choice-label';
+  name.textContent = label;
+  const chips = document.createElement('div');
+  chips.className = 'recipe-chips';
+  for (const option of options) {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'recipe-chip';
+    chip.setAttribute('aria-pressed', `${option.value === value}`);
+    chip.disabled = Boolean(option.disabled);
+    chip.title = option.title ?? '';
+    const text = document.createElement('span');
+    text.textContent = option.label;
+    const detail = document.createElement('small');
+    detail.textContent = option.detail;
+    chip.append(text, detail);
+    chip.addEventListener('click', () => onPick(option.value));
+    chips.append(chip);
+  }
+  root.append(name, chips);
+  return root;
+}
+
+function reactionFor(stage, values) {
+  const total = values.reduce((sum, value) => sum + value, 0) || 1;
+  const shares = values.map((value) => value / total);
+  if (stage === 'post' && shares[1] > 0.5) return FOCUS_REACTIONS.valuesCapped;
+  const moves = shares.map((share, index) => share - FOCUS[stage][index].start / 100);
+  const biggest = moves.reduce((best, move, index) => (Math.abs(move) > Math.abs(moves[best]) ? index : best), 0);
+  if (Math.abs(moves[biggest]) < 0.08) return FOCUS_REACTIONS.balanced;
+  return FOCUS_REACTIONS[FOCUS[stage][biggest].id][moves[biggest] > 0 ? 'high' : 'low'];
+}
+
+// Game Dev Tycoon's focus sliders: three weights whose shares fill one time bar.
+function focusBlock(stage, currentDraft, onChange) {
+  const root = document.createElement('section');
+  root.className = 'recipe-focus';
+  const sliders = document.createElement('div');
+  sliders.className = 'recipe-focus-sliders';
   const bar = document.createElement('div');
   bar.className = 'recipe-allocation-bar';
-  const capability = document.createElement('span');
-  capability.className = 'capability';
-  capability.style.flex = `${1 - alignShare} 1 0%`;
-  const capabilityLabel = document.createElement('b');
-  capabilityLabel.textContent = `Capability ${Math.round((1 - alignShare) * 100)}%`;
-  capability.append(capabilityLabel);
-  const alignment = document.createElement('span');
-  alignment.className = 'alignment';
-  alignment.style.flex = `${alignShare} 1 0%`;
-  const alignmentLabel = document.createElement('b');
-  alignmentLabel.textContent = `Alignment ${Math.round(alignShare * 100)}%`;
-  alignment.append(alignmentLabel);
-  bar.setAttribute('aria-label', `Capability ${Math.round((1 - alignShare) * 100)} percent, Alignment ${Math.round(alignShare * 100)} percent`);
-  bar.append(capability, alignment);
-  root.append(label, bar);
+  const label = document.createElement('div');
+  label.className = 'recipe-allocation-label';
+  label.textContent = 'Time allocation';
+  const reaction = document.createElement('p');
+  reaction.className = 'recipe-reaction';
+  reaction.setAttribute('aria-live', 'polite');
+  const values = () => currentDraft().focus[stage];
+  const shares = () => {
+    const total = values().reduce((sum, value) => sum + value, 0) || 1;
+    return values().map((value) => Math.round((value / total) * 100));
+  };
+  const segments = FOCUS[stage].map((slider, index) => {
+    const segment = document.createElement('span');
+    segment.className = FOCUS_COLOURS[stage][index];
+    bar.append(segment);
+    return segment;
+  });
+  let lastReaction = null;
+  const render = () => {
+    const current = shares();
+    segments.forEach((segment, index) => {
+      segment.style.flex = `${Math.max(current[index], 0.01)} 1 0%`;
+      // About 6.5px a character at 11px bold across a bar about 610px wide.
+      const room = (current[index] / 100) * 610 - 16;
+      const full = `${FOCUS[stage][index].name} ${current[index]}%`;
+      segment.textContent = full.length * 6.5 <= room ? full : room >= 26 ? `${current[index]}%` : '';
+    });
+    bar.setAttribute('aria-label', FOCUS[stage].map((slider, index) => `${slider.name} ${current[index]} percent`).join(', '));
+    const said = reactionFor(stage, values());
+    if (said !== lastReaction) {
+      lastReaction = said;
+      const words = document.createElement('span');
+      words.textContent = said.text;
+      reaction.replaceChildren(advisorVoice(said.advisor, 26), words);
+      reaction.classList.remove('fresh');
+      void reaction.offsetWidth;
+      reaction.classList.add('fresh');
+    }
+  };
+  FOCUS[stage].forEach((slider, index) => {
+    sliders.append(vslider({
+      label: slider.name,
+      value: values()[index],
+      min: 0,
+      max: 100,
+      step: 1,
+      colour: FOCUS_COLOURS[stage][index],
+      formatValue: () => '',
+      ariaValueText: () => `${shares()[index]} percent of this stage's time`,
+      onInput(value) {
+        currentDraft().focus[stage][index] = value;
+        render();
+        onChange();
+      },
+    }));
+  });
+  render();
+  root.append(sliders, label, bar, reaction);
   return root;
 }
 
@@ -146,7 +238,7 @@ function computeUsageText(used, free, era) {
   return `Uses ${usedValue} of ${freeValue} ${availability}`;
 }
 
-export function techniquePanel(state, stage, draft, onChange, { cardNote } = {}) {
+export function techniquePanel(state, stage, draft, onChange, { cardNote, onPicked } = {}) {
   const root = document.createElement('div');
   root.className = 'recipe-techniques';
   const counter = document.createElement('div');
@@ -163,7 +255,7 @@ export function techniquePanel(state, stage, draft, onChange, { cardNote } = {})
   if (cards.length === 0) {
     const empty = document.createElement('p');
     empty.className = 'recipe-technique-empty';
-    empty.textContent = stage === 'mid' ? 'Midtraining opens in era 2.' : 'No techniques are available yet.';
+    empty.textContent = 'No techniques are available yet.';
     list.append(empty);
   }
 
@@ -246,6 +338,7 @@ export function techniquePanel(state, stage, draft, onChange, { cardNote } = {})
           else next.push(card.id);
         }
         onChange(next);
+        if (!picked) onPicked?.(card);
       });
       section.append(button);
     }
@@ -319,8 +412,6 @@ export function openRecipe(game, overlayRoot, { stage = 1 } = {}) {
     return moves.slice(0, runIndex < 0 ? moves.length : runIndex).some((move) => move.type === 'release');
   };
   let draft = sanitizeDraft(projected(), rememberedDrafts.get(game));
-  let lengthWasAdjusted = false;
-  let automaticLengthChange = false;
   let opened;
 
   function showStage(requested) {
@@ -348,6 +439,9 @@ export function openRecipe(game, overlayRoot, { stage = 1 } = {}) {
         draft.picks[stageId] = picks;
         draft = sanitizeDraft(projected(), draft);
         refresh();
+      }, {
+        cardNote: (card) => (card.opens ? cardOpeners.get(card.opens)?.note?.(nextState, card) ?? null : null),
+        onPicked: (card) => { if (card.opens) cardOpeners.get(card.opens)?.open?.(game, card); },
       }));
       footerSlot.replaceChildren(computeFooter(nextState, preview, releaseBeforeRun()));
       error.textContent = capitaliseError(preview.errors[0]);
@@ -357,112 +451,57 @@ export function openRecipe(game, overlayRoot, { stage = 1 } = {}) {
       if (startButton && number === 3) startButton.title = capitaliseError(preview.errors[0]);
     };
 
+    centre.append(briefing(stageId));
     if (number === 1) {
-      const sliders = document.createElement('div');
-      sliders.className = 'recipe-sliders recipe-stage-one-sliders';
-      const sizeNotches = SIZES.map((size, index) => ({
-        value: index,
-        label: SIZE_NAMES[size],
-        detail: size === 'xl' && state.era < 2
-          ? 'opens in era 2'
-          : computeAmount(SIZE_UNITS[size] * eraScale(state.era), state.era),
-        title: size === 'xl' && state.era < 2 ? 'Extra large opens in era 2' : '',
-      }));
-      let lengthSlider;
-      const sizeSlider = vslider({
-        label: 'Model size',
-        role: 'Head of Research',
-        value: SIZES.indexOf(draft.sliders.size),
-        min: 0,
-        max: SIZES.length - 1,
-        step: 1,
-        colour: 'coral',
-        formatValue: (value) => SIZE_NAMES[SIZES[value]],
-        ariaValueText: (value) => SIZE_NAMES[SIZES[value]],
-        notches: sizeNotches,
-        disabledValues: state.era < 2 ? [3] : [],
-        onInput(value) {
-          draft.sliders.size = SIZES[value];
-          const large = value >= 2;
-          lengthWasAdjusted = false;
-          if (large && draft.sliders.length === 'heavy') {
-            lengthWasAdjusted = true;
-            automaticLengthChange = true;
-          }
-          lengthSlider.setDisabledValues(large ? [2] : []);
-          automaticLengthChange = false;
-          note.textContent = lengthWasAdjusted
-            ? 'Heavily overtrained is only available for small or medium models, so training length moved to Overtrained.'
-            : '';
-          refresh();
-        },
-      });
-      const lengthKeys = Object.keys(LENGTHS);
-      lengthSlider = vslider({
-        label: 'Training length',
-        role: 'Researcher',
-        value: lengthKeys.indexOf(draft.sliders.length),
-        min: 0,
-        max: lengthKeys.length - 1,
-        step: 1,
-        colour: 'teal',
-        formatValue: (value) => LENGTH_NAMES[lengthKeys[value]],
-        ariaValueText: (value) => LENGTH_NAMES[lengthKeys[value]],
-        notches: lengthKeys.map((length, index) => ({
-          value: index,
-          label: LENGTH_NAMES[length],
-          detail: LENGTHS[length].turns ? `+${roundsToWords(state.era, LENGTHS[length].turns)}` : '',
-          title: length === 'heavy' && ['large', 'xl'].includes(draft.sliders.size)
-            ? 'Heavily overtrained needs a small or medium model' : '',
-        })),
-        disabledValues: ['large', 'xl'].includes(draft.sliders.size) ? [2] : [],
-        onInput(value) {
-          draft.sliders.length = lengthKeys[value];
-          if (!automaticLengthChange) lengthWasAdjusted = false;
-          note.textContent = lengthWasAdjusted
-            ? 'Heavily overtrained is only available for small or medium models, so training length moved to Overtrained.'
-            : '';
-          refresh();
-        },
-      });
       const note = document.createElement('p');
       note.className = 'recipe-slider-note';
-      note.textContent = '';
-      sliders.append(sizeSlider, lengthSlider);
-      centre.append(sliders, note);
-    } else if (number === 2) centre.append(recap(draft));
-    else {
-      const sliderWrap = document.createElement('div');
-      sliderWrap.className = 'recipe-stage-three-slider';
-      sliderWrap.append(vslider({
-        label: 'Alignment share',
-        role: 'Head of Safety',
-        value: draft.sliders.alignShare * 100,
-        min: 0,
-        max: 50,
-        step: 5,
-        colour: 'sky',
-        notches: Array.from({ length: 11 }, (_, index) => ({
-          value: index * 5,
-          label: index % 2 === 0 ? `${index * 5}%` : '',
-          ariaLabel: `${index * 5}%`,
-        })),
-        onInput(value) {
-          draft.sliders.alignShare = value / 100;
-          allocation.replaceWith(allocation = allocationBar(draft.sliders.alignShare));
-          refresh();
-        },
-      }));
-      let allocation = allocationBar(draft.sliders.alignShare);
-      centre.append(sliderWrap, allocation);
+      const sizeRow = () => choiceRow('Model size', SIZES.filter((size) => size !== 'xl' || state.era >= 2).map((size) => ({
+        value: size,
+        label: SIZE_NAMES[size],
+        detail: computeAmount(SIZE_UNITS[size] * eraScale(state.era), state.era),
+      })), draft.sliders.size, (size) => {
+        draft.sliders.size = size;
+        const moved = ['large', 'xl'].includes(size) && draft.sliders.length === 'heavy';
+        if (moved) draft.sliders.length = 'over';
+        note.textContent = moved
+          ? 'Heavily overtrained is only available for small or medium models, so training length moved to Overtrained.'
+          : '';
+        rows.replaceChildren(sizeRow(), lengthRow());
+        refresh();
+      });
+      const lengthRow = () => choiceRow('Training length', Object.keys(LENGTHS).map((length) => {
+        const blocked = length === 'heavy' && ['large', 'xl'].includes(draft.sliders.size);
+        return {
+          value: length,
+          label: LENGTH_NAMES[length],
+          detail: LENGTHS[length].turns ? `+${roundsToWords(state.era, LENGTHS[length].turns)}` : 'No extra time',
+          disabled: blocked,
+          title: blocked ? 'Heavily overtrained needs a small or medium model' : '',
+        };
+      }), draft.sliders.length, (length) => {
+        draft.sliders.length = length;
+        note.textContent = '';
+        rows.replaceChildren(sizeRow(), lengthRow());
+        refresh();
+      });
+      const rows = document.createElement('div');
+      rows.className = 'recipe-choices';
+      rows.append(sizeRow(), lengthRow());
+      centre.append(rows, note);
     }
+    draft.focus ??= {};
+    draft.focus[stageId] ??= startFocus(stageId);
+    centre.append(focusBlock(stageId, () => draft, () => {
+      draft = sanitizeDraft(projected(), draft);
+      refresh();
+    }));
 
     const capRow = number === 3 ? genevaCapRow(game.state) : null;
     body.append(centre, footerSlot, error);
     const nextStage = number === 1 ? (state.era < 2 ? 3 : 2) : 3;
     const previousStage = number === 3 ? (state.era < 2 ? 1 : 2) : 1;
     opened = openDialog(overlayRoot, {
-      title: `Training run · Stage ${number}`,
+      title: `Training run · Stage ${stagesFor(state.era).indexOf(stageId) + 1}`,
       subtitle: `${workingName(state, draft)} / ${STAGE_NAMES[stageId]}`,
       left: { title: 'Team', content: teamPanel(state, { lines: true }) },
       right: { title: 'Selected techniques', content: rightContent },

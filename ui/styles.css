@@ -731,8 +731,8 @@ svg.room {
 }
 
 .recipe-dialog .dlg {
-  top: 92px;
-  height: 708px;
+  top: 84px;
+  height: 800px;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -799,45 +799,103 @@ svg.room {
   min-height: 0;
   flex: 1;
   flex-direction: column;
-  justify-content: center;
-}
-
-.recipe-sliders {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-around;
-  gap: 4px;
+  justify-content: flex-start;
+  text-align: left;
 }
 
 .recipe-slider-note {
-  min-height: 18px;
-  margin: 4px 16px 0;
+  min-height: 0;
+  margin: 2px 0 0;
   color: color-mix(in oklab, var(--ink) 62%, var(--paper));
   font-size: 10.5px;
   font-weight: 700;
   line-height: 1.25;
 }
 
-.recipe-stage-three-slider {
+.recipe-slider-note:empty { display: none; }
+
+.recipe-brief {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 0 10px;
+  padding: 8px 12px;
+  border-radius: 9px;
+  background: color-mix(in oklab, var(--cream) 55%, var(--paper));
+}
+
+.recipe-brief b {
+  color: color-mix(in oklab, var(--ink) 62%, var(--paper));
+  font-size: 10.5px;
+  font-weight: 900;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.recipe-brief p { margin: 1px 0 0; font-size: 12.5px; font-weight: 600; line-height: 1.38; }
+
+.recipe-face { display: flex; flex: none; }
+.recipe-face .portrait { border-radius: 50%; background: var(--paper); }
+
+.recipe-choices { display: grid; gap: 7px; }
+
+.recipe-choice-row {
+  display: grid;
+  align-items: center;
+  grid-template-columns: 112px 1fr;
+  gap: 10px;
+}
+
+.recipe-choice-label { font-size: 13px; font-weight: 800; }
+
+.recipe-chips { display: flex; gap: 6px; }
+
+.recipe-chip {
+  display: grid;
+  flex: 1;
+  gap: 1px;
+  padding: 6px 8px;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  background: color-mix(in oklab, var(--ink) 7%, var(--paper));
+  cursor: pointer;
+}
+
+.recipe-chip small {
+  color: color-mix(in oklab, var(--ink) 60%, var(--paper));
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.recipe-chip:hover:not(:disabled) { background: color-mix(in oklab, var(--ink) 11%, var(--paper)); }
+.recipe-chip[aria-pressed="true"] { border-color: var(--coral); background: color-mix(in oklab, var(--coral) 14%, var(--paper)); }
+.recipe-chip:disabled { opacity: .45; cursor: default; }
+.recipe-chip:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+
+.recipe-focus { display: grid; gap: 5px; margin-top: 8px; }
+
+.recipe-focus-sliders {
   display: flex;
   justify-content: center;
+  gap: 40px;
 }
 
-.recipe-stage-three-slider .vslider-notch {
-  justify-content: flex-start;
-  font-size: 10px;
-}
-
-.recipe-stage-three-slider .vslider-label { margin-top: 8px; }
-
-.recipe-allocation {
-  margin: 8px 6px 0;
-  text-align: left;
-}
+.recipe-focus-sliders .vslider { width: 128px; }
+.recipe-focus-sliders .vslider-track { height: 150px; margin-top: 0; }
+.recipe-centre-pre .recipe-focus-sliders .vslider-track { height: 120px; }
+.recipe-centre-post .recipe-focus-sliders .vslider-track { height: 190px; }
+.recipe-focus-sliders .vslider-fill { transition: height .08s linear; }
+.recipe-focus-sliders .vslider-grip { transition: bottom .08s linear; }
+.recipe-focus-sliders .vslider-label { min-height: 0; margin-top: 10px; text-align: center; font-size: 13.5px; }
+.recipe-focus-sliders .vslider-value:empty { display: none; }
 
 .recipe-allocation-label,
 .recipe-cost-label {
-  margin-bottom: 5px;
+  margin: 4px 0 1px;
   color: color-mix(in oklab, var(--ink) 62%, var(--paper));
   font-size: 11px;
   font-weight: 800;
@@ -847,48 +905,51 @@ svg.room {
   display: flex;
   height: 26px;
   overflow: hidden;
-  border-radius: 8px;
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--ink) 12%, transparent);
+  border-radius: 7px;
 }
 
 .recipe-allocation-bar span {
-  position: relative;
   display: flex;
   min-width: 0;
   align-items: center;
-  overflow: visible;
+  padding: 0 8px;
+  overflow: hidden;
   color: var(--paper);
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 900;
   white-space: nowrap;
+  transition: flex-grow .08s linear;
 }
 
-.recipe-allocation-bar span b {
-  position: absolute;
-  z-index: 1;
-  font: inherit;
-}
-
-.recipe-allocation-bar .capability b { left: 7px; }
-.recipe-allocation-bar .alignment b { right: 7px; }
-
-.recipe-allocation-bar .capability { background: var(--coral); }
-.recipe-allocation-bar .alignment { background: var(--sky); }
 .recipe-allocation-bar span + span { border-left: 2px solid var(--paper); }
+.recipe-allocation-bar .coral { background: var(--coral); }
+.recipe-allocation-bar .teal { background: var(--teal); }
+.recipe-allocation-bar .sky { background: var(--sky); }
+.recipe-allocation-bar .wood { background: var(--wood); }
 
-.recipe-recap {
-  margin: 18px 34px;
-  padding: 20px 22px;
-  border: 1.5px solid color-mix(in oklab, var(--wood) 30%, transparent);
-  border-radius: 12px;
-  text-align: left;
-  background: color-mix(in oklab, var(--wood) 8%, var(--paper));
+.recipe-reaction {
+  display: flex;
+  min-height: 28px;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0 0;
+  color: color-mix(in oklab, var(--ink) 82%, var(--paper));
+  font-size: 12.5px;
+  font-style: italic;
+  font-weight: 600;
 }
 
-.recipe-recap h2 { margin: 0 0 12px; font-size: 18px; font-weight: 900; }
-.recipe-recap dl { display: grid; margin: 0; grid-template-columns: 145px 1fr; gap: 8px 14px; }
-.recipe-recap dt { color: color-mix(in oklab, var(--ink) 60%, var(--paper)); font-size: 12px; font-weight: 800; }
-.recipe-recap dd { margin: 0; font-size: 12.5px; font-weight: 800; line-height: 1.35; }
+.recipe-reaction.fresh span:last-child { animation: recipe-say .25s ease-out; }
+
+@keyframes recipe-say {
+  from { opacity: 0; transform: translateY(3px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recipe-reaction.fresh span:last-child,
+  .recipe-focus-sliders .vslider-fill,
+  .recipe-focus-sliders .vslider-grip { animation: none; transition: none; }
+}
 
 .recipe-footer-slot { flex: none; }
 

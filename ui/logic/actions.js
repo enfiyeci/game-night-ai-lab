@@ -4,6 +4,7 @@ import {
   TRAIN_STAGES,
   cardById,
   cardUnlocked,
+  focusShares,
   recipeCost,
   slotsFor,
   validateRecipe,
@@ -141,10 +142,24 @@ export function sanitizeDraft(state, draft) {
     : DEFAULT_RECIPE.sliders.length;
   if (length === 'heavy' && (size === 'large' || size === 'xl')) length = 'over';
 
-  const rawAlign = Number.isFinite(draft?.sliders?.alignShare)
+  const focus = {};
+  for (const stage of TRAIN_STAGES) {
+    const values = draft?.focus?.[stage];
+    if (!Array.isArray(values) || values.length !== 3) continue;
+    const clean = values.map((value) => Math.round(Math.max(0, Math.min(100, Number.isFinite(value) ? value : 0))));
+    if (clean.some((value) => value > 0)) focus[stage] = clean;
+  }
+  const hasFocus = Object.keys(focus).length > 0;
+
+  // With focus sliders, the Values share of post-training time is the alignment share, capped at half.
+  const valuesShare = focus.post ? focusShares({ focus }, 'post')[1] : null;
+  const rawAlign = valuesShare ?? (Number.isFinite(draft?.sliders?.alignShare)
     ? draft.sliders.alignShare
-    : DEFAULT_RECIPE.sliders.alignShare;
-  const alignShare = Number((Math.round(Math.max(0, Math.min(0.5, rawAlign)) * 20) / 20).toFixed(2));
+    : DEFAULT_RECIPE.sliders.alignShare);
+  const clamped = Math.max(0, Math.min(0.5, rawAlign));
+  const alignShare = valuesShare === null
+    ? Number((Math.round(clamped * 20) / 20).toFixed(2))
+    : Number(clamped.toFixed(2));
 
   const picks = {};
   for (const stage of TRAIN_STAGES) {
@@ -161,7 +176,7 @@ export function sanitizeDraft(state, draft) {
     picks[stage] = selected;
   }
 
-  return { sliders: { size, length, alignShare }, picks };
+  return { sliders: { size, length, alignShare }, picks, ...(hasFocus && { focus }) };
 }
 
 export function cardCostWords(card, era = 1) {
