@@ -13,6 +13,7 @@ import {
   queueOrderPreflight,
   queueOrderPreview,
   queueScreenAvailable,
+  queueTrainingView,
   queueView,
   replaceQueueOrder,
   sitesView,
@@ -142,6 +143,20 @@ test('the queue preview compares standard and prepaid', () => {
   assert.equal(q.you.standard, allocate(supply, [...rivalOrders(s), { lab: 'you', units, tier: 'standard' }]).you);
   assert.equal(q.you.prepaid, allocate(supply, [...rivalOrders(s), { lab: 'you', units, tier: 'prepaid' }]).you);
   assert.equal(q.rows.find((r) => r.lab === 'qilin').tier, 'none');
+});
+
+test('queue training availability includes control and safety reservations', () => {
+  const s = createInitialState();
+  s.era = 3;
+  s.compute.online = 30;
+  s.compute.servingUnits = 5.4;
+  s.compute.split.safety = 0.2;
+  s.activeRun = { units: 20 };
+  const view = queueTrainingView(s);
+  assert.ok(Math.abs(view.free - 18.6) < 1e-9);
+  assert.equal(view.need, 20);
+  assert.ok(Math.abs(view.short - 1.4) < 1e-9);
+  assert.notEqual(view.free, s.compute.online - s.compute.servingUnits);
 });
 
 test('queue order preflight mirrors sim rejection and withdrawal rules', () => {

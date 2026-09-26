@@ -376,6 +376,16 @@ export function queueView(state, draft = {}) {
   return { released: supply, rows, you: { standard, prepaid, upfront }, announcements };
 }
 
+export function queueTrainingView(state) {
+  const slices = computeSlices(state);
+  const need = state.activeRun?.units ?? Math.ceil(state.compute.online * 1.25);
+  return {
+    free: slices.training,
+    need,
+    short: Math.max(0, need - slices.training),
+  };
+}
+
 export function queueOrderPreview(state, draft) {
   const projected = structuredClone(state);
   const result = placeOrder(projected, draft);
