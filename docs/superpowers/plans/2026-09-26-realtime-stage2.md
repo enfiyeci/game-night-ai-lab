@@ -669,3 +669,19 @@ Codex `gpt-5.6-sol` (session 01a0dfd1-a751-7bc1-97d7-4f2e5fbfd533) implemented T
 | Task 4 billing from the old date (experiment) | 7, the largest speed acquihire 43.0% → 56.0% |
 
 Lawsuits and promises changed no ending (Tasks 2 and 3 outputs are identical). Rival-disaster endings dip 1–6 points in every balanced variant, because a rival's capability now lands on its day in the next round.
+
+### Real-game check
+
+A Playwright run of the served game (`?seed=3&scenario=era2Deals`, ×4, cards deferred with "Decide later") saw OpenBrain launch on day 542, day 87 of a 91-day round and four days before the mark. Its `@launch_tracker` post reached the feed the same day. There were no page or console errors. No screen changed, so there was no design pass.
+
+### Pre-merge review (tier 3)
+
+Codex `gpt-5.6-sol`, run concurrently against `origin/ui`; the mutation guard was clean in both rounds.
+
+- Straight `review --base origin/ui` (session 01a0dfe6-4ce8-7e43-9a4b-c2e7791694c1): no findings.
+- Adversarial (session 01a0dfe6-4d1e-7fc1-8932-c947c9479a20), round 1 REVISE:
+  - Important, fixed in 1f56791: a daily lawsuit or kept promise could leave `publicTrust` or `govFavor.us` outside 0–100 until the mark. `landDue` now clamps both, with a test.
+  - Minor, won't fix: at the final mark a rival launch can be queued for a day after the run. Nothing reads a rival's `releases` count, and nothing runs after the run ends, so it is never seen.
+- Round 2 (resume): APPROVED, no findings.
+
+Final: 805 tests, 801 pass, 0 fail, 4 todo. Balance unchanged by the fix (the same two endings over 5 points as Tasks 1–3).
