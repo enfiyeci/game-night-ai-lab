@@ -18,6 +18,8 @@ import {
 import { openQueue } from './screens/compute.js';
 import { openPowerSites } from './screens/sites.js';
 import { mountHistory, openArticle, openHistory } from './screens/history.js';
+import { mountTraining } from './screens/training.js';
+import { mountHazard } from './screens/hazard.js';
 
 const params = new URLSearchParams(location.search);
 
@@ -60,6 +62,8 @@ mountCompany(game, overlay);
 mountRecipe(game, overlay);
 mountHistory(game, overlay);
 mountTurnSummary(overlay, game);
+const training = mountTraining(game, { stage, hud, overlay });
+mountHazard(game, { stage, overlay });
 
 function stagePoint(event) {
   const rect = stage.getBoundingClientRect();
@@ -134,6 +138,10 @@ async function openDebugRoute() {
   }
   if (location.hash === '#article') {
     openArticle(game, overlay);
+    return;
+  }
+  if (location.hash === '#training') {
+    training.replay();
     return;
   }
   if (location.hash !== '#menu' && location.hash !== '#company') return;

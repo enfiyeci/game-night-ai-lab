@@ -18,6 +18,7 @@ export function createGame({ seed = 1, state } = {}) {
   let actions = initialQueue(currentState.budget);
   const subscribers = new Set();
   const rivalReleases = [];
+  let lastAlignShare = currentState.activeRun?.recipe.sliders.alignShare;
 
   return {
     get state() {
@@ -28,6 +29,9 @@ export function createGame({ seed = 1, state } = {}) {
     },
     get rivalReleases() {
       return rivalReleases.map((release) => ({ ...release }));
+    },
+    get lastAlignShare() {
+      return lastAlignShare;
     },
     setBudget(budget) {
       const candidate = structuredClone(currentState);
@@ -52,9 +56,16 @@ export function createGame({ seed = 1, state } = {}) {
       return { ok: true };
     },
     endTurn() {
+      if (currentState.activeRun) lastAlignShare = currentState.activeRun.recipe.sliders.alignShare;
+      const hadRun = Boolean(currentState.activeRun);
+      const startedShare = actions.moves.find((move) => move.type === 'startRun')?.recipe.sliders.alignShare;
       const turn = currentState.turn;
       const update = runTurn(currentState, actions, rng);
       currentState = update.state;
+      if (currentState.activeRun) lastAlignShare = currentState.activeRun.recipe.sliders.alignShare;
+      else if (!hadRun && startedShare !== undefined && update.events.some((event) => event.type === 'runComplete')) {
+        lastAlignShare = startedShare; // a run that started and finished in one step
+      }
       actions = initialQueue(actions.budget);
       for (const event of update.events) {
         if (event.type === 'rivalRelease') rivalReleases.push({ turn, id: event.id });

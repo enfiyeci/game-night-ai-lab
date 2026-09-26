@@ -176,6 +176,31 @@ function dangerState(seed) {
   return state;
 }
 
+// A run with full reasoning RL that ends with the cheating trace unanswered. The dice are played from seed 1 up
+// until one rolls the hazard (an even chance each), so the state is always reached by the real sim.
+function hazardState(seed) {
+  const base = SCENARIOS.era3Idle(seed);
+  if (base.ending) return base;
+  const recipe = {
+    sliders: { size: 'small', length: 'optimal', alignShare: 0.25 },
+    picks: { pre: ['licensed-data'], mid: ['anneal'], post: ['human-sft', 'reasoning-rl', 'deliberative'] },
+  };
+  const basic = { budget: { spend: 25, split: { training: 0.6, security: 0.15, product: 0.1, talent: 0.15 } }, computeSplit: { safety: 0.2 } };
+  let last = base;
+  for (let dice = 1; dice <= 20; dice += 1) {
+    const rng = createRng(dice);
+    let state = endTurn(base, { ...basic, moves: [{ type: 'startRun', recipe }] }, rng).state;
+    if (!state.activeRun) return base;
+    for (let i = 0; i < 6 && state.activeRun && !state.ending; i += 1) {
+      const eventChoices = Object.fromEntries(state.pendingEvents.map((event) => [event.id, event.choices[0].id]));
+      state = endTurn(state, { ...basic, moves: [], eventChoices }, rng).state;
+    }
+    last = state;
+    if (state.pendingModel?.hazard) return state;
+  }
+  return last;
+}
+
 export const SCENARIOS = {
   start,
   midEra3,
@@ -189,4 +214,5 @@ export const SCENARIOS = {
   era3Queue: (seed) => atEra(seed, 3),
   era3Budget: budgetState,
   era4Power: powerState,
+  hazard: hazardState,
 };

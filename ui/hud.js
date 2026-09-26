@@ -1,6 +1,7 @@
 import { activeModels, projectBurn, runway } from '../sim/economy.js';
 import { rank } from '../sim/rivals.js';
 import { compute, money, months, project, users } from './logic/format.js';
+import { badgeCounts } from './logic/training.js';
 
 const ordinal = (value) => {
   const mod100 = value % 100;
@@ -8,14 +9,13 @@ const ordinal = (value) => {
   return `${value}${value % 10 === 1 ? 'st' : value % 10 === 2 ? 'nd' : value % 10 === 3 ? 'rd' : 'th'}`;
 };
 
-const bubbleCount = (run, kind) => run?.bubbles?.[kind] ?? run?.[`${kind}Bubbles`] ?? 0;
-
 export function mountHud(root, game) {
   let expanded = false;
 
   function render() {
     const state = game.state;
     const run = state.activeRun;
+    const counts = badgeCounts(state, game.lastAlignShare);
     const pill = project(state);
     const totalUsers = activeModels(state).reduce((sum, model) => sum + model.users, 0);
     const plannedRunway = runway({ ...state, burnPlanned: projectBurn(state) }, 'planned'); // burnPlanned is 0 before the first turn
@@ -23,13 +23,13 @@ export function mountHud(root, game) {
 
     root.innerHTML = `
       <div class="hud" aria-label="Current project">
-        <div class="ctr cap"><div class="badge">${bubbleCount(run, 'capability')}</div><div class="tag">Capability</div></div>
+        <div class="ctr cap"><div class="badge">${counts.capability}</div><div class="tag">Capability</div></div>
         <div class="pill">
           <div class="t"></div>
           <div class="s">${pill.status}</div>
           ${pill.progress === null ? '' : `<div class="bar"><i style="width:${Math.round(pill.progress * 100)}%"></i></div>`}
         </div>
-        <div class="ctr ali"><div class="badge">${bubbleCount(run, 'alignment')}</div><div class="tag">Alignment</div></div>
+        <div class="ctr ali"><div class="badge">${counts.alignment}</div><div class="tag">Alignment</div></div>
       </div>
       <button class="info" type="button" aria-expanded="${expanded}" aria-controls="${infoId}">
         <span class="full"><span class="k">Era</span> <b>${state.era}</b> <span class="k">· Turn</span> <b>${state.turn}</b> <span class="k">of 20</span></span>
