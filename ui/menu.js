@@ -13,7 +13,6 @@ const releaseQueued = (game) => game.queue.moves.some((move) => move.type === 'r
 const MOVE_TYPE = {
   training: 'startRun',
   release: 'release',
-  internal: 'deployInternal',
   constitution: 'amendConstitution',
   meeting: 'meeting',
   summit: 'summit',
@@ -30,7 +29,7 @@ export const ITEMS = [
   { id: 'budget', label: 'Plan the budget', free: true },
   { id: 'training', label: 'Start a training run', unavailable: (state, game) => (game.queue.moves.some((move) => move.type === 'startRun') && `A training run already started this ${roundWord(state.era)}`) || (state.activeRun && 'A run is already under way') || (state.pendingModel && 'Release the trained model first') },
   { id: 'release', label: 'Release a model', editsQueued: (game) => releaseQueued(game), unavailable: (state, game) => !releaseQueued(game) && !state.pendingModel && 'Release needs a finished model' },
-  { id: 'internal', label: 'Deploy a model internally', unavailable: (state) => state.era < 3 && 'Internal deployment opens in era 3' },
+  { id: 'automation', label: 'Who does the work', free: true },
   { id: 'constitution', label: 'Amend the constitution' },
   {
     id: 'meeting',
@@ -48,6 +47,8 @@ export const ITEMS = [
 ];
 
 export const COMPANY_ITEMS = [
+  { id: 'finance', label: 'Plan the years ahead', free: true },
+  { id: 'board', label: 'The board', free: true },
   { id: 'deals', label: 'Sign a compute deal' },
   { id: 'power', label: 'Power sites', hidden: (state) => state.era !== 4 },
   {
@@ -212,7 +213,7 @@ export function openMenu(game, point, { overlay = document.querySelector('#overl
     for (const item of COMPANY_ITEMS) {
       if (item.hidden?.(projected, game)) continue;
       const customHandler = handlerFor(item.id, handlers);
-      const reason = game.movesLeft() === 0
+      const reason = !item.free && game.movesLeft() === 0
         ? `Both team actions are used this ${roundWord(game.state.era)}`
         : disabledReason(item, game, customHandler, projected);
       const button = document.createElement('button');

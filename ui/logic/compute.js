@@ -21,7 +21,7 @@ import {
 import { setConstitution, amendConstitution } from '../../sim/constitution.js';
 import { addressWarning, fallbackChoice, resolveEvent } from '../../sim/events.js';
 import { resolveHazard } from '../../sim/hazards.js';
-import { deployInternal, stopInternal } from '../../sim/internal.js';
+import { setAutomation } from '../../sim/automation.js';
 import { buildSite, leaseMonthly, powerTurn, sitePower, SITE_TYPES } from '../../sim/power.js';
 import { expireMeeting, meetingDue, openMeeting, runMeeting } from '../../sim/president.js';
 import { allocate, placeOrder, PREPAY_SHARE, released, rivalOrders, withdrawOrder } from '../../sim/queue.js';
@@ -112,8 +112,6 @@ export function applyProjectedMove(state, move, queue) {
   if (move.type === 'raise') return raiseRound(state, move.archetype);
   if (move.type === 'research') return researchTechnique(state, move.techId);
   if (move.type === 'emergency') return useEmergency(state, move.option);
-  if (move.type === 'deployInternal') return deployInternal(state, move.control);
-  if (move.type === 'stopInternal') return stopInternal(state);
   if (move.type === 'amendConstitution') return amendConstitution(state, move.change);
   if (move.type === 'meeting') {
     if (!state.meeting) return { ok: false };
@@ -145,6 +143,7 @@ function projectBeforeMoves(state, queue) {
   }
   if (queue.budget) setBudget(state, queue.budget);
   if (Object.hasOwn(queue, 'computeSplit')) setComputeSplit(state, queue.computeSplit);
+  if (Object.hasOwn(queue, 'automation')) setAutomation(state, queue.automation);
   if (queue.pledge != null) makePledge(state, queue.pledge);
   for (const action of queue.contractActions ?? []) contractAction(state, action);
   if (queue.queueWithdraw === true) withdrawOrder(state);
@@ -636,6 +635,14 @@ export function turnSummary(events, state) {
       lines.push('The lab broke its public safety-compute pledge');
     } else if (event.type === 'raise') {
       lines.push(`You raised ${money(event.amount)}`);
+    } else if (event.type === 'boardPromise') {
+      lines.push(`You promised the board ${computeAmount(event.units, event.era)} by the end of era ${event.era}`);
+    } else if (event.type === 'boardPromiseJudged') {
+      lines.push(event.ratio >= 1 ? 'You kept your compute promise to the board'
+        : event.vote ? 'You missed your compute promise badly, and the board wants a vote'
+          : 'You came up short of your compute promise to the board');
+    } else if (event.type === 'staffLetter') {
+      lines.push('Staff signed a letter to keep you, and the board backed down');
     } else if (event.type === 'research') {
       const name = techniqueName(event.techId);
       if (name) lines.push(`Your researchers cracked ${name}`);

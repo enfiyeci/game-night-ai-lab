@@ -4,6 +4,7 @@ import { createInitialState } from '../sim/state.js';
 import { eventsTick, addressWarning, resolveEvent, stampNewCards } from '../sim/events.js';
 import { EVENTS } from '../sim/data/events.js';
 import { advanceDays, endTurn } from '../sim/turn.js';
+import { jobLevels } from '../sim/automation.js';
 
 const no = { next: () => 0.99, int: () => 0, chance: () => false, pick: (a) => a[0], normal: (m) => m };
 const yes = { next: () => 0, int: () => 0, chance: () => true, pick: (a) => a[0], normal: (m) => m };
@@ -63,14 +64,14 @@ test('at most two cards wait at once, and unanswered cards use passive fallbacks
 
 test('an internal stage-2 incident becomes the oversight card', () => {
   const s = createInitialState();
-  s.internal = { control: 0, stage: 2, turns: 1, stageTurn: 0 };
+  s.automation.stage = 2; s.automation.stageTurn = 0;
   eventsTick(s, no);
   assert.equal(s.pendingEvents[0].id, 'oversightTamper');
 });
 
 test('addressWarning cannot target an internal incident', () => {
   const s = createInitialState();
-  s.internal = { control: 0, stage: 2, turns: 1, stageTurn: 0 };
+  s.automation.stage = 2; s.automation.stageTurn = 0;
   eventsTick(s, no);
   assert.equal(addressWarning(s, 'oversightTamper').ok, false);
   assert.equal(s.pendingEvents[0].id, 'oversightTamper');
@@ -89,31 +90,36 @@ test('event and warning ids do not match inherited object properties', () => {
   assert.equal(auto.choiceId, 'deny');
 });
 
-test('internal incident choices preserve escalation and enforce control compute', () => {
+test('ladder cards act on the hand-offs: hand back, or add a monitor only if the compute fits', () => {
   const s = createInitialState();
-  s.era = 3;
-  s.models.push({ capability: 60 });
-  s.internal = { control: 0, stage: 2, turns: 1 };
+  s.era = 4;
+  s.automation.stage = 2;
   s.pendingEvents.push({ id: 'oversightTamper' });
   assert.equal(resolveEvent(s, 'oversightTamper', 'shutdown').ok, true);
-  assert.equal(s.internal, null);
-  assert.equal(s.flags.internalStage, 2);
+  assert.deepEqual(jobLevels(s), [3, 0, 0, 0, 0]);
+  assert.equal(s.automation.stage, 2);
+
+  const room = createInitialState();
+  room.era = 4;
+  room.compute.online = 200;
+  room.pendingEvents.push({ id: 'oversightTamper' });
+  const roomCash = room.cash;
+  resolveEvent(room, 'oversightTamper', 'controls');
+  assert.equal(room.automation.checks.monitors, 1);
+  assert.equal(room.cash, roomCash - 20);
 
   const blocked = createInitialState();
-  blocked.era = 3;
-  blocked.models.push({ capability: 60 });
+  blocked.era = 4;
   blocked.compute.online = 0;
-  blocked.internal = { control: 0, stage: 2, turns: 1 };
   blocked.pendingEvents.push({ id: 'oversightTamper' });
   const cash = blocked.cash;
   resolveEvent(blocked, 'oversightTamper', 'controls');
-  assert.equal(blocked.internal.control, 0);
+  assert.equal(blocked.automation.checks.monitors, 0);
   assert.equal(blocked.cash, cash);
 });
 
-test('internal reporting still applies public effects after an earlier shutdown', () => {
+test('reporting a self-copy applies its public effects', () => {
   const s = createInitialState();
-  s.internal = null;
   s.pendingEvents.push({ id: 'selfExfiltration' });
   resolveEvent(s, 'selfExfiltration', 'report');
   assert.equal(s.govFavor.us, 56);
@@ -166,9 +172,9 @@ test('internal incidents take priority when two warnings mature on the escalatio
   s.turn = 1;
   s.warnings.jailbreak = { turn: 0 };
   s.warnings.citations = { turn: 0 };
-  s.internal = { control: 0, stage: 1, turns: 1, stageTurn: 0 };
+  s.automation.stage = 1; s.automation.stageTurn = 0;
   const out = endTurn(s, {}, yes);
-  assert.equal(out.state.internal.stage, 2);
+  assert.equal(out.state.automation.stage, 2);
   assert.equal(out.state.pendingEvents[0].id, 'oversightTamper');
   assert.equal(out.state.warnings.citations.deferred, true);
 });

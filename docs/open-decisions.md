@@ -68,3 +68,33 @@ Decided 2026-09-25 and moved into the spec: the advisor cast (spec 6), the feed'
     access to the same model, enterprise licences and support, fine-tuning services, licence terms
     for big competitors, goodwill and hiring). To bring the current option back, delete
     `hidden: true` from `channel-open` and `tamper` in `sim/data/cards.js`.
+
+## E. The board (built 2026-09-26 on `board-redesign`; plan `docs/superpowers/plans/2026-09-26-board-ui.md`)
+
+Everything below was decided during the build so it would not stall; each is a quick yes or no for the owner.
+
+1. **Removal rates went up.** The six pre-meeting cards all cost support when nobody answers them, and the balance
+   strategies never answer. Out of 200 runs each: speed 34 → 57 removed, hand-to-mouth 11 → 66, balanced 1 → 7,
+   random 28 → 30; the others moved by 1 to 4. Nothing was retuned (owner defers balance). Offering every deal at
+   every meeting also raises removals, because a broken deal loses that director for good.
+2. **A third vote kind, "emergency".** The existing "board calls an emergency vote" card now records its vote as an
+   emergency meeting, not a promise vote, so the meeting and result copy stop blaming a compute promise that was
+   never made.
+3. **One vote per meeting.** If an emergency vote is held in an era's last month, the era-end vote is skipped that
+   round (it happened in 2 of 400 test runs). Before, both ran and the screen could show only one.
+4. **Deals when a vote is put off.** If the lab is insolvent, a due vote waits a round. The meeting says "the vote
+   is put off", and deals made stand; they are judged after the vote that is eventually held.
+5. **Pronouns.** Board copy on the new screens uses they/them for every director. The six card texts keep the
+   mockup frames' lines ("she will notice", "Walk him through the long plan"). Pick one.
+6. **Deal wording.** "Security above 40" and "Public trust above 55" pass at exactly 40 and 55.
+7. **What the board screen reads from true support.** The trend arrows and "Cooling fastest" follow real movement,
+   not the staff read (no numbers are shown). Say if they should follow the read instead.
+8. **The candor director can be dropped twice** if the cleaned-up safety report leaks while a candor deal is open
+   (she is already capped below the vote line, so no vote changes).
+9. **Owner copy.** Every director line, caption, joke, advisor line and consequence line is a placeholder marked
+   `// OWNER WRITES` in `ui/data/boardCopy.js` and `ui/data/eventCopy.js`, including the lines for losing the vote.
+10. **Not built:** the op-ed card's newspaper picture and the leak's toast from the mockups; calling a director
+    (parked in `docs/notes/later.md`); the whistleblower card.
+11. **Real time.** Ported before merging into `ui`: the meeting opens by itself on the last story day before a vote
+    mark and holds the clock; the board's round-end work runs at the hidden round mark; the finance planner records a
+    history row at each mark.

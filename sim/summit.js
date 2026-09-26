@@ -1,7 +1,6 @@
 import { clamp } from './util.js';
 import { RIVAL_TEMPLATES, leaderCapability } from './rivals.js';
 import { exposeConcealed } from './hazards.js';
-import { stopInternal } from './internal.js';
 import {
   CATCH, CAUGHT_TRUST, CHECK_LEAN, CHECK_LEVELS, DEFAULT_CHECK, DEMANDS, DETERRENCE, FALSE_ACCUSATION_TRUST,
   FALSE_ALARM, INVESTIGATE, MAX_PROMISES, PRESIDENT_VERIFICATION_FAVOR, PROMISE_BONUS, PROMISES, READ_BAND,
@@ -188,7 +187,6 @@ export function proposeSummit(state, move, rng) {
     state.alignmentDebt = clamp(state.alignmentDebt - 6, 0, 100);
     for (const rival of state.rivals) rival.caution = Math.min(1, rival.caution + 0.1);
   }
-  if (binding.includes('pauseAutomation') && state.internal) stopInternal(state);
   if (binding.includes('verification') && state.meetingsHeld?.includes('second')) {
     state.govFavor.us = clamp(state.govFavor.us - PRESIDENT_VERIFICATION_FAVOR, 0, 100);
     events.push({ type: 'presidentAngry' });

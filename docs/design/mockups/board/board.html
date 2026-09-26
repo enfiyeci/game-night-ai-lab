@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=1440">
+  <!-- Serve the repo root and open docs/design/mockups/board/board.html?m=1A. The base tag points every game path at
+       the repo root, so the real office, HUD and dialog styles load; board-mock.js then draws the option named by ?m=. -->
+  <base href="../../../../">
+  <title>Board mockups</title>
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Nunito:wght@300;400;600;700;800;900&family=Courier+Prime:wght@400;700&family=Caveat:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="ui/styles.css">
+  <link rel="stylesheet" href="docs/design/mockups/board/events-look.css">
+  <link rel="stylesheet" href="docs/design/mockups/board/board-mock.css">
+</head>
+<body>
+  <main id="stage" aria-label="AI lab office">
+    <div id="office"></div>
+    <div id="fx" aria-live="polite"></div>
+    <div id="hud"></div>
+    <div id="overlay"></div>
+  </main>
+  <script type="module" src="ui/main.js"></script>
+  <script type="module" src="docs/design/mockups/board/board-mock.js"></script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 import { BALANCE } from './balance.js';
 import { eraById } from './data/eras.js';
 import { SPOT_PRICE, RESALE, eraScale } from './data/compute.js';
-import { controlUnits } from './internal.js';
+import { controlUnits } from './automation.js';
 import { activeModels, safetyUnits } from './serving.js';
 
 export const MAX_SAFETY = 0.5;

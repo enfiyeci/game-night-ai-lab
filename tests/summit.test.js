@@ -8,6 +8,7 @@ import { CATCH, BREAK_GAIN, CAUGHT_TRUST } from '../sim/data/summit.js';
 import { finalEnding } from '../sim/endings.js';
 import { startRun, advanceRun } from '../sim/training.js';
 import { applyActions, endTurn } from '../sim/turn.js';
+import { jobLevels, setAutomation } from '../sim/automation.js';
 import { recipeCost } from '../sim/recipe.js';
 
 // No noise, and every coin flip lands "no".
@@ -258,4 +259,16 @@ test('catching after an investigation undoes exactly what the break gained', () 
   const suspicion = s.deal.suspicions.find((entry) => entry.party === 'openbrain');
   investigate(s, suspicion.id, always);
   assert.equal(openbrain.capability, 98);
+});
+
+test('pauseAutomation hands choosing and direction back to people while the deal holds', () => {
+  const { s } = signedAfter({ proposals: ['evaluators'], checks: { evaluators: 2 } });
+  s.deal.binding = ['pauseAutomation'];
+  s.models.push({ capability: 50 });
+  s.automation.stage = 2;
+  assert.deepEqual(jobLevels(s).slice(3), [0, 0]);
+  assert.equal(s.automation.stage, 2);
+  assert.equal(setAutomation(s, { levels: { choosing: 1 } }).error, 'choosing and direction are back with people');
+  s.deal.collapsed = true;
+  assert.deepEqual(jobLevels(s).slice(3), [2, 1]);
 });

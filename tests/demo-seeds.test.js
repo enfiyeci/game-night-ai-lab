@@ -156,15 +156,13 @@ test('recording script describes every part of a constitution amendment', () => 
   assert.match(line, /rule yield for wrong/);
 });
 
-test('recording script preserves unknown move payloads and internal control', () => {
+test('recording script preserves unknown move payloads', () => {
   const line = demoSeeds.describeActions({
     moves: [
-      { type: 'deployInternal', control: 0.6 },
       { type: 'moonshot', target: 'orbital', risk: 3 },
     ],
   });
 
-  assert.match(line, /deploy the model internally with 60% control/);
   assert.match(line, /moonshot: \{"target":"orbital","risk":3\}/);
 });
 

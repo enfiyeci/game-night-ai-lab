@@ -212,3 +212,20 @@ test('releaseDraft drops a remembered pick for a hidden card, and keeps a visibl
   const kept = releaseDraft(s, { picks: ['channel-app'] });
   assert.ok(kept.picks.includes('channel-app'));
 });
+
+test('the release reveal waits while a board meeting is open', async () => {
+  const { mountReveal } = await import('../ui/screens/reveal.js');
+  const subscribers = [];
+  const game = { subscribe: (fn) => { subscribers.push(fn); return () => {}; } };
+  const overlay = new EventTarget();
+  const shown = [];
+  mountReveal(game, overlay, { show: (_root, args) => shown.push(args.model) });
+  overlay.dispatchEvent(new Event('board-meeting-open'));
+  subscribers.forEach((fn) => fn({ state: {}, events: [{ type: 'release', ok: true, model: 'Kestrel' }] }));
+  assert.deepEqual(shown, []);
+  overlay.dispatchEvent(new Event('board-meeting-closed'));
+  overlay.dispatchEvent(new Event('board-meeting-closed'));
+  assert.deepEqual(shown, ['Kestrel']);
+  subscribers.forEach((fn) => fn({ state: {}, events: [{ type: 'release', ok: true, model: 'Wren' }] }));
+  assert.deepEqual(shown, ['Kestrel', 'Wren']);
+});

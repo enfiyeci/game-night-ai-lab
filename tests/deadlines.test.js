@@ -51,7 +51,7 @@ test('a new warning gets the day it was raised and the next round mark', () => {
 
 test('an event card post appears on its landing day, once', () => {
   const s = createInitialState({ seed: 5 });
-  s.internal = { control: 0, stage: 2, turns: 1, stageTurn: 0 };
+  s.automation.stage = 2; s.automation.stageTurn = 0;
   eventsTick(s, no);
   const card = s.pendingEvents[0];
   card.landsAt = 2;
