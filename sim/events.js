@@ -77,7 +77,11 @@ function queuePromiseCalls(state, event, out) {
   }
 }
 
-export function eventsTick(state, rng) {
+// Event pop-ups stay random (owner 2026-09-26), on a per-round stream of their own, so an outcome rule never reshuffles
+// which events appear.
+export const EVENT_TRIGGER_SALT = 970;
+
+export function eventsTick(state, rng = sideRng(state, EVENT_TRIGGER_SALT)) {
   const out = [];
   for (const event of orderedEvents()) {
     if (event.kind === 'promise') {

@@ -18,8 +18,23 @@ Ending counts per bot:
 | before | balancedLowSafety | misalignment 140, pacingDeal 28, acquihire 29, rivalDisaster 2, aligned 1 |
 | before | balancedHighSafety | pacingDeal 72, misalignment 86, acquihire 37, aligned 1, rivalDisaster 3, pyrrhic 1 |
 | before | balancedPush | pacingDeal 51, acquihire 29, misalignment 103, quietTakeover 10, aligned 1, rivalDisaster 6 |
+| a1 | speed | boardRemoved 200 |
+| a1 | safety | acquihire 184, leftBehind 14, misalignment 1, pacingDeal 1 |
+| a1 | balanced | misalignment 110, pacingDeal 57, acquihire 32, aligned 1 |
+| a1 | random | acquihire 143, boardRemoved 35, aligned 1, rivalDisaster 4, misalignment 16, misuse 1 |
+| a1 | overCommitter | acquihire 190, misalignment 10 |
+| a1 | handToMouth | misalignment 50, acquihire 133, aligned 1, pacingDeal 5, pyrrhic 2, rivalDisaster 9 |
+| a1 | balancedNoGrid | acquihire 21, pacingDeal 59, misalignment 119, pyrrhic 1 |
+| a1 | balancedLowSafety | misalignment 149, pacingDeal 32, acquihire 16, pyrrhic 2, rivalDisaster 1 |
+| a1 | balancedHighSafety | acquihire 33, pacingDeal 69, misalignment 93, rivalDisaster 2, aligned 3 |
+| a1 | balancedPush | acquihire 39, misalignment 108, pacingDeal 45, rivalDisaster 2, quietTakeover 3, aligned 2, pyrrhic 1 |
 
 Notes:
 
 - before: the careful (safety) bot's out-of-money endings by era are 15 / 3 / 7 / 158 / 5 (eras 1-5), so era 3 is back
   at 7, as it was before the WIP's eras 1-2 launch-users cut (which had moved it to 83).
+- a1 (Task A1, event pop-ups and advisor noise on their own per-round streams, salts 970 and 971): no outcome rule
+  changed; the main generator no longer feeds event triggers or advisor noise, so which events appear reshuffles once
+  and every bot moves a little, as expected. The largest moves are small counts: balanced rivalDisaster 6 to 0,
+  balancedPush quietTakeover 10 to 3, random boardRemoved 25 to 35, balancedLowSafety acquihire 29 to 16. No bot's
+  leading ending changed.

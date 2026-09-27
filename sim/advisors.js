@@ -3,6 +3,7 @@ import { leaderCapability } from './rivals.js';
 import { runway, safetySpend } from './economy.js';
 import { effectiveMisuse } from './endings.js';
 import { totalDebt } from './hazards.js';
+import { sideRng } from './contracts.js';
 
 export const ADVISORS = ['research', 'safety', 'cfo', 'policy'];
 
@@ -44,7 +45,10 @@ export function advisorReadings(state, rng) {
   }));
 }
 
-export function recordAdvisors(state, rng) {
+// Advisor noise stays random (owner 2026-09-26: "that should stay noisy"), on a per-round stream of its own.
+export const ADVISOR_SALT = 971;
+
+export function recordAdvisors(state, rng = sideRng(state, ADVISOR_SALT)) {
   const readings = advisorReadings(state, rng);
   state.advisorHistory.push({ turn: state.turn, readings: readings.map(({ id, band: b, estimate, truth }) => ({ id, band: b, estimate, truth })) });
   state.lastBriefing = readings;

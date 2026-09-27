@@ -47,8 +47,8 @@ export const MAX_MOVES = 2;
 const BUDGET_KEYS = ['training', 'security', 'product', 'talent'];
 // sideRng salts in sim/: 0 initial offers, 1 deals, 2 site opposition, 3 contracts, 4 queue,
 // 5 offers, 6 deliveries, 7 pooling, 8 board events (sim/data/boardEvents.js), 9 + card index for card landing days
-// (sim/events.js stampNewCards), 900 AI proposals, 950 the first round's rival roll (sim/state.js), 1000 + site ID for builds,
-// and 2000 + motion index for summit votes.
+// (sim/events.js stampNewCards), 900 AI proposals, 950 the first round's rival roll (sim/state.js), 970 event triggers
+// (sim/events.js), 971 advisor noise (sim/advisors.js), 1000 + site ID for builds, and 2000 + motion index for summit votes.
 const SITE_RNG_SALT_BASE = 1000;
 const AI_PROPOSAL_SALT = 900;
 
@@ -314,7 +314,7 @@ export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = 
   if (events.some((e) => e.type === 'hazardResolved' && e.choice === 'ignore')) state.round.hazardIgnored = true;
   if (state.ending) {
     normalize(state);
-    recordAdvisors(state, rng);
+    recordAdvisors(state);
     finishEnding(state, events);
   }
   // A release that is not live yet gets its "announced" posts now and its launch posts when it goes live (sim/feedLive.js).
@@ -413,7 +413,7 @@ function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
       rivalsTurn(state, rng, { deferTo: state.turn + 1 });
       state.raceHeat -= BALANCE.raceHeatDecay;
       promiseUpkeep(state, rng);
-      for (const e of eventsTick(state, rng)) events.push(e);
+      for (const e of eventsTick(state)) events.push(e);
       normalize(state);
       // Compared with the round's start (taken at the last mark). A hazard ignored by an instant action this round
       // still costs the safety chair, as it did when the choice was part of the turn.
@@ -446,7 +446,7 @@ function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
   normalize(state);
   state.concealedDebt = Number(state.concealedDebt.toFixed(12));
   state.alignmentDebt = Number(state.alignmentDebt.toFixed(12));
-  recordAdvisors(state, rng);
+  recordAdvisors(state);
   const era = eraById(state.era);
   state.turn += 1;
   state.turnInEra += 1;
