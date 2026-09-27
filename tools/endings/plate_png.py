@@ -52,8 +52,10 @@ def main(specs):
             time.sleep(0.3)
             proc.kill()
             proc.wait()
-            print(out if out.exists() else f"FAILED {plate}")
-            if not out.exists():
+            # Chrome is killed on purpose once the file is written, so its exit status says nothing; an empty file failed
+            ok = out.exists() and out.stat().st_size > 0
+            print(out if ok else f"FAILED {plate}")
+            if not ok:
                 failed.append(plate)
         httpd.shutdown()
     return 1 if failed else 0
