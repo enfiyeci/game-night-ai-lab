@@ -155,7 +155,7 @@ export function releaseModel(state, release, rng) {
     servingCost: 0,
     // The model's books: training (recipe cards and compute) and launch cards, then what it earns and what serving it
     // costs (sim/economy.js accrueEconomy).
-    trainingCost: m.trainingCost ?? 0,
+    trainingCost: m.trainingCost ?? null,
     launchCost: cash,
     earned: 0,
     servingSpent: 0,

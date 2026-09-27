@@ -35,10 +35,11 @@ export function advanceRunBy(state, rng, fraction) {
     run.capacityTurn = state.turn;
     run.canAdvance = computeSlices(state).training >= run.units;
   }
-  if (!run.canAdvance) return { type: 'runPaused' };
-  // The run's own bill: the units it holds, at today's price of a unit, for the time it advanced.
+  // The run's own bill: the units it holds, at today's price of a unit. A paused run still holds what training has.
+  const held = run.canAdvance ? run.units : Math.min(run.units, computeSlices(state).training);
   run.spent ??= { cash: 0, compute: 0 };
-  run.spent.compute += run.units * fraction * eraById(state.era).monthsPerTurn * unitMonthlyPrice(state);
+  run.spent.compute += held * fraction * eraById(state.era).monthsPerTurn * unitMonthlyPrice(state);
+  if (!run.canAdvance) return { type: 'runPaused' };
   run.spikeProgress = (run.spikeProgress ?? 0) + fraction;
   if (run.spikeProgress >= 1 - 1e-9) {
     const chance = Math.min(1, Math.max(0, run.spikeChance));

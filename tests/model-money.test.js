@@ -92,3 +92,16 @@ test('a model launched in a later era earns more per user, and keeps its launch 
   s.era = 4;
   assert.equal(revenuePerUser(r.model), REVENUE_PER_USER[r.model.channel] * ERA_PRICE[2]);
 });
+
+test('a run paused for want of capacity still pays for the training compute it holds', () => {
+  const s = createInitialState();
+  const recipe = { sliders: { size: 'small', length: 'optimal', alignShare: 0.1 }, picks: { pre: [], mid: [], post: [] } };
+  assert.equal(startRun(s, recipe).ok, true);
+  s.activeRun.units = 1000; // more than the fleet: the run pauses
+  const before = s.activeRun.spent.compute;
+  const result = advanceRunBy(s, createRng(1), 0.5);
+  assert.equal(result.type, 'runPaused');
+  const held = computeSlices(s).training;
+  assert.ok(held > 0);
+  assert.ok(Math.abs(s.activeRun.spent.compute - before - held * 0.5 * 3 * unitMonthlyPrice(s)) < 1e-9);
+});
