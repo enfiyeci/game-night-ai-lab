@@ -202,15 +202,18 @@ def silhouettes(points, seed=1, coats=("#2A2D33", "#33302E", "#262B33", "#3A3436
         s = rng.uniform(0.92, 1.08)
         rot = Euler((0, 0, math.radians(facing))).to_matrix().to_4x4()
         coat, hair = rng.randrange(nc), nc + rng.randrange(4)
-        base = z if pose == "sit" else z + 0.52 * s
-        if pose != "sit":   # legs, as one tall blob
-            blob(Vector((x, y, z + 0.48 * s)), (0.16 * s, 0.12 * s, 0.5 * s), rot, coat, 10)
+        base = z if pose == "sit" else z + 0.78 * s
+        if pose != "sit":   # two legs
+            for dx in (-0.09, 0.09):
+                blob(rot @ Vector((dx * s, 0, 0)) + Vector((x, y, z + 0.46 * s)), (0.08 * s, 0.09 * s, 0.47 * s), rot, coat, 10)
         lean = Vector((0, 0.05 * s, 0)) if pose == "sit" else Vector((0, 0, 0))
-        blob(rot @ lean + Vector((x, y, base + 0.36 * s)), (0.2 * s, 0.14 * s, 0.33 * s), rot, coat)      # torso
-        blob(rot @ lean + Vector((x, y, base + 0.6 * s)), (0.23 * s, 0.13 * s, 0.09 * s), rot, coat)      # shoulders
-        blob(rot @ (lean * 1.4) + Vector((x, y, base + 0.8 * s)), (0.085 * s, 0.095 * s, 0.11 * s), rot, hair)  # head
-        if hand:
-            blob(rot @ Vector((0.2 * s, 0.05 * s, 0)) + Vector((x, y, base + 0.92 * s)), (0.045 * s, 0.045 * s, 0.3 * s), rot, coat, 8)
+        blob(rot @ lean + Vector((x, y, base + 0.36 * s)), (0.2 * s, 0.13 * s, 0.36 * s), rot, coat)       # torso
+        blob(rot @ lean + Vector((x, y, base + 0.6 * s)), (0.23 * s, 0.13 * s, 0.085 * s), rot, coat)     # shoulders
+        blob(rot @ (lean * 1.2) + Vector((x, y, base + 0.7 * s)), (0.05 * s, 0.05 * s, 0.06 * s), rot, coat, 8)   # neck
+        blob(rot @ (lean * 1.4) + Vector((x, y, base + 0.81 * s)), (0.085 * s, 0.095 * s, 0.11 * s), rot, hair)   # head
+        if hand:   # a thin raised arm and a hand
+            blob(rot @ Vector((0.2 * s, 0.04 * s, 0)) + Vector((x, y, base + 0.9 * s)), (0.035 * s, 0.035 * s, 0.28 * s), rot, coat, 8)
+            blob(rot @ Vector((0.2 * s, 0.04 * s, 0)) + Vector((x, y, base + 1.2 * s)), (0.04 * s, 0.03 * s, 0.055 * s), rot, hair, 8)
     bm.verts.index_update()
     index = {v.index: slot for verts, slot in slots for v in verts}
     me = bpy.data.meshes.new(name)
@@ -224,3 +227,14 @@ def silhouettes(points, seed=1, coats=("#2A2D33", "#33302E", "#262B33", "#3A3436
         ob.data.materials.append(m)
     bpy.context.scene.collection.objects.link(ob)
     return ob
+
+
+def hair_back(root, height=1.75, pose="stand", hair="#2A211C"):
+    """Cover the back of a person()'s head down to the nape, for figures seen from close behind (the stock hair cap
+    leaves a band of face showing under it from that side)."""
+    s = height / 1.75
+    hz = (1.19 if pose == "sit" else 1.64) * s
+    hy = (0.02 + 0.02 * s) if pose == "sit" else 0.02 * s
+    back = kit.sphere((0, hy - 0.035 * s, hz - 0.03 * s), 0.1 * s, kit.mat(hair, 0.7), scale=(0.93, 0.9, 1.0))
+    back.parent = root
+    return back

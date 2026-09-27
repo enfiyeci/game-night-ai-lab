@@ -20,7 +20,7 @@ import people as P  # noqa: E402
 RW, RD, RH = 4.5, 7.0, 3.6
 
 
-def office():
+def office(day=False):
     wall = kit.mat("#E6DCC6", 0.8)
     trim = kit.mat("#F2EBDC", 0.6)
     kit.box((0, RD / 2, -0.05), (2 * RW, RD, 0.1), kit.mat("#1F2A44", 0.95))         # deep blue carpet
@@ -34,11 +34,14 @@ def office():
     # three tall windows in the back wall, night beyond, drapes either side
     drape = kit.mat("#B58A3C", 0.75)
     for wx in (-2.6, 0.0, 2.6):
-        kit.box((wx, RD - 0.01, 1.9), (1.2, 0.02, 2.4), kit.mat("#0E1726", 0.1, emit="#1A2A44", strength=0.25))
+        kit.box((wx, RD - 0.01, 1.9), (1.2, 0.02, 2.4), kit.emission("#E4EEF6", 7) if day else
+                kit.mat("#0E1726", 0.1, emit="#1A2A44", strength=0.25))
         kit.box((wx, RD - 0.04, 1.9), (0.04, 0.05, 2.4), trim)
         kit.box((wx, RD - 0.04, 1.9), (1.2, 0.05, 0.04), trim)
         for side in (-1, 1):
             kit.box((wx + side * 0.75, RD - 0.18, 1.95), (0.34, 0.14, 2.9), drape, bevel=0.05)
+        if day:   # daylight pouring in through each window
+            kit.area((wx, RD - 0.3, 1.9), (wx, 2.0, 0.6), (1.2, 2.4), 220, kit.kelvin(6800))
     kit.world("#05070B", 1.0)
 
 
@@ -91,6 +94,15 @@ def order_paper(at, rot_z=0.0):
     sig.data.materials.append(ink)
 
 
+def bankers_lamp(at):
+    """A brass banker's lamp with a green glass shade."""
+    x, y, z = at
+    brass = kit.mat("#B8913F", 0.25, 1.0)
+    kit.cyl((x, y, z + 0.013), 0.08, 0.025, brass)
+    kit.cyl((x, y, z + 0.153), 0.012, 0.28, brass)
+    kit.box((x, y - 0.07, z + 0.303), (0.3, 0.13, 0.07), kit.mat("#1F5A3A", 0.15, emit="#2F8A56", strength=0.4), bevel=0.03)
+
+
 def shot_mis_order():
     office()
     desk()
@@ -100,11 +112,7 @@ def shot_mis_order():
     # the desk phone, receiver off the hook
     kit.box((0.62, 3.45, 0.83), (0.2, 0.24, 0.06), kit.mat("#16171A", 0.4), bevel=0.01)
     kit.box((0.5, 3.15, 0.815), (0.22, 0.05, 0.035), kit.mat("#16171A", 0.4), bevel=0.012, rot=(0, 0, 0.4))
-    # a brass banker's lamp with a green glass shade
-    brass = kit.mat("#B8913F", 0.25, 1.0)
-    kit.cyl((-0.8, 3.62, 0.81), 0.08, 0.025, brass)
-    kit.cyl((-0.8, 3.62, 0.95), 0.012, 0.28, brass)
-    kit.box((-0.8, 3.55, 1.1), (0.3, 0.13, 0.07), kit.mat("#1F5A3A", 0.15, emit="#2F8A56", strength=0.4), bevel=0.03)
+    bankers_lamp((-0.8, 3.62, 0.797))
     kit.spot((-0.8, 3.5, 1.06), (-0.3, 3.2, 0.8), 30, kit.kelvin(2600), angle=80, blend=0.8)
     kit.point((2.2, 5.3, 1.5), 3, kit.kelvin(7000), radius=0.4)       # the TV's glow on the room
     kit.area((0, 1.0, 3.0), (0, 4, 0), (3, 2), 25, kit.kelvin(3200))   # a low fill from the corridor lamps
@@ -133,9 +141,8 @@ def nameplate(body, at, yaw=0.0, width=0.4, colour="#F4F0E6", ink="#1C1C1C", siz
     card, ink = kit.mat(colour, 0.6), kit.mat(ink, 0.6)
     c, s = math.cos(math.radians(yaw)), math.sin(math.radians(yaw))
     for side in (1, -1):
-        tilt = math.radians(90 - 14) * side
         ox, oy = -s * 0.018 * side, c * 0.018 * side
-        rot = (math.radians(90) - side * math.radians(14), 0, math.radians(yaw) + (0 if side > 0 else math.pi))
+        rot = (math.radians(76), 0, math.radians(yaw) + (0 if side > 0 else math.pi))
         kit.plane((x - ox, y - oy, z + 0.055), (width, 0.115), card, rot=rot)
         kit.text(body, (x - ox * 1.25, y - oy * 1.25, z + 0.055), size, ink, font=font, rot=rot)
 
@@ -147,9 +154,9 @@ def mic(at, toward, h=0.34):
     kit.cyl((x, y, z + 0.012), 0.05, 0.024, black)
     dx, dy = toward[0] - x, toward[1] - y
     yaw = math.atan2(-dx, dy)
-    kit.cyl((x - 0.06 * math.sin(yaw), y + 0.06 * math.cos(yaw), z + h / 2), 0.006, h, black, rot=(math.radians(20), 0, yaw), verts=8)
+    kit.cyl((x - 0.06 * math.sin(yaw), y + 0.06 * math.cos(yaw), z + h / 2), 0.006, h, black, rot=(math.radians(-20), 0, yaw), verts=8)
     kit.cyl((x - 0.12 * math.sin(yaw), y + 0.12 * math.cos(yaw), z + h * 0.97), 0.016, 0.07, kit.mat("#0B0B0B", 0.9),
-            rot=(math.radians(70), 0, yaw), verts=12)
+            rot=(math.radians(-70), 0, yaw), verts=12)
 
 
 def from_behind(root, pose="sit", height=1.75, hair="#2A211C"):
@@ -206,7 +213,7 @@ def hearing_room():
 
 
 def dais(names=("MR. HALE", "MS. ORTIZ", "MR. BRANDT", "MS. OKAFOR", "THE CHAIR", "MR. WEI", "MS. LANG", "MR. DUVAL", "MS. RUIZ"),
-         seated=True, lamp=None):
+         seated=True, backs=True):
     """The raised bench across the back: a panelled front, a glossy ledge with nameplates and microphones, and the
     members in high-backed chairs behind it."""
     panel = kit.tex("dark_paneled_wood", 0.6, name="hpanel2")
@@ -225,7 +232,8 @@ def dais(names=("MR. HALE", "MS. ORTIZ", "MR. BRANDT", "MS. OKAFOR", "THE CHAIR"
         x = (i - (n - 1) / 2) * 1.2
         nameplate(body, (x, DAIS + 0.12, 1.285), width=0.42, colour="#EDE6D6", size=0.04)
         mic((x + 0.18, DAIS + 0.3, 1.285), (x, DAIS + 1.0))
-        kit.box((x, DAIS + 1.25, 1.55), (0.62, 0.14, 1.1), leather, bevel=0.05)       # the high chair back
+        if backs:
+            kit.box((x, DAIS + 1.25, 1.55), (0.62, 0.14, 1.1), leather, bevel=0.05)       # the high chair back
         if seated:
             P.person((x, DAIS + 0.95, 0.5), facing=180, pose="sit", height=1.74, coat=["#23262C", "#2E2A2C", "#1F2533"][i % 3],
                      hair=["#8C8C8C", "#2A211C", "#6B5A48", "#141212"][i % 4], seed=70 + i)
@@ -272,34 +280,349 @@ def easel(at, yaw, lines, size=(1.0, 0.76)):
     board_text(lines, (x - 0.01 * s, y - 0.01 * c, z), yaw, kit.mat("#1E1C1C", 0.6))
 
 
-def hearing_lights(key=1.0):
-    """Warm ceiling panels, and the bench lit from behind and above so the members read as silhouettes."""
+def hearing_lights(key=1.0, warm=3400):
+    """Warm ceiling light, and the bench lit from behind and above so the members read as silhouettes against the
+    lit drape."""
     for y in (3.5, 6.5):
-        kit.area((0, y, HH - 0.05), (0, y, 0), (13, 1.4), 220 * key, kit.kelvin(3400))
-    kit.area((0, DAIS + 2.6, HH - 0.3), (0, DAIS + 0.4, 1.2), (10, 1.0), 900 * key, kit.kelvin(3800))    # rim on the members
-    kit.area((0, 7.0, 4.8), (0, DAIS, 1.2), (6, 1.0), 40 * key, kit.kelvin(4300))                       # a soft TV fill
-    kit.spot((0, HD - 4, HH - 0.2), (0, HD - 0.3, 2.2), 2600 * key, kit.kelvin(3000), angle=80, blend=0.9)  # the drape behind them
+        kit.area((0, y, HH - 0.05), (0, y, 0), (12, 1.4), 80 * key, kit.kelvin(warm))
+    kit.area((0, DAIS + 2.6, HH - 0.3), (0, DAIS + 0.4, 1.2), (10, 1.0), 700 * key, kit.kelvin(warm + 400))   # rim on the members
+    kit.spot((0, HD - 4, HH - 0.2), (0, HD - 0.3, 2.3), 5000 * key, kit.kelvin(warm - 400), angle=75, blend=0.9)   # the drape
 
 
 def shot_rb_hearing():
-    """boardRemoved 4, Month 2: from behind the new CEO at the witness table. The members sit high on the bench; on the
-    easel beside it, the founder's pledge blown up for the cameras; on the wall screen, the hearing live."""
+    """boardRemoved 4, Month 2: from the gallery, behind the new CEO alone at the witness table. On an easel beside
+    the bench, the founder's pledge blown up for the cameras; on the wall screen, the hearing live."""
     hearing_room()
     dais()
     witness_table()
-    gallery(skip=((0, 5), (0, 6)))
-    # the new CEO, alone at the table, and an aide at the end
-    from_behind(P.person((0.6, 6.1, 0.0), facing=0, pose="sit", height=1.78, coat="#1D2230", hair="#3A2C22", seed=11), height=1.78, hair="#3A2C22")
-    from_behind(P.person((-0.6, 6.1, 0.0), facing=8, pose="sit", height=1.66, coat="#2B2F36", hair="#141212", seed=12, hold="paper"),
-                height=1.66, hair="#141212")
+    gallery(rows=(5.0, 4.1, 3.2), skip=((0, 5), (0, 6), (0, 4)))
+    ceo = P.person((0.6, 6.1, 0.0), facing=0, pose="sit", height=1.78, coat="#1D2230", hair="#3A2C22", seed=11)
+    P.hair_back(ceo, 1.78, "sit", "#3A2C22")
+    aide = P.person((-0.6, 6.1, 0.0), facing=8, pose="sit", height=1.66, coat="#2B2F36", hair="#141212", seed=12, hold="paper")
+    P.hair_back(aide, 1.66, "sit", "#141212")
     easel((2.9, DAIS - 1.9, 1.62), -8, [
-        ("\u201cWe will spend 20% of our", 0.2, 0.075, kit.FONT_SERIF), ("compute on safety, whatever", 0.1, 0.075, kit.FONT_SERIF),
-        ("our rivals do.\u201d", 0.0, 0.075, kit.FONT_SERIF), ("KESTREL LABS PLEDGE \u00b7 SIGNED BY ITS FOUNDER", -0.2, 0.034, kit.FONT)])
+        ("“We will spend 20% of our", 0.2, 0.075, kit.FONT_SERIF), ("compute on safety, whatever", 0.1, 0.075, kit.FONT_SERIF),
+        ("our rivals do.”", 0.0, 0.075, kit.FONT_SERIF), ("KESTREL LABS PLEDGE · SIGNED BY ITS FOUNDER", -0.2, 0.034, kit.FONT)])
+    kit.spot((1.2, 7.5, 4.6), (2.9, DAIS - 1.9, 1.62), 260, kit.kelvin(4500), angle=18, blend=0.6)     # a press lamp on the board
     kit.box((5.2, HD - 0.3, 3.9), (0.1, 0.3, 0.1), kit.mat("#222", 0.4))
     face, _ = kit.screen("wall", (4.8, HD - 0.5, 3.9), 3.0, "rb-hearing", crop=(56, 4, 1168, 657), strength=1.2,
-                         rot=(math.radians(90), 0, math.radians(-10)), depth=0.06, border=0.03, bezel="#0D0E10")
+                         rot=(math.radians(90), 0, math.radians(-18)), depth=0.06, border=0.03, bezel="#0D0E10")
     hearing_lights()
-    kit.spot((1.0, 7.5, 3.8), (2.9, DAIS - 1.9, 1.6), 260, kit.kelvin(4500), angle=25, blend=0.6)        # a press lamp on the pledge
-    kit.camera((-1.2, 2.3, 1.75), (2.3, DAIS + 1.5, 2.15), lens=45, fstop=4.0, focus=(2.9, DAIS - 1.9, 1.6))
+    kit.camera((-1.2, 2.3, 1.75), (2.3, DAIS + 1.5, 2.1), lens=45, fstop=4.0, focus=(2.9, DAIS - 1.9, 1.6))
 
-kit.run({"mis-order": shot_mis_order, "rb-hearing": shot_rb_hearing})
+
+def shot_mu_hearing():
+    """misuse 6, Day 3: an emergency session. The members vote with raised hands; your lab's witness chairs stand
+    empty under a hard light; the exhibit monitor in the well carries the President's order."""
+    hearing_room()
+    dais(seated=False)
+    members = [((i - 4) * 1.2, DAIS + 0.95, 0.5 + 0.5, 180, "sit", "hand" if i not in (2, 7) else None) for i in range(9)]
+    P.silhouettes(members, seed=21, name="members")
+    witness_table(label="KESTREL LABS")
+    kit.box((0.35, 6.75, 0.795), (0.24, 0.32, 0.01), kit.mat("#8A2E22", 0.5), rot=(0, 0, 0.12))      # the order, in its red folder
+    gallery(rows=(5.0, 4.1, 3.2), seed=5, stand=[(-5.5, 1.2, 10), (-4.6, 1.0, -5), (4.9, 1.1, 4), (5.8, 1.3, -12)])
+    # the exhibit monitor on a floor stand in the well, turned to the gallery
+    kit.cyl((-2.7, 8.6, 0.6), 0.04, 1.2, kit.mat("#1A1A1C", 0.4, 0.6))
+    kit.cyl((-2.7, 8.6, 0.02), 0.35, 0.04, kit.mat("#1A1A1C", 0.4, 0.6))
+    face, _ = kit.screen("monitor", (-2.7, 8.55, 1.9), 2.0, "mu-hearing", crop=(56, 4, 1168, 657), strength=1.25,
+                         rot=(math.radians(90), 0, math.radians(30)), depth=0.07, border=0.03, bezel="#0D0E10")
+    hearing_lights(key=0.4, warm=4600)
+    kit.spot((0.4, 5.4, HH - 0.2), (0, 6.5, 0.4), 2200, kit.kelvin(5600), angle=22, blend=0.25)       # the hard light on the empty chairs
+    kit.camera((1.4, 1.6, 2.1), (-0.9, 10.0, 1.5), lens=35, fstop=5.6, focus=face)
+
+
+def laptop(at, yaw=180.0, width=0.32):
+    """An open laptop on a table, its screen running the model: a dark window with its name and a listening cursor."""
+    x, y, z = at
+    body = kit.mat("#8E9398", 0.3, 0.7)
+    r = math.radians(yaw)
+    c, s = math.cos(r), math.sin(r)
+    kit.box((x, y, z + 0.009), (width, width * 0.7, 0.018), body, bevel=0.004, rot=(0, 0, r))
+    h = width * 0.64
+    tilt = math.radians(15)
+    back = width * 0.35
+    lx, ly = x - s * back, y + c * back       # the hinge, along the laptop's own +y
+    cy = h / 2 * math.sin(tilt)
+    cx_, cy_ = lx - s * cy, ly + c * cy
+    cz = z + 0.02 + h / 2 * math.cos(tilt)
+    rot = (math.radians(90) - tilt, 0, r)
+    kit.box((cx_, cy_, cz), (width, h, 0.007), body, rot=rot)
+    glow = kit.plane((cx_ + s * 0.005, cy_ - c * 0.005, cz), (width * 0.92, h * 0.88), kit.emission("#0F1B2A", 1.0), rot=rot)
+    ink = kit.mat("#DCE8F5", 0.5, emit="#DCE8F5", strength=3)
+    kit.text("KESTREL 5", (cx_ + s * 0.007, cy_ - c * 0.007, cz + 0.03), 0.026, ink, font=kit.FONT, rot=rot)
+    kit.text("listening", (cx_ + s * 0.007, cy_ - c * 0.007, cz - 0.015), 0.013, kit.mat("#7FA6C9", 0.5, emit="#7FA6C9", strength=2),
+             font=kit.FONT_SANS, rot=rot)
+    kit.point((x + s * 0.3, y - c * 0.3, z + 0.2), 2.5, kit.kelvin(9000), radius=0.1)
+    return glow
+
+
+def shot_cw_hearing():
+    """pyrrhic 7, Month 4: the reverse angle, over the chair's shoulder on the bench. Down at the witness table, where
+    a person should sit, a laptop running the model, every microphone bent toward it; the feed monitor in the well
+    shows the chair's question."""
+    hearing_room()
+    dais(seated=False, backs=False)
+    # the witness table: the laptop at the witness's place, microphones gathered round it, the chair pushed back
+    kit.box((0, 6.8, 0.765), (3.6, 0.95, 0.05), kit.mat("#3A2415", 0.3, coat=0.5), bevel=0.01)
+    kit.box((0, 6.8, 0.37), (3.62, 0.97, 0.74), kit.mat("#1E3A2F", 0.95))
+    laptop((0.0, 6.75, 0.79), yaw=180)
+    nameplate("KESTREL 5", (0, 7.2, 0.79), width=0.5, size=0.05, font=kit.FONT)
+    for mx in (-0.28, -0.12, 0.14, 0.3):
+        mic((mx, 7.05, 0.79), (0, 6.75), h=0.3)
+    kit.place("dining_chair_02", (0.0, 5.85, 0), rot_z=math.radians(12))
+    gallery(rows=(5.0, 4.1, 3.2, 2.3, 1.4), seed=8)
+    # the feed monitor in the well, turned to the bench
+    kit.cyl((-1.35, 7.8, 0.55), 0.035, 1.1, kit.mat("#1A1A1C", 0.4, 0.6))
+    kit.cyl((-1.35, 7.8, 0.02), 0.3, 0.04, kit.mat("#1A1A1C", 0.4, 0.6))
+    face, _ = kit.screen("monitor", (-1.35, 7.85, 1.4), 1.1, "cw-hearing", crop=(56, 4, 1168, 657), strength=1.25,
+                         rot=(math.radians(90), 0, math.radians(159)), depth=0.06, border=0.025, bezel="#0D0E10")
+    hearing_lights(key=0.8)
+    kit.area((0, 3.0, 3.6), (0, 6.8, 0.8), (4, 1), 120, kit.kelvin(4200))       # the press lights on the witness table
+    kit.camera((0.5, DAIS + 1.4, 2.05), (-0.6, 6.9, 0.95), lens=50, fstop=4.0, focus=(-0.6, 7.3, 1.1))
+
+
+# ------------------------------------------------------------------ the press briefing room
+BW, BD, BH = 5.6, 13.0, 4.0     # half-width, depth (the backdrop at y=BD), height
+STAGE = 10.3                    # the front edge of the low stage
+
+
+def briefing_room():
+    """Rows of blue seats facing a low stage, a navy backdrop with two screens either side of the podium, and a
+    camera riser at the back."""
+    wall = kit.mat("#D9D2C4", 0.85)
+    kit.box((0, BD / 2, -0.05), (2 * BW, BD, 0.1), kit.mat("#2A2F3F", 0.95))
+    kit.box((0, BD / 2, BH + 0.05), (2 * BW, BD, 0.1), kit.mat("#E6E2DA", 0.9))
+    for side in (-1, 1):
+        kit.box((side * (BW + 0.05), BD / 2, BH / 2), (0.1, BD, BH), wall)
+        kit.box((side * (BW - 0.02), BD / 2, 0.5), (0.04, BD, 1.0), kit.mat("#3B2A20", 0.5))
+    kit.box((0, -0.05, BH / 2), (2 * BW, 0.1, BH), wall)
+    kit.box((0, STAGE + (BD - STAGE) / 2, 0.12), (2 * BW, BD - STAGE, 0.24), kit.mat("#1F2742", 0.9))
+    # the backdrop: navy fabric panels in a warm wood frame, a darker panel behind the podium
+    navy = kit.tex("velour_velvet", 1.5, tint="#1C2A52", name="backdrop")
+    kit.box((0, BD + 0.02, BH / 2), (2 * BW, 0.04, BH), navy)
+    for x in (-3.9, -1.3, 1.3, 3.9):
+        kit.box((x, BD - 0.03, BH / 2), (0.12, 0.08, BH), kit.mat("#8A6A45", 0.4, coat=0.4))
+    kit.box((0, BD - 0.02, 2.3), (2.4, 0.02, 2.6), kit.mat("#141C38", 0.8))
+    kit.box((0, BD - 0.05, 3.62), (2 * BW, 0.08, 0.1), kit.mat("#8A6A45", 0.4, coat=0.4))
+    # rows of seats, two blocks either side of a centre aisle
+    seats = []
+    for r in range(7):
+        y = 8.6 - r * 1.0
+        for k in range(8):
+            x = 0.75 + (k % 4) * 0.62 if k < 4 else -(0.75 + (k % 4) * 0.62)
+            seats += [((x, y, 0.44), (0.5, 0.48, 0.07)), ((x, y - 0.25, 0.78), (0.5, 0.06, 0.6))]
+    boxes("seats", seats, kit.mat("#27407A", 0.6))
+    # the camera riser at the back
+    kit.box((0, 1.1, 0.3), (2 * BW, 2.2, 0.6), kit.mat("#202226", 0.8))
+    kit.world("#05060A", 1.0)
+
+
+def podium(at=(0.0, STAGE + 0.9)):
+    x, y = at
+    wood = kit.mat("#5A3B24", 0.3, coat=0.6)
+    kit.box((x, y, 0.24 + 0.58), (0.72, 0.5, 1.16), wood, bevel=0.02)
+    kit.box((x, y - 0.26, 0.24 + 0.55), (0.6, 0.02, 0.9), kit.mat("#1C2A52", 0.7))
+    kit.cyl((x, y - 0.275, 0.24 + 0.68), 0.14, 0.012, kit.mat("#B8913F", 0.3, 1.0), rot=(math.radians(90), 0, 0))   # a blank brass disc
+    kit.box((x, y - 0.05, 0.24 + 1.19), (0.76, 0.46, 0.04), wood, rot=(math.radians(-10), 0, 0))
+    for dx in (-0.12, 0.12):
+        kit.cyl((x + dx, y - 0.1, 0.24 + 1.36), 0.005, 0.32, kit.mat("#141414", 0.3, 0.5), rot=(math.radians(-25), 0, dx * -2))
+
+
+def tv_camera(at, yaw, z=0.6):
+    """A broadcast camera on a tripod, looking along yaw (0 = +y)."""
+    x, y = at
+    black, metal = kit.mat("#16171A", 0.4), kit.mat("#5A5D62", 0.35, 0.8)
+    for k in range(3):
+        a = math.radians(yaw + 60 + k * 120)
+        kit.cyl((x + 0.22 * math.cos(a), y + 0.22 * math.sin(a), z + 0.7), 0.014, 1.45, metal, rot=(0.16 * math.sin(a), -0.16 * math.cos(a), 0), verts=8)
+    r = math.radians(yaw)
+    kit.box((x, y, z + 1.52), (0.24, 0.5, 0.28), black, bevel=0.02, rot=(0, 0, r))
+    kit.cyl((x - 0.34 * math.sin(r), y + 0.34 * math.cos(r), z + 1.5), 0.075, 0.28, black, rot=(math.radians(90), 0, r))
+    kit.box((x - 0.12 * math.cos(r), y - 0.12 * math.sin(r), z + 1.72), (0.12, 0.2, 0.1), black, rot=(0, 0, r))
+    kit.cyl((x + 0.2 * math.sin(r), y - 0.2 * math.cos(r), z + 1.46), 0.012, 0.5, metal, rot=(math.radians(70), 0, r), verts=8)
+
+
+def tv_light(at, target, energy=300, z=2.4, size=0.6, colour=5600):
+    """A soft panel on a stand, aimed at target; returns the light."""
+    x, y = at
+    kit.cyl((x, y, z / 2), 0.02, z, kit.mat("#2A2B2E", 0.4, 0.7), verts=8)
+    L = kit.area((x, y, z), target, (size, size * 0.7), energy, kit.kelvin(colour))
+    panel = kit.box((x, y, z), (size + 0.06, size * 0.7 + 0.06, 0.08), kit.mat("#1C1C1E", 0.5))
+    panel.rotation_euler = L.rotation_euler
+    face = kit.plane((0, 0, 0), (size, size * 0.7), kit.emission("#FFF6E8", 6))
+    face.rotation_euler = L.rotation_euler
+    bpy.context.view_layer.update()
+    face.location = L.location + L.matrix_world.to_3x3() @ kit.Vector((0, 0, -0.05))
+    return L
+
+
+def briefing_lights():
+    for y in (3.0, 6.5):
+        kit.area((0, y, BH - 0.05), (0, y, 0), (8, 1.2), 90, kit.kelvin(3600))
+    kit.area((0, STAGE - 2.5, BH - 0.1), (0, BD - 0.5, 1.8), (4, 1), 450, kit.kelvin(4800))      # the TV key on the podium
+    kit.spot((0, BD - 1.2, BH - 0.1), (0, BD, 2.0), 500, kit.kelvin(3200), angle=80, blend=1.0)  # backdrop wash
+
+
+def side_screens(plate, crop, live_side=1, other=None):
+    """The two screens either side of the podium; the live plate on live_side (1 = stage right, camera left)."""
+    faces = {}
+    for side in (-1, 1):
+        x = 3.2 * side
+        if side == live_side:
+            faces["live"], _ = kit.screen("tv", (x, BD - 0.12, 2.35), 2.1, plate, crop=crop, strength=1.2, depth=0.06, border=0.03,
+                                          bezel="#0B0C0E")
+        else:
+            h = 2.1 * 9 / 16
+            kit.box((x, BD - 0.1, 2.35), (2.16, 0.06, h + 0.06), kit.mat("#0B0C0E", 0.35))
+            kit.plane((x, BD - 0.135, 2.35), (2.1, h), kit.emission("#16254A", 1.0), rot=(math.radians(90), 0, 0))
+            if other:
+                kit.text(other, (x, BD - 0.14, 2.35), 0.16, kit.mat("#E9E2CF", 0.5, emit="#E9E2CF", strength=2.5), font=kit.FONT, spacing=1.3)
+    return faces["live"]
+
+
+def shot_ov_news():
+    """overtaken 2, Month 1: the briefing room from the reporters' seats. The President at the podium; beside him
+    the screen names the national champion; hands go up in the rows."""
+    briefing_room()
+    podium()
+    face = side_screens("ov-news", (56, 4, 1168, 657), live_side=1, other="THE PRESIDENT")
+    P.person((0.0, STAGE + 1.3, 0.24), facing=228, height=1.9, coat="#1A2030", hair="#D9C27A", build=1.2, seed=90)
+    rng = random.Random(4)
+    pts = []
+    for r in range(7):
+        for k in range(8):
+            x = 0.75 + (k % 4) * 0.62 if k < 4 else -(0.75 + (k % 4) * 0.62)
+            if rng.random() < 0.9:
+                pts.append((x, 8.6 - r * 1.0 + 0.03, 0.48, rng.uniform(-10, 10), "sit", "hand" if rng.random() < 0.3 else None))
+    P.silhouettes(pts, seed=7, name="press")
+    for x in (-2.0, 0.0, 2.2):
+        tv_camera((x, 1.2), 0)
+    briefing_lights()
+    kit.camera((-2.9, 3.6, 1.3), (1.9, BD, 2.0), lens=42, fstop=5.6, focus=face)
+
+
+def shot_rd_news():
+    """rivalDisaster 3, Day 3: the reverse angle, from behind the podium. The President faces a standing room of
+    reporters and camera flashes; the monitor over the camera riser shows what he is being asked about."""
+    briefing_room()
+    podium()
+    pres = P.person((0.0, STAGE + 1.3, 0.24), facing=180, height=1.9, coat="#1A2030", hair="#D9C27A", build=1.2, seed=90)
+    P.hair_back(pres, 1.9, "stand", "#D9C27A")
+    rng = random.Random(9)
+    pts = []
+    for r in range(7):
+        for k in range(8):
+            x = 0.75 + (k % 4) * 0.62 if k < 4 else -(0.75 + (k % 4) * 0.62)
+            if rng.random() < 0.92:
+                standing = rng.random() < 0.45
+                pts.append((x, 8.6 - r * 1.0 + (0.15 if standing else 0.03), 0.0 if standing else 0.48, rng.uniform(-12, 12),
+                            "stand" if standing else "sit", "hand" if rng.random() < 0.45 else None))
+    P.silhouettes(pts, seed=11, name="press")
+    for x in (-2.4, -0.2, 2.3):
+        tv_camera((x, 1.2), 180)
+    for x, z in ((-3.4, 2.9), (3.6, 2.8)):
+        tv_light((x, 0.9), (0, STAGE, 1.8), 350, z=z)
+    kit.box((0.8, 0.25, 3.0), (0.3, 0.3, 0.1), kit.mat("#222", 0.4))
+    face, _ = kit.screen("confidence", (0.8, 0.35, 2.75), 2.4, "rd-news", crop=(56, 4, 1168, 657), strength=1.25,
+                         rot=(math.radians(90), 0, math.radians(180)), depth=0.06, border=0.03, bezel="#0B0C0E")
+    for y in (3.0, 6.5):
+        kit.area((0, y, BH - 0.05), (0, y, 0), (8, 1.2), 40, kit.kelvin(3600))
+    kit.area((0, STAGE - 2.5, BH - 0.1), (0, BD - 0.5, 1.8), (4, 1), 150, kit.kelvin(4800))
+    kit.camera((0.4, BD - 0.2, 1.85), (0.3, 0.3, 2.1), lens=48, fstop=4.5, focus=face)
+
+
+# ------------------------------------------------------------------ the office, more shots
+def office_front():
+    """The wall opposite the windows: bookcases either side of a doorway, a console with a television."""
+    shelf = kit.mat("#3B2416", 0.4, coat=0.4)
+    rng = random.Random(2)
+    books = []
+    for bx in (-3.3, 3.3):
+        kit.box((bx, 0.2, 1.3), (1.6, 0.36, 2.6), shelf, bevel=0.01)
+        for shelf_z in (0.45, 0.95, 1.45, 1.95):
+            x = bx - 0.7
+            while x < bx + 0.7:
+                w = rng.uniform(0.03, 0.06)
+                h = rng.uniform(0.25, 0.36)
+                books.append(((x + w / 2, 0.36, shelf_z + h / 2), (w, 0.2, h)))
+                x += w + 0.004
+    boxes("books", books, kit.mat("#6B3A2A", 0.7))
+    kit.box((0, 0.06, 1.2), (1.3, 0.1, 2.4), kit.mat("#EFE6D2", 0.5))          # the door
+    kit.box((0, 0.12, 1.2), (1.1, 0.04, 2.2), kit.mat("#F2EBDC", 0.45), bevel=0.01)
+
+
+def report(at, rot_z=0.0):
+    """The draft report the White House asked to soften: a bound stack, red ink on the findings, a HOLD stamp."""
+    x, y, z = at
+    flat = (0, 0, rot_z)
+    kit.box((x, y, z + 0.012), (0.23, 0.3, 0.024), kit.mat("#F2EEE4", 0.7), rot=flat)
+    kit.box((x - 0.105, y, z + 0.025), (0.018, 0.3, 0.004), kit.mat("#1E2C4E", 0.5), rot=flat)       # the binding
+    ink, red = kit.mat("#1C1C1C", 0.6), kit.mat("#B3261E", 0.5)
+    c, s = math.cos(rot_z), math.sin(rot_z)
+
+    def at_(dx, dy):
+        return (x + dx * c - dy * s, y + dx * s + dy * c, z + 0.0255)
+    kit.text("DRINKING WATER, EASTERN DISTRICTS", at_(0.005, 0.11), 0.0085, ink, font=kit.FONT, rot=flat)
+    kit.text("Lead above the safe limit", at_(0.005, 0.085), 0.012, ink, font=kit.FONT_SERIF, rot=flat)
+    kit.text("in 41 of 260 schools", at_(0.005, 0.068), 0.012, ink, font=kit.FONT_SERIF, rot=flat)
+    for k in range(8):
+        kit.box(at_(0.005, 0.04 - k * 0.014), (0.17 if k % 3 != 2 else 0.1, 0.0022, 0.0003), kit.mat("#8A8780", 0.7), rot=flat)
+    kit.box(at_(-0.02, 0.0765), (0.19, 0.0016, 0.0004), red, rot=flat)          # the findings struck through in red
+    kit.text("soften", at_(0.07, 0.052), 0.011, red, font=kit.FONT_SERIF, rot=(0, 0, rot_z + 0.2))
+    kit.box(at_(0.04, -0.1), (0.1, 0.036, 0.0004), red, rot=(0, 0, rot_z - 0.15))
+    kit.text("HOLD", at_(0.04, -0.1), 0.02, kit.mat("#F2EEE4", 0.6), font=kit.FONT, rot=(0, 0, rot_z - 0.15))
+
+
+def shot_al_news():
+    """aligned 4, Month 2, night: the reverse of the President's office, from behind his chair. On the desk, the draft
+    report marked HOLD with the findings struck through; across the room, the television shows it published anyway."""
+    office()
+    office_front()
+    desk()
+    kit.box((-1.6, 0.35, 0.45), (1.8, 0.45, 0.9), kit.mat("#3B2416", 0.4, coat=0.4), bevel=0.02)
+    face, _ = kit.screen("tv", (-1.6, 0.4, 1.62), 1.55, "al-news", crop=(56, 4, 1168, 657), strength=1.3,
+                         rot=(math.radians(90), 0, math.radians(165)), depth=0.05, border=0.02, bezel="#0D0E10")
+    report((0.3, 3.6, 0.797), rot_z=math.radians(180 + 6))
+    bankers_lamp((0.95, 3.7, 0.797))
+    # the President in his high-backed chair, turned toward the set
+    kit.box((0.25, 4.42, 0.75), (0.62, 0.14, 0.8), kit.mat("#2A1812", 0.45), bevel=0.06, rot=(0, 0, math.radians(-20)))
+    pres = P.person((0.2, 4.15, 0.0), facing=160, pose="sit", height=1.9, coat="#1A2030", hair="#D9C27A", build=1.2, seed=90)
+    P.hair_back(pres, 1.9, "sit", "#D9C27A")
+    kit.point((-1.6, 0.9, 1.6), 6, kit.kelvin(7200), radius=0.5)           # the set's glow
+    kit.spot((0.95, 3.63, 1.06), (0.35, 3.6, 0.8), 30, kit.kelvin(2600), angle=80, blend=0.8)    # the lamp on the report
+    kit.area((1.5, RD - 0.5, 2.6), (0, 2, 1), (2, 1), 18, kit.kelvin(8000))    # moonlight from the windows behind
+    kit.camera((1.35, 5.95, 1.9), (-1.0, 0.9, 1.05), lens=32, fstop=5.6, focus=(-1.2, 1.2, 1.3))
+
+
+def shot_qt_briefing():
+    """quietTakeover 3, Month 6, afternoon: a signing in the President's office staged for television. In front, the
+    crew's monitor shows the bill (its footer: drafted with the model); behind, TV lights blaze on the desk where it
+    is being signed, aides standing against the bright windows."""
+    office(day=True)
+    desk()
+    P.person((0.0, 3.95, 0.0), facing=180, pose="sit", height=1.9, coat="#1A2030", hair="#D9C27A", build=1.2, seed=90)
+    kit.box((0.0, 3.08, 0.8), (0.3, 0.22, 0.004), kit.mat("#F4F0E6", 0.7))       # the bill
+    for k in range(6):   # a row of signing pens
+        kit.cyl((-0.5 + k * 0.08, 3.0, 0.805), 0.005, 0.13, kit.mat("#111", 0.3, 0.6), rot=(math.radians(90), 0, 0))
+    for i, x in enumerate((-1.7, -1.1, -0.5, 0.55, 1.15, 1.75)):   # aides standing against the bright windows
+        P.person((x, 5.2 + 0.1 * (i % 2), 0.0), facing=180, height=1.72 + 0.06 * (i % 3), coat=["#1D2230", "#2B2F36", "#3A3436"][i % 3],
+                 hair=["#2A211C", "#8C8C8C", "#141212"][i % 3], seed=60 + i)
+    tv_camera((0.95, 1.7), 29, z=0.0)
+    for x, y in ((-2.0, 2.0), (2.2, 2.3)):
+        tv_light((x, y), (0, 3.9, 1.2), 380, z=2.3, size=0.7)
+    # the crew's monitor on a stand, in front
+    kit.cyl((0.63, 1.28, 0.6), 0.015, 1.2, kit.mat("#2A2B2E", 0.4, 0.7), verts=8)
+    face, _ = kit.screen("monitor", (0.6, 1.23, 1.45), 0.55, "qt-briefing", crop=(56, 4, 1168, 657), strength=1.2,
+                         rot=(math.radians(90), 0, math.radians(35)), depth=0.04, border=0.015, bezel="#141416")
+    kit.camera((1.3, 0.25, 1.5), (-0.2, 3.7, 1.2), lens=32, fstop=2.8, focus=face)
+
+kit.run({
+    "mis-order": shot_mis_order,
+    "al-news": shot_al_news,
+    "rb-hearing": shot_rb_hearing,
+    "mu-hearing": shot_mu_hearing,
+    "ov-news": shot_ov_news,
+    "cw-hearing": shot_cw_hearing,
+    "qt-briefing": shot_qt_briefing,
+    "rd-news": shot_rd_news,
+})
