@@ -649,8 +649,7 @@ const EMERGENCY_SUMMARIES = {
   acquihire: 'You accepted an acquihire — the run is over',
 };
 
-// The "Just now" toast's lines, each with a kind (rival, lab, money, compute, era, washington, blocked), the name to
-// set in bold and the one figure that matters: part of the text, or extra detail after it (owner playtest 2026-09-26).
+// Keep presentation metadata beside the player-facing sentence so each visual treatment emphasizes the same facts.
 export function summaryItems(events, state) {
   const list = Array.isArray(events) ? events : [];
   const items = [];

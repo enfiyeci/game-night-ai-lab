@@ -1456,10 +1456,7 @@ svg.room {
 
 .company-footer .dialog-ok { flex: none; margin: 0; }
 
-/* ---- "Just now" summary: three options (owner playtest 2026-09-26) ---- */
-/* Shared: the slot, the line anatomy (kind tag, sentence with the name in bold, the figure) and the kind colours.
-   A (default) a quiet paper card with a kind column; B a torn Marketwire slip taped to the glass; C one paper strip
-   per line and no box. Pick with ?summary=A|B|C. */
+/* ---- "Just now" summary ---- */
 .turn-summary {
   --kind: color-mix(in oklab, var(--ink) 62%, var(--paper));
   position: absolute;

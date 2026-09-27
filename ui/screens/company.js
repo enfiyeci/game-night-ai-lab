@@ -414,8 +414,7 @@ export function mountCompany(game, overlayRoot) {
 
 export { openDeals, openQueue };
 
-// Three looks for the "Just now" toast, picked with ?summary=A|B|C (owner playtest 2026-09-26): A a quiet paper
-// card with a kind column, B a torn wire slip taped to the screen, C one paper strip per line and no box at all.
+// A is the quiet default; B borrows the wire-service paper language; C separates each update into its own strip.
 const SUMMARY_LOOKS = ['A', 'B', 'C'];
 const SUMMARY_LOOK_DEFAULT = 'A';
 const SUMMARY_KINDS = {
@@ -433,7 +432,6 @@ function summaryLook() {
   return SUMMARY_LOOKS.includes(asked) ? asked : SUMMARY_LOOK_DEFAULT;
 }
 
-// One line: the kind tag, the sentence with its name in bold, and the figure (marked in place, or added after).
 function summaryRow({ kind, text, name, figure }) {
   const item = make('li', `turn-summary-item kind-${kind}`);
   const sentence = make('span', 'turn-summary-text');
