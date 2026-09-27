@@ -301,7 +301,7 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
   }
 
   function renderStill(node, shot, local, still) {
-    const fit = node.wrapEl.clientWidth / STILL.w || 1;
+    const fit = frameFit || $('.film-frame').clientWidth / STILL.w || 1;
     const { x, y, s } = stillCam(shot.cam, local / shot.dur, still);
     // scale about the frame's centre, with the point (x, y) brought to the centre
     node.stage.style.transform = `translate(${(STILL.w / 2) * fit}px, ${(STILL.h / 2) * fit}px) scale(${s * fit}) translate(${-x}px, ${-y}px)`;
@@ -314,6 +314,14 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
   const lumenText = lumenLine ?? film.lumen ?? '';
   let current = null;
   let playing = false;
+  let lastT = 0;
+  // The stills' stage is sized from the frame's width. The frame can still be laying out (or hidden) when the film
+  // first draws, so the size is taken again whenever the frame's size changes, and the current moment redrawn.
+  let frameFit = 0;
+  const resize = new ResizeObserver(() => {
+    frameFit = $('.film-frame').clientWidth / STILL.w;
+    if (frameFit && !done) render(lastT);
+  });
 
   // A clip follows the film's clock: it plays while the film plays and is re-seeked when it drifts; otherwise it shows
   // the frame for this moment. Reduced motion holds the clip's last frame, as the camera holds its final framing.
@@ -372,6 +380,7 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
   }
 
   function render(t) {
+    lastT = t;
     const still = reducedMotion();
     const { shot, local } = shotAt(timeline, t);
     if (shot !== current) {
@@ -430,6 +439,7 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
     cancelAnimationFrame(raf);
     audio?.pause();
     document.removeEventListener('keydown', onKey);
+    resize.disconnect();
     el.remove();
     for (const url of clips.values()) URL.revokeObjectURL(url);
     for (const { url } of stills.values()) URL.revokeObjectURL(url);
@@ -443,6 +453,7 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
   }
   $('.film-skip').addEventListener('click', () => finish('skipped'));
   root.append(el);
+  resize.observe($('.film-frame'));
   render(0);
 
   return {

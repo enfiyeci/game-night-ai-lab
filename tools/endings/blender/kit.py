@@ -410,8 +410,12 @@ def screen_quads():
         if not face.visible_get():
             continue
         mw = face.matrix_world
-        # plane corners in local space: (-.5,.5) top-left ... in the plane's own UV orientation
-        corners = [Vector((-0.5, 0.5, 0)), Vector((0.5, 0.5, 0)), Vector((0.5, -0.5, 0)), Vector((-0.5, -0.5, 0))]
+        # the plane's corners in its own space (its size is in the mesh, not the object scale): top-left, top-right,
+        # bottom-right, bottom-left in the plane's UV orientation
+        xs = [v.co.x for v in face.data.vertices]
+        ys = [v.co.y for v in face.data.vertices]
+        x0, x1, y0, y1 = min(xs), max(xs), min(ys), max(ys)
+        corners = [Vector((x0, y1, 0)), Vector((x1, y1, 0)), Vector((x1, y0, 0)), Vector((x0, y0, 0))]
         quad = []
         for c in corners:
             p = world_to_camera_view(scene, scene.camera, mw @ c)
@@ -442,6 +446,12 @@ def run(shots, build=None):
             build(name)
         shots[name]()
         scene = bpy.context.scene
+        if opts.get("quads"):   # corners only: rebuild the scene and rewrite <name>.json, no render
+            bpy.context.view_layer.update()
+            with open(os.path.join(out, f"{name}.json"), "w") as f:
+                json.dump({"w": scene.render.resolution_x, "h": scene.render.resolution_y, "screens": screen_quads()}, f)
+            print("QUADS", name)
+            continue
         if opts.get("blend"):
             bpy.ops.wm.save_as_mainfile(filepath=os.path.join(out, f"{name}.blend"))
         scene.render.filepath = os.path.join(out, f"{name}.png")
