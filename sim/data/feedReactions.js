@@ -1198,6 +1198,208 @@ export const REACTIONS = {
    [
     "@garage_gpu",
     "rumour is a certain lab just wrapped a training run. new model incoming, maybe."
+   ],
+   [
+    "@anon_staffer",
+    "can't say where i work but somebody brought cake to the training channel and nobody would say why."
+   ],
+   [
+    "@chip_counter",
+    "{lab}'s cluster bookings just fell off a cliff. The run is done. Now watch for the model."
+   ],
+   [
+    "@launch_tracker",
+    "Tracker note: {lab}'s training run appears to have finished. Their launches have usually followed within weeks. Tracker updated."
+   ],
+   [
+    "@not_a_vc",
+    "hearing {lab} finished a training run. we'll wait for the model, the benchmarks, the vibes and a second opinion. then we'll pass."
+   ],
+   [
+    "@evalmaxxer",
+    "{lab} has a new model trained and not yet public. The weeks between \"trained\" and \"released\" are when the testing happens, or doesn't. We'll see which.",
+    {
+     "replies": [
+      [
+       "@redteam_ruth",
+       "they never let outside testers in during those weeks. we meet the model the same day you do."
+      ],
+      [
+       "@evalmaxxer",
+       "Which is the problem, yes."
+      ]
+     ]
+    }
+   ]
+  ]
+ },
+ "training": {
+  "start": {
+   "small": [
+    [
+     "@crab_apple_leaks",
+     "{lab} is training something. small. a warm-up, maybe. 🍎"
+    ],
+    [
+     "@garage_gpu",
+     "hearing {lab} kicked off a small run this week. i could fit it in my garage, if my garage were forty garages."
+    ],
+    [
+     "@chip_counter",
+     "{lab} booked a modest slice of cluster time this week. The tell here is the size: small runs are how you test a recipe before you bet the company on it."
+    ],
+    [
+     "@actually_neil",
+     "Actually, a \"small\" training run still costs more than most people's houses, which I've been saying."
+    ],
+    [
+     "@not_a_vc",
+     "hearing {lab} is doing a small training run. we only back labs whose small runs are big. passing."
+    ]
+   ],
+   "medium": [
+    [
+     "@crab_apple_leaks",
+     "{lab} has a run going. not their biggest. not their smallest. they have it 🍎"
+    ],
+    [
+     "@chip_counter",
+     "Mid-size run under way at {lab}, going by the cluster bookings. Big enough to ship, small enough to afford twice."
+    ],
+    [
+     "@arun_builds",
+     "people keep asking me how big {lab}'s new run is. honest answer: mid-sized, and that is the interesting size. most of what you'll use every day comes out of runs like this, not the headline monsters."
+    ],
+    [
+     "@anon_staffer",
+     "can't say where i work but the training dashboard is the only tab anyone has open this week."
+    ],
+    [
+     "@evalmaxxer",
+     "Heard {lab} started a new run. Reminder for when it ships: judge the results, not the size of the run. Error bars will be provided."
+    ],
+    [
+     "@unhinged_memes",
+     "me: waiting for my code to compile. {lab} engineers: waiting weeks for a loss curve. same energy, bigger electric bill."
+    ]
+   ],
+   "large": [
+    [
+     "@crab_apple_leaks",
+     "{lab} just lit up a very big cluster. this is not a warm-up 🍎"
+    ],
+    [
+     "@megawatt_mood",
+     "One of {lab}'s sites jumped its power draw overnight and has held it there since. That's a training run, y'all. A big one."
+    ],
+    [
+     "@situationally",
+     "{lab} has started a large run. Count the chips, not the press releases. This is the size of run that moves a lab up the leaderboard or sinks its balance sheet."
+    ],
+    [
+     "@term_sheet",
+     "hearing {lab} just put a huge chunk of its cash into one training run. brave or desperate. the next round will tell us which."
+    ],
+    [
+     "@yolo_calls",
+     "{lab} is doing a BIG training run. can't buy their stock so i bought the chip guys. calls 🚀"
+    ],
+    [
+     "@water_not_watts",
+     "a large training run at {lab} means months of cooling water pulled from somewhere dry. ask them which aquifer. they won't say."
+    ],
+    [
+     "@lunt_rational",
+     "{lab} has begun another large training run. Each one is a Bet placed on behalf of everyone alive by a few hundred people who did not ask us. I would like the record to show that I objected before it finished, since objecting afterwards has never once worked.",
+     {
+      "replies": [
+       [
+        "@bex_entropy",
+        "the record shows you objected. the loss curve does not care. ⚡"
+       ],
+       [
+        "@lunt_rational",
+        "Yes. That is the complaint."
+       ]
+      ]
+     }
+    ]
+   ],
+   "xl": [
+    [
+     "@crab_apple_leaks",
+     "{lab} is training the big one. biggest anyone has tried. not joking this time 🍎🍎🍎"
+    ],
+    [
+     "@chip_counter",
+     "{lab} has started what looks like the largest single training run on record. The tell here is the memory orders: they bought everything that was left, and a few things that aren't built yet."
+    ],
+    [
+     "@wescallow",
+     "congrats to {lab} on starting what i hear is a very ambitious run. scale isn't everything. we have something fun planned too :)"
+    ],
+    [
+     "@bex_entropy",
+     "{lab} just started the BIGGEST RUN IN HISTORY. the universe wants to compute and {lab} is letting it. ACCELERATE ⚡⚡⚡"
+    ],
+    [
+     "@ilse_interp",
+     "i hear {lab} has started a very large run. i hope they've planned how to look inside what comes out. the bigger the model, the less anyone understands it by default."
+    ],
+    [
+     "@natsec_brief",
+     "Bottom line: {lab}'s new run is the largest on record. Good, if it stays American. Now secure the weights before someone else takes them."
+    ],
+    [
+     "@not_in_my_county",
+     "The data centre on the ridge has run at full power every night this week. The hum is back. Somebody tell {lab} we can hear their \"historic run\" from the porch."
+    ],
+    [
+     "@wake_up_sheeple",
+     "BIGGEST AI TRAINING RUN EVER starts the SAME WEEK power bills go up?? coincidence?? do your research"
+    ],
+    [
+     "@situationally",
+     "{lab} has started the largest training run the world has seen. Count the gigawatts: this one run draws what a mid-sized city does. Whoever finishes a run like this first sets the terms for everyone else. That is the whole race now.",
+     {
+      "replies": [
+       [
+        "@avasseur",
+        "Nope. Bigger is not smarter. A larger autocomplete is still an autocomplete. Paper linked."
+       ],
+       [
+        "@situationally",
+        "You said that three runs ago."
+       ],
+       [
+        "@avasseur",
+        "And I was right three runs ago."
+       ]
+      ]
+     }
+    ]
+   ]
+  },
+  "doneBig": [
+   [
+    "@megawatt_mood",
+    "{lab}'s site dropped half its load at 4 a.m. and the whole grid felt it. The big run's done, y'all."
+   ],
+   [
+    "@crab_apple_leaks",
+    "the big one is done. they have it. nobody at {lab} is talking, which is how you know 🍎"
+   ],
+   [
+    "@lunt_rational",
+    "{lab}'s big run has finished. Somewhere in that building is a thing nobody has spoken to yet. Everyone involved is excited. I appear to be the only one who finds that sentence frightening."
+   ],
+   [
+    "@long_form_pod",
+    "guy on the show says {lab} just finished training something huge. says the people who've seen it went quiet. that's crazy, man."
+   ],
+   [
+    "@yolo_calls",
+    "{lab} big run DONE. everybody act normal 🚀🦍"
    ]
   ]
  },
