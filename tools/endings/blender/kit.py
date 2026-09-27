@@ -220,6 +220,7 @@ def place(asset, loc, rot_z=0.0, scale=1.0, rot=None):
         return []
     for r in roots:
         r.location = Vector(loc)
+        r.rotation_mode = "XYZ"      # glTF imports come in as quaternions, which would ignore rotation_euler
         r.rotation_euler = rot or (0, 0, rot_z)
         r.scale = (scale,) * 3
     return roots
@@ -261,6 +262,7 @@ def area(loc, target, size=(1, 1), energy=100, color=(1, 1, 1), name="area", spr
     L.data.color = color
     if spread:
         L.data.spread = spread
+    L.visible_camera = False    # fill light: it lights the scene but is never seen as a bright panel
     C.look_at(L, target)
     return L
 
