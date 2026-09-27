@@ -58,9 +58,9 @@ export function bubbleSpawns(from, to) {
 
 const releaseWaits = (state) => Boolean(state.pendingModel && !state.pendingModel.hazard && !state.ending);
 
-// Owner pick 2A: the only way into the menu is a click on the floor, so the note says it.
+// A polishing model has its own Publish button; other waiting models use the floor menu.
 export function readyNote(state) {
-  return releaseWaits(state) ? 'Ready · click the floor to release' : null;
+  return releaseWaits(state) && !state.pendingModel.polishing ? 'Ready · click the floor to release' : null;
 }
 
 // The ring on the floor is for the first release only; after one the player knows the way.
