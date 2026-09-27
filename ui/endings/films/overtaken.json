@@ -3,7 +3,6 @@
   "title": "Overtaken",
   "tagline": "You survived the race but finished behind it. Others decide what comes next.",
   "lumen": "The future is being written in someone else's model. I hope they wrote it carefully.",
-  "titleClip": "ov-globe-title",
   "titleSfx": [
     [
       "wind",
@@ -180,10 +179,35 @@
       ]
     },
     {
-      "kind": "video",
-      "clip": "ov-globe",
+      "kind": "still",
+      "frames": [
+        {
+          "image": "ov-globe-1",
+          "at": 0
+        },
+        {
+          "image": "ov-globe-2",
+          "at": 2.4,
+          "fade": 1.4
+        },
+        {
+          "image": "ov-globe-3",
+          "at": 5.0,
+          "fade": 1.6
+        }
+      ],
       "dur": 8,
       "card": "Year 1 · Everywhere",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "x": 960,
+          "y": 520,
+          "s": 1.05
+        }
+      },
       "sfx": [
         [
           "wind",
@@ -191,5 +215,18 @@
         ]
       ]
     }
-  ]
+  ],
+  "titleStill": "ov-globe-3",
+  "titleCam": {
+    "from": {
+      "s": 1.05,
+      "x": 960,
+      "y": 520
+    },
+    "to": {
+      "s": 1.09,
+      "x": 960,
+      "y": 520
+    }
+  }
 }
