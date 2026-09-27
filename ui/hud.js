@@ -59,8 +59,8 @@ export function mountHud(root, game) {
         </div>
         <div class="ctr ali"><div class="badge">${counts.alignment}</div><div class="tag">Alignment</div></div>
       </div>
+      <div class="lab-plate" aria-label="Your lab"></div>
       <button class="info" type="button" aria-expanded="${expanded}" aria-controls="${infoId}">
-        <span class="full lab-name"></span>
         <span class="full"><span class="k">Era</span> <b>${state.era}</b> <span class="k">· ${eraById(state.era).name}</span></span>
         <span class="k">Cash</span><b>${money(state.cash)}</b>
         <span class="k">Runway</span><b>${months(plannedRunway)}</b>
@@ -83,7 +83,7 @@ export function mountHud(root, game) {
 
     root.querySelector('.pill .t').textContent = pill.name; // player-typed names are text, never markup
     const labName = typeof state.labName === 'string' ? state.labName.trim() : '';
-    const labLine = root.querySelector('.lab-name');
+    const labLine = root.querySelector('.lab-plate');
     if (labName) labLine.textContent = labName; // the name typed on the title screen, as text
     else labLine.remove();
     if (refocus) root.querySelector(refocus)?.focus(); // the rebuild replaced the button the player was on

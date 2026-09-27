@@ -186,7 +186,7 @@ svg.room {
 }
 
 .info .full { grid-column: 1 / span 2; }
-.info .lab-name { max-width: 190px; font-size: 13.5px; font-weight: 900; overflow-wrap: anywhere; }
+.lab-plate { position: absolute; top: 12px; left: 14px; max-width: 320px; padding: 6px 14px 7px; border: 1px solid color-mix(in oklab, var(--ink) 8%, transparent); border-radius: 9px; font-size: 16px; font-weight: 900; line-height: 1.3; overflow-wrap: anywhere; background: var(--paper); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 14%, transparent), 0 6px 16px color-mix(in oklab, var(--ink) 11%, transparent); }
 .info .k { color: color-mix(in oklab, var(--ink) 58%, var(--paper)); font-weight: 700; }
 .info b { font-weight: 900; text-align: right; }
 
