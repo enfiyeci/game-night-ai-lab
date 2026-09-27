@@ -7,7 +7,7 @@ import {
   SCALE_DOWN, SCALE_DOWN_PENALTY_MONTHS, BREAK_SHARE, BUYOUT_MONTHS,
 } from './data/compute.js';
 import { SITE_TYPES, reserveGrid, poweredUnits } from './power.js';
-import { BOARD_SUPPLIERS } from './data/race.js';
+import { BOARD_SUPPLIERS, BIG_DEAL_SHARE, BIG_DEAL_HEAT, DENIAL_HEAT } from './data/race.js';
 
 const UNIT = BALANCE.unitMonthlyCost;
 const FAMILY = { azuriaEquity: 'azuria', loi: 'verde' };
@@ -110,6 +110,8 @@ export function signOffer(state, offerId, rng) {
   if (offer.supplier === 'gulf' && (state.govFavor.us < GULF_OPEN || state.flags.supplyChainRisk)) return { ok: false, error: 'the Gulf deal needs US approval' };
   if (offer.upfront > state.cash) return { ok: false, error: 'not enough cash for the upfront payment' };
   state.cash -= offer.upfront;
+  if (offer.wantedBy) state.raceHeat += DENIAL_HEAT;
+  if (offer.units >= BIG_DEAL_SHARE * state.compute.online) state.raceHeat += BIG_DEAL_HEAT;
   const f = family(offer.supplier);
   state.compute.deals ??= [];
   state.compute.deals.push({ supplier: f, turn: state.turn });
@@ -131,7 +133,7 @@ export function signOffer(state, offerId, rng) {
     arrive(state, state.compute.pipeline.splice(i, 1)[0], rng);
     refreshOnline(state);
   }
-  return { ok: true, offerId, arrivesTurn, pipelineId: id };
+  return { ok: true, offerId, arrivesTurn, pipelineId: id, denied: offer.wantedBy ?? null };
 }
 
 // Called once the turn has advanced, so what is due on turn T is online while the player plans turn T.

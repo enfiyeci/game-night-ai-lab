@@ -30,7 +30,8 @@ test('a run in progress counts part of its expected gain, without touching the s
 });
 
 test('a trained model shows its real gain and the remembered share', () => {
-  const state = SCENARIOS.hazard(4);
+  // Under the compute race plan (docs/superpowers/plans/2026-09-26-compute-race.md) Task 5, none of seed 4's twenty dice reach the hazard; seed 5's do.
+  const state = SCENARIOS.hazard(5);
   assert.ok(state.pendingModel, 'hazard scenario ends with a trained model');
   const counts = badgeCounts(state, 0.25);
   assert.equal(counts.capability, Math.round(state.pendingModel.gain));
@@ -39,7 +40,7 @@ test('a trained model shows its real gain and the remembered share', () => {
 });
 
 test('the hazard scenario stops with the cheating trace still unanswered', () => {
-  const state = SCENARIOS.hazard(4);
+  const state = SCENARIOS.hazard(5); // seed 4 no longer reaches the hazard: see the test above
   assert.equal(state.pendingModel?.hazard?.type, 'rewardHacking');
 });
 

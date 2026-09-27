@@ -248,8 +248,10 @@ test('endTurn wires real release reactions and era changes into the feed', () =>
     releaseEvent.model.launch.reactions,
   );
 
-  let state = createInitialState({ seed: 2 });
-  const rng = createRng(2);
+  // Under the compute race plan (docs/superpowers/plans/2026-09-26-compute-race.md) Task 5, rivals grow their fleets and train bigger models, so an idle lab is left behind at the
+  // era 1 gate on most seeds (seed 2 among them); seed 3's idle run still reaches era 2.
+  let state = createInitialState({ seed: 3 });
+  const rng = createRng(3);
   let transition;
   for (let turn = 0; turn < 4; turn += 1) {
     transition = endTurn(state, {}, rng);
