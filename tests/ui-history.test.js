@@ -220,3 +220,9 @@ test('history status follows what the sim serves: open weights and not-yet-onlin
   assert.deepEqual(rows.slice(0, 3).map((row) => [row.status, row.active]), [['open', false], ['upcoming', false], ['retired', false]]);
   assert.equal(labSummary(rows).stillServing, activeModels(state).length);
 });
+
+test('article table columns are headed by each benchmark row\'s job, since the named tests change with the era', () => {
+  const state = SCENARIOS.summit(5);
+  const result = article(state, historyRows(state));
+  assert.deepEqual(result.table.benchmarks, ['Coding', 'Science', 'Agents', 'Final exam', 'Safety']);
+});

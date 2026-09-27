@@ -55,6 +55,7 @@ function benchmarks(state, model) {
     const head = el('div', 'reveal-bench-name');
     const title = el('span', null, row.name);
     if (row.kind === 'safety') title.append(el('span', 'reveal-check', checkLabel(model.flags)));
+    if (row.newTest) title.append(el('span', 'reveal-check', 'New test')); // a harder test than your last flagship took
     head.append(title);
     if (row.flagship != null) {
       const delta = row.shown - row.flagship;
@@ -320,7 +321,8 @@ async function benchmarkRace(t, show, row, index) {
   const { body, dots, leader, lastName, newName } = show;
   const scene = el('div', 'rshow-scene');
   const title = el('div', 'rshow-title');
-  title.append(el('small', null, row.kind === 'safety' ? 'Safety benchmark' : 'Benchmark'), row.name);
+  const kind = row.kind === 'safety' ? 'safety benchmark' : 'benchmark';
+  title.append(el('small', null, row.newTest ? `New ${kind}` : kind[0].toUpperCase() + kind.slice(1)), row.name);
   const lane = (label, note, kind, me = false) => {
     const node = el('div', `rshow-lane${me ? ' me' : ''}`);
     const name = el('div', 'rshow-lane-name', label);

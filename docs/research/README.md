@@ -45,6 +45,8 @@ only through search-result snippets, and those claims carry ⚠️ inline.
    research (2026-09-26): Anthropic's "When AI builds itself" essay and automation index, the
    RSP, OpenAI and Google DeepMind thresholds, share-of-code figures, METR's measured speedups,
    and how other games model a self-accelerating loop. Start with its verified-rows table.
+12. `benchmarks-by-era.md` — how real AI benchmarks start low, fill up within a year or two and are retired
+   (2026-09-26), behind the per-era benchmark tests. Subagent output; snippet-only claims flagged ⚠️ inline.
 
 ## Notable catches
 

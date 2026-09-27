@@ -87,7 +87,7 @@ export function historyRows(state) {
         activeFromDate: Number.isFinite(model.activeFromTurn)
           ? storyDate(storyDayForTurn(model.activeFromTurn)).label
           : '',
-        benchmarks: model.launch.benchmarks.map(({ name, shown, rival }) => ({ name, shown, rival })),
+        benchmarks: model.launch.benchmarks.map(({ name, label, shown, rival }) => ({ name, label, shown, rival })),
       };
     });
 }
@@ -204,7 +204,8 @@ export function article(state, rows) {
     title: `${family} (language model)`,
     lead,
     table: {
-      benchmarks: first.benchmarks.map((benchmark) => benchmark.name),
+      // Headed by each row's job: the named tests change with the era (sim/data/launch.js).
+      benchmarks: first.benchmarks.map((benchmark) => benchmark.label),
       rows: rows.map((row) => ({
         name: row.name,
         released: `${row.era} · ${row.releasedDate}`,
