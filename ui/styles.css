@@ -4837,3 +4837,17 @@ html.title-waking #hud { transition: opacity .5s ease .6s; }
 .advisor-hit { fill: transparent; stroke: none; cursor: pointer; }
 /* A mark flipped to the advisor's left (ui/logic/advisorMarks.js, markerSpot) points its tail back at their head. */
 .advisor-marker.left svg { transform: scaleX(-1); }
+
+/* ---- Money and Compute: the advisors explain the screen (owner playtest 2026-09-26) ---- */
+.advisor-explains { display: flex; align-items: center; gap: 12px; margin: 0 0 10px; padding: 7px 12px; border-radius: 9px; background: color-mix(in oklab, var(--cream) 55%, var(--paper)); text-align: left; }
+.advisor-explains[hidden] { display: none; }
+.advisor-explains-face { display: flex; flex: none; }
+.advisor-explains-face .portrait { border-radius: 50%; background: var(--paper); }
+.advisor-explains b { color: color-mix(in oklab, var(--ink) 62%, var(--paper)); font-size: 10.5px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; }
+.advisor-explains p { margin: 1px 0 0; font-size: 12.5px; font-weight: 600; line-height: 1.38; }
+.advisor-tabline { margin: -4px 0 10px; color: color-mix(in oklab, var(--ink) 66%, var(--paper)); font-size: 12px; font-weight: 600; line-height: 1.35; text-align: center; }
+.advisor-tabline b { margin-right: 2px; color: color-mix(in oklab, var(--wood) 60%, var(--ink)); font-size: 10.5px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; }
+.screen-help { position: absolute; top: 16px; right: 18px; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; color: color-mix(in oklab, var(--wood) 70%, var(--ink)); font: inherit; font-size: 15px; font-weight: 900; line-height: 1; background: color-mix(in oklab, var(--wood) 16%, var(--paper)); cursor: pointer; }
+.screen-help:hover { background: color-mix(in oklab, var(--wood) 28%, var(--paper)); }
+.screen-help.on { color: var(--paper); background: var(--wood); }
+.screen-help:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }

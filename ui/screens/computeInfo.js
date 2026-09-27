@@ -4,6 +4,8 @@ import { openDialog } from '../components/dialog.js';
 import { computeBar } from '../logic/compute.js';
 import { computeAmount } from '../logic/format.js';
 import { raceTab } from './race.js';
+import { advisorExplains, advisorTabLine, screenHelp } from '../components/advisorSays.js';
+import { COMPUTE_ADVISOR, COMPUTE_SEEN_KEY, COMPUTE_TAB_LINES, computeExplainer, firstOpen, pageStorage } from '../logic/explainers.js';
 
 const PARTS = {
   training: { label: 'Training', say: 'Training your next model right now.' },
@@ -25,7 +27,11 @@ function element(tag, className, text) {
 export function openComputeInfo(game, overlayRoot, { view = 'where', race = raceTab } = {}) {
   const state = game.state;
   let opened;
+  // Research explains the screen the first time it opens in this browser; the header's "?" brings her back.
+  let explaining = firstOpen(pageStorage(), COMPUTE_SEEN_KEY);
+  const withHelp = () => screenHelp(opened, (shown) => { explaining = shown; });
 
+  // The CFO's explanation (hidden unless asked for), the tabs, then her one line on the tab on show.
   function tabs(current) {
     const row = element('div', 'finance-tabs');
     row.setAttribute('role', 'tablist');
@@ -37,7 +43,9 @@ export function openComputeInfo(game, overlayRoot, { view = 'where', race = race
       tab.addEventListener('click', () => { if (key !== current) (key === 'race' ? showRace : showWhere)(); });
       row.append(tab);
     }
-    return row;
+    const head = document.createDocumentFragment();
+    head.append(advisorExplains(COMPUTE_ADVISOR, computeExplainer(state.era), explaining), row, advisorTabLine(COMPUTE_ADVISOR, COMPUTE_TAB_LINES[current]));
+    return head;
   }
 
   function showWhere() {
@@ -92,6 +100,7 @@ export function openComputeInfo(game, overlayRoot, { view = 'where', race = race
       onOk: () => opened.close(),
     });
     opened.classList.add('compute-info');
+    withHelp();
   }
 
   function showRace() {
@@ -107,6 +116,7 @@ export function openComputeInfo(game, overlayRoot, { view = 'where', race = race
     // Same size as the first tab, so switching tabs does not move the dialog.
     opened.classList.add('compute-info', 'compute-info-race');
     if (stacked) opened.classList.add('history-race-stacked');
+    withHelp();
   }
 
   if (view === 'race') showRace();
