@@ -42,8 +42,9 @@ export function mountTraining(game, { stage, hud, overlay }) {
   function writeCounts(counts) {
     displayed = { ...counts };
     const current = badges();
-    current.capability.textContent = `${counts.capability}`;
-    current.alignment.textContent = `${counts.alignment}`;
+    // Only when it differs: each write is itself a child-list change the HUD watcher below would see again.
+    if (current.capability.textContent !== `${counts.capability}`) current.capability.textContent = `${counts.capability}`;
+    if (current.alignment.textContent !== `${counts.alignment}`) current.alignment.textContent = `${counts.alignment}`;
   }
 
   function centre(element) {
@@ -188,7 +189,7 @@ export function mountTraining(game, { stage, hud, overlay }) {
   // The HUD also redraws itself (the info toggle); keep the in-flight counts rather than jumping to the target.
   new MutationObserver(() => {
     if (flying) writeCounts(displayed);
-  }).observe(hud, { childList: true });
+  }).observe(hud, { childList: true, subtree: true }); // the HUD redraws inside its own view
 
   overlay.addEventListener('hazard-chosen', updateReadyNote);
   game.subscribe(render);

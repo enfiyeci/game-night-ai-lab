@@ -32,6 +32,7 @@ import { mountBriefing } from './screens/briefing.js';
 import { mountFeed } from './screens/feed.js';
 import { mountEnding } from './screens/end.js';
 import { mountFinance, openFinance } from './screens/finance.js';
+import { openComputeInfo } from './screens/computeInfo.js';
 import { createCollection } from './logic/collection.js';
 import { lumenEpilogue } from '../sim/lumen.js';
 import { mountBoard, openBoard } from './screens/board.js';
@@ -247,6 +248,14 @@ async function openDebugRoute() {
   }
   if (location.hash === '#emergency') {
     openEmergency(game, overlay);
+    return;
+  }
+  if (location.hash === '#money' || location.hash === '#money-changes') {
+    openFinance(game, overlay, { view: location.hash === '#money' ? 'month' : 'changes' });
+    return;
+  }
+  if (location.hash === '#compute-info' || location.hash === '#compute-race') {
+    openComputeInfo(game, overlay, { view: location.hash === '#compute-race' ? 'race' : 'where' });
     return;
   }
   if (location.hash === '#finance' || location.hash === '#books') {
