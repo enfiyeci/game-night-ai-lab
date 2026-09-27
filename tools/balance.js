@@ -74,9 +74,13 @@ function shuffled(values, rng) {
 
 function constitutionFor(style, rng) {
   const option = (entry) => {
-    if (style === 'speed') return entry.options.find((candidate) => candidate.id === 'comply') ?? entry.options.at(-1);
-    if (style === 'safety') return entry.options[0];
-    if (style === 'balanced') return entry.options[1] ?? entry.options[0];
+    if (style === 'speed') return entry.options.reduce((best, candidate) =>
+      ((candidate.values.userFirst ?? 0) + (candidate.values.deference ?? 0)
+        > (best.values.userFirst ?? 0) + (best.values.deference ?? 0) ? candidate : best));
+    if (style === 'safety') return entry.options.reduce((best, candidate) =>
+      ((candidate.values.caution ?? 0) + (candidate.values.candor ?? 0)
+        > (best.values.caution ?? 0) + (best.values.candor ?? 0) ? candidate : best));
+    if (style === 'balanced') return entry.options[1];
     return rng.pick(entry.options);
   };
   const hardLines = style === 'speed'

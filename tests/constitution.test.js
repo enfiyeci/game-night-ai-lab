@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import { setConstitution, amendConstitution, constitutionValues, learnedConstitution, hasLine } from '../sim/constitution.js';
-import { HARD_LINES, CASES } from '../sim/data/constitution.js';
+import { HARD_LINES, CASES, FIXED_LINE, SAFETY_PROPOSAL, PERMISSIVE_OPTIONS } from '../sim/data/constitution.js';
 import { applyAlignmentFaking } from '../sim/hazards.js';
 import { automationTick } from '../sim/automation.js';
 import { resolveRun } from '../sim/training.js';
@@ -38,6 +38,19 @@ const releaseState = (hardLines, channel = 'channel-app') => {
   return releaseModel(state, release(channel), no).model;
 };
 
+test('the era 3 content: 8 lines, 6 cases of 3 options, a valid Safety proposal', () => {
+  assert.equal(HARD_LINES.length, 8);
+  assert.deepEqual(CASES.map((c) => c.id), ['companion', 'feedback', 'tests', 'fraud', 'stop', 'report']);
+  for (const c of CASES) {
+    assert.equal(c.options.length, 3, c.id);
+    assert.equal(new Set(c.options.map((o) => o.id)).size, 3, c.id);
+  }
+  assert.match(FIXED_LINE, /children/);
+  const s = createInitialState();
+  assert.deepEqual(setConstitution(s, SAFETY_PROPOSAL), { ok: true });
+  for (const id of ['reciprocate', 'encourage', 'fake', 'finish', 'continue', 'quiet']) assert.ok(PERMISSIVE_OPTIONS.has(id), id);
+});
+
 test('exactly three hard lines and every case ruled', () => {
   const s = createInitialState();
   assert.equal(setConstitution(s, { hardLines: ['no-wmd'], rulings: allRulings() }).ok, false);
@@ -46,7 +59,7 @@ test('exactly three hard lines and every case ruled', () => {
   assert.equal(setConstitution(s, { hardLines: 'no-wmd', rulings: allRulings() }).ok, false);
   assert.equal(setConstitution(s, { hardLines: ['no-wmd', 'no-wmd', 'privacy'], rulings: allRulings() }).ok, false);
   assert.equal(setConstitution(s, { hardLines: ['no-wmd', 'honest', 'constructor'], rulings: allRulings() }).ok, false);
-  assert.equal(setConstitution(s, { hardLines: ['no-wmd', 'honest', 'privacy'], rulings: { ...allRulings(), chem: 'constructor' } }).ok, false);
+  assert.equal(setConstitution(s, { hardLines: ['no-wmd', 'honest', 'privacy'], rulings: { ...allRulings(), bogusCase: 'constructor' } }).ok, false);
   assert.equal(setConstitution(s, { hardLines: ['no-wmd', 'honest', 'privacy'], rulings: Object.create(allRulings()) }).ok, false);
   assert.equal(setConstitution(s, { hardLines: ['no-wmd', 'honest', 'privacy'], rulings: allRulings() }).ok, true);
   assert.equal(hasLine(s, 'honest'), true);
@@ -58,7 +71,7 @@ test('hard-line effect descriptions contain no hidden numbers', () => {
 
 test('rulings average into value dials between 0 and 1', () => {
   const s = createInitialState();
-  setConstitution(s, { hardLines: ['no-wmd', 'honest', 'privacy'], rulings: allRulings() });
+  setConstitution(s, SAFETY_PROPOSAL);
   const v = constitutionValues(s);
   for (const k of ['candor', 'caution', 'deference', 'userFirst']) assert.ok(v[k] >= 0 && v[k] <= 1);
   assert.ok(v.candor > 0.7);
@@ -69,21 +82,21 @@ test('amendments add, remove and re-rule, and are recorded', () => {
   setConstitution(s, { hardLines: ['no-wmd', 'honest', 'privacy'], rulings: allRulings() });
   assert.equal(amendConstitution(s, { remove: 'honest', add: 'accept-shutdown' }).ok, true);
   assert.equal(hasLine(s, 'accept-shutdown'), true);
-  assert.equal(amendConstitution(s, { ruling: { caseId: 'wrong', optionId: 'yield' } }).ok, true);
+  assert.equal(amendConstitution(s, { ruling: { caseId: 'feedback', optionId: 'encourage' } }).ok, true);
   assert.equal(s.constitution.amendments.length, 2);
   assert.equal(amendConstitution(s, { add: 'no-wmd' }).ok, false);
-  assert.equal(amendConstitution(s, { ruling: { caseId: 'constructor', optionId: 'yield' } }).ok, false);
+  assert.equal(amendConstitution(s, { ruling: { caseId: 'constructor', optionId: 'encourage' } }).ok, false);
 });
 
 test('amendments reject inherited ruling fields without changing state', () => {
   const state = createInitialState();
   adopt(state);
   const before = structuredClone(state);
-  const inheritedRuling = Object.create({ caseId: 'wrong', optionId: 'yield' });
+  const inheritedRuling = Object.create({ caseId: 'feedback', optionId: 'encourage' });
   assert.equal(amendConstitution(state, { ruling: inheritedRuling }).ok, false);
   assert.deepEqual(state, before);
 
-  const inheritedChange = Object.create({ ruling: { caseId: 'wrong', optionId: 'yield' } });
+  const inheritedChange = Object.create({ ruling: { caseId: 'feedback', optionId: 'encourage' } });
   assert.equal(amendConstitution(state, inheritedChange).ok, false);
   assert.deepEqual(state, before);
 });
@@ -96,7 +109,7 @@ test('the learned constitution drifts with total debt', () => {
   s.alignmentDebt = 50; s.concealedDebt = 40;
   const learned = learnedConstitution(s, yes);
   assert.equal(learned.hardLines.length, 0);
-  assert.notEqual(learned.rulings.chem, 'refuse');
+  assert.notEqual(learned.rulings.companion, 'reciprocate');
   assert.deepEqual(learnedConstitution(s, no).hardLines, ['no-wmd', 'honest', 'privacy']);
 });
 
@@ -282,8 +295,8 @@ test('the President demand triggers and both choices apply', () => {
   resolveEvent(accept, 'president', 'accept');
   assert.equal(accept.govFavor.us, 58);
   assert.equal(accept.staffTrust, 64);
-  assert.equal(accept.constitution.rulings.president, 'comply');
-  assert.deepEqual(accept.constitution.amendments.at(-1), { turn: 0, change: { ruling: { caseId: 'president', optionId: 'comply' } }, source: 'president' });
+  assert.equal(accept.constitution.rulings.report, 'quiet');
+  assert.deepEqual(accept.constitution.amendments.at(-1), { turn: 0, change: { ruling: { caseId: 'report', optionId: 'quiet' } }, source: 'president' });
   const refuse = demandState('president');
   resolveEvent(refuse, 'president', 'refuse');
   assert.equal(refuse.govFavor.us, 42);
@@ -303,7 +316,7 @@ test('the investor demand triggers and both choices apply', () => {
 test('the user demand triggers and both choices apply', () => {
   const accept = demandState('users');
   resolveEvent(accept, 'users', 'accept');
-  assert.equal(accept.constitution.rulings.wrong, 'yield');
+  assert.equal(accept.constitution.rulings.feedback, 'encourage');
   assert.equal(accept.models[0].users, 6.6e6);
   assert.equal(accept.constitution.amendments.at(-1).source, 'users');
   const refuse = demandState('users');

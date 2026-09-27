@@ -325,7 +325,7 @@ export const EVENTS = [
           effects(state) {
             state.govFavor.us += 8;
             state.staffTrust -= 6;
-            forceAmendConstitution(state, { ruling: { caseId: 'president', optionId: 'comply' } }, 'president');
+            forceAmendConstitution(state, { ruling: { caseId: 'report', optionId: 'quiet' } }, 'president');
           },
         },
         {
@@ -371,7 +371,7 @@ export const EVENTS = [
         {
           id: 'accept', label: 'Accept', cost: 'the model yields', backers: ['Product'], opposers: ['Safety'],
           effects(state) {
-            forceAmendConstitution(state, { ruling: { caseId: 'wrong', optionId: 'yield' } }, 'users');
+            forceAmendConstitution(state, { ruling: { caseId: 'feedback', optionId: 'encourage' } }, 'users');
             for (const model of state.models) if (model.channel === 'consumer') model.users = Math.round(model.users * 1.1);
           },
         },

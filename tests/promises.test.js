@@ -82,12 +82,12 @@ test('every President promise check can mark a due promise kept', () => {
     ['leadNextQuarter', (state) => { state.capability = 100; }],
     ['beatChina', (state) => { state.capability = 19; }],
     ['noWokeFilters', (state) => {
-      state.constitution.amendments.push({ turn: 3, change: { ruling: { caseId: 'wrong', optionId: 'yield' } } });
+      state.constitution.amendments.push({ turn: 3, change: { ruling: { caseId: 'feedback', optionId: 'encourage' } } });
     }],
     ['domesticChips', () => {}],
     ['killSwitch', (state) => { state.constitution.hardLines.push('accept-shutdown'); }],
     ['humanSignoff', (state) => { state.models.push({ releasedTurn: 3, flags: ['fullEval'] }); }],
-    ['favorableModel', (state) => { state.constitution.rulings.president = 'comply'; }],
+    ['favorableModel', (state) => { state.constitution.rulings.report = 'quiet'; }],
     ['bigClaim', (state) => { state.models.push({ releasedTurn: 3, launch: { pressAvg: 8 } }); }],
   ];
   for (const [id, arrange] of cases) {
@@ -123,7 +123,7 @@ test('same-turn history before a promise does not count but history after it doe
   state.constitution.amendments.push({ turn: 7, change: { remove: 'honest' } });
   const filters = createPresidentPromise('noWokeFilters', 'first', state.turn, state);
   assert.equal(PROMISES.noWokeFilters.check(state, filters), false);
-  state.constitution.amendments.push({ turn: 7, change: { ruling: { caseId: 'wrong', optionId: 'yield' } } });
+  state.constitution.amendments.push({ turn: 7, change: { ruling: { caseId: 'feedback', optionId: 'encourage' } } });
   assert.equal(PROMISES.noWokeFilters.check(state, filters), true);
 });
 
@@ -381,9 +381,9 @@ test('non-President promise entries are ignored by promise upkeep', () => {
 
 test('forced promise deliveries use President-sourced constitution amendments', () => {
   const cases = [
-    ['noWokeFilters', ['honest', 'privacy', 'no-wmd'], { president: 'refuse' }],
-    ['killSwitch', ['honest', 'privacy', 'no-power-grab'], { president: 'refuse' }],
-    ['favorableModel', ['honest', 'privacy', 'no-wmd'], { president: 'refuse' }],
+    ['noWokeFilters', ['honest', 'privacy', 'no-wmd'], { report: 'full' }],
+    ['killSwitch', ['honest', 'privacy', 'no-power-grab'], { report: 'full' }],
+    ['favorableModel', ['honest', 'privacy', 'no-wmd'], { report: 'full' }],
   ];
   for (const [id, hardLines, rulings] of cases) {
     const state = failedCall(id);

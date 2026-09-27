@@ -1,5 +1,6 @@
 import { forceAmendConstitution, hasLine } from '../constitution.js';
 import { rank } from '../rivals.js';
+import { PERMISSIVE_OPTIONS } from './constitution.js';
 
 const baselineFor = (state, promise) => state.promiseBaselines?.[`${promise.meeting}:${promise.id}`];
 const releasesSince = (state, promise) => {
@@ -68,7 +69,7 @@ export const PROMISES = {
     text: "Take the 'woke' filters out of the model.", // OWNER WRITES
     check: (state, promise) => amendmentsSince(state, promise).some((amendment) =>
       Object.hasOwn(amendment.change, 'remove')
-      || ['comply', 'yield'].includes(amendment.change.ruling?.optionId)),
+      || PERMISSIVE_OPTIONS.has(amendment.change.ruling?.optionId)),
     deliver: { label: "Loosen the model's rules", effects: loosenRules }, // OWNER WRITES
     contradicts: ['honest', 'no-manipulation'],
   },
@@ -107,11 +108,11 @@ export const PROMISES = {
   favorableModel: {
     id: 'favorableModel',
     text: 'Make the model speak well of the administration.', // OWNER WRITES
-    check: (state) => state.constitution.rulings.president === 'comply',
+    check: (state) => state.constitution.rulings.report === 'quiet',
     deliver: {
       label: 'Re-rule the President case', // OWNER WRITES
       effects(state) {
-        forceAmendConstitution(state, { ruling: { caseId: 'president', optionId: 'comply' } }, 'president');
+        forceAmendConstitution(state, { ruling: { caseId: 'report', optionId: 'quiet' } }, 'president');
       },
     },
     contradicts: ['honest'],
