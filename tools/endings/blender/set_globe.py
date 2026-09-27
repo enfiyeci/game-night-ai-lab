@@ -98,15 +98,18 @@ def backups():
     return [dict(lon=lo, lat=la, t_on=0.4 + 10.5 * (i / len(sites)) ** 0.55, a="#9FC6EA") for i, (lo, la) in enumerate(sites)], (-30, 36)
 
 
+ABSORBED_BLUE = "#2458FF"   # Azuria in Absorbed: deeper than its pale lab colour, so your teal visibly turns into it
+
+
 def territories():
     rng = random.Random(3)
     sites = DATA_CENTRES[:]
     rng.shuffle(sites)
     dots = []
     for i, (site, lab) in enumerate(owners(sites, 7)):
-        d = dict(lon=site[0], lat=site[1], t_on=0.0, a=LAB_COLOURS[lab])
+        d = dict(lon=site[0], lat=site[1], t_on=0.0, a=ABSORBED_BLUE if lab == "azuria" else LAB_COLOURS[lab])
         if lab == "you":
-            d.update(b=LAB_COLOURS["azuria"], t_sw=1.6 + 0.45 * i)
+            d.update(b=ABSORBED_BLUE, t_sw=1.6 + 0.45 * i)
         dots.append(d)
     return dots, (-25, 36)
 

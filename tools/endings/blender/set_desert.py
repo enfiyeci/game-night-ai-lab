@@ -537,7 +537,7 @@ RD_ORDER = [[(0, 0), (0, 1), (0, 2)], [(1, 0), (1, 1), (1, 2), (2, 0)], [(2, 1),
 HALL_X = [-300 + c * 230 for c in range(4)]
 
 
-def rd_shot(stage, cam=((-330, 100, 18), (80, 330, 10), 28), exposure=0.3):
+def rd_shot(stage, cam=((-330, 100, 48), (80, 330, 0), 28), exposure=0.3):
     """stage 0: all lit; each further stage switches off the next group in RD_ORDER."""
     def shot():
         kit.world(hdri="qwantani_night_puresky", strength=0.06, rotation=0)
