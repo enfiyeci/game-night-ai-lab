@@ -460,7 +460,7 @@ test('endTurn: the mark that ends the run in a quiet takeover queues and runs no
     const s = atLeads();
     s.capability = 80;
     s.alignmentDebt = 100;
-    s.automation.stage = 4; // already at the final internal step before the takeover
+    s.automation.stage = 4; // start past the escalation stages so this tick reaches the takeover ending
     s.automation.autoApprove = autoApprove;
     return endTurn(s, {}, hit);
   };

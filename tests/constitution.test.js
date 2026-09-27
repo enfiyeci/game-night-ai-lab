@@ -187,11 +187,33 @@ test('a run with the constitution card learns the draft it started with', () => 
   setDraft(s, { hardLines: ['no-wmd', 'honest', 'privacy'], rulings: SAFETY_PROPOSAL.rulings });
   const recipe = { sliders: { size: 'small', length: 'optimal', alignShare: 0.2 }, picks: { pre: [], mid: [], post: ['constitution'] } };
   assert.equal(startRun(s, recipe).ok, true, 'if this fails, copy a valid era 3 recipe from tests/training.test.js and add the card');
+  assert.notEqual(s.constitutionDraft.hardLines, s.activeRun.constitution.hardLines);
+  assert.notEqual(s.constitutionDraft.rulings, s.activeRun.constitution.rulings);
   setDraft(s, { hardLines: ['no-wmd', 'honest', 'accept-shutdown'], rulings: SAFETY_PROPOSAL.rulings }); // edited mid-run: for the next model
   s.activeRun.turnsLeft = 0.5; s.activeRun.canAdvance = true; s.activeRun.capacityTurn = s.turn;
   advanceRunBy(s, no, 1);
   assert.deepEqual(s.constitution.hardLines, ['no-wmd', 'honest', 'privacy']);
   assert.deepEqual(s.constitutionDraft.hardLines, ['no-wmd', 'honest', 'accept-shutdown']);
+});
+
+test('the constitution card resolves the model under the snapshot it teaches', () => {
+  const train = (hardLines) => {
+    const s = createInitialState();
+    s.era = 3; s.cash = 5000;
+    s.compute.split.safety = 0; s.compute.online = 100;
+    setDraft(s, { hardLines, rulings: SAFETY_PROPOSAL.rulings });
+    const recipe = { sliders: { size: 'small', length: 'optimal', alignShare: 0.2 }, picks: { pre: [], mid: [], post: ['thumbs', 'constitution'] } };
+    assert.equal(startRun(s, recipe).ok, true);
+    s.activeRun.turnsLeft = 0.5; s.activeRun.canAdvance = true; s.activeRun.capacityTurn = s.turn;
+    advanceRunBy(s, no, 1);
+    return s.pendingModel;
+  };
+  const protectedModel = train(['no-manipulation', 'honest', 'privacy']);
+  const controlModel = train(['no-wmd', 'honest', 'privacy']);
+  assert.equal(protectedModel.flags.includes('sycophancy'), false);
+  assert.equal(protectedModel.publicEffects.usersMult, 1.05);
+  assert.equal(controlModel.flags.includes('sycophancy'), true);
+  assert.equal(controlModel.publicEffects.usersMult, 1.15);
 });
 
 test('a run without the card keeps the live constitution', () => {

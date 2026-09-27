@@ -352,6 +352,7 @@ test('an unknown President answer id expires the open meeting', () => {
 
 test('meeting flattery causes the President demand card to be queued', () => {
   const state = open(createInitialState());
+  state.era = 3;
   state.turn = 1;
   const out = endTurn(state, { moves: [{ type: 'meeting' }], presidentAnswers: flatteringIds() }, no);
   assert.equal(out.state.flags.presidentDemand, true);

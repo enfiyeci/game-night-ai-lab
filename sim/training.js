@@ -24,7 +24,7 @@ export function startRun(state, recipe) {
   if (recipe.picks?.post?.includes('constitution')) {
     const draft = draftFor(state);
     state.activeRun.constitution = { hardLines: draft.hardLines, rulings: draft.rulings };
-    state.constitutionDraft = { ...state.activeRun.constitution, changes: [] };
+    state.constitutionDraft = { ...structuredClone(state.activeRun.constitution), changes: [] };
   }
   return { ok: true, cost };
 }
@@ -47,8 +47,8 @@ export function advanceRunBy(state, rng, fraction) {
   run.turnsLeft -= fraction;
   if (run.turnsLeft > 1e-9) return null;
   state.activeRun = null;
-  state.pendingModel = resolveRun(state, run, rng);
   if (run.constitution) learnConstitution(state, run.constitution);
+  state.pendingModel = resolveRun(state, run, rng);
   if (run.uncapped) state.pendingModel.uncapped = true; // run past the Geneva cap
   return state.pendingModel;
 }

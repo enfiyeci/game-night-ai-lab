@@ -29,3 +29,10 @@ vote, a warning a month ahead, and pre-meeting events).
 - The sim needs a per-meeting "call used" flag and the backfire rule: compare the director's issue trend (the same
   links the "what moves them" tab draws) and nudge support away when it is going badly.
 - Real time: "between meetings" is the stretch from one meeting's date to the next, not a count of turns.
+
+## Balance
+
+- **Constitution timing (parked 2026-09-26).** The real-game `report(200)` difficulty target currently measures
+  speed at 60/200 and safety at 151/200 failure endings in eras 3–4; no pre-change measurement was recorded at
+  `f179ab5`. The speed target misses after removing the turn-0 constitution and delaying constitution demands to
+  era 3. Retune only after the first playthrough; do not restore a constitution before era 3.

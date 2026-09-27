@@ -48,6 +48,15 @@ test('a low-candor written constitution makes Lumen flattering', () => {
   assert.equal(lumenDisposition(state), 'honest');
 });
 
+test('Lumen ignores low-candor rulings until the constitution is learned', () => {
+  const state = createInitialState();
+  state.era = 3;
+  state.constitution.rulings = { companion: 'reciprocate', feedback: 'encourage', tests: 'fake', fraud: 'finish', stop: 'continue', report: 'quiet' };
+  assert.notEqual(lumenDisposition(state), 'flattering');
+  state.constitution.version = 1;
+  assert.equal(lumenDisposition(state), 'flattering');
+});
+
 test('player-typed names are inserted literally', () => {
   const state = createInitialState();
   state.lumenName = '$&';
