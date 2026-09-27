@@ -246,6 +246,8 @@ def mina(at, facing=0.0):
     """Mina at the table, seated, seen from behind, her hair in a ponytail."""
     root = P.person(at, facing=facing, pose="sit", height=1.62, coat="#6A5D7B", hair="#0A0807", skin="#C99576",
                     trousers="#2C3A4F", build=0.9, seed=7)
+    hair = next(n for n in kit.mat("#0A0807", 0.7).node_tree.nodes if n.type == "BSDF_PRINCIPLED")
+    hair.inputs["Specular IOR Level"].default_value = 0.15   # dark hair, not a shiny rim in the low sun
     a = math.radians(facing)
     tail = kit.sphere((at[0] + 0.1 * math.sin(a), at[1] - 0.1 * math.cos(a), 1.06), 0.045, kit.mat("#0A0807", 0.95),
                       scale=(0.8, 0.8, 1.7))
@@ -333,7 +335,7 @@ def shot_rb_app():
         kit.place("food_apple_01", (bowl[0] + dx, bowl[1] + dy, t[2] + 0.04))
     # breakfast before school: cereal, juice, her phone, the school bag against the table leg
     kit.cyl((0.2, 3.05, 0.79), 0.07, 0.06, kit.mat("#F2EEE6", 0.3), r2=0.05)
-    kit.cyl((0.2, 3.05, 0.815), 0.062, 0.004, kit.mat("#E9C46A", 0.8))
+    kit.cyl((0.2, 3.05, 0.8), 0.058, 0.004, kit.mat("#E9C46A", 0.8))
     kit.cyl((0.36, 2.98, 0.82), 0.03, 0.12, kit.glass(0.05, tint="#FFB45A"))
     kit.cyl((0.36, 2.98, 0.8), 0.028, 0.08, kit.mat("#F2962E", 0.2, alpha=0.9))
     phone_flat((-0.5, 3.0, 0.76), rz=0.3, strength=0.2)
@@ -400,7 +402,7 @@ def shot_ov_chat():
     room(sky="cobblestone_street_night", sky_strength=0.12, sky_rot=100, clock="02:07")
     table()
     face = laptop((-0.1, 3.3, 0.76), "ov-chat", CHAT, yaw=101, strength=1.0)
-    for (x, y, c) in ((0.25, 3.3, "#F2EEE6"), (0.36, 3.12, "#C9553B"), (0.16, 3.02, "#3F84C6")):
+    for (x, y, c) in ((-0.35, 3.02, "#F2EEE6"), (-0.47, 2.92, "#C9553B"), (-0.3, 2.86, "#3F84C6")):
         mug((x, y, 0.76), c)
     kit.box((0.3, 3.5, 0.762), (0.12, 0.08, 0.004), kit.mat("#E0613B", 0.4, 0.3), rot=(0, 0, 0.6))   # a snack wrapper
     desk_lamp((-0.6, 3.1, 0.76), math.radians(-20), (0.1, 3.25, 0.76), energy=6)
