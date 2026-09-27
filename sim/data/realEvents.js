@@ -353,7 +353,8 @@ export const REAL_EVENTS = [
     counsel(state) { state.publicTrust -= 4; state.govFavor.us -= 2; },
   }),
   anchor('whiteHouseCommitments', 1, 2, 0.55, 'decline', {
-    signall(state) { state.govFavor.us += 6; state.security += 8; state.cash -= 10; },
+    // Every later release waits a round for outside testers (sim/release.js testerWait). Owner 2026-09-26: "add it".
+    signall(state) { state.govFavor.us += 6; state.security += 8; state.cash -= 10; state.flags.outsideTesters = true; },
     signskip(state) { state.govFavor.us += 3; state.concealedDebt += 2; state.flags.hollowCommitments = true; },
     decline(state) { state.govFavor.us -= 6; state.raceHeat += 2; },
   }),

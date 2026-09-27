@@ -363,3 +363,42 @@ test('pulling back a live release puts the model it replaced back in service unt
   assert.equal(model.activated, true);
   assert.equal(model.users, liveUsers);
 });
+
+// Owner 2026-09-26 ("add it"): signing every White House line puts outside testers before every release.
+test('signing every White House line makes each release wait for outside testers', () => {
+  const s = trainedModel(1);
+  s.pendingEvents.push({ id: 'whiteHouseCommitments' });
+  resolveEvent(s, 'whiteHouseCommitments', 'signall');
+  assert.equal(s.flags.outsideTesters, true);
+  // Era 1: three-month rounds, so the release ships on time with a quarter fewer launch users.
+  assert.equal(shipDelay(s, ['eval-full', 'channel-app']), 0);
+  const plain = trainedModel(1);
+  assert.equal(ship(plain, ['eval-full']).ok, true);
+  assert.equal(ship(s, ['eval-full']).ok, true);
+  assert.equal(s.models.at(-1).users, Math.round(plain.models.at(-1).users * 0.75));
+  // Era 3: one-month rounds, so the release waits one.
+  const later = trainedModel(3);
+  later.flags.outsideTesters = true;
+  assert.equal(shipDelay(later, ['eval-full', 'channel-app']), 1);
+  const turn = later.turn;
+  assert.equal(ship(later, ['eval-full']).ok, true);
+  assert.equal(later.models.at(-1).activeFromTurn, turn + 1);
+});
+
+test('the other White House answers add no wait', () => {
+  for (const choice of ['signskip', 'decline']) {
+    const s = trainedModel(1);
+    s.pendingEvents.push({ id: 'whiteHouseCommitments' });
+    resolveEvent(s, 'whiteHouseCommitments', choice);
+    assert.equal(shipDelay(s, ['eval-full', 'channel-app']), 0, choice);
+  }
+});
+
+test('an outside evaluator on the release counts as the testers, and two tester promises wait once', () => {
+  const s = trainedModel(3);
+  s.flags.outsideTesters = true;
+  assert.equal(shipDelay(s, ['eval-third', 'channel-app']), 1, 'the third-party card already waits a round');
+  assert.equal(shipDelay(s, ['eval-gov', 'channel-app']), 1, 'the government card already waits a round');
+  s.flags.govTesting = true;
+  assert.equal(shipDelay(s, ['eval-full', 'channel-app']), 1, 'both promises, one round');
+});

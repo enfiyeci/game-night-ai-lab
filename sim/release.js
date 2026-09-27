@@ -6,6 +6,7 @@ import { scoreLaunch } from './launch.js';
 import { resolveHazard, exposeConcealed } from './hazards.js';
 import { hasLine } from './constitution.js';
 import { pushFeed } from './events.js';
+import { eraById } from './data/eras.js';
 
 export const TIER_WORDS = { small: 'Swift', medium: 'Core', large: 'Grand', xl: 'Apex' };
 export const REASONING_BONUS = { off: 0, low: 2, medium: 4, high: 6 };
@@ -22,10 +23,34 @@ export const tierWord = (size, words) => {
 
 export const modelName = ({ family, generation, size, tierWords }) => `${family} ${generation} ${tierWord(size, tierWords)}`;
 
-// Rounds a release waits: its cards, the trained model's own delay, and one more for the government's tests once the
-// lab signed the testing agreement (the preReleaseTests card), unless an eval-gov card already waits for them.
+// Outside testing the lab promised: the government's tests (the preReleaseTests card) and the White House's outside
+// testers (whiteHouseCommitments, "Sign all of it"; owner 2026-09-26 "add it"). The testers get a few weeks first. Where
+// a round is a month or less (era 3 on) that is one round's wait; in the three-month rounds of eras 1-2 the model ships
+// on time but opens with a quarter fewer users (about three of the round's twelve weeks). One round covers both
+// promises, and a release whose own eval card already waits for outsiders (eval-gov; eval-third for the testers) adds
+// nothing more.
+export const TESTER_USERS_MULT = 0.75;
+
+function testerNeeds(state, cards) {
+  const flags = new Set(cards.flatMap((card) => card.effects.flags ?? []));
+  const government = Boolean(state.flags.govTesting) && !flags.has('govEval');
+  const testers = Boolean(state.flags.outsideTesters) && !flags.has('govEval') && !flags.has('thirdPartyEval');
+  return { government, testers, shortRounds: eraById(state.era).monthsPerTurn <= 1 };
+}
+
+export function testerWait(state, cards) {
+  const need = testerNeeds(state, cards);
+  return need.government || (need.testers && need.shortRounds) ? 1 : 0;
+}
+
+// Eras 1-2: the testers' head start costs launch users instead of a three-month wait.
+export function testerHeadStart(state, cards) {
+  const need = testerNeeds(state, cards);
+  return need.testers && !need.shortRounds && !need.government;
+}
+
 export const releaseWait = (state, cards) => cards.reduce((sum, card) => sum + (card.cost.turns ?? 0), state.pendingModel?.releaseDelay ?? 0)
-  + (state.flags.govTesting && !cards.some((card) => (card.effects.flags ?? []).includes('govEval')) ? 1 : 0);
+  + testerWait(state, cards);
 
 const TIER_WORD_MAX = 16;
 // The release move can carry the player's four size words (named once, on the first release).
@@ -126,6 +151,7 @@ export function releaseModel(state, release, rng) {
   const quality = clamp(1 + (launch.pressAvg - 6) / 8, 0.5, 1.6);
   const eraGrowth = 1 + 0.5 * (state.era - 1);
   const constitutionUsers = spec.channel === 'enterprise' && hasLine(state, 'privacy') ? 1.1 : 1;
+  const testerUsers = testerHeadStart(state, cards) ? TESTER_USERS_MULT : 1;
   const fresh = Math.round(USERS_BASE[spec.channel] * quality * eraGrowth * PRICE_STANCE[release.price].growth * m.publicEffects.usersMult * constitutionUsers);
 
   const model = {
@@ -142,9 +168,9 @@ export function releaseModel(state, release, rng) {
     channel: spec.channel,
     priceStance: release.price,
     reasoning,
-    users: fresh,
-    newUsers: fresh,
-    userCap: fresh * 4,
+    users: Math.round(fresh * testerUsers),
+    newUsers: Math.round(fresh * testerUsers),
+    userCap: fresh * 4, // the testers' head start slows the launch, not the model's reach
     activeFromTurn: state.turn + delay,
     releasedTurn: state.turn,
     releaseSequence: state.models.reduce((max, existing, index) => Math.max(max, existing.releaseSequence ?? index), -1) + 1,
