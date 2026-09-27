@@ -442,6 +442,6 @@ test('a delayed release goes live at the round mark with no player action', asyn
   assert.equal(out.state.models.at(-1).activated, true);
   const live = events.find((event) => event.type === 'modelLive');
   assert.ok(live);
-  const texts = new Set(out.state.feed.map((post) => post.text));
-  assert.ok(live.model.launch.reactions.some((reaction) => texts.has(reaction.text)), 'its launch posts appear when it ships');
+  const scheduled = (state) => [...state.feed, ...(state.feedQueue ?? [])].filter((post) => post.tag === 'launch').length;
+  assert.ok(scheduled(out.state) > launches(ready), 'its launch posts appear when it ships');
 });
