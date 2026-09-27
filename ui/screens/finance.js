@@ -83,14 +83,14 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
     const down = element('button', '', '−');
     down.type = 'button';
     down.dataset.focus = `down-${era}`;
-    down.setAttribute('aria-label', `Lower the goal for ${eraLabel(state, era).replace(/^From/, 'from')}`);
+    down.setAttribute('aria-label', `Lower the goal ${eraLabel(state, era).replace(/^From/, 'from').replace(/^Era/, 'for era')}`);
     down.addEventListener('click', () => changeGoal(era, plan.goals[era] - stepFor(era)));
     const value = element('output', 'finance-step-value', computeAmount(plan.goals[era], era));
     value.setAttribute('aria-live', 'polite');
     const up = element('button', '', '+');
     up.type = 'button';
     up.dataset.focus = `up-${era}`;
-    up.setAttribute('aria-label', `Raise the goal for ${eraLabel(state, era).replace(/^From/, 'from')}`);
+    up.setAttribute('aria-label', `Raise the goal ${eraLabel(state, era).replace(/^From/, 'from').replace(/^Era/, 'for era')}`);
     up.addEventListener('click', () => changeGoal(era, plan.goals[era] + stepFor(era)));
     root.append(down, value, up);
     return root;
