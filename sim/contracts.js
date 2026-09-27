@@ -60,7 +60,8 @@ export function generateOffers(state, rng) {
 // Spec 2026-09-26 compute race §2 rule 3: board cards stay until signed or taken, a taken slot refills next round,
 // and an era change makes a new board. The investment, the grid and the queue are priced from the player's own
 // state, so they are made fresh every round. A full board is drawn either way, so the draws never change.
-// A kept card takes the fresh card's arrival, so a scale-down delay (contractAction) never sticks to it or stacks.
+// A kept card takes the fresh card's arrival and price, so a scale-down delay (contractAction) or an old markup never
+// sticks to it or stacks.
 const onBoard = (offer) => BOARD_SUPPLIERS.includes(offer.supplier) && !offer.viaQueue;
 export function refreshOffers(state, rng) {
   const fresh = generateOffers(state, rng);
@@ -72,6 +73,13 @@ export function refreshOffers(state, rng) {
     const kept = state.compute.offers.find((o) => onBoard(o) && o.supplier === offer.supplier);
     if (!kept) return offer;
     kept.arrivesIn = offer.arrivesIn;
+    // It keeps its size but takes this round's price, so a markup or price that has changed never sticks to it.
+    const scale = kept.units / offer.units;
+    kept.price = offer.price;
+    kept.monthly = offer.monthly * scale;
+    kept.upfront = Math.round(offer.upfront * scale);
+    if (offer.partnerMarkup) kept.partnerMarkup = offer.partnerMarkup;
+    else delete kept.partnerMarkup;
     return kept;
   });
 }

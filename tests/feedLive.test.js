@@ -299,3 +299,20 @@ test('a run is sized in the era\'s chips, the same counts the recipe screen show
   assert.equal(runGpus('xl', 4), '600,000 GB200s');
   assert.equal(runGpus('xl', 5), '1.6 million Rubins');
 });
+
+test('a big rival deal and taking a rival its card reach the live feed (compute race)', async () => {
+  const { RIVAL_DEAL_POSTS, DENIAL_POSTS } = await import('../sim/data/feed.js');
+  const texts = (pool) => new Set(pool.map((post) => post.text));
+  const state = stateOnDay();
+  reactToEvents(state, state, [{ type: 'rivalDeal', id: 'openbrain', big: true }]);
+  runDays(state, 3);
+  assert.ok(state.feed.some((post) => texts(RIVAL_DEAL_POSTS.openbrain).has(post.text)), 'a post about the deal');
+  const quiet = stateOnDay();
+  reactToEvents(quiet, quiet, [{ type: 'rivalDeal', id: 'openbrain', big: false }]);
+  runDays(quiet, 3);
+  assert.ok(!quiet.feed.some((post) => texts(RIVAL_DEAL_POSTS.openbrain).has(post.text)), 'a small deal is not news');
+  const denied = stateOnDay();
+  reactToEvents(denied, denied, [{ type: 'deal', denied: 'lodestar' }]);
+  runDays(denied, 3);
+  assert.ok(denied.feed.some((post) => texts(DENIAL_POSTS.lodestar).has(post.text)), 'a post about the lost card');
+});

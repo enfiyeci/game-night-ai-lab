@@ -37,11 +37,13 @@ function why(state) {
   const next = ladder.slice(start, start + 2);
   const opening = size ? `Why you only train ${SIZE_LABEL[size]}.` : "Why you can't train yet.";
   if (!next.length) return `You can train ${SIZE_LABEL[size]}, the largest size.`;
-  const amount = (units) => computeAmount(Math.round(units), state.era);
+  // Not rounded to whole units: computeAmount keeps one decimal, so a small slice never reads as 0.
+  const amount = (units) => computeAmount(units, state.era);
   const needs = next.map((s) => `${SIZE_LABEL[s]} needs ${amount(unitsFor(s, state.era))} free`).join('; ');
-  const taken = Math.round(slices.serving) > 0
-    ? `Your users take ${amount(slices.serving)} of your ${amount(slices.online)} and safety takes ${amount(slices.safety)}.`
-    : `Safety takes ${amount(slices.safety)} of your ${amount(slices.online)}.`;
+  const left = `leaving ${amount(slices.training)} free`;
+  const taken = amount(slices.serving) !== amount(0)
+    ? `Your users take ${amount(slices.serving)} of your ${amount(slices.online)} and safety takes ${amount(slices.safety)}, ${left}.`
+    : `Safety takes ${amount(slices.safety)} of your ${amount(slices.online)}, ${left}.`;
   return `${opening} ${taken} ${needs}.`;
 }
 
@@ -91,7 +93,7 @@ export function raceModel(state) {
   const free = computeSlices(state).training;
   const rows = [
     { id: 'you', name: 'You', you: true, score: state.capability, compute: state.compute.online,
-      computeNote: `${computeAmount(Math.round(free), state.era)} free after users and safety`,
+      computeNote: `${computeAmount(free, state.era)} free after users and safety`,
       size: SIZE_LABEL[playerSize(state)] ?? 'none yet', word: state.activeRun ? 'training now' : 'no run yet' },
     ...state.rivals.map((r) => ({ id: r.id, name: r.name, you: false, score: r.capability, compute: r.fleet,
       // A copy: rivalSize records lastSize on the rival, and this model must not change the state.

@@ -72,3 +72,12 @@ test('the round-end box follows the projected board: a rival whose card you sign
   assert.ok(s.compute.offers.includes(spot), 'the model does not take cards off the real board');
   assert.equal(s.rivals.find((r) => r.id === 'openbrain').named.offerId, verde.id, 'the model does not clear rival plans');
 });
+
+test('the why box says what is left free and never rounds a slice away', () => {
+  const s = createInitialState({ seed: 1 });
+  assert.match(raceModel(s).why, /Safety takes 1 unit of your 10 units, leaving 9 units free\./);
+  s.compute.online = 4; // safety 0.4, free 3.6
+  const why = raceModel(s).why;
+  assert.match(why, /Safety takes 0\.4 units of your 4 units, leaving 3\.6 units free\./);
+  assert.match(raceModel(s).rows.find((row) => row.you).computeNote, /^3\.6 units free/);
+});

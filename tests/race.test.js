@@ -114,6 +114,25 @@ test('board cards stay; a signed or taken slot refills; an era change makes a ne
   assert.ok(s.compute.offers.every((o) => o.id.endsWith('-4')), 'a new era makes a new board');
 });
 
+test('a kept card keeps its size but takes the fresh card\'s price', () => {
+  const s = createInitialState({ seed: 1 });
+  const azuria = s.compute.offers.find((o) => o.supplier === 'azuria');
+  const units = azuria.units;
+  azuria.price *= 2; // a stale price, as if drawn under a markup that has since ended
+  azuria.monthly *= 2;
+  azuria.upfront *= 2;
+  azuria.partnerMarkup = 2;
+  s.turn = 1;
+  s.compute.offers = refreshOffers(s, flat);
+  const kept = s.compute.offers.find((o) => o.supplier === 'azuria');
+  const fresh = generateOffers(s, flat).find((o) => o.supplier === 'azuria');
+  assert.equal(kept, azuria, 'still the same card');
+  assert.equal(kept.units, units);
+  assert.equal(kept.price, fresh.price);
+  assert.ok(Math.abs(kept.monthly - (units * fresh.monthly) / fresh.units) < 1e-9);
+  assert.equal(kept.partnerMarkup, undefined);
+});
+
 test('the investment and the grid are always made fresh', () => {
   const s = createInitialState({ seed: 1 });
   s.era = 2;

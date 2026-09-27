@@ -10,6 +10,7 @@ import { eraScale } from './data/compute.js';
 import { SIZE_UNITS } from './recipe.js';
 import { PROMISES } from './data/promises.js';
 import { REACTIONS as R } from './data/feedReactions.js';
+import { RIVAL_DEAL_POSTS, DENIAL_POSTS } from './data/feed.js';
 
 export const FEED_KEEP = 400; // posts kept for scrolling back
 const RECENT = 200; // a text posted this recently is not posted again
@@ -29,6 +30,9 @@ const inSeason = (extra, day) => !extra?.season || (SEASON_MONTHS[extra.season] 
 // A stream of its own per story day and purpose, so feed picks never move the game's rng.
 const feedRng = (state, salt) => createRng(((state.seed >>> 0) * 2246822519 + state.day * 3266489917 + salt * 668265263) >>> 0);
 const hash = (text) => [...text].reduce((h, c) => (Math.imul(h, 31) + c.charCodeAt(0)) >>> 0, 7);
+
+// The compute race's hand-written posts (sim/data/feed.js) in the live pools' [handle, text] form.
+const livePool = (posts) => (posts ?? []).map(({ handle, text }) => [handle, text]);
 
 const partyName = (state, party) => state.rivals.find((r) => r.id === party)?.name ?? PARTY_NAMES[party] ?? 'a rival lab';
 
@@ -244,6 +248,13 @@ export function reactToEvents(before, state, events, { atMark = false } = {}) {
         s.add(pool, 1, 'rival', { from: 1, to: 2 });
         break;
       }
+      // Compute race: a rival deal big enough to be news, and the player signing the card a rival wanted.
+      case 'rivalDeal':
+        if (event.big) s.add(livePool(RIVAL_DEAL_POSTS[event.id]), 1, 'rival', { from: 0, to: 1 });
+        break;
+      case 'deal':
+        if (event.denied) s.add(livePool(DENIAL_POSTS[event.denied]), 1, 'rival', { from: 0, to: 1 });
+        break;
       case 'eraStart':
         s.add(R.eras[event.era], 2, 'era', { from: 0, to: 0 });
         s.add(R.eras[event.era], 2, 'era', { from: 1, to: 6 });
