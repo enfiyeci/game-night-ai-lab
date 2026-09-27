@@ -27,6 +27,15 @@ test('a worse band brings the mark back; calm never marks', () => {
   assert.notEqual(readingKey(uneasy), readingKey({ ...uneasy, band: 'alarmed' }));
 });
 
+test('an improving mood is not news, and the worst band already heard stays remembered', () => {
+  const marks = createAdvisorMarks();
+  const alarmed = { id: 'cfo', band: 'alarmed', line: 'Payroll is Friday.' };
+  marks.heard('cfo', alarmed);
+  assert.equal(marks.markFor('cfo', { ...alarmed, band: 'uneasy' }), null);
+  assert.equal(marks.markFor('cfo', alarmed), null, 'returning to an already-heard band is not new');
+  assert.equal(marks.markFor('cfo', { ...alarmed, line: 'The lenders called.' }), 'alarmed', 'a new line is new');
+});
+
 test('a warning keeps its advisor marked until it is answered, even when calm or already heard', () => {
   const marks = createAdvisorMarks();
   const calm = { id: 'safety', band: 'calm', line: 'Quiet week.' };

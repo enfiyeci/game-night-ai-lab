@@ -10,16 +10,21 @@ export const readingKey = (reading) => (reading ? `${reading.band}|${reading.lin
 // Remembers per advisor the reading the player has heard and the warnings still waiting for an answer.
 // A mark shows while the reading is unheard (and not calm), or while a warning waits, whatever the band.
 export function createAdvisorMarks() {
-  const heardKeys = new Map();
+  const heardReadings = new Map(); // role -> { line, bandRank }, keeping the worst band heard for the current line
   let tasks = new Map(); // role -> sorted warning ids
   const listeners = new Set();
   const changed = () => { for (const listener of listeners) listener(); };
 
   return {
     heard(role, reading) {
-      const key = readingKey(reading);
-      if (heardKeys.get(role) === key) return;
-      heardKeys.set(role, key);
+      const line = reading?.line ?? '';
+      const bandRank = Math.max(0, MOODS.indexOf(reading?.band));
+      const heard = heardReadings.get(role);
+      const next = heard?.line === line
+        ? { line, bandRank: Math.max(heard.bandRank, bandRank) }
+        : { line, bandRank };
+      if (heard?.line === next.line && heard.bandRank === next.bandRank) return;
+      heardReadings.set(role, next);
       changed();
     },
     // warnings: [{ id, advisor }] waiting for "Look into it" or "Not now".
@@ -35,7 +40,10 @@ export function createAdvisorMarks() {
     markFor(role, reading) {
       const band = MOODS.includes(reading?.band) ? reading.band : 'calm';
       if (tasks.has(role)) return band === 'calm' ? 'uneasy' : band;
-      if (band === 'calm' || heardKeys.get(role) === readingKey(reading)) return null;
+      if (band === 'calm') return null;
+      const heard = heardReadings.get(role);
+      const line = reading?.line ?? '';
+      if (heard?.line === line && heard.bandRank >= MOODS.indexOf(band)) return null;
       return band;
     },
     subscribe(listener) {
