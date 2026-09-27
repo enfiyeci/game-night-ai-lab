@@ -285,6 +285,7 @@ export const EVENTS = [
     id: 'promise',
     kind: 'planted',
     flag: 'brokenPromise',
+    eras: [2, 3, 4, 5], // a lab's written safety promises, and staff asking about them, start in 2024
     trigger: (state) => hasFlag(state, 'brokenPromise') || state.flags.brokenPromise === true,
     warning: { handle: '@anon_staffer', text: 'some of us are asking what happened to the safety commitment' },
     card: {

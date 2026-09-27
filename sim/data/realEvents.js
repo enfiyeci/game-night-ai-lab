@@ -320,7 +320,7 @@ const evaluatedRelease = (state, model) => model.active && model.releasedTurn ==
   && (model.flags ?? []).some((flag) => flag === 'fullEval' || flag === 'thirdPartyEval');
 const strandedSite = (state) => state.power.sites.find((site) => !site.online && site.arrivesTurn >= state.turn + 3);
 
-function makeEvent(id, { trigger, fallback, effects, anchor = null, warning = COPY[id].warning }) {
+function makeEvent(id, { trigger, fallback, effects, anchor = null, eras = null, warning = COPY[id].warning }) {
   const copy = COPY[id];
   const choices = copy.choices
     .map((choice) => ({ ...choice, effects: effects[choice.id] }))
@@ -332,6 +332,7 @@ function makeEvent(id, { trigger, fallback, effects, anchor = null, warning = CO
     trigger,
     warning,
     ...(anchor ? { anchor, bypassCardLimit: true } : {}),
+    ...(eras ? { eras } : {}),
     card: { title: copy.title, post: copy.post, choices },
   };
 }
@@ -358,6 +359,7 @@ export const REAL_EVENTS = [
   }),
   makeEvent('unhinged', {
     fallback: 'preview',
+    eras: [1, 2],
     trigger: (state) => state.era <= 2 && liveModelsWithFlag(state, 'quickEval')
       .some((model) => (model.flags ?? []).includes('jailbreakWaiting') && model.channel === 'consumer'),
     effects: {
@@ -383,6 +385,7 @@ export const REAL_EVENTS = [
   }),
   makeEvent('countryBan', {
     fallback: 'leave',
+    eras: [1, 2],
     trigger: (state, rng) => state.era <= 2 && liveConsumerModels(state).length > 0
       && hasFlag(state, 'scraped') && rng.chance(0.25),
     effects: {
@@ -402,6 +405,7 @@ export const REAL_EVENTS = [
   }),
   makeEvent('redTeamLie', {
     fallback: 'omit',
+    eras: [1, 2], // the GPT-4 CAPTCHA story, March 2023
     // A release this round that ran full or outside evals. The card is answered after the round mark, when the model
     // may already be live, so it remembers which model the red team tested.
     trigger(state) {
@@ -422,7 +426,9 @@ export const REAL_EVENTS = [
   }),
   makeEvent('exitGag', {
     fallback: 'unaware',
-    trigger: (state) => state.era >= 2 && (state.seenEvents.includes('safetyQuits') || state.seenEvents.includes('poached')),
+    eras: [2, 3], // May 2024
+    // Staff leaving (or a whistleblower going public, as happened in 2024) bring the exit paperwork out.
+    trigger: (state) => state.era >= 2 && ['safetyQuits', 'poached', 'whistleblower'].some((id) => state.seenEvents.includes(id)),
     effects: {
       void(state) { state.staffTrust += 6; state.publicTrust += 2; },
       defend(state) { state.staffTrust -= 6; },
@@ -444,6 +450,7 @@ export const REAL_EVENTS = [
   }),
   makeEvent('voiceLikeness', {
     fallback: 'license',
+    eras: [2],
     trigger: (state, rng) => state.era === 2 && liveConsumerModels(state).some((model) => model.spec?.features?.some((f) => f.id === 'voice')) && rng.chance(0.2),
     effects: {
       pull(state) {
