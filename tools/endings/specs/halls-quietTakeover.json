@@ -1,0 +1,15 @@
+{
+ "shots": {
+  "3": {
+   "image": "qt-briefing",
+   "screens": [
+    [
+     "monitor",
+     "qt-briefing"
+    ]
+   ],
+   "focus": "screen",
+   "push": 1.05
+  }
+ }
+}

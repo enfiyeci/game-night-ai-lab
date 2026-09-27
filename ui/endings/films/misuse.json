@@ -245,8 +245,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "mu-mirrors",
+      "kind": "still",
+      "image": "mu-mirrors",
+      "screens": [
+        {
+          "at": "monitor",
+          "plate": "mu-mirrors"
+        }
+      ],
       "dur": 6,
       "card": "Day 30 · Everywhere",
       "cam": {
@@ -254,7 +260,9 @@
           "s": 1.0
         },
         "to": {
-          "s": 1.05
+          "x": 752,
+          "y": 551,
+          "s": 1.07
         }
       },
       "sfx": [

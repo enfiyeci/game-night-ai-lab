@@ -91,10 +91,35 @@
       ]
     },
     {
-      "kind": "video",
-      "clip": "rd-globe",
+      "kind": "still",
+      "frames": [
+        {
+          "image": "rd-globe-1",
+          "at": 0
+        },
+        {
+          "image": "rd-globe-2",
+          "at": 2.4,
+          "fade": 1.4
+        },
+        {
+          "image": "rd-globe-3",
+          "at": 5.0,
+          "fade": 1.6
+        }
+      ],
       "dur": 8,
       "card": "Day 2 · Everywhere",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "x": 960,
+          "y": 520,
+          "s": 1.05
+        }
+      },
       "sfx": [
         [
           "wind",

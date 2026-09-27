@@ -1,0 +1,42 @@
+{
+ "shots": {
+  "6": {
+   "frames": [
+    {
+     "image": "rb-skyline-1",
+     "at": 0
+    },
+    {
+     "image": "rb-skyline-2",
+     "at": 1.0,
+     "fade": 0.3
+    },
+    {
+     "image": "rb-skyline-3",
+     "at": 2.4,
+     "fade": 0.3
+    },
+    {
+     "image": "rb-skyline-4",
+     "at": 3.5,
+     "fade": 0.3
+    },
+    {
+     "image": "rb-skyline-5",
+     "at": 4.4,
+     "fade": 0.3
+    }
+   ],
+   "focus": [
+    1040,
+    460
+   ],
+   "push": 1.06
+  }
+ },
+ "title": {
+  "still": "rb-skyline-title",
+  "from": 1.0,
+  "to": 1.04
+ }
+}

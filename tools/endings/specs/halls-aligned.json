@@ -1,0 +1,15 @@
+{
+ "shots": {
+  "4": {
+   "image": "al-news",
+   "screens": [
+    [
+     "tv",
+     "al-news"
+    ]
+   ],
+   "focus": "screen",
+   "push": 1.05
+  }
+ }
+}
