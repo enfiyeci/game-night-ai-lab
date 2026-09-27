@@ -4,7 +4,7 @@ import { createInitialState } from '../sim/state.js';
 import { BALANCE } from '../sim/balance.js';
 import { SIZE_CAP } from '../sim/recipe.js';
 import { RIVAL_EDGE, NO_SIZE_GAIN } from '../sim/data/race.js';
-import { refreshOffers, signOffer, sideRng } from '../sim/contracts.js';
+import { generateOffers, refreshOffers, signOffer, sideRng } from '../sim/contracts.js';
 import { announceTargets, takeTargets, offBoardGrowth, landRivalCompute, rivalDealsTurn } from '../sim/rivalDeals.js';
 import { rivalsTurn, rivalSize, rivalTraining, rivalShortfall, launchGain, rank, computeShares, recordStanding } from '../sim/rivals.js';
 
@@ -120,12 +120,32 @@ test('the investment and the grid are always made fresh', () => {
   s.compute.offersEra = 2;
   s.compute.offers = refreshOffers(s, flat);
   const equity = s.compute.offers.find((o) => o.supplier === 'azuriaEquity');
+  const grid = s.compute.offers.find((o) => o.supplier === 'grid');
   s.valuation *= 2;
   s.turn = 5;
   s.compute.offers = refreshOffers(s, flat);
   const next = s.compute.offers.find((o) => o.supplier === 'azuriaEquity');
   assert.notEqual(next.id, equity.id);
   assert.ok(next.credits > equity.credits);
+  assert.equal(grid.id, 'grid-0');
+  assert.equal(s.compute.offers.find((o) => o.supplier === 'grid').id, 'grid-5', 'the grid card is made fresh');
+});
+
+test('a kept card takes the current arrival delay, so a scale-down delay never sticks or stacks', () => {
+  const s = createInitialState({ seed: 1 });
+  const verde = s.compute.offers.find((o) => o.supplier === 'verde');
+  s.compute.delays.verde = 1; // a scale-down: Verde's cards on the board arrive a round later
+  verde.arrivesIn += 1;
+  s.turn = 1;
+  s.compute.offers = refreshOffers(s, flat);
+  const kept = s.compute.offers.find((o) => o.supplier === 'verde');
+  assert.equal(kept, verde, 'the kept card is the same card');
+  assert.equal(kept.arrivesIn, generateOffers(s, flat).find((o) => o.supplier === 'verde').arrivesIn, 'still delayed once, never twice');
+  s.compute.delays.verde = 0; // signing with Verde clears the delay
+  s.turn = 2;
+  s.compute.offers = refreshOffers(s, flat);
+  assert.equal(s.compute.offers.find((o) => o.supplier === 'verde'), verde);
+  assert.equal(verde.arrivesIn, generateOffers(s, flat).find((o) => o.supplier === 'verde').arrivesIn, 'the delay is gone');
 });
 
 test('the era 3 queue entry is made fresh every round, never kept as a board card', () => {
