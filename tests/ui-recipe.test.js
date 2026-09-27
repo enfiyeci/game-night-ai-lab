@@ -283,3 +283,10 @@ test('the Head of Research only suggests a run when the idle compute fits one', 
   assert.match(research(state), /less than the smallest run needs/);
   assert.doesNotMatch(research(state), /bigger run/);
 });
+
+test('with one unit idle the advisor line reads in the singular', () => {
+  const state = createInitialState();
+  state.compute.servingUnits += 8;
+  const text = opinions(state, 'budget').find((item) => item.id === 'research').text;
+  assert.match(text, /^1 unit sits idle/);
+});

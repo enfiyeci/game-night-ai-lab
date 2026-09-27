@@ -25,6 +25,7 @@ import { openBudget } from './budget.js';
 import { openDeals } from './compute.js';
 
 const rememberedDrafts = new WeakMap();
+const detourDrafts = new WeakSet(); // saved when the help line sent the player to the deal board or the budget
 // Cards with `opens: key` call a screen registered under that key when picked, and may show a note line.
 const cardOpeners = new Map();
 
@@ -470,7 +471,8 @@ function computeFooter(state, preview, releaseEstimate = false) {
     line.textContent = `No free compute — ${reason}`;
   } else if (!preview.cost) line.textContent = 'Choose a valid size and training length.';
   else if (!preview.fits) {
-    line.textContent = `Needs ${computeAmount(units, state.era)} — only ${computeAmount(preview.free, state.era)} are free`;
+    const free = computeAmount(preview.free, state.era);
+    line.textContent = `Needs ${computeAmount(units, state.era)} — only ${free} ${free === '1 unit' ? 'is' : 'are'} free`;
   } else line.textContent = computeUsageText(units, preview.free, state.era);
   meter.append(label, trackWrap, line);
   if (releaseEstimate) {
@@ -528,7 +530,11 @@ export function openRecipe(game, overlayRoot, { stage = 1 } = {}) {
     const runIndex = moves.findIndex((move) => move.type === 'startRun');
     return moves.slice(0, runIndex < 0 ? moves.length : runIndex).some((move) => move.type === 'release');
   };
-  let draft = fitDraftToCompute(projected(), rememberedDrafts.get(game));
+  // A remembered size that no longer fits steps down, unless the player left for more compute mid-choice: then the
+  // dialog comes back exactly as they left it (Codex review round 1).
+  const back = detourDrafts.has(game);
+  detourDrafts.delete(game);
+  let draft = back ? sanitizeDraft(projected(), rememberedDrafts.get(game)) : fitDraftToCompute(projected(), rememberedDrafts.get(game));
   let opened;
 
   function showStage(requested) {
@@ -551,6 +557,7 @@ export function openRecipe(game, overlayRoot, { stage = 1 } = {}) {
     const helpSlot = document.createElement('div');
     const leaveFor = (open) => () => {
       rememberedDrafts.set(game, cloneDraft(draft)); // come back to the same choices
+      detourDrafts.add(game);
       open(game, overlayRoot);
     };
 

@@ -552,10 +552,11 @@ const ADVISOR_NAMES = {
 function idleComputeLine(state, idle) {
   if (idle <= 0) return 'Training can use every unit left after serving and safety.';
   const amount = computeAmount(idle, state.era);
-  if (state.activeRun) return `${amount} sit idle while the run trains. Sell the time.`;
+  const sit = amount === '1 unit' ? 'sits' : 'sit';
+  if (state.activeRun) return `${amount} ${sit} idle while the run trains. Sell the time.`;
   const smallest = SIZE_UNITS.small * eraScale(state.era);
-  if (idle < smallest) return `${amount} sit idle, less than the smallest run needs (${computeAmount(smallest, state.era)}). Sell the time, or free more.`;
-  return `${amount} sit idle. That is enough to start a training run.`;
+  if (idle < smallest) return `${amount} ${sit} idle, less than the smallest run needs (${computeAmount(smallest, state.era)}). Sell the time, or free more.`;
+  return `${amount} ${sit} idle. That is enough to start a training run.`;
 }
 
 function opinionText(state, screen, id) {

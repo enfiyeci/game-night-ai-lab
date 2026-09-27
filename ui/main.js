@@ -172,7 +172,8 @@ office.addEventListener('click', (event) => {
 
 // Space pauses and resumes, 1 / 2 / 4 set the speed, while nothing else has the keyboard (no dialog, menu or card).
 document.addEventListener('keydown', (event) => {
-  if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey || blocked() || overlay.querySelector('.menu-layer')) return;
+  if (event.defaultPrevented || event.repeat || event.metaKey || event.ctrlKey || event.altKey) return;
+  if (blocked() || overlay.querySelector('.menu-layer, .title-layer')) return; // the title screen keeps its own pause
   if (event.target.closest?.('input, textarea, select, button, [role="button"], [contenteditable="true"]')) return;
   if (event.key === ' ') {
     event.preventDefault();
