@@ -4,6 +4,7 @@ import { BALANCE } from './balance.js';
 import { eraById } from './data/eras.js';
 import { clamp } from './util.js';
 import { startRun, advanceRun, advanceRunBy, recheckCapacity } from './training.js';
+import { advancePolishBy, applyFlawAction, notePolishLandings } from './polish.js';
 import { activateReleases, releaseModel } from './release.js';
 import {
   signOffer, contractAction, deliverDue, contractsTurn, expireContracts, pullBumped, spendCredits, creditOffset, refreshOffers, monthlyBills, sideRng,
@@ -219,6 +220,10 @@ export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = 
     const r = resolveHazard(state, actions.hazardChoice);
     if (!r.ok) errors.push(r.error);
     else events.push({ type: 'hazardResolved', choice: actions.hazardChoice });
+  }
+  for (const action of actions.flawActions ?? []) {
+    const r = applyFlawAction(state, action);
+    if (!r.ok) errors.push(r.error);
   }
   for (const id of actions.addressWarnings ?? []) {
     const result = addressWarning(state, id);
@@ -526,6 +531,7 @@ export function advanceDays(prev, days, rng, observer = {}) {
     const mood = { raceHeat: state.roundStart.raceHeat ?? state.raceHeat, publicTrust: state.roundStart.publicTrust ?? state.publicTrust };
     const firstEvent = events.length;
     const fraction = 1 / ROUND_DAYS[state.era];
+    const polishingModel = state.pendingModel;
     budgetEffects(state, fraction);
     const reachesMark = state.dayInRound + 1 >= ROUND_DAYS[state.era];
     if (!reachesMark) {
@@ -548,11 +554,18 @@ export function advanceDays(prev, days, rng, observer = {}) {
     }
     state.day += 1;
     state.dayInRound += 1;
+    // Training and polishing cannot spend the same story day on a model.
+    if (state.pendingModel === polishingModel) {
+      for (const e of advancePolishBy(state, fraction)) events.push(e);
+    } else if (state.pendingModel?.polishing) {
+      state.pendingModel.polishing.startedDay = state.day;
+    }
     expireSuspicions(state);
     releaseDueFeed(state);
     postLandedCards(state);
     for (const e of resolveDue(state)) events.push(e);
     const landed = landDue(state);
+    notePolishLandings(state, landed);
     if (landed.length) {
       events.push(...landed);
       updateServing(state);

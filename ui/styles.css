@@ -4577,3 +4577,67 @@ html.title-waking #hud { transition: opacity .5s ease .6s; }
 .model-money-table .finance-cell { grid-template-columns: 1fr 70px; }
 .model-money-table .finance-bar.diverging i.pos { background: var(--teal); }
 .model-money-empty { margin: 30px 0; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); font-size: 14px; font-weight: 800; }
+/* Keep polishing, then Publish (spec docs/superpowers/specs/2026-09-26-keep-polishing-publish-design.md, option A). */
+.pill-act { pointer-events: auto; cursor: pointer; }
+.pill-act:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+.hud-flaw { position: absolute; top: 10px; left: calc(50% + 203px); padding: 0; border: 0; font: inherit; background: none; pointer-events: auto; cursor: pointer; }
+.hud-flaw .badge { border: 3px solid var(--coral); color: color-mix(in oklab, var(--coral) 70%, var(--ink)); background: var(--paper); }
+.hud-flaw .tag { background: color-mix(in oklab, var(--coral) 70%, var(--ink)); }
+.hud-flaw:focus-visible .badge { outline: 3px solid var(--teal); outline-offset: 2px; }
+.hud-polish { position: absolute; top: 86px; left: 50%; display: flex; flex-direction: column; align-items: center; gap: 7px; transform: translateX(-50%); }
+.hud-publish { padding: 7px 16px 8px; border: 0; border-radius: 10px; color: var(--paper); background: var(--coral); font: inherit; font-size: 14px; font-weight: 900; box-shadow: 0 2px 0 color-mix(in oklab, var(--coral) 60%, var(--ink)); pointer-events: auto; cursor: pointer; }
+.hud-publish:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+.hud-rumor { display: inline-flex; align-items: center; gap: 6px; padding: 3px 11px 4px; border-radius: 999px; color: color-mix(in oklab, var(--wood) 55%, var(--ink)); background: color-mix(in oklab, var(--wood) 16%, var(--paper)); font-size: 11.5px; font-weight: 800; white-space: nowrap; box-shadow: 0 1px 0 color-mix(in oklab, var(--ink) 18%, transparent); }
+.hud-rumor::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--wood); }
+.hud-rumor.landed { color: var(--paper); background: color-mix(in oklab, var(--wood) 75%, var(--ink)); }
+.hud-rumor.landed::before { background: var(--paper); }
+
+.hud-flaw[hidden], .hud-polish[hidden], .hud-rumor[hidden] { display: none; }
+
+.has-polish-flaws .hud, .has-polish-flaws .hud-polish { left: calc(50% - 47px); }
+
+.polish-layer { position: absolute; inset: 0; pointer-events: none; }
+.polish-flaws { position: absolute; z-index: 6; width: 310px; padding: 10px 14px 8px; border: 1px solid color-mix(in oklab, var(--ink) 8%, transparent); border-radius: 14px; background: var(--paper); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 14%, transparent), 0 8px 22px color-mix(in oklab, var(--ink) 14%, transparent); pointer-events: auto; }
+.polish-flaws-head { margin-bottom: 4px; color: color-mix(in oklab, var(--wood) 60%, var(--ink)); font-size: 10.5px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; }
+.polish-flaw { display: grid; grid-template-columns: 18px 1fr auto; gap: 8px; align-items: start; padding: 7px 0; border-top: 1px solid color-mix(in oklab, var(--ink) 9%, transparent); font-size: 13px; }
+.polish-flaw .n { font-weight: 900; }
+.polish-flaw .q { margin-top: 1px; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); font-size: 11.5px; font-weight: 700; font-style: italic; }
+.polish-flaw .st { font-size: 11px; font-weight: 900; white-space: nowrap; color: color-mix(in oklab, var(--coral) 70%, var(--ink)); }
+.polish-flaw.done .st { color: var(--teal); }
+.polish-flaw.done .n { text-decoration: line-through; text-decoration-color: var(--teal); text-decoration-thickness: 2px; }
+.polish-flaw .ico { width: 16px; height: 16px; margin-top: 1px; border-radius: 50%; box-sizing: border-box; }
+.polish-flaw.done .ico { background: var(--teal); }
+.polish-flaw.work .ico { border: 3px solid var(--coral); }
+.polish-flaw.next .ico { border: 2px solid color-mix(in oklab, var(--coral) 70%, var(--ink)); }
+.polish-flaw.left .ico { border: 2px dashed color-mix(in oklab, var(--coral) 70%, var(--ink)); }
+.polish-flaw-acts { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 4px; }
+.fly-bubble.polish, .fly-bubble.flaw { display: grid; place-items: center; width: 32px; height: 32px; left: -16px; top: -16px; color: var(--paper); font-size: 11.5px; font-weight: 900; }
+.fly-bubble.polish { background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--teal) 55%, var(--paper)), var(--teal) 62%); border: 2px solid color-mix(in oklab, var(--teal) 70%, var(--ink)); }
+.fly-bubble.flaw { background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--coral) 60%, var(--paper)), var(--coral) 62%); border: 2px solid color-mix(in oklab, var(--coral) 70%, var(--ink)); }
+#polish-fx { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+
+.polish-strip { position: absolute; left: 220px; top: 742px; z-index: 6; width: 1000px; height: 142px; overflow: hidden; border: 1px solid color-mix(in oklab, var(--ink) 8%, transparent); border-radius: 14px; background: var(--paper); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 14%, transparent), 0 8px 22px color-mix(in oklab, var(--ink) 14%, transparent); pointer-events: auto; }
+.polish-strip > * { position: absolute; }
+.ps-title { left: 16px; top: 12px; color: color-mix(in oklab, var(--wood) 60%, var(--ink)); font-size: 10.5px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; }
+.ps-sub { left: 230px; top: 12px; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); font-size: 10.5px; font-weight: 800; }
+.ps-lane { left: 10px; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); font-size: 9px; font-weight: 900; writing-mode: vertical-rl; transform: rotate(180deg); }
+.ps-lane.you { top: 44px; }
+.ps-lane.rivals { top: 80px; }
+.ps-rule { left: 36px; top: 80px; width: 800px; height: 1px; background: color-mix(in oklab, var(--ink) 12%, transparent); }
+.ps-today { top: 30px; width: 3px; height: 82px; border-radius: 2px; background: var(--coral); }
+.ps-today-label { top: 12px; color: var(--coral); font-size: 11px; font-weight: 900; white-space: nowrap; }
+.ps-block { top: 40px; height: 26px; display: grid; place-items: center; overflow: hidden; border-radius: 6px; color: color-mix(in oklab, var(--coral) 60%, var(--ink)); background: color-mix(in oklab, var(--coral) 20%, var(--paper)); font-size: 11px; font-weight: 900; white-space: nowrap; }
+.ps-block:not(.done) { background: repeating-linear-gradient(135deg, color-mix(in oklab, var(--coral) 20%, var(--paper)) 0 6px, var(--paper) 6px 12px); }
+.ps-bubble { display: grid; place-items: center; border-radius: 50%; box-sizing: border-box; font-size: 9.5px; font-weight: 900; border: 2px dashed color-mix(in oklab, var(--teal) 70%, var(--paper)); color: color-mix(in oklab, var(--teal) 70%, var(--ink)); background: var(--paper); }
+.ps-bubble.past { border: 2px solid color-mix(in oklab, var(--teal) 70%, var(--ink)); color: var(--paper); background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--teal) 55%, var(--paper)), var(--teal) 62%); }
+.ps-dot { top: 84px; width: 10px; height: 10px; border-radius: 50%; background: var(--ink); }
+.ps-landed { top: 82px; font-size: 11px; font-weight: 900; white-space: nowrap; }
+.ps-window { top: 82px; height: 16px; border-radius: 4px; background: repeating-linear-gradient(135deg, color-mix(in oklab, var(--wood) 34%, transparent) 0 6px, transparent 6px 12px); }
+.ps-window-label { top: 98px; color: color-mix(in oklab, var(--wood) 55%, var(--ink)); font-size: 11px; font-weight: 900; white-space: nowrap; }
+.ps-tick { top: 110px; width: 1px; height: 6px; background: color-mix(in oklab, var(--ink) 30%, transparent); }
+.ps-tick-label { top: 118px; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); font-size: 10.5px; font-weight: 800; white-space: nowrap; }
+.ps-publish { right: 18px; top: 40px; }
+.ps-left { right: 18px; top: 80px; width: 170px; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); font-size: 11px; font-weight: 700; text-align: right; }
+
+.ps-title { max-width: 210px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ps-window-label, .ps-landed { overflow: hidden; text-overflow: ellipsis; }

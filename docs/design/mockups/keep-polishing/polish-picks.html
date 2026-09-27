@@ -1,0 +1,168 @@
+<title>Polish and Publish Picks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap">
+<style>
+  /* Single look on purpose: the game's own palette (ui/styles.css :root), so the page reads like the game. */
+  :root {
+    --cream: #F1E4C8;
+    --paper: #FFFBF1;
+    --ink: #2E2A2B;
+    --teal: #3F9C8F;
+    --wood: #C8864C;
+    --coral: #E0613B;
+    --muted: #6E6660;
+    --rule: #E3D6BC;
+  }
+  body {
+    background: var(--cream);
+    color: var(--ink);
+    font-family: "Nunito", "Trebuchet MS", system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    padding-inline: 24px;
+    padding-block: 32px 64px;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 44px; }
+  h1, h2, h3 { text-wrap: balance; margin: 0; line-height: 1.15; }
+  h1 { font-size: 36px; font-weight: 900; }
+  h2 { font-size: 26px; font-weight: 900; }
+  h3 { font-size: 15px; font-weight: 900; }
+  p { margin: 0; max-width: 68ch; }
+  .lede { display: grid; gap: 12px; }
+  .lede p { font-weight: 700; }
+  .eyebrow { font-size: 12px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: #8A5A2E; }
+  .facts { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { padding: 3px 11px 4px; border-radius: 999px; background: var(--paper); font-size: 13px; font-weight: 800; }
+  .chip.warn { background: color-mix(in oklab, var(--coral) 16%, var(--paper)); color: #9A3A1E; }
+  section.opt { display: grid; gap: 16px; }
+  .opt-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 14px; }
+  .letter { display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--ink); color: var(--paper); font-size: 20px; font-weight: 900; flex: none; align-self: center; }
+  .rec { padding: 3px 10px 4px; border-radius: 999px; background: var(--teal); color: var(--paper); font-size: 12px; font-weight: 900; }
+  .ref { padding: 3px 10px 4px; border-radius: 999px; background: color-mix(in oklab, var(--wood) 22%, var(--paper)); color: #7A4B22; font-size: 12px; font-weight: 900; }
+  .exp { padding: 3px 10px 4px; border-radius: 999px; background: color-mix(in oklab, var(--coral) 18%, var(--paper)); color: #9A3A1E; font-size: 12px; font-weight: 900; }
+  figure { margin: 0; display: grid; gap: 8px; }
+  figure img { display: block; width: 100%; height: auto; border-radius: 10px; box-shadow: 0 2px 0 rgba(46,42,43,.12), 0 10px 24px rgba(46,42,43,.12); background: var(--paper); }
+  figcaption { font-size: 14px; font-weight: 700; color: var(--muted); max-width: 80ch; }
+  .points { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px 28px; }
+  .points div { display: grid; gap: 2px; }
+  .points b { font-size: 12px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; color: #8A5A2E; }
+  .points span { font-weight: 700; font-size: 15px; }
+  .strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .strip figure img { border-radius: 8px; }
+  .step { font-size: 13px; font-weight: 900; color: var(--ink); }
+  .step i { font-style: normal; display: inline-grid; place-items: center; width: 20px; height: 20px; margin-right: 6px; border-radius: 50%; background: var(--coral); color: var(--paper); font-size: 11px; }
+  .note { background: var(--paper); border-radius: 12px; padding: 18px 20px; display: grid; gap: 8px; }
+  .note h3 { color: #9A3A1E; }
+  hr { border: 0; height: 1px; background: var(--rule); margin: 0; }
+  .today { display: grid; grid-template-columns: minmax(0, 360px) 1fr; gap: 20px; align-items: center; }
+  @media (max-width: 800px) {
+    .strip { grid-template-columns: 1fr; }
+    .today { grid-template-columns: 1fr; }
+    h1 { font-size: 28px; }
+  }
+</style>
+
+<div class="wrap">
+  <header class="lede">
+    <div class="eyebrow">Game Night · keep working, then Publish</div>
+    <h1>Where polishing lives on screen</h1>
+    <p>Four ways to show a trained model being polished until you press Publish. Every option shows the same moment, on the real game at 1440 × 900.</p>
+    <div class="facts">
+      <span class="chip">Era 3 · Kestrel 3 Core</span>
+      <span class="chip">20 days into polishing</span>
+      <span class="chip">Jailbreaks and wrong answers fixed</span>
+      <span class="chip">Too eager to please: left in</span>
+      <span class="chip">Polish 37 of 100 · bubbles +21, +16</span>
+      <span class="chip">OpenBrain launched · Lodestar rumored</span>
+    </div>
+    <p style="font-size:14px;color:var(--muted)">The numbers come from the proposed rule (a quarter of a month per flaw, then a bubble every 2½ days worth a fifth of what's missing). The game doesn't produce them yet; they're example values.</p>
+  </header>
+
+  <div class="today">
+    <figure>
+      <img src="img/base.jpg" alt="The game today: the pill says Training complete, ready to release" width="1440" height="900">
+    </figure>
+    <div style="display:grid;gap:6px">
+      <h3>Today, for comparison</h3>
+      <p style="font-weight:700">Training ends, the pill says "Training complete · ready to release", and the model waits unchanged until you open Release from the floor menu.</p>
+    </div>
+  </div>
+
+  <hr>
+
+  <section class="opt" id="a">
+    <div class="opt-head"><span class="letter">A</span><h2>Game Dev Tycoon's bug-fixing phase</h2><span class="ref">What Game Dev Tycoon itself does</span><span class="rec">Recommended</span></div>
+    <figure>
+      <img src="img/A.jpg" alt="Option A: the project pill shows polish 37 with a teal bar, a coral Flaws badge reads 1, a Publish button and a rival rumor sit under the pill, and a +16 bubble flies up from the Research desk" width="1440" height="900">
+      <figcaption>The project pill keeps the job: "polishing · polish 37" with a teal bar that fills as bubbles land. A Flaws badge joins Capability and Alignment and counts down. Publish sits under the pill, with the rival rumor under it.</figcaption>
+    </figure>
+    <div class="points">
+      <div><b>Where</b><span>The HUD you already watch during training. Nothing new opens.</span></div>
+      <div><b>Bubbles</b><span>Coral bubbles fly from Safety into the Flaws badge; teal polish bubbles fly from Research into the pill, each labelled with its gain.</span></div>
+      <div><b>Flaw order</b><span>Tap the Flaws badge to open the list, move one up, or leave it in.</span></div>
+    </div>
+    <h3 style="margin-top:8px">How it plays, in order</h3>
+    <div class="strip">
+      <figure><img src="img/A-start.jpg" alt="Training ends: Research says they will keep tuning while you decide; Flaws badge reads 3" width="1440" height="900"><figcaption class="step"><i>1</i>Training ends. Research introduces polishing the first time. Flaws: 3.</figcaption></figure>
+      <figure><img src="img/A-flawfix.jpg" alt="A flaw fixed: a coral check bubble flies to the Flaws badge, now 2; Safety says jailbreak holes are patched" width="1440" height="900"><figcaption class="step"><i>2</i>A flaw is fixed. A check bubble flies into the badge; Safety says what's next.</figcaption></figure>
+      <figure><img src="img/A-flaws-open.jpg" alt="The flaws list open under the badge: two fixed with dates, one left in, each with an advisor quote" width="1440" height="900"><figcaption class="step"><i>3</i>Tap Flaws to reorder or leave one in. Advisors say what each costs, in their words.</figcaption></figure>
+      <figure><img src="img/A.jpg" alt="Polishing: a +16 bubble flies to the pill" width="1440" height="900"><figcaption class="step"><i>4</i>Polish bubbles arrive, each smaller than the last.</figcaption></figure>
+      <figure><img src="img/A-rival.jpg" alt="A rival lands: the rumor chip turns solid and reads Lodestar launched today, the critics' bar just went up" width="1440" height="900"><figcaption class="step"><i>5</i>Lodestar lands. The chip turns solid: the critics' bar just went up.</figcaption></figure>
+      <figure><img src="img/R.jpg" alt="Publish opens today's release dialog unchanged" width="1440" height="900"><figcaption class="step"><i>6</i>Publish opens today's release dialog, unchanged.</figcaption></figure>
+    </div>
+  </section>
+
+  <hr>
+
+  <section class="opt" id="b">
+    <div class="opt-head"><span class="letter">B</span><h2>A post-training card on the side</h2></div>
+    <figure>
+      <img src="img/B.jpg" alt="Option B: a paper card docked on the left lists the flaws with advisor quotes, a polish score of 37 with a row of shrinking bubbles, the next bubble time, the rival rumor and a Publish button" width="1440" height="900">
+      <figcaption>Everything in one card while the model polishes: flaws with advisor quotes, polish 37 with a row of past and coming bubbles (shrinking), "next bubble +13 in about 2 days", the rival lines, and Publish. It covers the Policy corner of the office.</figcaption>
+    </figure>
+    <div class="points">
+      <div><b>Good for</b><span>Showing the why in one glance: what you got, what's coming, who's about to land.</span></div>
+      <div><b>Cost</b><span>An always-open panel during play, which you've steered away from before ("decisions open on demand").</span></div>
+    </div>
+  </section>
+
+  <hr>
+
+  <section class="opt" id="c">
+    <div class="opt-head"><span class="letter">C</span><h2>The whiteboard is the post-training board</h2><span class="exp">Experimental · in the world</span></div>
+    <div class="strip" style="grid-template-columns:1fr 1fr">
+      <figure><img src="img/C-office.jpg" alt="Option C in the office: the wall whiteboard is ringed in teal, Safety says the hallucinations are crossed off, a small Publish button sits under the pill" width="1440" height="900"><figcaption class="step"><i>1</i>In the office: the whiteboard is ringed, and staff speak from their desks as things get crossed off.</figcaption></figure>
+      <figure><img src="img/C.jpg" alt="Option C opened: a flat whiteboard with flaw sticky notes crossed off, a hand-drawn polish curve flattening out, the OpenBrain line, today's dashed line, a shaded Lodestar window, and Publish" width="1440" height="900"><figcaption class="step"><i>2</i>Click it: the board opens flat, like the paperwork. Sticky notes for flaws, a hand-drawn curve that flattens, the rival window shaded.</figcaption></figure>
+    </div>
+    <div class="points">
+      <div><b>Good for</b><span>The same in-world feel as the paperwork you approved; the flattening curve says "less and less" without numbers.</span></div>
+      <div><b>Cost</b><span>Hidden until you click the board, so the day-to-day bubbles need the HUD anyway. Handwriting uses a new font (Caveat).</span></div>
+    </div>
+  </section>
+
+  <hr>
+
+  <section class="opt" id="d">
+    <div class="opt-head"><span class="letter">D</span><h2>A calendar strip of what waiting buys</h2><span class="exp">Experimental · shows the future</span></div>
+    <figure>
+      <img src="img/D.jpg" alt="Option D: a strip along the bottom with two lanes on a date axis; the top lane shows the two fixed flaws as blocks and polish bubbles shrinking along the days, filled up to today and dashed after; the bottom lane marks OpenBrain launched and a hatched Lodestar rumored window; Publish now on the right" width="1440" height="900">
+      <figcaption>Two lanes on one calendar. Top: your flaw fixes, then polish bubbles shrinking day by day (filled up to today, dashed after). Bottom: rival launches, with the rumor as a hatched window. The trade-off is laid out as distance: bubbles getting tiny while the Lodestar window gets close.</figcaption>
+    </figure>
+    <div class="points">
+      <div><b>Good for</b><span>The clearest picture of "when do I stop": you can see the next bubbles are small and the rival window is near.</span></div>
+      <div><b>Cost</b><span>Shows future bubbles exactly, which removes some guesswork. Could instead open on demand from A's pill.</span></div>
+    </div>
+  </section>
+
+  <hr>
+
+  <div class="note">
+    <h3>One new idea in these pictures, not agreed yet: "leave it in"</h3>
+    <p style="font-weight:700">With "flaws first, then polish", keeping a flaw on purpose (the thumbs-up users, say) would block polish forever. So every mock lets you mark a flaw "left in", and polish starts once the rest are fixed. Game Dev Tycoon players do the same with bugs. Say if you want it; without it, polish only starts when every flaw is gone.</p>
+  </div>
+
+  <div class="note">
+    <h3>Mix and match</h3>
+    <p style="font-weight:700">The parts are separable. My pick is A for the everyday view, with D's strip opening when you click the pill, for the moment you're deciding whether to stop.</p>
+  </div>
+</div>

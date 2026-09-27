@@ -1,3 +1,5 @@
+import { rivalRumor, rumorText, showFlawBadge } from './logic/polish.js';
+import { flawsLeft } from '../sim/polish.js';
 import { activeModels, projectBurn, runway } from '../sim/economy.js';
 import { eraById } from '../sim/data/eras.js';
 import { rank } from '../sim/rivals.js';
@@ -112,6 +114,11 @@ export function mountHud(root, game) {
   // each render only rewrites text and states inside it.
   view.innerHTML = `
     <div class="hud" aria-label="Current project"></div>
+    <button type="button" class="ctr hud-flaw" data-act="flaws" aria-label="Flaws" hidden><span class="badge"></span><span class="tag">Flaws</span></button>
+    <div class="hud-polish" hidden>
+      <button type="button" class="hud-publish" data-act="publish"></button>
+      <span class="hud-rumor" hidden></span>
+    </div>
     <div class="lab-plate" aria-label="Your lab" hidden></div>
     <div class="hud-right">
       <button class="info" type="button" aria-controls="lab-stats"></button>
@@ -155,6 +162,19 @@ export function mountHud(root, game) {
     if (sound.muted) sfx.hush();
   });
 
+  // Keep polishing (spec §4): the pill opens the calendar strip, the badge the flaws list, the button the release.
+  const polishAct = (act) => { if (!blocked() && !overlay()?.querySelector('.dialog-layer')) overlay()?.dispatchEvent(new CustomEvent('polish-act', { detail: act })); };
+  view.addEventListener('click', (event) => {
+    const act = event.target.closest?.('[data-act]')?.dataset.act;
+    if (act) polishAct(act);
+  });
+  centre.addEventListener('keydown', (event) => {
+    if ((event.key === 'Enter' || event.key === ' ') && event.target.closest?.('.pill-act')) {
+      event.preventDefault();
+      polishAct('strip');
+    }
+  });
+
   function render() {
     connectClock();
     const state = game.state;
@@ -171,15 +191,30 @@ export function mountHud(root, game) {
     const beat = Math.round((state.dayInRound / ROUND_DAYS[state.era]) * 100);
     const markLabel = `New ${roundWord(state.era)} on ${nextMark.label}`;
 
+    const polishingModel = state.pendingModel?.polishing ? state.pendingModel : null;
     centre.innerHTML = `
       <div class="ctr cap"><div class="badge">${counts.capability}</div><div class="tag">Capability</div></div>
-      <div class="pill">
+      <div class="pill${polishingModel ? ' pill-act' : ''}"${polishingModel ? ' data-act="strip" role="button" tabindex="0" aria-label="Show the polishing calendar"' : ''}>
         <div class="t"></div>
         <div class="s">${pill.status}</div>
         ${pill.progress === null ? '' : `<div class="bar"><i style="width:${Math.round(pill.progress * 100)}%"></i></div>`}
       </div>
       <div class="ctr ali"><div class="badge">${counts.alignment}</div><div class="tag">Alignment</div></div>`;
     centre.querySelector('.pill .t').textContent = pill.name; // player-typed names are text, never markup
+    const flawButton = view.querySelector('.hud-flaw');
+    flawButton.hidden = !showFlawBadge(polishingModel) || Boolean(state.ending);
+    view.classList.toggle('has-polish-flaws', !flawButton.hidden);
+    if (!flawButton.hidden) flawButton.querySelector('.badge').textContent = `${flawsLeft(polishingModel)}`;
+    const polishRow = view.querySelector('.hud-polish');
+    polishRow.hidden = !polishingModel || Boolean(polishingModel.hazard) || Boolean(state.ending);
+    if (!polishRow.hidden) {
+      polishRow.querySelector('.hud-publish').textContent = `Publish ${pill.name}`;
+      const rumor = rivalRumor(state);
+      const chip = polishRow.querySelector('.hud-rumor');
+      chip.hidden = !rumor;
+      chip.textContent = rumorText(rumor);
+      chip.classList.toggle('landed', rumor?.kind === 'landed');
+    }
     const labName = typeof state.labName === 'string' ? state.labName.trim() : '';
     labPlate.textContent = labName; // the name typed on the title screen, as text
     labPlate.hidden = !labName;
