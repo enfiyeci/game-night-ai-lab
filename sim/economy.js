@@ -83,6 +83,7 @@ export function accrueEconomy(state, months) {
   for (const m of activeModels(state)) {
     m.earned = (m.earned ?? 0) + (m.users * revenuePerUser(m)) / 1e6 * usage * months;
     m.servingSpent = (m.servingSpent ?? 0) + (m.users * m.servingCost) / BALANCE.unitMonthlyDollars * load * price * months;
+    m.monthsOnSale = (m.monthsOnSale ?? 0) + months;
   }
   state.arr = revenue * 12;
   state.cash += (revenue - burn) * months;

@@ -4408,3 +4408,14 @@ html.title-waking #hud { transition: opacity .5s ease .6s; }
 .paper-note .company-card-reason, .paper-letter .company-card-reason { margin-top: auto; padding-top: 10px; }
 .paper-folder .paper-foot { margin-top: 12px; }
 @media (prefers-reduced-motion: reduce) { .paper-slot, .paper-note, .paper-letter { transition: none; } }
+
+/* ---------- Finance planner: Each model tab (lane gn-model-money) ---------- */
+.model-money-table .model-money-name-col { width: 290px; }
+.model-money-table .model-money-net-col { width: 250px; }
+.model-money-table thead th { text-align: left; }
+.model-money-table td strong { display: block; font-weight: 900; }
+.model-money-table td small { display: block; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); font-size: 10.5px; font-weight: 700; }
+.model-money-table tr.model-money-unreleased td { background: color-mix(in oklab, var(--sky) 6%, var(--paper)); }
+.model-money-table .finance-cell { grid-template-columns: 1fr 70px; }
+.model-money-table .finance-bar.diverging i.pos { background: var(--teal); }
+.model-money-empty { margin: 30px 0; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); font-size: 14px; font-weight: 800; }

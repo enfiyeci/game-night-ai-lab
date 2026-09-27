@@ -158,6 +158,7 @@ export function releaseModel(state, release, rng) {
     launchCost: cash,
     earned: 0,
     servingSpent: 0,
+    monthsOnSale: 0,
   };
   if (spec.channel === 'consumer' && hasLine(state, 'no-wmd')) model.revenueMult = 0.97;
   state.models.push(model);
