@@ -129,6 +129,7 @@ function choiceRow(label, options, value, onPick) {
     chip.setAttribute('aria-pressed', `${option.value === value}`);
     chip.disabled = Boolean(option.disabled);
     chip.title = option.title ?? '';
+    if (option.ariaLabel) chip.setAttribute('aria-label', option.ariaLabel);
     const text = document.createElement('span');
     text.textContent = option.label;
     const detail = document.createElement('small');
@@ -364,7 +365,9 @@ export function techniquePanel(state, stage, draft, onChange, { cardNote, onPick
     for (const card of cards.filter((candidate) => candidate.group === group)) {
       const picked = selected.includes(card.id);
       const blocked = blockedGroup;
-      const short = (card.cost.cash ?? 0) - state.cash;
+      // Cash left after the other picks; a card in a group you already picked from replaces that pick.
+      const otherCash = pickedCards.filter((other) => other.group !== group).reduce((sum, other) => sum + (other.cost.cash ?? 0), 0);
+      const short = (card.cost.cash ?? 0) - (state.cash - otherCash);
       const reason = blocked ? `All ${slots} picks are used — remove one first` : '';
       const row = document.createElement('button');
       row.type = 'button';
@@ -521,7 +524,15 @@ export function openRecipe(game, overlayRoot, { stage = 1 } = {}) {
         refresh();
       }, {
         cardNote: (card) => (card.opens ? cardOpeners.get(card.opens)?.note?.(nextState, card) ?? null : null),
-        onPicked: (card) => { if (card.opens) cardOpeners.get(card.opens)?.open?.(game, card); },
+        onPicked: (card) => {
+          if (!card.opens) return;
+          const unpick = () => {
+            draft.picks[stageId] = draft.picks[stageId].filter((id) => id !== card.id);
+            draft = sanitizeDraft(projected(), draft);
+            refresh();
+          };
+          cardOpeners.get(card.opens)?.open?.(game, card, { unpick });
+        },
       }));
       footerSlot.replaceChildren(computeFooter(nextState, preview, releaseBeforeRun()));
       error.textContent = capitaliseError(preview.errors[0]);
@@ -544,14 +555,14 @@ export function openRecipe(game, overlayRoot, { stage = 1 } = {}) {
           value: size,
           label: chips,
           detail: [power, comparison].filter(Boolean).join(' · ') || ' ',
-          title: SIZE_NAMES[size],
+          ariaLabel: `${SIZE_NAMES[size]}: ${chips}`,
         };
       }), draft.sliders.size, (size) => {
         draft.sliders.size = size;
         const moved = ['large', 'xl'].includes(size) && draft.sliders.length === 'heavy';
         if (moved) draft.sliders.length = 'over';
         note.textContent = moved
-          ? 'Heavily overtrained is only available for small or medium models, so training length moved to Overtrained.'
+          ? 'Heavily overtrained needs one of the two smallest models, so training length moved to Overtrained.'
           : '';
         rows.replaceChildren(sizeRow(), lengthRow());
         refresh();
@@ -563,7 +574,7 @@ export function openRecipe(game, overlayRoot, { stage = 1 } = {}) {
           label: LENGTH_NAMES[length],
           detail: LENGTHS[length].turns ? `+${roundsToWords(state.era, LENGTHS[length].turns)}` : 'No extra time',
           disabled: blocked,
-          title: blocked ? 'Heavily overtrained needs a small or medium model' : '',
+          title: blocked ? 'Heavily overtrained needs one of the two smallest models' : '',
         };
       }), draft.sliders.length, (length) => {
         draft.sliders.length = length;
