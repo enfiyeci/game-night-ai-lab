@@ -236,14 +236,14 @@ def shot_cw_port():
 
 
 def trio_camera(face):
-    """The pyrrhic trio's framing (cw-port, cw-triage, cw-chat): the screen, 1150 px wide, seen 22 degrees off its
+    """The pyrrhic trio's framing (cw-port, cw-triage, cw-chat): the screen, 1000 px wide, seen 22 degrees off its
     axis from a little above, with the room soft behind it."""
     bpy.context.view_layer.update()
     mw = face.matrix_world
     n = (mw.to_3x3() @ Vector((0, 0, 1))).normalized()
     width = face.dimensions.x
     lens = 50
-    dist = width / (0.6 * 36 / lens)
+    dist = width / (0.52 * 36 / lens)
     side = Vector((n.y, -n.x, 0)).normalized()
     a = math.radians(22)
     eye = mw.translation + (n * math.cos(a) + side * math.sin(a)) * dist + Vector((0, 0, dist * 0.12))

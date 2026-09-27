@@ -389,12 +389,12 @@ def shot_mu_kitchen():
     pw = 0.07
     ph = pw * crop[3] / crop[2]
     lean = math.radians(15)
-    px, py = 0.16, 3.17
+    px, py = 0.1, 3.17
     face, _ = kit.screen("phone", (px, py, 0.76 + 0.004 + ph / 2 * math.cos(lean)), pw, "mu-kitchen", crop=crop,
                          rot=(math.radians(90) - lean, 0, math.radians(99)), bezel="#111", depth=0.008, border=0.004,
                          strength=1.2)
     kit.place("plastic_bottle_gallon", (px - 0.11, py - 0.02, 0.76), rot_z=0.5, scale=0.6)
-    kit.camera((0.5, 3.25, 0.94), (-1.8, 2.15, 0.62), lens=35, fstop=8, focus=face)
+    kit.camera((0.5, 3.25, 0.94), (-1.8, 2.15, 0.5), lens=35, fstop=8, focus=face)
     bpy.context.scene.view_settings.exposure = 1.6
 
 
@@ -445,14 +445,14 @@ def shot_cw_chat():
 
 
 def trio_camera(face):
-    """The pyrrhic trio's framing (cw-port, cw-triage, cw-chat): the screen, 1150 px wide, seen 22 degrees off its
+    """The pyrrhic trio's framing (cw-port, cw-triage, cw-chat): the screen, 1000 px wide, seen 22 degrees off its
     axis from a little above, with the room soft behind it."""
     bpy.context.view_layer.update()
     mw = face.matrix_world
     n = (mw.to_3x3() @ Vector((0, 0, 1))).normalized()
     width = face.dimensions.x
     lens = 50
-    dist = width / (0.6 * 36 / lens)
+    dist = width / (0.52 * 36 / lens)
     side = Vector((n.y, -n.x, 0)).normalized()
     a = math.radians(22)
     eye = mw.translation + (n * math.cos(a) + side * math.sin(a)) * dist + Vector((0, 0, dist * 0.12))
