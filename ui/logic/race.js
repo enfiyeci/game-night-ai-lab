@@ -40,10 +40,15 @@ function why(state) {
   // Not rounded to whole units: computeAmount keeps one decimal, so a small slice never reads as 0.
   const amount = (units) => computeAmount(units, state.era);
   const needs = next.map((s) => `${SIZE_LABEL[s]} needs ${amount(unitsFor(s, state.era))} free`).join('; ');
-  const left = `leaving ${amount(slices.training)} free`;
-  const taken = amount(slices.serving) !== amount(0)
-    ? `Your users take ${amount(slices.serving)} of your ${amount(slices.online)} and safety takes ${amount(slices.safety)}, ${left}.`
-    : `Safety takes ${amount(slices.safety)} of your ${amount(slices.online)}, ${left}.`;
+  // Every slice computeSlices takes before training is named, so the numbers add up to what is online.
+  const parts = [
+    ['Your users take', slices.serving],
+    ['Monitors take', slices.control],
+    ['Safety takes', slices.safety],
+  ].filter(([label, units]) => label === 'Safety takes' || amount(units) !== amount(0))
+    .map(([label, units], i) => (i ? `${label.toLowerCase()} ${amount(units)}` : `${label} ${amount(units)} of your ${amount(slices.online)}`));
+  const list = parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}` : parts[0];
+  const taken = `${list}, leaving ${amount(slices.training)} free.`;
   return `${opening} ${taken} ${needs}.`;
 }
 
@@ -93,7 +98,7 @@ export function raceModel(state) {
   const free = computeSlices(state).training;
   const rows = [
     { id: 'you', name: 'You', you: true, score: state.capability, compute: state.compute.online,
-      computeNote: `${computeAmount(free, state.era)} free after users and safety`,
+      computeNote: `${computeAmount(free, state.era)} free after monitors, users and safety`,
       size: SIZE_LABEL[playerSize(state)] ?? 'none yet', word: state.activeRun ? 'training now' : 'no run yet' },
     ...state.rivals.map((r) => ({ id: r.id, name: r.name, you: false, score: r.capability, compute: r.fleet,
       // A copy: rivalSize records lastSize on the rival, and this model must not change the state.

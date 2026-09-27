@@ -74,10 +74,9 @@ export function refreshOffers(state, rng) {
     if (!kept) return offer;
     kept.arrivesIn = offer.arrivesIn;
     // It keeps its size but takes this round's price, so a markup or price that has changed never sticks to it.
-    const scale = kept.units / offer.units;
     kept.price = offer.price;
-    kept.monthly = offer.monthly * scale;
-    kept.upfront = Math.round(offer.upfront * scale);
+    kept.monthly = kept.units * kept.price * UNIT;
+    kept.upfront = Math.round(SUPPLIERS[kept.supplier].upfrontShare * kept.monthly * (kept.termMonths ?? 0));
     if (offer.partnerMarkup) kept.partnerMarkup = offer.partnerMarkup;
     else delete kept.partnerMarkup;
     return kept;

@@ -133,6 +133,21 @@ test('a kept card keeps its size but takes the fresh card\'s price', () => {
   assert.equal(kept.partnerMarkup, undefined);
 });
 
+test('a kept card\'s upfront is worked out from the card itself, so it never drifts', async () => {
+  const { SUPPLIERS } = await import('../sim/data/compute.js');
+  const s = createInitialState({ seed: 1 });
+  const verde = s.compute.offers.find((o) => o.supplier === 'verde');
+  const expected = (o) => Math.round(SUPPLIERS.verde.upfrontShare * o.units * o.price * BALANCE.unitMonthlyCost * o.termMonths);
+  const [lo, hi] = SUPPLIERS.verde.size;
+  for (let size = lo; size <= hi; size += 1) { // every size the fresh card can be drawn at
+    const turn = size - lo + 1;
+    s.turn = turn;
+    s.compute.offers = refreshOffers(s, { ...flat, int: () => size });
+    assert.equal(s.compute.offers.find((o) => o.supplier === 'verde'), verde);
+    assert.equal(verde.upfront, expected(verde), `round ${turn}`);
+  }
+});
+
 test('the investment and the grid are always made fresh', () => {
   const s = createInitialState({ seed: 1 });
   s.era = 2;

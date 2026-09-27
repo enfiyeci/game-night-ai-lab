@@ -81,3 +81,16 @@ test('the why box says what is left free and never rounds a slice away', () => {
   assert.match(why, /Safety takes 0\.4 units of your 4 units, leaving 3\.6 units free\./);
   assert.match(raceModel(s).rows.find((row) => row.you).computeNote, /^3\.6 units free/);
 });
+
+test('the why box names what monitors take, so its numbers add up', () => {
+  const s = createInitialState({ seed: 1 });
+  s.era = 2;
+  s.compute.online = 20;
+  s.automation.checks.monitors = 1;
+  const why = raceModel(s).why;
+  assert.match(why, /monitors take/i);
+  const n = (label) => Number(why.match(new RegExp(`${label} ([\\d.]+) units`, 'i'))[1]);
+  const total = n('monitors take') + n('safety takes') + n('leaving');
+  assert.ok(Math.abs(total - 20) <= 0.15, why);
+  assert.match(raceModel(s).rows.find((row) => row.you).computeNote, /free after monitors, users and safety$/);
+});
