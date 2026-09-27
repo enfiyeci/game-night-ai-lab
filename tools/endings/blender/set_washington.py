@@ -41,7 +41,7 @@ def office(day=False):
         for side in (-1, 1):
             kit.box((wx + side * 0.75, RD - 0.18, 1.95), (0.34, 0.14, 2.9), drape, bevel=0.05)
         if day:   # daylight pouring in through each window
-            kit.area((wx, RD - 0.3, 1.9), (wx, 2.0, 0.6), (1.2, 2.4), 220, kit.kelvin(6800))
+            kit.area((wx, RD - 0.3, 1.9), (wx, 2.0, 0.6), (1.2, 2.4), 90, kit.kelvin(6800))
     kit.world("#05070B", 1.0)
 
 
@@ -461,7 +461,7 @@ def tv_light(at, target, energy=300, z=2.4, size=0.6, colour=5600):
 def briefing_lights():
     for y in (3.0, 6.5):
         kit.area((0, y, BH - 0.05), (0, y, 0), (8, 1.2), 90, kit.kelvin(3600))
-    kit.area((0, STAGE - 2.5, BH - 0.1), (0, BD - 0.5, 1.8), (4, 1), 450, kit.kelvin(4800))      # the TV key on the podium
+    kit.area((0, STAGE - 2.5, BH - 0.1), (0, BD - 0.5, 1.8), (4, 1), 130, kit.kelvin(4800))      # the TV key on the podium
     kit.spot((0, BD - 1.2, BH - 0.1), (0, BD, 2.0), 500, kit.kelvin(3200), angle=80, blend=1.0)  # backdrop wash
 
 
@@ -484,7 +484,7 @@ def side_screens(plate, crop, live_side=1, other=None):
 
 def shot_ov_news():
     """overtaken 2, Month 1: the briefing room from the reporters' seats. The President at the podium; beside him
-    the screen names the national champion; hands go up in the rows."""
+    the screen names the national champion."""
     briefing_room()
     podium()
     face = side_screens("ov-news", (56, 4, 1168, 657), live_side=1, other="THE PRESIDENT")
@@ -495,7 +495,7 @@ def shot_ov_news():
         for k in range(8):
             x = 0.75 + (k % 4) * 0.62 if k < 4 else -(0.75 + (k % 4) * 0.62)
             if rng.random() < 0.9:
-                pts.append((x, 8.6 - r * 1.0 + 0.03, 0.48, rng.uniform(-10, 10), "sit", "hand" if rng.random() < 0.3 else None))
+                pts.append((x, 8.6 - r * 1.0 + 0.03, 0.48, rng.uniform(-10, 10), "sit"))
     P.silhouettes(pts, seed=7, name="press")
     for x in (-2.0, 0.0, 2.2):
         tv_camera((x, 1.2), 0)
@@ -507,8 +507,8 @@ def shot_rd_news():
     """rivalDisaster 3, Day 3: the reverse angle, from behind the podium. The President faces a standing room of
     reporters and camera flashes; the monitor over the camera riser shows what he is being asked about."""
     briefing_room()
-    podium()
-    pres = P.person((0.0, STAGE + 1.3, 0.24), facing=172, height=1.9, coat="#1A2030", hair="#B59E5E", build=1.2, seed=90)
+    podium((1.45, STAGE + 0.9))
+    pres = P.person((1.45, STAGE + 1.3, 0.24), facing=172, height=1.9, coat="#1A2030", hair="#B59E5E", build=1.2, seed=90)
     P.hair_back(pres, 1.9, "stand", "#B59E5E")
     rng = random.Random(9)
     pts = []
@@ -518,7 +518,7 @@ def shot_rd_news():
             if rng.random() < 0.92:
                 standing = rng.random() < 0.45
                 pts.append((x, 8.6 - r * 1.0 + (0.15 if standing else 0.03), 0.0 if standing else 0.48, rng.uniform(-12, 12),
-                            "stand" if standing else "sit", "hand" if rng.random() < 0.45 else None))
+                            "stand" if standing else "sit"))
     P.silhouettes(pts, seed=11, name="press")
     for x in (-2.4, -0.2, 2.3):
         tv_camera((x, 1.2), 180)
@@ -548,8 +548,14 @@ def office_front():
                 books.append(((x + w / 2, 0.36, shelf_z + h / 2), (w, 0.2, h)))
                 x += w + 0.004
     boxes("books", books, kit.mat("#6B3A2A", 0.7))
-    kit.box((0, 0.06, 1.2), (1.3, 0.1, 2.4), kit.mat("#EFE6D2", 0.5))          # the door
-    kit.box((0, 0.12, 1.2), (1.1, 0.04, 2.2), kit.mat("#F2EBDC", 0.45), bevel=0.01)
+    kit.box((0, 0.06, 1.2), (1.3, 0.1, 2.4), kit.mat("#EFE6D2", 0.5))          # the door, panelled, a brass knob
+    for px, pz, ph in ((-0.27, 1.65, 0.8), (0.27, 1.65, 0.8), (-0.27, 0.55, 0.7), (0.27, 0.55, 0.7)):
+        kit.box((px, 0.12, pz), (0.42, 0.03, ph), kit.mat("#F2EBDC", 0.45), bevel=0.02)
+    kit.sphere((0.5, 0.15, 1.05), 0.03, kit.mat("#B8913F", 0.25, 1.0))
+    # a floor lamp in the corner, lit
+    kit.cyl((-4.0, 1.2, 0.75), 0.015, 1.5, kit.mat("#B8913F", 0.25, 1.0))
+    kit.cyl((-4.0, 1.2, 1.62), 0.22, 0.3, kit.mat("#F1E4C8", 0.6, emit="#FFD9A0", strength=2.5), r2=0.16)
+    kit.point((-4.0, 1.2, 1.55), 30, kit.kelvin(2500), radius=0.12)
 
 
 def report(at, rot_z=0.0):
@@ -583,16 +589,16 @@ def shot_al_news():
     kit.box((-1.6, 0.35, 0.45), (1.8, 0.45, 0.9), kit.mat("#3B2416", 0.4, coat=0.4), bevel=0.02)
     face, _ = kit.screen("tv", (-1.6, 0.4, 1.65), 1.8, "al-news", crop=(56, 4, 1168, 657), strength=1.3,
                          rot=(math.radians(90), 0, math.radians(165)), depth=0.05, border=0.02, bezel="#0D0E10")
-    report((0.3, 3.6, 0.797), rot_z=math.radians(180 + 6))
-    bankers_lamp((0.95, 3.7, 0.797))
+    report((0.55, 3.35, 0.797), rot_z=math.radians(180 + 6))
+    bankers_lamp((1.05, 3.2, 0.797))
     # the President in his high-backed chair, turned toward the set
-    kit.box((0.25, 4.45, 0.92), (0.66, 0.16, 1.3), kit.mat("#2A1812", 0.45), bevel=0.06, rot=(0, 0, math.radians(-20)))
+    kit.box((0.25, 4.45, 0.8), (0.66, 0.16, 1.3), kit.mat("#2A1812", 0.45), bevel=0.06, rot=(0, 0, math.radians(-20)))
     pres = P.person((0.2, 4.15, 0.0), facing=160, pose="sit", height=1.9, coat="#1A2030", hair="#D9C27A", build=1.2, seed=90)
     P.hair_back(pres, 1.9, "sit", "#D9C27A")
     kit.point((-1.6, 0.9, 1.6), 6, kit.kelvin(7200), radius=0.5)           # the set's glow
-    kit.spot((0.95, 3.63, 1.06), (0.35, 3.6, 0.8), 30, kit.kelvin(2600), angle=80, blend=0.8)    # the lamp on the report
+    kit.spot((1.05, 3.13, 1.06), (0.55, 3.35, 0.8), 30, kit.kelvin(2600), angle=80, blend=0.8)    # the lamp on the report
     kit.area((1.5, RD - 0.5, 2.6), (0, 2, 1), (2, 1), 18, kit.kelvin(8000))    # moonlight from the windows behind
-    kit.camera((1.35, 5.95, 1.9), (-1.0, 0.9, 1.05), lens=32, fstop=5.6, focus=(-1.2, 1.2, 1.3))
+    kit.camera((1.35, 5.95, 1.9), (-1.0, 0.9, 0.88), lens=32, fstop=5.6, focus=(-1.2, 1.2, 1.3))
 
 
 def shot_qt_briefing():
@@ -605,10 +611,10 @@ def shot_qt_briefing():
     kit.box((0.0, 3.08, 0.8), (0.3, 0.22, 0.004), kit.mat("#F4F0E6", 0.7))       # the bill
     for k in range(6):   # a row of signing pens
         kit.cyl((-0.5 + k * 0.08, 3.0, 0.805), 0.005, 0.13, kit.mat("#111", 0.3, 0.6), rot=(math.radians(90), 0, 0))
-    for i, x in enumerate((-1.7, -1.1, -0.5, 0.55, 1.15, 1.75)):   # aides standing against the bright windows
+    for i, x in enumerate((-1.9, -1.3, 1.35, 1.95)):   # aides standing against the bright windows
         P.person((x, 5.2 + 0.1 * (i % 2), 0.0), facing=180, height=1.72 + 0.06 * (i % 3), coat=["#1D2230", "#2B2F36", "#3A3436"][i % 3],
                  hair=["#2A211C", "#8C8C8C", "#141212"][i % 3], seed=60 + i)
-    tv_camera((1.75, 1.95), 20, z=0.0)
+    tv_camera((1.1, 2.0), 15, z=0.0)
     for x, y in ((-2.0, 2.0), (2.4, 2.4)):
         tv_light((x, y), (0, 3.9, 1.0), 40, z=2.3, size=0.7)
         kit.spot((x, y, 2.3), (0, 3.6, 0.9), 600, kit.kelvin(5600), angle=22, blend=0.5)

@@ -138,12 +138,10 @@ def shot_pd_news():
         P.person((x, ty + 0.72, 0.0), facing=180, pose="sit", height=1.76, coat=["#1D2230", "#2B2F36", "#23262C"][i % 3],
                  hair=["#2A211C", "#8C8C8C", "#141212", "#6B5A48"][i % 4], seed=30 + i)
         flag((x, ty + 2.2), COLOURS[name])
-    P.silhouettes([(x, ty + 1.6, 0.0, 180, "stand") for x in (-4.4, -3.0, -0.6, 0.8, 2.9, 4.5)], seed=12, name="officials")
-    # the press pen in front: photographers from behind, cameras up
+    # the press pen in front: photographers from behind
     rng = random.Random(3)
-    pts = [(x, 5.6 + rng.uniform(-0.3, 0.3), 0.0, rng.uniform(-10, 10), "stand", "hand" if rng.random() < 0.5 else None)
-           for x in (-3.6, -2.7, -1.6, -0.2, 2.6, 3.5)]
-    P.silhouettes(pts, seed=5, name="press")
+    P.silhouettes([(x, 5.2 + rng.uniform(-0.3, 0.3), 0.0, rng.uniform(-10, 10), "stand") for x in (-3.9, -2.9, 3.0, 4.0)],
+                  seed=5, name="press")
     boxes("rope", [((0, 6.4, 0.9), (9, 0.03, 0.03))], kit.mat("#8A2E22", 0.6))
     for x in (-4.5, 4.5):
         kit.cyl((x, 6.4, 0.5), 0.03, 1.0, kit.mat("#B8913F", 0.3, 1.0))
@@ -162,7 +160,7 @@ def shot_lb_summit():
     kit.cyl((cx, cy, 0.37), 0.5, 0.74, kit.mat("#3A2415", 0.4), verts=32)
     parties = ["OPENBRAIN", "DEEPTHINK", "LODESTAR", "UNITED STATES", "CHINA"]
     for i, name in enumerate(parties):
-        a = math.radians(180 + (i - 2) * 50)          # seats spread round the far side of the table
+        a = math.radians(180 + (i - 2) * 42)          # seats spread round the far side of the table
         px, py = cx + math.sin(a) * (R + 0.45), cy - math.cos(a) * (R + 0.45)
         face_deg = math.degrees(math.atan2(-(cx - px), cy - py))
         P.person((px, py, 0.0), facing=face_deg, pose="sit", height=1.76, coat=["#1D2230", "#2B2F36", "#23262C"][i % 3],
@@ -177,15 +175,15 @@ def shot_lb_summit():
         kit.box((cx + math.cos(a) * 1.2, cy + math.sin(a) * 1.2, 0.79), (0.21, 0.29, 0.003), kit.mat("#F4F0E6", 0.7), rot=(0, 0, a))
     # at the back of the hall: a row of spare chairs, and one with your sign on it
     for x in (-7.8, -7.1, -5.7):
-        kit.place("plastic_monobloc_chair_01", (x, 3.4, 0), rot_z=math.radians(10))
-    kit.place("plastic_monobloc_chair_01", (-6.4, 3.3, 0), rot_z=math.radians(8))
-    kit.box((-6.4, 3.08, 0.78), (0.3, 0.004, 0.2), kit.mat("#F4F1EA", 0.7), rot=(math.radians(-12), 0, math.radians(8)))
-    kit.text("KESTREL LABS", (-6.4, 3.07, 0.8), 0.04, kit.mat("#1C1C1C", 0.6), font=kit.FONT, rot=(math.radians(78), 0, math.radians(8)))
-    kit.text("observer", (-6.4, 3.07, 0.75), 0.022, kit.mat("#555", 0.6), font=kit.FONT_SANS, rot=(math.radians(78), 0, math.radians(8)))
+        kit.place("plastic_monobloc_chair_01", (x, 4.0, 0), rot_z=math.radians(10))
+    kit.place("plastic_monobloc_chair_01", (-6.4, 3.9, 0), rot_z=math.radians(8))
+    kit.box((-6.4, 3.68, 0.78), (0.3, 0.004, 0.2), kit.mat("#F4F1EA", 0.7), rot=(math.radians(-12), 0, math.radians(8)))
+    kit.text("KESTREL LABS", (-6.4, 3.67, 0.8), 0.04, kit.mat("#1C1C1C", 0.6), font=kit.FONT, rot=(math.radians(78), 0, math.radians(8)))
+    kit.text("observer", (-6.4, 3.67, 0.75), 0.022, kit.mat("#555", 0.6), font=kit.FONT_SANS, rot=(math.radians(78), 0, math.radians(8)))
     kit.sun((74, 0, -62), 3.0, kit.kelvin(3400), angle=1.0)          # late sun, low through the windows
     kit.area((cx, cy - 3.5, 4.8), (cx, cy, 0.8), (4, 3), 300, kit.kelvin(4000))
     kit.haze((0, GD / 2, GH / 2), (2 * GW - 0.2, GD - 0.2, GH - 0.2), 0.004, color="#FFF1DE")
-    kit.camera((-7.2, 1.2, 1.25), (-0.2, 16.0, 2.2), lens=28, fstop=8.0, focus=(-2.0, 11.0, 1.5))
+    kit.camera((-7.2, 1.2, 1.15), (-0.2, 16.0, 1.85), lens=28, fstop=8.0, focus=(-2.0, 11.0, 1.5))
 
 
 kit.run({"pd-news": shot_pd_news, "lb-summit": shot_lb_summit})

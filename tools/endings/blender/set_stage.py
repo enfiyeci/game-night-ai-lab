@@ -74,7 +74,7 @@ def seating(rows=15, per_row=26, seed=4):
 def shot_ov_launch():
     auditorium()
     # the LED wall, and a thin black frame round it
-    face, _ = kit.screen("wall", (0, WALL, SH + 0.5 + 3.05), 14.2, "ov-launch", crop=(150, 96, 980, 420), strength=1.6,
+    face, _ = kit.screen("wall", (0, WALL, SH + 0.5 + 3.05), 14.2, "ov-launch", crop=(150, 96, 980, 420), strength=1.15,
                          depth=0.3, border=0.12, bezel="#0A0A0C")
     seating()
     # the presenter, small, stage left of centre, in a hard spot
@@ -84,7 +84,7 @@ def shot_ov_launch():
         kit.spot((x, SY + 1.0, 10.3), (x * 0.6, SY + 4.0, SH), 900, kit.kelvin(4200), angle=14, blend=0.5)
     kit.area((0, WALL - 1.5, 5), (0, SY - 10, 1.5), (14, 6), 900, kit.kelvin(5600))   # the wall's light on the house
     kit.haze((0, SY + 3.5, 6), (2 * SW, 7, 10), 0.012, color="#FFFFFF", anisotropy=0.5)
-    kit.camera((-0.3, SY - 13.5, 3.2), (0, WALL, 4.9), lens=30, fstop=5.6, focus=face)
+    kit.camera((-0.1, SY - 15.8, 3.3), (0, WALL, 3.9), lens=30, fstop=5.6, focus=face)      # from the aisle, seated
 
 
 kit.run({"ov-launch": shot_ov_launch})
