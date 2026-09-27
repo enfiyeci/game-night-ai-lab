@@ -79,7 +79,6 @@ function wireChoices(group, buttons, select) {
   for (const button of buttons) button.addEventListener('click', () => select(button.dataset.choice));
   group.addEventListener('keydown', (event) => {
     if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return;
-    if (event.target.getAttribute('role') !== 'radio') return; // the Sign button can sit inside the group
     const choices = enabled();
     if (choices.length === 0) return;
     event.preventDefault();
@@ -192,19 +191,22 @@ export function openRaise(game, overlayRoot) {
   fan.append(...slots);
   const sign = make('button', 'btn paper-action term-sign-button', 'Sign');
   sign.type = 'button';
+  // Sign sits outside the radiogroup, in a holder that takes the chosen slot's place, so it never moves in the DOM.
+  const signHolder = make('div', 'paper-slot paper-sign-holder selected');
+  signHolder.append(sign);
   const error = errorBox();
   let opened;
   const close = () => opened.close();
-  desk.append(fan, paperFoot(projected.flags.independenceLost
+  desk.append(fan, signHolder, paperFoot(projected.flags.independenceLost
     ? `${actionNote}. Rounds raise ${pct(1 - INDEPENDENCE_ROUND_SHARE)} less since you traded equity for compute.`
     : actionNote, error, close));
 
   function renderSelection() {
     setSelected(buttons, selected);
-    slots.forEach((slot, index) => slot.classList.toggle('selected', buttons[index].dataset.choice === selected));
-    const slot = slots.find((candidate) => candidate.classList.contains('selected'));
-    if (slot) slot.append(sign);
-    else sign.remove();
+    const index = buttons.findIndex((button) => button.dataset.choice === selected);
+    slots.forEach((slot, at) => slot.classList.toggle('selected', at === index));
+    signHolder.className = `paper-slot paper-sign-holder selected paper-slot-${index}`;
+    signHolder.hidden = index < 0;
   }
   wireChoices(fan, buttons, (id) => { selected = id; error.textContent = ''; renderSelection(); });
   sign.addEventListener('click', () => {
