@@ -1,6 +1,6 @@
 import { BALANCE } from './balance.js';
 import { eraById } from './data/eras.js';
-import { SPOT_PRICE, RESALE, eraScale } from './data/compute.js';
+import { RESALE, eraScale, spotPrice } from './data/compute.js';
 import { controlUnits } from './automation.js';
 import { activeModels, safetyUnits } from './serving.js';
 
@@ -49,7 +49,7 @@ export function computeSlices(state) {
 }
 
 export const spotCover = (state) =>
-  (state.compute.split.coverWithSpot ? computeSlices(state).shortfall * SPOT_PRICE[state.era] * UNIT : 0);
+  (state.compute.split.coverWithSpot ? computeSlices(state).shortfall * spotPrice(state) * UNIT : 0);
 
 // Spec §5.3: idle units recover the era's share of the base price, but never more than they bill.
 // Idle units are taken from the cheapest contracts first, so signing cheap capacity (such as the

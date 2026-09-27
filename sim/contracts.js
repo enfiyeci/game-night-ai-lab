@@ -3,7 +3,7 @@ import { eraById } from './data/eras.js';
 import { createRng } from './rng.js';
 import {
   SUPPLIERS, SPOT_PRICE, eraScale, FRAGILE_MONTHLY, BUMP_CHANCE, GULF_OPEN, GULF_REVOKE, EQUITY_SHARE,
-  SCALE_DOWN, SCALE_DOWN_PENALTY_MONTHS, BREAK_SHARE, BUYOUT_MONTHS,
+  SCALE_DOWN, SCALE_DOWN_PENALTY_MONTHS, BREAK_SHARE, BUYOUT_MONTHS, partnerMarkup, spotPrice,
 } from './data/compute.js';
 import { SITE_TYPES, reserveGrid, poweredUnits } from './power.js';
 
@@ -46,12 +46,26 @@ export function generateOffers(state, rng) {
       continue;
     }
     const units = rng.int(s.size[0], s.size[1]) * eraScale(era);
-    const price = key === 'spot' ? SPOT_PRICE[era] : s.price;
+    const markup = partnerMarkup(state, key);
+    const price = key === 'spot' ? spotPrice(state) : s.price * markup;
     const termMonths = s.termMonths; // null for spot: it renews every turn until dropped or pulled
     const monthly = units * price * UNIT;
-    offers.push({ id, supplier: key, units, arrivesIn: arrivalOf(s, era) + delay, upfront: Math.round(s.upfrontShare * monthly * (termMonths ?? 0)), monthly, termMonths, price, string: s.string });
+    offers.push({ id, supplier: key, units, arrivesIn: arrivalOf(s, era) + delay, upfront: Math.round(s.upfrontShare * monthly * (termMonths ?? 0)), monthly, termMonths, price, string: s.string, ...(markup > 1 ? { partnerMarkup: markup } : {}) });
   }
   return offers;
+}
+
+// Raising from the strategic cloud partner marks up rival-cloud offers already on the table this turn too,
+// so raising first and signing second cannot dodge the lock-in.
+export function markUpRivalOffers(state) {
+  for (const offer of state.compute.offers ?? []) {
+    const markup = partnerMarkup(state, offer.supplier);
+    if (markup === 1 || offer.partnerMarkup || offer.viaQueue) continue;
+    offer.price = offer.supplier === 'spot' ? spotPrice(state) : offer.price * markup;
+    offer.monthly = offer.units * offer.price * UNIT;
+    offer.upfront = Math.round(offer.upfront * markup);
+    offer.partnerMarkup = markup;
+  }
 }
 
 export function addPipeline(state, item) {
@@ -135,7 +149,7 @@ export function deliverDue(state, rng) {
 // the compute a turn uses is the compute it is billed for.
 export function syncContracts(state) {
   for (const c of state.compute.contracts) {
-    if (c.supplier === 'spot') c.price = SPOT_PRICE[state.era]; // renewals pay today's spot price
+    if (c.supplier === 'spot') c.price = spotPrice(state); // renewals pay today's spot price
     if (c.supplier === 'gulf') {
       if (state.govFavor.us < GULF_REVOKE || state.flags.supplyChainRisk) c.dark = true;
       else if (state.govFavor.us >= GULF_OPEN) c.dark = false;

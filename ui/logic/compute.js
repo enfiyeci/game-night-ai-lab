@@ -239,7 +239,8 @@ export function dealCards(state) {
         per: OFFER_COPY[offer.supplier].per,
         rows: investment ? investmentRows(offer, state.era) : standardRows(offer, state.era),
         chip,
-        explanation,
+        // Raising from the strategic cloud partner marks up every rival cloud (sim/data/compute.js PARTNER_MARKUP).
+        explanation: offer.partnerMarkup ? `${explanation} Your cloud partner's terms add ${pct(offer.partnerMarkup - 1)}.` : explanation,
         disabled: Boolean(reason),
         reason,
         viaQueue: false,
