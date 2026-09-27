@@ -23,6 +23,11 @@ export const LOOK = {
   security: { skin: 1, hair: 'grey', cut: 'buzz', top: 'color-mix(in oklab, var(--ink) 88%, var(--teal))', shirt: 'var(--paper)', tie: 'color-mix(in oklab, var(--sky) 70%, var(--ink))', pin: true },
   trustee: { skin: 2, hair: 'white', cut: 'side', top: 'color-mix(in oklab, var(--wood) 70%, var(--paper))', shirt: 'color-mix(in oklab, var(--cream) 40%, var(--paper))', glasses: true },
   ceo: { skin: 0, hair: 'dark', cut: 'short', top: 'color-mix(in oklab, var(--ink) 85%, var(--sky))', shirt: 'var(--paper)', tie: 'var(--coral)' },
+  // The four advisors, for the training recipe's briefings.
+  'advisor-research': { skin: 2, hair: 'dark', cut: 'long', top: 'var(--coral)', shirt: 'var(--paper)' },
+  'advisor-safety': { skin: 0, hair: 'brown', cut: 'short', top: 'var(--sky)', shirt: 'var(--paper)', glasses: true },
+  'advisor-cfo': { skin: 1, hair: 'grey', cut: 'bun', top: 'var(--teal)', shirt: 'color-mix(in oklab, var(--cream) 50%, var(--paper))' },
+  'advisor-policy': { skin: 3, hair: 'dark', cut: 'swept', top: 'var(--wood)', shirt: 'var(--paper)' },
 };
 
 export function hairShape(cut, fill) {
