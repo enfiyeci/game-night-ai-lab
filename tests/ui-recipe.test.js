@@ -401,7 +401,9 @@ test('Next and Back keep the same recipe dialog, veil and side panels, and never
   for (const part of [veil, left, right, ok, back]) assert.ok(layer.contains(part), 'the frame parts are the same elements');
   assert.equal(closedSignals(), 0, 'screens waiting for the dialog to close are not woken between stages');
 
+  const closed = new Promise((resolve) => overlay.addEventListener('gdt-dialog-closed', resolve));
   veil.click();
+  await closed;
   assert.equal(overlay.querySelector('.dialog-layer'), null, 'the veil still cancels');
   assert.equal(closedSignals(), 1);
 });
@@ -435,6 +437,8 @@ test('the Geneva cap row shows only on the last stage and leaves when the player
 test('Escape still cancels the recipe after a page turn', async () => {
   const { overlay, layer } = await openRecipeAt(SCENARIOS.era3Idle(1));
   layer.querySelector('.dialog-ok').click();
+  const closed = new Promise((resolve) => overlay.addEventListener('gdt-dialog-closed', resolve));
   layer.querySelector('.dialog-centre').dispatchEvent(new FakeEvent('keydown', { key: 'Escape' }));
+  await closed;
   assert.equal(overlay.querySelector('.dialog-layer'), null);
 });

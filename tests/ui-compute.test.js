@@ -462,7 +462,7 @@ async function dealBoard() {
 }
 const nextFrame = () => new Promise((resolve) => setTimeout(resolve, 5));
 
-test('signing stamps the card, queues exactly one deal, and a second click ends the stamp', async () => {
+test('signing stamps the card, queues exactly one deal, and a second click ends the stamp', { timeout: 3000 }, async () => {
   const { game, overlay } = await dealBoard();
   const movesBefore = game.movesLeft();
   const offersBefore = game.state.compute.offers.length;
@@ -479,17 +479,20 @@ test('signing stamps the card, queues exactly one deal, and a second click ends 
   overlay.querySelector('.compute-queue-card')?.click();
   assert.equal(overlay.querySelector('.deal-signed')?.dataset.choice, signedId, 'a card click does not redraw the board mid-stamp');
   await nextFrame();
+  const closed = new Promise((resolve) => overlay.addEventListener('gdt-dialog-closed', resolve));
   overlay.querySelector('.dialog-ok').click();
+  await closed;
   assert.equal(overlay.querySelector('.dialog-layer'), null, 'a second click finishes the stamp');
   assert.equal(game.movesLeft(), movesBefore - 1, 'still exactly one deal');
 });
 
-test('the signed stamp closes the board on its own after a short hold', async () => {
+test('the signed stamp closes the board on its own after a short hold', { timeout: 3000 }, async () => {
   const { game, overlay } = await dealBoard();
   const movesBefore = game.movesLeft();
+  const closed = new Promise((resolve) => overlay.addEventListener('gdt-dialog-closed', resolve));
   overlay.querySelector('.dialog-ok').click();
   assert.ok(overlay.querySelector('.dialog-layer'));
-  await new Promise((resolve) => setTimeout(resolve, 900));
+  await closed;
   assert.equal(overlay.querySelector('.dialog-layer'), null);
   assert.equal(game.movesLeft(), movesBefore - 1);
 });
