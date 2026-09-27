@@ -351,6 +351,19 @@ svg.room {
 .dialog-layer.dialog-open { opacity: 1; }
 .dialog-layer:focus { outline: none; }
 
+/* One scene change: the old layer keeps the stage through its short exit, while the next one settles in. */
+.scene-transition { transition: opacity 180ms ease, transform 180ms ease; }
+.scene-transition.scene-entering { opacity: 0; transform: translateY(8px); }
+.scene-transition.scene-ready { opacity: 1; transform: translateY(0); }
+.scene-transition.scene-exiting { opacity: 0; transform: translateY(-4px); pointer-events: auto; transition-duration: 160ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .scene-transition,
+  .scene-transition.scene-entering,
+  .scene-transition.scene-ready,
+  .scene-transition.scene-exiting { opacity: 1; transform: none; transition: none !important; }
+}
+
 .dialog-veil {
   position: absolute;
   inset: 0;
@@ -3374,7 +3387,6 @@ svg.room {
 @keyframes floor-hint-pulse { 50% { transform: scale(1.14); opacity: .7; } }
 @media (prefers-reduced-motion: reduce) { .floor-hint-ring { animation: none; } }
 @media (prefers-reduced-motion: reduce) { .badge.tick { transform: none; transition: none; } }
-.hazard-layer { transition: none; }
 .hazard-open #office { filter: saturate(.8) brightness(.96); }
 .hazard-open .advisor-marker { display: none; }
 .hazard-card { z-index: 12; left: 230px; right: 230px; bottom: 20px; padding: 0; text-align: left; display: grid; grid-template-columns: auto 1fr; pointer-events: auto; animation: hazard-in 260ms ease-out both; }

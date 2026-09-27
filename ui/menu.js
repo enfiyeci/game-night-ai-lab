@@ -5,6 +5,7 @@ import { TEAM_OF, TEAMS, busySubject, teamBusyError } from '../sim/teams.js';
 import { roundWord } from '../sim/time.js';
 import { projectQueue } from './logic/compute.js';
 import { openBudget } from './screens/budget.js';
+import { enterTransition, exitTransition } from './components/transition.js';
 
 const registeredHandlers = new Map();
 
@@ -202,9 +203,10 @@ export function openMenu(game, point, { overlay = document.querySelector('#overl
   const close = ({ picked = false } = {}) => {
     if (closed) return;
     closed = true;
-    layer.remove();
-    if (previousFocus?.isConnected && typeof previousFocus.focus === 'function') previousFocus.focus();
-    overlay.dispatchEvent(new CustomEvent('gdt-menu-closed', { detail: { picked } }));
+    exitTransition(layer).then(() => {
+      if (!picked && previousFocus?.isConnected && typeof previousFocus.focus === 'function') previousFocus.focus();
+      overlay.dispatchEvent(new CustomEvent('gdt-menu-closed', { detail: { picked } }));
+    });
   };
 
   const focusFirstIn = (list) => {
@@ -365,6 +367,7 @@ export function openMenu(game, point, { overlay = document.querySelector('#overl
   menu.append(counter);
   layer.append(markerAt(x, y), menu);
   overlay.append(layer);
+  enterTransition(layer);
 
   const menuWidth = menu.offsetWidth;
   const menuHeight = menu.offsetHeight;

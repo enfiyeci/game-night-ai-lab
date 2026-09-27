@@ -1,4 +1,5 @@
 import { workingName as nextName } from '../logic/naming.js';
+import { enterTransition, exitTransition } from '../components/transition.js';
 
 export const HAZARD_CHOICES = [
   { id: 'penalize', label: 'Penalize the thought' },
@@ -95,18 +96,19 @@ export function mountHazard(game, { stage, overlay }) {
   let layer = null;
   let returnFocus = null;
 
-  function teardown() {
+  async function teardown() {
     if (!layer) return;
-    layer.remove();
+    const closing = layer;
     layer = null;
+    await exitTransition(closing);
     stage.classList.remove('hazard-open');
     game.clock?.resume?.(CLOCK_REASON);
     if (returnFocus?.isConnected) returnFocus.focus();
     returnFocus = null;
   }
 
-  function close(choiceId) {
-    teardown(); // first: the choice applies at once, and the update it sends must find the card already gone
+  async function close(choiceId) {
+    await teardown(); // first: the choice applies at once, and the update it sends must find the card already gone
     game.setField('hazardChoice', choiceId);
     overlay.dispatchEvent(new CustomEvent('hazard-chosen'));
     overlay.dispatchEvent(new CustomEvent('gdt-dialog-closed')); // cards, warnings and the ending film wait on this
@@ -122,6 +124,7 @@ export function mountHazard(game, { stage, overlay }) {
     opened.append(card);
     overlay.append(opened);
     layer = opened;
+    enterTransition(opened);
     anchorsFor(state.era).then((anchors) => {
       if (layer !== opened) return;
       for (const argument of HAZARD_ARGUMENTS) {

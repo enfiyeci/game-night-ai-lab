@@ -2,6 +2,7 @@
 // and what happened when someone was caught. Breaking the deal yourself happens in the run and release screens.
 import { dealBinds } from '../../sim/summit.js';
 import { PARTY_INFO, partyBadge } from './summit.js';
+import { enterTransition, exitTransition } from '../components/transition.js';
 
 const VERBS = Object.freeze(['Accuse them in public', 'Demand their report', 'Ask the testers', 'Send the inspectors']);
 const SIGNS = Object.freeze({
@@ -132,11 +133,10 @@ export function mountDeal(game, overlayRoot) {
       <div class="dl-lines">${card.lines.map((line) => `<div><i>•</i>${esc(line)}</div>`).join('')}</div>
       <div class="sm-actions"><button type="button" class="btn">Continue</button></div></section>`;
     layer.querySelector('button').addEventListener('click', () => {
-      layer.remove();
-      overlayRoot.dispatchEvent(new CustomEvent('gdt-dialog-closed'));
+      exitTransition(layer).then(() => overlayRoot.dispatchEvent(new CustomEvent('gdt-dialog-closed')));
     });
     overlayRoot.append(layer);
-    layer.classList.add('dialog-open');
+    enterTransition(layer);
     layer.querySelector('button').focus();
   }
 

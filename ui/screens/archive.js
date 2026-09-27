@@ -6,6 +6,7 @@ import { music } from '../music.js';
 import { archiveModel } from '../logic/archive.js';
 import { registerMenuHandler } from '../menu.js';
 import { filmHost } from './end.js';
+import { enterTransition, exitTransition } from '../components/transition.js';
 
 const make = (tag, className, text) => {
   const node = document.createElement(tag);
@@ -86,9 +87,10 @@ export function openArchive(game, overlay, { collection }) {
   function close() {
     if (watching) return;
     document.removeEventListener('keydown', onKey, true);
-    layer.remove();
-    if (previousFocus?.isConnected && typeof previousFocus.focus === 'function') previousFocus.focus();
-    overlay.dispatchEvent(new CustomEvent('gdt-dialog-closed')); // work that waited for the dialog layer can go on
+    exitTransition(layer).then(() => {
+      if (previousFocus?.isConnected && typeof previousFocus.focus === 'function') previousFocus.focus();
+      overlay.dispatchEvent(new CustomEvent('gdt-dialog-closed')); // work that waited for the dialog layer can go on
+    });
   }
 
   // The same film the ending played, in the end screen's host (it undoes the page zoom and holds focus while
@@ -154,6 +156,7 @@ export function openArchive(game, overlay, { collection }) {
   closeButton.addEventListener('click', close);
   document.addEventListener('keydown', onKey, true);
   overlay.append(layer);
+  enterTransition(layer);
   (grid.querySelector('.dt-page.found') ?? closeButton).focus();
   return { close, node: layer };
 }

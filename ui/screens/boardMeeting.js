@@ -12,6 +12,7 @@ import { ADVISOR_TITLE } from '../logic/events.js';
 import * as COPY from '../data/boardCopy.js';
 import { portrait } from '../components/portraits.js';
 import { dialog } from '../components/dialog.js';
+import { enterTransition, exitTransition } from '../components/transition.js';
 
 const { fill } = COPY;
 const CLOCK_REASON = 'board-meeting';
@@ -224,7 +225,7 @@ export function mountBoardMeeting(game, { overlay, stage }) {
     stage?.classList.add('mt-dim');
     game.clock?.pause(CLOCK_REASON);
     overlay.dispatchEvent(new CustomEvent('board-meeting-open'));
-    requestAnimationFrame(() => root.classList.add('dialog-open'));
+    enterTransition(root);
 
     // A meeting cannot be left: Escape does nothing, and Tab stays inside.
     root.addEventListener('keydown', (event) => {
@@ -247,15 +248,16 @@ export function mountBoardMeeting(game, { overlay, stage }) {
       closed = true;
       stopTimers();
       watcher?.disconnect();
-      root.remove();
-      for (const child of benched) child.inert = false;
-      stage?.classList.remove('mt-dim');
-      game.clock?.resume(CLOCK_REASON);
-      if (session?.root === root) session = null;
-      overlay.dispatchEvent(new CustomEvent('board-meeting-closed'));
-      if (quiet) return;
-      overlay.dispatchEvent(new CustomEvent('gdt-dialog-closed'));
-      if (previousFocus?.isConnected && typeof previousFocus.focus === 'function') previousFocus.focus();
+      exitTransition(root).then(() => {
+        for (const child of benched) child.inert = false;
+        stage?.classList.remove('mt-dim');
+        game.clock?.resume(CLOCK_REASON);
+        if (session?.root === root) session = null;
+        overlay.dispatchEvent(new CustomEvent('board-meeting-closed'));
+        if (quiet) return;
+        overlay.dispatchEvent(new CustomEvent('gdt-dialog-closed'));
+        if (previousFocus?.isConnected && typeof previousFocus.focus === 'function') previousFocus.focus();
+      });
     }
 
     // ---- 1. the call rings -------------------------------------------------------------------------------------------
