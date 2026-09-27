@@ -1,7 +1,7 @@
 import { BALANCE } from './balance.js';
 import { clamp, sigmoid } from './util.js';
 import { validatePicks, resolveCards } from './recipe.js';
-import { PRICE_STANCE } from './serving.js';
+import { ERA_PRICE, PRICE_STANCE } from './serving.js';
 import { scoreLaunch } from './launch.js';
 import { resolveHazard, exposeConcealed } from './hazards.js';
 import { hasLine } from './constitution.js';
@@ -141,6 +141,7 @@ export function releaseModel(state, release, rng) {
     spec,
     channel: spec.channel,
     priceStance: release.price,
+    eraPrice: ERA_PRICE[state.era - 1],
     reasoning,
     users: fresh,
     newUsers: fresh,

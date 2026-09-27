@@ -59,3 +59,18 @@ test('a training run bills its compute as it runs, and the released model carrie
   assert.equal(r.model.launchCost, 0);
   assert.equal(r.model.earned, 0);
 });
+
+test('a model launched in a later era earns more per user, and keeps its launch price', async () => {
+  const { ERA_PRICE, REVENUE_PER_USER } = await import('../sim/serving.js');
+  const { revenuePerUser } = await import('../sim/economy.js');
+  assert.equal(ERA_PRICE[0], 1);
+  assert.ok(ERA_PRICE.every((price, i) => i === 0 || price >= ERA_PRICE[i - 1]));
+  const s = createInitialState();
+  s.era = 3;
+  s.pendingModel = { size: 'small', capability: 30, spec: { size: 'small', arch: 'dense', context: 'short', precision: 'bf16', guard: false, reasoningCapable: false, channel: 'consumer' }, flags: [], publicEffects: { pt: 0, st: 0, govUs: 0, govIntl: 0, heat: 0, usersMult: 1 }, openWeightsMx: 0, trainingCost: 50 };
+  const r = releaseModel(s, { picks: [], price: 'market', reasoning: 'off', family: 'Kestrel', generation: 1 }, createRng(5));
+  assert.equal(r.ok, true);
+  assert.equal(r.model.eraPrice, ERA_PRICE[2]);
+  s.era = 4;
+  assert.equal(revenuePerUser(r.model), REVENUE_PER_USER[r.model.channel] * ERA_PRICE[2]);
+});

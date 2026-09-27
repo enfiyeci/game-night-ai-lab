@@ -2,7 +2,8 @@ import { roundsToWords } from './format.js';
 import { cardById, pickableCards, resolveCards, slotsFor } from '../../sim/recipe.js';
 import { modelName, releaseModel, releaseWait, tierWord } from '../../sim/release.js';
 import { createRng } from '../../sim/rng.js';
-import { CHANNEL, PRICE_STANCE, REASONING, REVENUE_PER_USER, USAGE, margin, servingCost } from '../../sim/serving.js';
+import { CHANNEL, ERA_PRICE, PRICE_STANCE, REASONING, REVENUE_PER_USER, USAGE, margin, servingCost } from '../../sim/serving.js';
+import { revenuePerUser } from '../../sim/economy.js';
 import { applyProjectedMove, projectQueue } from './compute.js';
 import { familyName } from './naming.js';
 
@@ -33,7 +34,7 @@ export const tokensPerUser = (spec, era) => USAGE[era - 1] * CHANNEL[spec.channe
 // What a customer pays per million tokens: the monthly revenue per user spread over their tokens.
 export function pricePerMillion(spec, era, stance) {
   if (spec.channel === 'open') return null;
-  return (REVENUE_PER_USER[spec.channel] * PRICE_STANCE[stance].rev) / tokensPerUser(spec, era);
+  return (REVENUE_PER_USER[spec.channel] * PRICE_STANCE[stance].rev * ERA_PRICE[era - 1]) / tokensPerUser(spec, era);
 }
 
 // What serving costs the lab per million tokens at light load.
@@ -204,8 +205,6 @@ export function checkLabel(flags = []) {
   if (flags.includes('fullEval')) return 'Internal evals';
   return 'Self-reported';
 }
-
-const revenuePerUser = (model) => REVENUE_PER_USER[model.channel] * PRICE_STANCE[model.priceStance].rev * (model.revenueMult ?? 1);
 
 export function priceSheet(model, era) {
   if (model.channel === 'open') return { open: true };

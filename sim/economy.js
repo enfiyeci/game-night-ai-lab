@@ -14,7 +14,7 @@ export { activeModels } from './serving.js';
 
 export const safetySpend = (state) => safetyValue(state);
 
-export const revenuePerUser = (model) => REVENUE_PER_USER[model.channel] * PRICE_STANCE[model.priceStance].rev * (model.revenueMult ?? 1);
+export const revenuePerUser = (model) => REVENUE_PER_USER[model.channel] * PRICE_STANCE[model.priceStance].rev * (model.revenueMult ?? 1) * (model.eraPrice ?? 1);
 
 export function updateServing(state) {
   const online = state.compute.online;
