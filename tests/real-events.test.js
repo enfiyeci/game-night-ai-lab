@@ -290,7 +290,7 @@ function trainedModel(era) {
   s.pendingModel.capability = 40;
   return s;
 }
-const ship = (s, picks) => releaseModel(s, { picks: [...picks, 'channel-app'], price: 'market', reasoning: 'off', family: 'Kestrel', generation: 1 }, trainRng);
+const ship = (s, picks) => releaseModel(s, { picks: [...picks, 'channel-app'], price: 'market', reasoning: 'off', family: 'Kestrel', generation: 1 });
 
 test('the red team card holds back its model even after the round mark made it live', () => {
   const s = trainedModel(2);

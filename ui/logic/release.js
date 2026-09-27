@@ -1,7 +1,6 @@
 import { roundsToWords } from './format.js';
 import { cardById, pickableCards, resolveCards, slotsFor } from '../../sim/recipe.js';
 import { modelName, releaseModel, releaseWait, testerWait, tierWord } from '../../sim/release.js';
-import { createRng } from '../../sim/rng.js';
 import { scoreOnTest, testScore } from '../../sim/launch.js';
 import { CHANNEL, ERA_PRICE, PRICE_STANCE, REASONING, REVENUE_PER_USER, USAGE, margin, servingCost } from '../../sim/serving.js';
 import { revenuePerUser } from '../../sim/economy.js';
@@ -146,7 +145,7 @@ export function releasePreview(state, queue, draft) {
   const payload = releasePayload(projected, draft);
   const cash = cardsFor(projected, draft.picks).reduce((sum, card) => sum + (card.cost.cash ?? 0), 0);
   if (errors.length === 0) {
-    const result = releaseModel(structuredClone(projected), payload, createRng(0));
+    const result = releaseModel(structuredClone(projected), payload);
     if (!result.ok) errors.push(capitalise(result.error));
   }
   return {

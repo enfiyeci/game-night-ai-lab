@@ -71,7 +71,7 @@ test('a training run bills its compute as it runs, and the released model carrie
   const months = cost.turns * 3; // era 1 is three months a round
   assert.ok(Math.abs(s.pendingModel.trainingCost - (cost.cash + cost.units * months * price)) < 1e-6);
   s.pendingModel.hazard = null;
-  const r = releaseModel(s, { picks: [], price: 'market', reasoning: 'off', family: 'Kestrel', generation: 1 }, createRng(4));
+  const r = releaseModel(s, { picks: [], price: 'market', reasoning: 'off', family: 'Kestrel', generation: 1 });
   assert.equal(r.ok, true);
   assert.ok(Math.abs(r.model.trainingCost - s.models.at(-1).trainingCost) < 1e-9);
   assert.equal(r.model.launchCost, 0);
@@ -86,7 +86,7 @@ test('a model launched in a later era earns more per user, and keeps its launch 
   const s = createInitialState();
   s.era = 3;
   s.pendingModel = { size: 'small', capability: 30, spec: { size: 'small', arch: 'dense', context: 'short', precision: 'bf16', guard: false, reasoningCapable: false, channel: 'consumer' }, flags: [], publicEffects: { pt: 0, st: 0, govUs: 0, govIntl: 0, heat: 0, usersMult: 1 }, openWeightsMx: 0, trainingCost: 50 };
-  const r = releaseModel(s, { picks: [], price: 'market', reasoning: 'off', family: 'Kestrel', generation: 1 }, createRng(5));
+  const r = releaseModel(s, { picks: [], price: 'market', reasoning: 'off', family: 'Kestrel', generation: 1 });
   assert.equal(r.ok, true);
   assert.equal(r.model.eraPrice, ERA_PRICE[2]);
   s.era = 4;

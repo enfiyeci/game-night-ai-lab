@@ -122,7 +122,7 @@ export function applyProjectedMove(state, move, queue) {
   }
   if (move.type === 'release') {
     const ending = state.ending;
-    const result = releaseModel(state, move.release, createRng(0));
+    const result = releaseModel(state, move.release);
     state.ending = ending;
     return result;
   }

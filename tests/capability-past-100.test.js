@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import { startRun, advanceRun } from '../sim/training.js';
-import { releaseModel } from '../sim/release.js';
+import { releaseModel, misalignmentScore } from '../sim/release.js';
 import { evalGaming, scoreLaunch } from '../sim/launch.js';
 import { automationRisk } from '../sim/automation.js';
 import { stealWeights } from '../sim/data/events.js';
@@ -81,7 +81,7 @@ test('misuse exposure from a release stops rising at capability 100', () => {
     const { s } = trainFrom(20);
     s.pendingModel.capability = capability;
     const before = s.misuseExposure;
-    assert.equal(releaseModel(s, release, noLuck).ok, true);
+    assert.equal(releaseModel(s, release).ok, true);
     return s.misuseExposure - before;
   };
   assert.ok(exposureAfter(100) > exposureAfter(90));
@@ -89,17 +89,22 @@ test('misuse exposure from a release stops rising at capability 100', () => {
 });
 
 test('the misalignment check on an agent release reads capability up to 100', () => {
-  const chanceAt = (capability) => {
-    const { s } = trainFrom(20, { era: 3 });
+  // No dice (Task A10): the check is a line on hidden debt × capability / 100, and capability past 100 counts as 100.
+  const endingAt = (capability, debt) => {
+    const { s } = trainFrom(20, { era: 4 });
+    s.pendingModel.hazard = null; // an ignored training hazard would add its debt at release
     s.pendingModel.capability = capability;
     s.pendingModel.flags.push('agentic');
-    s.alignmentDebt = 60;
-    const seen = [];
-    releaseModel(s, release, { ...noLuck, chance: (p) => { seen.push(p); return false; } });
-    return seen.at(-1);
+    s.alignmentDebt = debt;
+    s.concealedDebt = 0;
+    assert.equal(misalignmentScore(s, capability), debt * Math.min(capability, 100) / 100);
+    releaseModel(s, release);
+    return s.ending;
   };
-  assert.ok(chanceAt(100) > chanceAt(90));
-  assert.equal(chanceAt(150), chanceAt(100));
+  // Uncapped, 38 × 150 / 100 = 57 would cross the line of 40; capped it is 38 and stays under.
+  assert.equal(endingAt(150, 38), null);
+  assert.equal(endingAt(150, 45), 'misalignment');
+  assert.equal(endingAt(100, 45), 'misalignment');
 });
 
 test('quiet-takeover risk reads the newest model up to 100', () => {

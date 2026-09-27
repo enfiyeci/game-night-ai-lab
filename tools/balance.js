@@ -29,7 +29,6 @@ const HAZARD_CHOICES = ['penalize', 'fix', 'ignore'];
 // Mirrors SPEND_LEVELS and spendFor(level, era) in ui/logic/actions.js on the UI branch.
 const SPEND_LEVELS = { lean: 12, steady: 20, aggressive: 35 };
 const spendFor = (level, era) => SPEND_LEVELS[level] * (1 + 0.5 * (era - 1));
-const VALIDATION_RNG = { next: () => 0.5, int: () => 0, chance: () => false, pick: (values) => values[0], normal: (mean) => mean };
 const BALANCED_EVENT_CHOICES = {
   flattery: 'patch',
   jailbreak: 'patch',
@@ -389,7 +388,7 @@ function makeStrategy(style, prefs, policy = {}) {
         type: 'release',
         release: { picks: pickFrom(planned, 'release', prefs.release), price: 'market', reasoning: 'medium', family: 'Bot', generation: planned.models.length + 1 },
       };
-      if (releaseModel(structuredClone(planned), move.release, VALIDATION_RNG).ok) actions.moves.push(move);
+      if (releaseModel(structuredClone(planned), move.release).ok) actions.moves.push(move);
     } else if (!planned.activeRun && actions.moves.length < 2) {
       const recipe = bestRecipe(planned, prefs);
       // The speed bot breaks the Geneva cap whenever one binds.
@@ -398,7 +397,7 @@ function makeStrategy(style, prefs, policy = {}) {
     const afterPriority = structuredClone(planned);
     const priority = actions.moves.find((move) => move.type === 'startRun' || move.type === 'release');
     if (priority?.type === 'startRun') startRun(afterPriority, priority.recipe);
-    if (priority?.type === 'release') releaseModel(afterPriority, priority.release, VALIDATION_RNG);
+    if (priority?.type === 'release') releaseModel(afterPriority, priority.release);
     updateServing(afterPriority);
     afterPriority.burnPlanned = projectBurn(afterPriority);
     const compute = computeMove(afterPriority, rng, style, prefs, policy);

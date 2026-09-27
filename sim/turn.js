@@ -82,7 +82,7 @@ function applyMove(state, move, rng) {
     }
     case 'release': {
       const inGap = dealBinds(state, 'releaseDelay') && move.release?.breakDeal === true;
-      const r = releaseModel(state, move.release, rng);
+      const r = releaseModel(state, move.release);
       if (r.ok && inGap && r.brokeGap) {
         playerBreak(state, 'releaseDelay');
         r.brokeDeal = 'releaseDelay';

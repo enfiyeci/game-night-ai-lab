@@ -48,7 +48,7 @@ const releaseState = (hardLines, channel = 'channel-app') => {
   const state = createInitialState();
   adopt(state, hardLines);
   state.pendingModel = pendingModel();
-  return releaseModel(state, release(channel), no).model;
+  return releaseModel(state, release(channel)).model;
 };
 
 test('before any model learns one, there is no constitution and the draft is Safety’s proposal', () => {
@@ -337,11 +337,11 @@ test('no-wmd lowers release exposure and consumer revenue', () => {
   const plain = createInitialState();
   adopt(plain, ['honest', 'privacy', 'accept-shutdown']);
   plain.pendingModel = pendingModel();
-  releaseModel(plain, release(), no);
+  releaseModel(plain, release());
   const protectedState = createInitialState();
   adopt(protectedState, ['no-wmd', 'honest', 'privacy']);
   protectedState.pendingModel = pendingModel();
-  const protectedModel = releaseModel(protectedState, release(), no).model;
+  const protectedModel = releaseModel(protectedState, release()).model;
   assert.equal(protectedState.misuseExposure, plain.misuseExposure - 4);
   assert.equal(protectedModel.revenueMult, 0.97);
   assert.equal(revenuePerUser(protectedModel), revenuePerUser(plain.models[0]) * 0.97);
@@ -351,7 +351,7 @@ test('no-wmd lowers release exposure and consumer revenue', () => {
   locked.misuseExposure = 50;
   locked.misuseLocked = 60;
   locked.pendingModel = pendingModel();
-  releaseModel(locked, release('channel-open'), no);
+  releaseModel(locked, release('channel-open'));
   assert.equal(locked.misuseExposure, 76);
   assert.equal(locked.misuseLocked, 76);
 });

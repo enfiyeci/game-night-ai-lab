@@ -10,7 +10,6 @@ import {
 } from '../ui/logic/release.js';
 import { SCENARIOS } from '../ui/logic/scenarios.js';
 import { releaseModel } from '../sim/release.js';
-import { createRng } from '../sim/rng.js';
 import { scoreOnTest } from '../sim/launch.js';
 
 const rng = { next: () => 0.5, int: () => 0, chance: (p) => p > 0.5, normal: (m) => m };
@@ -328,7 +327,7 @@ test('the flagship a launch was compared with is found by name', () => {
 test('on a real release in a later era, earlier models are re-scored on its tests', () => {
   const state = SCENARIOS.readyToRelease(1);
   const draft = { ...releaseDraft(state), family: 'Kestrel', picks: [] };
-  const r = releaseModel(state, releasePayload(state, draft), createRng(1));
+  const r = releaseModel(state, releasePayload(state, draft));
   assert.equal(r.ok, true);
   const model = r.model;
   const caps = model.launch.benchmarks.filter((row) => row.kind === 'cap');

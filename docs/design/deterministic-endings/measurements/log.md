@@ -121,6 +121,17 @@ Ending counts per bot:
 | a9 | balancedHighSafety | pacingDeal 35, misalignment 156, acquihire 9 |
 | a9 | balancedPush | pacingDeal 26, misalignment 165, acquihire 6, quietTakeover 3 |
 | a9 | denier | misalignment 195, acquihire 5 |
+| a10 | speed | boardRemoved 186, misuse 10, misalignment 4 |
+| a10 | safety | acquihire 193, pacingDeal 2, leftBehind 1, aligned 3, rivalDisaster 1 |
+| a10 | balanced | pacingDeal 20, misalignment 177, acquihire 3 |
+| a10 | random | acquihire 148, boardRemoved 23, rivalDisaster 9, misalignment 14, misuse 5, leftBehind 1 |
+| a10 | overCommitter | acquihire 175, misalignment 25 |
+| a10 | handToMouth | misalignment 181, rivalDisaster 7, acquihire 12 |
+| a10 | balancedNoGrid | pacingDeal 13, misalignment 184, acquihire 3 |
+| a10 | balancedLowSafety | misalignment 168, leftBehind 9, pacingDeal 15, acquihire 8 |
+| a10 | balancedHighSafety | pacingDeal 27, misalignment 168, acquihire 5 |
+| a10 | balancedPush | pacingDeal 21, misalignment 175, acquihire 4 |
+| a10 | denier | misalignment 198, acquihire 2 |
 
 Notes:
 
@@ -240,3 +251,22 @@ Notes:
   other nine bots are identical. Lawsuits from training data, runs sued at least once (before / after): speed 146 /
   200, safety 37 / 0, balanced 183 / 200, and every bot that trains on filtered or scraped data is now sued on every
   model (balanced 397 cases, $47.6B in total over 200 runs, to 1238 cases, $148.6B). Not traced run by run.
+- a10 (Task A10, misalignment is a line, not a roll, stated condition from the spec: an agent release in era 3 or
+  later goes wrong exactly when hidden debt, alignment plus concealed, times capability counted up to 100
+  (`dangerCapability`, owner pick A) over 100 is at least `MISALIGNMENT_LINE = 40`, the old sigmoid's even-chance
+  point in the same units; in era 3 that is the warning incident, from era 4 the ending; was a roll on
+  `sigmoid((score - 40) / 8)`): compared against the a9 rows as re-measured with the A9 review fix (9b48ef7). Measured
+  on a scratch snapshot whose sim, tools and ui files equal 9b48ef7 plus this task; the a9 rows were reproduced
+  exactly from the same snapshot with this task's five source files restored. No bot's leading ending changed. Every
+  balanced bot's misalignment rises and its pace-deal count falls: balanced misalignment 165 to 177 and pacingDeal 29
+  to 20, balancedNoGrid 173 to 184 (pacingDeal 21 to 13), balancedHighSafety 156 to 168 (pacingDeal 35 to 27),
+  balancedPush 165 to 175 (its 3 quietTakeover are gone), balancedLowSafety 164 to 168, denier 195 to 198; handToMouth
+  misalignment 162 to 181 (rivalDisaster 16 to 7, acquihire 21 to 12). The safety bot's 4 misalignment endings are
+  gone (acquihire 189 to 193): its era 4 agent releases score about 6, where the old roll still hit about 1 time in
+  70. Speed is unchanged; random and overCommitter move by at most 3. Why the balanced bots rise: their era 4 agent
+  releases score about 47 (median, from debt before the round, so slightly low), over the line, and the roll let about
+  1 in 9 of those releases through (era 4 and 5 agent releases that did not end the run: balanced 21 to 0,
+  balancedNoGrid 24 to 0, balancedHighSafety 19 to 0, balancedPush 21 to 0, denier 22 to 0, handToMouth 65 to 28,
+  safety 217 to 222). Era 3 warning incidents, runs with at least one over 200 (a9 fixed build / a10): speed 196 / 196
+  (one each, the only bot that ships agents in era 3 as a rule; all 4 of its misalignment endings follow one), random
+  1 / 1, every other bot 0 / 0 (none ships an agent in era 3). Not traced run by run.
