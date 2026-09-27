@@ -87,6 +87,19 @@ function earlyMonths(item) {
   return Math.max(0, end - item.landsDay) * (eraById(eraOfTurn(item.arrivesTurn - 1)).monthsPerTurn / (end - start));
 }
 
+// The row's average monthly credit: at each moment the sim pays min(the Azuria bill running then, cap), where cap is
+// the credits per month at the row's start (they are only spent at the mark).
+function averageCredit(spans, cap) {
+  const cuts = [...new Set([0, 1, ...spans.flatMap((span) => [span.from, span.to])])].sort((a, b) => a - b);
+  let credit = 0;
+  for (let i = 0; i < cuts.length - 1; i += 1) {
+    const mid = (cuts[i] + cuts[i + 1]) / 2;
+    const bill = spans.filter((span) => span.from <= mid && mid < span.to).reduce((sum, span) => sum + span.bill, 0);
+    credit += (cuts[i + 1] - cuts[i]) * Math.min(bill, cap);
+  }
+  return credit;
+}
+
 export function signedAt(state, turn) {
   const era = eraOfTurn(turn);
   const ahead = monthOfTurn(turn) - monthOfTurn(state.turn);
@@ -118,11 +131,16 @@ export function signedAt(state, turn) {
   const bill = live.reduce((sum, c) => sum + billOf(c) * share(c), 0) + sites.reduce((sum, s) => sum + leaseMonthly(s.units), 0)
     + landingSites.reduce((sum, s) => sum + leaseMonthly(s.units) * landedShare(s, turn), 0);
   const azuria = live.filter((c) => c.supplier === 'azuria').reduce((sum, c) => sum + billOf(c) * share(c), 0);
-  const azuriaFull = live.filter((c) => c.supplier === 'azuria').reduce((sum, c) => sum + billOf(c), 0);
+  // When each Azuria contract runs inside the row (0 = row start, 1 = its mark): credits pay only while one runs.
+  const azuriaSpans = live.filter((c) => c.supplier === 'azuria').map((c) => ({
+    from: turn > state.turn ? 1 - (c.landing ?? 1) : 0,
+    to: turn > state.turn && Number.isFinite(c.left) ? Math.min(1, c.left / rowMonths) : 1,
+    bill: billOf(c),
+  }));
   const raw = own + Math.min(needs, power);
   const prices = whole.map((c) => ({ units: c.units, price: c.supplier === 'spot' ? SPOT_PRICE[era] : c.price }));
   // refreshOnline: pooled compute goes to the government pool; it is still billed.
-  return { units: Math.floor(raw * (1 - (state.compute.pooled ?? 0))), raw, bill, azuria, azuriaFull, prices };
+  return { units: Math.floor(raw * (1 - (state.compute.pooled ?? 0))), raw, bill, azuria, azuriaSpans, prices };
 }
 
 // Eras that still have a turn after this one: only those can take new compute (a deal signed now arrives next turn).
@@ -192,9 +210,8 @@ export function project(state, plan) {
     const planBill = bought * UNIT_PRICE;
     const ops = opsMonthly(era);
     const people = budgetSpend + reviewerCost({ automation: state.automation, era }); // reviewers' pay grows by era
-    // creditOffset, spent the way spendCredits spends it: only for the part of the row the Azuria compute runs
-    const running = signed.azuriaFull > 0 ? signed.azuria / signed.azuriaFull : 1;
-    const credit = Math.min(signed.azuria, running * (credits / months));
+    // creditOffset, spent the way spendCredits spends it, day by day: min(Azuria bill running now, credits per month)
+    const credit = averageCredit(signed.azuriaSpans, credits / months);
     credits = Math.max(0, credits - credit * months);
     // Compute above today's level covers today's shortfall first and then sits idle; compute below it idles less first.
     const delta = signed.units + planned - state.compute.online;

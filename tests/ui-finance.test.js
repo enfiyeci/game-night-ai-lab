@@ -368,3 +368,23 @@ test('in a later row, Azuria credits are spent only for the part of the row the 
   const ran = (end - state.compute.pipeline[0].landsDay) / (end - start);
   assert.ok(Math.abs(row.credit - ran * Math.min(bill, state.compute.credits / months)) < 1e-9, `${row.credit}`);
 });
+
+test('in a later row, a running Azuria contract and one landing partway share the credit cap moment by moment', () => {
+  const state = structuredClone(era3());
+  const next = state.turn + 1;
+  const { start, end } = roundSpan(next);
+  const months = eraById(state.era).monthsPerTurn;
+  const bill = 10 * BALANCE.unitMonthlyCost;
+  const half = start + Math.round((end - start) / 2);
+  state.compute.contracts = [{ id: 'za', supplier: 'azuria', units: 10, price: 1, monthsLeft: 24, needsPower: false, string: null, arrivedTurn: 0, scaledDown: false, troubled: false, dark: false, bumpTurn: null, exclusiveBought: false, headline: null }];
+  state.compute.pipeline = [{ id: 'zb', supplier: 'azuria', units: 10, price: 1, termMonths: 24, arrivesTurn: next + 1, string: null, landsDay: half, landsFor: next }];
+  state.compute.credits = 2.5 * bill * months; // one bill a month this row, then a cap of 1.5 bills a month in the next
+  const rows = project(state, defaultPlan(state)).rows;
+  const now = rows.find((r) => r.turn === state.turn);
+  const row = rows.find((r) => r.turn === next);
+  const cap = (state.compute.credits - now.credit * months) / months;
+  const late = (end - half) / (end - start);
+  assert.ok(cap > bill && cap < 2 * bill, 'the cap binds only after the second contract lands');
+  const expected = (1 - late) * Math.min(bill, cap) + late * Math.min(2 * bill, cap);
+  assert.ok(Math.abs(row.credit - expected) < 1e-9, `${row.credit} vs ${expected}`);
+});
