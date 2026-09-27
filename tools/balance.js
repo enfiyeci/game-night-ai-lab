@@ -23,6 +23,8 @@ import { eraStartTurn } from '../sim/power.js';
 import { PREPAY_SHARE, QUEUE_TERM_MONTHS, released } from '../sim/queue.js';
 import { rank } from '../sim/rivals.js';
 import { BALANCE } from '../sim/balance.js';
+import { flawsLeft, nextBubbleGain } from '../sim/polish.js';
+import { nextRoundDay } from '../sim/time.js';
 
 const HAZARD_CHOICES = ['penalize', 'fix', 'ignore'];
 // Mirrors SPEND_LEVELS and spendFor(level, era) in ui/logic/actions.js on the UI branch.
@@ -334,6 +336,19 @@ function computeMove(state, rng, style, prefs, policy) {
   return null;
 }
 
+// When a bot publishes (keep-polishing spec §7). Bots decide at round marks, so "wait" means another round.
+// Speed and random publish at once; balanced once no flaw is left and the next bubble adds under 8, or when a rival
+// lands before the next mark; safety once no flaw is left and the next bubble adds under 4.
+const PUBLISH_BELOW = { balanced: 8, safety: 4 };
+export function readyToPublish(state, style) {
+  const model = state.pendingModel;
+  const below = PUBLISH_BELOW[style];
+  if (!model?.polishing || below == null) return true;
+  if (flawsLeft(model) > 0) return false;
+  if (nextBubbleGain(model) < below) return true;
+  return style === 'balanced' && (state.rivalLaunches ?? []).some((launch) => launch.day <= nextRoundDay(state));
+}
+
 function makeStrategy(style, prefs, policy = {}) {
   return (state, rng) => {
     const computeSafety = policy.randomSafety ? Math.round(rng.next() * 30) / 100 : prefs.computeSafety;
@@ -367,13 +382,13 @@ function makeStrategy(style, prefs, policy = {}) {
     if (automation) actions.automation = automation;
     const planned = plannedState(state, actions);
     if (meeting) actions.moves.push({ type: 'meeting' });
-    if (planned.pendingModel && actions.moves.length < 2) {
+    if (planned.pendingModel && readyToPublish(planned, style) && actions.moves.length < 2) {
       const move = {
         type: 'release',
         release: { picks: pickFrom(planned, 'release', prefs.release), price: 'market', reasoning: 'medium', family: 'Bot', generation: planned.models.length + 1 },
       };
       if (releaseModel(structuredClone(planned), move.release, VALIDATION_RNG).ok) actions.moves.push(move);
-    } else if (!planned.activeRun && actions.moves.length < 2) {
+    } else if (!planned.activeRun && !planned.pendingModel && actions.moves.length < 2) {
       const recipe = bestRecipe(planned, prefs);
       // The speed bot breaks the Geneva cap whenever one binds.
       if (recipe) actions.moves.push({ type: 'startRun', recipe, ...(style === 'speed' && dealBinds(state, 'computeCap') && { breakDeal: true }) });
@@ -461,7 +476,7 @@ export const STRATEGIES = {
 };
 
 function freshMetrics() {
-  return { perEra: {}, queueShortTurns: 0, queueTurns: 0, rankAtEra4End: null, rejectedActions: 0, rounds: 0, roundsAtFirst: 0, rivalDeals: 0 };
+  return { perEra: {}, queueShortTurns: 0, queueTurns: 0, rankAtEra4End: null, rejectedActions: 0, rounds: 0, roundsAtFirst: 0, rivalDeals: 0, releases: 0, polishDaysSum: 0, polishSum: 0, fixesSum: 0, pressSum: 0 };
 }
 
 function observeTurn(metrics, { era, burn, compute }) {
@@ -485,8 +500,17 @@ function simulateMeasured(name, seed) {
     const era = state.era;
     const turnInEra = state.turnInEra;
     let economySample = null;
+    const pending = state.pendingModel;
+    const decisionDay = state.day;
     const result = endTurn(state, STRATEGIES[name](state, rng), rng, { beforeEconomy: (sample) => { economySample = sample; } });
     state = result.state;
+    for (const event of result.events.filter((e) => e.type === 'release')) {
+      metrics.releases += 1;
+      metrics.polishDaysSum += pending?.polishing ? decisionDay - pending.polishing.startedDay : 0;
+      metrics.polishSum += event.model.polish ?? 0;
+      metrics.fixesSum += event.model.fixedFlaws?.length ?? 0;
+      metrics.pressSum += event.model.launch.pressAvg;
+    }
     metrics.rejectedActions += result.errors.length;
     metrics.rounds += 1;
     if (rank(state) === 1) metrics.roundsAtFirst += 1;
@@ -530,6 +554,11 @@ export function report(n) {
     let rounds = 0;
     let roundsAtFirst = 0;
     let rivalDeals = 0;
+    let releases = 0;
+    let polishDaysSum = 0;
+    let polishSum = 0;
+    let fixesSum = 0;
+    let pressSum = 0;
     for (let seed = 1; seed <= n; seed++) {
       const { state, metrics } = simulateMeasured(name, seed);
       const r = { ending: state.ending, era: state.era, turn: state.turn };
@@ -539,6 +568,11 @@ export function report(n) {
       rounds += metrics.rounds;
       roundsAtFirst += metrics.roundsAtFirst;
       rivalDeals += metrics.rivalDeals;
+      releases += metrics.releases;
+      polishDaysSum += metrics.polishDaysSum;
+      polishSum += metrics.polishSum;
+      fixesSum += metrics.fixesSum;
+      pressSum += metrics.pressSum;
       eraSum += r.era;
       if (ENDINGS[r.ending]?.kind === 'fail' && (r.era === 3 || r.era === 4)) diedInEra3or4 += 1;
       queueShortTurns += metrics.queueShortTurns;
@@ -573,6 +607,10 @@ export function report(n) {
       leftBehindByEra,
       roundsAtFirst: rounds > 0 ? roundsAtFirst / rounds : 0,
       rivalDealsPerRun: rivalDeals / n,
+      polishDaysPerRelease: releases ? polishDaysSum / releases : 0,
+      meanPolishAtRelease: releases ? polishSum / releases : 0,
+      fixesPerRelease: releases ? fixesSum / releases : 0,
+      meanPressAvg: releases ? pressSum / releases : 0,
       rejectedActions,
       meanRankAtEra4End: rankAtEra4EndRuns > 0 ? rankAtEra4EndSum / rankAtEra4EndRuns : null,
     };
