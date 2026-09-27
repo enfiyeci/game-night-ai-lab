@@ -52,7 +52,11 @@ balance tool (`node tools/balance.js <runs>`).
 - Push in its own Bash call (memory: the safety hook blocks a line with a push followed by any "-f" text). No force
   pushes: the owner's hook forbids them, so bring in `origin/ui` with `git merge`, never a rebase of pushed commits.
 
-## Owner decisions this plan needs (defaults in bold; the build uses the default unless the owner picks otherwise)
+## Owner decisions (answered 2026-09-26)
+
+Owner answers: D1 "sure" (option a), D2 "sure" (all four rules as written), D4 "lets make it more expensive" (see the
+D4 line), D5 "sounds good" (12th month), D6 and D7 "whatever you recommend" (the bold defaults). The option lists
+below are kept as the record.
 
 - **D1. White House testers cost** (open since the handoff; WIP commit `1368f47`). Options: **(a) era 3 on only: a
   release waits one round unless an outside eval card is on it; nothing in eras 1-2 (measured: no bot changes)**;
@@ -70,9 +74,10 @@ balance tool (`node tools/balance.js <runs>`).
 - **D3. The spec's table row for `sim/data/events6c.js:104` is wrong.** It says "rival version jump"; the code is
   the player's own "Sudden capability jump" card (25% on a trained model). **It stays random, as an event card
   pop-up (decision 2).** Alternative: a threshold on something the player controls (not designed).
-- **D4. Lawsuits** ("always happen when the causing choice is made"): **every data card with legal risk is always
-  settled, at its expected cost: scraping $120M, filtered $36M, synthetic $6M, licensed $3M**. Alternative: only
-  scraping (the one card at 60%) is sued, always, at the full $200M; the others never.
+- **D4. Lawsuits** ("always happen when the causing choice is made"). Owner: "lets make it more expensive" than the
+  proposed expected-cost settlement. **Picked: every data card with legal risk is always sued at its full listed
+  cost: scraping $200M, filtered $120M, synthetic $60M, licensed $60M** (`legal.cost` in `sim/data/cards.js`). The
+  licensed card being sued every time is the one line the owner may still want to drop.
 - **D5. CoreFlame trouble (Part B).** A running total of 2% a month never reaches 1 in a normal run (about 33
   months), so the fragile supplier would disappear. **Default: a CoreFlame contract runs into trouble in its 12th
   month, stated on the offer.** Alternative: the running total (CoreFlame never fails).
@@ -777,7 +782,7 @@ test('refusing the compute pool marks supply-chain risk when US favor ends below
 ## Task A9 (after gn-model-money is in `ui`): Training hazards follow the recipe
 
 Rule shapes: 1 (running total) for loss spikes; 4 for reward hacking (spec: "always happen when the causing choice is
-made"); D4 for lawsuits (expected-cost settlement).
+made"); D4 for lawsuits (always sued, full listed cost).
 
 **Files:**
 - Modify: `sim/training.js` (`advanceRunBy`, `resolveRun`), `sim/hazards.js` (`rollTrainingHazard`, remove
@@ -811,12 +816,12 @@ test('loss spikes add up: a run spikes when its per-round chances reach 1', () =
   assert.equal(s.activeRun.spikes, 1);
 });
 
-test('a data card with legal risk is always settled at its expected cost', () => {
+test('a data card with legal risk is always sued at its full listed cost', () => {
   const s = finishedRunState(['scrape-data']); // a run about to resolve with that pre-training card
   const before = s.legalCases.length;
   resolveRun(s, s.activeRun);
   assert.equal(s.legalCases.length, before + 1);
-  assert.equal(s.legalCases.at(-1).cost, 120);
+  assert.equal(s.legalCases.at(-1).cost, 200);
 });
 ```
 Build `runningState` and `finishedRunState` from the existing training tests' setup (they already start runs with
@@ -828,7 +833,7 @@ Build `runningState` and `finishedRunState` from the existing training tests' se
   `if (accrue(run, 'spikePressure', Math.min(1, Math.max(0, run.spikeChance)))) run.spikes += 1;`,
   `state.pendingModel = resolveRun(state, run);`, `advanceRun = (state) => advanceRunBy(state, null, 1)`.
   `resolveRun(state, run)`: lawsuits become
-  `if (e.legal) state.legalCases.push({ cost: Math.round(e.legal.cost * e.legal.chance), dueTurn: state.turn + e.legal.delay, source: 'training data' }); // D4`,
+  `if (e.legal) state.legalCases.push({ cost: e.legal.cost, dueTurn: state.turn + e.legal.delay, source: 'training data' }); // D4: always sued, full cost`,
   and the hazard call becomes `rollTrainingHazard(state, cards, flags)`. `sim/hazards.js`:
   `if (!hackable) return null;` and delete `REWARD_HACK_CHANCE`. `ui/logic/training.js`: `resolveRun(structuredClone(state),
   structuredClone(run))` and delete `NO_DICE`. `ui/logic/scenarios.js` `hazardState` still works (the first dice seed
