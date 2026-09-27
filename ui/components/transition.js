@@ -2,6 +2,7 @@ export const ENTER_MS = 180;
 export const EXIT_MS = 160;
 
 const running = new WeakMap();
+const entering = new WeakMap();
 
 export function reducedMotion() {
   return globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
@@ -10,6 +11,11 @@ export function reducedMotion() {
 function nextFrame(callback) {
   if (typeof globalThis.requestAnimationFrame === 'function') return globalThis.requestAnimationFrame(callback);
   return globalThis.setTimeout(callback, 0);
+}
+
+function cancelFrame(id) {
+  if (typeof globalThis.cancelAnimationFrame === 'function') globalThis.cancelAnimationFrame(id);
+  else globalThis.clearTimeout(id);
 }
 
 function finishOnInput(layer, finish) {
@@ -26,6 +32,7 @@ function finishOnInput(layer, finish) {
 }
 
 export function enterTransition(layer) {
+  entering.get(layer)?.();
   layer.classList.add('scene-transition', 'scene-entering');
   if (reducedMotion()) {
     layer.classList.remove('scene-entering');
@@ -33,18 +40,29 @@ export function enterTransition(layer) {
     return;
   }
 
+  let cancelled = false;
+  let frame = null;
   let timer = null;
   let removeInput = () => {};
-  const finish = () => {
-    if (!layer.classList.contains('scene-entering')) return;
+  const cancel = () => {
+    if (cancelled) return;
+    cancelled = true;
+    if (frame !== null) cancelFrame(frame);
     if (timer !== null) globalThis.clearTimeout(timer);
     removeInput();
+    entering.delete(layer);
     layer.classList.remove('scene-entering');
+  };
+  const finish = () => {
+    if (cancelled || !layer.classList.contains('scene-entering')) return;
+    cancel();
     layer.classList.add('scene-ready', 'dialog-open');
   };
   removeInput = finishOnInput(layer, finish);
-  nextFrame(() => {
-    if (!layer.isConnected) return;
+  entering.set(layer, cancel);
+  frame = nextFrame(() => {
+    frame = null;
+    if (cancelled || !layer.isConnected) return;
     layer.classList.add('scene-ready', 'dialog-open');
     timer = globalThis.setTimeout(finish, ENTER_MS);
   });
@@ -52,6 +70,7 @@ export function enterTransition(layer) {
 
 export function exitTransition(layer, { remove = true } = {}) {
   if (!layer) return Promise.resolve();
+  entering.get(layer)?.();
   if (running.has(layer)) return running.get(layer);
   const instant = reducedMotion() || !layer.isConnected;
 

@@ -45,7 +45,7 @@ test('a warning keeps its advisor marked until it is answered, even when calm or
   assert.equal(marks.markFor('safety', calm), 'uneasy', 'a calm advisor with a warning shows one "!"');
   assert.equal(marks.markFor('cfo', alarmed), 'alarmed', 'heard, but the warning still waits');
   assert.ok(marks.hasTask('safety'));
-  marks.setTasks([{ id: 'runway', advisor: 'cfo' }]); // "Not now" on Safety's warning
+  marks.setTasks([{ id: 'runway', advisor: 'cfo' }]); // Safety's warning was answered.
   assert.equal(marks.markFor('safety', calm), null);
   assert.equal(marks.hasTask('safety'), false);
   marks.setTasks([]);

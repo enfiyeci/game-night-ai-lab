@@ -99,8 +99,15 @@ const focusable = (root) => [...root.querySelectorAll(
 )].filter((element) => !element.closest('[hidden]'));
 
 export function closeDialog(target) {
-  const layer = target?.classList?.contains('dialog-layer') ? target : target?.querySelector?.('.dialog-layer');
-  closers.get(layer)?.();
+  const layers = target?.classList?.contains('dialog-layer')
+    ? [target]
+    : [...(target?.querySelectorAll?.('.dialog-layer') ?? [])];
+  for (let index = layers.length - 1; index >= 0; index -= 1) {
+    const close = closers.get(layers[index]);
+    if (!close) continue;
+    close();
+    return;
+  }
 }
 
 export function openDialog(overlayRoot, opts) {
