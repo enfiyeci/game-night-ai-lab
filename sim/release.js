@@ -152,6 +152,12 @@ export function releaseModel(state, release, rng) {
     activated: false,
     flags,
     servingCost: 0,
+    // The model's books: training (recipe cards and compute) and launch cards, then what it earns and what serving it
+    // costs (sim/economy.js accrueEconomy).
+    trainingCost: m.trainingCost ?? 0,
+    launchCost: cash,
+    earned: 0,
+    servingSpent: 0,
   };
   if (spec.channel === 'consumer' && hasLine(state, 'no-wmd')) model.revenueMult = 0.97;
   state.models.push(model);

@@ -52,6 +52,11 @@ export function monthlyRevenue(state) {
 
 export const computeRent = (state) => monthlyBills(state) + leaseBills(state) - creditOffset(state);
 
+// What one online unit costs the lab each month right now: rent after credits plus spot cover, over the fleet.
+export const unitMonthlyPrice = (state) => (state.compute.online > 0
+  ? Math.max(0, computeRent(state) + spotCover(state)) / state.compute.online
+  : BALANCE.unitMonthlyCost);
+
 export function projectBurn(state) {
   const spot = spotCover(state);
   const ops = BALANCE.baseOpsMonthly * (1 + 0.25 * (state.era - 1));
@@ -70,6 +75,15 @@ export function accrueEconomy(state, months) {
   const burn = projectBurn(state);
   state.burnPlanned = burn;
   const revenue = monthlyRevenue(state);
+  // Each model's own books (the finance page's "Each model" table): what it earned, and what serving it cost at
+  // today's price of a unit.
+  const usage = state.compute.surge?.usage ?? 1;
+  const load = (state.compute.surge?.mult ?? 1) * usage;
+  const price = unitMonthlyPrice(state);
+  for (const m of activeModels(state)) {
+    m.earned = (m.earned ?? 0) + (m.users * revenuePerUser(m)) / 1e6 * usage * months;
+    m.servingSpent = (m.servingSpent ?? 0) + (m.users * m.servingCost) / BALANCE.unitMonthlyDollars * load * price * months;
+  }
   state.arr = revenue * 12;
   state.cash += (revenue - burn) * months;
   state.valuation = valuationOf(state);

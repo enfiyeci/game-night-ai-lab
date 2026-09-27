@@ -5,6 +5,7 @@ import { standardTechniques } from './techniques.js';
 import { rollTrainingHazard, applyAlignmentFaking, evalGamingDebt } from './hazards.js';
 import { hasLine } from './constitution.js';
 import { computeSlices } from './split.js';
+import { unitMonthlyPrice } from './economy.js';
 
 export const SHARED_SAFETY_DEBT_MULT = 0.7;
 
@@ -22,7 +23,7 @@ export function startRun(state, recipe) {
   state.cash -= cost.cash;
   // Focus effects are fixed when the run starts, so a stage that opens mid-run cannot change them.
   const focus = focusEffects(state, recipe);
-  state.activeRun = { recipe: structuredClone(recipe), units: cost.units, turnsLeft: cost.turns, spikes: 0, spikeChance: Math.max(0, spikeChance), bonus: 0, focus };
+  state.activeRun = { recipe: structuredClone(recipe), units: cost.units, turnsLeft: cost.turns, spikes: 0, spikeChance: Math.max(0, spikeChance), bonus: 0, focus, spent: { cash: cost.cash, compute: 0 } };
   return { ok: true, cost };
 }
 
@@ -35,6 +36,9 @@ export function advanceRunBy(state, rng, fraction) {
     run.canAdvance = computeSlices(state).training >= run.units;
   }
   if (!run.canAdvance) return { type: 'runPaused' };
+  // The run's own bill: the units it holds, at today's price of a unit, for the time it advanced.
+  run.spent ??= { cash: 0, compute: 0 };
+  run.spent.compute += run.units * fraction * eraById(state.era).monthsPerTurn * unitMonthlyPrice(state);
   run.spikeProgress = (run.spikeProgress ?? 0) + fraction;
   if (run.spikeProgress >= 1 - 1e-9) {
     const chance = Math.min(1, Math.max(0, run.spikeChance));
@@ -45,6 +49,7 @@ export function advanceRunBy(state, rng, fraction) {
   if (run.turnsLeft > 1e-9) return null;
   state.activeRun = null;
   state.pendingModel = resolveRun(state, run, rng);
+  state.pendingModel.trainingCost = (run.spent?.cash ?? 0) + (run.spent?.compute ?? 0);
   if (run.uncapped) state.pendingModel.uncapped = true; // run past the Geneva cap
   return state.pendingModel;
 }
