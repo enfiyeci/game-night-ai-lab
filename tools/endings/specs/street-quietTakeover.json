@@ -1,0 +1,30 @@
+{
+ "shots": {
+  "4": {
+   "image": "qt-gate",
+   "screens": [
+    [
+     "reader",
+     "qt-gate"
+    ]
+   ],
+   "focus": "screen",
+   "push": 1.05
+  },
+  "5": {
+   "image": "qt-cafe",
+   "screens": [
+    [
+     "phone",
+     "qt-cafe"
+    ],
+    [
+     "tv",
+     "qt-cafe"
+    ]
+   ],
+   "focus": "screen",
+   "push": 1.05
+  }
+ }
+}

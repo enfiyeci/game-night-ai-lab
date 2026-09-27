@@ -1,0 +1,15 @@
+{
+ "shots": {
+  "6": {
+   "image": "al-cafe",
+   "screens": [
+    [
+     "tv",
+     "al-cafe"
+    ]
+   ],
+   "focus": "screen",
+   "push": 1.06
+  }
+ }
+}
