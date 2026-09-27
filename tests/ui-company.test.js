@@ -101,7 +101,7 @@ test('a deal card is disabled when cash cannot cover its prepayment', () => {
   initial.cash = 0;
   const card = dealCards(initial).find((candidate) => candidate.id === prepaid.id);
   assert.equal(card.disabled, true);
-  assert.equal(card.reason, 'Not enough cash for the upfront payment');
+  assert.match(card.reason, /^Upfront is \$[\d.,]+[MB]; you have -?\$[\d.,]+[MB]\.$/);
 });
 
 test('queued prepayments are projected before another deal is offered', () => {

@@ -12,6 +12,7 @@ import {
   queueOrderPreflight,
   replaceQueueOrder,
   queueScreenAvailable,
+  roundEndStrip,
   queueTrainingView,
   queueView,
 } from '../logic/compute.js';
@@ -31,6 +32,9 @@ function finishDialog(opened, kind, footer) {
   opened.querySelector('.dialog-body').append(footer);
   return opened;
 }
+
+// "A", "A and B", "A, B and C".
+const listNames = (names) => (names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names.at(-1)}` : names[0]);
 
 function dealButton(card) {
   const button = element('button', `company-card supplier-${card.supplier}`);
@@ -56,6 +60,9 @@ function dealButton(card) {
     element('span', `company-chip${card.chip === 'No strings' ? ' no-strings' : ''}`, card.chip),
     element('span', 'company-explanation', card.explanation),
   );
+  if (card.fallbackLine) catchBlock.append(element('span', 'company-fallback', card.fallbackLine));
+  if (card.takenBy) button.append(element('span', 'company-taken', `${card.takenBy} takes this`));
+  else if (card.secondChoiceOf.length) button.append(element('span', 'company-second', `${listNames(card.secondChoiceOf)}'s second choice`));
   button.append(who, big, element('span', 'company-per', card.per), rows, catchBlock);
   if (card.disabled) button.append(element('span', 'company-card-reason', card.reason));
   return button;
@@ -262,6 +269,10 @@ export function openDeals(game, overlayRoot) {
     const ok = opened?.querySelector('.dialog-ok');
     if (ok) ok.disabled = !card || card.disabled;
     body.replaceChildren(group);
+    const strip = element('div', 'deal-round-end');
+    strip.append(element('b', '', `At the ${roundWord(state.era)}'s end`));
+    for (const item of roundEndStrip(state)) strip.append(element('span', `deal-round-end-item lab-${item.id}`, item.text));
+    body.append(strip);
     if (gridStrip) body.append(gridStrip);
     body.append(error);
     if (focusKey) {
@@ -280,7 +291,7 @@ export function openDeals(game, overlayRoot) {
 
   opened = openDialog(overlayRoot, {
     title: 'Sign a compute deal',
-    subtitle: `Era ${initial.era} · ${eraById(initial.era).name} · offers change every ${roundWord(initial.era)}`,
+    subtitle: `Era ${initial.era} · ${eraById(initial.era).name} · rivals take the marked cards at the ${roundWord(initial.era)}'s end`,
     left: { title: 'Team', content: teamPanel(initial, { opinions: opinions(initial, 'deals') }) },
     right: { title: 'Commitments', content: right },
     body,

@@ -1467,6 +1467,67 @@ svg.room {
 .grid-reservation-identity strong { font-size: 12.5px; font-weight: 900; }
 .grid-reservation-strip > b { font-weight: 900; white-space: nowrap; }
 .grid-reservation-strip .company-chip { white-space: nowrap; }
+
+/* Compute race: the deal board says which cards rivals take at the round's end. */
+.company-dialog-deals .deal-cards { margin-top: 18px; }
+.company-card:has(.company-taken) { border-color: color-mix(in oklab, var(--coral) 70%, var(--ink)); box-shadow: 0 0 0 2px color-mix(in oklab, var(--coral) 70%, var(--paper)); }
+.company-card:has(.company-taken):disabled { border-color: color-mix(in oklab, var(--coral) 45%, var(--paper)); box-shadow: 0 0 0 2px color-mix(in oklab, var(--coral) 30%, var(--paper)); }
+.company-card.selected:has(.company-taken) { border-color: var(--wood); box-shadow: 0 0 0 3px color-mix(in oklab, var(--wood) 32%, transparent); }
+.company-card:has(.company-taken):hover:not(:disabled) { border-color: var(--wood); }
+.company-card:has(.company-taken):focus-visible { border-color: var(--wood); box-shadow: 0 0 0 3px color-mix(in oklab, var(--sky) 36%, transparent); }
+/* In flow, straddling the card's top edge: a banner that wraps pushes the card down instead of covering its name. */
+.company-taken {
+  display: block;
+  margin: -24.5px -12.5px 5px;
+  padding: 3px 8px;
+  border-radius: 8px;
+  color: var(--paper);
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1.2;
+  text-align: center;
+  background: color-mix(in oklab, var(--coral) 88%, var(--ink));
+}
+/* The banner holds the card's top edge, so its Selected tag moves to the bottom edge. */
+.company-card:has(.company-taken) .company-selected { top: auto; bottom: -9px; }
+.company-second {
+  order: 1;
+  margin-top: auto;
+  padding-top: 10px;
+  color: color-mix(in oklab, var(--ink) 62%, var(--paper));
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+.company-card:has(.company-second) .company-catch { order: 2; margin-top: 5px; padding-top: 0; }
+.company-card:has(.company-second) .company-card-reason { order: 3; }
+.company-fallback {
+  display: block;
+  margin-top: 7px;
+  padding-top: 6px;
+  border-top: 1px dashed color-mix(in oklab, var(--coral) 45%, var(--paper));
+  color: color-mix(in oklab, var(--coral) 55%, var(--ink));
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+.company-card:disabled .company-fallback { color: color-mix(in oklab, var(--ink) 50%, var(--paper)); }
+.deal-round-end {
+  display: flex;
+  margin-top: 16px;
+  padding: 9px 13px;
+  flex-wrap: wrap;
+  gap: 5px 16px;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: left;
+  background: color-mix(in oklab, var(--ink) 5%, var(--paper));
+}
+.deal-round-end b { font-weight: 900; }
+.deal-round-end-item.lab-rest,
+.deal-round-end-item.lab-qilin { color: color-mix(in oklab, var(--ink) 72%, var(--paper)); }
 .commitments-panel { padding: 4px 14px 14px; }
 .compute-bill-row { display: flex; padding: 8px 0 2px; align-items: baseline; justify-content: space-between; gap: 8px; }
 .compute-bill-row span { color: color-mix(in oklab, var(--ink) 62%, var(--paper)); font-size: 12px; font-weight: 700; }

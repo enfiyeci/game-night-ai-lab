@@ -16,6 +16,7 @@ import {
   queueTrainingView,
   queueView,
   replaceQueueOrder,
+  roundEndStrip,
   sitesView,
   turnSummary,
 } from '../ui/logic/compute.js';
@@ -218,7 +219,7 @@ test('projected contract actions refresh deal cash and exclusivity checks', () =
   const broken = projectQueue(lowCash, { contractActions: [{ id: 'az', action: 'break' }], moves: [] });
   const prepaid = dealCards(broken).find((card) => Object.fromEntries(card.rows).Upfront !== 'none');
   assert.equal(prepaid.disabled, true);
-  assert.match(prepaid.reason, /cash/i);
+  assert.match(prepaid.reason, /^Upfront is .*; you have -?\$/);
 });
 
 test('a projection leaves a pending card alone until its story-day deadline', () => {
@@ -369,4 +370,41 @@ test('sites and signed deals show the landing date, not the old mark', () => {
   s.compute.pipeline.unshift({ id: 'c8', supplier: 'azuria', units: 4, arrivesTurn: 2, landsDay: 160, landsFor: 1 }); // an older deal due the same round
   const lines = turnSummary([{ type: 'deal', supplier: 'verde', arrivesTurn: 2, pipelineId: 'c9' }], s);
   assert.ok(lines.some((line) => line.includes(storyDate(175).label)), lines.join(' / '));
+});
+
+test('deal cards say who takes them and what happens if you sign first', () => {
+  const s = createInitialState({ seed: 1 });
+  const cards = dealCards({ ...s, movesLeft: 2 });
+  const named = s.compute.offers.filter((o) => o.wantedBy);
+  for (const o of named) {
+    const card = cards.find((c) => c.id === o.id);
+    const rival = s.rivals.find((r) => r.id === o.wantedBy).name;
+    assert.equal(card.takenBy, rival);
+    assert.match(card.fallbackLine, new RegExp(`^If you sign it, ${rival} `));
+  }
+  for (const card of cards.filter((c) => !named.some((o) => o.id === c.id))) assert.equal(card.takenBy, null);
+});
+
+test('the round-end strip lists every named card and Qilin', () => {
+  const s = createInitialState({ seed: 1 });
+  const strip = roundEndStrip(s);
+  assert.equal(strip.length, s.compute.offers.filter((o) => o.wantedBy).length + 2);
+  assert.equal(strip.at(-1).text, 'Cards nobody takes stay on the board');
+});
+
+test('turn summaries report rival deals and your denial', () => {
+  const s = createInitialState({ seed: 1 });
+  const lines = turnSummary([
+    { type: 'rivalDeal', id: 'openbrain', supplier: 'verde', units: 40, arrivesTurn: 3, fallback: false, big: true },
+    { type: 'rivalDeal', id: 'deepthink', supplier: 'spot', units: 4, arrivesTurn: 1, fallback: true, big: true },
+  ], s);
+  assert.deepEqual(lines, ["OpenBrain signed Verde's 40 units", "DeepThink signed Spot market's 4 units, its second choice"]);
+});
+
+test('a card you cannot pay for says how much you have', () => {
+  const s = createInitialState({ seed: 1 });
+  const verde = s.compute.offers.find((o) => o.supplier === 'verde');
+  s.cash = verde.upfront - 1;
+  const card = dealCards({ ...s, movesLeft: 2 }).find((c) => c.id === verde.id);
+  assert.match(card.reason, /^Upfront is \$[\d.,]+[MB]; you have \$[\d.,]+[MB]\.$/);
 });
