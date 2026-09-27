@@ -7,7 +7,7 @@ import {
   SCALE_DOWN, SCALE_DOWN_PENALTY_MONTHS, BREAK_SHARE, BUYOUT_MONTHS,
 } from './data/compute.js';
 import { SITE_TYPES, reserveGrid, poweredUnits } from './power.js';
-import { BOARD_SUPPLIERS, BIG_DEAL_SHARE, BIG_DEAL_HEAT, DENIAL_HEAT } from './data/race.js';
+import { BOARD_SUPPLIERS, DENIAL_HEAT } from './data/race.js';
 
 const UNIT = BALANCE.unitMonthlyCost;
 const FAMILY = { azuriaEquity: 'azuria', loi: 'verde' };
@@ -116,7 +116,6 @@ export function signOffer(state, offerId, rng) {
   if (offer.upfront > state.cash) return { ok: false, error: 'not enough cash for the upfront payment' };
   state.cash -= offer.upfront;
   if (offer.wantedBy) state.raceHeat += DENIAL_HEAT;
-  if (offer.units >= BIG_DEAL_SHARE * state.compute.online) state.raceHeat += BIG_DEAL_HEAT;
   const f = family(offer.supplier);
   state.compute.deals ??= [];
   state.compute.deals.push({ supplier: f, turn: state.turn });

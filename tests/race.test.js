@@ -192,7 +192,8 @@ test('a rival takes exactly the card it named', () => {
   assert.deepEqual(s.compute.offers.map((o) => o.id), ['spot-0'], 'the untaken card stays');
   assert.deepEqual(rivalOf(s, 'openbrain').pipeline, [{ units: 40, turn: s.turn + 3, supplier: 'verde', source: 'board' }]);
   assert.equal(rivalOf(s, 'lodestar').pipeline[0].turn, s.turn + 1);
-  assert.equal(s.raceHeat, heat + 6, 'each deal adds a quarter or more to its fleet: +2 each');
+  assert.equal(s.raceHeat, heat, 'rival deals add no heat (owner pick F); big ones are still news');
+  assert.ok(events.every((e) => e.big), 'each of these deals adds a quarter or more to its fleet');
 });
 
 test('sign a named card first and that rival takes its second choice', () => {
@@ -228,7 +229,7 @@ test('compute lands in the rival fleet on its turn', () => {
   assert.deepEqual(ob.pipeline, [{ units: 7, turn: 1, source: 'board' }]);
 });
 
-test('denying a rival its card heats the race; so does a deal a quarter the size of your fleet', () => {
+test('denying a rival its card heats the race; a big deal on its own does not (owner pick F)', () => {
   const s = board();
   s.compute.online = 100;
   const heat = s.raceHeat;
@@ -237,7 +238,7 @@ test('denying a rival its card heats the race; so does a deal a quarter the size
   assert.equal(s.raceHeat, heat + 2);
   s.compute.online = 10;
   signOffer(s, 'spot-0', sideRng(s, 1)); // nobody named it; 4 is over a quarter of 10
-  assert.equal(s.raceHeat, heat + 4);
+  assert.equal(s.raceHeat, heat + 2);
 });
 
 test('the round mark counts standing, then lands, takes and grows', () => {

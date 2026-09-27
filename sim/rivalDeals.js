@@ -1,6 +1,6 @@
 // The shared deal board (spec 2026-09-26 compute race §2 rules 3–5). No dice: rivals name cards in catch-up order,
 // the player moves first, and at the round's end each rival takes what it named or its second choice.
-import { BOARD_SUPPLIERS, BIG_DEAL_SHARE, BIG_DEAL_HEAT, OFF_BOARD_SHARE } from './data/race.js';
+import { BOARD_SUPPLIERS, BIG_DEAL_SHARE, OFF_BOARD_SHARE } from './data/race.js';
 import { rivalShortfall, recordStanding } from './rivals.js';
 
 const boardCards = (state) => state.compute.offers.filter((o) => BOARD_SUPPLIERS.includes(o.supplier) && o.units > 0);
@@ -53,8 +53,7 @@ export function takeTargets(state) {
     state.compute.offers = state.compute.offers.filter((o) => o !== offer);
     const arrivesTurn = state.turn + Math.max(1, offer.arrivesIn ?? 1);
     r.pipeline.push({ units: offer.units, turn: arrivesTurn, supplier: offer.supplier, source: 'board' });
-    const big = offer.units >= BIG_DEAL_SHARE * r.fleet;
-    if (big) state.raceHeat += BIG_DEAL_HEAT;
+    const big = offer.units >= BIG_DEAL_SHARE * r.fleet; // news for the feed; no race heat (owner pick F)
     events.push({ type: 'rivalDeal', id: r.id, supplier: offer.supplier, units: offer.units, arrivesTurn, fallback: offer.id !== plan.offerId, big });
   }
   return events;
