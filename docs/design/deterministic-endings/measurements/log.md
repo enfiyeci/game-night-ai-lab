@@ -132,6 +132,17 @@ Ending counts per bot:
 | a10 | balancedHighSafety | pacingDeal 27, misalignment 168, acquihire 5 |
 | a10 | balancedPush | pacingDeal 21, misalignment 175, acquihire 4 |
 | a10 | denier | misalignment 198, acquihire 2 |
+| p1 | speed | boardRemoved 185, misuse 15 |
+| p1 | safety | acquihire 196, aligned 2, leftBehind 1, pacingDeal 1 |
+| p1 | balanced | misalignment 174, acquihire 10, pacingDeal 16 |
+| p1 | random | acquihire 168, boardRemoved 17, misalignment 12, rivalDisaster 3 |
+| p1 | overCommitter | acquihire 199, misalignment 1 |
+| p1 | handToMouth | acquihire 85, misalignment 113, rivalDisaster 1, aligned 1 |
+| p1 | balancedNoGrid | misalignment 186, pacingDeal 9, acquihire 5 |
+| p1 | balancedLowSafety | misalignment 184, acquihire 9, pacingDeal 7 |
+| p1 | balancedHighSafety | misalignment 165, pacingDeal 25, acquihire 10 |
+| p1 | balancedPush | misalignment 175, acquihire 9, pacingDeal 16 |
+| p1 | denier | misalignment 194, acquihire 6 |
 
 Notes:
 
@@ -270,3 +281,21 @@ Notes:
   safety 217 to 222). Era 3 warning incidents, runs with at least one over 200 (a9 fixed build / a10): speed 196 / 196
   (one each, the only bot that ships agents in era 3 as a rule; all 4 of its misalignment endings follow one), random
   1 / 1, every other bot 0 / 0 (none ships an agent in era 3). Not traced run by run.
+- p1 (Task P1, the press gives 10s only to outstanding releases, owner: "getting all 10s should be harder": a critic's
+  raw score, the shared base plus its bias, counts in full up to `PRESS_KNEE = 8` and at `PRESS_TOP_SLOPE = 0.1` above
+  it before rounding, so a 9 needs a raw 13 and a 10 a raw 23; scores at 8 or below are unchanged): compared against
+  a10. Measured on scratch exports: c844afe (A9 review round 2) alone reproduces the a10 JSON exactly, and c844afe plus
+  this task gives the same ending counts as e265872 plus this task (only random's era 3-4 compute bills differ, in the
+  fourth digit). The brief's starting slope 0.4 was measured and rejected: raw critic scores run about 10-26 in era 1
+  and 12-42 in eras 2-3 (10th to 90th percentile, four main bots), so with 0.4 (a 10 at raw 11.75) all four critics
+  still gave 10 on 57-76% of each bot's releases (was 77-98%). Other slopes, share of releases with all four at 10 per
+  bot: 0.2 44-63%, 0.15 19-58%, 0.1 1-37%, 0.07 0-28% (0.07 prints 8 on nearly every era 1 release, means 8.0-8.5, and
+  overCommitter never sees a 10 in 200 runs). No bot's leading ending changed, but the endings move more than a handful,
+  because the press feeds users and money (`sim/release.js`: users x `1 + (pressAvg - 6) / 8`, sentiment +
+  `(pressAvg - 6) / 20`) and the average critic score falls from about 10 to 8.1-9.1 in era 1 and 8.5-10 in eras 2-3; era 1 revenue
+  (ARR at era end) drops 14-16% for every bot and most later eras drop 5-17% (a few rise, from which runs survive).
+  Out-of-money endings come sooner: the safety bot's acquihires in era 3 go 1 to 46 (era 5: 55 to 12; mean era 4.29 to
+  3.83); handToMouth misalignment 181 to 113 and acquihire 12 to 85 (72 of them in era 2, was 6); overCommitter
+  misalignment 25 to 1 (198 of its 200 runs sell in era 2, was 163); random acquihire 148 to 168. The balanced bots move
+  by at most 16 (balancedLowSafety misalignment 168 to 184). Slope 0.2 moves the same endings about half as far (safety
+  era 3 acquihires 22, handToMouth misalignment 163). Not traced run by run.

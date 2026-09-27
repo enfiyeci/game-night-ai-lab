@@ -63,6 +63,13 @@ export const BUG_PENALTY = 0.05;
 export const JUMP_BAR_PER_NUMBER = 1;
 export const JUMP_EARNED_GAIN = 5;
 
+// Owner 2026-09-26: "getting all 10s should be harder." A critic's raw score counts in full up to the knee and at the
+// top slope above it (sim/launch.js pressCurve), so a 9 needs a raw 13 and a 10 a raw 23. Measured in
+// docs/design/deterministic-endings/measurements/log.md (p1): a slope of 0.4 left all four critics at 10 on 57-76% of
+// bot releases, since raw scores in eras 2-3 run about 12 to 42.
+export const PRESS_KNEE = 8;
+export const PRESS_TOP_SLOPE = 0.1;
+
 // bias(ctx) adds to the shared base score. ctx: { launch, flags, rank, safetyShown }
 // Each tier holds a few quips; the lab's release count picks one, so back-to-back launches read differently
 // (playtest 2026-09-26: two 10/10 launches printed the same four quotes). Lines after the first in each tier are drafts.

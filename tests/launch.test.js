@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
-import { scoreLaunch, evalGaming, testFor, testScore, retiredTests } from '../sim/launch.js';
-import { BENCHMARKS, TEST_WIDTH } from '../sim/data/launch.js';
+import { scoreLaunch, evalGaming, testFor, testScore, retiredTests, pressCurve } from '../sim/launch.js';
+import { BENCHMARKS, TEST_WIDTH, PRESS_KNEE, PRESS_TOP_SLOPE } from '../sim/data/launch.js';
 import { safetySpend } from '../sim/economy.js';
 import { eraScale } from '../sim/data/compute.js';
 import { createRng } from '../sim/rng.js';
@@ -167,6 +167,39 @@ test('no jump posts when no number was skipped', () => {
   s.lastFlagship = flagshipAt(plainAvg() - 1);
   const r = scoreLaunch(s, { ...named, skipped: 0 }, zeroRng);
   assert.ok(!r.reactions.some((x) => /skipping|jump to|evals read|version number/.test(x.text)));
+});
+
+// Owner 2026-09-26: "getting all 10s should be harder." A critic's raw score (the shared base plus its bias) counts
+// in full up to PRESS_KNEE and at PRESS_TOP_SLOPE above it, before rounding.
+test('the press curve leaves raw scores at or below the knee alone and bends the ones above', () => {
+  for (const raw of [-4, 1, 5.4, 7.49, PRESS_KNEE]) assert.equal(pressCurve(raw), raw);
+  assert.equal(pressCurve(PRESS_KNEE + 10), PRESS_KNEE + 10 * PRESS_TOP_SLOPE);
+  assert.ok(pressCurve(9) < 9 && pressCurve(9) > PRESS_KNEE);
+});
+
+test('a release whose critics all score 8 or below scores exactly as before the curve', () => {
+  const s = createInitialState();
+  for (const r of s.rivals) r.capability = 65;
+  s.lastFlagship = flagshipAt(plainAvg() + 3);
+  // Raw scores 5.75, 4.75, 4.75 and 7.55: all at or below the knee, so the old round-and-clamp result stands.
+  assert.deepEqual(scoreLaunch(s, plain, zeroRng).press.map((p) => p.score), [6, 5, 5, 8]);
+});
+
+test('a big lead over the rivals no longer gets 10 from every critic', () => {
+  const s = createInitialState();
+  s.lastFlagship = flagshipAt(plainAvg() + 12);
+  // Raw scores 12.08, 11.08, 11.08 and 13.88 (about 55 points over the rivals, 12 under the last flagship):
+  // before the curve all four rounded to 10.
+  assert.deepEqual(scoreLaunch(s, plain, zeroRng).press.map((p) => p.score), [8, 8, 8, 9]);
+});
+
+test('an outstanding release still earns 10s: some critics at a 20-point jump, all four at a 40-point jump', () => {
+  const s = createInitialState();
+  s.lastFlagship = flagshipAt(plainAvg() - 20);
+  // Raw scores 23.75, 21.75, 21.75 and 24.55.
+  assert.deepEqual(scoreLaunch(s, plain, zeroRng).press.map((p) => p.score), [10, 9, 9, 10]);
+  s.lastFlagship = flagshipAt(plainAvg() - 40);
+  assert.deepEqual(scoreLaunch(s, plain, zeroRng).press.map((p) => p.score), [10, 10, 10, 10]);
 });
 
 test('back-to-back launches with the same scores quote different lines', async () => {

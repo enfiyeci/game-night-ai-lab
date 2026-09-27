@@ -76,8 +76,10 @@ test('the estimate counts the constitution the run will teach', () => {
 });
 
 test('a trained model shows its real gain and the remembered share', () => {
-  // Under the compute race plan (docs/superpowers/plans/2026-09-26-compute-race.md) Task 5, none of seed 4's twenty dice reach the hazard; seed 5's do.
-  const state = SCENARIOS.hazard(5);
+  // Under the compute race plan (docs/superpowers/plans/2026-09-26-compute-race.md) Task 5, none of seed 4's twenty dice reach the hazard; seed 5's did.
+  // Since deterministic endings P1 (the press curve above 8: lower critic scores, fewer users and less cash), seed 5's
+  // scripted lab plays on to an ending before it idles in era 3, so it never starts the hazard run; seed 1 reaches it.
+  const state = SCENARIOS.hazard(1);
   assert.ok(state.pendingModel, 'hazard scenario ends with a trained model');
   const counts = badgeCounts(state, 0.25);
   assert.equal(counts.capability, Math.round(state.pendingModel.gain));
@@ -86,7 +88,7 @@ test('a trained model shows its real gain and the remembered share', () => {
 });
 
 test('the hazard scenario stops with the cheating trace still unanswered', () => {
-  const state = SCENARIOS.hazard(5); // seed 4 no longer reaches the hazard: see the test above
+  const state = SCENARIOS.hazard(1); // seed 5 no longer reaches the hazard (deterministic endings P1): see the test above
   assert.equal(state.pendingModel?.hazard?.type, 'rewardHacking');
 });
 

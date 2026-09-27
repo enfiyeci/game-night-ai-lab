@@ -2,7 +2,7 @@ import { clamp } from './util.js';
 import { leaderCapability, rank } from './rivals.js';
 import { safetySpend } from './economy.js';
 import { INTERPRETABILITY_SPEND, GAMING_THRESHOLD, dangerCapability } from './hazards.js';
-import { BENCHMARKS, TEST_WIDTH, RETIRED_POSTS, CONTAMINATED_BENCHMARKS, CONTAMINATION_BONUS, BUG_FLAGS, BUG_PENALTY, CRITICS, GENERIC_REACTIONS, REACTIONS, JUMP_BAR_PER_NUMBER } from './data/launch.js';
+import { BENCHMARKS, TEST_WIDTH, RETIRED_POSTS, CONTAMINATED_BENCHMARKS, CONTAMINATION_BONUS, BUG_FLAGS, BUG_PENALTY, CRITICS, GENERIC_REACTIONS, REACTIONS, JUMP_BAR_PER_NUMBER, PRESS_KNEE, PRESS_TOP_SLOPE } from './data/launch.js';
 
 const GAMING_RATE = { 3: 0.35, 4: 0.55, 5: 0.75 };
 
@@ -38,6 +38,9 @@ export function retiredTests(era) {
     .filter((t) => t.from !== t.to);
 }
 export const retiredTestPosts = (era) => retiredTests(era).map((t) => RETIRED_POSTS[t.kind](t.from, t.to));
+
+// Owner 2026-09-26: "getting all 10s should be harder." Diminishing returns above the knee, applied before rounding.
+export const pressCurve = (raw) => (raw <= PRESS_KNEE ? raw : PRESS_KNEE + (raw - PRESS_KNEE) * PRESS_TOP_SLOPE);
 
 // Owner 2026-09-26, no dice: benchmarks show the truth (plus eval gaming and contamination)
 // and critics score without noise.
@@ -92,7 +95,7 @@ export function scoreLaunch(state, model) {
   const ctx = { launch, flags, rank: rank(state), safetyShown: benchmarks.find((b) => b.id === 'gauntlet').shown };
   const releaseCount = state.models.length; // picks the quip and the everyday reactions without another random draw
   const press = CRITICS.map((c) => {
-    const score = clamp(Math.round(base + c.bias(ctx)), 1, 10);
+    const score = clamp(Math.round(pressCurve(base + c.bias(ctx))), 1, 10);
     const quips = c.quips[score >= 8 ? 'high' : score >= 5 ? 'mid' : 'low'];
     const quip = quips[releaseCount % quips.length];
     return { id: c.id, name: c.name, score, quip };
