@@ -88,6 +88,7 @@ export function createInitialState({ seed = 1 } = {}) {
     meetingsHeld: [],
     flags: {},
     rivals: createRivals(),
+    race: { atTop: {} },
     advisorHistory: [],
     lastBriefing: [],
     ending: null,

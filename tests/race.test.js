@@ -4,7 +4,7 @@ import { createInitialState } from '../sim/state.js';
 import { BALANCE } from '../sim/balance.js';
 import { SIZE_CAP } from '../sim/recipe.js';
 import { RIVAL_EDGE, NO_SIZE_GAIN } from '../sim/data/race.js';
-import { rivalsTurn, rivalSize, rivalTraining, rivalShortfall, launchGain } from '../sim/rivals.js';
+import { rivalsTurn, rivalSize, rivalTraining, rivalShortfall, launchGain, rank, computeShares, recordStanding } from '../sim/rivals.js';
 
 const rivalOf = (s, id) => s.rivals.find((r) => r.id === id);
 const expectedGain = (r, size, roll) => (BALANCE.baseRunGain + SIZE_CAP[size] + RIVAL_EDGE + roll - 2) * (1 - 0.5 * (0.1 + 0.2 * r.caution));
@@ -65,4 +65,32 @@ test('a binding compute cap limits each signing rival to 5 per launch', () => {
   assert.ok(launchGain(s, rivalOf(s, 'deepthink'), 4) > 5, 'a lab that did not sign keeps its full gain');
   s.deal.collapsed = true;
   assert.ok(launchGain(s, rivalOf(s, 'openbrain'), 4) > 5, 'a collapsed deal binds nobody');
+});
+
+test('compute shares cover every lab and add up to 1', () => {
+  const s = createInitialState({ seed: 1 });
+  const shares = computeShares(s);
+  assert.ok(Math.abs(shares.you - 10 / 57) < 1e-9); // 10 of 10 + 14 + 10 + 12 + 11
+  assert.ok(Math.abs(Object.values(shares).reduce((a, b) => a + b, 0) - 1) < 1e-9);
+});
+
+test('each round mark counts the labs within half a point of the top', () => {
+  const s = createInitialState({ seed: 1 });
+  s.capability = 26.4; // OpenBrain 26 is within 0.5; DeepThink 24 is not
+  recordStanding(s);
+  recordStanding(s);
+  assert.deepEqual(s.race.atTop, { you: 2, openbrain: 2 });
+});
+
+test('score ranks first; within half a point, standing decides and ties go to you', () => {
+  const s = createInitialState({ seed: 1 });
+  s.capability = 25.4; // OpenBrain 0.6 ahead
+  assert.equal(rank(s), 2);
+  s.capability = 26.3; // within 0.5, you are higher on score
+  s.race.atTop = { you: 2, openbrain: 4 };
+  assert.equal(rank(s), 2, 'OpenBrain got there first and stayed');
+  s.race.atTop = { you: 4, openbrain: 4 };
+  assert.equal(rank(s), 2, 'same time at the top: OpenBrain holds more compute (14 against your 10)');
+  s.compute.online = 14;
+  assert.equal(rank(s), 1, 'equal standing goes to you');
 });

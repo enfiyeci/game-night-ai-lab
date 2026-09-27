@@ -3,7 +3,9 @@ import { ERAS } from './data/eras.js';
 import { eraOfRound, roundSpan } from './time.js';
 import { SIZES, SIZE_UNITS, SIZE_CAP } from './recipe.js';
 import { eraScale } from './data/compute.js';
-import { FRONTIER, START_FLEET, RIVAL_EDGE, SERVING_ROOM, NO_SIZE_GAIN, CAPPED_GAIN } from './data/race.js';
+import {
+  FRONTIER, START_FLEET, RIVAL_EDGE, SERVING_ROOM, NO_SIZE_GAIN, CAPPED_GAIN, STANDING_TIE, STANDING_WEIGHTS,
+} from './data/race.js';
 
 const LAST_DAY = roundSpan(ERAS.reduce((sum, era) => sum + era.turns, 0) - 1).end;
 
@@ -23,8 +25,33 @@ export function leaderCapability(state) {
   return Math.max(...state.rivals.map((r) => r.capability));
 }
 
+export function computeShares(state) {
+  const fleets = { you: state.compute.online, ...Object.fromEntries(state.rivals.map((r) => [r.id, r.fleet])) };
+  const total = Object.values(fleets).reduce((sum, units) => sum + units, 0);
+  return Object.fromEntries(Object.entries(fleets).map(([id, units]) => [id, total > 0 ? units / total : 0]));
+}
+
+// Spec §2 rule 6: once per round mark, every lab within half a point of the top score earns a round at the top.
+export function recordStanding(state) {
+  const atTop = (state.race ??= { atTop: {} }).atTop;
+  const labs = [['you', state.capability], ...state.rivals.map((r) => [r.id, r.capability])];
+  const top = Math.max(...labs.map(([, capability]) => capability));
+  for (const [id, capability] of labs) if (top - capability <= STANDING_TIE) atTop[id] = (atTop[id] ?? 0) + 1;
+}
+
+export function standing(state) {
+  const atTop = state.race?.atTop ?? {};
+  const most = Math.max(0, ...Object.values(atTop));
+  const shares = computeShares(state);
+  return Object.fromEntries(Object.keys(shares).map((id) => [id,
+    STANDING_WEIGHTS.top * (most > 0 ? (atTop[id] ?? 0) / most : 0) + STANDING_WEIGHTS.compute * shares[id]]));
+}
+
+// A rival ranks above you when it is more than half a point ahead; within half a point, the higher standing does.
 export function rank(state) {
-  return 1 + state.rivals.filter((r) => r.capability > state.capability).length;
+  const s = standing(state);
+  return 1 + state.rivals.filter((r) => r.capability > state.capability + STANDING_TIE
+    || (Math.abs(r.capability - state.capability) <= STANDING_TIE && s[r.id] > s.you)).length;
 }
 
 export function gapToLeader(state) {
