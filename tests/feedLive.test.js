@@ -284,9 +284,10 @@ test('a start-run move that fails gets no posts', async () => {
   const { createRng } = await import('../sim/rng.js');
   const state = createInitialState({ seed: 7 });
   state.feed = [];
-  const recipe = { sliders: { size: 'xl', length: 'optimal', alignShare: 0.4 }, picks: { pre: [], mid: [], post: [] } };
+  state.pendingModel = { size: 'xl' }; // an earlier run's model, not yet released: the new run is refused
+  const recipe = { sliders: { size: 'medium', length: 'optimal', alignShare: 0.4 }, picks: { pre: [], mid: [], post: [] } };
   const out = applyActions(state, { moves: [{ type: 'startRun', recipe }] }, createRng(7));
-  assert.ok(out.errors.length >= 1, 'the run is refused');
+  assert.ok(out.errors.includes('release the trained model first'), 'the run is refused');
   const pools = Object.values(REACTIONS.training.start).flatMap((pool) => [...shown(pool)]);
   assert.ok(![...out.state.feed, ...(out.state.feedQueue ?? [])].some((post) => pools.includes(post.text)));
 });
