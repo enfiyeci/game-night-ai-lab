@@ -536,9 +536,9 @@ export const PEOPLE = {
   "badge": "org",
   "reach": 2
  },
- "@scorewing": {
+ "@sportswing": {
   "n": 103,
-  "name": "Scorewing",
+  "name": "Sportswing",
   "badge": "org",
   "reach": 2
  },

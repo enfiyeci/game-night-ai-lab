@@ -1,6 +1,6 @@
 # World news (not about AI)
 
-Headlines from the four news desks (Global Wire, The Ledger, Scorewing, Marketwire) about the world
+Headlines from the four news desks (Global Wire, The Ledger, Sportswing, Marketwire) about the world
 outside AI, so the feed feels like a real timeline. Owner ask 2026-09-26: "some unrelated world news".
 Events are invented for the game; no real person is named. Replies (indented) are personas arguing
 under the headline, shown as a thread.
@@ -75,19 +75,19 @@ Suggested rule for the feed: one or two per round, spread across quiet days, nev
   - `@normal_person` — my sister is one of the 40,000. she is currently sleeping in an airport in a borrowed jumper. airlines are a scam.
 
 ## Sport and culture
-- `@scorewing` — FULL TIME: A 94th-minute winner sends the underdogs into the cup final for the first time in their 120-year history.
+- `@sportswing` — FULL TIME: A 94th-minute winner sends the underdogs into the cup final for the first time in their 120-year history.
   - `@premier_pundit` — 94th minute. in a cup semi. against THEM. i'm not ok. nobody in this pub is ok.
-- `@scorewing` — The world's top-ranked tennis player withdraws from the season finale with a wrist injury.
-- `@scorewing` — Record crowd: 91,000 people attend the women's club final, the most ever for a women's club match.
+- `@sportswing` — The world's top-ranked tennis player withdraws from the season finale with a wrist injury.
+- `@sportswing` — Record crowd: 91,000 people attend the women's club final, the most ever for a women's club match.
   - `@study_break` — 91,000!! the people who said nobody would watch have gone very quiet.
-- `@scorewing` — A marathon runner has broken the world record by 31 seconds in near-perfect conditions.
-- `@scorewing` — Fans boycott the season opener over a 40% rise in ticket prices. The stadium was a third empty.
+- `@sportswing` — A marathon runner has broken the world record by 31 seconds in near-perfect conditions.
+- `@sportswing` — Fans boycott the season opener over a 40% rise in ticket prices. The stadium was a third empty.
   - `@yolo_calls` — 40%?? i could buy two nosebleed seats or one share of the club. i bought neither. i'm at home.
 - `@globalwire` — A 400-year-old painting found in an attic sold for a record price at auction tonight. The family had used it to cover a hole in the wall.
   - `@ink_and_spite` — somewhere a painter is laughing in their grave. or crying. probably both.
 - `@globalwire` — A new novel about a lighthouse keeper has won this year's biggest literary prize. It is the author's first book, written over eleven years.
   - `@hardscifi_hal` — Eleven years for a first book. The rest of us should feel bad and we will.
-- `@scorewing` — The national team's coach has been sacked after a 4-0 defeat. It is the third coach in two years.
+- `@sportswing` — The national team's coach has been sacked after a 4-0 defeat. It is the third coach in two years.
   - `@premier_pundit` — third coach in two years. at this point just give it to a fan. give it to me. i'll do it for a scarf and a pie.
 - `@globalwire` — The biggest music festival of the summer has been cancelled after days of storms turned the site into a swamp. *(season: summer)*
   - `@kpop_stan_acct` — i saved for eight months for this ticket 😭 refund pending. heart not refunded.
