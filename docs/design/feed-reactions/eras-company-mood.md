@@ -112,7 +112,7 @@ in the era's top chips, the same count the recipe screen shows (1 compute unit =
 H100, H200, GB200, then Rubin), for example "15,000 H100s" for a medium run in era 2.
 - `@crab_apple_leaks` — {lab} is training something. small. a warm-up, maybe. 🍎
 - `@garage_gpu` — hearing {lab} kicked off a small run on {gpus}. i have three. in my garage. we are not the same.
-- `@chip_counter` — {lab} booked about {gpus} of cluster time this week. The tell here is the size: small runs are how you test a recipe before you bet the company on it.
+- `@chip_counter` — {lab} booked about {gpus} for the week. The tell here is the size: small runs are how you test a recipe before you bet the company on it.
 - `@actually_neil` — Actually, a "small" training run still costs more than most people's houses, which I've been saying.
 - `@not_a_vc` — hearing {lab} is doing a small training run. we only back labs whose small runs are big. passing.
 

@@ -1246,7 +1246,7 @@ export const REACTIONS = {
     ],
     [
      "@chip_counter",
-     "{lab} booked about {gpus} of cluster time this week. The tell here is the size: small runs are how you test a recipe before you bet the company on it."
+     "{lab} booked about {gpus} for the week. The tell here is the size: small runs are how you test a recipe before you bet the company on it."
     ],
     [
      "@actually_neil",

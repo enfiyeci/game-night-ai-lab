@@ -289,8 +289,7 @@ test('a start-run move that fails gets no posts', async () => {
   const recipe = { sliders: { size: 'medium', length: 'optimal', alignShare: 0.4 }, picks: { pre: [], mid: [], post: [] } };
   const out = applyActions(state, { moves: [{ type: 'startRun', recipe }] }, createRng(7));
   assert.ok(out.errors.includes('release the trained model first'), 'the run is refused');
-  const pools = Object.values(REACTIONS.training.start).flatMap((pool) => [...shown(pool)]);
-  assert.ok(![...out.state.feed, ...(out.state.feedQueue ?? [])].some((post) => pools.includes(post.text)));
+  assert.ok(![...out.state.feed, ...(out.state.feedQueue ?? [])].some((post) => post.tag === 'company'), 'no training-run posts');
 });
 
 test('a run is sized in the era\'s chips, the same counts the recipe screen shows', () => {
