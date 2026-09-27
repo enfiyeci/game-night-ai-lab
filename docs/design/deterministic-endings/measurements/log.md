@@ -88,6 +88,17 @@ Ending counts per bot:
 | a8 | balancedLowSafety | misalignment 139, pacingDeal 34, acquihire 21, rivalDisaster 6 |
 | a8 | balancedHighSafety | misalignment 78, pacingDeal 69, acquihire 43, rivalDisaster 10 |
 | a8 | balancedPush | misalignment 111, pacingDeal 50, acquihire 33, rivalDisaster 6 |
+| m1 | speed | boardRemoved 172, misuse 25, misalignment 3 |
+| m1 | safety | acquihire 171, leftBehind 20, rivalDisaster 5, pacingDeal 3, misalignment 1 |
+| m1 | balanced | pacingDeal 69, misalignment 111, acquihire 12, rivalDisaster 8 |
+| m1 | random | misalignment 19, misuse 8, acquihire 146, boardRemoved 18, leftBehind 2, rivalDisaster 7 |
+| m1 | overCommitter | acquihire 172, misalignment 20, rivalDisaster 6, misuse 2 |
+| m1 | handToMouth | misalignment 111, rivalDisaster 46, acquihire 41, pacingDeal 2 |
+| m1 | balancedNoGrid | pacingDeal 58, misalignment 122, rivalDisaster 4, acquihire 16 |
+| m1 | balancedLowSafety | misalignment 143, pacingDeal 32, leftBehind 8, acquihire 13, rivalDisaster 4 |
+| m1 | balancedHighSafety | pacingDeal 86, misalignment 92, acquihire 12, rivalDisaster 10 |
+| m1 | balancedPush | pacingDeal 58, misalignment 126, rivalDisaster 4, acquihire 12 |
+| m1 | denier | misalignment 182, acquihire 11, pacingDeal 5, rivalDisaster 2 |
 
 Notes:
 
@@ -159,3 +170,13 @@ Notes:
   The board stream still picks which board card is made, with the same first draw as before, so which card pops up
   did not change. The old pooling draw came from a side stream (salt 7, now unused), so removing it shifts no other
   roll. Not traced run by run.
+- m1 (new base: merged origin/ui 04650e0 (capability cap, model-money, benchmarks, constitution), merge commit
+  6456335): rows from here on compare against m1, not a8, because the merge brings many rule changes at once
+  (capability counting past 100 with every danger reader capped at 100, benchmarks by era, model money, the era-3
+  constitution, the compute race's rival deals, and ui's balance moves). The moves from a8 are not attributed to any
+  one of them and were not traced run by run. The larger ones: the speed bot now ends in misuse in 25 runs (0 at a8)
+  and boardRemoved in 172 (200); handToMouth's leading ending changed from acquihire (142) to misalignment (111), with
+  rivalDisaster 8 to 46; balancedHighSafety's pacingDeal rose from 69 to 86 (misalignment 78 to 92, still its leading
+  ending); acquihire fell in every balanced bot except balancedNoGrid (for example balanced 36 to 12; balancedNoGrid
+  stayed at 16). The `denier` bot is new
+  from origin/ui and has no a8 row.
