@@ -5,10 +5,20 @@ import { createRng } from '../sim/rng.js';
 import { applyActions, advanceDays, endTurn } from '../sim/turn.js';
 import { ROUND_DAYS, storyDate, nextRoundDay } from '../sim/time.js';
 
-test('story dates use year, month and week', () => {
-  assert.equal(storyDate(0).label, 'Y1 M1 W1');
-  assert.equal(storyDate(40).label, 'Y1 M2 W2');
-  assert.equal(storyDate(365).label, 'Y2 M1 W1');
+test('story dates are real calendar dates, each era starting in its real year', () => {
+  assert.equal(storyDate(0).label, 'Jan 2023');
+  assert.equal(storyDate(40).label, 'Feb 2023');
+  assert.deepEqual([storyDate(40).y, storyDate(40).m, storyDate(40).w], [2023, 2, 2]);
+  assert.equal(storyDate(363).label, 'Dec 2023');
+  assert.equal(storyDate(364).label, 'Jan 2024'); // era 2 starts at its fourth quarter mark
+  assert.equal(storyDate(728).label, 'Jan 2025'); // era 3: reasoning and agents
+  assert.equal(storyDate(848).label, 'Jan 2026'); // era 4: the gigawatt race
+  assert.equal(storyDate(847).label, 'Apr 2025');
+  // Era 5 moves a week at a time, so its dates name the week.
+  assert.equal(storyDate(968).label, 'Jan 2027, week 1');
+  assert.equal(storyDate(975).label, 'Jan 2027, week 2');
+  assert.equal(storyDate(989).label, 'Jan 2027, week 4');
+  assert.equal(storyDate(996).label, 'Jan 2027, week 5'); // the final mark is a week on, so it reads differently
 });
 
 test('a round mark falls every ROUND_DAYS[era] days', () => {
