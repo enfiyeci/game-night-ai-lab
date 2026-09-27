@@ -91,6 +91,11 @@ if (params.has('paused')) game.clock.setSpeed(0);
 const showTitle = titleShows({ search: location.search, hash: location.hash, ending: game.state.ending });
 if (showTitle) game.clock.pause('title');
 game.clock.start();
+// The portrait-phone cover (ui/styles.css, same media query) hides the game, so the story waits behind it.
+const portrait = globalThis.matchMedia?.('(orientation: portrait) and (pointer: coarse)');
+const holdForPortrait = () => { if (portrait?.matches) game.clock.pause('portrait'); else game.clock.resume('portrait'); };
+portrait?.addEventListener?.('change', holdForPortrait);
+holdForPortrait();
 const collection = createCollection(browserStorage());
 game.collection = collection; // Game › Endings found shows its count (owner pick 3B)
 if (showTitle) {
