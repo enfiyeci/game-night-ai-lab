@@ -34,6 +34,7 @@ import { startRun } from '../../sim/training.js';
 import { MAX_MOVES, setBudget } from '../../sim/turn.js';
 import { roundWord, storyDate } from '../../sim/time.js';
 import { computeAmount, money, pct, roundsToWords, storyDayForTurn } from './format.js';
+import { eraEndWords } from './finance.js';
 
 const OFFER_COPY = {
   verde: { per: 'your own chips' },
@@ -479,10 +480,13 @@ export function sitesView(state) {
     unpoweredBill += darkUnits * contract.price * BALANCE.unitMonthlyCost;
     unitsLeft -= darkUnits;
   }
-  const pending = state.power.sites.filter((site) => !site.online).sort((a, b) => a.arrivesTurn - b.arrivesTurn);
+  // The day a site comes online: its landing day once stamped (sim/landings.js), else its old round mark.
+  const landing = (site) => site.landsDay ?? storyDayForTurn(site.arrivesTurn);
+  const pending = state.power.sites.filter((site) => !site.online).sort((a, b) => landing(a) - landing(b));
   const nextArrival = pending[0] ? {
     turn: pending[0].arrivesTurn,
     turns: Math.max(0, pending[0].arrivesTurn - state.turn),
+    day: landing(pending[0]),
     units: pending[0].units,
     name: SITE_TYPES[pending[0].source]?.name ?? pending[0].source,
   } : null;
@@ -527,8 +531,8 @@ export function sitesView(state) {
       source: site.source,
       units: site.units,
       status: site.online
-        ? `Online since ${storyDate(storyDayForTurn(site.arrivesTurn)).label}`
-        : `Building · ${roundsToWords(state.era, turnsLeft)} left`,
+        ? `Online since ${storyDate(landing(site)).label}`
+        : `Building · online ${storyDate(landing(site)).label}`,
       progress: site.online ? 1 : Math.max(0, Math.min(1, 1 - turnsLeft / duration)),
       warning: site.oppositionCut ? 'Local opposition cut this site\'s capacity.' : '',
     };
@@ -614,7 +618,10 @@ export function turnSummary(events, state) {
         ?? state?.compute?.offers?.find((offer) => offer.id === event.offerId)?.supplier
         ?? supplierFromOfferId(event.offerId);
       const subject = supplier ? `You signed with ${supplierName(supplier)}` : 'You signed a compute deal';
-      lines.push(`${subject} — online from ${storyDate(storyDayForTurn(event.arrivesTurn)).label}`);
+      const day = state?.compute?.pipeline?.find((p) => p.id === event.pipelineId && p.landsDay != null)?.landsDay
+        ?? state?.power?.sites?.find((s) => s.id === event.site)?.landsDay // a grid reservation
+        ?? (event.arrivesTurn <= (state?.turn ?? -1) ? state.day : storyDayForTurn(event.arrivesTurn)); // delivered at once
+      lines.push(`${subject} — online from ${storyDate(day).label}`);
     } else if (event.type === 'spotWarning') {
       lines.push(`Spot capacity may be pulled after next ${roundWord(state.era)}`);
     } else if (event.type === 'spotPulled') {
@@ -639,7 +646,7 @@ export function turnSummary(events, state) {
     } else if (event.type === 'raise') {
       lines.push(`You raised ${money(event.amount)}`);
     } else if (event.type === 'boardPromise') {
-      lines.push(`You promised the board ${computeAmount(event.units, event.era)} by the end of era ${event.era}`);
+      lines.push(`You promised the board ${computeAmount(event.units, state ? Math.min(event.era, state.era) : event.era)} by ${state ? eraEndWords(state, event.era) : `the end of era ${event.era}`}`);
     } else if (event.type === 'boardPromiseJudged') {
       lines.push(event.ratio >= 1 ? 'You kept your compute promise to the board'
         : event.vote ? 'You missed your compute promise badly, and the board wants a vote'

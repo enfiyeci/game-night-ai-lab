@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { EVENTS } from '../sim/data/events.js';
 import { EVENTS_6C } from '../sim/data/events6c.js';
+import { REAL_EVENTS } from '../sim/data/realEvents.js';
 import { createGame } from '../ui/game.js';
 import { SCENARIOS } from '../ui/logic/scenarios.js';
 import * as COPY from '../ui/data/eventCopy.js';
@@ -10,9 +11,10 @@ import {
   hasLanded, jokeFor, lookIntoCost, openWarnings, queueAnswer, queueLookInto, timingFor,
 } from '../ui/logic/events.js';
 import { DEFAULT_EVENT_TIMING, EVENT_TIMING } from '../sim/data/eventTiming.js';
+import { isAnchorId } from '../sim/events.js';
 import { warningProgress } from '../ui/screens/briefing.js';
 
-const ALL = [...EVENTS, ...EVENTS_6C];
+const ALL = [...EVENTS, ...EVENTS_6C, ...REAL_EVENTS];
 const pendingOf = (id) => {
   const row = ALL.find((event) => event.id === id);
   return { id, title: row.card.title, post: row.card.post, choices: row.card.choices.map(({ id: c, label, cost, backers, opposers }) => ({ id: c, label, cost, backers, opposers })) };
@@ -20,7 +22,7 @@ const pendingOf = (id) => {
 
 test('every warning row has an owning advisor', () => {
   const withWarning = ALL.filter((event) => event.warning).map((event) => event.id).sort();
-  assert.deepEqual(Object.keys(COPY.WARNING_ADVISOR).sort(), withWarning);
+  assert.deepEqual(Object.keys(COPY.WARNING_ADVISOR).filter((id) => !isAnchorId(id)).sort(), withWarning);
   for (const role of Object.values(COPY.WARNING_ADVISOR)) assert.ok(['research', 'safety', 'cfo', 'policy'].includes(role));
   assert.equal(COPY.WARNING_ADVISOR.flattery, 'safety');
   assert.equal(COPY.WARNING_ADVISOR.whistleblower, 'policy');
@@ -44,18 +46,20 @@ test('a card view marks exactly one fallback choice and flags crises', () => {
   const theft = cardView(pendingOf('weightTheft'));
   assert.equal(theft.crisis, true);
   assert.equal(theft.staging.room, 'theft');
-  assert.equal(cardView(pendingOf('agentwreck')).choices.find((c) => c.id === 'blame').cost, 'nothing up front');
+  assert.equal(cardView(pendingOf('agentwreck')).choices.find((c) => c.id === 'blame').cost, 'other customers wonder if they are next');
   assert.equal(catalogRow('promiseCall:2').id, 'promiseCall');
 });
 
 test('argue lines use written lines, stay silent where marked, and fall back to backer tags', () => {
   const theft = argueLines(cardView(pendingOf('weightTheft')));
-  assert.deepEqual(theft.map((line) => line.role), ['cfo', 'policy']); // a card with written lines uses only those
-  assert.equal(theft.find((line) => line.role === 'policy').pick, 'Say nothing');
+  assert.deepEqual(theft.filter((line) => line.pick).map((line) => line.role), ['safety', 'policy']);
+  assert.equal(theft.find((line) => line.role === 'policy').pick, 'Tell only staff and the board');
   const quits = argueLines(cardView(pendingOf('safetyQuits')));
   assert.ok(!quits.some((line) => line.role === 'safety'));
   const flattery = argueLines(cardView(pendingOf('flattery')));
-  assert.deepEqual(flattery.find((line) => line.role === 'safety'), { role: 'safety', say: 'My vote: roll it back.', pick: 'Roll it back' });
+  assert.deepEqual(flattery.find((line) => line.role === 'safety'), {
+    role: 'safety', say: 'We trained it on thumbs-up. It learned to get them.', pick: 'Roll it back',
+  });
   assert.ok(flattery.length <= 3);
 });
 
@@ -147,4 +151,13 @@ test('the copy file never talks about turns', () => {
   };
   walk(COPY);
   for (const text of strings) assert.doesNotMatch(text, /\bturns?\b/i, text);
+});
+
+test('every real-event card has a catalog row the card screen can draw', () => {
+  for (const event of REAL_EVENTS) {
+    const row = catalogRow(event.id);
+    assert.ok(row, event.id);
+    const view = cardView({ id: event.id, title: row.card.title, post: row.card.post, choices: row.card.choices.map(({ id, label, cost, backers, opposers }) => ({ id, label, cost, backers, opposers })) });
+    assert.equal(view.choices.filter((choice) => choice.fallback).length, 1, event.id);
+  }
 });

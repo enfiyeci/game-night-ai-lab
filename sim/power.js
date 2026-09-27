@@ -40,10 +40,10 @@ export function buildSite(state, source, rng) {
   return { ok: true, site: site.id, arrivesTurn: site.arrivesTurn };
 }
 
-export function powerTurn(state) {
+export function powerTurn(state, due = (s) => s.arrivesTurn <= state.turn) {
   const events = [];
   for (const s of state.power.sites) {
-    if (!s.online && s.arrivesTurn <= state.turn) {
+    if (!s.online && due(s)) {
       s.online = true;
       events.push({ type: 'siteOnline', id: s.id, source: s.source, units: s.units });
     }

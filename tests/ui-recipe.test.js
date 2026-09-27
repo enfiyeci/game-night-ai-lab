@@ -238,3 +238,13 @@ test('cardCostWords formats public card costs and omits free parts', () => {
   assert.deepEqual(cardCostWords({ cost: { turns: 1 } }), ['+about 3 months']);
   assert.deepEqual(cardCostWords({ cost: {} }), []);
 });
+
+test('sanitizeDraft keeps focus sliders and takes the alignment share from Values', () => {
+  const state = createInitialState();
+  const draft = { ...recipe({ alignShare: 0.2 }), focus: { pre: [50, 30, 20], post: [30, 60, 10] } };
+  const clean = sanitizeDraft(state, draft);
+  assert.deepEqual(clean.focus, { pre: [50, 30, 20], post: [30, 60, 10] });
+  assert.equal(clean.sliders.alignShare, 0.5); // 60% of the time on values, capped at half
+  assert.equal(sanitizeDraft(state, { ...draft, focus: { post: [50, 25, 25] } }).sliders.alignShare, 0.25);
+  assert.equal(sanitizeDraft(state, { ...draft, focus: { post: [0, 0, 0] } }).focus, undefined);
+});

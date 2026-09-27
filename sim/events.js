@@ -1,11 +1,13 @@
 import { EVENTS } from './data/events.js';
 import { EVENTS_6C } from './data/events6c.js';
+import { REAL_EVENTS } from './data/realEvents.js';
 import { BOARD_EVENTS } from './data/boardEvents.js';
 import { hasLine } from './constitution.js';
 import { EVENT_TIMING, DEFAULT_EVENT_TIMING } from './data/eventTiming.js';
 import { ROUND_DAYS, nextRoundDay, roundMarkDay } from './time.js';
 import { eraById } from './data/eras.js';
 import { sideRng } from './contracts.js';
+import { FEED_KEEP } from './feedLive.js';
 import {
   failedPresidentPromises,
   promiseCallCard,
@@ -15,8 +17,11 @@ import {
 } from './promises.js';
 
 const MAX_CARDS = 2;
-const allEvents = () => [...EVENTS, ...EVENTS_6C, ...BOARD_EVENTS];
+const allEvents = () => [...EVENTS, ...EVENTS_6C, ...REAL_EVENTS, ...BOARD_EVENTS];
 const byId = (id) => allEvents().find((event) => event.id === id);
+export const isAnchorId = (id) => Boolean(byId(id)?.anchor);
+const limitedCardCount = (state) => state.pendingEvents
+  .filter((card) => !isAnchorId(card.eventId ?? card.id)).length;
 const KIND_ORDER = ['internal', 'training'];
 const orderedEvents = () => {
   const events = allEvents();
@@ -25,7 +30,8 @@ const orderedEvents = () => {
     ...events.filter((event) => !KIND_ORDER.includes(event.kind)),
   ];
 };
-const targetIndices = (state, event) => event.flag
+// A row may name its own targets (a card planted by more than one flag); otherwise the flag decides.
+const targetIndices = (state, event) => event.targets ? event.targets(state) : event.flag
   ? state.models.flatMap((model, index) => ((model.flags ?? []).includes(event.flag) ? [index] : []))
   : [];
 const publicCard = (state, event) => ({
@@ -38,9 +44,14 @@ const publicCard = (state, event) => ({
   ...(event.card.watching ? { watching: [...event.card.watching] } : {}),
 });
 
+export function nextRound(state) {
+  if (state.turnInEra + 1 >= eraById(state.era).turns && state.era < 5) return { era: state.era + 1, round: 0 };
+  return { era: state.era, round: state.turnInEra + 1 };
+}
+
 export function pushFeed(state, handle, text, tag = 'feed') {
-  state.feed.push({ turn: state.turn, handle, text, tag });
-  if (state.feed.length > 40) state.feed.splice(0, state.feed.length - 40);
+  state.feed.push({ turn: state.turn, day: state.day, handle, text, tag });
+  if (state.feed.length > FEED_KEEP) state.feed.splice(0, state.feed.length - FEED_KEEP);
 }
 
 function queuePromiseCalls(state, event, out) {
@@ -48,7 +59,7 @@ function queuePromiseCalls(state, event, out) {
     const key = promiseCallKey(state, promise);
     const queued = state.pendingEvents.some((pending) => pending.id === key);
     if (queued) continue;
-    if (state.pendingEvents.length >= MAX_CARDS) {
+    if (limitedCardCount(state) >= MAX_CARDS) {
       state.warnings[key] = {
         turn: state.turn,
         deferred: true,
@@ -93,10 +104,10 @@ export function eventsTick(state, rng) {
       event.card.choices.find((choice) => choice.id === 'refuse').effects(state, []);
       if (!state.seenEvents.includes(event.id)) state.seenEvents.push(event.id);
       pushFeed(state, '@your_model', "The model's hard line refused the request.", 'event');
-      out.push({ type: 'eventResolved', id: event.id, choiceId: 'refuse', auto: true });
+      out.push({ type: 'eventResolved', id: event.id, eventId: event.id, choiceId: 'refuse', auto: true });
       continue;
     }
-    if (!event.bypassCardLimit && state.pendingEvents.length >= MAX_CARDS) {
+    if (!event.bypassCardLimit && limitedCardCount(state) >= MAX_CARDS) {
       state.warnings[event.id] = { turn: state.turn, deferred: true };
       continue;
     }
@@ -168,8 +179,14 @@ export function stampNewCards(state) {
   state.pendingEvents.forEach((card, index) => {
     if (card.landsAt != null) return;
     const rng = sideRng(state, 9 + index);
-    card.landsAt = state.day + rng.int(0, Math.max(0, Math.floor(days * 0.8) - 1));
-    card.dueAt = card.landsAt + (EVENT_TIMING[card.eventId ?? card.id] ?? DEFAULT_EVENT_TIMING).days;
+    const anchor = byId(card.eventId ?? card.id)?.anchor;
+    card.landsAt = anchor
+      ? state.day + Math.floor(days * anchor.at)
+      : state.day + rng.int(0, Math.max(0, Math.floor(days * 0.8) - 1));
+    const timing = EVENT_TIMING[card.eventId ?? card.id] ?? DEFAULT_EVENT_TIMING;
+    card.dueAt = card.landsAt + Math.min(timing.days, state.era === 5 ? 6 : Infinity);
+    // The run ends at era 5's last mark: a card due after it could never fall back, so it is due the day before.
+    if (state.era === 5 && state.turnInEra >= eraById(5).turns - 1) card.dueAt = Math.min(card.dueAt, nextRoundDay(state) - 1);
     // A board card must resolve before its meeting opens: due by the day before the vote round's mark.
     if (byId(card.id)?.kind === 'board') {
       card.dueAt = Math.min(card.dueAt, roundMarkDay(state, eraById(state.era).turns - state.turnInEra) - 1);
@@ -191,7 +208,7 @@ export function resolveDue(state) {
     if (pending.dueAt == null || state.day < pending.dueAt) continue;
     const choiceId = fallbackChoice(pending.id, pending);
     const result = resolveEvent(state, pending.id, choiceId);
-    if (result.ok) out.push({ type: 'eventResolved', id: pending.id, choiceId, auto: true, reason: 'deadline' });
+    if (result.ok) out.push({ type: 'eventResolved', id: pending.id, eventId: pending.eventId ?? pending.id, choiceId, promiseId: pending.promiseId, auto: true, reason: 'deadline' });
   }
   return out;
 }

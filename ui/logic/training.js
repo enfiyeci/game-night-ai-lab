@@ -24,7 +24,11 @@ export function expectedGain(state) {
 export function badgeCounts(state, lastAlignShare) {
   const run = state.activeRun;
   if (run) {
-    const capability = Math.round(expectedGain(state) * (project(state).progress ?? 0));
+    // The first bubble flies on the run's first day rather than after half a point; later counts round as before, so
+    // the early bubble adds no overcount of its own (a loss spike at the end can still trim the count, as it always could).
+    const gain = expectedGain(state);
+    const progress = project(state).progress ?? 0;
+    const capability = Math.max(Math.round(gain * progress), progress > 0 && Math.round(gain) >= 1 ? 1 : 0);
     return { capability, alignment: alignmentFor(capability, run.recipe.sliders.alignShare) };
   }
   if (state.pendingModel) {

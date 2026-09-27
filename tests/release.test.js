@@ -216,7 +216,7 @@ test('in era 3 the misalignment roll becomes a warning incident instead', () => 
   // Half the hidden debt comes into view; none of it goes away.
   assert.equal(s.concealedDebt, quiet.concealedDebt / 2);
   assert.equal(s.alignmentDebt + s.concealedDebt, quiet.alignmentDebt + quiet.concealedDebt);
-  assert.deepEqual(s.feed.at(-1), { turn: s.turn, handle: '@sre_oncall', text: s.feed.at(-1).text, tag: 'warning' });
+  assert.deepEqual(s.feed.at(-1), { turn: s.turn, day: s.day, handle: '@sre_oncall', text: s.feed.at(-1).text, tag: 'warning' });
   assert.equal(quiet.feed.some((post) => post.handle === '@sre_oncall'), false);
 });
 
