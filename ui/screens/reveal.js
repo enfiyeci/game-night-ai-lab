@@ -2,6 +2,7 @@ import { roundMarkDay, storyDate } from '../../sim/time.js';
 import { money, pct, users } from '../logic/format.js';
 import { beatCount, checkLabel, flagshipBefore, leaderboard, oneDecimal, perMillion, priceSheet, salesEstimate } from '../logic/release.js';
 import { sfx } from '../sfx.js';
+import { enterTransition, exitTransition } from '../components/transition.js';
 
 // Coral stays for the misalignment warning post, so ordinary avatars never look like a warning (mockup avatar set).
 const AVATAR_COLOURS = ['var(--ink)', 'var(--teal)', 'var(--sky)', 'var(--wood)', 'color-mix(in oklab, var(--sky) 55%, var(--ink))'];
@@ -648,10 +649,11 @@ export function showReveal(overlayRoot, { state, model, misalignmentIncident = f
     if (closed) return;
     closed = true;
     timeline.end();
-    layer.remove();
-    overlayRoot.dispatchEvent(new CustomEvent('gdt-dialog-closed'));
-    if (previousFocus?.isConnected && typeof previousFocus.focus === 'function') previousFocus.focus();
-    onClose?.();
+    exitTransition(layer).then(() => {
+      if (previousFocus?.isConnected && typeof previousFocus.focus === 'function') previousFocus.focus();
+      overlayRoot.dispatchEvent(new CustomEvent('gdt-dialog-closed'));
+      onClose?.();
+    });
   };
   soundButton.addEventListener('click', () => {
     if (sfx.enabled) sfx.hush();
@@ -723,8 +725,7 @@ export function showReveal(overlayRoot, { state, model, misalignmentIncident = f
   });
 
   overlayRoot.append(layer);
-  // The shared dialog CSS keeps .dialog-layer at opacity 0 until .dialog-open is added (ui/styles.css).
-  requestAnimationFrame(() => layer.classList.add('dialog-open'));
+  enterTransition(layer);
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
     showSummary();
   } else {

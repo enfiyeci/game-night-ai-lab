@@ -3,6 +3,7 @@ import { boardRead } from '../../sim/boardRead.js';
 import { PICTURES } from '../data/crisisArt.js';
 import { bubbleAt, choiceButton, dueBar, el, loadAnchors, post, sourcePost } from '../components/eventBits.js';
 import { moodForLean, portrait } from '../components/portraits.js';
+import { enterTransition, exitTransition } from '../components/transition.js';
 import {
   ADVISOR_TITLE, argueLines, cardView, catalogRow, consequenceLines, daysLeft, dueText, hasLanded, queueAnswer,
   timingFor,
@@ -151,11 +152,12 @@ export function mountEvents(game, { stage, overlay }) {
     const { id, layer, cleanup, preview } = current;
     current = null;
     if (aside && !preview && !Object.hasOwn(answered, id) && known.has(id)) setAside.add(id);
-    layer.remove();
     cleanup?.();
     clock()?.resume(CLOCK_REASON);
-    emit('event-card-closed');
-    emit('events-changed');
+    exitTransition(layer).then(() => {
+      emit('event-card-closed');
+      emit('events-changed');
+    });
   }
 
   function sync(state, events) {
@@ -267,6 +269,7 @@ export function mountEvents(game, { stage, overlay }) {
       later();
     });
     layer.append(card);
+    enterTransition(layer);
 
     const bubbles = [];
     for (const line of argueLines(view)) {

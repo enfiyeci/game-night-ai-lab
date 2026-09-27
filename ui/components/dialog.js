@@ -1,3 +1,5 @@
+import { enterTransition, exitTransition } from './transition.js';
+
 let nextDialogId = 0;
 const closers = new WeakMap();
 
@@ -110,11 +112,12 @@ export function openDialog(overlayRoot, opts) {
   const close = () => {
     if (closed) return;
     closed = true;
-    layer.classList.remove('dialog-open');
-    layer.remove();
     closers.delete(layer);
-    if (previousFocus?.isConnected && typeof previousFocus.focus === 'function') previousFocus.focus();
-    overlayRoot.dispatchEvent(new CustomEvent('gdt-dialog-closed'));
+    exitTransition(layer).then(() => {
+      const successor = overlayRoot.querySelector('.dialog-layer, .event-layer, .screenwall-layer');
+      if (!successor && previousFocus?.isConnected && typeof previousFocus.focus === 'function') previousFocus.focus();
+      overlayRoot.dispatchEvent(new CustomEvent('gdt-dialog-closed'));
+    });
   };
   const cancel = () => {
     try {
@@ -158,7 +161,7 @@ export function openDialog(overlayRoot, opts) {
   });
 
   overlayRoot.append(layer);
-  requestAnimationFrame(() => layer.classList.add('dialog-open'));
+  enterTransition(layer);
   layer.querySelector('.dialog-centre').focus();
   return layer;
 }

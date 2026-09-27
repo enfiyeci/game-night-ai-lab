@@ -5,6 +5,7 @@ import { readTheRoom, voteMotion, COMMITMENTS, PARTIES } from '../../sim/summit.
 import { DEMANDS, PROMISES, MAX_PROMISES, DEFAULT_CHECK } from '../../sim/data/summit.js';
 import { registerMenuHandler } from '../menu.js';
 import { ART } from '../assets/summitArt.js';
+import { enterTransition, exitTransition } from '../components/transition.js';
 
 export const PARTY_INFO = Object.freeze({
   openbrain: { name: 'OpenBrain', ab: 'OB', line: 'Qilin first, then we talk. And testers at most: inspectors make our lawyers cry.' },
@@ -107,6 +108,7 @@ export function openSummit(game, overlayRoot) {
   let swingParty = null;
   let error = '';
   const previousFocus = document.activeElement;
+  let closed = false;
 
   const layer = document.createElement('div');
   layer.className = 'dialog-layer sm-layer';
@@ -127,10 +129,13 @@ export function openSummit(game, overlayRoot) {
   document.addEventListener('focusin', keepFocus);
 
   const close = () => {
+    if (closed) return;
+    closed = true;
     document.removeEventListener('focusin', keepFocus);
-    layer.remove();
-    if (previousFocus?.isConnected) previousFocus.focus?.();
-    overlayRoot.dispatchEvent(new CustomEvent('gdt-dialog-closed'));
+    exitTransition(layer).then(() => {
+      if (previousFocus?.isConnected) previousFocus.focus?.();
+      overlayRoot.dispatchEvent(new CustomEvent('gdt-dialog-closed'));
+    });
   };
 
   const promised = () => Object.assign({}, ...motions.map((m) => m.promises), current?.promises ?? {});
@@ -359,7 +364,7 @@ export function openSummit(game, overlayRoot) {
 
   render();
   overlayRoot.append(layer);
-  requestAnimationFrame(() => layer.classList.add('dialog-open'));
+  enterTransition(layer);
   layer.focus();
   return layer;
 }

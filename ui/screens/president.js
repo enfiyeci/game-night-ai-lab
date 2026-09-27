@@ -1,5 +1,6 @@
 import { roundWord } from '../../sim/time.js';
 import { registerMenuHandler } from '../menu.js';
+import { enterTransition, exitTransition } from '../components/transition.js';
 import {
   answersPayload,
   hatedWord,
@@ -118,10 +119,10 @@ export async function openPresident(game, overlayRoot, options = {}) {
     if (closed) return;
     closed = true;
     if (timer !== null) clearTimeout(timer);
-    layer.classList.remove('dialog-open');
-    layer.remove();
-    if (previousFocus?.isConnected && typeof previousFocus.focus === 'function') previousFocus.focus();
-    overlayRoot.dispatchEvent(new CustomEvent('gdt-dialog-closed'));
+    exitTransition(layer).then(() => {
+      if (previousFocus?.isConnected && typeof previousFocus.focus === 'function') previousFocus.focus();
+      overlayRoot.dispatchEvent(new CustomEvent('gdt-dialog-closed'));
+    });
   };
   Object.defineProperty(layer, 'close', { value: close });
 
@@ -363,7 +364,7 @@ export async function openPresident(game, overlayRoot, options = {}) {
   else if (picked.length >= meeting.exchanges.length) {
     finishView('The meeting is over.');
   } else renderExchange();
-  requestAnimationFrame(() => layer.classList.add('dialog-open'));
+  enterTransition(layer);
   return layer;
 }
 
