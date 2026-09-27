@@ -499,12 +499,14 @@ def side_screens(plate, crop, live_side=1, other=None):
 
 
 def shot_ov_news():
-    """overtaken 2, Month 1: the briefing room from the reporters' seats. The President at the podium; beside him
-    the screen names the national champion."""
+    """overtaken 2, Month 1: the briefing room from the reporters' seats. The President at the podium, turned away
+    from us toward the screen beside him, which names the national champion."""
     briefing_room()
     podium()
     face = side_screens("ov-news", (56, 4, 1168, 657), live_side=1, other="THE PRESIDENT")
-    P.person((0.0, STAGE + 1.3, 0.24), facing=228, height=1.9, coat="#1A2030", hair="#D9C27A", build=1.2, seed=90)
+    pres = P.person((0.0, STAGE + 1.3, 0.24), facing=292, height=1.9, coat="#161B28", hair="#1E1A18", skin="#6E4630",
+                    build=1.2, seed=90)
+    P.hair_back(pres, 1.9, "stand", "#1E1A18")
     rng = random.Random(4)
     pts = []
     for r in range(7):
@@ -620,20 +622,21 @@ def shot_al_news():
 def shot_qt_briefing():
     """quietTakeover 3, Month 6, afternoon: a signing in the President's office staged for television. In front, the
     crew's monitor shows the bill (its footer: drafted with the model); behind, TV lights blaze on the desk where it
-    is being signed, aides standing against the bright windows."""
+    is being signed, a dark shape against the bright windows, aides looking out."""
     office(day=True)
     desk()
-    P.person((0.0, 3.95, 0.0), facing=180, pose="sit", height=1.9, coat="#1A2030", hair="#D9C27A", build=1.2, seed=90)
+    P.person((0.0, 3.95, 0.0), facing=200, pose="sit", height=1.9, coat="#161B28", hair="#1E1A18", skin="#4A3020", build=1.2, seed=90)
     kit.box((0.0, 3.08, 0.8), (0.3, 0.22, 0.004), kit.mat("#F4F0E6", 0.7))       # the bill
     for k in range(6):   # a row of signing pens
         kit.cyl((-0.5 + k * 0.08, 3.0, 0.805), 0.005, 0.13, kit.mat("#111", 0.3, 0.6), rot=(math.radians(90), 0, 0))
-    for i, x in enumerate((-1.9, -1.3, 1.35, 1.95)):   # aides standing against the bright windows
-        P.person((x, 5.2 + 0.1 * (i % 2), 0.0), facing=180, height=1.72 + 0.06 * (i % 3), coat=["#1D2230", "#2B2F36", "#3A3436"][i % 3],
-                 hair=["#2A211C", "#8C8C8C", "#141212"][i % 3], seed=60 + i)
+    for i, x in enumerate((-1.9, -1.3)):   # aides at the windows, backs to the room
+        aide = P.person((x, 5.6 + 0.15 * i, 0.0), facing=10 - 25 * i, height=1.72 + 0.06 * i, coat=["#1D2230", "#2B2F36"][i],
+                        hair=["#2A211C", "#141212"][i], seed=60 + i)
+        P.hair_back(aide, 1.72 + 0.06 * i, "stand", ["#2A211C", "#141212"][i])
     tv_camera((1.1, 2.0), 15, z=0.0)
     for x, y in ((-2.0, 2.0), (2.4, 2.4)):
-        tv_light((x, y), (0, 3.9, 1.0), 40, z=2.3, size=0.7)
-        kit.spot((x, y, 2.3), (0, 3.6, 0.9), 600, kit.kelvin(5600), angle=22, blend=0.5)
+        tv_light((x, y), (0, 3.2, 0.8), 40, z=2.3, size=0.7)
+        kit.spot((x, y, 2.3), (0, 3.15, 0.78), 500, kit.kelvin(5600), angle=12, blend=0.5)      # on the desk top, not his face
     # the crew's monitor on a stand, in front
     kit.cyl((0.63, 1.28, 0.6), 0.015, 1.2, kit.mat("#2A2B2E", 0.4, 0.7), verts=8)
     face, _ = kit.screen("monitor", (0.6, 1.23, 1.45), 0.55, "qt-briefing", crop=(56, 4, 1168, 657), strength=1.2,

@@ -136,7 +136,7 @@ def shot_pd_news():
         folder((x, ty - 0.05, 0.79))
         kit.place("dining_chair_02", (x, ty + 0.85, 0), rot_z=math.radians(180))
         P.person((x, ty + 0.72, 0.0), facing=180, pose="sit", height=1.76, coat=["#1D2230", "#2B2F36", "#23262C"][i % 3],
-                 hair=["#2A211C", "#8C8C8C", "#141212", "#6B5A48"][i % 4], seed=30 + i)
+                 hair=["#2A211C", "#141212", "#3A2C22"][i % 3], skin=["#A06A4A", "#6E4630", "#B98260"][i % 3], seed=30 + i)
         flag((x, ty + 2.2), COLOURS[name])
     # the press pen in front: photographers from behind
     rng = random.Random(3)
