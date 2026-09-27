@@ -301,14 +301,14 @@ svg.room {
   line-height: 1;
 }
 
-.company-submenu {
+.submenu {
   z-index: 2;
   width: 246px;
 }
 
-.company-submenu::before {
+.submenu::before {
   position: absolute;
-  top: 13px;
+  top: var(--tail-top, 13px);
   left: -7px;
   width: 12px;
   height: 12px;
@@ -319,7 +319,7 @@ svg.room {
   transform: rotate(45deg);
 }
 
-.company-submenu.opens-left::before {
+.submenu.opens-left::before {
   right: -7px;
   left: auto;
   border: 0;
@@ -2659,6 +2659,9 @@ svg.room {
   background: color-mix(in oklab, var(--ink) 7%, var(--paper));
 }
 
+/* Game › Endings found carries its count (owner pick 3B). */
+.it .count { margin-left: 8px; font-size: 11.5px; font-weight: 900; color: color-mix(in oklab, var(--wood) 70%, var(--ink)); }
+
 /* Plan 2B Task 8: event cards and warnings (mockups K2-events.html and K2-events-crisis.html) */
 .event-layer { position: absolute; inset: 0; z-index: 20; pointer-events: none; }
 .event-layer > * { pointer-events: auto; }
@@ -3385,6 +3388,15 @@ svg.room {
 .fly-bubble.alignment { background: var(--paper); border: 5px solid var(--sky); }
 .badge.tick { transform: scale(1.12); transition: transform 180ms ease-out; }
 .ready-note { position: absolute; z-index: 5; top: 74px; left: 50%; transform: translateX(-50%); padding: 3px 12px 4px; border-radius: 999px; color: var(--paper); background: color-mix(in oklab, var(--teal) 70%, var(--ink)); font-size: 12px; font-weight: 900; white-space: nowrap; box-shadow: 0 1px 0 color-mix(in oklab, var(--ink) 25%, transparent); }
+/* Owner pick 2A: a ring lying on the floor at the menu spot while the first model waits (the menu's own marker in the middle). */
+.floor-hint { position: absolute; width: 0; height: 0; }
+.floor-hint-ring { position: absolute; left: -35px; top: -17.5px; width: 70px; height: 35px; box-sizing: border-box; border: 2.5px solid var(--coral); border-radius: 50%; box-shadow: 0 0 0 8px color-mix(in oklab, var(--coral) 18%, transparent); animation: floor-hint-pulse 1.6s ease-in-out infinite; }
+.floor-hint-dot { position: absolute; left: -16px; top: -8px; width: 32px; height: 16px; box-sizing: border-box; border: 2.5px solid var(--paper); border-radius: 50%; }
+.floor-hint-dot::after { content: ''; position: absolute; inset: 3px 7px; border-radius: 50%; background: color-mix(in oklab, var(--paper) 80%, transparent); }
+.floor-hint-label { position: absolute; left: -30px; top: 32px; padding: 6px 11px; border-radius: 9px; background: var(--ink); color: var(--paper); font-size: 13px; font-weight: 800; line-height: 1.3; white-space: nowrap; box-shadow: 0 6px 16px color-mix(in oklab, var(--ink) 25%, transparent); }
+.floor-hint-label::before { content: ''; position: absolute; left: 24px; top: -6px; width: 12px; height: 12px; background: var(--ink); transform: rotate(45deg); }
+@keyframes floor-hint-pulse { 50% { transform: scale(1.14); opacity: .7; } }
+@media (prefers-reduced-motion: reduce) { .floor-hint-ring { animation: none; } }
 @media (prefers-reduced-motion: reduce) { .badge.tick { transform: none; transition: none; } }
 .hazard-layer { transition: none; }
 .hazard-open #office { filter: saturate(.8) brightness(.96); }
@@ -4175,3 +4187,25 @@ html.title-waking #hud { transition: opacity .5s ease .6s; }
     text-align: center;
   }
 }
+/* ---------- Game › Endings found: The Daily Token archive (owner pick 7C) ---------- */
+.archive-layer { position: absolute; inset: 0; z-index: 12; display: flex; flex-direction: column; padding: 28px 40px 40px; background: color-mix(in oklab, var(--wood) 55%, var(--ink)); overflow: hidden; }
+.dt-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; color: var(--paper); }
+.dt-title { margin: 0; font: 700 42px/1.1 "Libre Baskerville", Georgia, serif; }
+.dt-sub { margin: 6px 0 0; font-size: 16px; font-weight: 800; color: color-mix(in oklab, var(--paper) 85%, var(--wood)); }
+.dt-close { width: auto; min-width: 110px; padding-inline: 18px; margin-top: 6px; }
+.dt-grid { flex: 1; display: grid; grid-template-columns: repeat(6, 1fr); gap: 34px 18px; margin-top: 24px; align-content: center; }
+.dt-page { display: flex; flex-direction: column; position: relative; width: 100%; padding: 10px 12px 12px; border: 0; border-radius: 3px; background: var(--paper); color: var(--ink); font: inherit; text-align: left; transform: rotate(var(--tilt, 0deg)); box-shadow: 0 8px 18px color-mix(in oklab, var(--ink) 30%, transparent); }
+.dt-page.found { cursor: pointer; transition: transform 160ms ease-out, box-shadow 160ms ease-out; }
+.dt-page.found:hover, .dt-page.found:focus-visible { transform: rotate(0deg) translateY(-4px); box-shadow: 0 14px 26px color-mix(in oklab, var(--ink) 38%, transparent); }
+.dt-page.found:focus-visible { outline: 3px solid var(--sky); outline-offset: 4px; }
+.dt-mast { padding-bottom: 4px; border-bottom: 2px solid var(--ink); text-align: center; font: 700 15px/1.2 "Libre Baskerville", Georgia, serif; }
+.dt-dateline { display: flex; justify-content: space-between; gap: 6px; margin-top: 3px; font-size: 9.5px; font-weight: 800; }
+.dt-head { margin: 6px 0 0; font: 700 17px/1.15 "Libre Baskerville", Georgia, serif; }
+.dt-still { display: block; width: 100%; aspect-ratio: 4 / 3; margin-top: 6px; object-fit: cover; filter: grayscale(.3); background: color-mix(in oklab, var(--ink) 12%, var(--paper)); }
+.dt-deck { min-height: 2.8em; margin: 6px 0 0; font: italic 11px/1.4 "Libre Baskerville", Georgia, serif; }
+.dt-blank { flex: 1; display: grid; place-content: center; min-height: 150px; margin-top: 10px; border: 1.5px dashed color-mix(in oklab, var(--ink) 25%, transparent); text-align: center; font: italic 13px/1.4 "Libre Baskerville", Georgia, serif; color: color-mix(in oklab, var(--ink) 60%, var(--paper)); }
+.dt-blank span { display: block; }
+.dt-hint { min-height: 2.7em; margin: 8px 0 0; font-size: 11.5px; font-weight: 800; line-height: 1.35; color: color-mix(in oklab, var(--ink) 62%, var(--paper)); }
+.dt-left { display: grid; place-content: center; align-self: stretch; padding: 12px; border: 2px dashed color-mix(in oklab, var(--paper) 35%, transparent); border-radius: 4px; text-align: center; font-size: 15px; font-weight: 800; color: var(--paper); }
+@media (prefers-reduced-motion: reduce) { .dt-page.found { transition: none; } }
+.dt-left span { display: block; }

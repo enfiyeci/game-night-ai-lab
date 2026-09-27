@@ -6,12 +6,13 @@ import { mountOffice } from './office.js';
 import { SCENARIOS, scenarioHistory } from './logic/scenarios.js';
 import { powerSitesAvailable, queueScreenAvailable } from './logic/compute.js';
 import { meetingFor } from './logic/president.js';
-import { openMenu } from './menu.js';
+import { openMenu, registerMenuHandler } from './menu.js';
 import { openBudget } from './screens/budget.js';
 import { mountRecipe, openRecipe } from './screens/recipe.js';
 import { mountRelease, openRelease } from './screens/release.js';
 import { mountReveal, showReveal } from './screens/reveal.js';
 import { mountSound, openSound } from './screens/sound.js';
+import { mountArchive, openArchive } from './screens/archive.js';
 import { music } from './music.js';
 import { releaseDraft, releasePayload } from './logic/release.js';
 import {
@@ -91,6 +92,7 @@ const showTitle = titleShows({ search: location.search, hash: location.hash, end
 if (showTitle) game.clock.pause('title');
 game.clock.start();
 const collection = createCollection(browserStorage());
+game.collection = collection; // Game › Endings found shows its count (owner pick 3B)
 if (showTitle) {
   mountTitle(game, {
     stage,
@@ -115,6 +117,7 @@ mountReveal(game, overlay, {
   },
 });
 mountSound(game, overlay);
+mountArchive(game, overlay, { collection });
 mountPresident(game, overlay);
 mountHistory(game, overlay);
 mountAutomation(game, overlay);
@@ -150,6 +153,7 @@ const intro = mountIntro(game, { stage, overlay, storage: browserStorage() });
 if (isFreshStart(game.state, { scenario: scenarioName, hash: location.hash }) && !tourSeen(browserStorage())) intro.start();
 addEventListener('hashchange', () => { if (location.hash === '#tour' && !game.state.ending) intro.start(); });
 if (location.hash === '#tour' && !game.state.ending) intro.start();
+registerMenuHandler('howto', () => { if (!game.state.ending) intro.start(); }); // Game › How to play (owner pick 3B)
 
 function stagePoint(event) {
   const rect = stage.getBoundingClientRect();
@@ -166,7 +170,10 @@ office.addEventListener('click', (event) => {
     openArticle(game, overlay);
     return;
   }
-  if (!event.target.closest?.('#floor') || blocked()) return;
+  // A waiting decision card does not block the floor menu; it steps aside and the story stays paused (owner pick 2A).
+  // The phone and dialogs still block it.
+  if (!event.target.closest?.('#floor') || overlay.querySelector('.dialog-layer, .ev-phone, .screenwall-layer, .intro-layer:not(.intro-open)')) return;
+  events.stepAside();
   openMenu(game, stagePoint(event), { overlay });
 });
 
@@ -263,6 +270,10 @@ async function openDebugRoute() {
   }
   if (location.hash === '#history') {
     openHistory(game, overlay);
+    return;
+  }
+  if (location.hash === '#archive') {
+    openArchive(game, overlay, { collection });
     return;
   }
   if (location.hash === '#race') {

@@ -42,8 +42,10 @@ export const ITEMS = [
     hidden: (state) => !(state.era === 5 && state.turnInEra === 0 && !state.deal),
     unavailable: (state) => state.meeting && 'Take the President’s call first',
   },
-  { id: 'company', label: 'Company', free: true, submenu: true },
+  { id: 'company', label: 'Company', free: true, submenu: 'company' },
   { id: 'history', label: 'Lab history', free: true, unavailable: (_state, game) => game.state.models.length === 0 && 'Nothing released yet' },
+  { divider: true },
+  { id: 'game', label: 'Game', free: true, submenu: 'game' }, // owner pick 3B: things about the game, not the lab
 ];
 
 export const COMPANY_ITEMS = [
@@ -103,8 +105,24 @@ export const COMPANY_ITEMS = [
         ? `Every unused emergency option already started this ${roundWord(state.era)}` : '';
     },
   },
-  { id: 'sound', label: 'Sound and music', free: true },
 ];
+
+export const GAME_ITEMS = [
+  {
+    id: 'endings',
+    label: 'Endings found',
+    free: true,
+    note(game) {
+      const progress = game.collection?.progress();
+      return progress ? `${progress.found} of ${progress.total}` : '';
+    },
+  },
+  { id: 'howto', label: 'How to play', free: true }, // replays the first-minute tour (ui/screens/intro.js)
+  { id: 'sound', label: 'Sound and music', free: true },
+  { id: 'credits', label: 'Credits', free: true },
+];
+
+const SUBMENUS = { company: COMPANY_ITEMS, game: GAME_ITEMS };
 
 export function registerMenuHandler(id, fn) {
   if (typeof fn === 'function') registeredHandlers.set(id, fn);
@@ -125,7 +143,7 @@ export function disabledReason(item, game, handler, state = game.state) {
   const unavailable = item.unavailable?.(state, game);
   if (unavailable) return unavailable;
   if (!item.free && game.movesLeft() === 0 && !item.editsQueued?.(game)) return `Both team actions are used this ${roundWord(state.era)}`;
-  if (!handler && item.id !== 'budget' && item.id !== 'company') return 'Not built yet';
+  if (!handler && item.id !== 'budget' && !item.submenu) return 'Not built yet';
   return '';
 }
 
@@ -179,64 +197,80 @@ export function openMenu(game, point, { overlay = document.querySelector('#overl
   menu.setAttribute('aria-label', 'Office actions');
 
   let closed = false;
-  let submenu = null;
-  let companyButton = null;
-  const close = () => {
+  let submenu = null; // the one open submenu (Company or Game)
+  let submenuButton = null; // the main-menu button that opened it
+  const submenuButtons = new Map(); // submenu id -> its main-menu button
+  // `picked` says a screen is about to open, so a decision card that stepped aside waits for that screen instead.
+  const close = ({ picked = false } = {}) => {
     if (closed) return;
     closed = true;
     layer.remove();
     if (previousFocus?.isConnected && typeof previousFocus.focus === 'function') previousFocus.focus();
+    overlay.dispatchEvent(new CustomEvent('gdt-menu-closed', { detail: { picked } }));
   };
 
-  function closeCompany({ focusParent = false } = {}) {
+  const focusFirstIn = (list) => {
+    const first = list.querySelector('[role="menuitem"]:not([aria-disabled="true"])')
+      ?? list.querySelector('[role="menuitem"]');
+    first?.focus();
+  };
+
+  function closeSubmenu({ focusParent = false } = {}) {
     submenu?.remove();
     submenu = null;
-    companyButton?.setAttribute('aria-expanded', 'false');
-    if (focusParent) companyButton?.focus();
+    submenuButton?.setAttribute('aria-expanded', 'false');
+    if (focusParent) submenuButton?.focus();
+    submenuButton = null;
   }
 
-  function openCompany({ focusFirst = true } = {}) {
-    if (submenu) {
-      if (focusFirst) {
-        const first = submenu.querySelector('[role="menuitem"]:not([aria-disabled="true"])')
-          ?? submenu.querySelector('[role="menuitem"]');
-        first?.focus();
-      }
+  function openSubmenu(parent, { focusFirst = true } = {}) {
+    const button = submenuButtons.get(parent.submenu);
+    if (submenu && submenuButton === button) {
+      if (focusFirst) focusFirstIn(submenu);
       return;
     }
+    closeSubmenu();
     submenu = document.createElement('div');
-    submenu.className = 'ctx company-submenu';
+    submenu.className = `ctx submenu ${parent.submenu}-submenu`;
     submenu.setAttribute('role', 'menu');
-    submenu.setAttribute('aria-label', 'Company actions');
-    companyButton.setAttribute('aria-expanded', 'true');
+    submenu.setAttribute('aria-label', `${parent.label} actions`);
+    submenuButton = button;
+    button.setAttribute('aria-expanded', 'true');
     const projected = projectQueue(game.state, game.queue);
 
-    for (const item of COMPANY_ITEMS) {
+    for (const item of SUBMENUS[parent.submenu]) {
       if (item.hidden?.(projected, game)) continue;
       const customHandler = handlerFor(item.id, handlers);
       const reason = !item.free && game.movesLeft() === 0
         ? `Both team actions are used this ${roundWord(game.state.era)}`
         : disabledReason(item, game, customHandler, projected);
-      const button = document.createElement('button');
-      button.className = 'it';
-      button.type = 'button';
-      button.setAttribute('role', 'menuitem');
-      button.dataset.menuId = item.id;
-      button.textContent = item.label;
-      appendTeamTag(button, item, game);
-      if (reason) appendDisabledReason(button, reason);
+      const entry = document.createElement('button');
+      entry.className = 'it';
+      entry.type = 'button';
+      entry.setAttribute('role', 'menuitem');
+      entry.dataset.menuId = item.id;
+      entry.textContent = item.label;
+      const note = item.note?.(game);
+      if (note) {
+        const count = document.createElement('span');
+        count.className = 'count';
+        count.textContent = note;
+        entry.append(count);
+      }
+      appendTeamTag(entry, item, game);
+      if (reason) appendDisabledReason(entry, reason);
       else {
-        button.addEventListener('click', () => {
-          close();
+        entry.addEventListener('click', () => {
+          close({ picked: true });
           customHandler(game, overlay);
         });
       }
-      submenu.append(button);
+      submenu.append(entry);
     }
 
     layer.append(submenu);
     const menuRect = menu.getBoundingClientRect();
-    const companyRect = companyButton.getBoundingClientRect();
+    const buttonRect = button.getBoundingClientRect();
     const submenuWidth = submenu.offsetWidth;
     const submenuHeight = submenu.offsetHeight;
     const menuLeft = Number.parseFloat(menu.style.left);
@@ -244,8 +278,13 @@ export function openMenu(game, point, { overlay = document.querySelector('#overl
     const opensLeft = menuLeft + menu.offsetWidth + 8 + submenuWidth > 1440 - 12;
     submenu.classList.toggle('opens-left', opensLeft);
     submenu.style.left = `${opensLeft ? menuLeft - submenuWidth - 8 : menuLeft + menu.offsetWidth + 8}px`;
-    const companyTop = menuTop + companyRect.top - menuRect.top;
-    submenu.style.top = `${Math.max(12, Math.min(900 - submenuHeight - 12, companyTop - 5))}px`;
+    const zoom = menuRect.height / menu.offsetHeight || 1; // the stage may be scaled to fit the window
+    const buttonTop = menuTop + (buttonRect.top - menuRect.top) / zoom;
+    const submenuTop = Math.max(12, Math.min(900 - submenuHeight - 12, buttonTop - 5));
+    submenu.style.top = `${submenuTop}px`;
+    // The pointer stays level with its button when the submenu is pushed up to fit the screen.
+    const tail = buttonTop + buttonRect.height / zoom / 2 - submenuTop - 6;
+    submenu.style.setProperty('--tail-top', `${Math.max(8, Math.min(submenuHeight - 20, tail))}px`);
 
     submenu.addEventListener('keydown', (event) => {
       const items = [...submenu.querySelectorAll('[role="menuitem"]')];
@@ -259,7 +298,7 @@ export function openMenu(game, point, { overlay = document.querySelector('#overl
       else if (event.key === 'ArrowLeft' || event.key === 'Escape') {
         event.preventDefault();
         event.stopPropagation();
-        closeCompany({ focusParent: true });
+        closeSubmenu({ focusParent: true });
         return;
       } else if ((event.key === 'Enter' || event.key === ' ') && current >= 0) {
         event.preventDefault();
@@ -271,11 +310,7 @@ export function openMenu(game, point, { overlay = document.querySelector('#overl
       event.stopPropagation();
       items[next]?.focus();
     });
-    if (focusFirst) {
-      const first = submenu.querySelector('[role="menuitem"]:not([aria-disabled="true"])')
-        ?? submenu.querySelector('[role="menuitem"]');
-      first?.focus();
-    }
+    if (focusFirst) focusFirstIn(submenu);
   }
 
   const projected = projectQueue(game.state, game.queue);
@@ -306,10 +341,10 @@ export function openMenu(game, point, { overlay = document.querySelector('#overl
       button.append(label, arrow);
       button.setAttribute('aria-haspopup', 'menu');
       button.setAttribute('aria-expanded', 'false');
-      companyButton = button;
+      submenuButtons.set(item.submenu, button);
       button.addEventListener('click', () => {
-        if (submenu) closeCompany({ focusParent: true });
-        else openCompany();
+        if (submenuButton === button) closeSubmenu({ focusParent: true });
+        else openSubmenu(item);
       });
     } else button.textContent = item.label;
     appendTeamTag(button, item, game);
@@ -317,13 +352,9 @@ export function openMenu(game, point, { overlay = document.querySelector('#overl
       appendDisabledReason(button, reason);
     } else if (!item.submenu) {
       button.addEventListener('click', () => {
-        if (item.id === 'budget') {
-          close();
-          openBudget(game, overlay);
-        } else {
-          close();
-          customHandler(game, overlay);
-        }
+        close({ picked: true });
+        if (item.id === 'budget') openBudget(game, overlay);
+        else customHandler(game, overlay);
       });
     }
     menu.append(button);
@@ -342,7 +373,7 @@ export function openMenu(game, point, { overlay = document.querySelector('#overl
   menu.style.left = `${Math.max(12, Math.min(1440 - menuWidth - 12, x + 8))}px`;
   menu.style.top = `${Math.max(12, Math.min(900 - menuHeight - 12, y + 8))}px`;
 
-  if (companyOpen) openCompany();
+  if (companyOpen) openSubmenu(ITEMS.find((item) => item.submenu === 'company'));
 
   const menuItems = () => [...menu.querySelectorAll('[role="menuitem"]')];
   menu.addEventListener('keydown', (event) => {
@@ -353,9 +384,9 @@ export function openMenu(game, point, { overlay = document.querySelector('#overl
     else if (event.key === 'ArrowUp') next = (current - 1 + items.length) % items.length;
     else if (event.key === 'Home') next = 0;
     else if (event.key === 'End') next = items.length - 1;
-    else if (event.key === 'ArrowRight' && document.activeElement === companyButton) {
+    else if (event.key === 'ArrowRight' && [...submenuButtons.values()].includes(document.activeElement)) {
       event.preventDefault();
-      openCompany();
+      openSubmenu(ITEMS.find((item) => submenuButtons.get(item.submenu) === document.activeElement));
       return;
     }
     else if (event.key === 'Escape') {
@@ -373,10 +404,6 @@ export function openMenu(game, point, { overlay = document.querySelector('#overl
   layer.addEventListener('pointerdown', (event) => {
     if (!menu.contains(event.target) && !submenu?.contains(event.target)) close();
   });
-  if (!companyOpen) {
-    const first = menu.querySelector('[role="menuitem"]:not([aria-disabled="true"])')
-      ?? menu.querySelector('[role="menuitem"]');
-    first?.focus();
-  }
-  return { element: layer, close };
+  if (!companyOpen) focusFirstIn(menu);
+  return { element: layer, close: () => close() };
 }
