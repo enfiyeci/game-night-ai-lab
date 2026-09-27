@@ -177,8 +177,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "rb-hearing",
+      "kind": "still",
+      "image": "rb-hearing",
+      "screens": [
+        {
+          "at": "wall",
+          "plate": "rb-hearing"
+        }
+      ],
       "dur": 8,
       "card": "Month 2 · Washington",
       "cam": {
@@ -186,6 +192,8 @@
           "s": 1.0
         },
         "to": {
+          "x": 1200,
+          "y": 480,
           "s": 1.05
         }
       },

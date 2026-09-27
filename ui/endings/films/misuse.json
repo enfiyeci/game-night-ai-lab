@@ -310,8 +310,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "mu-hearing",
+      "kind": "still",
+      "image": "mu-hearing",
+      "screens": [
+        {
+          "at": "monitor",
+          "plate": "mu-hearing"
+        }
+      ],
       "dur": 7,
       "card": "Day 3 · Washington",
       "cam": {
@@ -319,6 +325,8 @@
           "s": 1.0
         },
         "to": {
+          "x": 443,
+          "y": 459,
           "s": 1.05
         }
       },

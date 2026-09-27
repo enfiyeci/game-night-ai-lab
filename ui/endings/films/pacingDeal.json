@@ -152,8 +152,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "pd-news",
+      "kind": "still",
+      "image": "pd-news",
+      "screens": [
+        {
+          "at": "hall",
+          "plate": "pd-news"
+        }
+      ],
       "dur": 8,
       "card": "Signing day · Geneva",
       "cam": {
@@ -161,6 +167,8 @@
           "s": 1.0
         },
         "to": {
+          "x": 994,
+          "y": 370,
           "s": 1.05
         }
       },

@@ -192,8 +192,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "al-news",
+      "kind": "still",
+      "image": "al-news",
+      "screens": [
+        {
+          "at": "tv",
+          "plate": "al-news"
+        }
+      ],
       "dur": 7,
       "card": "Month 2 · Washington",
       "cam": {
@@ -201,6 +207,8 @@
           "s": 1.0
         },
         "to": {
+          "x": 1047,
+          "y": 295,
           "s": 1.05
         }
       },

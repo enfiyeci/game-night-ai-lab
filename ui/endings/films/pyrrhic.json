@@ -256,8 +256,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "cw-hearing",
+      "kind": "still",
+      "image": "cw-hearing",
+      "screens": [
+        {
+          "at": "monitor",
+          "plate": "cw-hearing"
+        }
+      ],
       "dur": 6,
       "card": "Month 4 · Washington",
       "cam": {
@@ -265,7 +271,9 @@
           "s": 1.0
         },
         "to": {
-          "s": 1.05
+          "x": 960,
+          "y": 560,
+          "s": 1.06
         }
       },
       "sfx": [

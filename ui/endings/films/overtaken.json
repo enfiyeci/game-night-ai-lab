@@ -55,8 +55,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "ov-launch",
+      "kind": "still",
+      "image": "ov-launch",
+      "screens": [
+        {
+          "at": "wall",
+          "plate": "ov-launch"
+        }
+      ],
       "dur": 8,
       "card": "Launch · OpenBrain",
       "cam": {
@@ -64,6 +70,8 @@
           "s": 1.0
         },
         "to": {
+          "x": 959,
+          "y": 485,
           "s": 1.06
         }
       },
@@ -79,8 +87,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "ov-news",
+      "kind": "still",
+      "image": "ov-news",
+      "screens": [
+        {
+          "at": "tv",
+          "plate": "ov-news"
+        }
+      ],
       "dur": 8,
       "card": "Month 1 · Washington",
       "cam": {
@@ -88,6 +102,8 @@
           "s": 1.0
         },
         "to": {
+          "x": 1275,
+          "y": 449,
           "s": 1.05
         }
       },

@@ -179,8 +179,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "qt-briefing",
+      "kind": "still",
+      "image": "qt-briefing",
+      "screens": [
+        {
+          "at": "monitor",
+          "plate": "qt-briefing"
+        }
+      ],
       "dur": 6,
       "card": "Month 6 · Washington",
       "cam": {
@@ -188,6 +194,8 @@
           "s": 1.0
         },
         "to": {
+          "x": 576,
+          "y": 476,
           "s": 1.05
         }
       },

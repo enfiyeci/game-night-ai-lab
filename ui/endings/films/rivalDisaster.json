@@ -140,8 +140,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "rd-news",
+      "kind": "still",
+      "image": "rd-news",
+      "screens": [
+        {
+          "at": "confidence",
+          "plate": "rd-news"
+        }
+      ],
       "dur": 7,
       "card": "Day 3 · Washington",
       "cam": {
@@ -149,7 +155,9 @@
           "s": 1.0
         },
         "to": {
-          "s": 1.05
+          "x": 960,
+          "y": 446,
+          "s": 1.06
         }
       },
       "sfx": [

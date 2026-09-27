@@ -240,8 +240,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "lb-summit",
+      "kind": "still",
+      "image": "lb-summit",
+      "screens": [
+        {
+          "at": "hall",
+          "plate": "lb-summit"
+        }
+      ],
       "dur": 7,
       "card": "Year 1 · The summit",
       "cam": {
@@ -249,6 +255,8 @@
           "s": 1.0
         },
         "to": {
+          "x": 760,
+          "y": 700,
           "s": 1.05
         }
       },
