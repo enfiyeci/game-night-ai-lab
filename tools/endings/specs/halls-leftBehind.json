@@ -1,0 +1,18 @@
+{
+ "shots": {
+  "5": {
+   "image": "lb-summit",
+   "screens": [
+    [
+     "hall",
+     "lb-summit"
+    ]
+   ],
+   "focus": [
+    760,
+    700
+   ],
+   "push": 1.05
+  }
+ }
+}

@@ -66,7 +66,6 @@
       }
     }
   },
-  "titleClip": "pd-globe-title",
   "titleSfx": [
     [
       "chord",
@@ -293,10 +292,20 @@
       ]
     },
     {
-      "kind": "video",
-      "clip": "pd-globe",
+      "kind": "still",
+      "image": "pd-globe",
       "dur": 7,
       "card": "Year 1 · Everywhere",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "x": 960,
+          "y": 520,
+          "s": 1.05
+        }
+      },
       "sfx": [
         [
           "wind",
@@ -308,5 +317,18 @@
         ]
       ]
     }
-  ]
+  ],
+  "titleStill": "pd-globe",
+  "titleCam": {
+    "from": {
+      "s": 1.05,
+      "x": 960,
+      "y": 520
+    },
+    "to": {
+      "s": 1.09,
+      "x": 960,
+      "y": 520
+    }
+  }
 }

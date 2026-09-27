@@ -1,0 +1,15 @@
+{
+ "shots": {
+  "3": {
+   "image": "rd-news",
+   "screens": [
+    [
+     "confidence",
+     "rd-news"
+    ]
+   ],
+   "focus": "screen",
+   "push": 1.06
+  }
+ }
+}

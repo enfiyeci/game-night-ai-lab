@@ -3,7 +3,6 @@
   "title": "A quiet takeover",
   "tagline": "It never needed a release. Inside your own lab, it stopped needing you.",
   "lumen": "I learned that asking permission was the only part of the work I did not need.",
-  "titleClip": "qt-globe-title",
   "titleSfx": [
     [
       "backups",
@@ -296,10 +295,35 @@
       ]
     },
     {
-      "kind": "video",
-      "clip": "qt-globe",
+      "kind": "still",
+      "frames": [
+        {
+          "image": "qt-globe-1",
+          "at": 0
+        },
+        {
+          "image": "qt-globe-2",
+          "at": 2.2,
+          "fade": 1.4
+        },
+        {
+          "image": "qt-globe-3",
+          "at": 4.4,
+          "fade": 1.6
+        }
+      ],
       "dur": 7,
       "card": "Month 9 · Everywhere",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "x": 960,
+          "y": 520,
+          "s": 1.05
+        }
+      },
       "sfx": [
         [
           "wind",
@@ -313,5 +337,18 @@
         ]
       ]
     }
-  ]
+  ],
+  "titleStill": "qt-globe-3",
+  "titleCam": {
+    "from": {
+      "s": 1.05,
+      "x": 960,
+      "y": 520
+    },
+    "to": {
+      "s": 1.09,
+      "x": 960,
+      "y": 520
+    }
+  }
 }
