@@ -445,3 +445,51 @@ test('the research advisor names the gap only when the leader trains a larger mo
   s.rivals[0].fleet = 40; // the leader can train Large
   assert.match(research(s), /^OpenBrain can train Large; we can train \w+\. More compute closes that\.$/);
 });
+
+// The signed stamp (owner playtest 2026-09-26): the board holds a moment with a SIGNED stamp on the card.
+import { createGame } from '../ui/game.js';
+import { SCENARIOS } from '../ui/logic/scenarios.js';
+import { installFakeDom } from './helpers/fakeDom.js';
+
+async function dealBoard() {
+  const doc = installFakeDom();
+  const { openDeals } = await import('../ui/screens/compute.js');
+  const game = createGame({ state: SCENARIOS.era3Idle(1), seed: 1 });
+  const overlay = doc.createElement('div');
+  doc.body.append(overlay);
+  openDeals(game, overlay);
+  return { game, overlay };
+}
+const nextFrame = () => new Promise((resolve) => setTimeout(resolve, 5));
+
+test('signing stamps the card, queues exactly one deal, and a second click ends the stamp', async () => {
+  const { game, overlay } = await dealBoard();
+  const movesBefore = game.movesLeft();
+  const offersBefore = game.state.compute.offers.length;
+  const signedId = overlay.querySelector('.company-card.selected').dataset.choice;
+  overlay.querySelector('.dialog-ok').click();
+  assert.equal(game.movesLeft(), movesBefore - 1, 'the deal is queued at once, not after the stamp');
+  assert.equal(game.state.compute.offers.some((offer) => offer.id === signedId), false);
+  assert.equal(game.state.compute.offers.length, offersBefore - 1);
+  const card = overlay.querySelector('.deal-signed');
+  assert.equal(card?.dataset.choice, signedId, 'the stamp lands on the card that was signed');
+  assert.equal(card.querySelector('.deal-signed-stamp').textContent, 'Signed');
+  assert.ok(overlay.querySelector('.dialog-layer'), 'the board stays up while the stamp plays');
+  overlay.querySelector('[data-choice]:not(.deal-signed)')?.click();
+  overlay.querySelector('.compute-queue-card')?.click();
+  assert.equal(overlay.querySelector('.deal-signed')?.dataset.choice, signedId, 'a card click does not redraw the board mid-stamp');
+  await nextFrame();
+  overlay.querySelector('.dialog-ok').click();
+  assert.equal(overlay.querySelector('.dialog-layer'), null, 'a second click finishes the stamp');
+  assert.equal(game.movesLeft(), movesBefore - 1, 'still exactly one deal');
+});
+
+test('the signed stamp closes the board on its own after a short hold', async () => {
+  const { game, overlay } = await dealBoard();
+  const movesBefore = game.movesLeft();
+  overlay.querySelector('.dialog-ok').click();
+  assert.ok(overlay.querySelector('.dialog-layer'));
+  await new Promise((resolve) => setTimeout(resolve, 900));
+  assert.equal(overlay.querySelector('.dialog-layer'), null);
+  assert.equal(game.movesLeft(), movesBefore - 1);
+});

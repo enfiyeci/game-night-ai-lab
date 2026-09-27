@@ -17,6 +17,7 @@ import {
   queueView,
 } from '../logic/compute.js';
 import { computeAmount, money, months } from '../logic/format.js';
+import { sfx } from '../sfx.js';
 
 const element = (tag, className, text) => {
   const node = document.createElement(tag);
@@ -109,6 +110,52 @@ function gridReservationButton(card) {
   return button;
 }
 
+// The signed stamp (owner playtest 2026-09-26): the card the player signed takes a SIGNED stamp before the
+// board closes. The deal is already queued when it starts; the stamp only holds the dialog open for a moment,
+// and any click or key during it ends it at once.
+const SIGNED_HOLD_MS = 800;
+const SIGNED_LANDS_MS = 200; // when the stamp meets the card (styles.css deal-stamp-land)
+const SKIP_EVENTS = ['pointerdown', 'click', 'keydown'];
+const reducedMotion = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+
+function stampSigned(layer, card, done) {
+  let over = false;
+  let armed = false;
+  let landed = false;
+  const land = () => {
+    if (landed) return;
+    landed = true;
+    sfx.stamp(0.4);
+  };
+  const soundTimer = setTimeout(land, reducedMotion() ? 0 : SIGNED_LANDS_MS);
+  const holdTimer = setTimeout(() => finish(), SIGNED_HOLD_MS);
+  function finish() {
+    if (over) return;
+    over = true;
+    clearTimeout(soundTimer);
+    clearTimeout(holdTimer);
+    land();
+    for (const type of SKIP_EVENTS) layer.removeEventListener(type, skip, true);
+    done();
+  }
+  // Capture phase, so the skipping click never reaches a card, the veil or the office underneath.
+  function skip(event) {
+    if (!armed) return; // the click that signed is still being dispatched
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.type !== 'pointerdown') finish();
+  }
+  layer.classList.add('deal-signing');
+  if (card) {
+    card.classList.add('deal-signed');
+    card.querySelector('.company-selected')?.remove();
+    card.append(element('span', 'deal-signed-stamp', 'Signed'));
+  }
+  for (const type of SKIP_EVENTS) layer.addEventListener(type, skip, true);
+  requestAnimationFrame(() => { armed = true; });
+  return { finish };
+}
+
 function commitmentPanel(game, state, selected, onAction) {
   const view = commitmentsView(state, selected);
   const root = element('div', 'commitments-panel');
@@ -190,6 +237,7 @@ function commitmentPanel(game, state, selected, onAction) {
 export function openDeals(game, overlayRoot) {
   const initial = projectQueue(game.state, game.queue);
   let selected = '';
+  let signing = null; // the signed stamp while it plays
   const body = element('div');
   body.setAttribute('role', 'radiogroup');
   body.setAttribute('aria-label', 'Compute suppliers and reservations');
@@ -234,6 +282,7 @@ export function openDeals(game, overlayRoot) {
     if (queueOffer) {
       const queueCard = queueDealButton();
       queueCard.addEventListener('click', () => {
+        if (signing) return;
         opened.close();
         openQueue(game, overlayRoot);
       });
@@ -252,6 +301,7 @@ export function openDeals(game, overlayRoot) {
         button.append(element('span', 'company-selected', 'Selected'));
       }
       button.addEventListener('click', () => {
+        if (signing) return;
         selected = button.dataset.choice;
         error.textContent = '';
         render({ focusKey: button.dataset.focusKey });
@@ -297,6 +347,10 @@ export function openDeals(game, overlayRoot) {
     body,
     okLabel: 'Sign',
     onOk() {
+      if (signing) {
+        signing.finish();
+        return;
+      }
       const { state, cards, gridCard } = currentCards();
       const card = cards.find((candidate) => candidate.id === selected) ?? (gridCard?.id === selected ? gridCard : null);
       if (!card || card.disabled) {
@@ -311,8 +365,12 @@ export function openDeals(game, overlayRoot) {
         return;
       }
       const result = game.addMove(card.move);
-      if (result.ok) opened.close();
-      else error.textContent = result.error ?? 'The deal could not be queued.';
+      if (!result.ok) {
+        error.textContent = result.error ?? 'The deal could not be queued.';
+        return;
+      }
+      const signed = [...body.querySelectorAll('[data-choice]')].find((node) => node.dataset.choice === card.id);
+      signing = stampSigned(opened, signed, () => opened.close());
     },
   });
   finishDialog(opened, 'deals', footer);
