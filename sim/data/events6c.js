@@ -189,6 +189,7 @@ export const EVENTS_6C = [
     id: 'safetyQuits',
     kind: 'world',
     crisis: true,
+    eras: [2, 3], // a safety head quitting in public: May 2024
     fallback: 'letgo',
     trigger: (state) => state.seenEvents.includes('promise') && state.staffTrust < 50,
     warning: { handle: '@anon_staffer', text: 'the Head of Safety cancelled every meeting this week' },
@@ -298,6 +299,7 @@ export const EVENTS_6C = [
   {
     id: 'exportFlip',
     kind: 'world',
+    eras: [2, 3], // the memory-chip and chip-tool rules of December 2024
     fallback: 'quiet',
     trigger: (state, rng) => state.era >= 2 && rng.chance(0.15),
     warning: null,
@@ -327,6 +329,7 @@ export const EVENTS_6C = [
   {
     id: 'priceWar',
     kind: 'world',
+    eras: [2, 3, 4], // cheap small models, 2024 on; era 5's weeks are about the frontier, not prices
     fallback: 'wait',
     trigger: (state, rng) => state.era >= 2 && liveModels(state).length > 0 && rng.chance(0.12),
     warning: null,
@@ -365,6 +368,7 @@ export const EVENTS_6C = [
   {
     id: 'copyright',
     kind: 'world',
+    eras: [1, 2, 3], // newspaper and author suits, 2023-2025; the case coming due is copyrightDue
     fallback: 'fight',
     trigger: (state, rng) => state.models.some((model) => (model.flags ?? []).includes('scraped'))
       && (state.era >= 2 || state.turnInEra >= 2) && rng.chance(0.25),

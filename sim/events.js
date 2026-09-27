@@ -49,6 +49,20 @@ export function nextRound(state) {
   return { era: state.era, round: state.turnInEra + 1 };
 }
 
+// The era of the round `ahead` rounds from now. Cards made at a mark land in the next round (ahead 1); a warning shows
+// in the next round and its card lands in the one after (ahead 2).
+export function eraAhead(state, ahead) {
+  let at = { era: state.era, turnInEra: state.turnInEra };
+  for (let k = 0; k < ahead; k += 1) {
+    const next = nextRound(at);
+    at = { era: next.era, turnInEra: next.round };
+  }
+  return at.era;
+}
+
+// A row with `eras` lands only in those eras (owner, 2026-09-26: "each era should have events relevant to itself").
+export const eraAllows = (event, era) => !event.eras || event.eras.includes(era);
+
 export function pushFeed(state, handle, text, tag = 'feed') {
   state.feed.push({ turn: state.turn, day: state.day, handle, text, tag });
   if (state.feed.length > FEED_KEEP) state.feed.splice(0, state.feed.length - FEED_KEEP);
@@ -86,12 +100,19 @@ export function eventsTick(state, rng) {
     }
     if (state.pendingEvents.some((pending) => pending.id === event.id)) continue;
     if (event.kind !== 'internal' && !event.repeatable && state.seenEvents.includes(event.id)) continue;
+    if (!eraAllows(event, eraAhead(state, 1))) {
+      // Out of its eras: a card deferred from earlier lapses instead of landing in the wrong era.
+      delete state.warnings[event.id];
+      continue;
+    }
     const hasWarning = Object.hasOwn(state.warnings, event.id);
     const warned = hasWarning ? state.warnings[event.id] : null;
     if (hasWarning && warned?.turn < state.turn) {
       delete state.warnings[event.id];
       if ((event.kind === 'planted' || event.repeatable) && !event.trigger(state, rng)) continue;
     } else if (!hasWarning) {
+      // A warning's card lands a round after the warning, so both rounds must fall in the card's eras.
+      if (event.warning && !eraAllows(event, eraAhead(state, 2))) continue;
       if (!event.trigger(state, rng)) continue;
       if (event.warning) {
         state.warnings[event.id] = { turn: state.turn };

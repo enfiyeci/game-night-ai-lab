@@ -88,7 +88,7 @@ export function mountBriefing(game, { office, overlay }) {
     extra.append(row);
     const node = bubbleAt(root, head, {
       label: `${ADVISOR_TITLE[warning.advisor]} · ${bandOf(warning.advisor)}`,
-      say: `Heads up: “${warning.text}” Might be nothing. It is never nothing.`, // OWNER WRITES
+      say: warning.say, // ui/data/eventCopy.js WARNING_SAY
       width: 300,
       tail: 30,
       dy: bandOf(warning.advisor) === 'calm' ? -34 : -64, // clear their "!" marker
