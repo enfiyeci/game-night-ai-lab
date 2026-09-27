@@ -365,8 +365,11 @@ export function techniquePanel(state, stage, draft, onChange, { cardNote, onPick
     for (const card of cards.filter((candidate) => candidate.group === group)) {
       const picked = selected.includes(card.id);
       const blocked = blockedGroup;
-      // Cash left after the other picks; a card in a group you already picked from replaces that pick.
-      const otherCash = pickedCards.filter((other) => other.group !== group).reduce((sum, other) => sum + (other.cost.cash ?? 0), 0);
+      // Cash left after every other pick in the recipe, across all its stages; a card in a group you already
+      // picked from in this stage replaces that pick.
+      const otherCash = Object.entries(draft.picks)
+        .flatMap(([pickStage, ids]) => ids.map(cardById).filter((other) => other && (pickStage !== stage || other.group !== group)))
+        .reduce((sum, other) => sum + (other.cost.cash ?? 0), 0);
       const short = (card.cost.cash ?? 0) - (state.cash - otherCash);
       const reason = blocked ? `All ${slots} picks are used — remove one first` : '';
       const row = document.createElement('button');
