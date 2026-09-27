@@ -115,6 +115,12 @@ Messages sent 2026-09-26 from lane `gn-newplayer`. Replies still pending when th
 | `sim/training.js`, `sim/release.js` | gn-model-money (active, Mac mini) | A9, A10, after its work lands in `ui` |
 | `sim/summit.js`, `sim/automation.js`, event data | summit, automation, events lanes (all done) | A3, A4, A6, A8 |
 
+gn-compute-race replied 2026-09-27 02:54 UTC: the order is agreed; its build removes none of these draws; and its
+owner-picked catch-up rule makes `launchGain` in `sim/rivals.js` depend on the player's score and on launches still
+waiting in `state.rivalLaunches` (from era 2: +0.5 per point a rival trails you beyond 10). **Task B1 must keep that
+term** when it replaces `rng.int(0, 4)`. It will message the SHA once `compute-race-build` is in `ui` (not before
+2026-09-27 12:00 AM PT).
+
 Order: **Task 0 → Part A (A1-A8) → A9-A10 once gn-model-money is in `ui` → Part B once `compute-race-build` is in
 `ui` → Part C.** Part A never edits a gn-compute-race file. gn-compute-race agreed nothing yet; its build keeps "the
 same random calls in the same order", which is compatible with this order.
