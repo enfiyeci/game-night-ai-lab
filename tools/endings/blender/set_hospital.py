@@ -158,7 +158,7 @@ def doors(lit=260, ajar=0.0):
             part.parent = pivot
         pivot.rotation_euler = (0, 0, sign * -swing)
     kit.box((1.9, -0.01, 2.62), (1.3, 0.02, 0.3), kit.mat("#17465E", 0.4))
-    kit.text("TREATMENT", (1.9, 0.012, 2.62), 0.15, kit.mat("#FFFFFF", 0.5, emit="#F4F8F6", strength=0.6), font=kit.FONT)
+    kit.text("TREATMENT", (1.9, 0.012, 2.62), 0.15, kit.mat("#FFFFFF", 0.5, emit="#F4F8F6", strength=4), font=kit.FONT)
     if lit:
         kit.area((1.9, -1.6, H - 0.05), (1.9, -1.6, 0), (1.6, 2.4), lit, (0.92, 1.0, 0.96))
 
