@@ -4,6 +4,7 @@ import { SIZE_CAP, LENGTHS, validateRecipe, recipeCost, recipeCards, talentSpend
 import { standardTechniques } from './techniques.js';
 import { rollTrainingHazard, applyAlignmentFaking, evalGamingDebt, dangerCapability } from './hazards.js';
 import { draftError, draftFor, hasLine, learnConstitution } from './constitution.js';
+import { accrue } from './util.js';
 import { computeSlices } from './split.js';
 import { unitMonthlyPrice } from './economy.js';
 
@@ -37,7 +38,8 @@ export function startRun(state, recipe) {
   return { ok: true, cost };
 }
 
-export function advanceRunBy(state, rng, fraction) {
+// _rng: kept so callers don't shift; training draws nothing (owner 2026-09-26)
+export function advanceRunBy(state, _rng, fraction) {
   const run = state.activeRun;
   if (!run) return null;
   // Capacity is checked once per round, as the balance was tuned; a player action rechecks it.
@@ -52,8 +54,8 @@ export function advanceRunBy(state, rng, fraction) {
   if (!run.canAdvance) return { type: 'runPaused' };
   run.spikeProgress = (run.spikeProgress ?? 0) + fraction;
   if (run.spikeProgress >= 1 - 1e-9) {
-    const chance = Math.min(1, Math.max(0, run.spikeChance));
-    if (rng.chance(chance)) run.spikes += 1;
+    // Running total: each round adds the run's spike chance, and a spike lands each time the total reaches 1.
+    if (accrue(run, 'spikePressure', Math.min(1, Math.max(0, run.spikeChance)))) run.spikes += 1;
     run.spikeProgress = Math.max(0, run.spikeProgress - 1);
   }
   run.turnsLeft -= fraction;
@@ -63,20 +65,20 @@ export function advanceRunBy(state, rng, fraction) {
     learnConstitution(state, run.constitution);
     state.constitutionDraft.changes = state.constitutionDraft.changes.slice(run.constitutionChanges ?? 0);
   }
-  state.pendingModel = resolveRun(state, run, rng);
+  state.pendingModel = resolveRun(state, run);
   state.pendingModel.trainingCost = (run.spent?.cash ?? 0) + (run.spent?.compute ?? 0);
   if (run.uncapped) state.pendingModel.uncapped = true; // run past the Geneva cap
   return state.pendingModel;
 }
 
-export const advanceRun = (state, rng) => advanceRunBy(state, rng, 1);
+export const advanceRun = (state) => advanceRunBy(state, null, 1);
 
 // A player action (a new compute split, a deal, a release) can change training capacity mid-round.
 export function recheckCapacity(state) {
   if (state.activeRun) delete state.activeRun.capacityTurn;
 }
 
-export function resolveRun(state, run, rng) {
+export function resolveRun(state, run) {
   const { size, length, alignShare } = run.recipe.sliders;
   const cards = recipeCards(state, run.recipe);
   const autos = standardTechniques(state).map((t) => t.auto).filter(Boolean);
@@ -127,7 +129,8 @@ export function resolveRun(state, run, rng) {
   state.misuseExposure += sum('mx');
   state.perceivedAdOffset += sum('perceivedAdOffset');
   for (const e of effects) {
-    if (e.legal && rng.chance(e.legal.chance)) {
+    // D4: web-crawl data is always sued, at full cost; licensed and synthetic never.
+    if (e.legal && e.legal.chance >= 0.3) {
       state.legalCases.push({ cost: e.legal.cost, dueTurn: state.turn + e.legal.delay, source: 'training data' });
     }
   }
@@ -158,7 +161,7 @@ export function resolveRun(state, run, rng) {
       govIntl: sum('govIntl'),
       usersMult: effects.reduce((m, e) => m * (e.usersMult ?? 1), 1),
     },
-    hazard: rollTrainingHazard(state, cards, flags, rng),
+    hazard: rollTrainingHazard(state, cards, flags),
     releaseDelay: 0,
   };
 }

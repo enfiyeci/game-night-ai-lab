@@ -219,7 +219,8 @@ function dangerState(seed) {
 }
 
 // A run with full reasoning RL that ends with the cheating trace unanswered. The dice are played from seed 1 up
-// until one rolls the hazard (an even chance each), so the state is always reached by the real sim.
+// until one meets the hazard (since deterministic endings A9 a hackable recipe always does, so the first seed does),
+// so the state is always reached by the real sim.
 function hazardState(seed) {
   let base = SCENARIOS.era3Idle(seed);
   if (base.ending) return base;

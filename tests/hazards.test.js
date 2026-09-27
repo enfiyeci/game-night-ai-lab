@@ -13,9 +13,16 @@ const no = { ...yes, chance: () => false };
 
 test('reward hacking can appear only with verifiable-reward, reasoning or agentic RL', () => {
   const s = createInitialState();
-  assert.equal(rollTrainingHazard(s, [{ id: 'synthetic-sft' }], [], yes), null);
-  assert.deepEqual(rollTrainingHazard(s, [{ id: 'rlvr-light' }], [], yes), { type: 'rewardHacking', size: rewardHackSize(1) });
-  assert.equal(rollTrainingHazard(s, [{ id: 'reasoning-rl' }], [], no), null);
+  assert.equal(rollTrainingHazard(s, [{ id: 'synthetic-sft' }], []), null);
+  assert.deepEqual(rollTrainingHazard(s, [{ id: 'rlvr-light' }], []), { type: 'rewardHacking', size: rewardHackSize(1) });
+  assert.deepEqual(rollTrainingHazard(s, [], ['agentic']), { type: 'rewardHacking', size: rewardHackSize(1) });
+});
+
+test('a hackable recipe always meets reward hacking', () => {
+  const s = createInitialState();
+  s.era = 3;
+  assert.deepEqual(rollTrainingHazard(s, [{ id: 'reasoning-rl' }], []), { type: 'rewardHacking', size: rewardHackSize(3) });
+  assert.equal(rollTrainingHazard(s, [{ id: 'human-sft' }], []), null);
 });
 
 test('penalizing the thought hides the debt; fixing removes it; ignoring leaves it visible', () => {
@@ -113,10 +120,10 @@ test('fixing the hazard delays activation by one turn', () => {
   assert.equal(b.activeFromTurn, a.activeFromTurn + 1);
 });
 
-test('a finished run rolls reward hacking and feeds alignment faking', () => {
+test('a finished run with a hackable recipe meets reward hacking and feeds alignment faking', () => {
   const s = createInitialState();
   const hackRun = { recipe: { sliders: { size: 'small', length: 'optimal', alignShare: 0.15 }, picks: { pre: [], mid: [], post: ['rlvr-light'] } }, spikes: 0, bonus: 0 };
-  assert.deepEqual(resolveRun(s, hackRun, yes).hazard, { type: 'rewardHacking', size: rewardHackSize(1) });
+  assert.deepEqual(resolveRun(s, hackRun).hazard, { type: 'rewardHacking', size: rewardHackSize(1) });
   const t = createInitialState();
   t.era = 3; t.capability = 60; t.concealedDebt = 0;
   const safeRun = { recipe: { sliders: { size: 'small', length: 'optimal', alignShare: 0.5 }, picks: { pre: [], mid: [], post: ['synthetic-sft'] } }, spikes: 0, bonus: 0 };

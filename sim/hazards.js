@@ -1,7 +1,6 @@
 import { BALANCE } from './balance.js';
 import { hasLine } from './constitution.js';
 
-export const REWARD_HACK_CHANCE = 0.5;
 export const rewardHackSize = (era) => 4 + 2 * era;
 export const INTERPRETABILITY_SPEND = 5;
 const HACKABLE = new Set(['rlvr-light', 'reasoning-rl', 'agentic-rl']);
@@ -14,9 +13,10 @@ export const totalDebt = (state) => state.alignmentDebt + state.concealedDebt;
 // The capability the danger rules see: progress past 100 still shows in the race and the benchmarks, not in the risk.
 export const dangerCapability = (capability) => Math.min(capability, BALANCE.dangerCapabilityMax);
 
-export function rollTrainingHazard(state, cards, flags, rng) {
+// Stated condition (spec: "always happen when the causing choice is made"): a hackable recipe always meets reward hacking.
+export function rollTrainingHazard(state, cards, flags) {
   const hackable = cards.some((c) => HACKABLE.has(c.id)) || flags.includes('agentic');
-  if (!hackable || !rng.chance(REWARD_HACK_CHANCE)) return null;
+  if (!hackable) return null;
   return { type: 'rewardHacking', size: rewardHackSize(state.era) };
 }
 

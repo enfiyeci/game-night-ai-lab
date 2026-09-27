@@ -49,9 +49,11 @@ test('the first bubble flies on the first day of a run, and the count never pass
 
 test('the early first bubble adds no overcount when a loss spike trims the finished model', () => {
   // Seed 35: seed 1 stopped spiking when the quiet-takeover roll became a running total (deterministic endings A3
-  // removed that draw from the main random stream); the loss spike is still a roll until its own task.
+  // removed that draw from the main random stream). Loss spikes are now a running total too (A9): this one-round
+  // run's own 0.1 never reaches 1, so the run is given a spike chance of 1, which lands the spike as it finishes.
   const rng = createRng(35);
   let state = applyActions(SCENARIOS.era3Idle(35), { moves: [{ type: 'startRun', recipe: { sliders: { size: 'small', length: 'optimal', alignShare: 0.2 }, picks: { pre: [], mid: [], post: [] } } }] }, rng).state;
+  state.activeRun.spikeChance = 1;
   let peak = 0;
   for (let day = 0; day < 40 && state.activeRun; day += 1) {
     peak = Math.max(peak, badgeCounts(state).capability);

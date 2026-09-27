@@ -110,6 +110,17 @@ Ending counts per bot:
 | a5 | balancedHighSafety | pacingDeal 81, misalignment 97, rivalDisaster 11, acquihire 11 |
 | a5 | balancedPush | misalignment 135, pacingDeal 53, acquihire 8, rivalDisaster 4 |
 | a5 | denier | misalignment 181, acquihire 14, rivalDisaster 4, pacingDeal 1 |
+| a9 | speed | boardRemoved 161, misuse 35, misalignment 4 |
+| a9 | safety | acquihire 189, pacingDeal 2, leftBehind 1, aligned 3, rivalDisaster 1, misalignment 4 |
+| a9 | balanced | pacingDeal 29, misalignment 165, acquihire 5, rivalDisaster 1 |
+| a9 | random | acquihire 149, boardRemoved 22, misalignment 20, misuse 6, rivalDisaster 3 |
+| a9 | overCommitter | acquihire 176, misalignment 24 |
+| a9 | handToMouth | misalignment 162, rivalDisaster 16, acquihire 21, pacingDeal 1 |
+| a9 | balancedNoGrid | pacingDeal 21, misalignment 173, acquihire 5, rivalDisaster 1 |
+| a9 | balancedLowSafety | misalignment 164, leftBehind 9, pacingDeal 19, acquihire 8 |
+| a9 | balancedHighSafety | pacingDeal 35, misalignment 156, acquihire 9 |
+| a9 | balancedPush | pacingDeal 26, misalignment 165, acquihire 6, quietTakeover 3 |
+| a9 | denier | misalignment 195, acquihire 5 |
 
 Notes:
 
@@ -202,3 +213,26 @@ Notes:
   speed identical to m1). So the noise itself decided almost nothing; the larger moves above come from no longer
   drawing 14 numbers per release (2 for the safety row, 2 for each of the 4 capability rows, 1 for each of the 4 critics) from the main random stream, which shifts every later roll on that stream.
   No bot's leading ending changed. Not traced run by run.
+- a9 (Task A9, training hazards follow the recipe: reward hacking always happens on a hackable recipe (stated
+  condition, spec "always happen when the causing choice is made"; was a 50% roll); the two web-crawl data cards are
+  always sued at their full listed cost, scraping $200M and filtered $120M, and licensed or synthetic data never (D4,
+  rule `legal.chance >= 0.3`); loss spikes are a running total of the run's per-round spike chance on
+  `run.spikePressure` (rule shape 1)): compared against a5. Large moves, though no bot's leading ending changed: balanced misalignment 126 to 165 and pacingDeal 57 to 29;
+  handToMouth misalignment 100 to 162, rivalDisaster 52 to 16, acquihire 48 to 21; every other balanced probe's
+  misalignment rises by 21 to 59 (balancedHighSafety 97 to 156); denier 181 to 195; the safety bot's leftBehind 14 to
+  1 (acquihire 166 to 189); speed misuse 26 to 35. Split with scratch copies (not committed), each still drawing the
+  old numbers in the old order so no roll reshuffles: all three rules together land within 7 of a9 for every bot, so
+  the rules, not the reshuffle, make these moves. Reward hacking alone (spikes and lawsuits as before) gives the
+  misalignment surge (balanced 167, handToMouth 155, balancedHighSafety 151): hazards per 200 runs roughly double
+  (balanced 442 to 838), and the balanced bots answer every hazard with "ignore", which adds rewardHackSize (4 + 2 x
+  era) of visible debt each time. The lawsuit rule alone moves every bot by at most 9 (balanced misalignment 117,
+  pacingDeal 62). The safety bot's leftBehind drop and speed's misuse rise come, by elimination, from loss spikes
+  (neither single-rule copy moves them), which under the running total almost never happen.
+  Games with at least one loss spike over 200 seeds (before, the roll, at HEAD 1393e49 / after): speed 143 / 0, safety 119 / 0, balanced 84 / 0, random 49 / 4,
+  overCommitter 53 / 0, handToMouth 66 / 0, balancedNoGrid 76 / 0, balancedLowSafety 80 / 0, balancedHighSafety 77 /
+  0, balancedPush 85 / 0, denier 50 / 0. A run lasts a round or a few, and a typical recipe's spike chance is about
+  0.1 a round, so its running total never reaches 1 before the run ends; even a total kept on the lab across runs
+  (scratch check) reaches 1 only for speed (121 runs) and random (20), because most bots expect fewer than one spike
+  per game. Lawsuits from training data, runs sued at least once (before / after): speed 146 / 200, safety 37 / 0,
+  balanced 183 / 200, and every bot that trains on filtered or scraped data is now sued on every model (balanced 397
+  cases, $47.6B in total over 200 runs, to 1238 cases, $148.6B). Not traced run by run.

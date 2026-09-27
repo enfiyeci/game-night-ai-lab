@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
-import { startRun, advanceRun, advanceRunBy, availableUnits, recheckCapacity } from '../sim/training.js';
+import { startRun, advanceRun, advanceRunBy, availableUnits, recheckCapacity, resolveRun } from '../sim/training.js';
 import { recipeCost } from '../sim/recipe.js';
 
 const noLuck = { next: () => 0.99, int: () => 0, chance: () => false, normal: (m) => m };
@@ -39,7 +39,8 @@ test('a finished run produces a trained model with hidden effects applied', () =
   assert.equal(s.pendingModel, trained);
   assert.equal(s.alignmentDebt, 7); // 5 + dpo 2 + zero from the safety-share term
   assert.equal(s.misuseExposure, 2); // 5 − 3
-  assert.equal(s.legalCases.length, 0); // chance() is false in this rng
+  assert.equal(s.legalCases.length, 1); // D4: filtered web data is always sued (was 0 when the dice said no)
+  assert.equal(s.legalCases[0].cost, 120);
   assert.equal(trained.spec.arch, 'dense');
   assert.equal(trained.openWeightsMx, 20);
 });
@@ -58,13 +59,13 @@ test('a run pauses without reserved compute and resumes when capacity returns', 
   startRun(s, recipe);
   s.compute.online = 4;
   const turnsLeft = s.activeRun.turnsLeft;
-  let draws = 0;
-  const countedRng = { ...noLuck, chance: () => { draws += 1; return false; } };
-  assert.deepEqual(advanceRun(s, countedRng), { type: 'runPaused' });
+  s.activeRun.spikeChance = 1;
+  assert.deepEqual(advanceRun(s), { type: 'runPaused' });
   assert.equal(s.activeRun.turnsLeft, turnsLeft);
-  assert.equal(draws, 0);
+  assert.equal(s.activeRun.spikes, 0); // a paused round adds nothing to the spike running total
+  assert.equal(s.activeRun.spikePressure ?? 0, 0);
   s.compute.online = 10;
-  assert.ok(advanceRun(s, countedRng).capability > 0);
+  assert.ok(advanceRun(s).capability > 0);
 });
 
 test('training capacity holds for the round unless a player action rechecks it', () => {
@@ -84,12 +85,12 @@ test('training capacity holds for the round unless a player action rechecks it',
   assert.equal(s.activeRun.turnsLeft, initial - 0.75);
 });
 
-test('low alignment share adds alignment debt; lawsuits are seeded by chance', () => {
+test('low alignment share adds alignment debt; a spike costs gain; web-crawl data is sued', () => {
   const s = createInitialState();
   const r2 = { ...recipe, sliders: { ...recipe.sliders, alignShare: 0 } };
   startRun(s, r2);
-  const sure = { ...noLuck, chance: () => true };
-  const trained = advanceRun(s, sure);
+  s.activeRun.spikeChance = 1; // the running total reaches 1 in this one round (was: dice that always landed)
+  const trained = advanceRun(s);
   // gain 17 × 1.0 × 1 × (1 − 0.2 × 1 spike) = 13.6; debt += 13.6 × 0.15 × 2 + 2
   assert.ok(Math.abs(trained.gain - 13.6) < 1e-9);
   assert.ok(Math.abs(s.alignmentDebt - (5 + 13.6 * 0.3 + 2)) < 1e-9);
@@ -114,4 +115,44 @@ test('standard agent techniques mark era 4 models as agentic', () => {
   startRun(s, recipe);
   const trained = advanceRun(s, noLuck);
   assert.ok(trained.flags.includes('agentic'));
+});
+
+// A one-round run under way (the recipe above, compute to spare).
+function runningState() {
+  const s = createInitialState();
+  s.compute.split.safety = 0;
+  startRun(s, recipe);
+  return s;
+}
+
+// A run about to resolve with the given pre-training cards. Scraping is the default data card: it applies when no
+// data card is picked, so it is left out of the picks.
+function finishedRunState(pre) {
+  const s = createInitialState();
+  s.compute.split.safety = 0;
+  const r = startRun(s, { ...recipe, picks: { ...recipe.picks, pre: pre.filter((id) => id !== 'scrape-data') } });
+  assert.equal(r.ok, true, r.error);
+  return s;
+}
+
+test('loss spikes add up: a run spikes when its per-round chances reach 1', () => {
+  const s = runningState();
+  s.activeRun.spikeChance = 0.4;
+  s.activeRun.turnsLeft = 10;
+  for (let round = 0; round < 2; round++) advanceRunBy(s, null, 1);
+  assert.equal(s.activeRun.spikes, 0);
+  advanceRunBy(s, null, 1);
+  assert.equal(s.activeRun.spikes, 1);
+});
+
+test('web-crawl data is always sued at full cost; licensed data never', () => {
+  const s = finishedRunState(['scrape-data']);
+  const before = s.legalCases.length;
+  resolveRun(s, s.activeRun);
+  assert.equal(s.legalCases.length, before + 1);
+  assert.equal(s.legalCases.at(-1).cost, 200);
+  const clean = finishedRunState(['licensed-data']);
+  const cases = clean.legalCases.length;
+  resolveRun(clean, clean.activeRun);
+  assert.equal(clean.legalCases.length, cases);
 });

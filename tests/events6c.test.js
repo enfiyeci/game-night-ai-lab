@@ -426,6 +426,9 @@ const oneTurnRecipe = {
 test('a loss spike on the final training tick becomes a pending card', () => {
   const s = createInitialState();
   assert.equal(startRun(s, oneTurnRecipe).ok, true);
+  // Loss spikes are a running total (deterministic endings A9): a chance of 1 reaches it in this one-round run
+  // (was: dice that always landed).
+  s.activeRun.spikeChance = 1;
   const out = endTurn(s, {}, yes);
   assert.ok(out.state.pendingModel);
   assert.equal(out.state.activeRun, null);
