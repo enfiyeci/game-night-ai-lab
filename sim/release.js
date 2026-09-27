@@ -1,7 +1,7 @@
 import { BALANCE } from './balance.js';
 import { clamp, sigmoid } from './util.js';
 import { validatePicks, resolveCards } from './recipe.js';
-import { PRICE_STANCE } from './serving.js';
+import { ERA_PRICE, PRICE_STANCE } from './serving.js';
 import { scoreLaunch } from './launch.js';
 import { resolveHazard, exposeConcealed } from './hazards.js';
 import { hasLine } from './constitution.js';
@@ -144,6 +144,7 @@ export function releaseModel(state, release, rng) {
     spec,
     channel: spec.channel,
     priceStance: release.price,
+    eraPrice: ERA_PRICE[state.era - 1],
     reasoning,
     users: fresh,
     newUsers: fresh,
@@ -155,6 +156,13 @@ export function releaseModel(state, release, rng) {
     activated: false,
     flags,
     servingCost: 0,
+    // The model's books: training (recipe cards and compute) and launch cards, then what it earns and what serving it
+    // costs (sim/economy.js accrueEconomy).
+    trainingCost: m.trainingCost ?? null,
+    launchCost: cash,
+    earned: 0,
+    servingSpent: 0,
+    monthsOnSale: 0,
   };
   if (spec.channel === 'consumer' && hasLine(state, 'no-wmd')) model.revenueMult = 0.97;
   state.models.push(model);

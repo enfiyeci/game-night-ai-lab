@@ -264,8 +264,8 @@ async function openDebugRoute() {
     openComputeInfo(game, overlay, { view: location.hash === '#compute-race' ? 'race' : 'where' });
     return;
   }
-  if (location.hash === '#finance' || location.hash === '#books') {
-    openFinance(game, overlay, { view: location.hash === '#books' ? 'books' : 'timeline' });
+  if (location.hash === '#finance' || location.hash === '#books' || location.hash === '#models-money') {
+    openFinance(game, overlay, { view: { '#books': 'books', '#models-money': 'models' }[location.hash] ?? 'timeline' });
     return;
   }
   if (location.hash === '#board' || location.hash === '#board-moves') {
