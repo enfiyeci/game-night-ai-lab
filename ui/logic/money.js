@@ -79,7 +79,7 @@ export function cashLine(state, history, horizon = 24) {
 // Rows are the finance history (one per round mark); models carry the round they were released in.
 const MIN_CHANGE = 3; // $M a month; smaller moves are users drifting, not a decision
 
-export function billChanges(history, models = [], nowMonth = null) {
+export function billChanges(history, models = [], nowMonth = null, nowTurn = null) {
   const changes = [];
   history.forEach((row, index) => {
     const before = history[index - 1];
@@ -96,7 +96,7 @@ export function billChanges(history, models = [], nowMonth = null) {
     const row = history.find((r) => r.turn === model.releasedTurn);
     const next = history.find((r) => r.turn === model.releasedTurn + 1);
     // Released this round: no history row yet, so it sits at today.
-    if (!row && nowMonth == null) continue;
+    if (!row && (nowMonth == null || model.releasedTurn !== nowTurn)) continue;
     changes.push({ kind: 'release', month: row?.month ?? nowMonth, turn: model.releasedTurn, name: model.name, from: row?.revenue ?? null, to: next?.revenue ?? null });
   }
   return changes.sort((a, b) => a.turn - b.turn || a.kind.localeCompare(b.kind));

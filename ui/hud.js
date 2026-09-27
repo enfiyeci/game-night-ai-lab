@@ -190,7 +190,7 @@ export function mountHud(root, game) {
       <span class="k">Cash</span><b>${money(state.cash)}</b>
       ${flowLine(bill)}
       ${sparkline(state, game.financeHistory ?? [])}
-      <span class="k">Runway</span><b>${months(plannedRunway)}</b>
+      <span class="k">Runway</span><b>${state.cash <= 0 ? 'out of cash' : months(plannedRunway)}</b>
       <span id="lab-stats" class="info-more" ${expanded ? '' : 'hidden'}>
         <span class="k">ARR</span><b>${money(state.arr)}</b>
         <span class="k">Users</span><b>${users(totalUsers)}</b>
@@ -207,9 +207,11 @@ export function mountHud(root, game) {
       button.className = chosen ? (waiting && speed !== 0 ? 'held' : 'on') : '';
       button.setAttribute('aria-pressed', `${chosen}`);
     }
-    mute.className = `mute${sound.muted ? ' on' : ''}`;
-    mute.setAttribute('aria-pressed', `${sound.muted}`);
-    mute.innerHTML = SPEAKER_ICON(sound.muted);
+    if (mute.getAttribute('aria-pressed') !== `${sound.muted}`) { // the icon is rebuilt only when it changes, so a press on it is not lost
+      mute.className = `mute${sound.muted ? ' on' : ''}`;
+      mute.setAttribute('aria-pressed', `${sound.muted}`);
+      mute.innerHTML = SPEAKER_ICON(sound.muted);
+    }
     waitingLabel.hidden = !waiting;
     waitingLabel.textContent = waiting ? (waitWord ? `Waiting: ${waitWord}` : 'Waiting for you') : '';
 

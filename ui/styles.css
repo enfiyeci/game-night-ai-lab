@@ -3904,6 +3904,7 @@ button.dl-pill { font: inherit; font-size: 13px; font-weight: 900; color: var(--
 .hud-right > * { pointer-events: auto; }
 .hud-right .info { position: static; min-width: 236px; }
 .hud-right .clock { position: static; }
+.hud-right .info *, .clock .mute * { pointer-events: none; } /* their insides are rewritten each tick; clicks land on the button */
 
 .hud-flow {
   display: grid;

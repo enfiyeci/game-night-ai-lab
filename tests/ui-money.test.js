@@ -39,3 +39,18 @@ test('What changed lists the raise and each release', () => {
   assert.equal(changes.filter((change) => change.kind === 'release').length, state.models.filter((m) => m.releasedTurn != null).length);
   assert.deepEqual(changes.map((c) => c.turn), [...changes.map((c) => c.turn)].sort((a, b) => a - b));
 });
+
+test('out of cash: the cash line says so instead of drawing a run to zero', () => {
+  const state = SCENARIOS.danger(1);
+  state.cash = -50;
+  const line = cashLine(state, []);
+  assert.equal(line.outOfCash, true);
+  assert.equal(line.runsOutIn, null);
+});
+
+test('a model released this round shows in What changed; an old one with no history row does not', () => {
+  const models = [{ name: 'Old', releasedTurn: 2 }, { name: 'New', releasedTurn: 7 }];
+  const changes = billChanges([], models, 30, 7);
+  assert.deepEqual(changes.map((c) => c.name), ['New']);
+  assert.equal(changes[0].month, 30);
+});

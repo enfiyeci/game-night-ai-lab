@@ -298,7 +298,7 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
     const bill = monthBill(state);
     const rows = [...history.map((r) => ({ month: r.month, end: r.month + r.months, revenue: r.revenue, burn: r.burn })),
       { month: state.monthsElapsed, end: state.monthsElapsed + 1, revenue: bill.moneyIn, burn: bill.moneyOut }];
-    const changes = billChanges(history, state.models, state.monthsElapsed);
+    const changes = billChanges(history, state.models, state.monthsElapsed, state.turn);
     const body = element('div', 'finance-changes-body');
     body.append(tabs('changes'));
     const W = 560, H = 300, padL = 56, padR = 12, top = 14, bottom = 26;
