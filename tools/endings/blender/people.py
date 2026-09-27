@@ -179,3 +179,65 @@ def crowd(points, seed=1, **kw):
                           hold=rng.choice(holds), hair=rng.choice(["#2A211C", "#4A3526", "#141212", "#6B5A48", "#8C8C8C"]),
                           build=rng.uniform(0.9, 1.15), seed=seed * 100 + i, **kw))
     return out
+
+
+def silhouettes(points, seed=1, coats=("#2A2D33", "#33302E", "#262B33", "#3A3436", "#22262A"), name="crowd"):
+    """Many far-off or backlit people as ONE mesh (fast for audiences of dozens): a rounded torso, shoulders and a
+    head each. points = [(x, y, z, facing, pose)], pose "sit" (z is the seat) or "stand" (z is the floor), with an
+    optional 6th value "hand" to raise the right hand. Returns the object."""
+    rng = random.Random(seed)
+    mats = [kit.mat(c, 0.85) for c in coats] + [kit.mat(h, 0.7) for h in ("#1E1A18", "#3A2C22", "#6B6660", "#141212")]
+    mats += [kit.mat(t, 0.55) for t in ("#C99576", "#8A5A3E")]
+    nc = len(coats)
+    bm = bmesh.new()
+    slots = []
+
+    def blob(centre, radii, rot, slot, segs=12):
+        m = Matrix.Translation(centre) @ rot @ Matrix.Diagonal((*radii, 1))
+        res = bmesh.ops.create_uvsphere(bm, u_segments=segs, v_segments=max(6, segs // 2), radius=1.0, matrix=m)
+        slots.append((res["verts"], slot))
+
+    for p in points:
+        x, y, z, facing, pose = p[:5]
+        hand = len(p) > 5 and p[5] == "hand"
+        s = rng.uniform(0.92, 1.08)
+        rot = Euler((0, 0, math.radians(facing))).to_matrix().to_4x4()
+        coat, hair = rng.randrange(nc), nc + rng.randrange(4)
+        base = z if pose == "sit" else z + 0.78 * s
+        if pose != "sit":   # two legs
+            for dx in (-0.09, 0.09):
+                blob(rot @ Vector((dx * s, 0, 0)) + Vector((x, y, z + 0.46 * s)), (0.08 * s, 0.09 * s, 0.47 * s), rot, coat, 10)
+        lean = Vector((0, 0.05 * s, 0)) if pose == "sit" else Vector((0, 0, 0))
+        blob(rot @ lean + Vector((x, y, base + 0.36 * s)), (0.2 * s, 0.13 * s, 0.36 * s), rot, coat)       # torso
+        blob(rot @ lean + Vector((x, y, base + 0.6 * s)), (0.23 * s, 0.13 * s, 0.085 * s), rot, coat)     # shoulders
+        blob(rot @ (lean * 1.2) + Vector((x, y, base + 0.7 * s)), (0.05 * s, 0.05 * s, 0.06 * s), rot, coat, 8)   # neck
+        blob(rot @ (lean * 1.4) + Vector((x, y, base + 0.81 * s)), (0.085 * s, 0.095 * s, 0.11 * s), rot, hair)   # head
+        if hand:   # a raised arm, bent at the elbow, and a hand
+            for (ax, ay, az), radii, slot in (((0.23, 0.02, 0.78), (0.045, 0.045, 0.17), coat),
+                                              ((0.25, 0.07, 1.05), (0.038, 0.038, 0.15), coat),
+                                              ((0.25, 0.08, 1.24), (0.035, 0.025, 0.055), nc + 4 + rng.randrange(2))):
+                blob(rot @ Vector((ax * s, ay * s, 0)) + Vector((x, y, base + az * s)), tuple(r * s for r in radii), rot, slot, 8)
+    bm.verts.index_update()
+    index = {v.index: slot for verts, slot in slots for v in verts}
+    me = bpy.data.meshes.new(name)
+    bm.to_mesh(me)
+    bm.free()
+    for poly in me.polygons:
+        poly.material_index = index.get(poly.vertices[0], 0)
+        poly.use_smooth = True
+    ob = bpy.data.objects.new(name, me)
+    for m in mats:
+        ob.data.materials.append(m)
+    bpy.context.scene.collection.objects.link(ob)
+    return ob
+
+
+def hair_back(root, height=1.75, pose="stand", hair="#2A211C"):
+    """Cover the back of a person()'s head down to the nape, for figures seen from close behind (the stock hair cap
+    leaves a band of face showing under it from that side)."""
+    s = height / 1.75
+    hz = (1.19 if pose == "sit" else 1.64) * s
+    hy = (0.02 + 0.02 * s) if pose == "sit" else 0.02 * s
+    back = kit.sphere((0, hy - 0.035 * s, hz - 0.03 * s), 0.1 * s, kit.mat(hair, 0.7), scale=(0.93, 0.9, 1.0))
+    back.parent = root
+    return back
