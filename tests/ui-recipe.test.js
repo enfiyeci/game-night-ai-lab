@@ -343,9 +343,10 @@ test('closing Safety’s draft without adopting unpicks the constitution card, b
 test('the constitution card note names the draft version and the live one, never a model', async () => {
   const { constitutionNote } = await import('../ui/screens/constitution.js');
   const state = SCENARIOS.era3Idle(1);
+  state.constitutionDraft = null; // the scenario's player may have accepted a demand that started a draft
   assert.equal(constitutionNote(state), null, 'no chip before any draft exists');
   setDraft(state, SAFETY_PROPOSAL);
-  assert.deepEqual(constitutionNote(state), { text: 'v1 draft · no model has learned it yet', later: false });
+  assert.deepEqual(constitutionNote(state), { text: 'v1 draft · not trained yet', later: false });
   learnConstitution(state, SAFETY_PROPOSAL);
   state.models.push({ ...state.models.at(-1), generation: 4 });
   assert.equal(constitutionNote(state).text, 'v2 draft · v1 is live');

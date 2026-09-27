@@ -222,7 +222,7 @@ test('the constitution card refuses a draft without three hard lines; a run with
   EVENTS.find((e) => e.id === 'investors').card.choices.find((c) => c.id === 'accept').effects(s);
   assert.equal(s.constitutionDraft.hardLines.length, 2);
   const before = structuredClone(s);
-  assert.deepEqual(startRun(s, cardRecipe()), { ok: false, error: 'Safety’s draft needs exactly three hard lines' });
+  assert.deepEqual(startRun(s, cardRecipe()), { ok: false, error: 'Safety’s draft needs exactly three hard lines. Open it from the card to fix it.' });
   assert.deepEqual(s, before, 'nothing changes');
   assert.equal(startRun(s, cardRecipe([])).ok, true);
   finishRun(s);
@@ -588,4 +588,16 @@ test('the activist capability penalty is consumed by the next finished run', () 
   const normal = resolveRun(control, { recipe, spikes: 0, bonus: 0 }, no);
   assert.equal(penalized.gain, normal.gain - 2);
   assert.equal(Object.hasOwn(state.flags, 'nextRunCapPenalty'), false);
+});
+
+test('accepting the political demand edits the next model, for favour in Washington', () => {
+  const s = createInitialState();
+  s.era = 3;
+  learnConstitution(s, SAFETY_PROPOSAL);
+  const favour = s.govFavor.us;
+  EVENTS.find((e) => e.id === 'political').card.choices.find((c) => c.id === 'accept').effects(s);
+  assert.equal(s.constitution.rulings.report, 'full', 'the live model keeps its ruling');
+  assert.equal(s.constitutionDraft.rulings.report, 'flag');
+  assert.equal(s.constitutionDraft.changes.at(-1).source, 'political');
+  assert.equal(s.govFavor.us, favour + 5);
 });

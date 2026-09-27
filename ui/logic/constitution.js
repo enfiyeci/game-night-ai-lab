@@ -13,7 +13,7 @@ const SOURCES = {
   political: 'Political groups asked',
   activists: 'Activists asked',
   pentagon: 'The Pentagon asked', // OWNER WRITES
-  blacklistAppeal: 'Agreed to end the blacklist fight', // OWNER WRITES
+  blacklistAppeal: 'Settled the blacklist appeal', // OWNER WRITES
 };
 
 export const sourceLabel = (source) => SOURCES[source]
@@ -46,7 +46,7 @@ export function documentView(state, draft) {
     const on = onLines.has(id);
     const inBase = baseLines.has(id);
     let tag = null;
-    if (on === inBase) tag = on ? (first ? 'Safety’s pick' : `In v${version}`) : null;
+    if (on === inBase) tag = on ? (first ? 'Safety’s pick' : 'Already live') : null;
     else {
       const demand = lastChange((change) => (on ? change.add === id : change.remove === id));
       if (demand) tag = sourceLabel(demand.source);

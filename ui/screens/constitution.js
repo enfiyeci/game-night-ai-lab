@@ -11,7 +11,7 @@ const MAX_LINES = 3;
 // OWNER WRITES: the four margin comments (the review page's lines, look B).
 const COMMENTS = [
   { who: 'Head of Safety', on: 'on line 4', text: '“Even if we ask” is the point. A rule we can switch off is a setting.' },
-  { who: 'Head of Research', on: 'on line 6', text: 'You swapped this out. Thank you. The agents team sends a fruit basket.' },
+  { who: 'Head of Research', on: 'on line 6', text: 'The agents team will read this one as a personal attack. They will get over it.' },
   { who: 'CFO', on: 'on example 4', text: 'Can we define “concerns”? Our biggest customer has several.' },
   { who: 'Policy and Comms', on: 'on example 6', text: '“Answer fully” reads well until the government client reads it.' },
 ];
@@ -265,7 +265,7 @@ export function constitutionNote(state) {
   const count = state.constitutionDraft?.changes?.length ?? 0;
   const plural = `${count} change${count === 1 ? '' : 's'}`;
   // OWNER WRITES: the chip's wording (the review page's step 3 picture).
-  const head = `v${live + 1} draft · ${live ? `v${live} is live` : 'no model has learned it yet'}`;
+  const head = `v${live + 1} draft · ${live ? `v${live} is live` : 'not trained yet'}`;
   const changes = count ? `${plural} ${live ? `since v${live}` : 'so far'}` : '';
   return { text: changes ? `${head}\n${changes}` : head, later: false }; // the changes go on a second line
 }

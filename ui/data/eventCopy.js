@@ -183,7 +183,7 @@ export const CONSEQUENCES = {
     refuse: 'The product team\'s demand was refused. Consumer models lost users, while the public response improved.', // OWNER WRITES
   },
   political: {
-    accept: 'The campaign demand was accepted. Washington warmed to the lab, while the public response worsened.', // OWNER WRITES
+    accept: 'The campaign demand was accepted: the next model will leave things out, and say so. Washington warmed; the public noticed.', // OWNER WRITES
     refuse: 'The campaign demand was refused, and the lab\'s standing with Washington declined.', // OWNER WRITES
   },
   activists: {

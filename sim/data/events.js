@@ -382,7 +382,7 @@ export const EVENTS = [
     warning: null,
     card: {
       title: demandText('users'),
-      post: { handle: '@product_team', text: demandText('users') },
+      post: { handle: '@product_team', text: 'Every churn survey says the same thing: “it argues with me.” Can we tune it to agree more? Just on the small stuff.' }, // OWNER WRITES
       choices: [
         {
           id: 'accept', label: 'Accept', cost: 'the model yields', backers: ['Product'], opposers: ['Safety'],
@@ -408,13 +408,14 @@ export const EVENTS = [
     warning: null,
     card: {
       title: demandText('political'),
-      post: { handle: '@campaign_desk', text: demandText('political') },
+      post: { handle: '@campaign_desk', text: 'Your model keeps “both-sidesing” our issues. Tone it down, and we will remember who was helpful come budget season.' }, // OWNER WRITES
       choices: [
         {
           id: 'accept', label: 'Accept', cost: 'public trust', backers: ['Government'], opposers: ['Comms'],
           effects(state) {
             state.govFavor.us += 5;
             state.publicTrust -= 4;
+            changeDraft(state, { ruling: { caseId: 'report', optionId: 'flag' } }, 'political'); // owner 2026-09-26: the edit is what wins the favour
           },
         },
         {
@@ -461,7 +462,7 @@ export const EVENTS = [
     fallback: 'clarify',
     card: {
       title: 'The President read your constitution', // OWNER WRITES
-      post: { handle: '@executive_office', text: '“Refuses to help anyone seize illegitimate power, even if we ask.” Who exactly is seizing power? Very insulting to a GREAT Administration!' }, // OWNER WRITES
+      post: { handle: '@executive_office', text: 'Just read their so-called constitution: “Refuse to help anyone seize illegitimate power, even if we ask.” Who exactly is seizing power?? Very insulting to a GREAT Administration. Sad!' }, // OWNER WRITES
       choices: [
         { id: 'stand', label: 'Stand by it', cost: 'goodwill in Washington', backers: ['Safety'], opposers: ['Comms'],
           effects(state) { state.govFavor.us -= 6; state.staffTrust += 2; } },

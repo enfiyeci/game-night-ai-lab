@@ -21,7 +21,7 @@ export function startRun(state, recipe) {
   const teaches = recipe.picks?.post?.includes('constitution');
   const draft = teaches ? draftFor(state) : null;
   const draftProblem = draft && draftError(draft);
-  if (draftProblem) return { ok: false, error: /ruling/.test(draftProblem) ? draftProblem : 'Safety’s draft needs exactly three hard lines' }; // OWNER WRITES
+  if (draftProblem) return { ok: false, error: /ruling/.test(draftProblem) ? draftProblem : 'Safety’s draft needs exactly three hard lines. Open it from the card to fix it.' }; // OWNER WRITES
   const spikeChance = recipeCards(state, recipe).reduce((p, c) => p + (c.effects.spike ?? 0), 0.1) + focusEffects(state, recipe).spike;
   state.cash -= cost.cash;
   // Focus effects are fixed when the run starts, so a stage that opens mid-run cannot change them.
