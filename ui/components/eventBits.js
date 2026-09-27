@@ -1,4 +1,5 @@
 // Small DOM helpers shared by the event, briefing and feed screens (plan 2B Task 8).
+import { sourceFor } from '../data/postSources.js';
 const AVATAR_TONES = ['var(--teal)', 'var(--coral)', 'var(--sky)', 'var(--wood)'];
 const anchorCache = new Map();
 
@@ -31,6 +32,29 @@ export function post({ handle, text }) {
   avatar.style.background = AVATAR_TONES[letter.charCodeAt(0) % AVATAR_TONES.length];
   node.querySelector('.ev-handle').textContent = handle;
   node.querySelector('.ev-text').textContent = text;
+  return node;
+}
+
+// An event card's post, drawn as its real channel (ui/data/postSources.js): a social post keeps post() above; a news
+// story gets a masthead, an official notice a letterhead with a seal, an open letter its label, a lab message a desk tag.
+export function sourcePost({ handle, text }) {
+  const source = sourceFor(handle);
+  if (source.kind === 'social') return post({ handle, text });
+  const node = el(`<div class="ev-src ev-src-${source.kind}"><div class="ev-src-head"><span class="ev-src-name"></span></div><div class="ev-src-text"></div></div>`);
+  const head = node.querySelector('.ev-src-head');
+  node.querySelector('.ev-src-name').textContent = source.name;
+  if (source.kind === 'official') head.prepend(el('<span class="ev-seal" aria-hidden="true">★</span>'));
+  if (source.kind === 'internal') {
+    const tag = el('<span class="ev-desk" aria-hidden="true"></span>');
+    tag.textContent = source.name[0].toUpperCase();
+    head.prepend(tag);
+    const channel = el('<span class="ev-src-channel"></span>');
+    channel.textContent = source.channel;
+    head.append(channel);
+  }
+  const body = source.kind === 'news' ? text.charAt(0).toUpperCase() + text.slice(1) : text;
+  node.querySelector('.ev-src-text').textContent = body;
+  node.setAttribute('aria-label', `${source.name}: ${body}`);
   return node;
 }
 

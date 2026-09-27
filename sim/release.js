@@ -22,6 +22,11 @@ export const tierWord = (size, words) => {
 
 export const modelName = ({ family, generation, size, tierWords }) => `${family} ${generation} ${tierWord(size, tierWords)}`;
 
+// Rounds a release waits: its cards, the trained model's own delay, and one more for the government's tests once the
+// lab signed the testing agreement (the preReleaseTests card), unless an eval-gov card already waits for them.
+export const releaseWait = (state, cards) => cards.reduce((sum, card) => sum + (card.cost.turns ?? 0), state.pendingModel?.releaseDelay ?? 0)
+  + (state.flags.govTesting && !cards.some((card) => (card.effects.flags ?? []).includes('govEval')) ? 1 : 0);
+
 const TIER_WORD_MAX = 16;
 // The release move can carry the player's four size words (named once, on the first release).
 export const cleanTierWords = (words) => Object.fromEntries(Object.keys(TIER_WORDS).map((size) => [
@@ -45,9 +50,12 @@ export function activateReleases(state) {
       continue;
     }
     let carried = 0;
+    // Remembered so a release pulled back before its next round (holdRelease) can hand the channel back.
+    model.replaced = [];
     for (const old of state.models) {
       if (old !== model && old.active && old.activated && old.channel === model.channel && releaseOrder(state, old) < order) {
         carried = Math.max(carried, old.users);
+        model.replaced.push({ index: state.models.indexOf(old), users: old.users });
         old.active = false;
         old.users = 0;
       }
@@ -56,6 +64,24 @@ export function activateReleases(state) {
     model.userCap = Math.max(model.userCap, model.users * 4);
     model.activated = true;
   }
+}
+
+// Holds a release back one more round (the red team card's delay). One that already went live comes off again, and
+// the model it replaced serves the channel's users as they are now (after anything that happened while it was live)
+// until the release relaunches at the next mark, when activateReleases carries them over again.
+export function holdRelease(state, model) {
+  if (!model?.active) return;
+  if (model.activated) {
+    const carrier = (model.replaced ?? []).reduce((best, entry) => (!best || entry.users > best.users ? entry : best), null);
+    const old = carrier && state.models[carrier.index];
+    if (old) {
+      old.active = true;
+      old.users = model.users;
+      model.users = 0;
+    }
+    model.activated = false;
+  }
+  model.activeFromTurn = Math.max(model.activeFromTurn ?? 0, state.turn) + 1;
 }
 
 export function releaseModel(state, release, rng) {
@@ -82,7 +108,7 @@ export function releaseModel(state, release, rng) {
 
   const effects = cards.map((c) => c.effects);
   const sum = (key) => effects.reduce((s, e) => s + (e[key] ?? 0), 0);
-  const delay = cards.reduce((s, c) => s + (c.cost.turns ?? 0), m.releaseDelay ?? 0);
+  const delay = releaseWait(state, cards);
   const spec = Object.assign({}, m.spec, ...effects.map((e) => e.spec ?? {}), { reasoning });
   const flags = [...new Set([...m.flags, ...effects.flatMap((e) => e.flags ?? [])])];
   if (spec.channel === 'enterprise' && flags.includes('agentic')) spec.channel = 'agent';

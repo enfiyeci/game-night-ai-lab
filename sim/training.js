@@ -1,6 +1,6 @@
 import { BALANCE } from './balance.js';
 import { eraById } from './data/eras.js';
-import { SIZE_CAP, LENGTHS, validateRecipe, recipeCost, recipeCards, talentSpend } from './recipe.js';
+import { SIZE_CAP, LENGTHS, validateRecipe, recipeCost, recipeCards, talentSpend, focusEffects } from './recipe.js';
 import { standardTechniques } from './techniques.js';
 import { rollTrainingHazard, applyAlignmentFaking, evalGamingDebt } from './hazards.js';
 import { draftError, draftFor, hasLine, learnConstitution } from './constitution.js';
@@ -22,9 +22,11 @@ export function startRun(state, recipe) {
   const draft = teaches ? draftFor(state) : null;
   const draftProblem = draft && draftError(draft);
   if (draftProblem) return { ok: false, error: /ruling/.test(draftProblem) ? draftProblem : 'Safety’s draft needs exactly three hard lines' }; // OWNER WRITES
-  const spikeChance = recipeCards(state, recipe).reduce((p, c) => p + (c.effects.spike ?? 0), 0.1);
+  const spikeChance = recipeCards(state, recipe).reduce((p, c) => p + (c.effects.spike ?? 0), 0.1) + focusEffects(state, recipe).spike;
   state.cash -= cost.cash;
-  state.activeRun = { recipe: structuredClone(recipe), units: cost.units, turnsLeft: cost.turns, spikes: 0, spikeChance: Math.max(0, spikeChance), bonus: 0 };
+  // Focus effects are fixed when the run starts, so a stage that opens mid-run cannot change them.
+  const focus = focusEffects(state, recipe);
+  state.activeRun = { recipe: structuredClone(recipe), units: cost.units, turnsLeft: cost.turns, spikes: 0, spikeChance: Math.max(0, spikeChance), bonus: 0, focus };
   if (teaches) {
     state.activeRun.constitution = { hardLines: draft.hardLines, rulings: draft.rulings };
     // The changes this model learns; they leave the draft's "who asked" list when the run finishes.
@@ -72,6 +74,7 @@ export function resolveRun(state, run, rng) {
   const { size, length, alignShare } = run.recipe.sliders;
   const cards = recipeCards(state, run.recipe);
   const autos = standardTechniques(state).map((t) => t.auto).filter(Boolean);
+  const { readiness: focusReadiness, spike: _focusSpike, ...focus } = run.focus ?? focusEffects(state, run.recipe);
   const effects = [
     ...cards.map((card) => {
       if (card.id === 'thumbs' && hasLine(state, 'no-manipulation')) {
@@ -83,8 +86,9 @@ export function resolveRun(state, run, rng) {
       return card.effects;
     }),
     ...autos,
+    focus,
   ];
-  const readiness = cards.reduce((r, c) => c.effects.readiness ?? r, 0.5);
+  const readiness = Math.max(0, Math.min(1.2, cards.reduce((r, c) => c.effects.readiness ?? r, 0.5) + focusReadiness));
   const large = size === 'large' || size === 'xl';
 
   let base = BALANCE.baseRunGain + SIZE_CAP[size] + LENGTHS[length].cap + (run.bonus ?? 0);

@@ -154,7 +154,7 @@ export function openRelease(game, overlayRoot, { stage } = {}) {
     };
 
     const thinkingSlider = () => {
-      if (!model?.spec?.reasoningCapable) return el('p', 'release-note', 'This model cannot think longer. Train with reasoning RL to unlock thinking effort.');
+      if (!model?.spec?.reasoningCapable) return el('p', 'release-note', 'This model cannot think longer.');
       return vslider({
         label: 'Thinking effort',
         role: 'Head of Research',
@@ -272,7 +272,8 @@ export function openRelease(game, overlayRoot, { stage } = {}) {
         remembered.set(game, structuredClone(draft));
         opened.close();
         // The release applied at once and its reveal is already open; closing this dialog moved focus behind it.
-        overlayRoot.querySelector('.reveal-layer .reveal-continue')?.focus();
+        // While the launch show plays there is no Continue yet, so the reveal panel takes focus.
+        (overlayRoot.querySelector('.reveal-layer .reveal-continue') ?? overlayRoot.querySelector('.reveal-layer .reveal'))?.focus();
       },
     });
     opened.classList.add('release-dialog');

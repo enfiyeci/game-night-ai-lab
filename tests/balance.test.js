@@ -81,7 +81,7 @@ test('difficulty target: no scripted strategy wins more than about a third of ru
 });
 
 test('difficulty target: most runs of the extreme strategies end in eras 3 or 4', {
-  todo: 'speed 59/200, safety 151/200; see docs/notes/later.md (balance)',
+  todo: 'speed 200/200, safety 161/200 after the ui merge (2026-09-26); the target holds, drop this todo in the balance pass; see docs/notes/later.md (balance)',
 }, () => {
   for (const name of ['speed', 'safety']) {
     assert.ok(targetReport[name].diedInEra3or4 / 200 >= 0.5, `${name} ${targetReport[name].diedInEra3or4}/200`);

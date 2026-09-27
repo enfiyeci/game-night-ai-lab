@@ -4,7 +4,7 @@ import { clamp } from './util.js';
 import { startRun, advanceRun, advanceRunBy, recheckCapacity } from './training.js';
 import { activateReleases, releaseModel } from './release.js';
 import {
-  signOffer, contractAction, deliverDue, contractsTurn, expireContracts, pullBumped, spendCredits, generateOffers, monthlyBills, sideRng,
+  signOffer, contractAction, deliverDue, contractsTurn, expireContracts, pullBumped, spendCredits, creditOffset, generateOffers, monthlyBills, sideRng,
 } from './contracts.js';
 import { placeOrder, withdrawOrder, queueTurn } from './queue.js';
 import { buildSite, leaseBills, powerTurn } from './power.js';
@@ -38,14 +38,16 @@ import { judgeEndingPromises, promiseUpkeep } from './promises.js';
 import { applySplitEffects, makePledge, setComputeSplit, spotCover } from './split.js';
 import { ROUND_DAYS, monthsPerDay } from './time.js';
 import { TEAM_OF, teamBusyError } from './teams.js';
-import { feedPosts } from './feed.js';
-import { setAutomation, automationTick, aiProposals, applyApprovals } from './automation.js';
+import { reactToEvents, reactToLandedCard, reactToRunStart, releaseDueFeed } from './feedLive.js';
+import { setAutomation, automationTick, aiProposals, applyApprovals, reviewerCost } from './automation.js';
+import { landDue, stampLandings } from './landings.js';
 
 export const MAX_MOVES = 2;
 const BUDGET_KEYS = ['training', 'security', 'product', 'talent'];
 // sideRng salts in sim/: 0 initial offers, 1 deals, 2 site opposition, 3 contracts, 4 queue,
 // 5 offers, 6 deliveries, 7 pooling, 8 board events (sim/data/boardEvents.js), 9 + card index for card landing days
-// (sim/events.js stampNewCards), 900 AI proposals, 1000 + site ID for builds, and 2000 + motion index for summit votes.
+// (sim/events.js stampNewCards), 900 AI proposals, 950 the first round's rival roll (sim/state.js), 1000 + site ID for builds,
+// and 2000 + motion index for summit votes.
 const SITE_RNG_SALT_BASE = 1000;
 const AI_PROPOSAL_SALT = 900;
 
@@ -120,10 +122,11 @@ function normalize(state) {
   state.govFavor.intl = clamp(state.govFavor.intl, 0, 100);
 }
 
-// Feed reactions to what just happened. Ambient filler only at a round mark, so quiet days stay quiet.
-// Reception, mood and ambient posts are time-based, so they run only at a round mark.
+// Feed reactions to what just happened, scheduled over the coming story days (sim/feedLive.js).
+// Reception, mood and background posts are time-based, so they are scheduled only at a round mark.
 function postFeed(before, state, events, atMark) {
-  for (const post of feedPosts(before, state, events, { ambient: atMark, timeBased: atMark })) pushFeed(state, post.handle, post.text, post.tag);
+  reactToEvents(before, state, events, { atMark });
+  releaseDueFeed(state);
 }
 
 // madeBefore: the round the run ended in; deals made in it never had a next meeting and stay open.
@@ -227,6 +230,7 @@ export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = 
     const choiceId = eventChoices[choiceKey];
     const result = resolveEvent(state, id, choiceId);
     if (!result.ok) errors.push(result.error);
+    else events.push({ type: 'eventResolved', id, eventId: pending.eventId ?? id, choiceId, promiseId: pending.promiseId });
     handledChoices.add(choiceKey);
   }
   for (const id of Object.keys(eventChoices)) {
@@ -264,7 +268,7 @@ export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = 
       const result = runMeeting(state, answerIds);
       if (!result.ok) errors.push(result.error);
       const outcome = result.ok ? result.outcome : expireMeeting(state).outcome;
-      events.push({ type: 'meetingOutcome', id, walkedOut: outcome.walkedOut, stake: outcome.stake });
+      events.push({ type: 'meetingOutcome', id, walkedOut: outcome.walkedOut, stake: outcome.stake, ...(result.ok && { answers: [...answerIds] }) });
       updateServing(state);
       state.burnPlanned = projectBurn(state);
       if (result.ok) {
@@ -303,8 +307,9 @@ export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = 
     recordAdvisors(state, rng);
     finishEnding(state, events);
   }
-  const announced = events.filter((event) => event.type !== 'release' || event.model?.activated);
-  if (announced.length) postFeed(mood, state, announced, false);
+  // A release that is not live yet gets its "announced" posts now and its launch posts when it goes live (sim/feedLive.js).
+  if (events.length) postFeed(mood, state, events, false);
+  stampLandings(state);
   recheckCapacity(state);
   return { state, events, errors };
 }
@@ -368,12 +373,17 @@ function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
         compute: monthlyBills(state) + leaseBills(state) + spotCover(state),
       });
       recordBurn(state);
+      // The round's average monthly burn, day by day (the finance history reads it; burnHistory stays the mark's rate).
+      state.lastRoundBurn = (state.roundBurnSum ?? 0) / eraById(state.era).monthsPerTurn;
+      state.lastRoundPeople = (state.roundPeopleSum ?? 0) / eraById(state.era).monthsPerTurn; // its people part, averaged the same way
+      state.roundBurnSum = 0;
+      state.roundPeopleSum = 0;
       if (state.compute.surge && --state.compute.surge.turnsLeft <= 0) {
         state.compute.split.coverWithSpot = state.compute.surge.restoreCover ?? state.compute.split.coverWithSpot;
         state.compute.surge = null;
       }
-      spendCredits(state);
-      for (const x of expireContracts(state)) events.push({ type: 'contractEnded', supplier: x.supplier, units: x.units });
+      spendCredits(state, state.compute.creditsUsed ?? 0);
+      state.compute.creditsUsed = 0;
       for (const x of pullBumped(state)) events.push({ type: 'spotPulled', units: x.units });
       if (state.flags.conversionDeadline != null && state.turn >= state.flags.conversionDeadline && !state.flags.converted) {
         state.flags.converted = true;
@@ -383,8 +393,10 @@ function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
         events.push({ type: 'conversionFight' });
       }
       for (const c of legalTick(state)) events.push({ type: 'lawsuitPaid', cost: c.cost, source: c.source });
-      state.lastRivalReleases = rivalsTurn(state, rng);
-      for (const r of state.lastRivalReleases) events.push({ type: 'rivalRelease', ...r });
+      // Stage 2: the event cards read the launches that landed this round; the roll schedules next round's.
+      state.lastRivalReleases = state.rivalLaunchesThisRound ?? [];
+      state.rivalLaunchesThisRound = [];
+      rivalsTurn(state, rng, { deferTo: state.turn + 1 });
       state.raceHeat -= BALANCE.raceHeatDecay;
       promiseUpkeep(state, rng);
       for (const e of eventsTick(state, rng)) events.push(e);
@@ -477,6 +489,7 @@ function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
   if (state.ending) {
     finishEnding(state, events, roundTurn);
   }
+  if (!state.ending) stampLandings(state);
 }
 
 function postLandedCards(state) {
@@ -488,7 +501,9 @@ function postLandedCards(state) {
     }
     pushFeed(state, card.post.handle, card.post.text, 'event');
     card.posted = true;
+    reactToLandedCard(state, card);
   }
+  releaseDueFeed(state); // the crowd's first reactions land the same day as the card
 }
 
 export function advanceDays(prev, days, rng, observer = {}) {
@@ -496,6 +511,7 @@ export function advanceDays(prev, days, rng, observer = {}) {
   const events = [];
   const errors = [];
   if (state.ending) return { state, events, errors: ['the run is over'] };
+  if (state.day === 0 && state.era === 1 && days > 0) reactToRunStart(state);
   for (let i = 0; i < days && !state.ending; i += 1) {
     // Mood posts compare the whole round, start to mark, as the old turn did, so an instant action's shift is not lost.
     const mood = { raceHeat: state.roundStart.raceHeat ?? state.raceHeat, publicTrust: state.roundStart.publicTrust ?? state.publicTrust };
@@ -512,11 +528,27 @@ export function advanceDays(prev, days, rng, observer = {}) {
     growUsers(state, fraction, { round: false });
     updateServing(state);
     accrueEconomy(state, monthsPerDay(state));
+    state.compute.creditsUsed = (state.compute.creditsUsed ?? 0) + creditOffset(state) * monthsPerDay(state);
+    state.roundBurnSum = (state.roundBurnSum ?? 0) + state.burnPlanned * monthsPerDay(state); // the round's real spend
+    state.roundPeopleSum = (state.roundPeopleSum ?? 0) + (state.budget.spend + reviewerCost(state)) * monthsPerDay(state);
+    const ended = expireContracts(state, monthsPerDay(state));
+    if (ended.length) {
+      for (const x of ended) events.push({ type: 'contractEnded', supplier: x.supplier, units: x.units });
+      updateServing(state);
+      state.burnPlanned = projectBurn(state);
+    }
     state.day += 1;
     state.dayInRound += 1;
     expireSuspicions(state);
+    releaseDueFeed(state);
     postLandedCards(state);
     for (const e of resolveDue(state)) events.push(e);
+    const landed = landDue(state);
+    if (landed.length) {
+      events.push(...landed);
+      updateServing(state);
+      state.burnPlanned = projectBurn(state);
+    }
     if (reachesMark) {
       endRound(state, rng, observer, events, errors, fraction);
       postLandedCards(state);
@@ -524,6 +556,7 @@ export function advanceDays(prev, days, rng, observer = {}) {
     const dayEvents = events.slice(firstEvent);
     if (reachesMark || dayEvents.length) postFeed(mood, state, dayEvents, reachesMark);
   }
+  if (state.ending) releaseDueFeed(state); // no later day comes, so nothing may stay queued
   return { state, events, errors };
 }
 

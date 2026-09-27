@@ -1,13 +1,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
-import { eventsTick, addressWarning, resolveEvent, stampNewCards } from '../sim/events.js';
+import { eventsTick, addressWarning, isAnchorId, resolveEvent, stampNewCards } from '../sim/events.js';
 import { EVENTS } from '../sim/data/events.js';
 import { advanceDays, endTurn } from '../sim/turn.js';
 import { jobLevels } from '../sim/automation.js';
 
 const no = { next: () => 0.99, int: () => 0, chance: () => false, pick: (a) => a[0], normal: (m) => m };
 const yes = { next: () => 0, int: () => 0, chance: () => true, pick: (a) => a[0], normal: (m) => m };
+const nonAnchors = (state) => state.pendingEvents.filter((event) => !isAnchorId(event.eventId ?? event.id));
 const withFlag = (flag, extra = {}) => {
   const s = createInitialState();
   const spec = { size: 'medium', arch: 'dense', context: 'short', precision: 'bf16', guard: false, channel: 'consumer', reasoning: 'off' };
@@ -19,12 +20,12 @@ test('a planted flag first shows a warning, then a card the next turn', () => {
   const s = withFlag('jailbreakWaiting');
   eventsTick(s, no);
   assert.ok(s.warnings.jailbreak);
-  assert.equal(s.pendingEvents.length, 0);
+  assert.equal(nonAnchors(s).length, 0);
   assert.equal(s.feed.at(-1).handle, '@devnull_ops');
   s.turn += 1;
   eventsTick(s, no);
-  assert.equal(s.pendingEvents[0].id, 'jailbreak');
-  assert.equal(s.pendingEvents[0].choices.length, 3);
+  assert.equal(nonAnchors(s)[0].id, 'jailbreak');
+  assert.equal(nonAnchors(s)[0].choices.length, 3);
 });
 
 test('acting on the warning is cheap and defuses the card', () => {
@@ -35,7 +36,7 @@ test('acting on the warning is cheap and defuses the card', () => {
   assert.equal(s.cash, cash - 5);
   s.turn += 1;
   eventsTick(s, no);
-  assert.equal(s.pendingEvents.length, 0);
+  assert.equal(nonAnchors(s).length, 0);
   assert.ok(!s.models[0].flags.includes('jailbreakWaiting'));
 });
 
@@ -45,7 +46,7 @@ test('resolving a card applies its effects and removes it', () => {
   const cash = s.cash;
   assert.equal(resolveEvent(s, 'jailbreak', 'patch').ok, true);
   assert.equal(s.cash, cash - 4);
-  assert.equal(s.pendingEvents.length, 0);
+  assert.equal(nonAnchors(s).length, 0);
   assert.equal(resolveEvent(s, 'jailbreak', 'patch').ok, false);
 });
 
@@ -53,20 +54,26 @@ test('at most two cards wait at once, and unanswered cards use passive fallbacks
   const s = withFlag('jailbreakWaiting');
   s.models[0].flags.push('hallucination', 'contaminated');
   eventsTick(s, no); s.turn += 1; eventsTick(s, no);
-  assert.equal(s.pendingEvents.length, 2);
+  assert.equal(nonAnchors(s).length, 2);
   assert.ok(s.warnings.contamination, 'the third warning waits instead of being dropped');
   stampNewCards(s);
-  const days = Math.max(...s.pendingEvents.map((event) => event.dueAt)) - s.day;
+  const days = Math.max(...nonAnchors(s).map((event) => event.dueAt)) - s.day;
   const out = advanceDays(s, days, no);
-  const auto = out.events.filter((e) => e.type === 'eventResolved' && e.auto);
-  assert.deepEqual(auto.map((e) => e.choiceId), ['deny', 'blame']);
+  const auto = out.events
+    .filter((event) => event.type === 'eventResolved' && event.auto && !isAnchorId(event.id))
+    .map(({ id, choiceId }) => ({ id, choiceId }))
+    .sort((a, b) => a.id.localeCompare(b.id));
+  assert.deepEqual(auto, [
+    { id: 'citations', choiceId: 'blame' },
+    { id: 'jailbreak', choiceId: 'deny' },
+  ]);
 });
 
 test('an internal stage-2 incident becomes the oversight card', () => {
   const s = createInitialState();
   s.automation.stage = 2; s.automation.stageTurn = 0;
   eventsTick(s, no);
-  assert.equal(s.pendingEvents[0].id, 'oversightTamper');
+  assert.equal(nonAnchors(s)[0].id, 'oversightTamper');
 });
 
 test('addressWarning cannot target an internal incident', () => {
@@ -74,7 +81,7 @@ test('addressWarning cannot target an internal incident', () => {
   s.automation.stage = 2; s.automation.stageTurn = 0;
   eventsTick(s, no);
   assert.equal(addressWarning(s, 'oversightTamper').ok, false);
-  assert.equal(s.pendingEvents[0].id, 'oversightTamper');
+  assert.equal(nonAnchors(s)[0].id, 'oversightTamper');
 });
 
 test('event and warning ids do not match inherited object properties', () => {
@@ -85,8 +92,8 @@ test('event and warning ids do not match inherited object properties', () => {
   stampNewCards(s);
   const acted = endTurn(s, { eventChoices: inherited }, no);
   const out = acted.events.some((event) => event.type === 'eventResolved')
-    ? acted : advanceDays(acted.state, acted.state.pendingEvents[0].dueAt - acted.state.day, no);
-  const auto = out.events.find((event) => event.type === 'eventResolved');
+    ? acted : advanceDays(acted.state, nonAnchors(acted.state)[0].dueAt - acted.state.day, no);
+  const auto = out.events.find((event) => event.type === 'eventResolved' && event.id === 'jailbreak');
   assert.equal(auto.choiceId, 'deny');
 });
 
@@ -130,7 +137,7 @@ test('catalog events adjust safety compute and undercut active models', () => {
   const s = createInitialState();
   s.compute.split.safety = 0.46;
   s.pendingEvents.push({ id: 'openletter' });
-  resolveEvent(s, 'openletter', 'meet');
+  resolveEvent(s, 'openletter', 'adopt');
   assert.equal(s.compute.split.safety, 0.5);
 
   s.models.push({ active: true, priceStance: 'premium' }, { active: false, priceStance: 'market' });
@@ -143,17 +150,18 @@ test('the open-letter meeting adjusts the compute split submitted on the same tu
   const s = createInitialState();
   s.pendingEvents.push({ id: 'openletter' });
   const budget = { spend: 20, split: { training: 0.5, security: 0.1, product: 0.2, talent: 0.2 } };
-  const out = endTurn(s, { budget, computeSplit: { safety: 0.2 }, eventChoices: { openletter: 'meet' } }, no);
+  const out = endTurn(s, { budget, computeSplit: { safety: 0.2 }, eventChoices: { openletter: 'adopt' } }, no);
   assert.ok(Math.abs(out.state.budget.split.training - 0.5) < 1e-12);
   assert.ok(Math.abs(out.state.compute.split.safety - 0.3) < 1e-12);
 });
 
-test('rival releases are stored and a Qilin release triggers its card', () => {
+test('the Qilin shock is anchored at the start of era 3', () => {
   const s = createInitialState();
   s.era = 2;
-  s.rivals.find((rival) => rival.id === 'qilin').progress = 1;
+  s.turnInEra = 3;
+  s.turn = 7;
   const out = endTurn(s, {}, no);
-  assert.equal(out.state.lastRivalReleases.some((release) => release.id === 'qilin'), true);
+  assert.equal(out.state.era, 3);
   assert.equal(out.state.pendingEvents.some((event) => event.id === 'qilinshock'), true);
 });
 
@@ -175,36 +183,38 @@ test('internal incidents take priority when two warnings mature on the escalatio
   s.automation.stage = 1; s.automation.stageTurn = 0;
   const out = endTurn(s, {}, yes);
   assert.equal(out.state.automation.stage, 2);
-  assert.equal(out.state.pendingEvents[0].id, 'oversightTamper');
+  assert.equal(nonAnchors(out.state)[0].id, 'oversightTamper');
   assert.equal(out.state.warnings.citations.deferred, true);
 });
 
-test('a Qilin shock blocked by a full queue is deferred and cannot be addressed', () => {
+test('the Qilin shock bypasses a full queue and cannot be addressed', () => {
   const s = createInitialState();
   s.era = 2;
+  s.turnInEra = 3;
+  s.turn = 7;
   s.pendingEvents.push({ id: 'jailbreak' }, { id: 'citations' });
-  s.lastRivalReleases = [{ id: 'qilin', gain: 6 }];
   eventsTick(s, no);
-  assert.deepEqual(s.warnings.qilinshock, { turn: 0, deferred: true });
+  assert.equal(s.pendingEvents.some((event) => event.id === 'qilinshock'), true);
+  assert.equal(Object.hasOwn(s.warnings, 'qilinshock'), false);
   assert.equal(addressWarning(s, 'qilinshock').ok, false);
-  s.pendingEvents.shift();
-  s.lastRivalReleases = [];
-  s.turn += 1;
-  eventsTick(s, no);
-  assert.equal(s.pendingEvents.at(-1).id, 'qilinshock');
 });
 
 test('simultaneous flagged-model outcomes do not depend on eventChoices key order', () => {
   const resolveBoth = (eventChoices) => {
     const s = withFlag('sycophancy');
+    s.era = 3; // flattery fires from era 3, the companion suit from era 2: both are live here
+    s.seenEvents.push('political', 'exitGag', 'hateMeltdown'); // era 3 cards that would otherwise take the two slots
     eventsTick(s, no);
     s.turn += 1;
     eventsTick(s, no);
-    return endTurn(s, { eventChoices }, no).state.models[0].users;
+    assert.deepEqual(s.pendingEvents.map((card) => card.id).filter((id) => !isAnchorId(id)).sort(), ['companion', 'flattery']);
+    const next = endTurn(s, { eventChoices }, no).state;
+    assert.ok(['flattery', 'companion'].every((id) => !next.pendingEvents.some((card) => card.id === id)));
+    return next.models[0].users;
   };
   const catalogOrder = resolveBoth({ flattery: 'rollback', companion: 'settle' });
   const reverseOrder = resolveBoth({ companion: 'settle', flattery: 'rollback' });
-  assert.equal(catalogOrder, 767040);
+  assert.equal(catalogOrder, 707804);
   assert.equal(reverseOrder, catalogOrder);
 });
 
@@ -224,7 +234,7 @@ test('customer incidents ignore staged and superseded models', () => {
   assert.equal(Object.hasOwn(superseded.warnings, 'citations'), false);
 });
 
-test('weight theft triggers only at the capability and security thresholds and its chance succeeds', () => {
+test('the forum breach triggers only at the capability and security thresholds and its chance succeeds', () => {
   const event = EVENTS.find((candidate) => candidate.id === 'weightTheft');
   let rolls = 0;
   const rng = { chance: (probability) => { rolls += 1; assert.equal(probability, 0.2); return true; } };
@@ -248,7 +258,7 @@ test('weight theft triggers only at the capability and security thresholds and i
   assert.equal(event.trigger(eligible, { chance: () => false }), false);
 });
 
-test('weight theft warns first and becomes a one-shot card the next turn', () => {
+test('the forum breach warns first and becomes a one-shot card the next turn', () => {
   const state = createInitialState();
   state.capability = 50;
   state.security = 44;
@@ -260,12 +270,12 @@ test('weight theft warns first and becomes a one-shot card the next turn', () =>
   state.turn += 1;
   eventsTick(state, yes);
   const card = state.pendingEvents.find((event) => event.id === 'weightTheft');
-  assert.equal(card.title, 'Weights stolen by a foreign state');
-  assert.equal(card.post.handle, '@newsdesk');
+  assert.equal(card.title, 'A hacker got into your internal forum');
+  assert.equal(card.post.handle, '@your_security');
   assert.equal(state.seenEvents.includes('weightTheft'), true);
 });
 
-test('addressing the weight-theft warning also raises security', () => {
+test('addressing the forum-breach warning also raises security', () => {
   const state = createInitialState();
   state.era = 3;
   state.capability = 50;
@@ -278,11 +288,11 @@ test('addressing the weight-theft warning also raises security', () => {
   assert.equal(state.seenEvents.includes('weightTheft'), true);
 });
 
-test('every weight-theft choice steals and locks the weights before its response', () => {
+test('forum-breach choices apply their response without stealing weights', () => {
   const cases = [
-    ['report', { cash: 0, gov: 5, public: -5, security: 10, coverUp: false }],
-    ['hunt', { cash: -30, gov: 0, public: 0, security: 15, coverUp: false }],
-    ['silence', { cash: 0, gov: 0, public: 0, security: 0, coverUp: true }],
+    ['report', { gov: 5, public: -3, staff: 0, security: 10, coverUp: false, hidden: false }],
+    ['staffonly', { gov: 0, public: 0, staff: -2, security: 5, coverUp: false, hidden: true }],
+    ['silent', { gov: 0, public: 0, staff: 0, security: 0, coverUp: true, hidden: false }],
   ];
   for (const [choiceId, effects] of cases) {
     const state = createInitialState();
@@ -291,25 +301,26 @@ test('every weight-theft choice steals and locks the weights before its response
     const qilin = state.rivals.find((rival) => rival.id === 'qilin');
     state.pendingEvents.push({ id: 'weightTheft' });
     const before = {
-      cash: state.cash,
       gov: state.govFavor.us,
       public: state.publicTrust,
+      staff: state.staffTrust,
       security: state.security,
       qilin: qilin.capability,
     };
     assert.equal(resolveEvent(state, 'weightTheft', choiceId).ok, true);
-    assert.equal(state.misuseExposure, 30, choiceId);
-    assert.equal(state.misuseLocked, 30, choiceId);
-    assert.equal(qilin.capability, before.qilin + 5, choiceId);
-    assert.equal(state.cash, before.cash + effects.cash, choiceId);
+    assert.equal(state.misuseExposure, 20, choiceId);
+    assert.equal(state.misuseLocked, 25, choiceId);
+    assert.equal(qilin.capability, before.qilin, choiceId);
     assert.equal(state.govFavor.us, before.gov + effects.gov, choiceId);
     assert.equal(state.publicTrust, before.public + effects.public, choiceId);
+    assert.equal(state.staffTrust, before.staff + effects.staff, choiceId);
     assert.equal(state.security, before.security + effects.security, choiceId);
     assert.equal(state.flags.coverUp === true, effects.coverUp, choiceId);
+    assert.equal(state.flags.forumBreachHidden === true, effects.hidden, choiceId);
   }
 });
 
-test('unanswered weight theft falls back to silence and preserves a higher misuse lock', () => {
+test('an unanswered forum breach falls back to silence without stealing weights', () => {
   const state = createInitialState();
   state.misuseExposure = 20;
   state.misuseLocked = 40;
@@ -317,10 +328,11 @@ test('unanswered weight theft falls back to silence and preserves a higher misus
   const beforeQilin = qilin.capability;
   state.pendingEvents.push({ id: 'weightTheft' });
   stampNewCards(state);
-  const out = advanceDays(state, state.pendingEvents[0].dueAt - state.day, no);
+  const card = state.pendingEvents.find((event) => event.id === 'weightTheft');
+  const out = advanceDays(state, card.dueAt - state.day, no);
   assert.equal(out.state.flags.coverUp, true);
-  assert.equal(out.state.misuseExposure, 30);
+  assert.equal(out.state.misuseExposure, 20);
   assert.equal(out.state.misuseLocked, 40);
-  assert.equal(out.state.rivals.find((rival) => rival.id === 'qilin').capability, beforeQilin + 5);
-  assert.equal(out.events.find((event) => event.id === 'weightTheft')?.choiceId, 'silence');
+  assert.equal(out.state.rivals.find((rival) => rival.id === 'qilin').capability, beforeQilin);
+  assert.equal(out.events.find((event) => event.id === 'weightTheft')?.choiceId, 'silent');
 });

@@ -1,13 +1,14 @@
 import { ERAS } from './data/eras.js';
 import { PROMISES } from './data/promises.js';
 import { hasLine } from './constitution.js';
+import { FEED_KEEP } from './feedLive.js';
 
 const LAST_TURN = ERAS.reduce((sum, era) => sum + era.turns, 0) - 1;
 const ERA3_FIRST_TURN = ERAS[0].turns + ERAS[1].turns;
 
 function pushFeed(state, handle, text, tag = 'feed') {
-  state.feed.push({ turn: state.turn, handle, text, tag });
-  if (state.feed.length > 40) state.feed.splice(0, state.feed.length - 40);
+  state.feed.push({ turn: state.turn, day: state.day, handle, text, tag });
+  if (state.feed.length > FEED_KEEP) state.feed.splice(0, state.feed.length - FEED_KEEP);
 }
 
 const promiseDefinition = (promise) => PROMISES[promise.id];
@@ -40,17 +41,22 @@ export function createPresidentPromise(id, meeting, turn, state) {
   };
 }
 
-export function promiseUpkeep(state, rng) {
+// Thanks the lab for each open President promise that has come due (by `due`) and is kept.
+export function keepPromises(state, due = (promise) => promise.dueTurn <= state.turn) {
   for (const promise of state.promises) {
     if (!isPresidentPromise(promise)
       || promise.status !== 'open'
       || isEndgamePromise(promise)
-      || promise.dueTurn > state.turn) continue;
+      || !due(promise)) continue;
     if (!promiseDefinition(promise).check(state, promise)) continue;
     promise.status = 'kept';
     state.govFavor.us += 5;
     pushFeed(state, '@executive_office', `Thank you to the lab for keeping its promise: “${promise.text}”`, 'event');
   }
+}
+
+export function promiseUpkeep(state, rng) {
+  keepPromises(state);
   for (const promise of state.promises) {
     if (!isPresidentPromise(promise) || promise.status !== 'open' || promise.leaked) continue;
     const contradictsHeldLine = promiseDefinition(promise).contradicts.some((line) => hasLine(state, line));

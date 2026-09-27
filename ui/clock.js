@@ -3,7 +3,7 @@ import { ROUND_DAYS, storyDate } from '../sim/time.js';
 const SPEEDS = [0, 1, 2, 4];
 const MAX_STEP_MS = 1000;
 
-export function createClock(game, { now = () => performance.now(), secondsPerRound = 150 } = {}) {
+export function createClock(game, { now = () => performance.now(), secondsPerRound = 90 } = {}) {
   let speed = 1;
   let last = null;
   let owed = 0;

@@ -1,6 +1,7 @@
 import { EVENTS } from '../../sim/data/events.js';
 import { EVENTS_6C } from '../../sim/data/events6c.js';
 import { BOARD_EVENTS } from '../../sim/data/boardEvents.js';
+import { REAL_EVENTS } from '../../sim/data/realEvents.js';
 import { DEFAULT_EVENT_TIMING, EVENT_TIMING } from '../../sim/data/eventTiming.js';
 import { fallbackChoice } from '../../sim/events.js';
 import {
@@ -12,7 +13,7 @@ export const TAG_TO_ADVISOR = { Research: 'research', Safety: 'safety', CFO: 'cf
 const ARGUE_ORDER = ['safety', 'research', 'cfo', 'policy'];
 const DAYS_PER_MONTH = 30.44;
 
-const ALL = [...EVENTS, ...EVENTS_6C, ...BOARD_EVENTS];
+const ALL = [...EVENTS, ...EVENTS_6C, ...BOARD_EVENTS, ...REAL_EVENTS];
 const baseId = (id) => (id.startsWith('promiseCall:') ? 'promiseCall' : id);
 
 export const catalogRow = (id) => ALL.find((event) => event.id === baseId(id));

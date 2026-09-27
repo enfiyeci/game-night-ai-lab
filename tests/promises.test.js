@@ -5,11 +5,13 @@ import { PROMISES } from '../sim/data/promises.js';
 import { MEETINGS } from '../sim/data/president.js';
 import { createPresidentPromise, promiseUpkeep } from '../sim/promises.js';
 import { runMeeting } from '../sim/president.js';
-import { addressWarning, eventsTick, resolveEvent, stampNewCards } from '../sim/events.js';
+import { addressWarning, eventsTick, isAnchorId, resolveEvent, stampNewCards } from '../sim/events.js';
 import { generateOffers, signOffer } from '../sim/contracts.js';
 import { advanceDays, applyActions, endTurn } from '../sim/turn.js';
 
 const no = { next: () => 0.99, int: () => 0, chance: () => false, pick: (a) => a[0], normal: (m) => m };
+const nonAnchors = (state) => state.pendingEvents.filter((event) => !isAnchorId(event.eventId ?? event.id));
+const promiseCalls = (state) => nonAnchors(state).filter((event) => event.eventId === 'promiseCall');
 const signGulf = (state) => {
   state.era = 3;
   state.govFavor.us = 60;
@@ -137,15 +139,16 @@ test('same-turn history before a promise does not count but history after it doe
 
 test('a failed due promise produces a repeatable promise card with its identity', () => {
   const state = failedCall();
-  assert.equal(state.pendingEvents.length, 1);
-  assert.deepEqual(state.pendingEvents[0].choices.map(({ id }) => id), ['deliver', 'stall', 'refuse']);
-  assert.equal(state.pendingEvents[0].eventId, 'promiseCall');
-  assert.equal(state.pendingEvents[0].id, 'promiseCall:0');
-  assert.equal(state.pendingEvents[0].promiseIndex, 0);
-  assert.equal(state.pendingEvents[0].promiseId, 'beatRivals');
-  assert.equal(state.pendingEvents[0].promiseMeeting, 'first');
-  assert.equal(state.pendingEvents[0].title, "The President's office is calling in your promise");
-  assert.match(state.pendingEvents[0].post.text, /Beat every rival to the next model\./);
+  assert.equal(promiseCalls(state).length, 1);
+  const [card] = promiseCalls(state);
+  assert.deepEqual(card.choices.map(({ id }) => id), ['deliver', 'stall', 'refuse']);
+  assert.equal(card.eventId, 'promiseCall');
+  assert.equal(card.id, 'promiseCall:0');
+  assert.equal(card.promiseIndex, 0);
+  assert.equal(card.promiseId, 'beatRivals');
+  assert.equal(card.promiseMeeting, 'first');
+  assert.equal(card.title, "The President's office is calling in your promise");
+  assert.match(card.post.text, /Beat every rival to the next model\./);
   assert.equal(state.seenEvents.includes('promiseCall'), false);
 });
 
@@ -240,13 +243,13 @@ test('simultaneous promise cards have unique ids and answering one resolves only
   );
   promiseUpkeep(state, no);
   eventsTick(state, no);
-  assert.deepEqual(state.pendingEvents.map(({ id }) => id), [
+  assert.deepEqual(promiseCalls(state).map(({ id }) => id), [
     'promiseCall:0',
     'promiseCall:1',
   ]);
   assert.equal(resolveEvent(state, 'promiseCall:1', 'refuse').ok, true);
   assert.deepEqual(state.promises.map(({ status }) => status), ['open', 'refused']);
-  assert.deepEqual(state.pendingEvents.map(({ id }) => id), ['promiseCall:0']);
+  assert.deepEqual(promiseCalls(state).map(({ id }) => id), ['promiseCall:0']);
 });
 
 test('eventChoices routes a promise answer only through its unique call id', () => {
@@ -258,7 +261,7 @@ test('eventChoices routes a promise answer only through its unique call id', () 
   eventsTick(state, no);
   stampNewCards(state);
   const acted = applyActions(state, { eventChoices: { 'promiseCall:1': 'refuse' } }, no);
-  const due = acted.state.pendingEvents[0].dueAt - acted.state.day;
+  const due = promiseCalls(acted.state)[0].dueAt - acted.state.day;
   const out = advanceDays(acted.state, due, no);
   assert.deepEqual([...acted.errors, ...out.errors], []);
   assert.deepEqual(out.state.promises.map(({ status, stalled }) => ({ status, stalled })), [
@@ -273,7 +276,7 @@ test('a bare promiseCall id is rejected without resolving any call', () => {
   assert.equal(result.ok, false);
   assert.match(result.error, /no pending event promiseCall/);
   assert.equal(state.promises[0].status, 'open');
-  assert.equal(state.pendingEvents.length, 1);
+  assert.equal(promiseCalls(state).length, 1);
 });
 
 test('fallback resolves simultaneous promise calls separately', () => {
@@ -285,14 +288,16 @@ test('fallback resolves simultaneous promise calls separately', () => {
   eventsTick(state, no);
   const favor = state.govFavor.us;
   stampNewCards(state);
-  const days = Math.max(...state.pendingEvents.map((event) => event.dueAt)) - state.day;
+  const days = Math.max(...promiseCalls(state).map((event) => event.dueAt)) - state.day;
   const out = advanceDays(state, days, no);
   assert.deepEqual(out.state.promises.map(({ status, stalled, dueTurn }) => ({ status, stalled, dueTurn })), [
     { status: 'open', stalled: true, dueTurn: 7 },
     { status: 'open', stalled: true, dueTurn: 7 },
   ]);
   assert.equal(out.state.govFavor.us, favor - 12);
-  assert.deepEqual(out.events.filter(({ type }) => type === 'eventResolved').map(({ id }) => id), [
+  assert.deepEqual(out.events
+    .filter(({ type, id }) => type === 'eventResolved' && !isAnchorId(id))
+    .map(({ id }) => id), [
     'promiseCall:0',
     'promiseCall:1',
   ]);
@@ -320,7 +325,7 @@ test('stall is offered once, delays the due turn, then disappears', () => {
   state.turn = 7;
   promiseUpkeep(state, no);
   eventsTick(state, no);
-  assert.deepEqual(state.pendingEvents[0].choices.map(({ id }) => id), ['deliver', 'refuse']);
+  assert.deepEqual(promiseCalls(state)[0].choices.map(({ id }) => id), ['deliver', 'refuse']);
   assert.equal(resolveEvent(state, 'promiseCall:0', 'stall').ok, false);
 });
 
@@ -338,14 +343,14 @@ test('refusing a called promise applies the refusal costs', () => {
 test('unanswered promise calls stall first and refuse after the one stall', () => {
   const first = failedCall();
   stampNewCards(first);
-  const stalled = advanceDays(first, first.pendingEvents[0].dueAt - first.day, no);
+  const stalled = advanceDays(first, promiseCalls(first)[0].dueAt - first.day, no);
   assert.equal(stalled.state.promises[0].status, 'open');
   assert.equal(stalled.state.promises[0].stalled, true);
   assert.equal(stalled.events.find((event) => event.type === 'eventResolved')?.choiceId, 'stall');
 
   const second = failedCall('beatRivals', { stalled: true });
   stampNewCards(second);
-  const refused = advanceDays(second, second.pendingEvents[0].dueAt - second.day, no);
+  const refused = advanceDays(second, promiseCalls(second)[0].dueAt - second.day, no);
   assert.equal(refused.state.promises[0].status, 'refused');
   assert.equal(refused.events.find((event) => event.type === 'eventResolved')?.choiceId, 'refuse');
 });
@@ -362,7 +367,7 @@ test('a promise call is deferred by the two-card cap and queued when space opens
   assert.ok(Object.values(state.warnings).some((warning) =>
     warning.eventId === 'promiseCall' && warning.promiseId === 'beatRivals' && warning.deferred));
 
-  state.pendingEvents.shift();
+  state.pendingEvents.splice(state.pendingEvents.findIndex((event) => !isAnchorId(event.id)), 1);
   state.turn += 1;
   eventsTick(state, no);
   assert.equal(state.pendingEvents.at(-1).eventId, 'promiseCall');

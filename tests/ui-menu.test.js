@@ -28,7 +28,7 @@ test('a release applies at once, and the policy team is busy until the next roun
   assert.equal(game.addMove(releaseMove(game)).ok, true);
   assert.equal(game.state.pendingModel, null);
   assert.equal(game.movesLeft(), 1);
-  assert.match(reasonFor(game, 'release'), /^The policy team is busy until Y\d+ M\d+ W\d$/);
+  assert.match(reasonFor(game, 'release'), /^The policy team is busy until [A-Z][a-z]{2} \d{4}(, week \d)?$/);
 });
 
 test('release is closed with no finished model, and when both team actions went elsewhere', () => {

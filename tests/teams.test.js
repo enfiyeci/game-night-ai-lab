@@ -12,7 +12,7 @@ test('every move type has a team', () => {
 test('a team that acted this round is busy until the next round mark', () => {
   const s = createInitialState({ seed: 1 });
   s.round.teams.cfo = 'deal';
-  assert.match(teamBusyError(s, { type: 'raise' }), /finance team is busy until Y1 M4 W1/);
+  assert.match(teamBusyError(s, { type: 'raise' }), /finance team is busy until Apr 2023/);
 });
 
 test('research is busy while a training run is under way', () => {
@@ -24,5 +24,5 @@ test('research is busy while a training run is under way', () => {
 test('when you are the busy one, the message says "you are", not "the you is"', () => {
   const s = createInitialState({ seed: 1 });
   s.round.teams.ceo = 'meeting';
-  assert.equal(teamBusyError(s, { type: 'meeting' }), 'you are busy until Y1 M4 W1');
+  assert.equal(teamBusyError(s, { type: 'meeting' }), 'you are busy until Apr 2023');
 });

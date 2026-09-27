@@ -13,6 +13,8 @@ import { createRng } from '../sim/rng.js';
 import { createInitialState } from '../sim/state.js';
 import { endTurn } from '../sim/turn.js';
 import { computeSlices } from '../sim/split.js';
+import { REACTIONS } from '../sim/data/feedReactions.js';
+import { PEOPLE } from '../sim/data/feedPeople.js';
 
 const TRAINING_RECIPE = {
   sliders: { size: 'medium', length: 'optimal', alignShare: 0.15 },
@@ -239,14 +241,18 @@ test('building feed posts does not consume the game rng', () => {
   assert.deepEqual(secondWithFeed, secondWithoutFeed);
 });
 
-test('endTurn wires real release reactions and era changes into the feed', () => {
-  const { trained, released } = releaseThroughTurns();
-  const releaseEvent = released.events.find((event) => event.type === 'release');
-  const added = released.state.feed.slice(trained.state.feed.length);
-  assert.deepEqual(
-    added.filter((post) => post.tag === 'launch').map(({ handle, text }) => ({ handle, text })),
-    releaseEvent.model.launch.reactions,
-  );
+// The live persona feed (sim/feedLive.js) schedules posts over the coming days: count the feed and the queue together.
+const allPosts = (state) => [...state.feed, ...(state.feedQueue ?? [])];
+const persona = (pool, state, model) => new Set(pool.map(([, text]) => text.replaceAll('{model}', model?.name ?? '')));
+
+test('endTurn wires persona launch reactions and era changes into the feed', () => {
+  const { released } = releaseThroughTurns();
+  const launch = allPosts(released.state).filter((post) => post.tag === 'launch');
+  assert.ok(launch.length >= 3, 'a launch draws several posts');
+  assert.ok(launch.every((post) => PEOPLE[post.handle]), 'every launch post comes from a persona');
+  const model = released.state.models[0];
+  const consumer = persona(REACTIONS.launch.channel.consumer, released.state, model);
+  assert.ok(launch.some((post) => consumer.has(post.text)), 'a consumer app draws consumer posts');
 
   let state = createInitialState({ seed: 2 });
   const rng = createRng(2);
@@ -256,47 +262,29 @@ test('endTurn wires real release reactions and era changes into the feed', () =>
     state = transition.state;
   }
   assert.ok(transition.events.some((event) => event.type === 'eraStart' && event.era === 2));
-  assert.equal(state.feed.filter((post) => post.turn === state.turn && post.tag === 'era').length, 2);
+  assert.equal(state.feed.filter((post) => post.day === state.day && post.tag === 'era').length, 2, 'two era posts on the day it starts');
+  assert.ok(allPosts(state).filter((post) => post.tag === 'era').length >= 3, 'more era posts follow over the next days');
 });
 
-test('real undercut releases can use the existing cheap reception bank', () => {
-  const { rng, released } = releaseThroughTurns({ price: 'undercut' });
-  const before = released.state;
-  const model = before.models[0];
-  const otherPools = [
-    RECEPTION_POSTS.channels[model.channel],
-    model.launch.pressAvg >= 7 ? RECEPTION_POSTS.press.high : [],
-    model.launch.pressAvg <= 4 ? RECEPTION_POSTS.press.low : [],
-    RECEPTION_POSTS.generic,
-  ].flat();
-  before.feed = rendered(otherPools, model).map((text) => ({ text }));
-
-  const result = endTurn(before, {}, rng);
-  const cheap = new Set(rendered(RECEPTION_POSTS.price.cheap, model));
-  assert.ok(result.state.feed.some((post) => post.tag === 'reception' && cheap.has(post.text)));
+test('real undercut releases draw the cheap-price persona posts', () => {
+  const { released } = releaseThroughTurns({ price: 'undercut' });
+  const cheap = persona(REACTIONS.launch.price.cheap, released.state, released.state.models[0]);
+  assert.ok(allPosts(released.state).some((post) => post.tag === 'launch' && cheap.has(post.text)));
 });
 
 test('real serving shortfalls use computeSlices for capacity-trouble reception', () => {
   const { rng, released } = releaseThroughTurns();
   const before = released.state;
   const model = before.models[0];
-  const otherPools = [
-    RECEPTION_POSTS.channels[model.channel],
-    model.launch.pressAvg >= 7 ? RECEPTION_POSTS.press.high : [],
-    model.launch.pressAvg <= 4 ? RECEPTION_POSTS.press.low : [],
-    RECEPTION_POSTS.generic,
-  ].flat();
-  before.feed = rendered(otherPools, model).map((text) => ({ text }));
   before.compute.split.coverWithSpot = false;
-
   const result = endTurn(before, { computeSplit: { servingCap: 0, coverWithSpot: false } }, rng);
-  const capacity = new Set(rendered(RECEPTION_POSTS.capacityTrouble, model));
+  const capacity = persona(REACTIONS.launch.capacity, result.state, model);
   assert.ok(computeSlices(result.state).shortfall > 0);
   assert.ok(result.events.some((event) => event.type === 'outage'));
-  assert.ok(result.state.feed.some((post) => post.tag === 'reception' && capacity.has(post.text)));
+  assert.ok(allPosts(result.state).some((post) => post.tag === 'reception' && capacity.has(post.text)));
 });
 
-test('a real CoreFlame trouble card uses the existing compute-failure company bank', () => {
+test('a real CoreFlame trouble card draws the compute-supplier persona posts', () => {
   const rng = createRng(4);
   let state = createInitialState({ seed: 4 });
   const coreflame = state.compute.offers.find((offer) => offer.supplier === 'coreflame');
@@ -307,10 +295,13 @@ test('a real CoreFlame trouble card uses the existing compute-failure company ba
   assert.ok(result.events.some((event) => event.type === 'warning' && event.id === 'neocloudTrouble'));
   state = result.state;
   result = endTurn(state, {}, rng);
-
-  const companyTexts = new Set(COMPANY_POSTS.computeFailed.map((template) => template.text));
+  const supplier = persona(REACTIONS.company.computeFailed, result.state);
   assert.ok(result.events.some((event) => event.type === 'eventCard' && event.id === 'neocloudTrouble'));
-  assert.ok(result.state.feed.some((post) => post.tag === 'company' && companyTexts.has(post.text)));
+  const card = result.state.pendingEvents.find((c) => (c.eventId ?? c.id) === 'neocloudTrouble');
+  const talk = (s) => allPosts(s).filter((post) => post.tag === 'company' && supplier.has(post.text));
+  assert.ok(talk(result.state).every((post) => post.day >= card.landsAt), 'nobody talks about it before the card lands');
+  result = endTurn(result.state, {}, rng); // the round the card lands in
+  assert.ok(talk(result.state).length >= 1);
 });
 
 test('with time-based posts off, a quiet moment posts nothing', async () => {
@@ -328,5 +319,5 @@ test('a trust drop from an instant action still gets its mood post at the round 
   s.roundStart.publicTrust = 41;
   s.publicTrust = 36; // dropped mid-round by an action
   const out = advanceDays(s, 91, createRng(5)).state;
-  assert.ok(out.feed.some((post) => post.tag === 'mood'), 'the low-trust mood post appears');
+  assert.ok([...out.feed, ...(out.feedQueue ?? [])].some((post) => post.tag === 'mood'), 'the low-trust mood post appears');
 });

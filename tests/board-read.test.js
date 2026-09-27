@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import { createRng } from '../sim/rng.js';
-import { endTurn } from '../sim/turn.js';
+import { applyActions, endTurn } from '../sim/turn.js';
 import { BALANCE } from '../sim/balance.js';
 import { BOARD_MEMBERS, boardVoteThisRound, holdVote, misread, voteOrder } from '../sim/board.js';
 import { boardRead } from '../sim/boardRead.js';
@@ -131,7 +131,8 @@ test('boardVoteThisRound is true exactly in rounds that hold a vote', () => {
     const rng = createRng(seed);
     let state = createInitialState({ seed });
     while (!state.ending && state.turn < 30) {
-      const expected = boardVoteThisRound(state);
+      // Forecast after the round's instant actions (answering a board-revolt card calls a vote at once), as the screen shows it.
+      const expected = boardVoteThisRound(applyActions(state, playerActions(state), createRng(0), { ignoreTeams: true }).state);
       const votesBefore = state.flags.boardVotesHeld ?? 0;
       state = endTurn(state, playerActions(state), rng).state;
       const held = (state.flags.boardVotesHeld ?? 0) > votesBefore;
