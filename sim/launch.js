@@ -39,7 +39,9 @@ export function retiredTests(era) {
 }
 export const retiredTestPosts = (era) => retiredTests(era).map((t) => RETIRED_POSTS[t.kind](t.from, t.to));
 
-export function scoreLaunch(state, model, rng) {
+// Owner 2026-09-26, no dice: benchmarks show the truth (plus eval gaming and contamination)
+// and critics score without noise.
+export function scoreLaunch(state, model) {
   const { capability, spec, flags } = model;
   const prev = state.lastFlagship;
   const rivalCap = leaderCapability(state);
@@ -57,16 +59,16 @@ export function scoreLaunch(state, model, rng) {
     let flagship = null;
     if (b.kind === 'safety') {
       truth = safetyTruth(state, flags);
-      shown = clamp(Math.round(truth + evalGaming(state, capability, flags, model.reasoningBonus) + rng.int(-2, 2)), 0, 100);
-      rival = clamp(Math.round(60 + rng.int(-5, 5)), 0, 100);
+      shown = clamp(Math.round(truth + evalGaming(state, capability, flags, model.reasoningBonus)), 0, 100);
+      rival = 60;
       flagship = before?.shown ?? null;
     } else {
       fit = b.fit(spec, flags);
       skill = oneDecimal(capability * clamp(fit - BUG_PENALTY * bugCount, 0.6, 1));
       truth = testScore(test.mid, skill);
       const contam = flags.includes('contaminated') && CONTAMINATED_BENCHMARKS.includes(b.id) ? CONTAMINATION_BONUS : 0;
-      shown = clamp(truth + contam + rng.int(-3, 3), 0, 100);
-      rival = clamp(testScore(test.mid, rivalCap * fit * 0.95) + rng.int(-3, 3), 0, 100);
+      shown = clamp(truth + contam, 0, 100);
+      rival = testScore(test.mid, rivalCap * fit * 0.95);
       if (before) flagship = scoreOnTest(test, before);
     }
     const newTest = Boolean(before) && !sameTest;
@@ -90,7 +92,7 @@ export function scoreLaunch(state, model, rng) {
   const ctx = { launch, flags, rank: rank(state), safetyShown: benchmarks.find((b) => b.id === 'gauntlet').shown };
   const releaseCount = state.models.length; // picks the quip and the everyday reactions without another random draw
   const press = CRITICS.map((c) => {
-    const score = clamp(Math.round(base + c.bias(ctx) + rng.int(-1, 1)), 1, 10);
+    const score = clamp(Math.round(base + c.bias(ctx)), 1, 10);
     const quips = c.quips[score >= 8 ? 'high' : score >= 5 ? 'mid' : 'low'];
     const quip = quips[releaseCount % quips.length];
     return { id: c.id, name: c.name, score, quip };

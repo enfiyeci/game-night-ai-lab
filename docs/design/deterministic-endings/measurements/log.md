@@ -99,6 +99,17 @@ Ending counts per bot:
 | m1 | balancedHighSafety | pacingDeal 86, misalignment 92, acquihire 12, rivalDisaster 10 |
 | m1 | balancedPush | pacingDeal 58, misalignment 126, rivalDisaster 4, acquihire 12 |
 | m1 | denier | misalignment 182, acquihire 11, pacingDeal 5, rivalDisaster 2 |
+| a5 | speed | boardRemoved 171, misuse 26, misalignment 3 |
+| a5 | safety | acquihire 166, leftBehind 14, misalignment 7, pacingDeal 5, rivalDisaster 5, aligned 3 |
+| a5 | balanced | misalignment 126, pacingDeal 57, rivalDisaster 9, acquihire 8 |
+| a5 | random | acquihire 147, boardRemoved 21, misalignment 19, rivalDisaster 6, misuse 5, leftBehind 2 |
+| a5 | overCommitter | acquihire 176, misalignment 21, rivalDisaster 2, misuse 1 |
+| a5 | handToMouth | misalignment 100, rivalDisaster 52, acquihire 48 |
+| a5 | balancedNoGrid | misalignment 125, pacingDeal 55, acquihire 18, rivalDisaster 2 |
+| a5 | balancedLowSafety | misalignment 143, pacingDeal 33, leftBehind 7, acquihire 12, rivalDisaster 5 |
+| a5 | balancedHighSafety | pacingDeal 81, misalignment 97, rivalDisaster 11, acquihire 11 |
+| a5 | balancedPush | misalignment 135, pacingDeal 53, acquihire 8, rivalDisaster 4 |
+| a5 | denier | misalignment 181, acquihire 14, rivalDisaster 4, pacingDeal 1 |
 
 Notes:
 
@@ -180,3 +191,14 @@ Notes:
   ending); acquihire fell in every balanced bot except balancedNoGrid (for example balanced 36 to 12; balancedNoGrid
   stayed at 16). The `denier` bot is new
   from origin/ui and has no a8 row.
+- a5 (Task A5, launch benchmarks and press carry no noise, rule shape 3 average: the five draws in `scoreLaunch` were
+  ±2 on the shown safety score, ±5 on the rival safety score, ±3 on each shown and each rival capability score, and ±1
+  on each critic, all averaging to 0, so each is dropped): compared against m1. Several counts moved more than a
+  handful: balanced misalignment 111 to 126 and pacingDeal 69 to 57; balancedPush misalignment 126 to 135;
+  handToMouth misalignment 111 to 100 and acquihire 41 to 48; the safety bot gains 3 aligned endings and 6
+  misalignment endings. To split the rule from the reshuffle, a scratch copy removed the noise but still drew the
+  same five numbers in the same order and threw them away (not committed): every bot then lands within 4 of m1
+  (largest: overCommitter acquihire 172 to 176 and misalignment 20 to 17; balanced, balancedNoGrid, balancedPush and
+  speed identical to m1). So the noise itself decided almost nothing; the larger moves above come from no longer
+  drawing 14 numbers per release (2 for the safety row, 2 for each of the 4 capability rows, 1 for each of the 4 critics) from the main random stream, which shifts every later roll on that stream.
+  No bot's leading ending changed. Not traced run by run.

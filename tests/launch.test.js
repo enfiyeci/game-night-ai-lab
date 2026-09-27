@@ -5,6 +5,7 @@ import { scoreLaunch, evalGaming, testFor, testScore, retiredTests } from '../si
 import { BENCHMARKS, TEST_WIDTH } from '../sim/data/launch.js';
 import { safetySpend } from '../sim/economy.js';
 import { eraScale } from '../sim/data/compute.js';
+import { createRng } from '../sim/rng.js';
 
 const zeroRng = { next: () => 0.5, int: () => 0, chance: () => false, pick: (a) => a[0], normal: (m) => m };
 const plain = { capability: 60, spec: { reasoningCapable: false }, flags: [] };
@@ -246,4 +247,15 @@ test('at an era change, the tests that retire are listed with their replacements
   const [first] = retiredTests(2);
   assert.equal(first.from, 'Hello Function (coding)');
   assert.equal(first.to, 'Patchwork (coding)');
+});
+
+// Owner 2026-09-26, no dice (rule shape 3, average): benchmark and critic noise averaged to 0, so it is gone.
+test('the same model scores the same launch whatever rng is passed', () => {
+  const s = createInitialState();
+  const model = {
+    capability: 50,
+    spec: { size: 'medium', arch: 'dense', context: 'short', precision: 'bf16', guard: false, reasoningCapable: false, channel: 'api' },
+    flags: [], name: 'Bot 1', priceStance: 'market', generation: 1, skipped: 0,
+  };
+  assert.deepEqual(scoreLaunch(structuredClone(s), model, createRng(1)), scoreLaunch(structuredClone(s), model, createRng(2)));
 });
