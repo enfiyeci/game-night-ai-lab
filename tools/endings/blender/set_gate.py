@@ -126,19 +126,22 @@ def halls(seed=4):
     """Long windowless data halls behind the fence: cladding, rooftop chillers, a line of status lights, yard lamps."""
     rng = random.Random(seed)
     clad = kit.tex("box_profile_metal_sheet", 0.4, tint="#A9B4C0", name="clad")
-    chill, leds, lamps = [], [], []
-    for i, (x, y) in enumerate(((-45, 30), (5, 30), (55, 30), (-20, 75), (30, 75))):
+    chill, leds, lamps, glazing = [], [], [], []
+    for i, (x, y) in enumerate(((-45, 55), (5, 55), (55, 55), (-20, 100), (30, 100))):
         L, Wd, Hh = 44, 20, 10
         kit.box((x, y + Wd / 2, Hh / 2), (L, Wd, Hh), clad)
         for k in range(10):
             chill.append(((x - L / 2 + 2.5 + k * 4.3, y + Wd / 2, Hh + 0.8), (3.2, 5.5, 1.6)))
+        for k in range(10):   # clerestory glazing: the lit, empty rooms inside
+            glazing.append(((x - L / 2 + 2.5 + k * 4.3, y - 0.04, 7.6), (3.4, 0.05, 1.1)))
         for k in range(24):
             leds.append(((x - L / 2 + 1 + k * 1.8, y - 0.05, 3.2 + (k % 3) * 0.02), (0.12, 0.05, 0.06)))
         for k in range(4):
             lamps.append(((x - L / 2 + 5 + k * 11, y - 0.1, 6.5), (0.8, 0.2, 0.25)))
             kit.spot((x - L / 2 + 5 + k * 11, y - 0.6, 6.4), (x - L / 2 + 5 + k * 11, y - 3, 0), 1400, kit.kelvin(5600), angle=110, blend=0.8)
     _batch("chillers", chill, kit.mat("#8E949A", 0.4, 0.6))
-    _batch("leds", leds, kit.emission("#48E0B0", 30))
+    _batch("leds", leds, kit.emission("#48E0B0", 45))
+    _batch("glazing", glazing, kit.emission("#DCEBFF", 6))
     _batch("lamps", lamps, kit.emission("#FFE7C4", 40))
 
 
@@ -150,9 +153,9 @@ def kiosk(plate, crop, at, yaw=0.0):
     root = bpy.data.objects.new("kiosk", None)
     bpy.context.scene.collection.objects.link(root)
     parts = [kit.box((0, 0, 0.55), (0.18, 0.18, 1.1), body, bevel=0.01),
-             kit.box((0, 0, 1.4), (0.46, 0.14, 0.7), body, bevel=0.015),
-             kit.box((0, -0.071, 1.71), (0.44, 0.004, 0.06), kit.mat("#E9E4D6", 0.5))]
-    parts.append(kit.text("MANAGED REMOTELY", (0, -0.074, 1.71), 0.036, kit.mat("#2A2B2E", 0.5), font=kit.FONT_COND))
+             kit.box((0, 0, 1.45), (0.58, 0.14, 0.8), body, bevel=0.015),
+             kit.box((0, -0.071, 1.8), (0.56, 0.004, 0.07), kit.mat("#E9E4D6", 0.5))]
+    parts.append(kit.text("MANAGED REMOTELY", (0, -0.074, 1.8), 0.044, kit.mat("#2A2B2E", 0.5), font=kit.FONT_COND))
     ring = kit.cyl((0, -0.072, 1.16), 0.055, 0.004, kit.emission("#FF3A26", 25), rot=(math.radians(90), 0, 0), verts=40)
     pad = kit.cyl((0, -0.074, 1.16), 0.046, 0.004, kit.mat("#202225", 0.4), rot=(math.radians(90), 0, 0), verts=40)
     parts += [ring, pad]
@@ -160,9 +163,9 @@ def kiosk(plate, crop, at, yaw=0.0):
         p.parent = root
     root.location = (x, y, 0)
     root.rotation_euler = (0, 0, rz)
-    w = 0.36
+    w = 0.48
     c, s = math.cos(rz), math.sin(rz)
-    face, _ = kit.screen("reader", (x + 0.073 * s, y - 0.073 * c, 1.46), w, plate, crop=crop, rot=(math.radians(90), 0, rz),
+    face, _ = kit.screen("reader", (x + 0.073 * s, y - 0.073 * c, 1.53), w, plate, crop=crop, rot=(math.radians(90), 0, rz),
                          strength=1.1, bezel="#1B1C1F", depth=0.008, border=0.01)
     kit.point((x + 0.25 * s, y - 0.25 * c, 1.2), 3, kit.lin("#FF3A26")[:3], radius=0.03)   # the red glow on whoever stands here
     return face
@@ -175,13 +178,14 @@ def shot_qt_gate():
     halls()
     face = kiosk("qt-gate", (200, 172, 270, 166), KIOSK, yaw=28)
     # Tomas, from behind, badge still in his hand, looking through the fence at the halls he can no longer enter
-    tomas = P.person((KIOSK[0] - 0.55, KIOSK[1] - 0.25), facing=8, height=1.8, coat="#2B2F36", long_coat=True, hold="paper", hood=True, seed=7)
+    tomas = P.person((KIOSK[0] - 0.75, KIOSK[1] + 0.1), facing=12, height=1.8, coat="#2B2F36", long_coat=True, hold="paper",
+                     hair="#3A2E25", skin="#6E4630", seed=7)
     badge = next(c for c in tomas.children if c.dimensions.y < 0.01 and c.dimensions.z > 0.15)   # the paper, cut to a badge
     badge.scale = (0.34, 1, 0.39)
     badge.data.materials[0] = kit.mat("#E8EEF4", 0.4)
     kit.place("security_camera_01", (-2.6, 0.1, 3.1), rot_z=math.radians(-60))
-    kit.haze((0, 18, 7), (90, 44, 14), 0.0012)
-    kit.camera((KIOSK[0] + 0.55, KIOSK[1] - 2.15, 1.5), (KIOSK[0] - 0.6, KIOSK[1], 1.48), lens=40, fstop=4.0, focus=face)
+    kit.haze((0, 30, 7), (90, 64, 14), 0.0006)
+    kit.camera((KIOSK[0] + 0.35, KIOSK[1] - 2.3, 1.5), (KIOSK[0] - 0.75, KIOSK[1] + 1.0, 1.62), lens=40, fstop=4.0, focus=face)
     bpy.context.scene.view_settings.exposure = 0.0
 
 
