@@ -1,7 +1,6 @@
 import { BALANCE } from './balance.js';
 import { SUPPLIERS, eraScale } from './data/compute.js';
 import { addPipeline } from './contracts.js';
-import { rivalShortfall } from './rivals.js';
 
 export const QUEUE_RELEASE = 7;      // × eraScale(3) units per turn
 export const RIVAL_ORDER = 4.5;      // × eraScale(3) units ordered by a rival of average Western speed
@@ -14,7 +13,8 @@ export const released = () => QUEUE_RELEASE * eraScale(3);
 const queueOf = (state) => (state.compute.queue ??= { order: null, carry: null, last: null });
 
 // Today's order size is relative to the Western rivals' speeds, so a rival-speed re-tune does not change the queue.
-// A rival orders no more than it is short of (compute race §5), so the queue is never tighter than before.
+// Orders ignore what a rival already has coming (owner, 2026-09-26): capped at the shortfall, rivals nearly full by
+// era 3 ordered almost nothing and the queue stopped rationing. What a rival gets still lands in its fleet.
 // The fastest Western rival prepays; the others order standard until they announce a switch.
 export function rivalOrders(state) {
   const west = state.rivals.filter((r) => !r.eastern);
@@ -22,7 +22,7 @@ export function rivalOrders(state) {
   const fastest = Math.max(...west.map((r) => r.speed));
   return west.map((r) => ({
     lab: r.id,
-    units: Math.min(Math.round(RIVAL_ORDER * (r.speed / mean) * eraScale(3)), Math.round(rivalShortfall(state, r))),
+    units: Math.round(RIVAL_ORDER * (r.speed / mean) * eraScale(3)),
     tier: r.speed === fastest || r.prepayNext ? 'prepaid' : 'standard',
   }));
 }

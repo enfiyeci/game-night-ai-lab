@@ -18,7 +18,7 @@
 - Starting fleets (from the prototype; the spec does not list them): OpenBrain 14, Lodestar 10, DeepThink 12, Qilin 11.
 - Off-board growth: a quarter of each rival's remaining shortfall, arriving next round. Qilin never takes a board card.
 - Standing: `0.6 × (rounds within 0.5 of the top score ÷ the most any lab has) + 0.4 × compute share`. A rival ranks above the player if its score is more than 0.5 higher; within 0.5 the higher standing ranks higher; equal standing goes to the player.
-- Race heat: +2 when a deal adds 25% or more to the signing lab's fleet (player included); +2 more when the player signs a card a rival named.
+- Race heat: +2 when the player signs a card a rival named. Big deals add no heat (owner pick F, 2026-09-26).
 - Summit: a binding compute cap limits each signing rival's launch gain to 5.
 - The design breaks the ±5-points-per-ending balance rule on purpose (owner decision 4). Every mechanic change is still measured with the bots before and after (memory rule "check mechanic dynamics").
 - Do not merge into `ui` before 2026-09-27 12:00 AM PT; hand the SHA to gn-merge after that, unless the owner says otherwise.
@@ -28,7 +28,7 @@
 
 These are defaults picked while planning. Each is small to change; the owner may overrule any of them.
 
-1. **Queue orders are capped at today's size.** The spec says rival queue orders follow their shortfall. Uncapped, OpenBrain's prepaid order in era 3 (a shortfall of about 106 to 125 units) would take the whole 56-unit supply every turn, so standard orders, including the player's, would never fill. The prototype never built this rule. This plan uses `min(shortfall, today's speed-relative order)`: a rival that is nearly full orders less, and the queue is never tighter than today.
+1. **Queue orders keep today's size** (revised by the owner 2026-09-26 after measurement). The first build capped each rival's order at `min(shortfall, today's order)`; rivals are nearly full by era 3, so they ordered almost nothing, the queue stopped rationing, and the balanced bot bought itself broke. Orders are back to today's speed-relative size; rival fills still land in their fleets.
 2. **Which cards persist.** Only the six unit cards a rival can take (Verde, Azuria cloud, CoreFlame, spot, Gulf, the letter of intent) stay between rounds. The Azuria investment, the grid reservation and the queue entry are priced from the player's own state, so they are made fresh every round, as today.
 3. **Fallbacks never steal another rival's named card.** Each rival's second choice comes from the cards nobody named. Two rivals can share a fallback; the one earlier in catch-up order gets it, and the other goes without a board card that round.
 4. **Constants go in a new `sim/data/race.js`**, not `sim/balance.js`, following `sim/data/compute.js`. gn-merge and gn-realtime both edit `sim/balance.js` tonight; a separate file avoids conflicts.

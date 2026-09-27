@@ -38,8 +38,8 @@ sits idle; across the four bots only 3 of 400 runs end "left behind".
    Getting to the top first and staying there counts most; compute is a background factor, not the only one (owner
    2026-09-26: "that shouldn't be the only thing probably but be a bg component"). Weights are first-pass, for the
    balance run. Era gates and final endings keep their rules.
-7. **Race heat.** +2 when any lab's deal adds 25% or more to its fleet (the player included), the size of a prepaid
-   queue order.
+7. **Race heat.** +2 when the player signs a card a rival named (owner decision 3). Big deals add no heat (owner pick
+   F, 2026-09-26: with +2 per big deal, rival disaster became the most common ending).
 8. **Summit.** A binding compute cap limits every signing rival's launch gain to 5, as it limits the player's runs
    (today rivals ignore it). Breaking the deal stays as `dealWeek` models it.
 
@@ -76,8 +76,8 @@ likely fix. Not prototyped: persistent board, era 4 rival power, bots that take 
 ## 5. Fit with other systems
 
 Training sizes (shared ladder), rival launches (gain from size), deal offers (shared board), era 3 queue (fills count;
-orders from shortfall, replacing the speed-relative rule), era 4 power (rivals build: OpenBrain gas, Lodestar nuclear,
-DeepThink grid; second phase), safety split (rival caution = safety share), race heat (+2 big deals), rank (fleet
+orders keep today's speed-relative size: owner, 2026-09-26), era 4 power (rivals build: OpenBrain gas, Lodestar nuclear,
+DeepThink grid; second phase), safety split (rival caution = safety share), race heat (+2 for denial only), rank (fleet
 tie-break), summit (cap binds rivals), export controls (optional: halve Qilin's growth for the era), board promise and
 planner (optional leader-fleet line), advisors and feed (new lines). Unchanged: `launch.js` press, `advisors.js` gap
 reading, `promises.js` rank checks, `events6c.js` rival breakthrough, weight theft.
@@ -88,7 +88,7 @@ reading, `promises.js` rank checks, `events6c.js` rival breakthrough, weight the
   `computeShares`.
 - `sim/rivalDeals.js` (new): `announceTargets`, `takeTargets`, off-board growth, arrivals.
 - `sim/contracts.js`: persistent board, `wantedBy` and `fallback` on offers.
-- `sim/queue.js`: fills to rival fleets; orders from shortfall.
+- `sim/queue.js`: fills to rival fleets; orders keep today's speed-relative size.
 - `sim/turn.js` (**gn-realtime owns**): about ten lines in `endRound`; new `sideRng` salts (10 picks, 11 growth).
   Compatible with stage 2 mid-round rival launches: the gain is fixed when the launch is rolled.
 - `sim/balance.js`, `sim/data/feed.js`, `sim/data/advisorLines.js`, optional `sim/data/events6c.js`.
@@ -113,3 +113,8 @@ against existing effects before calling it done.
    +4 to +8 points for the speed, safety and random bots) and fewer out-of-money endings (−3 to −7). Retune once the
    full build exists and report the new numbers against these.
 5. **Era 4 rival power.** Second pass, after the first build is measured.
+6. **Big deals add no race heat** (option F, picked after the first build's measurement,
+   `docs/design/mockups/compute-race/measurements/options.md`). Denial heat (decision 3) stays.
+7. **Queue orders keep today's size.** Orders sized from each rival's shortfall let rivals, nearly full by era 3, order
+   almost nothing, so the queue stopped rationing and the balanced bot bought itself broke (money investigation,
+   2026-09-26). Rival fills still land in rival fleets.
