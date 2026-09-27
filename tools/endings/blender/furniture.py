@@ -11,12 +11,14 @@ import kit
 
 
 def batch(name, boxes, material):
-    """One mesh object holding many boxes [(center, size)] or [(center, size, rot_z)], for speed."""
+    """One mesh object holding many boxes [(center, size)] or [(center, size, rot)], rot an angle about z or an
+    (x, y, z) Euler in radians, for speed."""
     bm = bmesh.new()
     for b in boxes:
         (cx, cy, cz), (sx, sy, sz) = b[0], b[1]
-        rz = b[2] if len(b) > 2 else 0.0
-        m = Matrix.Translation((cx, cy, cz)) @ Matrix.Rotation(rz, 4, "Z") @ Matrix.Diagonal((sx, sy, sz, 1))
+        rot = b[2] if len(b) > 2 else 0.0
+        rot = Euler((0, 0, rot) if isinstance(rot, (int, float)) else rot).to_matrix().to_4x4()
+        m = Matrix.Translation((cx, cy, cz)) @ rot @ Matrix.Diagonal((sx, sy, sz, 1))
         bmesh.ops.create_cube(bm, size=1.0, matrix=m)
     me = bpy.data.meshes.new(name)
     bm.to_mesh(me)

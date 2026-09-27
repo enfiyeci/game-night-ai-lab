@@ -225,16 +225,16 @@ def shot_cw_letter():
     party()
     face = hero_desk("cw-letter", MAIL)
     # the trophy, the printed letter folded under it, his badge on the keyboard; his chair pushed in
-    F.paper((0.4, 1.92, 0.755), rot_z=0.35)
-    F.flat_text("RESIGNATION", (0.4 + 0.1 * math.sin(0.35), 1.92 - 0.1 * math.cos(0.35), 0.7567), 0.026, rot_z=0.35, font=kit.FONT)
-    F.trophy((0.44, 2.0, 0.7565), scale=1.2)
+    F.paper((0.4, 1.98, 0.755), rot_z=0.35)
+    F.flat_text("RESIGNATION", (0.4 + 0.1 * math.sin(0.35), 1.98 - 0.1 * math.cos(0.35), 0.7567), 0.026, rot_z=0.35, font=kit.FONT)
+    F.trophy((0.44, 2.06, 0.7565), scale=1.2)
     kit.box((-0.05, 1.86, 0.772), (0.055, 0.085, 0.002), kit.mat("#F1EEE6", 0.5), rot=(0, 0, 0.3))       # the badge
     kit.text("TOMAS\nSAFETY", (-0.05, 1.86, 0.7735), 0.008, kit.mat("#2B2B2B", 0.6), rot=(0, 0, 0.3), extrude=0.0001)
     kit.box((-0.14, 1.93, 0.771), (0.25, 0.006, 0.001), kit.mat("#3F9C8F", 0.6), rot=(0, 0, 0.9))          # its lanyard
     confetti((0.0, 1.4), (1.2, 0.9), n=100, seed=6, z=0.001)
     kit.point((0.9, 1.4, 1.4), 4, kit.kelvin(2700), radius=0.2)
     kit.area((0, 1.9, 1.05), (0, 1.0, 0.9), (0.6, 0.35), 4, kit.kelvin(6500))
-    kit.camera((0.75, 0.72, 1.32), (0.02, 2.2, 0.94), lens=35, fstop=2.4, focus=face)
+    kit.camera((0.75, 0.72, 1.32), (0.02, 2.2, 0.91), lens=35, fstop=2.4, focus=face)
 
 
 def shot_cw_reveal():
@@ -252,12 +252,12 @@ def shot_cw_phone():
     F.desk(0.0, 2.0, top="#B9A88E")
     # the phone standing in its dock, the laptop captioning the call, the trophy from victory night
     kit.box((0.16, 1.9, 0.77), (0.1, 0.08, 0.03), kit.mat("#1A1B1D", 0.4), bevel=0.006)
-    kit.screen("phone", (0.16, 1.905, 0.867), 0.078, "cw-phone", (172, 102, 251, 472), rot=(math.radians(80), 0, math.radians(-8)),
+    kit.screen("phone", (0.16, 1.905, 0.872), 0.085, "cw-phone", (172, 102, 251, 472), rot=(math.radians(80), 0, math.radians(-8)),
                strength=1.3, bezel="#0C0C0D", depth=0.008, border=0.005)
     F.laptop("captions", (-0.24, 2.1, 0.755), "cw-phone", (512, 192, 676, 226), yaw=10, strength=1.0, width=0.36)
-    F.trophy((0.45, 2.2, 0.755), scale=1.1)
+    F.trophy((0.03, 2.5, 0.755), scale=1.1)
     kit.area((0.16, 1.8, 0.9), (0.16, 1.4, 0.76), (0.08, 0.15), 0.8, kit.kelvin(7500))   # the phone's light on the desk
-    kit.camera((0.06, 1.28, 1.03), (0.06, 2.1, 0.87), lens=32, fstop=8.0, focus=(0.0, 2.0, 0.88))
+    kit.camera((0.06, 1.42, 1.0), (0.0, 2.1, 0.85), lens=32, fstop=8.0, focus=(0.0, 1.95, 0.88))
 
 
 def shot_rb_budget():
@@ -286,8 +286,8 @@ def shot_lb_usage():
         F.carton((x + rng.uniform(-0.3, 0.3), y - 0.05, 0.755), (0.55, 0.38, 0.34), rot_z=rng.uniform(-0.3, 0.3), label=labels[k])
     for k in range(3):
         F.carton((2.2 + k * 0.05, 3.9, k * 0.4), (0.6, 0.4, 0.4), rot_z=0.1 * k, label="LAB " + str(k + 1))
-    P.person((-1.6, 3.9), facing=95, pose="walk", coat="#5B3A33")
-    F.carton((-1.93, 3.93, 0.98), (0.45, 0.32, 0.3), rot_z=math.radians(5), taped=False)
+    P.person((-1.5, 6.25), facing=95, pose="walk", coat="#2C2A2E", hair="#141212")
+    F.carton((-1.83, 6.28, 0.98), (0.45, 0.32, 0.3), rot_z=math.radians(5), taped=False)
     kit.camera((0.9, 0.9, 1.6), (0.0, OD, 1.5), lens=32, fstop=5.6, focus=(0, OD, 1.8))
 
 
@@ -306,7 +306,7 @@ def rd_letter(lit):
         face = hero_desk("rd-letter", MAIL)
         F.mug((-0.5, 1.85, 0.755))
         kit.area((0, 1.9, 1.05), (0, 1.0, 0.9), (0.6, 0.35), 4, kit.kelvin(6500))
-        kit.camera((0.78, 0.7, 1.3), (-0.12, 2.2, 0.95), lens=34, fstop=2.8, focus=face)
+        kit.camera((0.78, 0.7, 1.26), (-0.12, 2.2, 1.02), lens=34, fstop=2.8, focus=face)
     return shot
 
 
