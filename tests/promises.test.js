@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import { PROMISES } from '../sim/data/promises.js';
 import { MEETINGS } from '../sim/data/president.js';
-import { createPresidentPromise, promiseUpkeep } from '../sim/promises.js';
+import { LEAK_ROUNDS, createPresidentPromise, promiseUpkeep } from '../sim/promises.js';
 import { runMeeting } from '../sim/president.js';
 import { addressWarning, eventsTick, isAnchorId, resolveEvent, stampNewCards } from '../sim/events.js';
 import { generateOffers, signOffer } from '../sim/contracts.js';
@@ -414,7 +414,7 @@ function contradictingPromiseState() {
 
 test('a contradictory open promise can leak only once', () => {
   const state = contradictingPromiseState();
-  state.promises[0].leakPressure = 1; // forced leak (no dice: running total)
+  state.promises[0].contradictRounds = LEAK_ROUNDS - 1; // one more contradicting round leaks (stated term)
   promiseUpkeep(state);
   assert.equal(state.promises[0].leaked, true);
   assert.equal(state.publicTrust, 56);
@@ -423,9 +423,8 @@ test('a contradictory open promise can leak only once', () => {
   assert.match(state.feed.at(-1).text, /memo: lab promised the President it would/);
   assert.match(state.feed.at(-1).text, /woke.*filters/i);
 
-  const pressure = state.promises[0].leakPressure;
   promiseUpkeep(state);
-  assert.equal(state.promises[0].leakPressure, pressure); // a leaked promise stops counting
+  assert.equal(state.promises[0].contradictRounds, LEAK_ROUNDS); // a leaked promise stops counting
   assert.equal(state.publicTrust, 56);
   assert.equal(state.staffTrust, 64);
 });
@@ -434,16 +433,16 @@ test('a promise without a currently held contradicting line cannot leak', () => 
   const state = createInitialState();
   state.turn = 2;
   state.constitution.hardLines = ['privacy'];
-  state.promises.push(presidentPromise('noWokeFilters', { dueTurn: 8, leakPressure: 1 }));
+  state.promises.push(presidentPromise('noWokeFilters', { dueTurn: 8, contradictRounds: LEAK_ROUNDS - 1 }));
   promiseUpkeep(state);
-  assert.equal(state.promises[0].leakPressure, 1); // no held contradicting line: the total does not count
+  assert.equal(state.promises[0].contradictRounds, LEAK_ROUNDS - 1); // no held contradicting line: no round counts
   assert.equal(state.promises[0].leaked, false);
   assert.equal(state.feed.length, 0);
 });
 
-test('a promise that contradicts a held line leaks on its seventh round, not before', () => {
+test('a promise that contradicts a held line leaks on its LEAK_ROUNDS-th such round, not before', () => {
   const s = contradictingPromiseState();
-  for (let round = 1; round <= 6; round++) {
+  for (let round = 1; round < LEAK_ROUNDS; round++) {
     promiseUpkeep(s);
     assert.equal(s.promises[0].leaked ?? false, false, `round ${round}`);
   }

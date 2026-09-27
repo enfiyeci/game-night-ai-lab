@@ -2,11 +2,10 @@ import { ERAS } from './data/eras.js';
 import { PROMISES } from './data/promises.js';
 import { hasLine } from './constitution.js';
 import { FEED_KEEP } from './feedLive.js';
-import { accrue } from './util.js';
 
-// Owner 2026-09-26, no dice: the old 15% a round, as a running total: a promise that contradicts a held line leaks on its
-// seventh such round.
-export const LEAK_CHANCE = 0.15;
+// Owner 2026-09-26, no dice: a promise that contradicts a held line leaks on its fifth such round (a stated term; a 15%
+// running total never came due in play).
+export const LEAK_ROUNDS = 5;
 
 const LAST_TURN = ERAS.reduce((sum, era) => sum + era.turns, 0) - 1;
 
@@ -63,7 +62,9 @@ export function promiseUpkeep(state) {
   for (const promise of state.promises) {
     if (!isPresidentPromise(promise) || promise.status !== 'open' || promise.leaked) continue;
     const contradictsHeldLine = promiseDefinition(promise).contradicts.some((line) => hasLine(state, line));
-    if (!contradictsHeldLine || !accrue(promise, 'leakPressure', LEAK_CHANCE)) continue;
+    if (!contradictsHeldLine) continue;
+    promise.contradictRounds = (promise.contradictRounds ?? 0) + 1;
+    if (promise.contradictRounds < LEAK_ROUNDS) continue;
     promise.leaked = true;
     state.publicTrust -= 4;
     state.staffTrust -= 6;

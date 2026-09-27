@@ -128,13 +128,13 @@ Notes:
   to 111, acquihire 31 to 33. The site-building bots (speed, overCommitter on gas, safety on nuclear, random on either)
   and the no-grid bots keep the same ending counts, although their site sizes and dates did change. The old site draws
   came from side streams, so removing them shifts no other roll. No bot's leading ending changed. Not traced run by run.
-- a7 (Task A7, a President promise that contradicts a line the constitution holds leaks when its running total of
-  0.15 a round, `promise.leakPressure`, reaches 1, so on its seventh round spent contradicting a held line; the total
-  only counts in those rounds, as the roll only rolled then): only the random bot's counts moved (acquihire 143 to 144,
-  boardRemoved 39 to 40, misalignment 13 to 11). Traced with the a6 build and this one over the same 200 seeds: only
-  the speed and random bots ever take President promises. Under the roll the speed bot leaked a promise in 93 runs and
-  random in 4; now neither leaks in any run, because no open contradicting promise lasts seven such rounds (largest
-  running total in either bot: 0.75, five rounds). The speed bot still ends in boardRemoved in all 200 runs. Random's
-  small moves are the 4 lost leaks plus the reshuffle from no longer drawing this roll from the main random stream (not
-  split apart). Left for the retune (C3): with a total that starts at zero, leaks now need a promise held open against
-  a held line for seven rounds, which bots do not do.
+- a7 (Task A7, rerun after the review ruling: a President promise that contradicts a line the constitution holds leaks
+  on its fifth such round, `promise.contradictRounds` against `LEAK_ROUNDS = 5`, counted only in rounds where the old
+  roll rolled; a stated term like D5, because a first build with a running total of the old 0.15 a round never
+  reached 1 in play): only the random bot's counts moved (acquihire 143 to 144, boardRemoved 39 to 40, misalignment
+  13 to 11), and the raw JSON matches the first build's run byte for byte. Only the speed and random bots ever take
+  President promises. Runs with at least one leaked promise over the same 200 seeds (N picked as the one closest to
+  the old roll's speed count, 93 at a6, within 1-5): N=1 speed 200, random 9; N=2 174, 7; N=3 174, 7; N=4 170, 7;
+  N=5 162, 4; for reference N=6 gives 0 and 0 (no open contradicting promise lasts six such rounds), and the running
+  total gave 0 and 0. Leaks do not change any bot's ending counts (speed still ends boardRemoved in all 200 runs), so
+  random's small moves are the reshuffle from no longer drawing this roll from the main random stream.
