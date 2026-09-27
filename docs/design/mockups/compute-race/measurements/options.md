@@ -11,11 +11,13 @@ often. Fewer of its runs reach the era 5 summit, and fewer summits end in a deal
 
 Two more findings the owner should see first:
 
-1. **The new speed bot runs out of money in era 2 on all 100 seeds.** Task 7 told it to sign any card OpenBrain names
-   whenever it can pay the upfront cost. It does that about 2.4 times a run, and those are all the deals it signs.
-   With that rule turned off, the speed bot plays as it did after Tasks 2 to 6 (out of money 31, rival disaster 27,
-   removed by the board 28, misalignment 14). This breaks the test "most runs of the extreme strategies end in eras 3
-   or 4" (speed: 0 of 200). The denier probe has the same problem: 35 of its 100 runs run out of money in era 2.
+1. **The Task 7 speed bot ran out of money in era 2 on all 100 seeds; that is now fixed.** Its first deny rule signed
+   any card OpenBrain named whenever it could pay the upfront cost, about 2.4 times a run. The rule now fires only when
+   the bot is short of compute for its next run, and never for a supplier it already dealt with that era. With the fix
+   the speed bot's numbers are identical to its numbers with no deny rule at all (out of money 31, rival disaster 27,
+   removed by the board 28, misalignment 14), and the "extreme strategies" test passes again. The denier probe no longer
+   goes broke in era 2 (out of money 6, none in era 2), but it now has more rival disasters (50), most likely because it
+   survives longer and keeps denying; not traced. Options B to F and B + E below were measured with the old deny rule; see the note before the tables.
 2. **`RIVAL_EDGE` is not the lever for the win drop.** Option E (edge −4 instead of −2) leaves every ending count
    within 4 of option A. It does fix a different problem: an idle player is left behind at the era 1 gate on 8 of
    seeds 1 to 50 with edge −4, against 31 of 50 now and 9 of 50 before the compute race.
@@ -43,17 +45,22 @@ switches; the committed code is option A, exactly as built.
 
 | Bot | Before (Task 1) | A | B | C | D | E | F | B + E |
 |---|---|---|---|---|---|---|---|---|
-| speed: rival disaster / wins | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 |
+| speed: rival disaster / wins | 0 / 0 | 27 / 0 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 |
 | safety: rival disaster / wins | 0 / 0 | 22 / 1 | 2 / 0 | 11 / 1 | 19 / 0 | 22 / 1 | 0 / 1 | 2 / 0 |
 | balanced: rival disaster / wins | 1 / 18 | 64 / 0 | 15 / 1 | 52 / 0 | 52 / 0 | 64 / 0 | 2 / 2 | 15 / 1 |
 | random: rival disaster / wins | 2 / 0 | 24 / 0 | 7 / 0 | 10 / 0 | 19 / 0 | 20 / 0 | 0 / 1 | 8 / 0 |
-| denier: rival disaster / wins | — | 39 / 0 | 16 / 0 | 32 / 0 | 40 / 0 | 39 / 0 | 3 / 0 | 16 / 0 |
+| denier: rival disaster / wins | — | 50 / 0 | 16 / 0 | 32 / 0 | 40 / 0 | 39 / 0 | 3 / 0 | 16 / 0 |
 | idle player, left behind at era 1 (of 50) | 9 | 31 | 31 | 31 | 31 | 8 | 31 | 8 |
 
 ## Full tables per option
 
 "Before (Task 1)" is `before.json`, measured on the code before the compute race (commit `e8da33d`). It has no
 denier row because that bot did not exist.
+
+**Deny rule note.** Column and table A use the fixed deny rule (commit after `797467e`). Options B, C, D, E, F and B + E
+were measured before that fix, with the old rule, so their speed and denier rows show the old behavior (speed out of
+money in era 2 on every seed). The safety, balanced and random rows do not depend on the deny rule: under A they are
+byte-for-byte the same with the old rule, the new rule, and no rule. I did not re-measure B to F.
 
 ### Before (Task 1), for reference
 
@@ -70,11 +77,11 @@ Random also had 1 misuse ending.
 
 | Bot | Rival disaster | Left behind | Out of money | Misalignment | Board removed | Wins (aligned / pacing deal / costly) | Rounds at 1st | Rank, end of era 4 | Rival deals per run |
 |---|---|---|---|---|---|---|---|---|---|
-| speed | 0 | 0 | 100 (era 2: 100) | 0 | 0 | 0 (0 / 0 / 0) | 68% | — | 8.4 |
+| speed | 27 | 0 | 31 (era 2: 31) | 14 | 28 | 0 (0 / 0 / 0) | 79% | — | 10.7 |
 | safety | 22 | 2 (era 2: 2) | 75 (era 2: 3, era 3: 42, era 4: 25, era 5: 5) | 0 | 0 | 1 (1 / 0 / 0) | 59% | 1.00 | 12.2 |
 | balanced | 64 | 0 | 9 (era 4: 8, era 5: 1) | 20 | 7 | 0 (0 / 0 / 0) | 91% | 1.00 | 14.4 |
 | random | 24 | 0 | 71 (era 1: 19, era 2: 50, era 3: 2) | 0 | 4 | 0 (0 / 0 / 0) | 58% | 1.00 | 8.6 |
-| denier | 39 | 0 | 36 (era 2: 35, era 5: 1) | 15 | 10 | 0 (0 / 0 / 0) | 82% | 1.00 | 12.4 |
+| denier | 50 | 0 | 6 (era 4: 2, era 5: 4) | 32 | 12 | 0 (0 / 0 / 0) | 80% | 1.00 | 15.0 |
 
 Random also had 1 misuse ending. The speed bot never reaches the end of era 4, so it has no rank there.
 
@@ -188,18 +195,20 @@ This needs its own look before any heat option is judged on wins.
 
 ## The speed bot and the denier probe (Task 7)
 
-The Task 7 rule "deny OpenBrain whenever the bot can pay" has no check on whether the bot needs the compute or can
-carry the monthly bill. The speed bot signs about 2.4 denials a run (at most 3), and it signs no other deal. It runs
-out of money in era 2 on 100 of 100 seeds. With the rule off (`check-speed-no-deny.json`), it returns to its Tasks 2
-to 6 numbers. The denier probe runs out of money in era 2 on 35 of 100 for the same reason. The safety bot's new
-"never take a named card" rule works as meant: it signs no named card (the Task 7 test checks this on seeds 1 to 3, and
-`heat-sources.json` shows no denial heat for it). Its rival disasters fell from 35 (after Tasks 2 to 6) to 22 and its
-out-of-money endings rose from 57 to 75, most likely because it no longer adds denial heat by accident; I did not
-measure that link directly.
+The first Task 7 rule, "deny OpenBrain whenever the bot can pay", had no check on whether the bot needed the compute. The
+speed bot signed about 2.4 denials a run (at most 3) and no other deal, and ran out of money in era 2 on 100 of 100
+seeds. The denier probe ran out of money in era 2 on 35 of 100.
 
-This may be the bots overdoing it rather than a game problem: denying a rival costs real money, which is the design.
-A deny rule that fires only when the bot also has a shortfall, or once an era, would show what a sensible denier does.
-That is a bot change the owner should pick; I did not make it.
+The fixed rule denies only when the bot is short for its next run, and never from a supplier family it already signed
+with that era. For the speed bot this makes the deny rule change nothing: its 100-seed results are identical to
+`check-speed-no-deny.json`. (In the first 12 rounds of seeds 1 to 20 it signs exactly one card OpenBrain had named, with
+the fixed rule and with no rule, so that card comes from its ordinary Verde deal.) The denier probe now reaches later eras (out of money 6, none in era 2) and ends mostly in rival disaster (50) and
+misalignment (32), with no wins.
+
+The safety bot's "never take a named card" rule works as meant: it signs no named card (the Task 7 test checks this on
+seeds 1 to 3, and `heat-sources.json` shows no denial heat for it). Its rival disasters fell from 35 (after Tasks 2 to 6)
+to 22 and its out-of-money endings rose from 57 to 75, most likely because it no longer adds denial heat by accident; I
+did not measure that link directly.
 
 ## Idle player, left behind at the era 1 gate
 
@@ -210,7 +219,7 @@ E and B + E 8 of 50. Heat plays no part here. Rival fleets grow and train bigger
 ## Recommendation
 
 **Option B: rival card deals stop adding heat; the player's big deals and denials still do.** It is the smallest change
-that removes most of the new rival disasters (balanced 64 to 15, safety 22 to 2, random 24 to 7, denier 39 to 16), and
+that removes most of the new rival disasters (balanced 64 to 15, safety 22 to 2, random 24 to 7, and denier 39 to 16 under the old deny rule), and
 it keeps the half of rule 7 the player controls, so a big deal or a denial is still a choice with a cost. Rival deals
 still show in the feed as news.
 
@@ -222,7 +231,7 @@ Add E (`RIVAL_EDGE` −4) only if the owner wants the idle player to survive era
 2 of B, with rounds at 1st 7 to 9 points higher for speed, safety and random.
 
 None of these options restores the balanced bot's wins (18 before, 0 to 2 now). That needs the era 4 money problem above
-looked at first, and the speed bot's deny rule decided, before any win-count target is set.
+looked at first, before any win-count target is set.
 
 Four things the prototype never covered, so these numbers are the first measure of them: the persistent board, denial
 heat, standing, and bots that deny. The standing weights (60% time at the top, 40% compute share) are this lane's first

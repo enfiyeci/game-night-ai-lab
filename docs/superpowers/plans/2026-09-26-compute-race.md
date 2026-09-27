@@ -1378,8 +1378,8 @@ git commit -m "feat(sim): feed posts when a rival lands a big deal or you take i
 | Bot | Measure | Prototype today (spec §4) | Before (Task 1) | Prototype B + C | After (Task 8) |
 |---|---|---|---|---|---|
 | speed | left behind | 0 | 0 (by era: —) | 8 | 0 (by era: —) |
-| speed | out of money | 44 | 30 | 37 | 100 (all in era 2) |
-| speed | rounds at 1st | 82% | 88% | 54% | 68% |
+| speed | out of money | 44 | 30 | 37 | 31 (all in era 2) |
+| speed | rounds at 1st | 82% | 88% | 54% | 79% |
 | safety | left behind | 2 | 5 (era 2: 5) | 6 | 2 (era 2: 2) |
 | safety | out of money | 96 | 93 | 93 | 75 |
 | safety | rank, end of era 4 | 1.02 | 1.02 | 1.70 | 1.00 |
@@ -1390,22 +1390,22 @@ git commit -m "feat(sim): feed posts when a rival lands a big deal or you take i
 | random | left behind | 1 | 0 (by era: —) | 6 | 0 (by era: —) |
 | random | misalignment | 14 | 14 | 10 | 0 |
 | random | out of money | 64 | 64 | 61 | 71 |
-| all | rival deals per run | — | 0 | 9–15 | speed 8.4, safety 12.2, balanced 14.4, random 8.6, denier 12.4 |
-| denier | wins / left behind | — | — | — | 0 / 0 (rival disaster 39, out of money 36, 35 of them in era 2) |
+| all | rival deals per run | — | 0 | 9–15 | speed 10.7, safety 12.2, balanced 14.4, random 8.6, denier 15.0 |
+| denier | wins / left behind | — | — | — | 0 / 0 (rival disaster 50, misalignment 32, board removed 12, out of money 6) |
 
-After (Task 8, 2026-09-26, `node tools/balance.js 100` at the Task 7 commit, saved as
+After (Task 8, 2026-09-26, `node tools/balance.js 100` with the fixed deny rule, saved as
 `docs/design/mockups/compute-race/measurements/after.json`). Not in the table: rival disaster is now the most common
-ending (speed 0, safety 22, balanced 64, random 24, denier 39; before 0, 0, 1, 2). Balanced wins fell from 18 (pacing
-deal 15, aligned 3) to 0. The speed bot's new deny rule sends it out of money in era 2 on every seed (with the rule off
-it matches its Tasks 2 to 6 numbers). Retune options, measured but not applied, are in
+ending (speed 27, safety 22, balanced 64, random 24, denier 50; before 0, 0, 1, 2). Balanced wins fell from 18 (pacing
+deal 15, aligned 3) to 0. The first Task 7 deny rule sent the speed bot out of money in era 2 on every seed; the fix
+(deny only when short, and not from a supplier already signed with that era) makes its results identical to having no
+deny rule. Retune options, measured but not applied, are in
 `docs/design/mockups/compute-race/measurements/options.md`; no constant or test threshold was changed.
 
-Task 8 full suite (`npm test`, 2026-09-26): 845 tests, 839 pass, 2 fail, 4 todo.
+Task 8 full suite (`npm test`, 2026-09-26, after the deny fix): 845 tests, 840 pass, 1 fail, 4 todo. (Before the fix:
+839 pass, 2 fail; the extra failure was `difficulty target: most runs of the extreme strategies end in eras 3 or 4`
+with `speed 0/200`, now passing.)
 Values below are at 200 seeds, as the tests use.
 
-- Fail: `difficulty target: most runs of the extreme strategies end in eras 3 or 4` (`tests/balance.test.js`):
-  `speed 0/200`. New at Task 7: the speed bot runs out of money on all 200 seeds, none in eras 3 or 4 (at 100 seeds, all in
-  era 2).
 - Fail: `the era 3 queue leaves someone short most turns` (`tests/compute-balance.test.js`): balanced short on 234 of
   722 era 3 turns (0.32, needs 0.5). First failed at Task 6.
 - Todo `over-committing fails mostly in eras 3–4`: now 2 of 190 acquihires in eras 3 to 4 (1.1%; the note says 8/183).

@@ -18,7 +18,7 @@ import { ENDINGS } from '../sim/endings.js';
 import { eraById } from '../sim/data/eras.js';
 import { SUPPLIERS, eraScale } from '../sim/data/compute.js';
 import { setComputeSplit } from '../sim/split.js';
-import { exclusiveActive } from '../sim/contracts.js';
+import { exclusiveActive, family } from '../sim/contracts.js';
 import { eraStartTurn } from '../sim/power.js';
 import { PREPAY_SHARE, QUEUE_TERM_MONTHS, released } from '../sim/queue.js';
 import { rank } from '../sim/rivals.js';
@@ -293,10 +293,11 @@ function computeMove(state, rng, style, prefs, policy) {
     if (tier === 'prepaid' && prepay > state.cash) tier = 'standard';
     return { type: 'queueOrder', units, tier };
   }
-  // Compute race: deny a rival the card it named, when the bot can pay for it.
-  if (policy.deny) {
+  // Compute race: deny a rival its named card only when short, and not from a supplier already dealt with this era.
+  if (policy.deny && shortfall > 0) {
     const named = state.compute.offers
-      .filter((offer) => offer.wantedBy && (policy.deny === 'any' || offer.wantedBy === policy.deny) && canSign(state, offer))
+      .filter((offer) => offer.wantedBy && (policy.deny === 'any' || offer.wantedBy === policy.deny) && canSign(state, offer)
+        && !alreadyDealtThisEra(state, family(offer.supplier)))
       .sort((a, b) => b.units - a.units)[0];
     if (named) return { type: 'deal', offerId: named.id };
   }

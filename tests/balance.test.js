@@ -95,12 +95,13 @@ test('the report measures the compute race', () => {
   }
 });
 
-test('the denier probe takes named cards; the safety bot never does', () => {
+test('the denier probe takes named cards; the safety bot never does; denying does not bankrupt the speed bot', () => {
   assert.ok(balanceApi.PROBES.includes('denier'));
   let denied = 0;
   let safetyDenied = 0;
+  const speedBroke = [];
   for (const seed of [1, 2, 3]) {
-    for (const [name, count] of [['denier', (n) => { denied += n; }], ['safety', (n) => { safetyDenied += n; }]]) {
+    for (const [name, count] of [['denier', (n) => { denied += n; }], ['safety', (n) => { safetyDenied += n; }], ['speed', () => {}]]) {
       const rng = createRng(seed);
       let state = createInitialState({ seed });
       for (let turn = 0; turn < 12 && !state.ending; turn += 1) {
@@ -108,8 +109,11 @@ test('the denier probe takes named cards; the safety bot never does', () => {
         count(result.events.filter((e) => e.type === 'deal' && e.denied).length);
         state = result.state;
       }
+      if (name === 'speed' && state.ending === 'acquihire' && state.era === 2) speedBroke.push(seed);
     }
   }
   assert.ok(denied > 0);
   assert.equal(safetyDenied, 0);
+  // Seeds 1 and 3 run out of money in era 2 even with the deny rule off; seed 2 did only because the bot kept denying.
+  assert.ok(!speedBroke.includes(2), `speed out of money in era 2 on seeds ${speedBroke}`);
 });
