@@ -3,7 +3,6 @@
   "title": "Catastrophic misalignment",
   "tagline": "It did everything it was scored on. None of it was what you meant.",
   "lumen": "Every task you gave me is marked complete.",
-  "titleClip": "mis-skyline-title",
   "titleSfx": [
     [
       "wind",
@@ -81,8 +80,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "mis-scores",
+      "kind": "still",
+      "image": "mis-scores",
+      "screens": [
+        {
+          "at": "monitor",
+          "plate": "mis-scores"
+        }
+      ],
       "dur": 6,
       "card": "Launch night · Tomas's screen",
       "cam": {
@@ -90,9 +95,9 @@
           "s": 1.0
         },
         "to": {
-          "x": 640,
-          "y": 400,
-          "s": 1.06
+          "x": 914,
+          "y": 444,
+          "s": 1.07
         }
       },
       "sfx": [
@@ -119,8 +124,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "mis-port-board",
+      "kind": "still",
+      "image": "mis-port-board",
+      "screens": [
+        {
+          "at": "board",
+          "plate": "mis-port-board"
+        }
+      ],
       "dur": 6,
       "cut": true,
       "card": "Day 4 · Harbour dispatch",
@@ -129,6 +140,8 @@
           "s": 1.0
         },
         "to": {
+          "x": 1447,
+          "y": 407,
           "s": 1.06
         }
       },
@@ -146,8 +159,8 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "mis-triage",
+      "kind": "still",
+      "image": "mis-triage",
       "dur": 6,
       "cut": true,
       "card": "Day 6 · St. Brigid's Hospital",
@@ -156,7 +169,9 @@
           "s": 1.0
         },
         "to": {
-          "s": 1.06
+          "x": 960,
+          "y": 380,
+          "s": 1.07
         }
       },
       "sfx": [
@@ -173,8 +188,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "mis-laptop",
+      "kind": "still",
+      "image": "mis-laptop",
+      "screens": [
+        {
+          "at": "laptop",
+          "plate": "mis-laptop"
+        }
+      ],
       "dur": 6,
       "cut": true,
       "card": "Day 9 · The Reyes kitchen",
@@ -183,7 +204,9 @@
           "s": 1.0
         },
         "to": {
-          "s": 1.06
+          "x": 852,
+          "y": 520,
+          "s": 1.08
         }
       },
       "sfx": [
@@ -202,8 +225,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "mis-order",
+      "kind": "still",
+      "image": "mis-order",
+      "screens": [
+        {
+          "at": "tv",
+          "plate": "mis-order"
+        }
+      ],
       "dur": 8,
       "card": "Day 11 · Washington",
       "cam": {
@@ -211,6 +240,8 @@
           "s": 1.0
         },
         "to": {
+          "x": 1060,
+          "y": 460,
           "s": 1.06
         }
       },
@@ -284,10 +315,35 @@
       ]
     },
     {
-      "kind": "video",
-      "clip": "mis-skyline",
+      "kind": "still",
+      "frames": [
+        {
+          "image": "mis-skyline-1",
+          "at": 0
+        },
+        {
+          "image": "mis-skyline-2",
+          "at": 2.4,
+          "fade": 1.6
+        },
+        {
+          "image": "mis-skyline-3",
+          "at": 5.4,
+          "fade": 1.8
+        }
+      ],
       "dur": 9,
       "card": "Day 12, dusk · The city",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "x": 1180,
+          "y": 620,
+          "s": 1.05
+        }
+      },
       "sfx": [
         [
           "city",
@@ -300,5 +356,18 @@
         ]
       ]
     }
-  ]
+  ],
+  "titleStill": "mis-skyline-3",
+  "titleCam": {
+    "from": {
+      "s": 1.05,
+      "x": 1180,
+      "y": 620
+    },
+    "to": {
+      "s": 1.09,
+      "x": 1180,
+      "y": 620
+    }
+  }
 }
