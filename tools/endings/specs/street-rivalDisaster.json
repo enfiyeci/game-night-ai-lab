@@ -1,0 +1,15 @@
+{
+ "shots": {
+  "4": {
+   "image": "rd-card",
+   "screens": [
+    [
+     "reader",
+     "rd-card"
+    ]
+   ],
+   "focus": "screen",
+   "push": 1.05
+  }
+ }
+}

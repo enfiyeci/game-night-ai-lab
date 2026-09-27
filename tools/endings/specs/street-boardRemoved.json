@@ -1,0 +1,15 @@
+{
+ "shots": {
+  "3": {
+   "image": "rb-cafe",
+   "screens": [
+    [
+     "tv",
+     "rb-cafe"
+    ]
+   ],
+   "focus": "screen",
+   "push": 1.06
+  }
+ }
+}

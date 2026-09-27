@@ -156,8 +156,8 @@ def kiosk(plate, crop, at, yaw=0.0):
              kit.box((0, 0, 1.45), (0.58, 0.14, 0.8), body, bevel=0.015),
              kit.box((0, -0.071, 1.8), (0.56, 0.004, 0.07), kit.mat("#E9E4D6", 0.5))]
     parts.append(kit.text("MANAGED REMOTELY", (0, -0.074, 1.8), 0.044, kit.mat("#2A2B2E", 0.5), font=kit.FONT_COND))
-    ring = kit.cyl((0, -0.072, 1.16), 0.055, 0.004, kit.emission("#FF3A26", 25), rot=(math.radians(90), 0, 0), verts=40)
-    pad = kit.cyl((0, -0.074, 1.16), 0.046, 0.004, kit.mat("#202225", 0.4), rot=(math.radians(90), 0, 0), verts=40)
+    ring = kit.cyl((0, -0.072, 1.25), 0.055, 0.004, kit.emission("#FF3A26", 25), rot=(math.radians(90), 0, 0), verts=40)
+    pad = kit.cyl((0, -0.074, 1.25), 0.046, 0.004, kit.mat("#202225", 0.4), rot=(math.radians(90), 0, 0), verts=40)
     parts += [ring, pad]
     for p in parts:
         p.parent = root
@@ -167,7 +167,7 @@ def kiosk(plate, crop, at, yaw=0.0):
     c, s = math.cos(rz), math.sin(rz)
     face, _ = kit.screen("reader", (x + 0.073 * s, y - 0.073 * c, 1.53), w, plate, crop=crop, rot=(math.radians(90), 0, rz),
                          strength=1.1, bezel="#1B1C1F", depth=0.008, border=0.01)
-    kit.point((x + 0.25 * s, y - 0.25 * c, 1.2), 3, kit.lin("#FF3A26")[:3], radius=0.03)   # the red glow on whoever stands here
+    kit.point((x + 0.25 * s, y - 0.25 * c, 1.28), 3, kit.lin("#FF3A26")[:3], radius=0.03)   # the red glow on whoever stands here
     return face
 
 

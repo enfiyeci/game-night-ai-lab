@@ -1,8 +1,21 @@
 """Dot's café: a small corner café. A glass shopfront onto the street on the left, a counter across the back with the
-till, the espresso machine and a chalkboard menu behind it, and a TV high on the back wall at the window end. Shots:
+till, the espresso machine and a chalkboard menu behind it, and a TV high on the back wall at the window end. Seven
+shots, each its own time of day and its own crowd; figures are seen from behind (person() covers the back of the head).
 
   ab-news    Absorbed, Day 2, a grey wet morning: breakfast as usual; nobody looks up at the TV, where the takeover of
              your lab is one more business headline.
+  ab-till    Absorbed, Month 5, before opening, chairs up: the till shows Dot's new monthly plan, $412 (was $180), from
+             the only provider left; beside it the printed invoice, the total circled in red.
+  al-cafe    Aligned, Month 6, a slow sunny morning: two regulars watch the TV say the model behaves the same on and off
+             the test.
+  rb-cafe    Board removed, Day 2, after work: a man in a suit at the counter raises his cup to the TV (new CEO, partners
+             cheer); his neighbour keeps to her soup.
+  lb-cafe    Left behind, Month 4, closing time: the chairs are up, Dot sweeps toward the door with her back to the TV,
+             which talks about OpenBrain to an empty room.
+  qt-cafe    Quiet takeover, Month 8, a busy sunny morning: a board says prices are down again, the TV agrees, and a phone
+             on a standing table shows someone asking if anyone has talked to a person at Kestrel lately.
+  rd-card    Rival disaster, Day 4: the card reader says payments are suspended nationwide; a CASH ONLY sign and a tip jar
+             of notes beside it, the queue reflected in the mirror behind the counter.
 """
 import math
 import os
@@ -228,8 +241,19 @@ def pendants(on=True, energy=40, spots=((0.3, CY + 0.3), (1.6, CY + 0.3), (2.9, 
             kit.spot((x, y, z - 0.03), (x, y, 0), energy, kit.kelvin(2700), angle=110, blend=0.8, radius=0.05)
 
 
+def person(*args, **kw):
+    """A figure whose hair covers the back and sides of the head, so seen from behind it shows no skin."""
+    root = P.person(*args, **kw)
+    heads = [c for c in root.children if c.type == "MESH" and c.name.startswith("sphere")]
+    hair = min(heads, key=lambda o: o.location.y)          # the hair sits behind the face
+    hair.location.y -= 0.01
+    hair.location.z -= 0.03
+    hair.scale = (1.08, 1.05, 1.1)
+    return root
+
+
 def dot(at=(0.6, 6.2), facing=180, pose="stand"):
-    return P.person(at, facing=facing, pose=pose, height=1.63, coat="#3E4A44", hair="#8C8C8C", build=1.08, seed=77)
+    return person(at, facing=facing, pose=pose, height=1.63, coat="#3E4A44", hair="#46423E", skin="#A06A4A", build=1.08, seed=77)
 
 
 def cup(at, saucer=True):
@@ -237,6 +261,7 @@ def cup(at, saucer=True):
     if saucer:
         kit.cyl((x, y, z + 0.006), 0.07, 0.012, kit.mat("#F4F1EA", 0.35))
     kit.cyl((x, y, z + 0.05), 0.034, 0.08, kit.mat("#F4F1EA", 0.35), r2=0.044)
+    kit.cyl((x, y, z + 0.086), 0.04, 0.002, kit.mat("#4A2E1C", 0.2))   # the coffee
 
 
 def shot_ab_news():
@@ -251,15 +276,15 @@ def shot_ab_news():
     dot((0.5, 6.25), facing=10)             # Dot at the machine, her back to the room
     # breakfast regulars, nobody watching: a paper by the window, a phone, a chat at the counter; under the TV an
     # empty table with the business pages left folded by a cup
-    P.person((-2.3 + 0.55, 6.1, 0.0), facing=25, pose="sit", coat="#8A7A62", hold="paper", skin="#A06A4A", seed=3)
-    P.person((-2.9 + 0.5, 2.25, 0.0), facing=85, pose="sit", coat="#2C3A4F", hold="phone", seed=4)   # back to the TV
+    person((-2.3 + 0.55, 6.1, 0.0), facing=60, pose="sit", coat="#8A7A62", hold="paper", skin="#A06A4A", seed=3)   # to the window
+    person((-2.9 + 0.5, 2.25, 0.0), facing=85, pose="sit", coat="#2C3A4F", hold="phone", seed=4)   # back to the TV
     props("bar_chair_round_01", [(0.1, CY - 0.45, 0, 0), (0.9, CY - 0.45, 0, 0), (1.7, CY - 0.45, 0, 0)])
-    P.person((2.1, 4.6, 0.0), facing=-5, coat="#26302C", long_coat=True, seed=5)
+    person((2.1, 4.6, 0.0), facing=-5, coat="#26302C", long_coat=True, seed=5)
     cup((0.95, CY + 0.15, CT))
     cup((-2.45, 6.2, 0.75))
     cup((-2.75, 4.1, 0.75))
     cup((0.5, 0.95, 0.75))
-    P.person((-W - 1.4, 6.2, -0.05), facing=180, pose="walk", coat="#1F2226", long_coat=True, hold="umbrella", seed=9)
+    person((-W - 1.4, 6.2, -0.05), facing=180, pose="walk", coat="#1F2226", long_coat=True, hold="umbrella", seed=9)
     kit.area((0.5, 3.5, H - 0.05), (0.5, 3.5, 0), (3, 3), 80, kit.kelvin(3000))   # the ceiling downlights
     kit.camera((0.95, 1.7, 1.22), (-1.3, 6.6, 1.55), lens=37, fstop=4.0, focus=face)
     bpy.context.scene.view_settings.exposure = 0.4
@@ -276,9 +301,9 @@ def shot_al_cafe():
     # a slow sunny morning: sun across the floor, plants in the window, people lingering
     props("potted_plant_01", [(-3.5, 0.6, 0.0, 30), (-3.45, 5.3, 0.0, 200)])
     props("ceramic_vase_01", [(-3.0, 4.65, 0.75, 0)])
-    P.person((-3.0 + 0.5, 4.75, 0.0), facing=-15, pose="sit", coat="#7A8C9A", skin="#6E4630", seed=12, hold="cup")
-    P.person((-2.3 + 0.55, 6.1, 0.0), facing=10, pose="sit", coat="#B5654A", hold="paper", seed=13)
-    P.person((0.9 + 0.55, 3.0, 0.0), facing=-120, pose="sit", coat="#E7DFCF", seed=14, hold="cup")
+    person((-3.0 + 0.5, 4.75, 0.0), facing=-15, pose="sit", coat="#7A8C9A", skin="#6E4630", seed=12, hold="cup")
+    person((-2.3 + 0.55, 6.1, 0.0), facing=10, pose="sit", coat="#B5654A", hold="paper", seed=13)
+    person((0.9 + 0.55, 3.0, 0.0), facing=-120, pose="sit", coat="#E7DFCF", seed=14, hold="cup")
     dot((1.1, 6.2), facing=200)
     cup((-2.85, 4.8, 0.75))
     cup((0.75, 2.95, 0.75))
@@ -290,7 +315,7 @@ def shot_al_cafe():
 
 def raising_cup(at, facing, **kw):
     """A person lifting a cup toward something in front of them (the umbrella arm, with a cup in place of the umbrella)."""
-    root = P.person(at, facing=facing, hold="umbrella", **kw)
+    root = person(at, facing=facing, hold="umbrella", **kw)
     bpy.context.view_layer.update()
     shaft = next(c for c in root.children if c.dimensions.z > 0.5 and c.dimensions.x < 0.05)
     canopy = next(c for c in root.children if c.dimensions.x > 0.8)
@@ -315,12 +340,12 @@ def shot_rb_cafe():
     # after work: a man in a suit at the counter raises his cup to the screen; his neighbour keeps to her soup
     props("bar_chair_round_01", [(-0.4, CY - 0.45, 0, 0), (0.35, CY - 0.45, 0, 0), (1.1, CY - 0.45, 0, 0), (1.85, CY - 0.45, 0, 0)])
     raising_cup((-0.4, CY - 0.45, 0.28), 35, pose="sit", coat="#1F2226", trousers="#1F2226", hair="#141212", seed=21)
-    P.person((0.35, CY - 0.45, 0.28), facing=0, pose="sit", coat="#6A6154", long_coat=True, hair="#4A3526", seed=22)
-    dot((1.1, 6.2), facing=30)
+    person((0.35, CY - 0.45, 0.28), facing=0, pose="sit", coat="#6A6154", long_coat=True, hair="#4A3526", seed=22)
+    dot((1.1, 6.2), facing=22)
     kit.cyl((0.35, CY + 0.12, CT + 0.03), 0.09, 0.06, kit.mat("#F4F1EA", 0.35), r2=0.07)   # her soup
     kit.cyl((0.35, CY + 0.12, CT + 0.062), 0.075, 0.002, kit.mat("#C77A3A", 0.4))
     kit.area((0.5, 3.5, H - 0.05), (0.5, 3.5, 0), (3, 3), 60, kit.kelvin(3000))
-    kit.camera((2.7, 2.3, 1.5), (-1.2, 6.6, 1.5), lens=36, fstop=4.0, focus=face)
+    kit.camera((2.7, 2.3, 1.5), (-0.85, 6.6, 1.85), lens=44, fstop=4.0, focus=face)
     bpy.context.scene.view_settings.exposure = 0.3
 
 
@@ -333,14 +358,12 @@ def shot_lb_cafe():
     tables([(-2.9, 2.2), (-2.9, 4.1), (-2.3, 6.1)], chairs_up=True)
     pendants(energy=120, spots=((2.9, CY + 0.3),))
     # closing time: chairs up, the floor being swept; the TV talks to an empty room, Dot's back to it
-    dot((-0.6, 3.6), facing=80, pose="lean")                                     # sweeping toward the door
-    props("plastic_broom", [(-1.0, 3.4, 0, 80, -18)])
-    kit.cyl((0.2, 3.3, 0.16), 0.17, 0.32, kit.mat("#C9A227", 0.4), r2=0.15)          # the mop bucket
-    props("WetFloorSign_01", [(0.6, 3.9, 0, 35)])
+    dot((-0.6, 3.6), facing=45, pose="lean")                                     # sweeping toward the door
+    props("plastic_broom", [(-0.55, 4.05, 0, 45, -18)])
     kit.area((0.5, 3.5, H - 0.05), (0.5, 3.5, 0), (3, 3), 25, kit.kelvin(3000))
     kit.point((-1.75, 6.3, 2.0), 6, kit.kelvin(8000), radius=0.4)                   # the TV's glow in the corner
     kit.camera((1.6, 0.8, 1.3), (-1.3, 6.6, 1.7), lens=45, fstop=4.0, focus=face)
-    bpy.context.scene.view_settings.exposure = 0.2
+    bpy.context.scene.view_settings.exposure = 0.35
 
 
 def shot_qt_cafe():
@@ -359,14 +382,14 @@ def shot_qt_cafe():
     seats = [(-2.9 + 0.5, 1.85, 100), (-2.9 - 0.5, 1.75, 10), (-2.9 + 0.5, 3.65, 95), (-2.9 - 0.5, 3.55, 15),
              (-2.3 + 0.55, 6.1, 80), (-2.3 - 0.55, 6.05, 20)]
     for i, (x, y, f) in enumerate(seats):
-        P.person((x, y, 0.0), facing=f, pose="sit", coat=rng.choice(["#C9B79A", "#7A8C9A", "#B5654A", "#5B3A33", "#E7DFCF", "#2C3A4F"]),
+        person((x, y, 0.0), facing=f, pose="sit", coat=rng.choice(["#C9B79A", "#7A8C9A", "#B5654A", "#5B3A33", "#E7DFCF", "#2C3A4F"]),
                  hold=rng.choice([None, "cup", "phone"]), seed=30 + i)
     for i, x in enumerate((0.3, 1.0, 1.8)):   # a queue at the counter
-        P.person((x, CY - 0.6 - 0.1 * i, 0.0), facing=rng.uniform(-20, 20), coat=rng.choice(["#3B3F46", "#6A6154", "#26302C"]),
+        person((x, CY - 0.6 - 0.1 * i, 0.0), facing=rng.uniform(-20, 20), coat=rng.choice(["#3B3F46", "#6A6154", "#26302C"]),
                  long_coat=i == 1, seed=40 + i)
     dot((0.9, 6.2), facing=170)
     for i, (y, f) in enumerate(((3.0, 180), (5.5, 0))):   # people passing outside
-        P.person((-W - 1.2 - 0.5 * i, y, -0.03), facing=f, pose="walk", coat=["#C9B79A", "#3F6A8A"][i], seed=60 + i)
+        person((-W - 1.2 - 0.5 * i, y, -0.03), facing=f, pose="walk", coat=["#C9B79A", "#3F6A8A"][i], seed=60 + i)
     kit.camera((1.05, 1.55, 1.12), (-1.2, 6.6, 1.62), lens=30)
     # someone's phone, propped on a sugar pot on a standing table, showing the post
     at, rot = in_view(0.5, -0.15, 0.36)
@@ -422,7 +445,7 @@ def shot_ab_till():
     kit.cyl((1.48, CY + 0.52, CT + 0.004), 0.004, 0.14, kit.mat("#1E3B6A", 0.4), rot=(0, math.radians(90), math.radians(30)))  # the pen
     cup((2.05, CY + 0.2, CT))
     kit.camera((1.72, 6.45, 1.6), (1.45, 4.6, 0.72), lens=35, fstop=5.6, focus=face)
-    bpy.context.scene.view_settings.exposure = 0.6
+    bpy.context.scene.view_settings.exposure = 0.3
 
 
 def reader(plate, crop, at):
@@ -453,8 +476,8 @@ def shot_rd_card():
     # the reader refuses every card; a hand-written sign is taped up beside it; the mirror behind the counter shows the
     # queue back to the door
     face = reader("rd-card", (360, 130, 360, 250), (2.5, CY + 0.1, CT))
-    kit.box((2.5, D - 0.02, 1.42), (1.7, 0.02, 0.9), kit.mat("#5A3E2A", 0.5))
-    kit.box((2.5, D - 0.035, 1.42), (1.6, 0.01, 0.8), kit.mat("#DDE2E4", 0.02, 1.0))
+    kit.box((2.45, D - 0.02, 1.42), (2.7, 0.02, 0.9), kit.mat("#5A3E2A", 0.5))
+    kit.box((2.45, D - 0.035, 1.42), (2.6, 0.01, 0.8), kit.mat("#DDE2E4", 0.02, 1.0))
     sx, sy, sz = 2.69, CY + 0.2, CT + 0.11
     kit.box((sx, sy, sz), (0.14, 0.004, 0.2), kit.mat("#C8A57A", 0.85), rot=(math.radians(-6), 0, math.radians(-8)))
     kit.text("CASH\nONLY", (sx, sy - 0.006, sz + 0.015), 0.042, kit.mat("#1A1A1A", 0.6), font=HAND, rot=(math.radians(84), 0, math.radians(-8)))
@@ -468,13 +491,14 @@ def shot_rd_card():
     kit.box((2.3, CY + 0.24, CT + 0.12), (0.07, 0.001, 0.03), kit.mat("#F7F4EC", 0.8))
     kit.text("CASH", (2.3, CY + 0.2385, CT + 0.12), 0.018, kit.mat("#1A1A1A", 0.6), font=HAND)
     rng = random.Random(51)
-    line = [(2.05, 4.3), (2.6, 3.6), (2.3, 2.8), (2.7, 2.1), (2.1, 1.4), (1.3, 0.9), (0.3, 0.6), (-0.8, 0.45), (-2.5, -0.5)]
+    line = [(1.5, 4.3), (1.0, 3.6), (0.5, 2.9), (-0.1, 2.3), (-0.7, 1.7), (-1.3, 1.2), (-1.9, 0.7), (-2.5, 0.3), (-3.0, -0.6)]
     for i, (x, y) in enumerate(line):
-        P.person((x, y), facing=rng.uniform(-15, 15), height=rng.uniform(1.58, 1.88), long_coat=rng.random() < 0.5,
+        person((x, y), facing=rng.uniform(-40, -20), height=rng.uniform(1.58, 1.88), long_coat=rng.random() < 0.5,
+                 skin=rng.choice(["#6E4630", "#A06A4A", "#5A3A28"]),
                  coat=rng.choice(["#3B3F46", "#5B3A33", "#2C3A4F", "#6A6154", "#44343A", "#26302C"]),
                  hold="phone" if i in (1, 3, 6) else None, seed=50 + i)
     dot((1.0, 6.25), facing=20)
-    kit.camera((2.5, 4.72, 1.27), (2.5, 7.0, 1.1), lens=33, fstop=8.0, focus=face)
+    kit.camera((2.5, 4.72, 1.27), (2.5, 7.0, 1.1), lens=33, fstop=4.5, focus=face)
     bpy.context.scene.view_settings.exposure = 0.6
 
 

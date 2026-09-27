@@ -1,0 +1,37 @@
+{
+ "shots": {
+  "2": {
+   "image": "ab-news",
+   "screens": [
+    [
+     "tv",
+     "ab-news"
+    ]
+   ],
+   "focus": "screen",
+   "push": 1.05
+  },
+  "3": {
+   "image": "ab-farewell",
+   "screens": [
+    [
+     "laptop",
+     "ab-farewell"
+    ]
+   ],
+   "focus": "screen",
+   "push": 1.05
+  },
+  "5": {
+   "image": "ab-till",
+   "screens": [
+    [
+     "till",
+     "ab-till"
+    ]
+   ],
+   "focus": "screen",
+   "push": 1.05
+  }
+ }
+}
