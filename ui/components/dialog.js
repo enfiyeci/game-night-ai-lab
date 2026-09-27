@@ -132,6 +132,7 @@ export function openDialog(overlayRoot, opts) {
   layer.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
       event.preventDefault();
+      event.stopPropagation(); // a built layer has no GDT panel to stop it, so the key would also close the turn summary and bubbles
       cancel();
       return;
     }
