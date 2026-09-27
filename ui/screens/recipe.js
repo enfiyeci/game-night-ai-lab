@@ -16,11 +16,13 @@ import { openDialog } from '../components/dialog.js';
 import { portrait } from '../components/portraits.js';
 import { teamPanel } from '../components/team.js';
 import { vslider } from '../components/vslider.js';
-import { cardCostWords, recipePreview, sanitizeDraft } from '../logic/actions.js';
+import { cardCostWords, fitDraftToCompute, recipePreview, sanitizeDraft } from '../logic/actions.js';
 import { projectQueue } from '../logic/compute.js';
 import { computeAmount, money, roundsToWords } from '../logic/format.js';
 import { offeredCards } from '../logic/release.js';
 import { registerMenuHandler } from '../menu.js';
+import { openBudget } from './budget.js';
+import { openDeals } from './compute.js';
 
 const rememberedDrafts = new WeakMap();
 // Cards with `opens: key` call a screen registered under that key when picked, and may show a note line.
@@ -490,6 +492,35 @@ function computeFooter(state, preview, releaseEstimate = false) {
   return root;
 }
 
+// Shown when the recipe needs more compute than is free: a smaller size if one fits, otherwise the two places that
+// free compute (a deal, or capping serving in the budget), so a new player is never left at a dead Start button.
+function computeHelp(state, draft, preview, { onFit, onDeals, onBudget }) {
+  if (!preview.errors.includes('not enough free compute')) return null;
+  const root = document.createElement('div');
+  root.className = 'recipe-help';
+  root.setAttribute('role', 'alert');
+  const text = document.createElement('span');
+  text.className = 'recipe-help-text';
+  const link = (label, onClick) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'release-link';
+    button.textContent = label;
+    button.addEventListener('click', onClick);
+    return button;
+  };
+  const fitted = fitDraftToCompute(state, draft);
+  if (fitted.sliders.size !== draft.sliders.size && recipePreview(state, fitted).fits) {
+    const units = SIZE_UNITS[fitted.sliders.size] * eraScale(state.era);
+    text.textContent = `Not enough free compute. A ${(units * 1000).toLocaleString('en-US')} ${ERA_CHIP[state.era - 1]}s run fits.`;
+    root.append(text, link('Use the largest size that fits', onFit));
+  } else {
+    text.textContent = 'No model fits the free compute.';
+    root.append(text, link('Rent or sign compute', onDeals), link('Free some in the budget', onBudget));
+  }
+  return root;
+}
+
 export function openRecipe(game, overlayRoot, { stage = 1 } = {}) {
   const projected = () => projectQueue(game.state, game.queue);
   const releaseBeforeRun = () => {
@@ -497,7 +528,7 @@ export function openRecipe(game, overlayRoot, { stage = 1 } = {}) {
     const runIndex = moves.findIndex((move) => move.type === 'startRun');
     return moves.slice(0, runIndex < 0 ? moves.length : runIndex).some((move) => move.type === 'release');
   };
-  let draft = sanitizeDraft(projected(), rememberedDrafts.get(game));
+  let draft = fitDraftToCompute(projected(), rememberedDrafts.get(game));
   let opened;
 
   function showStage(requested) {
@@ -517,6 +548,11 @@ export function openRecipe(game, overlayRoot, { stage = 1 } = {}) {
     const error = document.createElement('div');
     error.className = 'dialog-error recipe-error';
     error.setAttribute('role', 'alert');
+    const helpSlot = document.createElement('div');
+    const leaveFor = (open) => () => {
+      rememberedDrafts.set(game, cloneDraft(draft)); // come back to the same choices
+      open(game, overlayRoot);
+    };
 
     const refresh = () => {
       const nextState = projected();
@@ -539,6 +575,16 @@ export function openRecipe(game, overlayRoot, { stage = 1 } = {}) {
       }));
       footerSlot.replaceChildren(computeFooter(nextState, preview, releaseBeforeRun()));
       error.textContent = capitaliseError(preview.errors[0]);
+      const help = computeHelp(nextState, draft, preview, {
+        onFit: () => {
+          draft = fitDraftToCompute(projected(), draft);
+          showStage(number);
+        },
+        onDeals: leaveFor(openDeals),
+        onBudget: leaveFor(openBudget),
+      });
+      helpSlot.replaceChildren(...(help ? [help] : []));
+      if (help) error.textContent = ''; // the help line says it, with the way out
       const subtitle = opened?.querySelector('.subt');
       if (subtitle) subtitle.textContent = `${workingName(nextState, draft)} / ${STAGE_NAMES[stageId]}`;
       const startButton = opened?.querySelector('.dialog-ok');
@@ -598,7 +644,7 @@ export function openRecipe(game, overlayRoot, { stage = 1 } = {}) {
     }));
 
     const capRow = number === 3 ? genevaCapRow(game.state) : null;
-    body.append(centre, footerSlot, error);
+    body.append(centre, footerSlot, error, helpSlot);
     const nextStage = number === 1 ? (state.era < 2 ? 3 : 2) : 3;
     const previousStage = number === 3 ? (state.era < 2 ? 1 : 2) : 1;
     opened = openDialog(overlayRoot, {
