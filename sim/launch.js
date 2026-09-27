@@ -23,13 +23,12 @@ export function safetyTruth(state, flags) {
 }
 
 // The test a benchmark row runs in an era, and a skill's score on a test with that mid (sim/data/launch.js).
-export const testFor = (benchmark, era) => benchmark.tests.find((t) => era >= t.from && era <= t.to) ?? benchmark.tests.at(-1);
+export const testFor = (benchmark, era) => benchmark.tests.find((t) => era >= t.from && era <= t.to);
 export const testScore = (mid, skill) => clamp(Math.round(100 / (1 + Math.exp(-(skill - mid) / TEST_WIDTH))), 0, 100);
 const oneDecimal = (value) => Math.round(value * 10) / 10;
 // An earlier model's result on a test: its published score if it took this test, otherwise re-scored from its skill,
-// as labs re-run older models on a new test. A result saved before tests changed has no name or skill; its old
-// score was about its skill.
-export const scoreOnTest = (test, before) => (before.name === test.name ? before.shown : testScore(test.mid, before.skill ?? before.shown));
+// as labs re-run older models on a new test.
+export const scoreOnTest = (test, before) => (before.name === test.name ? before.shown : testScore(test.mid, before.skill));
 
 // The rows whose test changes when `era` begins: { id, kind, from, to } with the old and new test names.
 export function retiredTests(era) {
@@ -69,7 +68,7 @@ export function scoreLaunch(state, model, rng) {
       rival = clamp(testScore(test.mid, rivalCap * fit * 0.95) + rng.int(-3, 3), 0, 100);
       if (before) flagship = scoreOnTest(test, before);
     }
-    const newTest = Boolean(before?.name) && !sameTest;
+    const newTest = Boolean(before) && !sameTest;
     const row = { id: b.id, name: test.name, label: b.label, kind: b.kind, shown, truth, flagship, rival, newTest };
     return b.kind === 'safety' ? row : { ...row, skill, fit, mid: test.mid };
   });
@@ -81,7 +80,7 @@ export function scoreLaunch(state, model, rng) {
 
   const compared = caps.filter((b) => b.flagship != null);
   const prevAvg = compared.length ? compared.reduce((s, b) => s + b.flagship, 0) / compared.length : capAvg - 5;
-  const launch = { benchmarks, capAvg, beats, skill, bar: prevAvg };
+  const launch = { benchmarks, capAvg, beats, skill, flagshipAvg: prevAvg };
 
   const rivalAvg = caps.reduce((s, b) => s + b.rival, 0) / caps.length;
   const skipped = Math.max(0, model.skipped ?? 0);

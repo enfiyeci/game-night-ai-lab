@@ -59,9 +59,9 @@ and rank. A launch shows up to five posts; follow-up reception shows one or two 
   - `@organize_the_lab` — The weavers were right that their families would go hungry. They were. Being "on the right side of history" is easy when you're not the one in it.
 
 ### Contaminated benchmarks (decontamination skipped)
-- `@evalmaxxer` — {model}'s Patchwork score is two standard deviations above where its other results predict. Looking into it. Please don't retweet the chart yet.
+- `@evalmaxxer` — {model}'s {coding} score is two standard deviations above where its other results predict. Looking into it. Please don't retweet the chart yet.
 - `@redteam_ruth` — those coding scores look a little too good. just saying.
-- `@actually_neil` — Actually, a model scoring that high on Doctorate Quiz while failing basic arithmetic has probably seen the answers.
+- `@actually_neil` — Actually, a model scoring that high on {science} while failing basic arithmetic has probably seen the answers.
 - `@abstract_only` — {model} aced the test i use for my thesis. it also completed the test's url. suspicious.
 - `@dag_rails` — Benchmarks are marketing. {model}'s are especially good marketing.
 

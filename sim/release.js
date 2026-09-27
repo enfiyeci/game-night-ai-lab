@@ -139,7 +139,7 @@ export function releaseModel(state, release, rng) {
     // launchScore is the test-independent skill, so models from different eras compare fairly (the flagship pick,
     // the end summary). bar is the last flagship's average re-scored on this launch's tests; flagshipName names it.
     launchScore: launch.skill,
-    bar: launch.bar,
+    bar: launch.flagshipAvg,
     flagshipName: state.lastFlagship?.name ?? null,
     spec,
     channel: spec.channel,

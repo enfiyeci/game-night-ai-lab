@@ -5,8 +5,8 @@ import { createRng } from './rng.js';
 import { rank } from './rivals.js';
 import { computeSlices } from './split.js';
 import { ROUND_DAYS } from './time.js';
-import { JUMP_EARNED_GAIN } from './data/launch.js';
-import { retiredTestPosts } from './launch.js';
+import { BENCHMARKS, JUMP_EARNED_GAIN, bare } from './data/launch.js';
+import { retiredTestPosts, testFor } from './launch.js';
 import { eraScale } from './data/compute.js';
 import { SIZE_UNITS } from './recipe.js';
 import { PROMISES } from './data/promises.js';
@@ -42,13 +42,18 @@ function newestLiveModel(state) {
   return newest;
 }
 
+// {coding} and {science} are the era's coding and science tests, as the reveal names them.
+const testNow = (state, id) => bare(testFor(BENCHMARKS.find((b) => b.id === id), state.era).name);
+
 // {lab} stays in the stored text and is filled in when the feed is shown (labText), so a lab named later still reads right.
 function render(state, text, { model, rival, gpus } = {}) {
   return text
     .replaceAll('{gpus}', () => gpus ?? 'thousands of GPUs')
     .replaceAll('{model}', () => model?.name ?? newestLiveModel(state)?.name ?? 'the new model')
     .replaceAll('{rival}', () => rival ?? 'a rival lab')
-    .replaceAll('{name}', () => state.lumenName ?? 'Lumen');
+    .replaceAll('{name}', () => state.lumenName ?? 'Lumen')
+    .replaceAll('{coding}', () => testNow(state, 'patchwork'))
+    .replaceAll('{science}', () => testNow(state, 'doctorate'));
 }
 
 // Fills {lab} with the player's lab name, or "Your lab" before it has one; minds "the {lab}" and possessives.

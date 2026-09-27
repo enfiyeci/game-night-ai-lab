@@ -296,7 +296,7 @@ export function openHistory(game, overlayRoot, { view = 'models' } = {}) {
     body.append(chart.svg, cards.root);
     opened = openDialog(overlayRoot, {
       title: 'The race so far',
-      subtitle: 'Public benchmarks only: the average of coding, science, agents and the final exam',
+      subtitle: 'Public benchmarks only: the average of coding, science, agents and the final exam. Scores dip when harder tests arrive',
       body,
       backLabel: 'Models',
       okLabel: 'Close',
@@ -328,7 +328,6 @@ function appendParts(root, parts) {
 function benchmarkHeading(name) {
   const kind = name.match(/\(([^)]+)\)$/)?.[1];
   if (kind) return kind[0].toUpperCase() + kind.slice(1);
-  if (name.includes('Final Final Exam')) return 'Final exam';
   return name;
 }
 

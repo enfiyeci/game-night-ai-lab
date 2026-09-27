@@ -47,7 +47,7 @@ export const BENCHMARKS = [
 ];
 
 // The feed at an era change: a test that top models have maxed out is retired for the next one.
-const bare = (name) => name.replace(/\s*\([^)]*\)$/, '');
+export const bare = (name) => name.replace(/\s*\([^)]*\)$/, '');
 export const RETIRED_POSTS = {
   cap: (from, to) => ['@evalmaxxer', `Retiring ${bare(from)} from our tracker: the top models have outgrown it, so it no longer separates anyone. From today we report ${bare(to)}.`],
   safety: (from, to) => ['@redteam_ruth', `${bare(from)} is done. every lab passes it, which proves nothing. the new bar is ${bare(to)}. good luck.`],

@@ -10,6 +10,7 @@ import { MEETINGS } from '../sim/data/president.js';
 import { labText, reactToEvents, reactToLandedCard, releaseDueFeed, runGpus } from '../sim/feedLive.js';
 import { createInitialState } from '../sim/state.js';
 import { retiredTestPosts } from '../sim/launch.js';
+import { BENCHMARKS, bare } from '../sim/data/launch.js';
 
 const ALL = [...EVENTS, ...EVENTS_6C, ...BOARD_EVENTS];
 const shown = (list) => new Set(list.map(([, text]) => text.replaceAll('{model}', 'the new model')));
@@ -316,4 +317,16 @@ test('a new era retires the tests top models have outgrown, in posts from real p
     }
   }
   assert.match(retiredTestPosts(2)[0][1], /Retiring Hello Function .* report Patchwork\./);
+});
+
+test('feed posts name benchmarks through {coding} and {science}, never a fixed test that changes with the era', () => {
+  const texts = JSON.stringify(REACTIONS);
+  for (const name of BENCHMARKS.flatMap((b) => b.tests.map((t) => bare(t.name)))) assert.ok(!texts.includes(name), name);
+  assert.ok(texts.includes('{coding}') && texts.includes('{science}'));
+  const state = stateOnDay();
+  state.era = 4;
+  reactToLandedCard(state, { id: 'contamination' });
+  runDays(state, 4);
+  assert.ok(state.feed.length > 0);
+  assert.ok(state.feed.every((post) => !/\{(coding|science)\}/.test(post.text)));
 });

@@ -203,8 +203,8 @@ export function article(state, rows) {
     title: `${family} (language model)`,
     lead,
     table: {
-      // Headed by each row's job: the named tests change with the era (sim/data/launch.js); older saves have no label.
-      benchmarks: first.benchmarks.map((benchmark) => benchmark.label ?? benchmark.name),
+      // Headed by each row's job: the named tests change with the era (sim/data/launch.js).
+      benchmarks: first.benchmarks.map((benchmark) => benchmark.label),
       rows: rows.map((row) => ({
         name: row.name,
         released: `${row.era} · ${row.releasedDate}`,

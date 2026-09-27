@@ -262,6 +262,7 @@ test('a stronger model on harder tests becomes the flagship, though its raw scor
   assert.ok(late.launch.capAvg < early.launch.capAvg, 'the harder tests score it lower');
   assert.equal(s.lastFlagship.name, late.name);
   assert.equal(late.flagshipName, early.name);
+  assert.equal(late.bar, late.launch.flagshipAvg, 'the feed judges a version jump against the flagship re-scored on these tests');
   assert.equal(late.launchScore, late.launch.skill);
   assert.ok(s.lastFlagship.benchmarks.every((b) => typeof b.name === 'string'));
 });

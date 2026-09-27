@@ -227,16 +227,7 @@ test('the last flagship is re-scored on a new test, and keeps its published scor
   assert.equal(science.flagship, testScore(72, row(old, 'doctorate').skill));
   assert.ok(science.flagship < row(old, 'doctorate').shown, 'the old model does worse on the harder test');
   const caps = r.benchmarks.filter((x) => x.kind === 'cap');
-  assert.equal(r.bar, caps.reduce((sum, x) => sum + x.flagship, 0) / caps.length);
-});
-
-test('a flagship saved before tests changed is re-scored from its old scores and not tagged new', () => {
-  const s = at(3);
-  s.lastFlagship = { name: 'Kestrel 1 Core', benchmarks: BENCHMARKS.map((b) => ({ id: b.id, shown: 40 })) };
-  const r = scoreLaunch(s, plain, zeroRng);
-  assert.equal(row(r, 'doctorate').flagship, testScore(72, 40));
-  assert.equal(row(r, 'gauntlet').flagship, 40);
-  assert.ok(r.benchmarks.every((x) => x.newTest === false));
+  assert.equal(r.flagshipAvg, caps.reduce((sum, x) => sum + x.flagship, 0) / caps.length);
 });
 
 test('at an era change, the tests that retire are listed with their replacements', () => {
