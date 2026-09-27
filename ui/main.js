@@ -40,7 +40,7 @@ import { mountAutomation, openAutomation } from './screens/automation.js';
 import { mountScreenWall } from './screens/screenwall.js';
 import { mountRacks } from './screens/racks.js';
 import { mountTitle } from './screens/title.js';
-import { titleShows } from './logic/title.js';
+import { cleanLabName, titleShows } from './logic/title.js';
 
 const params = new URLSearchParams(location.search);
 
@@ -70,7 +70,7 @@ const scenarioName = params.get('scenario') ?? 'start';
 const buildScenario = SCENARIOS[scenarioName] ?? SCENARIOS.start;
 const initialState = buildScenario(seed);
 const game = createGame({ seed, state: initialState, history: scenarioHistory(initialState) });
-if (params.has('lab')) game.state.labName = params.get('lab');
+if (cleanLabName(params.get('lab'))) game.state.labName = cleanLabName(params.get('lab')); // same cap as the title screen
 if (location.hash === '#board-warning') delete game.state.flags.boardQuiet; // debug still: the warning without going quiet
 
 const stage = document.querySelector('#stage');
