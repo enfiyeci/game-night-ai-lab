@@ -242,12 +242,12 @@ def shot_mis_triage():
 
 
 def shot_al_triage():
-    room(tube_energy=8)
+    room(dead_light=(2.6, 1.8), tube_energy=5)
     seating()
-    doors(lit=1400, ajar=1.2)
+    doors(lit=1600, ajar=1.2)
     face = cart((-0.45, 7.9), 157, "al-triage", (60, 84, 1160, 483))
     # a doctor in a white coat comes out of treatment toward the cart, dark against the lit corridor
-    P.person((1.55, 0.9), facing=22, pose="walk", height=1.72, coat="#E9ECEE", long_coat=True, trousers="#2C4A5E",
+    P.person((1.6, 0.45), facing=22, pose="walk", height=1.72, coat="#E9ECEE", long_coat=True, trousers="#2C4A5E",
              hair="#2A211C", seed=21)
     seated([(-1.55, 1, -90), (1.55, 4, 90), (2.25, 8, -90)], seed=2)
     kit.place("wheelchair_01", (-0.9, 5.4, 0), rot_z=math.radians(80))
@@ -280,8 +280,8 @@ def shot_mu_hospital():
     cart((-0.6, 7.6), 33, "mu-hospital", note, width=0.6, live=False)
     kit.area((0, BY - 1.0, 2.35), (0, 0, 1.0), (2.2, 1.26), 60, (1.0, 0.32, 0.26))   # the board's red spill
     # a nurse under the board with a torch, paper charts under her arm
-    P.person((0.35, BY - 2.3), facing=0, height=1.66, coat="#3E6F7C", trousers="#3E6F7C", hold="paper", seed=31)
-    kit.spot((0.25, BY - 2.0, 1.2), (-0.2, BY - 0.2, 0.4), 30, kit.kelvin(5500), angle=25, blend=0.4)
+    P.person((-0.8, 6.4), facing=-18, height=1.66, coat="#3E6F7C", trousers="#3E6F7C", hold="paper", seed=31)
+    kit.spot((-0.7, 6.7, 1.2), (-0.3, 8.4, 0.3), 30, kit.kelvin(5500), angle=25, blend=0.4)
     kit.box((0, D - 0.13, 2.48), (0.5, 0.03, 0.16), kit.mat("#0F3A22", 0.4, emit="#2FE07A", strength=3))
     kit.text("EXIT", (0, D - 0.15, 2.48), 0.1, kit.mat("#FFFFFF", 0.5, emit="#DFFFE8", strength=4), font=kit.FONT)
     kit.area((-1.5, D + 5.5, 2.6), (-1.5, D, 1.2), (14, 3), 110, (1.0, 0.7, 0.42))
@@ -296,7 +296,7 @@ def shot_pd_trial():
     kit.sun((50, 0, 200), 3.0, kit.kelvin(5200), angle=1.0)
     face = cart((-0.2, 6.3), -14, "pd-trial", (60, 80, 1160, 483))
     # the clinician stands at the cart, turned to the screen, the chart she checks against in her hand
-    P.person((-0.75, 5.5), facing=-35, height=1.68, coat="#3E7F8C", trousers="#3E7F8C", hold="paper", hair="#2A211C", seed=41)
+    P.person((-0.9, 5.45), facing=-35, height=1.68, coat="#3E7F8C", trousers="#3E7F8C", hold="paper", hair="#2A211C", seed=41)
     seated([(-1.55, 5, -90), (-2.25, 8, 90), (1.55, 7, 90), (1.55, 2, 90)], seed=4)
     kit.place("potted_plant_02", (-W + 0.45, 8.9, 0))
     kit.camera((-0.95, 3.3, 1.45), (-0.1, 7.0, 1.3), lens=36, fstop=2.0, focus=face)
