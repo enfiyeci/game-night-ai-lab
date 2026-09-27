@@ -61,7 +61,7 @@ export function openComputeInfo(game, overlayRoot, { view = 'where', race = race
     }
     body.append(stack, explain);
 
-    body.append(element('h6', '', 'Where that puts you'));
+    body.append(element('h6', '', 'Where that puts you · overall capability (the race tab shows public benchmarks only)'));
     const labs = [{ name: 'You', capability: state.capability, you: true }, ...state.rivals.map((r) => ({ name: r.name, capability: r.capability }))]
       .sort((a, b) => b.capability - a.capability);
     const top = Math.max(1, ...labs.map((l) => l.capability));

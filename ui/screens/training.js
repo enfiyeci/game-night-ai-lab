@@ -155,7 +155,7 @@ export function mountTraining(game, { stage, hud, overlay }) {
   // The HUD also redraws itself (the info toggle); keep the in-flight counts rather than jumping to the target.
   new MutationObserver(() => {
     if (flying) writeCounts(displayed);
-  }).observe(hud, { childList: true });
+  }).observe(hud, { childList: true, subtree: true }); // the HUD redraws inside its own view
 
   overlay.addEventListener('hazard-chosen', updateReadyNote);
   game.subscribe(render);

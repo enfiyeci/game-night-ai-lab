@@ -65,19 +65,21 @@ export function cashLine(state, history, horizon = 24) {
     points.push({ month: row.month + row.months, cash: row.cashEnd });
   }
   points.push({ month: now, cash: state.cash });
-  // The same months-left figure as the Runway readout, so the two never disagree.
-  const left = Math.max(0, runway({ ...state, burnPlanned: projectBurn(state) }, 'planned'));
-  const net = Number.isFinite(left) && left > 0 ? state.cash / left : 0;
+  // Out of cash already: no run to zero to draw.
+  if (state.cash <= 0) return { points, now, projection: [{ month: now, cash: state.cash }, { month: now, cash: state.cash }], runsOutIn: null, outOfCash: true };
+  // The same net burn as the Runway readout (spending less the last day's revenue), so the two never disagree.
+  const netBurn = projectBurn(state) - state.arr / 12;
+  const left = netBurn > 0 ? state.cash / netBurn : Infinity;
   const ahead = Math.min(horizon, left);
-  const end = { month: now + ahead, cash: Number.isFinite(left) && left <= horizon ? 0 : state.cash - Math.max(0, net) * ahead };
-  return { points, now, projection: [{ month: now, cash: state.cash }, end], runsOutIn: left <= horizon ? left : null };
+  const end = { month: now + ahead, cash: left <= horizon ? 0 : state.cash - netBurn * ahead };
+  return { points, now, projection: [{ month: now, cash: state.cash }, end], runsOutIn: left <= horizon ? left : null, outOfCash: false };
 }
 
 // "What changed": each round where one of the player's decisions moved the monthly bill or brought money in.
 // Rows are the finance history (one per round mark); models carry the round they were released in.
 const MIN_CHANGE = 3; // $M a month; smaller moves are users drifting, not a decision
 
-export function billChanges(history, models = []) {
+export function billChanges(history, models = [], nowMonth = null) {
   const changes = [];
   history.forEach((row, index) => {
     const before = history[index - 1];
@@ -93,8 +95,9 @@ export function billChanges(history, models = []) {
     if (model.releasedTurn == null) continue;
     const row = history.find((r) => r.turn === model.releasedTurn);
     const next = history.find((r) => r.turn === model.releasedTurn + 1);
-    if (!row) continue;
-    changes.push({ kind: 'release', month: row.month, turn: row.turn, name: model.name, from: row.revenue, to: next?.revenue ?? null });
+    // Released this round: no history row yet, so it sits at today.
+    if (!row && nowMonth == null) continue;
+    changes.push({ kind: 'release', month: row?.month ?? nowMonth, turn: model.releasedTurn, name: model.name, from: row?.revenue ?? null, to: next?.revenue ?? null });
   }
   return changes.sort((a, b) => a.turn - b.turn || a.kind.localeCompare(b.kind));
 }

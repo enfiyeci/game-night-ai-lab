@@ -205,7 +205,6 @@ export function mountBoard(game, { overlay, stage }) {
   stage.insertBefore(chip, hud); // under the HUD layer, so the info box covers it if they ever meet
   const quietSlot = node('div', 'bd-quiet-slot');
   stage.insertBefore(quietSlot, hud);
-  hud?.addEventListener('hud-layout', () => layout()); // the clock moves when the info box opens or closes
   const sayRoot = node('div', 'bd-say');
   overlay.append(sayRoot);
 

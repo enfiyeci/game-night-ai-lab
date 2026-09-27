@@ -57,6 +57,7 @@ function currentPlan(game) {
 // The Money screen's four views (owner pick 2026-09-26: 2A "This month" and 2B "What changed" join the planner's two).
 const VIEWS = [['month', 'This month'], ['changes', 'What changed'], ['timeline', 'Years ahead'], ['books', 'The books']];
 const monthLabel = (m) => `Y${Math.floor(m / 12) + 1} M${(Math.floor(m) % 12) + 1}`;
+const PRICE_WORDS = { premium: 'at the premium price', market: 'at the market price', undercut: 'at the undercut price', free: 'on the free tier' };
 const BUDGET_WORDS = { training: 'training', security: 'security', product: 'product', talent: 'talent' };
 
 export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
@@ -226,6 +227,8 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
     const top = Math.max(1, bill.moneyIn, bill.moneyOut);
     const line = (label, amount, kind, because, jump) => {
       const row = element('div', 'money-line');
+      // A net compute bill can fall below zero (cloud credits and idle resale): then it is money in.
+      if (amount < 0) { kind = kind === 'in' ? 'out' : 'in'; amount = -amount; }
       row.append(element('span', 'money-what', label), element('span', `money-amt ${kind}`, `${kind === 'in' ? '+' : '−'}${money(amount)}`));
       const why = element('span', 'money-because');
       why.append(element('span', '', because));
@@ -248,7 +251,7 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
     incol.append(inHead);
     if (bill.income.length === 0) incol.append(element('p', 'money-empty', 'Nothing yet. Release a model to start earning.'));
     for (const m of bill.income) {
-      incol.append(line(m.label, m.amount, 'in', `${(m.users / 1e6).toFixed(1)}M ${m.channel === 'enterprise' ? 'business' : m.channel} users at the ${m.price} price you set on release`));
+      incol.append(line(m.label, m.amount, 'in', `${(m.users / 1e6).toFixed(1)}M ${m.channel === 'enterprise' ? 'business' : m.channel} users ${PRICE_WORDS[m.price] ?? `at the ${m.price} price`} you set on release`));
     }
     const outcol = element('div');
     const outHead = element('h5', 'out');
@@ -291,7 +294,7 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
     const bill = monthBill(state);
     const rows = [...history.map((r) => ({ month: r.month, end: r.month + r.months, revenue: r.revenue, burn: r.burn })),
       { month: state.monthsElapsed, end: state.monthsElapsed + 1, revenue: bill.moneyIn, burn: bill.moneyOut }];
-    const changes = billChanges(history, state.models);
+    const changes = billChanges(history, state.models, state.monthsElapsed);
     const body = element('div', 'finance-changes-body');
     body.append(tabs('changes'));
     const W = 560, H = 300, padL = 56, padR = 12, top = 14, bottom = 26;
@@ -318,7 +321,7 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
       const item = element('li');
       item.append(element('span', 'money-when', monthLabel(c.month)));
       if (c.kind === 'release') {
-        item.append(element('b', '', `Released ${c.name}`), element('span', 'in', c.to == null ? 'users arriving' : `money in ${money(c.from)} → ${money(c.to)} a month`));
+        item.append(element('b', '', `Released ${c.name}`), element('span', 'in', c.to == null || c.from == null ? 'users arriving' : `money in ${money(c.from)} → ${money(c.to)} a month`));
       } else if (c.kind === 'raise') {
         item.append(element('b', '', 'Raised a round'), element('span', 'in', `+${money(c.amount)} once`));
       } else if (c.kind === 'budget') {

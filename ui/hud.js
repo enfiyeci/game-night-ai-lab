@@ -36,8 +36,10 @@ function sparkline(state, history) {
   const path = (pts) => pts.map((p, i) => `${i ? 'L' : 'M'}${x(p.month).toFixed(1)} ${y(p.cash).toFixed(1)}`).join(' ');
   const now = line.projection[0];
   const left = line.runsOutIn == null ? null : Math.max(1, Math.round(line.runsOutIn));
-  const end = left == null ? 'lasts 2+ years' : `$0 in ~${left} mo`;
-  const label = left == null ? 'Cash since the start; at today’s spending it lasts more than two years' : `Cash since the start; at today’s spending it reaches zero in about ${left} months`;
+  const end = line.outOfCash ? 'Out of cash' : left == null ? 'lasts 2+ years' : `$0 in ~${left} mo`;
+  const label = line.outOfCash ? 'Cash since the start; you are out of cash'
+    : left == null ? 'Cash since the start; at today’s spending it lasts more than two years'
+      : `Cash since the start; at today’s spending it reaches zero in about ${left} month${left === 1 ? '' : 's'}`;
   return `<span class="hud-spark" role="img" aria-label="${label}">
       <svg width="${SPARK_W}" height="${SPARK_H}" viewBox="0 0 ${SPARK_W} ${SPARK_H}" aria-hidden="true">
         <line x1="0" x2="${SPARK_W}" y1="${y(0).toFixed(1)}" y2="${y(0).toFixed(1)}" class="hud-spark-zero"/>
@@ -45,7 +47,7 @@ function sparkline(state, history) {
         <path d="${path(line.points)}" class="hud-spark-past"/>
         <circle cx="${x(now.month).toFixed(1)}" cy="${y(now.cash).toFixed(1)}" r="2.6" class="hud-spark-now"/>
       </svg>
-      <span class="hud-spark-cap"><span>Start</span><span class="${left == null ? '' : 'out'}">${end}</span></span>
+      <span class="hud-spark-cap"><span>Start</span><span class="${left == null && !line.outOfCash ? '' : 'out'}">${end}</span></span>
     </span>`;
 }
 
@@ -55,7 +57,7 @@ function flowLine(bill) {
   return `<span class="hud-flow">
       <span class="k">This month</span><span class="in">+${money(bill.moneyIn)} in</span><span class="out">−${money(bill.moneyOut)} out</span>
       <span class="hud-flow-bars" aria-hidden="true"><i class="in" style="width:${(bill.moneyIn / top) * 100}%"></i><i class="out" style="width:${(bill.moneyOut / top) * 100}%"></i></span>
-      <span class="hud-flow-net"><span>Each month</span><b class="${bill.net < 0 ? 'out' : 'in'}">${signed(bill.net)}</b></span>
+      <span class="hud-flow-net"><span>Net this month</span><b class="${bill.net < 0 ? 'out' : 'in'}">${signed(bill.net)}</b></span>
     </span>`;
 }
 
@@ -101,6 +103,44 @@ export function mountHud(root, game) {
     make('out', `−${money(flows.moneyOut)}`, 'costs this week', 72);
   }
 
+  // The shell is built once so its buttons survive the daily redraw (a click that straddles a rebuild is lost);
+  // each render only rewrites text and states inside it.
+  view.innerHTML = `
+    <div class="hud" aria-label="Current project"></div>
+    <div class="hud-right">
+      <button class="info" type="button" aria-controls="lab-stats"></button>
+      <div class="hud-actions">
+        <button type="button" class="hud-btn" data-open="money"><span class="ic money" aria-hidden="true">$</span>Money</button>
+        <button type="button" class="hud-btn" data-open="compute"><span class="ic compute" aria-hidden="true"></span>Compute</button>
+      </div>
+      <div class="clock" aria-label="Game clock">
+        <span class="date"></span>
+        <button type="button" data-speed="0" aria-label="Pause">${PAUSE_ICON}</button>
+        <button type="button" data-speed="1" aria-label="Speed 1">×1</button>
+        <button type="button" data-speed="2" aria-label="Speed 2">×2</button>
+        <button type="button" data-speed="4" aria-label="Speed 4">×4</button>
+        <span class="waiting" role="status" hidden></span>
+      </div>
+    </div>`;
+  const centre = view.querySelector('.hud');
+  const info = view.querySelector('.info');
+  const date = view.querySelector('.clock .date');
+  const waitingLabel = view.querySelector('.clock .waiting');
+  const column = view.querySelector('.hud-right');
+  const overlay = () => document.querySelector('#overlay');
+  // Like the office's own clicks, the buttons wait while a card, the phone or the screen wall holds the stage.
+  const blocked = () => Boolean(overlay()?.querySelector('.event-layer, .ev-phone, .screenwall-layer'));
+
+  info.addEventListener('click', () => {
+    expanded = !expanded;
+    render();
+  });
+  view.querySelector('[data-open="money"]').addEventListener('click', () => { if (!blocked()) openFinance(game, overlay(), { view: 'month' }); });
+  view.querySelector('[data-open="compute"]').addEventListener('click', () => { if (!blocked()) openComputeInfo(game, overlay()); });
+  for (const button of view.querySelectorAll('.clock button[data-speed]')) {
+    button.addEventListener('click', () => game.clock?.setSpeed(Number(button.dataset.speed)));
+  }
+
   function render() {
     connectClock();
     const state = game.state;
@@ -109,78 +149,52 @@ export function mountHud(root, game) {
     const totalUsers = activeModels(state).reduce((sum, model) => sum + model.users, 0);
     const plannedRunway = runway({ ...state, burnPlanned: projectBurn(state) }, 'planned'); // burnPlanned is 0 before the first turn
     const bill = monthBill(state);
-    const infoId = 'lab-stats';
-    const date = storyDate(state.day);
+    const day = storyDate(state.day);
     const nextMark = storyDate(state.day + ROUND_DAYS[state.era] - state.dayInRound);
     const clockState = game.clock?.now() ?? { speed: 1, paused: false, reasons: [] };
     const waiting = clockState.speed !== 0 && (clockState.reasons?.length ?? 0) > 0;
-    const waitWord = waiting ? (WAIT_WORDS[clockState.reasons.find((r) => WAIT_WORDS[r])] ?? 'for you') : '';
+    const waitWord = waiting ? (WAIT_WORDS[clockState.reasons.find((r) => WAIT_WORDS[r])] ?? null) : null;
     const beat = Math.round((state.dayInRound / ROUND_DAYS[state.era]) * 100);
     const markLabel = `New ${roundWord(state.era)} on ${nextMark.label}`;
-    // While the game waits, the chosen speed shows as an outline, so a lit ×4 never contradicts a pause.
-    const speedButton = (speed) => {
-      const chosen = clockState.speed === speed;
-      const cls = chosen ? (waiting ? 'held' : 'on') : '';
-      return `<button type="button" data-speed="${speed}" class="${cls}" aria-label="Speed ${speed}" aria-pressed="${chosen}">×${speed}</button>`;
-    };
 
-    view.innerHTML = `
-      <div class="hud" aria-label="Current project">
-        <div class="ctr cap"><div class="badge">${counts.capability}</div><div class="tag">Capability</div></div>
-        <div class="pill">
-          <div class="t"></div>
-          <div class="s">${pill.status}</div>
-          ${pill.progress === null ? '' : `<div class="bar"><i style="width:${Math.round(pill.progress * 100)}%"></i></div>`}
-        </div>
-        <div class="ctr ali"><div class="badge">${counts.alignment}</div><div class="tag">Alignment</div></div>
+    centre.innerHTML = `
+      <div class="ctr cap"><div class="badge">${counts.capability}</div><div class="tag">Capability</div></div>
+      <div class="pill">
+        <div class="t"></div>
+        <div class="s">${pill.status}</div>
+        ${pill.progress === null ? '' : `<div class="bar"><i style="width:${Math.round(pill.progress * 100)}%"></i></div>`}
       </div>
-      <div class="hud-right">
-        <button class="info" type="button" aria-expanded="${expanded}" aria-controls="${infoId}">
-          <span class="full"><span class="k">Era</span> <b>${state.era}</b> <span class="k">· ${eraById(state.era).name}</span></span>
-          <span class="k">Cash</span><b>${money(state.cash)}</b>
-          ${flowLine(bill)}
-          ${sparkline(state, game.financeHistory ?? [])}
-          <span class="k">Runway</span><b>${months(plannedRunway)}</b>
-          <span id="${infoId}" class="info-more" ${expanded ? '' : 'hidden'}>
-            <span class="k">ARR</span><b>${money(state.arr)}</b>
-            <span class="k">Users</span><b>${users(totalUsers)}</b>
-            <span class="k">Compute</span><b>${compute(state.compute, state.era)}</b>
-            <span class="k">Capability rank</span><b>${ordinal(rank(state))} of 5</b>
-            <span class="k">Valuation</span><b>${money(state.valuation)}</b>
-          </span>
-        </button>
-        <div class="hud-actions">
-          <button type="button" class="hud-btn" data-open="money"><span class="ic money" aria-hidden="true">$</span>Money</button>
-          <button type="button" class="hud-btn" data-open="compute"><span class="ic compute" aria-hidden="true"></span>Compute</button>
-        </div>
-        <div class="clock" aria-label="Game clock">
-          <span class="date">${date.label}<small>${MONTH_NAMES[date.m - 1]}</small><span class="beat" role="progressbar" aria-label="${markLabel}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${beat}"><i style="width:${beat}%"></i></span></span>
-          <button type="button" data-speed="0" class="${clockState.speed === 0 ? 'on' : ''}" aria-label="Pause" aria-pressed="${clockState.speed === 0}">${PAUSE_ICON}</button>
-          ${speedButton(1)}${speedButton(2)}${speedButton(4)}
-          ${waiting ? `<span class="waiting" role="status">Waiting${waitWord === 'for you' ? ' ' : ': '}${waitWord}</span>` : ''}
-        </div>
-      </div>`;
+      <div class="ctr ali"><div class="badge">${counts.alignment}</div><div class="tag">Alignment</div></div>`;
+    centre.querySelector('.pill .t').textContent = pill.name; // player-typed names are text, never markup
 
-    view.querySelector('.pill .t').textContent = pill.name; // player-typed names are text, never markup
+    info.setAttribute('aria-expanded', `${expanded}`);
+    info.innerHTML = `
+      <span class="full"><span class="k">Era</span> <b>${state.era}</b> <span class="k">· ${eraById(state.era).name}</span></span>
+      <span class="k">Cash</span><b>${money(state.cash)}</b>
+      ${flowLine(bill)}
+      ${sparkline(state, game.financeHistory ?? [])}
+      <span class="k">Runway</span><b>${months(plannedRunway)}</b>
+      <span id="lab-stats" class="info-more" ${expanded ? '' : 'hidden'}>
+        <span class="k">ARR</span><b>${money(state.arr)}</b>
+        <span class="k">Users</span><b>${users(totalUsers)}</b>
+        <span class="k">Compute</span><b>${compute(state.compute, state.era)}</b>
+        <span class="k">Capability rank</span><b>${ordinal(rank(state))} of 5</b>
+        <span class="k">Valuation</span><b>${money(state.valuation)}</b>
+      </span>`;
 
-    view.querySelector('.info').addEventListener('click', () => {
-      expanded = !expanded;
-      render();
-      view.querySelector('.info').focus();
-    });
-
-    const overlay = document.querySelector('#overlay');
-    view.querySelector('[data-open="money"]').addEventListener('click', () => openFinance(game, overlay, { view: 'month' }));
-    view.querySelector('[data-open="compute"]').addEventListener('click', () => openComputeInfo(game, overlay));
-
+    date.innerHTML = `${day.label}<small>${MONTH_NAMES[day.m - 1]}</small><span class="beat" role="progressbar" aria-label="${markLabel}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${beat}"><i style="width:${beat}%"></i></span>`;
+    // While the game waits, the chosen speed shows as an outline, so a lit ×4 never contradicts a pause.
     for (const button of view.querySelectorAll('.clock button[data-speed]')) {
-      button.addEventListener('click', () => game.clock?.setSpeed(Number(button.dataset.speed)));
+      const speed = Number(button.dataset.speed);
+      const chosen = clockState.speed === speed;
+      button.className = chosen ? (waiting && speed !== 0 ? 'held' : 'on') : '';
+      button.setAttribute('aria-pressed', `${chosen}`);
     }
+    waitingLabel.hidden = !waiting;
+    waitingLabel.textContent = waiting ? (waitWord ? `Waiting: ${waitWord}` : 'Waiting for you') : '';
 
-    // Things placed under the clock (the board's countdown chip, the Geneva deal pill) follow the column's height.
-    const column = view.querySelector('.hud-right');
+    // Things placed under the clock (the Geneva deal pill) follow the column's height.
     document.documentElement.style.setProperty('--hud-under', `${column.offsetTop + column.offsetHeight + 8}px`);
-    root.dispatchEvent(new CustomEvent('hud-layout'));
     floatWeek(state);
   }
 
