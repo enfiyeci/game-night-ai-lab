@@ -135,6 +135,7 @@ export function mountEvents(game, { stage, overlay }) {
   let busyLines = [];
   let previewing = false;
   let asideTimer = null;
+  let asideId = null; // the card that stepped aside for the floor menu, until a card opens again
 
   const clock = () => game.clock ?? null;
   const emit = (name) => overlay.dispatchEvent(new CustomEvent(name));
@@ -203,6 +204,7 @@ export function mountEvents(game, { stage, overlay }) {
     clock()?.pause(CLOCK_REASON);
     const cleanup = view.staging ? stageRoom(view.staging, { stage, layerRoot: layer, anchors }) : null;
     current = { id: view.id, layer, cleanup, preview };
+    asideId = null;
 
     const card = el(`<section class="gp ev-card${view.staging ? '' : ' no-pic'}" role="dialog" aria-modal="false"><div class="ev-card-main"><div class="ev-card-top"><h1></h1></div><div class="ev-choices"></div><div class="ev-card-foot"><button type="button" class="ev-act ghost ev-later">Decide later</button></div></div></section>`);
     const titleId = `ev-title-${view.id.replace(/\W/g, '-')}`;
@@ -286,7 +288,14 @@ export function mountEvents(game, { stage, overlay }) {
   }
 
   overlay.addEventListener('gdt-dialog-closed', () => {
-    if (!previewing) openNext();
+    if (previewing) return;
+    if (asideId === null) {
+      openNext();
+      return;
+    }
+    // A screen moving to its next stage closes one dialog and opens the next in the same task; the card that
+    // stepped aside waits a task, so it comes back after the screen is done, not in the middle of it.
+    globalThis.setTimeout(() => { if (!previewing) openNext(); }, 0);
   });
   // A menu closed with nothing picked gives the stage straight back. After a pick the card waits for that screen
   // to close (gdt-dialog-closed). Some screens load their art first and would not open over a card, so the card
@@ -347,6 +356,7 @@ export function mountEvents(game, { stage, overlay }) {
       layer.remove();
       cleanup?.();
       queue.unshift(id);
+      asideId = id;
       emit('event-card-closed');
       emit('events-changed');
     },
