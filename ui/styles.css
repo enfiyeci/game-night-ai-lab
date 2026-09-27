@@ -1599,6 +1599,44 @@ svg.room {
 .deal-round-end b { font-weight: 900; }
 .deal-round-end-item.lab-rest,
 .deal-round-end-item.lab-qilin { color: color-mix(in oklab, var(--ink) 72%, var(--paper)); }
+
+/* ---- Deal board: the signed stamp (owner playtest 2026-09-26) ---- */
+/* A rubber stamp in the player's ink (the summit's YOU seal is ink too), with the release show's stamp landing. */
+.deal-signed-stamp {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  left: 50%;
+  padding: 5px 9px 4px 11px;
+  border: 3px solid currentColor;
+  border-radius: 7px;
+  color: color-mix(in oklab, var(--ink) 88%, var(--wood));
+  font-size: 19px;
+  font-weight: 900;
+  letter-spacing: .1em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+  background: color-mix(in oklab, var(--paper) 94%, transparent);
+  box-shadow: inset 0 0 0 2px var(--paper), inset 0 0 0 3.5px currentColor;
+  transform: translate(-50%, -50%) rotate(-8deg);
+  pointer-events: none;
+  animation: deal-stamp-land .22s cubic-bezier(.3, 1.4, .5, 1) both;
+}
+@keyframes deal-stamp-land { from { opacity: 0; transform: translate(-50%, -50%) rotate(-14deg) scale(1.9); } }
+.grid-reservation-strip.deal-signed { position: relative; }
+.grid-reservation-strip .deal-signed-stamp { padding: 3px 9px 2px; border-width: 2px; font-size: 15px; box-shadow: none; }
+/* The press: the card gives a little under the stamp, then the rest of the board steps back. */
+.deal-signed { animation: deal-signed-press .24s linear .2s; }
+@keyframes deal-signed-press { 25% { transform: translateY(2px) scale(.985); } 60% { transform: translate(-1px, -1px); } }
+.deal-signing .deal-cards > :not(.deal-signed),
+.deal-signing .grid-reservation-strip:not(.deal-signed) { opacity: .5; transition: opacity .25s ease .2s; }
+.deal-signing .commitment-row.new { border-style: solid; }
+@media (prefers-reduced-motion: reduce) {
+  .deal-signed-stamp, .deal-signed { animation: none; }
+  .deal-signing .deal-cards > :not(.deal-signed),
+  .deal-signing .grid-reservation-strip:not(.deal-signed) { transition: none; }
+}
 .commitments-panel { padding: 4px 14px 14px; }
 .compute-bill-row { display: flex; padding: 8px 0 2px; align-items: baseline; justify-content: space-between; gap: 8px; }
 .compute-bill-row span { color: color-mix(in oklab, var(--ink) 62%, var(--paper)); font-size: 12px; font-weight: 700; }
