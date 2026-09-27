@@ -7,11 +7,11 @@ export function noteText(consequence) {
 }
 
 export function pointsBar(points, cost) {
-  const have = Math.round(points);
+  // Points are fractional and events can push them below zero: compare the raw values, round down for display.
   return {
-    fill: Math.min(1, points / cost),
-    label: `${have} of ${cost} research points`,
-    rest: have >= cost ? `${have - cost} left after this` : `Needs ${cost - have} more`,
+    fill: Math.min(1, Math.max(0, points / cost)),
+    label: `${Math.floor(points)} of ${cost} research points`,
+    rest: points >= cost ? `${Math.floor(points - cost)} left after this` : `Needs ${Math.ceil(cost - points)} more`,
   };
 }
 

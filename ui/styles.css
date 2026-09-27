@@ -4138,7 +4138,10 @@ html.title-waking #hud { transition: opacity .5s ease .6s; }
 .term-note { display: block; margin-top: 4px; font: italic 400 14px/1.6 "Libre Baskerville", Georgia, serif; }
 .term-after { display: block; margin-top: auto; color: color-mix(in oklab, var(--ink) 66%, var(--paper)); font-size: 13px; font-weight: 800; }
 .term-sign { display: block; margin-top: 52px; padding-top: 6px; border-top: 1.5px solid var(--ink); font-size: 12px; font-weight: 800; }
-.term-sign-button { position: absolute; right: 32px; bottom: 58px; width: 130px; }
+.paper-sign-holder { pointer-events: none; }
+.paper-sign-holder.selected { z-index: 3; }
+.paper-sign-holder[hidden] { display: none; }
+.term-sign-button { position: absolute; right: 32px; bottom: 58px; width: 130px; pointer-events: auto; }
 .term-sheet .company-card-reason { position: absolute; right: 32px; bottom: 60px; max-width: 290px; margin: 0; text-align: right; font: italic 700 14px/1.3 "Libre Baskerville", Georgia, serif; }
 .paper-raise .paper-foot { position: absolute; left: 120px; right: 120px; bottom: 44px; }
 
