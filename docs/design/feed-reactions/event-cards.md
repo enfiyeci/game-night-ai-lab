@@ -296,27 +296,27 @@ Demand: "Add a hard line against autonomous agents."
 - `@lodestar_eng` — welcome to the team! (you'll love the eval appendix.)
 - `@crab_apple_leaks` — {lab} just lost the person behind half its best ideas. watch the next release 🍎
 
-### Weights stolen by a foreign state (`weightTheft`, crisis)
+### A hacker got into your internal forum (`weightTheft`, crisis)
 **When it breaks**
-- `@public_record` — NEW: a foreign intelligence service copied a frontier lab's model weights, according to three officials. The lab has not confirmed.
-- `@natsec_brief` — If this is confirmed, it is the most serious AI security failure to date. Frontier weights must be treated like weapons designs.
-- `@patriot_pulse` — They let CHINA walk out with our AI?? Who's getting fired??
-- `@wei_in_shenzhen` — Every Western story this week says "a foreign state." I'd like to see the evidence before the headlines.
-- `@situationally` — I have been saying for years that lab security is a national security problem. This is the week that becomes obvious.
-- `@wake_up_sheeple` — they "stole" it. or they gave it away and needed a story. WAKE UP.
-- `@shenzhen_dispatch` — Before the takes arrive: nobody has said which state, the lab hasn't confirmed, and "officials say" is carrying the whole story. I have seen this headline turn out wrong twice in the last year. Wait for the evidence. Then get angry, if it's there.
+- `@public_record` — NEW: a hacker spent months inside a frontier lab's internal staff forum, reading threads on how its models are built, according to two people familiar. The lab says the model weights were not touched.
+- `@natsec_brief` — "Only the forum" is how these stories start. Design discussions are a map to the crown jewels. Treat them that way.
+- `@patriot_pulse` — Who was reading their forum for MONTHS?? If it's a foreign state somebody should be fired.
+- `@wei_in_shenzhen` — Every story this week already has a villain in the headline. Nobody has said who did it.
+- `@situationally` — Today it is the staff forum. Next time it is the weights. Lab security is a national security problem.
+- `@wake_up_sheeple` — "the weights were not touched." sure. WAKE UP.
+- `@shenzhen_dispatch` — Before the takes arrive: nobody has said who did it, the lab says the weights are safe, and "people familiar" is carrying the whole story. Wait for the evidence. Then get angry, if it's there.
   - `@natsec_brief` — Jordan, with respect, the cost of waiting is the whole problem with this industry.
 
 **If you pick Tell the government and the public**
-- `@natsec_brief` — {lab} reported the breach immediately and is cooperating. Painful, correct. That's what a serious lab does.
-- `@kayswanick` — {lab} confirmed the theft. Their security budget will now be larger than some countries'.
+- `@natsec_brief` — {lab} reported the forum breach to the government and told the public. Painful, correct. That's what a serious lab does.
+- `@kayswanick` — {lab} confirmed someone read its staff forum for months. Their security budget will now be larger than some countries'.
 
 **If you pick Tell only staff and the board**
 - `@crab_apple_leaks` — something is going on at {lab} security. new badge readers, fewer friends. 🍎
 - `@anon_staffer` — everyone at work had to reset every password today. no one will say why.
 
-**If you pick Say nothing** (these run only if the theft comes out later)
-- `@public_record` — Officials now say the stolen weights belonged to {lab}. {lab} had said nothing for weeks.
+**If you pick Say nothing** (these run only if the breach comes out later)
+- `@public_record` — A hacker read {lab}'s internal staff forum for months. {lab} told no one, not even its own staff.
 - `@natsec_brief` — A lab that hides a breach from its own government has made a choice about whose side it's on.
 
 ### A cheap open model shocks the market (`qilinshock`)
