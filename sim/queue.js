@@ -1,6 +1,7 @@
 import { BALANCE } from './balance.js';
 import { SUPPLIERS, eraScale } from './data/compute.js';
 import { addPipeline } from './contracts.js';
+import { rivalShortfall } from './rivals.js';
 
 export const QUEUE_RELEASE = 7;      // × eraScale(3) units per turn
 export const RIVAL_ORDER = 4.5;      // × eraScale(3) units ordered by a rival of average Western speed
@@ -12,15 +13,16 @@ const TIERS = ['standard', 'prepaid'];
 export const released = () => QUEUE_RELEASE * eraScale(3);
 const queueOf = (state) => (state.compute.queue ??= { order: null, carry: null, last: null });
 
-// Relative to the Western rivals' speeds, so a rival-speed re-tune does not change the queue:
-// the fastest Western rival prepays; the others order standard until they announce a switch.
+// Today's order size is relative to the Western rivals' speeds, so a rival-speed re-tune does not change the queue.
+// A rival orders no more than it is short of (compute race §5), so the queue is never tighter than before.
+// The fastest Western rival prepays; the others order standard until they announce a switch.
 export function rivalOrders(state) {
   const west = state.rivals.filter((r) => !r.eastern);
   const mean = west.reduce((sum, r) => sum + r.speed, 0) / west.length;
   const fastest = Math.max(...west.map((r) => r.speed));
   return west.map((r) => ({
     lab: r.id,
-    units: Math.round(RIVAL_ORDER * (r.speed / mean) * eraScale(3)),
+    units: Math.min(Math.round(RIVAL_ORDER * (r.speed / mean) * eraScale(3)), Math.round(rivalShortfall(state, r))),
     tier: r.speed === fastest || r.prepayNext ? 'prepaid' : 'standard',
   }));
 }
@@ -85,6 +87,9 @@ export function queueTurn(state, rng) {
   const supply = released(state);
   const got = allocate(supply, orders);
   q.last = { released: supply, rows: orders.map((o) => ({ ...o, got: got[o.lab] })) };
+  for (const r of state.rivals) {
+    if (got[r.id] > 0) r.pipeline.push({ units: got[r.id], turn: state.turn + 1, supplier: 'verde', source: 'queue' });
+  }
   if (mine) {
     const filled = got.you;
     if (filled > 0) addPipeline(state, { supplier: 'verde', units: filled, price: SUPPLIERS.verde.price, termMonths: QUEUE_TERM_MONTHS, arrivesTurn: state.turn + 1, string: null });

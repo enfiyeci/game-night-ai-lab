@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import { BALANCE } from '../sim/balance.js';
 import { SUPPLIERS, eraScale } from '../sim/data/compute.js';
+import { rivalShortfall } from '../sim/rivals.js';
 import { allocate, rivalOrders, placeOrder, queueTurn, released, withdrawOrder, QUEUE_RELEASE, RIVAL_ORDER, PREPAY_SHARE, QUEUE_TERM_MONTHS } from '../sim/queue.js';
 
 // Rival speeds are pinned here so a balance re-tune of rival speed does not change these tests.
@@ -94,4 +95,24 @@ test('outside era 3 the queue clears', () => {
   s.era = 4;
   assert.deepEqual(queueTurn(s, lo), []);
   assert.equal(s.compute.queue.carry, null);
+});
+
+test('a rival that has enough compute coming orders less', () => {
+  const s = fresh3();
+  const ob = s.rivals.find((r) => r.id === 'openbrain');
+  assert.equal(rivalOrders(s).find((x) => x.lab === 'openbrain').units, orderOf(SPEED.openbrain), 'short by more than today’s order: today’s order');
+  ob.pipeline.push({ units: Math.ceil(rivalShortfall(s, ob)) - 5, turn: s.turn + 1, source: 'offBoard' });
+  assert.equal(rivalOrders(s).find((x) => x.lab === 'openbrain').units, Math.round(rivalShortfall(s, ob)));
+  ob.pipeline.push({ units: 1000, turn: s.turn + 1, source: 'offBoard' });
+  assert.equal(rivalOrders(s).find((x) => x.lab === 'openbrain').units, 0);
+});
+
+test('what the queue gives a rival lands in its fleet next round', () => {
+  const s = fresh3();
+  queueTurn(s, lo);
+  const rows = s.compute.queue.last.rows.filter((row) => row.lab !== 'you' && row.got > 0);
+  assert.ok(rows.length > 0);
+  for (const row of rows) {
+    assert.deepEqual(s.rivals.find((r) => r.id === row.lab).pipeline.at(-1), { units: row.got, turn: s.turn + 1, supplier: 'verde', source: 'queue' });
+  }
 });
