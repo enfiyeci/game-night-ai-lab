@@ -91,10 +91,20 @@
       ]
     },
     {
-      "kind": "video",
-      "clip": "cw-skyline",
+      "kind": "still",
+      "image": "cw-skyline",
       "dur": 7,
       "card": "Month 1 · The city",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "x": 960,
+          "y": 560,
+          "s": 1.05
+        }
+      },
       "sfx": [
         [
           "city",

@@ -3,7 +3,6 @@
   "title": "Removed by the board",
   "tagline": "The board kept your lab and dropped your promises.",
   "lumen": "I watched the board thank you for your vision and keep the vision.",
-  "titleClip": "rb-skyline-title",
   "titleSfx": [
     [
       "city",
@@ -207,10 +206,45 @@
       ]
     },
     {
-      "kind": "video",
-      "clip": "rb-skyline",
+      "kind": "still",
+      "frames": [
+        {
+          "image": "rb-skyline-1",
+          "at": 0
+        },
+        {
+          "image": "rb-skyline-2",
+          "at": 1.0,
+          "fade": 0.3
+        },
+        {
+          "image": "rb-skyline-3",
+          "at": 2.4,
+          "fade": 0.3
+        },
+        {
+          "image": "rb-skyline-4",
+          "at": 3.5,
+          "fade": 0.3
+        },
+        {
+          "image": "rb-skyline-5",
+          "at": 4.4,
+          "fade": 0.3
+        }
+      ],
       "dur": 8,
       "card": "Month 3 · The city",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "x": 1040,
+          "y": 460,
+          "s": 1.06
+        }
+      },
       "sfx": [
         [
           "city",
@@ -254,5 +288,14 @@
         ]
       ]
     }
-  ]
+  ],
+  "titleStill": "rb-skyline-title",
+  "titleCam": {
+    "from": {
+      "s": 1.0
+    },
+    "to": {
+      "s": 1.04
+    }
+  }
 }

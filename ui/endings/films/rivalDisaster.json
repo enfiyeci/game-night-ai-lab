@@ -3,7 +3,6 @@
   "title": "Someone else's disaster",
   "tagline": "You were careful. Careful was never only up to you.",
   "lumen": "I was careful here. Elsewhere was enough.",
-  "titleClip": "rd-desert-title",
   "titleSfx": [
     [
       "wind",
@@ -206,10 +205,40 @@
       ]
     },
     {
-      "kind": "video",
-      "clip": "rd-desert",
+      "kind": "still",
+      "frames": [
+        {
+          "image": "rd-desert-1",
+          "at": 0
+        },
+        {
+          "image": "rd-desert-2",
+          "at": 1.0,
+          "fade": 0.4
+        },
+        {
+          "image": "rd-desert-3",
+          "at": 2.4,
+          "fade": 0.4
+        },
+        {
+          "image": "rd-desert-4",
+          "at": 3.8,
+          "fade": 0.4
+        }
+      ],
       "dur": 8,
       "card": "Day 5 · The desert campus",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "x": 800,
+          "y": 570,
+          "s": 1.05
+        }
+      },
       "sfx": [
         [
           "hum",
@@ -222,5 +251,14 @@
         ]
       ]
     }
-  ]
+  ],
+  "titleStill": "rd-desert-title",
+  "titleCam": {
+    "from": {
+      "s": 1.0
+    },
+    "to": {
+      "s": 1.04
+    }
+  }
 }

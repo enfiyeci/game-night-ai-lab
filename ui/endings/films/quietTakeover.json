@@ -140,10 +140,20 @@
       ]
     },
     {
-      "kind": "video",
-      "clip": "qt-desert",
+      "kind": "still",
+      "image": "qt-desert",
       "dur": 7,
       "card": "Month 4, 3 am · The desert campus",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "x": 800,
+          "y": 590,
+          "s": 1.06
+        }
+      },
       "sfx": [
         [
           "wind",

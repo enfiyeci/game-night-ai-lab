@@ -101,10 +101,40 @@
       ]
     },
     {
-      "kind": "video",
-      "clip": "lb-skyline",
+      "kind": "still",
+      "frames": [
+        {
+          "image": "lb-skyline-1",
+          "at": 0
+        },
+        {
+          "image": "lb-skyline-2",
+          "at": 1.6,
+          "fade": 0.4
+        },
+        {
+          "image": "lb-skyline-3",
+          "at": 3.2,
+          "fade": 0.4
+        },
+        {
+          "image": "lb-skyline-4",
+          "at": 4.8,
+          "fade": 0.4
+        }
+      ],
       "dur": 8,
       "card": "Months pass · The city",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "x": 920,
+          "y": 600,
+          "s": 1.05
+        }
+      },
       "sfx": [
         [
           "city",
@@ -210,10 +240,20 @@
       ]
     },
     {
-      "kind": "video",
-      "clip": "lb-desert",
+      "kind": "still",
+      "image": "lb-desert",
       "dur": 7,
       "card": "Year 1 · The desert",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "x": 780,
+          "y": 500,
+          "s": 1.05
+        }
+      },
       "sfx": [
         [
           "wind",

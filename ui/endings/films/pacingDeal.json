@@ -224,10 +224,20 @@
       ]
     },
     {
-      "kind": "video",
-      "clip": "pd-desert",
+      "kind": "still",
+      "image": "pd-desert",
       "dur": 7,
       "card": "Month 2 · The desert campus",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "x": 900,
+          "y": 560,
+          "s": 1.05
+        }
+      },
       "sfx": [
         [
           "wind",

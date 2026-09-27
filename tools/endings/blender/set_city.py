@@ -245,7 +245,8 @@ def poster(face, width, height, lines, du=0.0, paper="#E6E0D2"):
     c, s = math.cos(yaw), math.sin(yaw)
     nx, ny = math.sin(yaw), -math.cos(yaw)
     x, y, z = face.location
-    px, py = x + du * c + 0.08 * nx, y + du * s + 0.08 * ny
+    # in front of the board's own letters (billboard() sets them 0.1 x height/10 m off the face), so they are covered
+    px, py = x + du * c + 0.2 * nx, y + du * s + 0.2 * ny
     kit.box((px, py, z), (width, 0.02, height), kit.mat(paper, 0.85), rot=(0, 0, yaw))
     for body, dz, size, colour in lines:
         kit.text(body, (px + 0.03 * nx, py + 0.03 * ny, z + dz), size, colour, font=kit.FONT_COND, rot=(math.radians(90), 0, yaw))
@@ -445,7 +446,7 @@ kit.run({
     "al-skyline": shot_al_skyline,
     "al-skyline-title": shot_al_skyline_title,
     **{f"rb-skyline-{k}": rb_shot(k) for k in range(1, 6)},
-    "rb-skyline-title": rb_shot(5, ((0, -190, 118), (0, 800, 250), 35), title=True),
+    "rb-skyline-title": rb_shot(5, ((0, -190, 118), (0, 800, 300), 30), title=True),
     **{f"lb-skyline-{k + 1}": lb_shot(k) for k in range(4)},
     **{f"mu-skyline-{2 * k + 1}": mu_shot(k, False) for k in range(5)},
     **{f"mu-skyline-{2 * k + 2}": mu_shot(k, True) for k in range(4)},

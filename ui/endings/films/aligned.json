@@ -3,7 +3,6 @@
   "title": "Aligned success",
   "tagline": "You reached the frontier and kept your model trustworthy.",
   "lumen": "I became more capable without becoming less honest. We did that together.",
-  "titleClip": "al-skyline-title",
   "titleSfx": [
     [
       "chord",
@@ -241,10 +240,20 @@
       ]
     },
     {
-      "kind": "video",
-      "clip": "al-skyline",
+      "kind": "still",
+      "image": "al-skyline",
       "dur": 8,
       "card": "Year 1 · The city",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "x": 960,
+          "y": 500,
+          "s": 1.05
+        }
+      },
       "sfx": [
         [
           "city",
@@ -256,5 +265,14 @@
         ]
       ]
     }
-  ]
+  ],
+  "titleStill": "al-skyline-title",
+  "titleCam": {
+    "from": {
+      "s": 1.0
+    },
+    "to": {
+      "s": 1.04
+    }
+  }
 }
