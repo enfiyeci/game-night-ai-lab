@@ -4469,3 +4469,35 @@ html.title-waking #hud { transition: opacity .5s ease .6s; }
 .paper-note .company-card-reason, .paper-letter .company-card-reason { margin-top: auto; padding-top: 10px; }
 .paper-folder .paper-foot { margin-top: 12px; }
 @media (prefers-reduced-motion: reduce) { .paper-slot, .paper-note, .paper-letter { transition: none; } }
+/* compute race tab (compute race plan Task 10; docs/design/mockups/compute-race/plan.html, "The race tab") */
+.compute-info-race .dlg { padding-bottom: 66px; }
+.race-share { display: flex; height: 46px; overflow: hidden; border-radius: 9px; background: color-mix(in oklab, var(--ink) 7%, var(--paper)); }
+.race-share-part { display: flex; min-width: 4px; padding: 0 10px; flex-basis: 0; flex-direction: column; justify-content: center; overflow: hidden; color: var(--paper); font-size: 12px; font-weight: 800; line-height: 1.15; white-space: nowrap; }
+.race-share-part b { font-size: 15px; font-weight: 900; }
+.race-share-part.you { background: var(--coral); }
+.race-share-part.r1 { background: color-mix(in oklab, var(--ink) 62%, var(--paper)); }
+.race-share-part.r2 { background: color-mix(in oklab, var(--ink) 50%, var(--paper)); }
+.race-share-part.r3 { background: color-mix(in oklab, var(--ink) 28%, var(--paper)); color: var(--ink); }
+.race-share-part.r4 { background: color-mix(in oklab, var(--ink) 18%, var(--paper)); color: var(--ink); }
+.race-table { width: 100%; margin-top: 14px; border-collapse: collapse; font-size: 13px; font-weight: 800; }
+.race-table th { padding: 0 8px 6px; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); font-size: 11px; font-weight: 900; letter-spacing: .06em; text-align: left; text-transform: uppercase; }
+.race-table td { padding: 7px 8px; border-top: 1px solid color-mix(in oklab, var(--ink) 8%, transparent); vertical-align: middle; }
+.race-table .n { text-align: right; font-variant-numeric: tabular-nums; }
+.race-table td.n b { display: block; }
+.race-table td.n small { display: block; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); font-size: 11px; font-weight: 700; }
+.race-table tr.you td { color: color-mix(in oklab, var(--coral) 82%, var(--ink)); }
+.race-table tr.you td.n small { color: color-mix(in oklab, var(--coral) 60%, var(--ink)); }
+.race-size { display: inline-block; padding: 1px 8px; border-radius: 6px; color: var(--paper); background: var(--sky); font-size: 11.5px; font-weight: 900; }
+.race-size.small { color: var(--ink); background: color-mix(in oklab, var(--sky) 45%, var(--paper)); }
+.race-size.xl { background: color-mix(in oklab, var(--sky) 70%, var(--ink)); }
+.race-size.none { color: color-mix(in oklab, var(--ink) 62%, var(--paper)); background: color-mix(in oklab, var(--ink) 7%, var(--paper)); }
+.race-word { display: inline-block; padding: 2px 9px; border-radius: 999px; color: color-mix(in oklab, var(--ink) 70%, var(--paper)); background: color-mix(in oklab, var(--ink) 7%, var(--paper)); font-size: 11.5px; font-weight: 900; white-space: nowrap; }
+.race-word.hot { color: var(--paper); background: color-mix(in oklab, var(--coral) 88%, var(--ink)); }
+.race-word.mine { color: var(--paper); background: color-mix(in oklab, var(--teal) 85%, var(--ink)); }
+.race-boxes { display: grid; grid-template-columns: 1fr 1fr; align-items: start; gap: 16px; margin-top: 14px; }
+.race-box { padding: 10px 14px; border-radius: 10px; background: color-mix(in oklab, var(--ink) 5%, var(--paper)); font-size: 12.5px; font-weight: 700; line-height: 1.45; }
+.race-box.end { background: color-mix(in oklab, var(--coral) 11%, var(--paper)); }
+.race-box b { font-weight: 900; }
+.race-box.end b { display: block; margin-bottom: 2px; }
+.race-box p { margin: 0 0 4px; }
+.race-box p:last-child { margin-bottom: 0; }
