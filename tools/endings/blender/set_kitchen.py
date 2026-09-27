@@ -431,7 +431,7 @@ def shot_pd_school():
     kit.place("potted_plant_01", (-0.8, RD - 0.08, 0.93), scale=0.6)
     # afternoon sun streams in across the table
     kit.sun((52, 0, 230), 4.5, kit.kelvin(5200), angle=0.8)
-    kit.camera((0.5, 2.35, 1.45), (-0.02, 3.1, 0.82), lens=40, fstop=5.6, focus=face)
+    kit.camera((0.52, 2.25, 1.45), (-0.02, 3.1, 0.93), lens=38, fstop=5.6, focus=face)
     bpy.context.scene.view_settings.exposure = 0.8
 
 
