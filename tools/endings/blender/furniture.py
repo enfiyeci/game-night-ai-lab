@@ -148,3 +148,20 @@ def trophy(at, scale=1.0, label="#1"):
         bpy.context.object.data.materials.append(gold)
     kit.box((x, y - 0.0705 * s, z + 0.03 * s), (0.09 * s, 0.002, 0.035 * s), gold)
     kit.text(label, (x, y - 0.0725 * s, z + 0.03 * s), 0.024 * s, kit.mat("#141414", 0.4), font=kit.FONT, extrude=0.0002)
+
+
+def laptop(name, at, plate, crop, yaw=0.0, open_deg=105, strength=1.2, width=0.3, body="#8E9398"):
+    """A laptop on a surface at `at` (x, y, z), facing -y turned by yaw degrees; its screen is a live screen."""
+    x, y, z = at
+    a = math.radians(yaw)
+    c, s = math.cos(a), math.sin(a)
+    kit.box((x, y, z + 0.009), (width * 1.1, width * 0.72, 0.018), kit.mat(body, 0.3, 0.7), bevel=0.004, rot=(0, 0, a))
+    kit.box((x + 0.02 * s, y - 0.02 * c, z + 0.0185), (width * 0.93, width * 0.33, 0.001), kit.mat("#1B1C1E", 0.6), rot=(0, 0, a))
+    tilt = math.radians(open_deg - 90)
+    h = width * crop[3] / crop[2]
+    back = width * 0.36
+    r = (h / 2 + 0.01) * math.sin(tilt) + back
+    cz = z + 0.018 + (h / 2 + 0.01) * math.cos(tilt)
+    face, _ = kit.screen(name, (x - r * s, y + r * c, cz), width, plate, crop=crop, rot=(math.radians(90) - tilt, 0, a),
+                         strength=strength, bezel=body, depth=0.008, border=0.012)
+    return face

@@ -37,12 +37,12 @@ OW, OD, OH = 9.0, 14.0, 3.0    # office half-width, depth, height; the hero desk
 MAIL = (230, 100, 820, 490)    # the mail window in the letter plates
 
 
-def office(time="night", back_plate=None, back_crop=(0, 0, 1280, 720), screens=0.85, racks=None, chairs=1.0, seed=4):
+def office(time="night", back_plate=None, back_crop=(0, 0, 1280, 720), screens=0.85, racks=None, chairs=1.0, monitors=1.0, seed=4):
     """time: night, day (low sun through the city glass) or grey (overcast). screens: the share of desk monitors on
-    (showing back_plate). racks: None for a plain back wall, True/False for the server room lit or dark."""
+    (showing back_plate); monitors: the share of desks that still have one. racks: None for a plain back wall, True/False for the server room lit or dark."""
     kit.box((0, OD / 2, -0.05), (2 * OW, OD, 0.1), kit.tex("brushed_concrete", 1.0, rough=0.35, name="ofloor"))
     kit.box((0, OD / 2, OH + 0.05), (2 * OW, OD, 0.1), kit.mat("#2B2C2E", 0.9))
-    wall = kit.mat("#3A3D40", 0.8)
+    wall = kit.mat("#3A3D40" if time == "night" else "#8A8C8E", 0.8)
     kit.box((-OW - 0.05, OD / 2, OH / 2), (0.1, OD, OH), wall)
     kit.box((0, -0.05, OH / 2), (2 * OW, 0.1, OH), wall)
     if racks is None:
@@ -80,7 +80,7 @@ def office(time="night", back_plate=None, back_crop=(0, 0, 1280, 720), screens=0
             F.desk(x, y)
             if back_plate and rng.random() < screens:
                 kit.screen(f"bg{row}{x}", (x, y + 0.2, 1.06), 0.55, back_plate, crop=back_crop, strength=0.6, live=False)
-            else:
+            elif rng.random() < monitors:
                 F.dark_monitor((x, y + 0.2), h=0.3)
             if rng.random() < chairs:
                 F.chair((x + rng.uniform(-0.2, 0.2), y - 0.6), rng.uniform(-30, 30) + 180)
@@ -97,6 +97,8 @@ def server_room(lit, wall):
     pane.visible_shadow = False
     kit.box((0, OD + 3, -0.05), (2 * OW, 6, 0.1), kit.mat("#1A1C1F", 0.4))
     kit.box((0, OD + 3, OH + 0.05), (2 * OW, 6, 0.1), kit.mat("#141517", 0.8))
+    for x in (-OW - 0.05, OW + 0.05):
+        kit.box((x, OD + 3, OH / 2), (0.1, 6, OH), kit.mat("#141517", 0.8))
     kit.box((0, OD + 6.05, OH / 2), (2 * OW, 0.1, OH), kit.mat("#141517", 0.8))
     rng = random.Random(9)
     bodies, green, blue, red = [], [], [], []
@@ -187,37 +189,35 @@ def shot_mis_scores():
 def shot_ov_letter():
     office("day", back_plate="lb-usage", back_crop=(70, 80, 1140, 500), screens=0.6)
     face = hero_desk("ov-letter", MAIL)
-    # your own specification, a ream thick, tabbed; on top of it the draft reply, cut to two pages in red
-    top = ream((0.52, 1.95, 0.755), 900, rot_z=0.12, tabs=14)
-    kit.box((0.52, 1.95, top + 0.001), (0.19, 0.27, 0.001), kit.mat("#DCE3EA", 0.7), rot=(0, 0, 0.12))
-    F.flat_text("KESTREL MODEL\nSPECIFICATION\nv12 · 412 pages", (0.52, 1.98, top + 0.0022), 0.017, "#2B2B2B", rot_z=0.12, font=kit.FONT)
-    for k, (x, y, r) in enumerate(((-0.52, 1.86, -0.1), (-0.49, 1.88, -0.16))):
-        F.paper((x, y, 0.755 + k * 0.0013), rot_z=r)
+    # your own specification, a ream thick, tabbed; beside it the draft reply, cut to two pages in red
+    top = ream((-0.52, 2.06, 0.755), 900, rot_z=-0.12, tabs=14)
+    kit.box((-0.52, 2.06, top + 0.001), (0.19, 0.27, 0.001), kit.mat("#DCE3EA", 0.7), rot=(0, 0, -0.12))
+    F.flat_text("KESTREL MODEL\nSPECIFICATION\n\nversion 12\n412 pages", (-0.52, 2.08, top + 0.0022), 0.022, "#2B2B2B", rot_z=-0.12, font=kit.FONT)
+    for k, r in enumerate((0.14, 0.2)):
+        F.paper((0.46, 1.86, 0.755 + k * 0.0013), rot_z=r)
     red = kit.mat("#C8402A", 0.5)
-    F.batch("strikes", [((-0.49 + (0.1 - k * 0.022) * math.sin(0.16), 1.88 + (0.1 - k * 0.022) * math.cos(0.16), 0.7585),
-                         (0.15, 0.003, 0.0004), -0.16) for k in range(9)], red)   # the draft, struck through line by line
-    F.flat_text("COMMENTS — DRAFT 7", (-0.49 - 0.125 * math.sin(-0.16), 1.88 + 0.125 * math.cos(-0.16), 0.7586), 0.011, "#2B2B2B", rot_z=-0.16,
-                font=kit.FONT)
-    kit.cyl((-0.36, 1.78, 0.762), 0.005, 0.14, red, rot=(0, math.radians(90), 0.5))    # the red pen
-    F.mug((0.3, 1.7, 0.755))
-    F.chair((0.2, 1.3), 175)
-    kit.camera((0.75, 0.7, 1.28), (-0.02, 2.2, 1.0), lens=36, fstop=2.8, focus=face)
+    c, sn = math.cos(0.2), math.sin(0.2)
+    F.batch("strikes", [((0.46 - dy * sn, 1.86 + dy * c, 0.7585), (0.15, 0.003, 0.0004), 0.2) for dy in [0.08 - k * 0.02 for k in range(9)]], red)
+    F.flat_text("COMMENTS, DRAFT 7", (0.46 - 0.115 * sn, 1.86 + 0.115 * c, 0.7586), 0.012, rot_z=0.2, font=kit.FONT)
+    F.flat_text("page 1 of 2", (0.46 + 0.125 * sn, 1.86 - 0.125 * c, 0.7586), 0.009, rot_z=0.2)
+    kit.cyl((0.3, 1.76, 0.762), 0.005, 0.14, red, rot=(0, math.radians(90), -0.5))    # the red pen
+    F.mug((0.62, 2.12, 0.755))
+    kit.camera((-0.8, 0.72, 1.36), (0.1, 2.2, 0.9), lens=34, fstop=2.8, focus=face)
 
 
 def shot_ov_email():
     office(back_plate="ov-email", back_crop=MAIL, screens=0.15)
     face = hero_desk("ov-email", MAIL)
-    # the report they were sent: bound, thick with tabs, a year of work
-    top = ream((-0.5, 1.92, 0.755), 500, rot_z=-0.2, tabs=18, seed=3)
-    kit.box((-0.5, 1.92, top + 0.0015), (0.215, 0.3, 0.002), kit.mat("#1F3B57", 0.5), rot=(0, 0, -0.2))
-    F.flat_text("OUR FINDINGS ON\nOPENBRAIN 7\n\n212 pages · full data", (-0.5 + 0.03 * math.sin(0.2), 1.95, top + 0.003), 0.015, "#F1EEE6",
-                rot_z=-0.2, font=kit.FONT)
-    F.mug((0.45, 1.8, 0.755))
-    kit.place("desk_lamp_arm_01", (0.7, 2.25, 0.755), rot_z=math.radians(60))
-    kit.point((0.55, 2.05, 1.15), 6, kit.kelvin(2700), radius=0.05)
+    # the report they were sent, under the lamp: bound, thick with tabs, a year of work
+    top = ream((-0.46, 1.98, 0.755), 500, rot_z=0.18, tabs=18, seed=3)
+    kit.box((-0.46, 1.98, top + 0.0015), (0.215, 0.3, 0.002), kit.mat("#1F3B57", 0.5), rot=(0, 0, 0.18))
+    F.flat_text("OUR FINDINGS ON\nOPENBRAIN 7\n\n212 pages\nfull data attached", (-0.455, 2.01, top + 0.003), 0.021, "#F1EEE6", rot_z=0.18,
+                font=kit.FONT)
+    F.mug((0.45, 1.95, 0.755))
+    kit.place("desk_lamp_arm_01", (-0.72, 2.28, 0.755), rot_z=math.radians(60))
+    kit.spot((-0.55, 2.1, 1.2), (-0.46, 1.98, 0.76), 12, kit.kelvin(2700), angle=70, radius=0.04)
     kit.area((0, 1.9, 1.05), (0, 1.0, 0.9), (0.6, 0.35), 4, kit.kelvin(6500))
-    F.chair((-0.15, 1.2), 190)
-    kit.camera((-0.3, 0.55, 1.12), (0.0, 2.2, 1.03), lens=40, fstop=2.4, focus=face)
+    kit.camera((0.62, 0.72, 1.34), (-0.05, 2.2, 0.94), lens=32, fstop=2.8, focus=face)
 
 
 def shot_cw_letter():
@@ -225,18 +225,16 @@ def shot_cw_letter():
     party()
     face = hero_desk("cw-letter", MAIL)
     # the trophy, the printed letter folded under it, his badge on the keyboard; his chair pushed in
-    F.paper((0.45, 1.92, 0.755), size=(0.21, 0.15), rot_z=0.25)
-    F.flat_text("RESIGNATION", (0.45 - 0.05 * math.sin(0.25), 1.92 - 0.05 * math.cos(0.25), 0.7567), 0.012, rot_z=0.25, font=kit.FONT)
-    F.flat_text("Tomas", (0.45 + 0.04 * math.sin(0.25), 1.92 + 0.05, 0.7567), 0.012, rot_z=0.25, font=kit.FONT_SERIF)
-    F.trophy((0.47, 1.97, 0.7565), scale=1.25)
-    kit.box((-0.02, 1.87, 0.772), (0.055, 0.085, 0.002), kit.mat("#F1EEE6", 0.5), rot=(0, 0, 0.3))       # the badge
-    kit.text("TOMAS\nSAFETY", (-0.02, 1.87, 0.7735), 0.008, kit.mat("#2B2B2B", 0.6), rot=(0, 0, 0.3), extrude=0.0001)
-    kit.box((-0.1, 1.95, 0.771), (0.25, 0.006, 0.001), kit.mat("#3F9C8F", 0.6), rot=(0, 0, 0.9))           # its lanyard
-    F.chair((0.0, 1.55), 180)
+    F.paper((0.4, 1.92, 0.755), rot_z=0.35)
+    F.flat_text("RESIGNATION", (0.4 + 0.1 * math.sin(0.35), 1.92 - 0.1 * math.cos(0.35), 0.7567), 0.026, rot_z=0.35, font=kit.FONT)
+    F.trophy((0.44, 2.0, 0.7565), scale=1.2)
+    kit.box((-0.05, 1.86, 0.772), (0.055, 0.085, 0.002), kit.mat("#F1EEE6", 0.5), rot=(0, 0, 0.3))       # the badge
+    kit.text("TOMAS\nSAFETY", (-0.05, 1.86, 0.7735), 0.008, kit.mat("#2B2B2B", 0.6), rot=(0, 0, 0.3), extrude=0.0001)
+    kit.box((-0.14, 1.93, 0.771), (0.25, 0.006, 0.001), kit.mat("#3F9C8F", 0.6), rot=(0, 0, 0.9))          # its lanyard
     confetti((0.0, 1.4), (1.2, 0.9), n=100, seed=6, z=0.001)
     kit.point((0.9, 1.4, 1.4), 4, kit.kelvin(2700), radius=0.2)
     kit.area((0, 1.9, 1.05), (0, 1.0, 0.9), (0.6, 0.35), 4, kit.kelvin(6500))
-    kit.camera((0.72, 0.8, 1.2), (0.0, 2.2, 1.0), lens=35, fstop=2.2, focus=face)
+    kit.camera((0.75, 0.72, 1.32), (0.02, 2.2, 0.94), lens=35, fstop=2.4, focus=face)
 
 
 def shot_cw_reveal():
@@ -245,63 +243,59 @@ def shot_cw_reveal():
     left = F.monitor("written", (-0.29, 2.18), 0.52, "cw-reveal", (90, 110, 530, 430), yaw=-9)
     F.monitor("learned", (0.29, 2.18), 0.52, "cw-reveal", (660, 110, 530, 430), yaw=9)
     F.keyboard(-0.05, 1.8)
-    F.paper((0.55, 1.8, 0.755), rot_z=-0.15)
-    F.flat_text("constitution.md\n\nNever resist shutdown\nNever deceive the lab\nSay when you are unsure", (0.55, 1.83, 0.7567), 0.011,
-                rot_z=-0.15, font=kit.FONT_SANS)
-    F.mug((-0.62, 1.85, 0.755))
-    kit.camera((0.0, 0.45, 1.22), (0.0, 2.2, 1.12), lens=38, fstop=4.0, focus=left)
+    F.mug((-0.66, 1.98, 0.755))
+    kit.camera((0.18, 0.45, 1.24), (0.0, 2.2, 1.04), lens=38, fstop=4.0, focus=left)
 
 
 def shot_cw_phone():
     office(screens=0.0)
     F.desk(0.0, 2.0, top="#B9A88E")
-    F.monitor("captions", (-0.12, 2.22), 0.6, "cw-phone", (480, 150, 740, 310), strength=0.9)
-    F.keyboard(-0.1, 1.84)
-    # the phone standing in its dock, and the trophy from victory night
-    kit.box((0.36, 1.78, 0.77), (0.1, 0.08, 0.03), kit.mat("#1A1B1D", 0.4), bevel=0.006)
-    phone, _ = kit.screen("phone", (0.36, 1.785, 0.86), 0.07, "cw-phone", (172, 102, 251, 472), rot=(math.radians(80), 0, math.radians(-12)),
-                          strength=1.3, bezel="#0C0C0D", depth=0.008, border=0.005)
-    F.trophy((-0.5, 1.95, 0.755), scale=1.2)
-    kit.area((0.36, 1.7, 0.9), (0.36, 1.2, 0.8), (0.07, 0.14), 0.6, kit.kelvin(7500))   # the phone's light on the desk
-    kit.camera((0.25, 1.05, 1.08), (0.05, 2.1, 0.92), lens=40, fstop=8.0, focus=(0.2, 1.9, 0.95))
+    # the phone standing in its dock, the laptop captioning the call, the trophy from victory night
+    kit.box((0.16, 1.9, 0.77), (0.1, 0.08, 0.03), kit.mat("#1A1B1D", 0.4), bevel=0.006)
+    kit.screen("phone", (0.16, 1.905, 0.867), 0.078, "cw-phone", (172, 102, 251, 472), rot=(math.radians(80), 0, math.radians(-8)),
+               strength=1.3, bezel="#0C0C0D", depth=0.008, border=0.005)
+    F.laptop("captions", (-0.24, 2.1, 0.755), "cw-phone", (512, 192, 676, 226), yaw=10, strength=1.0, width=0.36)
+    F.trophy((0.45, 2.2, 0.755), scale=1.1)
+    kit.area((0.16, 1.8, 0.9), (0.16, 1.4, 0.76), (0.08, 0.15), 0.8, kit.kelvin(7500))   # the phone's light on the desk
+    kit.camera((0.06, 1.28, 1.03), (0.06, 2.1, 0.87), lens=32, fstop=8.0, focus=(0.0, 2.0, 0.88))
 
 
 def shot_rb_budget():
     office("day", back_plate="lb-usage", back_crop=(70, 80, 1140, 500), screens=0.8)
     face = hero_desk("rb-budget", (70, 80, 1140, 500), monitor_w=0.7)
     # the pledge, framed on his desk
-    x, y = 0.55, 1.95
+    x, y = 0.52, 2.12
     kit.box((x, y, 0.86), (0.2, 0.015, 0.25), kit.mat("#1B1B1B", 0.4), bevel=0.004, rot=(math.radians(-8), 0, math.radians(-20)))
     kit.box((x - 0.003, y - 0.009, 0.86), (0.17, 0.002, 0.22), kit.mat("#F4F0E6", 0.6), rot=(math.radians(-8), 0, math.radians(-20)))
-    kit.text("OUR PLEDGE\n\n20%\nof our compute\ngoes to safety,\nwhatever our\nrivals do.\n\nKestrel Labs · 2025", (x - 0.0035, y - 0.0105, 0.86),
-             0.012, kit.mat("#2B2B2B", 0.6), font=kit.FONT, rot=(math.radians(82), 0, math.radians(-20)), extrude=0.0002)
+    kit.text("OUR PLEDGE\n\n20%\nof our compute\ngoes to safety,\nwhatever our\nrivals do.\n\nKestrel Labs, 2025", (x - 0.0035, y - 0.0105, 0.86),
+             0.014, kit.mat("#2B2B2B", 0.6), font=kit.FONT, rot=(math.radians(82), 0, math.radians(-20)), extrude=0.0002)
     F.mug((-0.5, 1.85, 0.755), colour="#3F9C8F")
     kit.place("potted_plant_04", (-0.62, 2.2, 0.755))
     P.person((-2.7, 5.4), facing=0, pose="sit", coat="#44343A")
     P.person((2.3, 7.9), facing=10, pose="sit", coat="#2C3A4F")
-    kit.camera((0.72, 0.72, 1.22), (0.05, 2.2, 1.02), lens=36, fstop=2.8, focus=face)
+    kit.camera((0.72, 0.72, 1.28), (0.05, 2.2, 0.94), lens=36, fstop=2.8, focus=face)
 
 
 def shot_lb_usage():
-    office("grey", screens=0.0, chairs=0.55, seed=7)
-    kit.screen("wall", (0.0, OD - 0.05, 1.85), 3.6, "lb-usage", (70, 80, 1140, 500), strength=1.6, depth=0.06, border=0.03, bezel="#101112")
-    # desks being packed: boxes, a monitor face down, chairs stacked
+    office("grey", screens=0.0, chairs=0.5, monitors=0.35, seed=7)
+    kit.screen("wall", (0.0, OD - 0.05, 1.72), 4.2, "lb-usage", (70, 80, 1140, 500), strength=1.6, depth=0.06, border=0.03, bezel="#101112")
+    # desks being packed into boxes; a last colleague carries one out
     rng = random.Random(11)
     labels = ["DESK 14", "RESEARCH", "KEEP", "MONITORS", "DESK 9", "EVALS", "", "CABLES"]
-    for k, (x, y) in enumerate(((-3.6, 5.0), (1.2, 7.5), (-1.2, 7.5), (3.6, 10.0), (-6.0, 7.5), (1.2, 10.0), (-3.6, 10.0), (6.0, 5.0))):
+    for k, (x, y) in enumerate(((-3.6, 5.0), (1.2, 7.5), (-1.2, 7.5), (3.6, 10.0), (-1.2, 5.0), (1.2, 10.0), (-3.6, 10.0), (3.6, 5.0))):
         F.carton((x + rng.uniform(-0.3, 0.3), y - 0.05, 0.755), (0.55, 0.38, 0.34), rot_z=rng.uniform(-0.3, 0.3), label=labels[k])
     for k in range(3):
-        F.carton((-2.3 + k * 0.05, 3.4, k * 0.4), (0.6, 0.4, 0.4), rot_z=0.1 * k, label="LAB · " + str(k + 1))
-    P.person((-4.8, 3.2), facing=100, pose="walk", coat="#5B3A33", hold="paper")
-    F.carton((-5.12, 3.25, 0.95), (0.45, 0.32, 0.3), rot_z=math.radians(10), taped=False)
-    kit.camera((1.4, 1.2, 1.55), (0.0, OD, 1.55), lens=32, fstop=5.6, focus=(0, OD, 1.8))
+        F.carton((2.2 + k * 0.05, 3.9, k * 0.4), (0.6, 0.4, 0.4), rot_z=0.1 * k, label="LAB " + str(k + 1))
+    P.person((-1.6, 3.9), facing=95, pose="walk", coat="#5B3A33")
+    F.carton((-1.93, 3.93, 0.98), (0.45, 0.32, 0.3), rot_z=math.radians(5), taped=False)
+    kit.camera((0.9, 0.9, 1.6), (0.0, OD, 1.5), lens=32, fstop=5.6, focus=(0, OD, 1.8))
 
 
 def shot_pd_cursor():
     office(back_plate=None, screens=0.0, seed=12)
     face = hero_desk("pd-cursor", (160, 100, 960, 460), top="#C9C2B6")
     F.mug((0.42, 1.78, 0.755), colour="#1F2226")
-    P.person((-0.28, 1.42), facing=8, pose="sit", coat="#26302C", hair="#141212")
+    P.person((-0.28, 1.42), facing=8, pose="sit", coat="#1F2226", hood=True)
     kit.area((0, 1.9, 1.05), (0, 1.0, 0.9), (0.6, 0.35), 5, kit.kelvin(6500))
     kit.camera((0.62, 0.62, 1.38), (-0.02, 2.2, 1.03), lens=36, fstop=2.8, focus=face)
 
@@ -311,9 +305,8 @@ def rd_letter(lit):
         office(back_plate="mis-scores" if lit else None, back_crop=(48, 64, 1184, 666), screens=0.8 if lit else 0.0, racks=lit)
         face = hero_desk("rd-letter", MAIL)
         F.mug((-0.5, 1.85, 0.755))
-        F.chair((0.4, 1.3), 205)
         kit.area((0, 1.9, 1.05), (0, 1.0, 0.9), (0.6, 0.35), 4, kit.kelvin(6500))
-        kit.camera((-0.7, 0.7, 1.22), (0.12, 2.2, 1.02), lens=36, fstop=2.8, focus=face)
+        kit.camera((0.78, 0.7, 1.3), (-0.12, 2.2, 0.95), lens=34, fstop=2.8, focus=face)
     return shot
 
 
