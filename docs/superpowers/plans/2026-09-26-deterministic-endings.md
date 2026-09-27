@@ -79,8 +79,8 @@ below are kept as the record.
   cost (scraping $200M, filtered $120M); licensed data and synthetic data from your own model are never sued.** Real
   lawsuits target training on crawled copyrighted work; licensing is what buys a lab out of them. Rule in code: a card
   is sued when its `legal.chance` is at least 0.3 (only those two), at `legal.cost`.
-- **D8. Fixed numbers become decision-driven (owner: "it would be good", if it is not much work; proposed, awaiting
-  the owner's OK on each).** All sit in files Part B already edits; each is a few lines plus a test.
+- **D8. Fixed numbers become decision-driven. Approved by the owner 2026-09-27 ("all sounds good as additions to the
+  current system").** All sit in files Part B already edits; each is a few lines plus a test.
   - Deal sizes: instead of the middle of each supplier's range, the lab's rank picks the spot in the range (first place
     gets the top, last place the bottom): suppliers give the biggest allocations to the biggest buyers.
   - Verde's era 4 letter of intent (headline delivery, today 30-100%): delivers what the lab can power when it lands
@@ -628,7 +628,8 @@ Rule shapes: 3 (average) for sizes and delays; 4 (D2) for the opposition cut.
 **Interfaces:**
 - Produces: `reserveGrid(state)`, `buildSite(state, source)`; `siteUnits(type)` (exported, the middle of the size
   range rounded to 10: grid 350, gas 450, nuclear 300); `SITE_TYPES.nuclear.slip = 1` (rounds late, replacing
-  `slipChance`). Grid reservation arrives at `eraStartTurn(4) + 1` when made in era 2 and `eraStartTurn(4) + 3` in
+  `slipChance`), which applies only while US favor is below `NUCLEAR_ON_TIME_FAVOR = 60` (D8: permits move for a lab
+  Washington likes). Grid reservation arrives at `eraStartTurn(4) + 1` when made in era 2 and `eraStartTurn(4) + 3` in
   era 3 (the average of today's draws, rounded).
 - `sim/contracts.js` still passes an rng to `reserveGrid`; that call is untouched here (gn-compute-race's file) and
   harmless.
@@ -649,8 +650,16 @@ test('sites have fixed sizes and dates: the middle of the old ranges', () => {
   const u = createInitialState();
   u.era = 4;
   assert.equal(buildSite(u, 'gas').arrivesTurn, u.turn + SITE_TYPES.gas.turns);
+  u.govFavor.us = 50;
   assert.equal(buildSite(u, 'nuclear').arrivesTurn, u.turn + SITE_TYPES.nuclear.turns + 1);
   assert.deepEqual(u.power.sites.map((site) => site.units), [450, 300]);
+});
+
+test('a nuclear restart opens on time when US favor is 60 or more', () => {
+  const s = createInitialState();
+  s.era = 4;
+  s.govFavor.us = 60;
+  assert.equal(buildSite(s, 'nuclear').arrivesTurn, s.turn + SITE_TYPES.nuclear.turns);
 });
 ```
 Import `eraStartTurn` if the file lacks it. Rewrite the existing assertions that read `SITE_TYPES.x.size[0]` or pass
@@ -683,7 +692,8 @@ export const siteUnits = (type) => Math.round((type.size[0] + type.size[1]) / 2 
 ```
 Replace `slipChance: 0.5` with `slip: 1` in `SITE_TYPES.nuclear`; delete `roll`. `reserveGrid(state)`:
 `const arrivesTurn = eraStartTurn(4) + (state.era === 2 ? 1 : 3);` and `siteUnits(SITE_TYPES.grid)`.
-`buildSite(state, source)`: `addSite(state, source, siteUnits(t), state.turn + t.turns + (t.slip ?? 0))`.
+`buildSite(state, source)`: `const slip = state.govFavor.us >= NUCLEAR_ON_TIME_FAVOR ? 0 : (t.slip ?? 0); // D8` and
+`addSite(state, source, siteUnits(t), state.turn + t.turns + slip)`, with `export const NUCLEAR_ON_TIME_FAVOR = 60;`.
 In `sim/data/events.js`: in `siteOpposition.trigger` keep the pop-up roll on its stream and delete the line
 `site.oppositionCut = rng.chance(0.3);`; in the `push` choice, decide the cut before the trust loss:
 
@@ -922,15 +932,16 @@ the file; if the compute race changed a spot, apply the same rule there.
 
 ## Task B1: Rivals move at a fixed pace; prepay announcements come on a fixed cadence
 
-Rule shapes: 3 (average) for pace (`1 + rng.next() × 0.3` → 1.15) and the launch roll (`rng.int(0, 4)` → 2); 1
-(running total, staggered per rival) for the prepay announcement.
+Rule shapes: 3 (average) for pace (`1 + rng.next() × 0.3` → 1.15) and the launch roll (`rng.int(0, 4)` → 2); D8 for
+the prepay announcement: a Western rival announces a prepay when it is short of its compute target
+(`rivalShortfall(state, r) > 0`, from the compute race), so taking its deals makes it short.
 
 **Files:** Modify `sim/rivals.js:101-110` (`rivalsTurn`), `sim/queue.js:103` (`queueTurn`), `sim/turn.js`
 (`queueTurn(state)`). Test `tests/state.test.js`, `tests/race.test.js`, `tests/landings.test.js`,
 `tests/queue.test.js`.
 
 **Interfaces:** Produces `rivalsTurn(state, _rng, opts)` (slot kept), `queueTurn(state)`,
-`export const PACE_FACTOR = 1.15`, `export const LAUNCH_ROLL = 2`, `r.prepayPressure`.
+`export const PACE_FACTOR = 1.15`, `export const LAUNCH_ROLL = 2`. `ANNOUNCE_CHANCE` is removed.
 
 - [ ] **Step 1: Write the failing tests** (`tests/state.test.js`):
 
@@ -947,20 +958,19 @@ test('rivals move the same way whatever rng is passed', () => {
 (`tests/queue.test.js`):
 
 ```js
-test('each Western rival announces a prepay every fourth round, staggered', () => {
+test('a Western rival announces a prepay exactly when it is short of its compute target', () => {
   const s = queueState(); // the file's era 3 setup
-  const announced = [];
-  for (let round = 0; round < 4; round++) {
-    announced.push(queueTurn(s).filter((e) => e.type === 'rivalPrepays').map((e) => e.lab));
-    for (const r of s.rivals) delete r.prepayNext;
-  }
-  const western = s.rivals.filter((r) => !r.eastern).map((r) => r.id);
-  assert.deepEqual(announced.flat().sort(), [...western].sort()); // each exactly once in four rounds
+  const [short, full] = s.rivals.filter((r) => !r.eastern);
+  short.fleet = 0;
+  full.fleet = rivalTarget(s, full) + 1000; // nothing missing, whatever is still arriving
+  const labs = queueTurn(s).filter((e) => e.type === 'rivalPrepays').map((e) => e.lab);
+  assert.ok(labs.includes(short.id));
+  assert.ok(!labs.includes(full.id));
 });
 ```
 Rewrite the stubbed tests (`tests/state.test.js:44,58`, `tests/race.test.js:57`, `tests/landings.test.js:56`,
 `tests/queue.test.js:69,85,93,95,110`): expected gains use `LAUNCH_ROLL`, progress uses `PACE_FACTOR`, a forced
-announcement becomes `r.prepayPressure = 1`.
+announcement becomes a rival with `fleet = 0`; a forced silence becomes a fleet above its target.
 
 - [ ] **Step 2:** run the four files → FAIL.
 - [ ] **Step 3: Implement.** `sim/rivals.js`:
@@ -972,18 +982,20 @@ export const PACE_FACTOR = 1.15;
 export const LAUNCH_ROLL = 2;
 ```
 `rivalsTurn(state, _rng, { deferTo = null } = {})`: `const step = r.speed * 0.35 * PACE_FACTOR;` and
-`launchGain(state, r, LAUNCH_ROLL, ...)`. `sim/queue.js` (import `accrue`): iterate with the index,
-`r.prepayPressure ??= index * ANNOUNCE_CHANCE;` then `if (accrue(r, 'prepayPressure', ANNOUNCE_CHANCE)) {`, and update
-the `ANNOUNCE_CHANCE` comment to "a Western rival announces a prepay every fourth round, staggered by list position".
+`launchGain(state, r, LAUNCH_ROLL, ...)`, keeping gn-compute-race's catch-up term untouched. `sim/queue.js` (import
+`rivalShortfall` from `./rivals.js`): replace `if (rng.chance(ANNOUNCE_CHANCE)) {` with
+`if (rivalShortfall(state, r) > 0) { // D8: a rival short of compute prepays for priority` and delete
+`ANNOUNCE_CHANCE`.
 `sim/turn.js`: `queueTurn(state)`; the `rivalsTurn(state, rng, ...)` call may stay.
 
 - [ ] **Step 4:** `npm test` → PASS. **Step 5:** measure (`b1.json`). **Step 6: Commit**:
-  `feat(sim): rivals move at a fixed pace and prepay on a fixed cadence (no dice: average and running total)`.
+  `feat(sim): rivals move at a fixed pace and prepay when short of compute (no dice: average and stated condition)`.
 
 ## Task B2: Compute deals have fixed, stated terms
 
-Rule shapes: 3 (average) for offer sizes (middle of `s.size`) and headline deliveries (65%, the middle of 30-100%);
-1 (running total) for the spot pull-back in eras 3 and 5 (every fourth round with spot compute); D5 for CoreFlame.
+Rules (D8, D5): offer sizes follow the lab's rank (first place gets the top of the supplier's range, last place the
+bottom); Verde's era 4 letter of intent delivers what the lab can power when it lands, at least 30% of the headline;
+spot compute in eras 3 and 5 is pulled when race heat is 60 or more; CoreFlame runs into trouble in its 12th month.
 
 **Files:** Modify `sim/contracts.js:50` (`generateOffers`), `:65` (`refreshOffers`), `:99` (`arrive`), `:194-198`
 (`contractsTurn`), `signOffer`, `deliverDue`; `sim/data/compute.js` (`CORE_FLAME_TROUBLE_MONTHS = 12`, and the
@@ -992,34 +1004,39 @@ CoreFlame offer `string` to say "runs into trouble in its 12th month"); `sim/tur
 stays). Test `tests/contracts.test.js`, `tests/investor-strings.test.js`, `tests/race.test.js`, `tests/ui-compute.test.js`.
 
 **Interfaces:** Produces `generateOffers(state)`, `refreshOffers(state)`, `signOffer(state, offerId)`,
-`contractsTurn(state)`, `deliverDue(state, _rng, due, opts)` (slot kept), `export const HEADLINE_DELIVERY = 0.65`,
-`state.compute.bumpPressure`, `c.monthsRun`.
+`contractsTurn(state)`, `deliverDue(state, _rng, due, opts)` (slot kept), `export const LOI_FLOOR = 0.3`,
+`export const SPOT_PULL_HEAT = 60` (in `sim/data/compute.js`), `c.monthsRun`.
 
 - [ ] **Step 1: Write the failing tests** (`tests/contracts.test.js`):
 
 ```js
-test('offers have fixed sizes: the middle of each supplier range', () => {
+test('offer sizes follow rank: first place gets the top of the range, last place the bottom', () => {
   const s = createInitialState();
-  for (const offer of generateOffers(s).filter((o) => SUPPLIERS[o.supplier]?.size)) {
-    const [lo, hi] = SUPPLIERS[offer.supplier].size;
-    assert.equal(offer.units, Math.round((lo + hi) / 2) * eraScale(s.era), offer.supplier);
-  }
+  const sized = (st) => generateOffers(st).find((o) => o.supplier === 'coreflame').units;
+  const [lo, hi] = SUPPLIERS.coreflame.size;
+  for (const r of s.rivals) r.capability = 0; // you lead
+  assert.equal(sized(s), hi * eraScale(s.era));
+  for (const r of s.rivals) r.capability = 100; // you trail everyone
+  assert.equal(sized(s), lo * eraScale(s.era));
 });
 
-test('a headline deal delivers 65% of its headline', () => {
-  const s = headlineState(); // the file's LOI setup with a pipeline item carrying headline 100
+test('a letter of intent delivers what you can power, at least 30%', () => {
+  const s = headlineState(); // the file's LOI setup: a pipeline item carrying headline 100, now due
+  s.power.sites = [{ id: 'grid-1', source: 'grid', units: 70, arrivesTurn: 0, online: true }];
   deliverDue(s, null);
-  assert.equal(s.compute.contracts.at(-1).units, 65);
+  assert.equal(s.compute.contracts.at(-1).units, 70);
+  const dark = headlineState();
+  dark.power.sites = [];
+  deliverDue(dark, null);
+  assert.equal(dark.compute.contracts.at(-1).units, 30);
 });
 
-test('spot compute is pulled every fourth round in era 3', () => {
-  const s = spotState(3); // era 3 with one arrived spot contract
-  const warned = [];
-  for (let round = 0; round < 4; round++) {
-    warned.push(contractsTurn(s).warnedBump);
-    for (const c of s.compute.contracts) c.bumpTurn = null;
+test('spot compute is pulled in era 3 when race heat is 60 or more', () => {
+  for (const [heat, pulled] of [[55, false], [60, true]]) {
+    const s = spotState(3); // era 3 with one arrived spot contract
+    s.raceHeat = heat;
+    assert.equal(contractsTurn(s).warnedBump, pulled, `heat ${heat}`);
   }
-  assert.deepEqual(warned, [false, false, false, true]);
 });
 
 test('a CoreFlame contract runs into trouble in its 12th month', () => {
@@ -1036,13 +1053,33 @@ with a `mid` helper using the middle of the range, and rewrite `fire`/`lo` stubb
 - [ ] **Step 2:** run → FAIL.
 - [ ] **Step 3: Implement.** `generateOffers(state)`: `const units = Math.round((s.size[0] + s.size[1]) / 2) *
   eraScale(era);`. `refreshOffers(state)`: `const fresh = generateOffers(state);`. `arrive(state, p)`:
-  `const units = p.headline ? Math.round(p.headline * HEADLINE_DELIVERY) : p.units;` with
-  `export const HEADLINE_DELIVERY = 0.65; // the middle of the old 30-100% (owner 2026-09-26, no dice)`.
-  `deliverDue(state, _rng, due, opts)` calls `arrive(state, p)`. `signOffer(state, offerId)` (its `reserveGrid` call
+  `const units = p.headline ? loiDelivery(state, p.headline) : p.units;` with
+
+```js
+// D8: a letter of intent delivers what the lab can power when it lands (online site power, the grid included, not
+// already used by contracts that need power), and never less than 30% of the headline.
+export const LOI_FLOOR = 0.3;
+const freePower = (state) => Math.max(0, sitePower(state)
+  - state.compute.contracts.filter((c) => c.needsPower && !c.dark).reduce((sum, c) => sum + c.units, 0));
+const loiDelivery = (state, headline) => Math.max(Math.round(headline * LOI_FLOOR), Math.min(headline, Math.floor(freePower(state))));
+```
+  (import `sitePower` from `./power.js`). Offer sizes in `generateOffers(state)`, replacing the middle-of-range line
+  above:
+
+```js
+    // D8: suppliers give the biggest allocations to the biggest buyers: first place gets the top of the range.
+    const labs = state.rivals.length + 1;
+    const standing = (labs - rank(state)) / (labs - 1);
+    const units = Math.round(s.size[0] + (s.size[1] - s.size[0]) * standing) * eraScale(era);
+```
+  (import `rank` from `./rivals.js`; the import cycle is safe because both are only called at run time).
+  `deliverDue(state, _rng, due, opts)` calls `arrive(state, p)`. (The first `generateOffers` line in this step, the
+  middle of the range, is replaced by the rank rule above.) `signOffer(state, offerId)` (its `reserveGrid` call
   loses the rng). `contractsTurn(state)` (import `accrue`):
 
 ```js
-  const warnedBump = spots.length > 0 && accrue(state.compute, 'bumpPressure', BUMP_CHANCE[state.era] ?? 0);
+  // D8: in the tight eras, spot capacity is pulled for prepaid customers when race heat is 60 or more.
+  const warnedBump = spots.length > 0 && (BUMP_CHANCE[state.era] ?? 0) > 0 && state.raceHeat >= SPOT_PULL_HEAT;
   if (warnedBump) for (const c of spots) c.bumpTurn = state.turn + 1; // serves (and bills) one more turn
   for (const c of state.compute.contracts) {
     if (c.arrivedTurn > state.turn) continue;
@@ -1055,7 +1092,7 @@ Remove `FRAGILE_MONTHLY` if nothing else uses it; update the salt-list comment (
 `5 offers`, `6 deliveries` are gone once nothing passes them; keep any still used).
 
 - [ ] **Step 4:** `npm test` → PASS. **Step 5:** measure (`b2.json`). **Step 6: Commit**:
-  `feat(sim): compute deals have fixed, stated terms (no dice: average, running total, stated condition)`.
+  `feat(sim): compute deal terms follow rank, power, race heat and time (no dice: stated conditions)`.
 
 ## Task B3: Every game starts the same
 
