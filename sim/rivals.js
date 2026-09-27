@@ -127,11 +127,9 @@ export function rivalsTurn(state, rng, { deferTo = null } = {}) {
         releases.push({ id: r.id });
         continue;
       }
-      const capability = Math.min(BALANCE.maxCapability, r.capability + uncappedGain);
-      const gain = capability - r.capability;
-      r.capability = capability;
+      r.capability += uncappedGain;
       state.raceHeat += heat;
-      releases.push({ id: r.id, gain });
+      releases.push({ id: r.id, gain: uncappedGain });
     }
   }
   return releases;
@@ -142,9 +140,8 @@ export function landRivals(state) {
   state.rivalLaunches = (state.rivalLaunches ?? []).filter((launch) => {
     if (launch.day > state.day) return true;
     const r = state.rivals.find((rival) => rival.id === launch.id);
-    const capability = Math.min(BALANCE.maxCapability, r.capability + launch.gain);
-    landed.push({ id: r.id, gain: capability - r.capability });
-    r.capability = capability;
+    landed.push({ id: r.id, gain: launch.gain });
+    r.capability += launch.gain;
     state.raceHeat = Math.min(100, state.raceHeat + launch.heat);
     return false;
   });

@@ -1,5 +1,5 @@
 import { clamp, sigmoid } from './util.js';
-import { totalDebt } from './hazards.js';
+import { totalDebt, dangerCapability } from './hazards.js';
 import { eraScale } from './data/compute.js';
 import { availableUnits } from './training.js';
 import { hasLine } from './constitution.js';
@@ -74,7 +74,7 @@ export function effectiveChecks(state) {
 }
 
 export function automationRisk(state) {
-  const base = sigmoid((totalDebt(state) * newestCapability(state) / 100 - 40) / 8);
+  const base = sigmoid((totalDebt(state) * dangerCapability(newestCapability(state)) / 100 - 40) / 8);
   return base * Math.min(1, checking(effectiveChecks(state), jobLevels(state)).exposure) * RISK_SCALE;
 }
 

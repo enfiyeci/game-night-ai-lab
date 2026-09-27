@@ -28,7 +28,7 @@ test('renting only spot almost never wins', () => {
 });
 
 test('reserving the grid in era 2 pays off in era 4', {
-  todo: 'balanced rank 1.0254 vs no-grid 1.0244; needs cap-preserving era-4 progress or rank tie-break so powered compute matters at capability 100',
+  todo: 'balanced rank 1.0 vs no-grid 1.0 once capability counts past 100 (owner pick A, 2026-09-26): the lab stays well ahead, so compute share never breaks a tie at the top; needs powered compute to feed the lead itself',
 }, () => {
   assert.ok(r.balanced.meanRankAtEra4End < r.balancedNoGrid.meanRankAtEra4End);
 });

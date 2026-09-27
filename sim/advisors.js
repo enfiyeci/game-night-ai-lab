@@ -2,7 +2,7 @@ import { ADVISOR_LINES } from './data/advisorLines.js';
 import { leaderCapability } from './rivals.js';
 import { runway, safetySpend } from './economy.js';
 import { effectiveMisuse } from './endings.js';
-import { totalDebt } from './hazards.js';
+import { totalDebt, dangerCapability } from './hazards.js';
 
 export const ADVISORS = ['research', 'safety', 'cfo', 'policy'];
 
@@ -23,7 +23,7 @@ export function advisorReadings(state, rng) {
   const researchEst = gap - 10 + rng.normal(0, 3);
   const research = { id: 'research', truth: gap, estimate: researchEst, band: band(researchEst, 0, 10), weird: totalDebt(state) > 60 };
 
-  const sd = Math.max(2, 12 - safetySpend(state) + state.capability / 10);
+  const sd = Math.max(2, 12 - safetySpend(state) + dangerCapability(state.capability) / 10);
   const misuse = effectiveMisuse(state);
   const safetyEst = Math.max(state.alignmentDebt - state.perceivedAdOffset, misuse) + 10 + rng.normal(0, sd);
   const safety = { id: 'safety', truth: Math.max(totalDebt(state), misuse), estimate: safetyEst, band: band(safetyEst, 30, 60) };

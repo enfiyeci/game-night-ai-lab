@@ -10,9 +10,8 @@ export const JUMP_GAIN = 5;
 export const EXPORT_FLIP_QILIN_SPEED = 0.85;
 
 function applyJump(model) {
-  const before = model.capability;
-  model.capability = Math.min(BALANCE.maxCapability, model.capability + JUMP_GAIN);
-  model.gain = (model.gain ?? 0) + (model.capability - before);
+  model.capability += JUMP_GAIN;
+  model.gain = (model.gain ?? 0) + JUMP_GAIN;
 }
 
 function finishBoardRevolt(state) {
