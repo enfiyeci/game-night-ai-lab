@@ -62,7 +62,7 @@ def room(dead_light=(2.6, 6.6), tube_energy=45, lights=True, daylight=False):
     for y in (1.8, 4.2, 6.6, 9.0):
         for x in (-2.6, 0.0, 2.6):
             dead = (x, y) == dead_light or not lights
-            kit.box((x, y, H - 0.02), (0.6, 1.2, 0.03), frame if dead else kit.emission("#F2FAF6", 20))
+            kit.box((x, y, H - 0.02), (0.6, 1.2, 0.03), frame if dead else kit.emission("#F2FAF6", 20 * tube_energy / 45))
             if not dead:
                 L = kit.area((x, y, H - 0.06), (x, y, 0), (0.6, 1.2), tube_energy, (0.92, 1.0, 0.96))
     return frame
@@ -142,7 +142,7 @@ def doors(lit=260, ajar=0.0):
     cw = kit.mat("#E4ECE8", 0.8)   # the corridor beyond
     kit.box((1.9, -3.2, H / 2), (2.6, 0.2, H), cw)
     for x in (0.6, 3.2):
-        kit.box((x, -1.6, H / 2), (0.2, 3.2, H), cw)
+        kit.box((x, -1.7, H / 2), (0.2, 3.0, H), cw)
     kit.box((1.9, -1.6, H + 0.05), (2.6, 3.2, 0.1), cw)
     kit.box((1.9, -1.6, -0.05), (2.6, 3.2, 0.1), kit.tex("terrazzo_tiles", 0.35, name="floor"))
     for x in (1.0, 2.8):
@@ -249,7 +249,7 @@ def shot_al_triage():
     # a doctor in a white coat comes out of treatment toward the cart, dark against the lit corridor
     P.person((1.55, 0.9), facing=22, pose="walk", height=1.72, coat="#E9ECEE", long_coat=True, trousers="#2C4A5E",
              hair="#2A211C", seed=21)
-    seated([(-1.55, 2, -90), (-1.55, 7, -90), (1.55, 4, 90), (2.25, 8, -90)], seed=2)
+    seated([(-1.55, 1, -90), (1.55, 4, 90), (2.25, 8, -90)], seed=2)
     kit.place("wheelchair_01", (-0.9, 5.4, 0), rot_z=math.radians(80))
     kit.place("wall_clock", (-W + 0.02, 5.0, 2.3), rot_z=math.radians(90))
     kit.haze((0, D / 2, H / 2), (2 * W - 0.1, D - 0.1, H - 0.1), 0.01)
@@ -290,17 +290,16 @@ def shot_mu_hospital():
 
 
 def shot_pd_trial():
-    room(tube_energy=30, daylight=True)
+    room(tube_energy=12, daylight=True)
     seating()
     street(sky="urban_street_01", sky_strength=2.0, lamp=False)
     kit.sun((50, 0, 200), 3.0, kit.kelvin(5200), angle=1.0)
     face = cart((-0.2, 6.3), -14, "pd-trial", (60, 80, 1160, 483))
     # the clinician stands at the cart, turned to the screen, the chart she checks against in her hand
-    P.person((0.22, 5.62), facing=18, height=1.68, coat="#3E7F8C", trousers="#3E7F8C", hold="paper", hair="#2A211C", seed=41)
+    P.person((-0.75, 5.5), facing=-35, height=1.68, coat="#3E7F8C", trousers="#3E7F8C", hold="paper", hair="#2A211C", seed=41)
     seated([(-1.55, 5, -90), (-2.25, 8, 90), (1.55, 7, 90), (1.55, 2, 90)], seed=4)
     kit.place("potted_plant_02", (-W + 0.45, 8.9, 0))
-    kit.camera((-0.95, 3.3, 1.45), (-0.05, 7.0, 1.3), lens=36, fstop=2.8, focus=face)
-    bpy.context.scene.view_settings.exposure = 0.4
+    kit.camera((-0.95, 3.3, 1.45), (-0.1, 7.0, 1.3), lens=36, fstop=2.0, focus=face)
 
 
 def shot_cw_triage():
