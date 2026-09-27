@@ -239,7 +239,6 @@ export const oneDecimal = (value) => Math.round(value * 10) / 10;
 // launch's tests (scoreOnTest).
 export function leaderboard(state, model) {
   const caps = model.launch.benchmarks.filter((row) => row.kind === 'cap');
-  const rivalAverage = caps.reduce((sum, row) => sum + row.rival, 0) / caps.length;
   const leader = state.rivals.reduce((best, rival) => (rival.capability > best.capability ? rival : best));
   const on = (row, capability) => testScore(row.mid, capability * row.fit * 0.95);
   const labScore = (rival) => caps.reduce((sum, row) => sum
