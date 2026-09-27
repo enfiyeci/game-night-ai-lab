@@ -125,13 +125,18 @@ def quay():
         kit.box((0, y, 0.03), (400, 0.12, 0.06), kit.mat("#6B6E73", 0.3, 0.9))
 
 
-def board(plate, crop, x, y, width=5.2, z=3.4):
+def board(plate, crop, x, y, width=5.2, z=3.4, yaw=0.0):
+    """The dispatch board on two posts, facing -y turned by yaw degrees."""
     posts = kit.mat("#3A3D40", 0.5, 0.6)
     h = width * crop[3] / crop[2]
+    a = math.radians(yaw)
+    c, s = math.cos(a), math.sin(a)
     for dx in (-width / 2 + 0.3, width / 2 - 0.3):
-        kit.box((x + dx, y + 0.3, (z - h / 2) / 2 + 0.2), (0.22, 0.22, z - h / 2 + 0.4), posts)
-    face, _ = kit.screen("board", (x, y, z), width, plate, crop=crop, strength=2.2, depth=0.3, border=0.12, bezel="#15171A")
-    kit.box((x, y + 0.1, z + h / 2 + 0.3), (width + 0.3, 0.6, 0.12), posts)   # a hood over the board
+        kit.box((x + dx * c - 0.3 * s, y + dx * s + 0.3 * c, (z - h / 2) / 2 + 0.2), (0.22, 0.22, z - h / 2 + 0.4), posts,
+                rot=(0, 0, a))
+    face, _ = kit.screen("board", (x, y, z), width, plate, crop=crop, rot=(math.radians(90), 0, a), strength=2.2, depth=0.3,
+                         border=0.12, bezel="#15171A")
+    kit.box((x - 0.1 * s, y + 0.1 * c, z + h / 2 + 0.3), (width + 0.3, 0.6, 0.12), posts, rot=(0, 0, a))   # a hood
     return face
 
 
@@ -184,22 +189,22 @@ def hi_vis(at, facing):
 def shot_al_port():
     sea(sky="qwantani_dawn_puresky", strength=0.7, rotation=250)
     quay()
-    face = board("al-port", (70, 100, 1140, 410), 0.0, 9.0, width=5.4, z=3.6)
+    face = board("al-port", (70, 100, 1140, 410), 2.0, 3.0, width=5.4, z=3.6, yaw=-78)
     # a ship alongside, being worked: boxes on deck, one in the air under the crane, a few landed on the quay
-    ship(110, EDGE + 13.5, 170, 0, lights=False, seed=5)
-    crane(40, EDGE - 12, boom_up=False, load=(EDGE + 4, 11))
+    ship(75, EDGE + 13.5, 170, 0, lights=False, seed=5)
+    crane(34, EDGE - 12, boom_up=False, load=(EDGE + 4, 11))
     rng = random.Random(9)
     for i in range(4):
         for tier in range(rng.randint(1, 2)):
-            container((30 + i * 2.6, 13.5, tier * 2.62), rot_z=math.radians(-90),
+            container((18 + i * 2.6, 15.5, tier * 2.62), rot_z=math.radians(-90),
                       colour=rng.choice(["#8A3B2E", "#2F5F8A", "#3F7A5A", "#E8E6E0"]))
-    for (x, y, L, hd, sd) in ((-260, 900, 240, 70, 1), (-90, 1200, 280, 110, 2)):
+    for (x, y, L, hd, sd) in ((600, 450, 240, 70, 1), (950, 800, 280, 110, 2)):
         ship(x, y, L, hd, seed=sd)   # more ships waiting their turn offshore
     # the worker at the board, checking it against the clipboard before signing
-    hi_vis((-1.4, 7.4), -8)
-    kit.sun((85, 0, 215), 2.6, kit.kelvin(3000), angle=2)
-    kit.area((0.0, 5.0, 4.5), (0.0, 7.4, 1.0), (3, 1), 40, kit.kelvin(6500))   # the apron lamp
-    kit.camera((-8.5, -1.0, 1.7), (4.0, 30.0, 4.0), lens=30, fstop=5.6, focus=face)
+    hi_vis((0.45, 2.7), -80)
+    kit.sun((85, 0, 66), 2.6, kit.kelvin(3000), angle=2)
+    kit.area((-1.5, 2.5, 4.5), (0.5, 2.7, 1.0), (3, 1), 40, kit.kelvin(6500))   # the apron lamp
+    kit.camera((-10.0, 2.0, 1.7), (40.0, 22.0, 6.0), lens=26, fstop=5.6, focus=face)
     bpy.context.scene.view_settings.exposure = -0.1
 
 
