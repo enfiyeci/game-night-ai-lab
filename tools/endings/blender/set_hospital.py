@@ -158,7 +158,8 @@ def doors(lit=260, ajar=0.0):
             part.parent = pivot
         pivot.rotation_euler = (0, 0, sign * -swing)
     kit.box((1.9, -0.01, 2.62), (1.3, 0.02, 0.3), kit.mat("#17465E", 0.4))
-    kit.text("TREATMENT", (1.9, 0.012, 2.62), 0.15, kit.mat("#FFFFFF", 0.5, emit="#F4F8F6", strength=4), font=kit.FONT)
+    kit.text("TREATMENT", (1.9, 0.012, 2.62), 0.15, kit.mat("#FFFFFF", 0.5, emit="#F4F8F6", strength=4), font=kit.FONT,
+             rot=(math.radians(90), 0, math.pi))   # reads from the room
     if lit:
         kit.area((1.9, -1.6, H - 0.05), (1.9, -1.6, 0), (1.6, 2.4), lit, (0.92, 1.0, 0.96))
 
@@ -242,12 +243,12 @@ def shot_mis_triage():
 
 
 def shot_al_triage():
-    room(dead_light=(2.6, 1.8), tube_energy=5)
+    room(dead_light=(2.6, 1.8), tube_energy=2)
     seating()
     doors(lit=1600, ajar=1.2)
     face = cart((-0.45, 7.9), 157, "al-triage", (60, 84, 1160, 483))
-    # a doctor in a white coat comes out of treatment toward the cart, dark against the lit corridor
-    P.person((1.6, 0.45), facing=22, pose="walk", height=1.72, coat="#E9ECEE", long_coat=True, trousers="#2C4A5E",
+    # a doctor in a white coat comes out of treatment toward the cart, a dark shape against the lit doorway
+    P.person((2.3, 0.4), facing=22, pose="walk", height=1.72, coat="#E9ECEE", long_coat=True, trousers="#2C4A5E",
              hair="#2A211C", seed=21)
     seated([(-1.55, 6, -90), (-2.25, 3, 90)], seed=2)
     kit.place("wheelchair_01", (-0.9, 5.4, 0), rot_z=math.radians(80))
@@ -290,16 +291,17 @@ def shot_mu_hospital():
 
 
 def shot_pd_trial():
-    room(tube_energy=12, daylight=True)
+    room(tube_energy=3, daylight=True)
     seating()
-    street(sky="urban_street_01", sky_strength=2.0, lamp=False)
+    street(sky="urban_street_01", sky_strength=3.0, lamp=False)
     kit.sun((50, 0, 200), 3.0, kit.kelvin(5200), angle=1.0)
     face = cart((-0.2, 6.3), -14, "pd-trial", (60, 80, 1160, 483))
-    # the clinician stands at the cart, turned to the screen, the chart she checks against in her hand
-    P.person((-1.02, 5.42), facing=-35, height=1.68, coat="#3E7F8C", trousers="#3E7F8C", hold="paper", hair="#2A211C", seed=41)
+    # the clinician at the cart, over whose shoulder we look: near the lens, cut by the frame edge, dark against the
+    # daylit glass and out of focus, the chart she checks against in her hand
+    P.person((-1.2, 4.7), facing=-35, height=1.68, coat="#3E7F8C", trousers="#3E7F8C", hold="paper", hair="#1A1512", seed=41)
     seated([(-1.55, 5, -90), (-2.25, 8, 90), (1.55, 7, 90), (1.55, 2, 90)], seed=4)
     kit.place("potted_plant_02", (-W + 0.45, 8.9, 0))
-    kit.camera((-0.95, 3.3, 1.45), (-0.1, 7.0, 1.3), lens=40, fstop=2.0, focus=face)
+    kit.camera((-0.95, 3.3, 1.45), (-0.1, 7.0, 1.3), lens=40, fstop=1.4, focus=face)
 
 
 def shot_cw_triage():

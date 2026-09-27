@@ -290,9 +290,9 @@ def shot_ab_app():
     kit.cyl((-0.25, 2.98, 0.765), 0.004, 0.14, kit.mat("#E9C46A", 0.4), rot=(0, math.radians(90), math.radians(30)))   # pencil
     mug((-0.62, 3.4, 0.76), "#3F84C6", full=True)
     mina((0.02, 2.47, 0))
-    # the low sun through the window lays warm light across the table; the screen lights her face
+    # the low sun through the window lays warm light across the table; the screen glows faintly on her
     kit.sun((76, 0, 212), 4.0, kit.kelvin(3000), angle=1.5)
-    kit.area((0.02, 3.0, 0.95), (0.02, 2.5, 1.0), (0.3, 0.15), 5, kit.kelvin(7000))
+    kit.area((0.02, 3.0, 0.95), (0.02, 2.5, 1.0), (0.3, 0.15), 1.5, kit.kelvin(7000))
     kit.camera((0.5, 1.98, 1.2), (0.05, 3.14, 0.88), lens=58, fstop=4.0, focus=face)
     bpy.context.scene.view_settings.exposure = 0.3
 
