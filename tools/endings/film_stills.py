@@ -52,7 +52,8 @@ def main(fid, spec_path):
         t = spec["title"]
         film.pop("titleClip", None)
         film["titleStill"] = t["still"]
-        film["titleCam"] = {"from": {"s": t.get("from", 1.0)}, "to": {"s": t.get("to", 1.04), **({"x": t["x"], "y": t["y"]} if "x" in t else {})}}
+        at = {"x": t["x"], "y": t["y"]} if "x" in t else {}   # the title card continues the last shot's framing
+        film["titleCam"] = {"from": {"s": t.get("from", 1.0), **at}, "to": {"s": t.get("to", 1.04), **at}}
     text = json.dumps(film, indent=2, ensure_ascii=False) + "\n"
     path.write_text(text)
     print("wrote", path)
