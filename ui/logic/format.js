@@ -49,7 +49,7 @@ export function users(value) {
 }
 
 export function computeAmount(units, era = 1) {
-  if (era < 4) return `${trimOneDecimal(units)} units`;
+  if (era < 4) return `${trimOneDecimal(units)} ${trimOneDecimal(units) === '1' ? 'unit' : 'units'}`;
   const megawatts = units * MW_PER_UNIT;
   if (megawatts < 1000) return `${trimOneDecimal(megawatts)} MW`;
   return `${(megawatts / 1000).toFixed(2)} GW`;

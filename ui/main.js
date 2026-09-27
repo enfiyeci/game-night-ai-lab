@@ -170,6 +170,16 @@ office.addEventListener('click', (event) => {
   openMenu(game, stagePoint(event), { overlay });
 });
 
+// Space pauses and resumes, 1 / 2 / 4 set the speed, while nothing else has the keyboard (no dialog, menu or card).
+document.addEventListener('keydown', (event) => {
+  if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey || blocked() || overlay.querySelector('.menu-layer')) return;
+  if (event.target.closest?.('input, textarea, select, button, [role="button"], [contenteditable="true"]')) return;
+  if (event.key === ' ') {
+    event.preventDefault();
+    game.clock.togglePause();
+  } else if (['1', '2', '4'].includes(event.key)) game.clock.setSpeed(Number(event.key));
+});
+
 office.addEventListener('keydown', (event) => {
   if ((event.key !== 'Enter' && event.key !== ' ') || !event.target.closest?.('#person-ceo')) return;
   event.preventDefault();

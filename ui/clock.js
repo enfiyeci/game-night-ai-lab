@@ -5,6 +5,7 @@ const MAX_STEP_MS = 1000;
 
 export function createClock(game, { now = () => performance.now(), secondsPerRound = 90 } = {}) {
   let speed = 1;
+  let resumeSpeed = 1; // the speed Space returns to after a pause
   let last = null;
   let owed = 0;
   let frame = null;
@@ -41,7 +42,8 @@ export function createClock(game, { now = () => performance.now(), secondsPerRou
     stop() { if (frame !== null) cancelAnimationFrame(frame); frame = null; },
     pause(reason) { reasons.add(reason); emit(); },
     resume(reason) { reasons.delete(reason); last = now(); emit(); },
-    setSpeed(n) { if (SPEEDS.includes(n)) { speed = n; last = now(); emit(); } },
+    setSpeed(n) { if (SPEEDS.includes(n)) { speed = n; if (n > 0) resumeSpeed = n; last = now(); emit(); } },
+    togglePause() { this.setSpeed(speed === 0 ? resumeSpeed : 0); },
     now: snapshot,
     on(type, fn) { if (type !== 'tick') return () => {}; listeners.add(fn); return () => listeners.delete(fn); },
     watch(overlay) {

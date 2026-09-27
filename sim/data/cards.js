@@ -87,7 +87,7 @@ export const CARDS = [
   { id: 'channel-api', stage: 'release', group: 'channel', default: true, name: 'API only', hint: 'Businesses first.', era: 1, cost: {}, effects: { spec: { channel: 'enterprise' } } },
   { id: 'channel-app', stage: 'release', group: 'channel', name: 'Consumer app and API', hint: 'Millions of users; millions of edge cases.', era: 1, cost: {}, effects: { spec: { channel: 'consumer' } } },
   { id: 'channel-open', stage: 'release', group: 'channel', name: 'Open weights', hint: 'No recall button.', era: 1, cost: {}, effects: { spec: { channel: 'open' }, heat: 4, govIntl: 3 }, hidden: true },
-  { id: 'channel-staged', stage: 'release', group: 'channel', name: 'Staged: API first, app next turn', hint: 'Slower, gentler.', era: 1, cost: { turns: 1 }, effects: { spec: { channel: 'consumer' }, pt: 2 } },
+  { id: 'channel-staged', stage: 'release', group: 'channel', name: 'Staged: API first, app later', hint: 'Slower, gentler.', era: 1, cost: { turns: 1 }, effects: { spec: { channel: 'consumer' }, pt: 2 } },
   { id: 'fp8', stage: 'release', group: 'precision', name: 'Serve in FP8', hint: 'Cheaper serving, a tiny quality cost.', era: 2, cost: {}, effects: { spec: { precision: 'fp8' } } },
   { id: 'fp4', stage: 'release', group: 'precision', name: 'Serve in FP4', hint: 'Much cheaper serving; needs new hardware.', era: 3, requiresTech: 'fp4', cost: { cash: 5 }, effects: { spec: { precision: 'fp4' } } },
 ];
