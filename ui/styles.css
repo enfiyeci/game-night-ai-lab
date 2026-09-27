@@ -3642,3 +3642,66 @@ button.dl-pill { font: inherit; font-size: 13px; font-weight: 900; color: var(--
 .racks-panel .compute-toggle { padding-top: 8px; }
 /* The desk phone sits above dialogs and could open an event card over the choice; it steps away until then. */
 .hazard-open .ev-phone, .hazard-open .ev-phone-button { display: none; }
+
+/* Safety's constitution draft (look B of docs/design/mockups/K2-model-spec.html): paper document over the office. */
+.sd-layer { z-index: 12; opacity: 1; transition: none; }
+/* The document replaces the HUD and its board countdown while it is open, as in the mock; the desk phone steps away. */
+.sd-open #hud, .sd-open .bd-count, .sd-open .ev-phone, .sd-open .ev-phone-button { visibility: hidden; }
+.sd-veil { position: absolute; inset: 0; background: color-mix(in oklab, var(--cream) 50%, transparent); }
+.sd-doc { position: absolute; left: 110px; top: 60px; width: 1220px; height: 780px; display: grid; grid-template-columns: 1fr 300px; overflow: hidden; border-radius: 6px; background: var(--paper); box-shadow: 0 24px 56px color-mix(in oklab, var(--ink) 24%, transparent); }
+.sd-doc:focus { outline: none; }
+.sd-main { min-height: 0; overflow-y: auto; padding: 24px 36px 20px; }
+.sd-kicker { font-size: 11.5px; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; color: color-mix(in oklab, var(--ink) 66%, var(--paper)); }
+.sd-title { margin: 6px 0 0; font-family: "Libre Baskerville", Georgia, serif; font-size: 30px; font-style: italic; font-weight: 400; }
+.sd-h { display: flex; justify-content: space-between; align-items: baseline; margin: 16px 0 8px; padding-bottom: 6px; border-bottom: 2px solid color-mix(in oklab, var(--wood) 40%, transparent); font-size: 15.5px; font-weight: 900; }
+.sd-h small { font-size: 12.5px; font-weight: 800; color: color-mix(in oklab, var(--ink) 66%, var(--paper)); }
+.sd-clauses { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 22px; }
+.sd-line { display: grid; grid-template-columns: 18px 1fr; gap: 9px; align-items: start; width: 100%; padding: 6px 4px; margin: 0 -4px; border: 0; border-radius: 6px; background: transparent; color: var(--ink); font: inherit; font-size: 13.5px; font-weight: 700; line-height: 1.3; text-align: left; cursor: pointer; }
+.sd-line:hover { background: color-mix(in oklab, var(--teal) 7%, var(--paper)); }
+.sd-line:focus-visible, .sd-change:focus-visible, .sd-option:focus-visible { outline: 3px solid var(--sky); outline-offset: 1px; }
+.sd-line[aria-disabled="true"] { cursor: not-allowed; }
+.sd-line[aria-disabled="true"]:hover { background: transparent; }
+.sd-line.on { font-weight: 900; }
+.sd-line.fixed { color: color-mix(in oklab, var(--ink) 55%, var(--paper)); cursor: default; }
+.sd-line.struck .sd-line-text { text-decoration: line-through; text-decoration-thickness: 1.5px; text-decoration-color: color-mix(in oklab, var(--coral) 70%, var(--ink)); color: color-mix(in oklab, var(--ink) 62%, var(--paper)); }
+.sd-box { display: grid; place-items: center; width: 17px; height: 17px; margin-top: 1px; border: 2px solid color-mix(in oklab, var(--ink) 40%, var(--paper)); border-radius: 4px; }
+.sd-line.on .sd-box { border-color: var(--teal); background: var(--teal); }
+.sd-line.fixed .sd-box { border-color: color-mix(in oklab, var(--ink) 30%, var(--paper)); background: color-mix(in oklab, var(--ink) 30%, var(--paper)); }
+.sd-line.on .sd-box::after, .sd-line.fixed .sd-box::after { content: ""; width: 8px; height: 4px; border: 2.5px solid var(--paper); border-top: 0; border-right: 0; transform: translateY(-1px) rotate(-45deg); }
+.sd-line-copy { display: block; }
+.sd-line-text { display: block; }
+.sd-tag { display: block; margin-top: 2px; font-size: 11.5px; font-weight: 800; color: color-mix(in oklab, var(--teal) 62%, var(--ink)); }
+.sd-tag.you { color: color-mix(in oklab, var(--wood) 70%, var(--ink)); }
+.sd-tag.ask { color: color-mix(in oklab, var(--coral) 72%, var(--ink)); }
+.sd-case { display: grid; grid-template-columns: 1fr auto; gap: 6px 14px; align-items: center; padding: 7px 0; border-bottom: 1px solid color-mix(in oklab, var(--ink) 8%, transparent); }
+.sd-prompt { display: block; font-size: 13px; font-weight: 700; line-height: 1.3; quotes: none; color: color-mix(in oklab, var(--ink) 70%, var(--paper)); }
+.sd-ruling { margin-top: 2px; }
+.sd-ins { font-size: 14.5px; font-weight: 800; color: color-mix(in oklab, var(--teal) 62%, var(--ink)); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.sd-case.changed .sd-ins { color: var(--ink); text-decoration-color: var(--wood); }
+.sd-del { margin-left: 8px; font-size: 13px; font-weight: 700; color: color-mix(in oklab, var(--coral) 62%, var(--ink)); text-decoration: line-through; }
+.sd-acts { display: flex; gap: 8px; align-items: center; }
+.sd-status { font-size: 12px; font-weight: 800; color: color-mix(in oklab, var(--wood) 70%, var(--ink)); }
+.sd-status.ask { color: color-mix(in oklab, var(--coral) 72%, var(--ink)); }
+.sd-change { min-width: 72px; padding: 5px 12px; border: 1.5px solid color-mix(in oklab, var(--ink) 16%, transparent); border-radius: 7px; background: var(--paper); color: var(--ink); font: inherit; font-size: 12.5px; font-weight: 900; cursor: pointer; }
+.sd-change:hover { border-color: color-mix(in oklab, var(--ink) 40%, transparent); }
+.sd-case.open .sd-change { border-color: transparent; background: color-mix(in oklab, var(--teal) 78%, var(--ink)); color: var(--paper); }
+.sd-options { grid-column: 1 / -1; scroll-margin-bottom: 18px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding-bottom: 2px; }
+.sd-option { display: grid; grid-template-columns: 14px 1fr; gap: 3px 7px; align-items: start; padding: 7px 9px; border: 1.5px solid color-mix(in oklab, var(--ink) 12%, transparent); border-radius: 8px; background: var(--paper); color: var(--ink); font: inherit; font-size: 12.5px; font-weight: 700; line-height: 1.25; text-align: left; cursor: pointer; }
+.sd-option:hover { border-color: color-mix(in oklab, var(--teal) 60%, var(--paper)); }
+.sd-option i { width: 14px; height: 14px; margin-top: 1px; border: 2px solid color-mix(in oklab, var(--ink) 38%, var(--paper)); border-radius: 50%; }
+.sd-option.on { border-color: var(--teal); background: color-mix(in oklab, var(--teal) 9%, var(--paper)); font-weight: 800; }
+.sd-option.on i { border: 4.5px solid var(--teal); }
+.sd-option small { grid-column: 2; font-size: 11px; font-weight: 800; color: color-mix(in oklab, var(--teal) 62%, var(--ink)); }
+.sd-margin { display: flex; flex-direction: column; min-height: 0; padding: 22px 16px 18px; border-left: 1px solid color-mix(in oklab, var(--ink) 9%, transparent); background: color-mix(in oklab, var(--cream) 30%, var(--paper)); }
+.sd-notes { flex: 1 1 auto; min-height: 0; overflow-y: auto; margin: 0 -6px; padding: 0 6px 4px; }
+.sd-margin-h { margin: 0 0 10px; font-size: 11.5px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; color: color-mix(in oklab, var(--ink) 66%, var(--paper)); }
+.sd-note { margin-bottom: 11px; padding: 10px 12px; border-radius: 10px; background: var(--paper); font-size: 13px; font-weight: 600; line-height: 1.35; box-shadow: 0 1px 0 color-mix(in oklab, var(--ink) 8%, transparent); }
+.sd-note b { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 3px; font-size: 12px; font-weight: 900; }
+.sd-note .sd-when { font-weight: 800; color: color-mix(in oklab, var(--ink) 64%, var(--paper)); white-space: nowrap; }
+.sd-note.change { border-left: 3px solid color-mix(in oklab, var(--coral) 70%, var(--paper)); }
+.sd-note.change b > span:first-child { color: color-mix(in oklab, var(--coral) 72%, var(--ink)); }
+.sd-foot { flex: none; padding-top: 10px; text-align: center; }
+.sd-foot-note { margin: 0 0 10px; font-size: 12.5px; font-weight: 700; line-height: 1.35; text-align: left; color: color-mix(in oklab, var(--ink) 70%, var(--paper)); }
+.sd-foot-note.warn { font-weight: 900; color: color-mix(in oklab, var(--coral) 66%, var(--ink)); }
+.sd-foot .sd-adopt { width: 100%; padding: 12px 0; }
+.sd-foot .sd-close { margin: 8px 0 0; }
