@@ -1044,7 +1044,7 @@ Object.assign(CONSEQUENCES, {
     "counsel": "Your lawyer answered every question with a longer question. The empty chair with your name on it became the photo."
   },
   "whiteHouseCommitments": {
-    "signall": "You signed every line. From now on outside testers see each model before customers do, and every release waits for them.",
+    "signall": "You signed every line. From now on outside testers see each model before customers do; once the race moves month by month, every release waits for them.",
     "signskip": "Your signature went on the page. The watermarking team was told there was no rush.",
     "decline": "You were the lab that did not show up on Friday. The photo had seven chairs and a gap."
   },

@@ -25,12 +25,9 @@ export const modelName = ({ family, generation, size, tierWords }) => `${family}
 
 // Outside testing the lab promised: the government's tests (the preReleaseTests card) and the White House's outside
 // testers (whiteHouseCommitments, "Sign all of it"; owner 2026-09-26 "add it"). The testers get a few weeks first. Where
-// a round is a month or less (era 3 on) that is one round's wait; in the three-month rounds of eras 1-2 the model ships
-// on time but opens with a quarter fewer users (about three of the round's twelve weeks). One round covers both
-// promises, and a release whose own eval card already waits for outsiders (eval-gov; eval-third for the testers) adds
-// nothing more.
-export const TESTER_USERS_MULT = 0.75;
-
+// a round is a month or less (era 3 on) that is one round's wait; in the three-month rounds of eras 1-2 they cost
+// nothing (owner pick D1, 2026-09-26). One round covers both promises, and a release whose own eval card already waits
+// for outsiders (eval-gov; eval-third for the testers) adds nothing more.
 function testerNeeds(state, cards) {
   const flags = new Set(cards.flatMap((card) => card.effects.flags ?? []));
   const government = Boolean(state.flags.govTesting) && !flags.has('govEval');
@@ -41,12 +38,6 @@ function testerNeeds(state, cards) {
 export function testerWait(state, cards) {
   const need = testerNeeds(state, cards);
   return need.government || (need.testers && need.shortRounds) ? 1 : 0;
-}
-
-// Eras 1-2: the testers' head start costs launch users instead of a three-month wait.
-export function testerHeadStart(state, cards) {
-  const need = testerNeeds(state, cards);
-  return need.testers && !need.shortRounds && !need.government;
 }
 
 export const releaseWait = (state, cards) => cards.reduce((sum, card) => sum + (card.cost.turns ?? 0), state.pendingModel?.releaseDelay ?? 0)
@@ -151,7 +142,6 @@ export function releaseModel(state, release, rng) {
   const quality = clamp(1 + (launch.pressAvg - 6) / 8, 0.5, 1.6);
   const eraGrowth = 1 + 0.5 * (state.era - 1);
   const constitutionUsers = spec.channel === 'enterprise' && hasLine(state, 'privacy') ? 1.1 : 1;
-  const testerUsers = testerHeadStart(state, cards) ? TESTER_USERS_MULT : 1;
   const fresh = Math.round(USERS_BASE[spec.channel] * quality * eraGrowth * PRICE_STANCE[release.price].growth * m.publicEffects.usersMult * constitutionUsers);
 
   const model = {
@@ -168,9 +158,9 @@ export function releaseModel(state, release, rng) {
     channel: spec.channel,
     priceStance: release.price,
     reasoning,
-    users: Math.round(fresh * testerUsers),
-    newUsers: Math.round(fresh * testerUsers),
-    userCap: fresh * 4, // the testers' head start slows the launch, not the model's reach
+    users: fresh,
+    newUsers: fresh,
+    userCap: fresh * 4,
     activeFromTurn: state.turn + delay,
     releasedTurn: state.turn,
     releaseSequence: state.models.reduce((max, existing, index) => Math.max(max, existing.releaseSequence ?? index), -1) + 1,

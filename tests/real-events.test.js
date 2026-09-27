@@ -370,12 +370,8 @@ test('signing every White House line makes each release wait for outside testers
   s.pendingEvents.push({ id: 'whiteHouseCommitments' });
   resolveEvent(s, 'whiteHouseCommitments', 'signall');
   assert.equal(s.flags.outsideTesters, true);
-  // Era 1: three-month rounds, so the release ships on time with a quarter fewer launch users.
+  // Eras 1-2: three-month rounds, so the testers cost nothing (owner pick D1).
   assert.equal(shipDelay(s, ['eval-full', 'channel-app']), 0);
-  const plain = trainedModel(1);
-  assert.equal(ship(plain, ['eval-full']).ok, true);
-  assert.equal(ship(s, ['eval-full']).ok, true);
-  assert.equal(s.models.at(-1).users, Math.round(plain.models.at(-1).users * 0.75));
   // Era 3: one-month rounds, so the release waits one.
   const later = trainedModel(3);
   later.flags.outsideTesters = true;

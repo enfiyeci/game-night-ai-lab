@@ -1,6 +1,6 @@
 import { roundsToWords } from './format.js';
 import { cardById, pickableCards, resolveCards, slotsFor } from '../../sim/recipe.js';
-import { modelName, releaseModel, releaseWait, testerHeadStart, testerWait, tierWord } from '../../sim/release.js';
+import { modelName, releaseModel, releaseWait, testerWait, tierWord } from '../../sim/release.js';
 import { createRng } from '../../sim/rng.js';
 import { CHANNEL, PRICE_STANCE, REASONING, REVENUE_PER_USER, USAGE, margin, servingCost } from '../../sim/serving.js';
 import { applyProjectedMove, projectQueue } from './compute.js';
@@ -48,11 +48,8 @@ export function shipDelay(state, picks) {
   return releaseWait(state, cardsFor(state, picks));
 }
 
-// True when outside testers the lab promised go first: a round's wait, or (eras 1-2) fewer launch users.
-export const waitsForTesters = (state, picks) => {
-  const cards = cardsFor(state, picks);
-  return testerWait(state, cards) > 0 || testerHeadStart(state, cards);
-};
+// True when outside testers the lab promised make this release wait a round (era 3 on).
+export const waitsForTesters = (state, picks) => testerWait(state, cardsFor(state, picks)) > 0;
 
 // A ship delay counts hidden rounds; say it in story time for the current era.
 export const shipWords = (delay, era = 1) => (delay === 0 ? 'right away' : `in ${roundsToWords(era, delay)}`);
