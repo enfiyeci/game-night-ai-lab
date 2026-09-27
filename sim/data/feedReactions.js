@@ -1391,7 +1391,7 @@ export const REACTIONS = {
    ],
    [
     "@lunt_rational",
-    "{lab}'s largest run has finished. Somewhere in that building is a thing nobody has spoken to yet. Everyone involved is excited. I appear to be the only one who finds that sentence frightening."
+    "{lab}'s big run has finished. Somewhere in that building is a thing nobody has spoken to yet. Everyone involved is excited. I appear to be the only one who finds that sentence frightening."
    ],
    [
     "@long_form_pod",

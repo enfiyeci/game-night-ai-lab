@@ -259,6 +259,7 @@ test('a finished run gets the finished-run posts, and a big one gets more', () =
   const smallPosts = small.feed.filter((post) => !post.replyTo);
   assert.equal(smallPosts.length, 1);
   assert.ok(done.has(smallPosts[0].text));
+  assert.equal(smallPosts[0].day, 30, 'it lands the day the run finishes, before the model can be released');
   const large = stateOnDay();
   large.pendingModel = { size: 'large' };
   reactToEvents(large, large, [{ type: 'runComplete', gain: 5 }]);
@@ -276,4 +277,16 @@ test('the start-run move reaches the feed', async () => {
   assert.deepEqual(out.errors ?? [], []);
   const pool = shown(REACTIONS.training.start.medium);
   assert.ok([...out.state.feed, ...out.state.feedQueue].some((post) => pool.has(post.text)));
+});
+
+test('a start-run move that fails gets no posts', async () => {
+  const { applyActions } = await import('../sim/turn.js');
+  const { createRng } = await import('../sim/rng.js');
+  const state = createInitialState({ seed: 7 });
+  state.feed = [];
+  const recipe = { sliders: { size: 'xl', length: 'optimal', alignShare: 0.4 }, picks: { pre: [], mid: [], post: [] } };
+  const out = applyActions(state, { moves: [{ type: 'startRun', recipe }] }, createRng(7));
+  assert.ok(out.errors.length >= 1, 'the run is refused');
+  const pools = Object.values(REACTIONS.training.start).flatMap((pool) => [...shown(pool)]);
+  assert.ok(![...out.state.feed, ...(out.state.feedQueue ?? [])].some((post) => pools.includes(post.text)));
 });

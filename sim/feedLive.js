@@ -239,9 +239,10 @@ export function reactToEvents(before, state, events, { atMark = false } = {}) {
         s.add(R.company[event.type], 2, 'company', { from: 0, to: 2 });
         break;
       case 'startRun': trainingStartPosts(state, s); break;
+      // Same day: the player may release the model the next day, and these posts talk about it as not out yet.
       case 'runComplete':
-        s.add(R.company.runComplete, 1, 'company', { from: 0, to: 2 });
-        if (['large', 'xl'].includes(state.pendingModel?.size)) s.add(R.training.doneBig, 1, 'company', { from: 0, to: 1 });
+        s.add(R.company.runComplete, 1, 'company', { from: 0, to: 0 });
+        if (['large', 'xl'].includes(state.pendingModel?.size)) s.add(R.training.doneBig, 1, 'company', { from: 0, to: 0 });
         break;
       case 'eventResolved': choicePosts(state, event, s); break;
       case 'meetingOutcome': presidentPosts(state, event, s); break;

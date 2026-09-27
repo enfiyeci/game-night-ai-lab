@@ -162,7 +162,7 @@ out until the recipe screen's chip numbers land (gn-recipe).
 ### Finished a training run: large or extra large
 - `@megawatt_mood` — {lab}'s site dropped half its load at 4 a.m. and the whole grid felt it. The big run's done, y'all.
 - `@crab_apple_leaks` — the big one is done. they have it. nobody at {lab} is talking, which is how you know 🍎
-- `@lunt_rational` — {lab}'s largest run has finished. Somewhere in that building is a thing nobody has spoken to yet. Everyone involved is excited. I appear to be the only one who finds that sentence frightening.
+- `@lunt_rational` — {lab}'s big run has finished. Somewhere in that building is a thing nobody has spoken to yet. Everyone involved is excited. I appear to be the only one who finds that sentence frightening.
 - `@long_form_pod` — guy on the show says {lab} just finished training something huge. says the people who've seen it went quiet. that's crazy, man.
 - `@yolo_calls` — {lab} big run DONE. everybody act normal 🚀🦍
 
