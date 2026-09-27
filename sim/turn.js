@@ -419,7 +419,7 @@ function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
       // still costs the safety chair, as it did when the choice was part of the turn.
       const boardEvents = state.round.hazardIgnored ? [...events, { type: 'hazardResolved', choice: 'ignore' }] : events;
       updateBoard(state, { ...boardSnapshot(state), ...state.roundStart }, boardEvents);
-      checkTurnEndings(state, rng);
+      checkTurnEndings(state);
       // Judged after this turn's endings, so a vote it calls is held next turn rather than beside the era gate's.
       const judged = state.ending ? null : judgeBoardPromise(state);
       if (judged) {

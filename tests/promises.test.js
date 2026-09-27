@@ -8,6 +8,7 @@ import { runMeeting } from '../sim/president.js';
 import { addressWarning, eventsTick, isAnchorId, resolveEvent, stampNewCards } from '../sim/events.js';
 import { generateOffers, signOffer } from '../sim/contracts.js';
 import { advanceDays, applyActions, endTurn } from '../sim/turn.js';
+import { MISUSE_ROUNDS } from '../sim/endings.js';
 
 const no = { next: () => 0.99, int: () => 0, chance: () => false, pick: (a) => a[0], normal: (m) => m };
 const nonAnchors = (state) => state.pendingEvents.filter((event) => !isAnchorId(event.eventId ?? event.id));
@@ -210,6 +211,9 @@ test('a mid-game catastrophe judges promises exactly once', () => {
   state.turnInEra = 1;
   state.capability = 100;
   state.misuseExposure = 100;
+  // No dice (A2, stated condition): misuse ends on the second round in a row over both lines, so the round before was
+  // already over them and this round is the second.
+  state.flags.misuseRounds = MISUSE_ROUNDS - 1;
   state.promises.push(presidentPromise('bigClaim', { dueTurn: 19 }));
   const favor = state.govFavor.us;
   const catastrophe = { ...no, chance: () => true };

@@ -95,14 +95,14 @@ test('a due board vote is held in checkTurnEndings and can remove the player', (
   lose.board = [49, 49, 49, 60, 60, 60, 49];
   lose.staffTrust = STAFF_LETTER_TRUST - 1;
   lose.flags.boardVoteDue = true;
-  assert.equal(checkTurnEndings(lose, no), 'boardRemoved');
+  assert.equal(checkTurnEndings(lose), 'boardRemoved');
   const { turn, yes, passed } = lose.flags.lastBoardVote;
   assert.deepEqual({ turn, yes, passed }, { turn: 0, yes: 3, passed: false });
   assert.equal(lose.flags.boardVoteDue, undefined);
 
   const win = createInitialState();
   win.flags.boardVoteDue = true;
-  assert.equal(checkTurnEndings(win, no), null);
+  assert.equal(checkTurnEndings(win), null);
   assert.equal(win.flags.lastBoardVote.passed, true);
   assert.equal(win.flags.boardVoteDue, undefined);
 });
@@ -112,7 +112,7 @@ test('a due board vote waits while the lab is insolvent', () => {
   s.cash = -1;
   s.board = INITIAL_BOARD.map(() => 0);
   s.flags.boardVoteDue = true;
-  assert.equal(checkTurnEndings(s, no), null);
+  assert.equal(checkTurnEndings(s), null);
   assert.equal(s.flags.boardVoteDue, true);
 });
 

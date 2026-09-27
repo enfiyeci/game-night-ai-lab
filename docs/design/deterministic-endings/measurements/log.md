@@ -28,6 +28,16 @@ Ending counts per bot:
 | a1 | balancedLowSafety | misalignment 149, pacingDeal 32, acquihire 16, pyrrhic 2, rivalDisaster 1 |
 | a1 | balancedHighSafety | acquihire 33, pacingDeal 69, misalignment 93, rivalDisaster 2, aligned 3 |
 | a1 | balancedPush | acquihire 39, misalignment 108, pacingDeal 45, rivalDisaster 2, quietTakeover 3, aligned 2, pyrrhic 1 |
+| a2 | speed | boardRemoved 200 |
+| a2 | safety | acquihire 184, leftBehind 14, misalignment 1, pacingDeal 1 |
+| a2 | balanced | misalignment 110, pacingDeal 57, acquihire 32, rivalDisaster 1 |
+| a2 | random | acquihire 144, boardRemoved 34, rivalDisaster 4, misalignment 14, misuse 4 |
+| a2 | overCommitter | acquihire 190, misalignment 10 |
+| a2 | handToMouth | misalignment 51, acquihire 134, aligned 1, pacingDeal 5, rivalDisaster 9 |
+| a2 | balancedNoGrid | acquihire 21, pacingDeal 59, misalignment 119, rivalDisaster 1 |
+| a2 | balancedLowSafety | misalignment 151, pacingDeal 32, acquihire 16, rivalDisaster 1 |
+| a2 | balancedHighSafety | acquihire 33, pacingDeal 69, misalignment 93, rivalDisaster 4, aligned 1 |
+| a2 | balancedPush | acquihire 39, misalignment 110, pacingDeal 45, rivalDisaster 3, quietTakeover 2, aligned 1 |
 
 Notes:
 
@@ -38,3 +48,9 @@ Notes:
   and every bot moves a little, as expected. The largest moves are small counts: balanced rivalDisaster 6 to 0,
   balancedPush quietTakeover 10 to 3, random boardRemoved 25 to 35, balancedLowSafety acquihire 29 to 16. No bot's
   leading ending changed.
+- a2 (Task A2, misuse on the second round in a row over both lines, rival disaster on the third round in a row above
+  heat 85, both counted instead of rolled): the speed bot is unchanged (the board removes it in all 200 runs, as before, so
+  neither line ever decides its runs). Across all bots, rivalDisaster goes from 18 to 23 and misuse from 1 to 4 (all random bot),
+  while pyrrhic goes from 6 to 0 and aligned from 8 to 3. The expected drop did not appear: a 20% roll let some runs sit
+  above heat 85 for several rounds and still finish, while the count ends every run that stays there three rounds.
+  Likely (not traced run by run) the lost pyrrhic and aligned endings are those late runs. Left for the retune (C3).
