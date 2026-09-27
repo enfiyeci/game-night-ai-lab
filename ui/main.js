@@ -8,6 +8,7 @@ import { powerSitesAvailable, queueScreenAvailable } from './logic/compute.js';
 import { meetingFor } from './logic/president.js';
 import { openMenu } from './menu.js';
 import { openBudget } from './screens/budget.js';
+import { openConstitution } from './screens/constitution.js';
 import { mountRecipe, openRecipe } from './screens/recipe.js';
 import { mountRelease, openRelease } from './screens/release.js';
 import { mountReveal } from './screens/reveal.js';
@@ -164,6 +165,10 @@ async function openDebugRoute() {
   }
   if (location.hash === '#budget') {
     openBudget(game, overlay);
+    return;
+  }
+  if (location.hash === '#constitution') {
+    if (game.state.era >= 3) openConstitution(game, overlay);
     return;
   }
   if (location.hash === '#deals') {
