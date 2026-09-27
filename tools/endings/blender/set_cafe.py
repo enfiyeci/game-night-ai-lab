@@ -52,6 +52,11 @@ def room():
     kit.box((0, D + 0.05, H / 2), (2 * W, 0.1, H), plaster)
     kit.box((1.6, D - 0.005, 0.85), (4.4, 0.01, 1.7), kit.tex("long_white_tiles", 1.0, name="ctiles"))
     kit.box((W + 0.05, D / 2, H / 2), (0.1, D, H), kit.tex("red_brick_03", 0.5, name="cbrick"))
+    # green panelling to dado height on the back wall's window end and the front wall
+    panel = kit.mat("#2F4F46", 0.45)
+    kit.box((-2.25, D - 0.02, 0.55), (3.1, 0.04, 1.1), panel)
+    kit.box((-2.25, D - 0.045, 1.11), (3.1, 0.06, 0.04), kit.mat("#27433B", 0.4))
+    kit.box((1.4, 0.02, 0.55), (2.8, 0.04, 1.1), panel)
     # the front wall: plaster, with the glass door near the corner
     kit.box((1.4, -0.05, H / 2), (2.8 + 2 * 0.0, 0.1, H), plaster)
     kit.box((-2.3, -0.05, 2.85), (3.0, 0.1, 0.5), plaster)
@@ -176,12 +181,17 @@ def tables(spots, chairs_up=False):
     return roots
 
 
-def pendants(on=True, energy=40, spots=((0.3, CY + 0.3), (1.7, CY + 0.3), (3.1, CY + 0.3))):
-    """Enamel lamps over the counter, each throwing a pool of warm light down."""
-    props("hanging_industrial_lamp", [(x, y, H, 0) for x, y in spots], scale=0.75)
+def pendants(on=True, energy=40, spots=((0.3, CY + 0.3), (1.6, CY + 0.3), (2.9, CY + 0.3), (-2.9, 3.1), (-0.3, 2.2))):
+    """Small enamel lamps on long cords, over the counter and the tables."""
+    enamel = kit.mat("#E9E4D8", 0.3)
+    cord = kit.mat("#151515", 0.5)
     for x, y in spots:
+        z = 2.15
+        kit.cyl((x, y, (H + z) / 2 + 0.1), 0.004, H - z - 0.2, cord, verts=6)
+        kit.cyl((x, y, z + 0.06), 0.13, 0.14, enamel, r2=0.03)
+        kit.cyl((x, y, z + 0.005), 0.13, 0.004, kit.emission("#FFD9A8", 6 if on else 0.0), verts=24)
         if on:
-            kit.spot((x, y, H - 1.0), (x, y, 0), energy, kit.kelvin(2700), angle=100, blend=0.7, radius=0.05)
+            kit.spot((x, y, z), (x, y, 0), energy, kit.kelvin(2700), angle=110, blend=0.8, radius=0.05)
 
 
 def dot(at=(0.6, 6.2), facing=180, pose="stand"):
@@ -202,23 +212,22 @@ def shot_ab_news():
     counter()
     menu([("Espresso", "2.40"), ("Flat white", "3.10"), ("Tea", "2.00"), ("Toast & jam", "3.50")])
     face = tv("ab-news", (226, 112, 828, 452))
-    tables([(-2.9, 2.2), (-2.9, 4.0), (-2.3, 6.1), (1.55, 2.75)])
-    pendants(energy=260)
+    tables([(-2.9, 2.2), (-2.9, 4.0), (-2.3, 6.1), (0.4, 0.9)])
+    pendants(energy=160)
     dot((0.5, 6.25), facing=10)             # Dot at the machine, her back to the room
-    # breakfast regulars, nobody watching: a paper under the TV, a phone by the window, a chat at the counter
-    P.person((-2.3 + 0.55, 6.15, 0.0), facing=-100, pose="sit", coat="#3B2A26", hold="paper", seed=3)
-    P.person((-2.9 + 0.55, 4.05, 0.0), facing=-80, pose="sit", coat="#26303C", hold="phone", seed=4)
-    P.person((-2.9 - 0.55, 2.2, 0.0), facing=100, pose="sit", coat="#4A443C", hold="cup", seed=6)
-    props("bar_chair_round_01", [(1.2, CY - 0.45, 0, 0), (2.0, CY - 0.45, 0, 0), (2.8, CY - 0.45, 0, 0)])
-    P.person((1.2, CY - 0.45, 0.28), facing=10, pose="sit", coat="#44343A", long_coat=True, seed=5)
-    P.person((-W - 1.4, 3.0, -0.03), facing=180, pose="walk", coat="#1F2226", long_coat=True, hold="umbrella", seed=8)
-    cup((1.3, CY + 0.15, CT))
-    cup((-2.05, 6.0, 0.75))
+    # breakfast regulars, nobody watching: a paper by the window, a phone, a chat at the counter; under the TV an
+    # empty table with the business pages left folded by a cup
+    P.person((-2.3 + 0.55, 6.1, 0.0), facing=95, pose="sit", coat="#8A7A62", hold="paper", seed=3)
+    P.person((-2.9 + 0.5, 2.25, 0.0), facing=150, pose="sit", coat="#2C3A4F", hold="phone", seed=4)
+    props("bar_chair_round_01", [(0.1, CY - 0.45, 0, 0), (0.9, CY - 0.45, 0, 0), (1.7, CY - 0.45, 0, 0)])
+    P.person((2.1, 4.6, 0.0), facing=-5, coat="#26302C", long_coat=True, seed=5)
+    cup((0.95, CY + 0.15, CT))
+    cup((-2.45, 6.2, 0.75))
     cup((-2.75, 4.1, 0.75))
-    cup((1.35, 2.7, 0.75))
-    kit.box((1.62, 2.62, 0.755), (0.3, 0.4, 0.008), kit.mat("#E9E4D8", 0.8), rot=(0, 0, 0.3))    # a folded paper
-    kit.area((0.5, 3.0, H - 0.05), (0.5, 3.0, 0), (3, 3), 60, kit.kelvin(3000))   # the ceiling downlights
-    kit.camera((0.95, 1.55, 1.22), (-1.3, 6.6, 1.55), lens=38, fstop=2.8, focus=face)
+    cup((0.5, 0.95, 0.75))
+    P.person((-W - 1.4, 6.2, -0.05), facing=180, pose="walk", coat="#1F2226", long_coat=True, hold="umbrella", seed=9)
+    kit.area((0.5, 3.5, H - 0.05), (0.5, 3.5, 0), (3, 3), 80, kit.kelvin(3000))   # the ceiling downlights
+    kit.camera((0.95, 1.7, 1.22), (-1.3, 6.6, 1.55), lens=37, fstop=4.0, focus=face)
     bpy.context.scene.view_settings.exposure = 0.4
 
 
