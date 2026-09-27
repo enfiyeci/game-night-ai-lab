@@ -293,7 +293,7 @@ def shot_ab_app():
     # the low sun through the window lays warm light across the table; the screen lights her face
     kit.sun((76, 0, 212), 4.0, kit.kelvin(3000), angle=1.5)
     kit.area((0.02, 3.0, 0.95), (0.02, 2.5, 1.0), (0.3, 0.15), 5, kit.kelvin(7000))
-    kit.camera((0.5, 1.98, 1.2), (0.05, 3.14, 0.88), lens=58, fstop=2.8, focus=face)
+    kit.camera((0.5, 1.98, 1.2), (0.05, 3.14, 0.88), lens=58, fstop=4.0, focus=face)
     bpy.context.scene.view_settings.exposure = 0.3
 
 
@@ -405,7 +405,7 @@ def shot_ov_chat():
     for (x, y, c) in ((-0.35, 3.02, "#F2EEE6"), (-0.47, 2.92, "#C9553B"), (-0.3, 2.86, "#3F84C6")):
         mug((x, y, 0.76), c)
     kit.box((0.3, 3.5, 0.762), (0.12, 0.08, 0.004), kit.mat("#E0613B", 0.4, 0.3), rot=(0, 0, 0.6))   # a snack wrapper
-    desk_lamp((-0.6, 3.1, 0.76), math.radians(-20), (0.1, 3.25, 0.76), energy=6)
+    desk_lamp((-0.6, 3.1, 0.76), math.radians(-20), (-0.2, 3.05, 0.76), energy=9)
     kit.area((0.05, 3.33, 0.95), (0.9, 3.5, 1.0), (0.3, 0.15), 3, kit.kelvin(7000))
     kit.camera((0.9, 3.5, 1.15), (-1.2, 2.7, 0.8), lens=40, fstop=8, focus=face)
 
