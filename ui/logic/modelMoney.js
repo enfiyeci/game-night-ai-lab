@@ -33,7 +33,7 @@ export function moneyRows(state) {
         made,
         serving: servingSpent,
         earned,
-        net: earned - servingSpent - (made ?? 0),
+        net: made == null ? null : earned - servingSpent - made,
       };
     });
   const extra = [];
@@ -46,6 +46,7 @@ export function moneyRows(state) {
     extra.push({ kind: 'training', name: 'In training now', made: spent, serving: 0, earned: 0, net: -spent });
   }
   const rows = [...released, ...extra];
+  // A row with an unknown cost stays out of the totals' net rather than counting that cost as zero.
   const sum = (key) => rows.reduce((total, row) => total + (row[key] ?? 0), 0);
   const total = { made: sum('made'), serving: sum('serving'), earned: sum('earned'), net: sum('net') };
   return { rows, total, paidBack: released.filter((row) => row.made != null && row.net >= 0).length, released: released.length };

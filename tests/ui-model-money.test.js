@@ -31,7 +31,8 @@ test('a model from before the books shows no training figure instead of a made-u
   s.models.push(released('Old 1 Core', 0, { earned: 40, servingSpent: 10 }));
   const [row] = moneyRows(s).rows;
   assert.equal(row.made, null);
-  assert.equal(row.net, 30);
+  assert.equal(row.net, null);
+  assert.equal(moneyRows(s).total.net, 0);
 });
 
 test('the run in training and a trained model waiting for launch show what they cost so far', () => {

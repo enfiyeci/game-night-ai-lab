@@ -30,7 +30,7 @@ export function modelMoneyView(state) {
     return root;
   }
   const maxFlow = Math.max(1, ...rows.flatMap((r) => [r.made ?? 0, r.serving, r.earned]));
-  const maxNet = Math.max(1, ...rows.map((r) => Math.abs(r.net)));
+  const maxNet = Math.max(1, ...rows.map((r) => Math.abs(r.net ?? 0)));
   const bar = (value, cls, label) => {
     const cell = element('div', 'finance-cell');
     const track = element('div', 'finance-bar');
@@ -70,7 +70,7 @@ export function modelMoneyView(state) {
     const earn = element('td');
     earn.append(row.kind === 'model' ? bar(row.earned, 'teal', money(row.earned)) : dash());
     const net = element('td');
-    net.append(netCell(row.net));
+    net.append(row.net == null ? dash() : netCell(row.net));
     tr.append(name, make, serve, earn, net);
     tbody.append(tr);
   }

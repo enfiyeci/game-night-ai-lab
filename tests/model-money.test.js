@@ -7,6 +7,7 @@ import { BALANCE } from '../sim/balance.js';
 import { startRun, advanceRunBy } from '../sim/training.js';
 import { releaseModel } from '../sim/release.js';
 import { recipeCost } from '../sim/recipe.js';
+import { computeSlices, spotCover } from '../sim/split.js';
 
 const consumerModel = (name, users) => ({
   name, active: true, activeFromTurn: 0, channel: 'consumer', priceStance: 'market',
@@ -27,6 +28,23 @@ test('each model earns its share of the revenue and pays for the compute that se
   const units = (m) => (m.users * m.servingCost) / BALANCE.unitMonthlyDollars;
   assert.ok(Math.abs(a.servingSpent - units(a) * price * 2) < 1e-9);
   assert.ok(a.servingSpent > 0);
+});
+
+test('serving is charged for the compute it got, and spot cover for the rest', () => {
+  const s = createInitialState();
+  s.models.push(consumerModel('A 1 Core', 30e6)); // far more than the starting fleet can serve
+  updateServing(s);
+  const { serving, shortfall } = computeSlices(s);
+  assert.ok(shortfall > 0);
+  s.compute.split.coverWithSpot = false;
+  accrueEconomy(s, 1);
+  assert.ok(Math.abs(s.models[0].servingSpent - serving * unitMonthlyPrice(s)) < 1e-9);
+  const covered = createInitialState();
+  covered.models.push(consumerModel('A 1 Core', 30e6));
+  covered.compute.split.coverWithSpot = true;
+  updateServing(covered);
+  accrueEconomy(covered, 1);
+  assert.ok(Math.abs(covered.models[0].servingSpent - (serving * unitMonthlyPrice(covered) + spotCover(covered))) < 1e-9);
 });
 
 test('a model that is not on sale earns nothing', () => {
