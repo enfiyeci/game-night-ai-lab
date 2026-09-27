@@ -5,7 +5,7 @@ import { computeBar } from '../logic/compute.js';
 import { computeAmount } from '../logic/format.js';
 import { raceTab } from './race.js';
 import { advisorExplains, advisorTabLine, screenHelp } from '../components/advisorSays.js';
-import { COMPUTE_SEEN_KEY, COMPUTE_TAB_LINES, EXPLAINER_ADVISOR, computeExplainer, firstOpen, pageStorage } from '../logic/explainers.js';
+import { COMPUTE_ADVISOR, COMPUTE_SEEN_KEY, COMPUTE_TAB_LINES, computeExplainer, firstOpen, pageStorage } from '../logic/explainers.js';
 
 const PARTS = {
   training: { label: 'Training', say: 'Training your next model right now.' },
@@ -27,7 +27,7 @@ function element(tag, className, text) {
 export function openComputeInfo(game, overlayRoot, { view = 'where', race = raceTab } = {}) {
   const state = game.state;
   let opened;
-  // The CFO explains the screen the first time it opens in this browser; the header's "?" brings her back.
+  // Research explains the screen the first time it opens in this browser; the header's "?" brings her back.
   let explaining = firstOpen(pageStorage(), COMPUTE_SEEN_KEY);
   const withHelp = () => screenHelp(opened, (shown) => { explaining = shown; });
 
@@ -44,7 +44,7 @@ export function openComputeInfo(game, overlayRoot, { view = 'where', race = race
       row.append(tab);
     }
     const head = document.createDocumentFragment();
-    head.append(advisorExplains(EXPLAINER_ADVISOR, computeExplainer(state.era), explaining), row, advisorTabLine(EXPLAINER_ADVISOR, COMPUTE_TAB_LINES[current]));
+    head.append(advisorExplains(COMPUTE_ADVISOR, computeExplainer(state.era), explaining), row, advisorTabLine(COMPUTE_ADVISOR, COMPUTE_TAB_LINES[current]));
     return head;
   }
 

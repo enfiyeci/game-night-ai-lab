@@ -1,9 +1,9 @@
 // The finance planner (owner pick 2026-09-26: mockups A and B of K2-finance-plan.html, as two views of one screen).
-// Timeline: compute, money each month and cash on one turn axis, with a draggable goal per era. The books: the
-// same plan as an era-by-era ledger next to the actual history. Goals and rounds are a plan only; they queue no move.
+// Timeline: compute, money each month and cash through the current era plus one generic Later slice. The books show
+// played eras and the current one only. Goals and rounds are a plan only; they queue no move.
 // The one exception is "Promise it to the board": keeping the plan with it switched on makes the board promise at once.
 import { ERAS } from '../../sim/data/eras.js';
-import { roundWord, storyDate } from '../../sim/time.js';
+import { storyDate } from '../../sim/time.js';
 import { openDialog } from '../components/dialog.js';
 import { teamPanel } from '../components/team.js';
 import { registerMenuHandler } from '../menu.js';
@@ -14,12 +14,12 @@ import { openBudget } from './budget.js';
 import { openAutomation } from './automation.js';
 import { modelMoneyView } from './modelMoney.js';
 import { advisorExplains, advisorTabLine, screenHelp } from '../components/advisorSays.js';
-import { EXPLAINER_ADVISOR, MONEY_EXPLAINER, MONEY_SEEN_KEY, MONEY_TAB_LINES, firstOpen, pageStorage } from '../logic/explainers.js';
+import { MONEY_ADVISOR, MONEY_EXPLAINER, MONEY_SEEN_KEY, MONEY_TAB_LINES, firstOpen, pageStorage } from '../logic/explainers.js';
 
 // Compute is shown in the unit of the era the player is in: later eras' power units would hint at what is to come.
 const amountNow = (state, units, era) => computeAmount(units, Math.min(era, state.era));
 import {
-  LAST_TURN, UNIT_PRICE, boardPromiseOffer, byEra, defaultPlan, eraEndWords, eraLabel, eraOfTurn, eraStart, eraTitle, futureEras, monthOfTurn,
+  LAST_TURN, UNIT_PRICE, boardPromiseOffer, byEra, defaultPlan, eraEndWords, eraLabel, eraOfTurn, eraStart, eraTitle, futureEras,
   planOpinions, project,
   raiseAllowed, roundEras, setGoal,
 } from '../logic/finance.js';
@@ -45,9 +45,9 @@ function element(tag, className, text) {
 const text = (x, y, s, style = '', anchor = 'start') => `<text x="${x}" y="${y}" text-anchor="${anchor}" style="font-size:10.5px;font-weight:700;fill:color-mix(in oklab, var(--ink) 58%, var(--paper));${style}">${s}</text>`;
 const hatch = (id, token) => `<pattern id="${id}" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" style="fill:color-mix(in oklab, var(${token}) 22%, var(--paper))"/><rect width="3" height="6" style="fill:var(${token})"/></pattern>`;
 
-function verdict(p, state) {
-  if (!p.runsOut) return { good: true, text: `Cash lasts the run. You end with about ${money(p.end)}.` };
-  return { good: false, text: `Cash runs out in month ${Math.floor(p.runsOut.atMonth)}${p.runsOut.era <= state.era ? ` (era ${p.runsOut.era})` : ''}. You end ${money(-p.end)} short.` };
+function verdict(p) {
+  if (!p.runsOut) return { good: true, text: `Cash holds through this plan, with about ${money(p.end)} left.` };
+  return { good: false, text: `Cash runs out before this plan is done. It falls ${money(-p.end)} short.` };
 }
 
 // A saved plan keeps only the eras still ahead; eras it never set start at today's compute.
@@ -63,15 +63,26 @@ function currentPlan(game) {
 
 // The Money screen's five views (owner picks 2026-09-26: 2A "This month" and 2B "What changed" join the planner's two;
 // "Each model" shows every release's own books).
-const VIEWS = [['month', 'This month'], ['models', 'Each model'], ['changes', 'What changed'], ['timeline', 'Years ahead'], ['books', 'The books']];
+const VIEWS = [['month', 'This month'], ['models', 'Each model'], ['changes', 'What changed'], ['timeline', 'The plan'], ['books', 'The books']];
 const PRICE_WORDS = { premium: 'at the premium price', market: 'at the market price', undercut: 'at the undercut price', free: 'on the free tier' };
 const BUDGET_WORDS = { training: 'training', security: 'security', product: 'product', talent: 'talent' };
 
 export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
   const state = game.state;
-  const eras = futureEras(state);
-  const rounds = roundEras(state);
-  let plan = currentPlan(game);
+  const future = futureEras(state);
+  const laterEra = future.find((era) => era > state.era);
+  const eras = [...(future.includes(state.era) ? [state.era] : []), ...(laterEra == null ? [] : [laterEra])];
+  const rounds = state.era >= 2 ? [state.era] : [];
+  const currentEnd = eraStart(state.era) + ERAS[state.era - 1].turns - 1;
+  const planEnd = Math.min(LAST_TURN, laterEra == null ? currentEnd : eraStart(laterEra));
+  const planLabel = (era) => (era === state.era ? 'Current era' : 'Later');
+  const collapseLater = (candidate) => {
+    if (laterEra == null) return candidate;
+    const goals = { ...candidate.goals };
+    for (const era of future.filter((value) => value > laterEra)) goals[era] = goals[laterEra];
+    return { ...candidate, goals };
+  };
+  let plan = collapseLater(currentPlan(game));
   let promising = !!game.queue.boardPromise;
   let opened;
   let draw = () => {};
@@ -86,7 +97,7 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
     if (key) opened?.querySelector(`[data-focus="${key}"]`)?.focus();
   };
   const changeGoal = (era, units) => {
-    plan = setGoal(plan, era, Math.min(MAX_GOAL, Math.round(units / stepFor(era)) * stepFor(era)), eras);
+    plan = collapseLater(setGoal(plan, era, Math.min(MAX_GOAL, Math.round(units / stepFor(era)) * stepFor(era)), eras));
     render();
   };
   const keep = () => {
@@ -101,14 +112,14 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
     const down = element('button', '', '−');
     down.type = 'button';
     down.dataset.focus = `down-${era}`;
-    down.setAttribute('aria-label', `Lower the goal ${eraLabel(state, era).replace(/^From/, 'from').replace(/^Era/, 'for era')}`);
+    down.setAttribute('aria-label', `Lower the ${planLabel(era).toLowerCase()} goal`);
     down.addEventListener('click', () => changeGoal(era, plan.goals[era] - stepFor(era)));
     const value = element('output', 'finance-step-value', amountNow(state, plan.goals[era], era));
     value.setAttribute('aria-live', 'polite');
     const up = element('button', '', '+');
     up.type = 'button';
     up.dataset.focus = `up-${era}`;
-    up.setAttribute('aria-label', `Raise the goal ${eraLabel(state, era).replace(/^From/, 'from').replace(/^Era/, 'for era')}`);
+    up.setAttribute('aria-label', `Raise the ${planLabel(era).toLowerCase()} goal`);
     up.addEventListener('click', () => changeGoal(era, plan.goals[era] + stepFor(era)));
     root.append(down, value, up);
     return root;
@@ -144,7 +155,7 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
     if (open) {
       const row = element('div', 'compute-toggle finance-promised');
       const words = element('span');
-      words.append(element('b', '', 'Promised to the board'), element('small', '', `${amountNow(state, open.units, open.era)} by ${eraEndWords(state, open.era)}`));
+      words.append(element('b', '', 'Promised to the board'), element('small', '', `${amountNow(state, open.units, open.era)} ${open.era === state.era ? `by ${eraEndWords(state, open.era)}` : 'later'}`));
       row.append(words);
       return row;
     }
@@ -159,7 +170,7 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
     const words = element('span');
     words.append(
       element('b', '', 'Promise it to the board'),
-      element('small', '', offer ? `${amountNow(state, offer.units, offer.era)} by ${eraEndWords(state, offer.era)}` : 'Set a goal above zero first'),
+      element('small', '', offer ? `${amountNow(state, offer.units, offer.era)} ${offer.era === state.era ? `by ${eraEndWords(state, offer.era)}` : 'later'}` : 'Set a goal above zero first'),
     );
     button.append(words, element('i', on ? 'on' : ''));
     button.addEventListener('click', () => {
@@ -172,9 +183,8 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
   function goalRows(root) {
     for (const era of eras) {
       const row = element('div', 'finance-goal');
-      // A later era shows only its first clock date (owner rule: it is not named yet).
-      const label = element('span', '', eraTitle(state, era) ? eraLabel(state, era) : eraLabel(state, era).replace(/^From /, ''));
-      label.append(element('small', '', eraTitle(state, era) || 'onwards'));
+      const label = element('span', '', planLabel(era));
+      label.append(element('small', '', era === state.era ? 'from now' : 'broad estimate'));
       row.append(label, stepper(era));
       root.append(row);
     }
@@ -227,7 +237,7 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
       row.append(tab);
     }
     const head = document.createDocumentFragment();
-    head.append(advisorExplains(EXPLAINER_ADVISOR, MONEY_EXPLAINER, explaining), row, advisorTabLine(EXPLAINER_ADVISOR, MONEY_TAB_LINES[current]));
+    head.append(advisorExplains(MONEY_ADVISOR, MONEY_EXPLAINER, explaining), row, advisorTabLine(MONEY_ADVISOR, MONEY_TAB_LINES[current]));
     return head;
   }
   const withHelp = () => screenHelp(opened, (shown) => { explaining = shown; });
@@ -377,9 +387,10 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
   function showTimeline() {
     const history = game.financeHistory;
     const W = 788, padL = 62, padR = 10;
-    const x = (turn) => padL + (turn / (LAST_TURN + 1)) * (W - padL - padR);
-    const bw = (W - padL - padR) / (LAST_TURN + 1);
-    const hC = 150, hM = 132, hK = 104, gap = 26, top = 22;
+    const shownTurns = Math.max(1, planEnd + 1);
+    const x = (turn) => padL + (turn / shownTurns) * (W - padL - padR);
+    const bw = (W - padL - padR) / shownTurns;
+    const hC = 118, hM = 102, hK = 80, gap = 20, top = 18;
     const H = top + hC + gap + hM + gap + hK + 34;
     let maxC = 800;
     const yC = (u) => top + hC - (u / maxC) * hC;
@@ -395,15 +406,15 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
       item.append(element('i', `finance-swatch ${swatch}`), document.createTextNode(label));
       key.append(item);
     }
-    const note = element('p', 'finance-note', `Revenue is held at today's level; the dotted line grows today's users at the game's own rate, with no new releases. Compute bills are after cloud credits, and today's spot cover and idle resale are held at today's level. Compute you haven't signed is billed at the base price, ${unitPrice} a unit each month, from next ${roundWord(state.era)}; a letter of intent counts only the 30% it is sure to deliver. Rounds raise at today's valuation.`);
+    const note = element('p', 'finance-note', `Revenue is held at today's level; the dotted line grows today's users at the game's own rate, with no new releases. Compute bills are after cloud credits, and today's spot cover and idle resale are held at today's level. Compute you haven't signed is billed at the base price, ${unitPrice} a unit each month, once it arrives; a letter of intent counts only the share it is sure to deliver. A funding round uses today's valuation.`);
     const body = element('div', 'finance-timeline-body');
     body.append(tabs('timeline'), charts, key, note);
     const team = element('div');
     const panel = element('div', 'finance-plan');
 
     opened = openDialog(overlayRoot, {
-      title: 'Plan the years ahead',
-      subtitle: `Era ${state.era} · month ${state.monthsElapsed} · compute goals and what they cost each month`,
+      title: 'Plan from here',
+      subtitle: 'The rest of the current era, then one broad look later',
       left: { title: 'Team', content: team },
       right: { title: 'This plan', content: panel },
       body,
@@ -413,10 +424,11 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
     opened.classList.add('finance-timeline');
 
     draw = () => {
-      const p = project(state, plan);
-      const past = history.map((r) => ({ ...r, signed: r.online, planned: 0, signedBill: r.computeBill, planBill: 0, past: true }));
+      const p = project(state, plan, { until: planEnd });
+      const past = history.filter((r) => r.turn < state.turn && r.turn <= planEnd)
+        .map((r) => ({ ...r, signed: r.online, planned: 0, signedBill: r.computeBill, planBill: 0, past: true }));
       const rows = [...past, ...p.rows];
-      maxC = dragScale ?? niceCeil(Math.max(160, ...rows.map((r) => r.signed + r.planned), ...Object.values(plan.goals)) * 1.12);
+      maxC = dragScale ?? niceCeil(Math.max(160, ...rows.map((r) => r.signed + r.planned), ...eras.map((era) => plan.goals[era] ?? 0)) * 1.12);
       lastMaxC = maxC;
       const tM = top + hC + gap, tK = tM + hM + gap;
       const maxM = niceCeil(Math.max(100, ...rows.map((r) => Math.max(0, r.signedBill) + r.planBill + r.people + r.ops), ...rows.map((r) => r.grownRevenue ?? r.revenue)) * 1.08);
@@ -426,12 +438,18 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
       const cashes = rows.flatMap((r) => [r.cashStart + r.raised, r.cashEnd]);
       const lo = Math.min(0, ...cashes), hi = Math.max(1, ...cashes);
       const yK = (v) => tK + hK - ((v - lo) / (hi - lo)) * hK;
-      let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Compute, money each month and cash from the start of the run to its end"><defs>${hatch('finance-plan-hatch', '--sky')}${hatch('finance-bill-hatch', '--coral')}</defs>`;
-      ERAS.forEach((era, i) => {
-        const x0 = x(eraStart(era.id)), x1 = x(eraStart(era.id) + era.turns);
+      let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Compute, monthly money and cash through the visible plan"><defs>${hatch('finance-plan-hatch', '--sky')}${hatch('finance-bill-hatch', '--coral')}</defs>`;
+      ERAS.filter((era) => era.id <= state.era).forEach((era, i) => {
+        const x0 = x(eraStart(era.id)), x1 = x(Math.min(planEnd + 1, eraStart(era.id) + era.turns));
+        if (x0 >= x1) return;
         s += `<rect x="${x0}" y="${top - 18}" width="${x1 - x0}" height="${H - top - 2}" style="fill:${i % 2 ? 'color-mix(in oklab, var(--cream) 45%, var(--paper))' : 'var(--paper)'}"/>`;
-        s += text(x0 + 5, top - 6, eraLabel(state, era.id).toUpperCase(), 'font-weight:900;font-size:10px;letter-spacing:.06em');
+        s += text(x0 + 5, top - 6, era.id === state.era ? 'CURRENT ERA' : eraLabel(state, era.id).toUpperCase(), 'font-weight:900;font-size:10px;letter-spacing:.06em');
       });
+      if (laterEra != null) {
+        const x0 = x(eraStart(laterEra));
+        s += `<rect x="${x0}" y="${top - 18}" width="${x(planEnd + 1) - x0}" height="${H - top - 2}" style="fill:color-mix(in oklab, var(--cream) 45%, var(--paper))"/>`;
+        s += text(x0 + 5, top - 6, 'LATER', 'font-weight:900;font-size:10px;letter-spacing:.06em');
+      }
       const tickC = maxC / 4;
       for (let v = 0; v < maxC; v += tickC) {
         s += `<line x1="${padL}" x2="${W - padR}" y1="${yC(v)}" y2="${yC(v)}" style="stroke:color-mix(in oklab, var(--ink) ${v ? 7 : 25}%, transparent)"/>`;
@@ -452,12 +470,13 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
       const firstGoalY = early && eras.length ? yC(Math.min(plan.goals[eras[0]], maxC)) - 16 : Infinity;
       s += text(labelX, Math.min(yC(0) - 16, yC(pastSigned) - 6, firstGoalY), `${state.compute.online} units signed`, 'fill:color-mix(in oklab, var(--sky) 70%, var(--ink));font-weight:900', labelAnchor);
       for (const era of eras) {
-        const t0 = Math.max(state.turn + 1, eraStart(era)), t1 = eraStart(era) + ERAS[era - 1].turns;
+        const t0 = Math.max(state.turn + 1, eraStart(era));
+        const t1 = era === laterEra ? planEnd + 1 : Math.min(planEnd + 1, eraStart(era) + ERAS[era - 1].turns);
         if (t0 >= t1) continue;
         const gy = yC(Math.min(plan.goals[era], maxC)), cx = (x(t0) + x(t1)) / 2;
         const label = amountNow(state, plan.goals[era], era);
         s += `<line x1="${x(t0)}" x2="${x(t1)}" y1="${gy}" y2="${gy}" style="stroke:var(--ink);stroke-width:2;stroke-dasharray:5 4"/>`;
-        s += `<g class="finance-goal-handle" data-era="${era}" data-focus="handle-${era}" tabindex="0" role="slider" aria-label="${eraLabel(state, era)} compute goal" aria-valuemin="0" aria-valuemax="${MAX_GOAL}" aria-valuenow="${plan.goals[era]}" aria-valuetext="${label}">
+        s += `<g class="finance-goal-handle" data-era="${era}" data-focus="handle-${era}" tabindex="0" role="slider" aria-label="${planLabel(era)} compute goal" aria-valuemin="0" aria-valuemax="${MAX_GOAL}" aria-valuenow="${plan.goals[era]}" aria-valuetext="${label}">
           <rect x="${cx - 38}" y="${gy - 11}" width="76" height="22" rx="11" style="fill:var(--ink)"/>
           <text x="${cx}" y="${gy + 4}" text-anchor="middle" style="font-size:11px;font-weight:900;fill:var(--paper)">${label}</text></g>`;
       }
@@ -504,12 +523,8 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
       }
       s += `<line x1="${x(state.turn)}" x2="${x(state.turn)}" y1="${top - 18}" y2="${tK + hK + 6}" style="stroke:var(--ink);stroke-width:1.5"/>` + text(x(state.turn) + 5, top + 10, 'Now', 'fill:var(--ink);font-weight:900;font-size:11px');
       const axisY = tK + hK + 20;
-      for (const m of [0, 12, 24]) {
-        const t = Array.from({ length: LAST_TURN + 1 }, (_, i) => i).find((i) => monthOfTurn(i) === m);
-        if (t == null) continue;
-        s += text(x(t), axisY, `Year ${m / 12 + 1}`, 'fill:var(--ink);font-weight:900') + text(x(t), axisY + 12, `month ${m}`);
-      }
-      s += text(x(LAST_TURN + 1), axisY, `month ${monthOfTurn(LAST_TURN + 1)}`, '', 'end');
+      s += text(x(0), axisY, 'Start', 'fill:var(--ink);font-weight:900');
+      if (laterEra != null) s += text(x(eraStart(laterEra)) + 5, axisY, 'Later', 'fill:var(--ink);font-weight:900');
       s += '</svg>';
       charts.innerHTML = s;
       key.querySelector('.finance-key-income')?.remove();
@@ -519,11 +534,12 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
         key.append(item);
       }
 
-      team.replaceChildren(teamPanel(state, { opinions: planOpinions(state, p, plan) }));
+      const visiblePlan = { goals: Object.fromEntries(eras.map((era) => [era, plan.goals[era]])), raises: Object.fromEntries(rounds.map((era) => [era, plan.raises[era]])) };
+      team.replaceChildren(teamPanel(state, { opinions: planOpinions(state, p, visiblePlan) }));
       const summary = byEra(p.rows);
       const last = summary.at(-1);
       if (eras.length === 0) {
-        panel.replaceChildren(element('p', 'finance-note', `This is the last ${roundWord(state.era)}, so no new compute can arrive.`));
+        panel.replaceChildren(element('p', 'finance-note', 'No additional delivery fits in the visible plan.'));
       } else {
         panel.replaceChildren(element('h4', '', 'Compute goal'));
         goalRows(panel);
@@ -536,14 +552,14 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
       const sums = element('div', 'finance-sums');
       for (const [label, value, cls] of [
         ['Revenue today', perMonth(p.rows[0].revenue), 'in'],
-        [last.era <= state.era ? `Spending, era ${last.era}` : 'Spending at the end', perMonth(last.burn), 'out'],
+        [last.era <= state.era ? 'Spending, current era' : 'Spending later', perMonth(last.burn), 'out'],
         ['Lowest cash', money(p.lowest), p.lowest < 0 ? 'out' : ''],
       ]) {
         const row = element('div');
         row.append(element('span', '', label), element('b', cls, value));
         sums.append(row);
       }
-      const v = verdict(p, state);
+      const v = verdict(p);
       panel.append(sums, element('div', `finance-verdict ${v.good ? 'good' : 'bad'}`, v.text));
     };
     render();
@@ -554,8 +570,8 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
     const history = game.financeHistory;
     const body = element('div', 'finance-books-body');
     opened = openDialog(overlayRoot, {
-      title: 'The books, era by era',
-      subtitle: 'What happened, then the plan · every figure a monthly average unless it says otherwise',
+      title: 'The books so far',
+      subtitle: 'Played eras and the current one · every figure a monthly average unless it says otherwise',
       body,
       okLabel: 'Keep this plan',
       onOk: keep,
@@ -564,7 +580,7 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
     const actual = byEra(history.filter((r) => r.era < state.era), { actual: true });
 
     draw = () => {
-      const p = project(state, plan);
+      const p = project(state, plan, { until: currentEnd });
       const cols = [...actual, ...byEra(p.rows)];
       const maxMonth = Math.max(1, ...cols.map((c) => Math.max(c.revenue, c.burn)));
       const maxCash = Math.max(1, ...cols.map((c) => Math.abs(c.cashEnd)));
@@ -596,10 +612,9 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
       head.append(element('th'));
       for (const c of cols) {
         const th = element('th', c.actual ? '' : 'plan');
-        const month = c.actual ? history.find((r) => r.era === c.era)?.month ?? 0 : p.rows.find((r) => r.era === c.era).month;
         th.append(
-          element('small', '', `Year ${Math.floor(month / 12) + 1}${c.era <= state.era ? ` · Era ${c.era}` : ''}${c.era === state.era ? ' · now' : ''}`),
-          document.createTextNode(eraTitle(state, c.era) || eraLabel(state, c.era)),
+          element('small', '', `Era ${c.era}${c.era === state.era ? ' · now' : ''}`),
+          document.createTextNode(eraTitle(state, c.era)),
           element('br'),
           element('span', `finance-tag ${c.actual ? 'actual' : 'plan'}`, `${c.actual ? 'actual' : 'plan'} · ${c.months} mo${!c.actual && c.era === state.era && state.turnInEra > 0 ? ' left' : ''}`),
         );
@@ -650,8 +665,8 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
         return cell;
       }, 'finance-total');
       table.append(colgroup, thead, tbody);
-      const v = verdict(p, state);
-      const foot = element('p', 'finance-note', `Plan columns hold revenue at today's ${perMonth(p.rows[0].revenue)}, bill unsigned compute at ${unitPrice} a unit each month, and raise rounds at today's valuation. `);
+      const v = verdict(p);
+      const foot = element('p', 'finance-note', `The current column holds revenue at today's ${perMonth(p.rows[0].revenue)}, bills unsigned compute at ${unitPrice} a unit each month, and uses today's valuation for a funding round. `);
       foot.append(element('b', v.good ? 'in' : 'out', v.text));
       body.replaceChildren(tabs('books'), table, foot);
     };

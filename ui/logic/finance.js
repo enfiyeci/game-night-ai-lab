@@ -203,7 +203,7 @@ export function project(state, plan, { until = LAST_TURN } = {}) {
   let cash = state.cash;
   let credits = state.compute.credits ?? 0;
   let goal = 0;
-  for (let turn = state.turn; turn <= LAST_TURN; turn++) {
+  for (let turn = state.turn; turn <= Math.min(LAST_TURN, until); turn++) {
     const era = eraOfTurn(turn);
     const months = eraById(era).monthsPerTurn;
     if (goals[era] != null) goal = goals[era];
@@ -305,9 +305,8 @@ export function planOpinions(state, projection, plan) {
   const ratio = Math.round(last.burn / today);
   const finalGoal = plan.goals[last.era] ?? state.compute.online;
   const growth = finalGoal / Math.max(1, state.compute.online);
-  const era4Goal = plan.goals[4];
   const out = projection.runsOut;
-  const byEnd = last.era <= state.era ? `by era ${last.era}` : 'by the end of the plan';
+  const byEnd = last.era <= state.era ? 'by the end of this era' : 'later in the plan';
   const opinions = [
     {
       id: 'cfo',
@@ -328,15 +327,9 @@ export function planOpinions(state, projection, plan) {
     {
       id: 'safety',
       mood: 'calm',
-      text: era4Goal != null
-        ? `At our ${Math.round(state.compute.split.safety * 100)}% share, ${state.era >= 4 ? 'this era' : 'later on'}, safety gets ${unitWords(Math.round(era4Goal * state.compute.split.safety))}.`
-        : `At our ${Math.round(state.compute.split.safety * 100)}% share, safety gets ${unitWords(Math.round(finalGoal * state.compute.split.safety))}.`,
+      text: `At our ${Math.round(state.compute.split.safety * 100)}% share, safety gets ${unitWords(Math.round(finalGoal * state.compute.split.safety))}.`,
     },
   ];
-  if (state.era <= 3 && era4Goal != null) {
-    opinions.push({ id: 'policy', mood: 'uneasy', text: 'Chips we own will need power of their own later on, and grid reservations will not stay open forever.' });
-  } else {
-    opinions.push({ id: 'policy', mood: out ? 'uneasy' : 'calm', text: out ? 'Running out of money in public is the story I cannot spin.' : 'A plan that holds is one I can explain.' });
-  }
+  opinions.push({ id: 'policy', mood: out ? 'uneasy' : 'calm', text: out ? 'Running out of money in public is the story I cannot spin.' : 'A plan that holds is one I can explain.' });
   return opinions;
 }
