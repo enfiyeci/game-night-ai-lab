@@ -187,6 +187,7 @@ def silhouettes(points, seed=1, coats=("#2A2D33", "#33302E", "#262B33", "#3A3436
     optional 6th value "hand" to raise the right hand. Returns the object."""
     rng = random.Random(seed)
     mats = [kit.mat(c, 0.85) for c in coats] + [kit.mat(h, 0.7) for h in ("#1E1A18", "#3A2C22", "#6B6660", "#141212")]
+    mats += [kit.mat(t, 0.55) for t in ("#C99576", "#8A5A3E")]
     nc = len(coats)
     bm = bmesh.new()
     slots = []
@@ -211,9 +212,11 @@ def silhouettes(points, seed=1, coats=("#2A2D33", "#33302E", "#262B33", "#3A3436
         blob(rot @ lean + Vector((x, y, base + 0.6 * s)), (0.23 * s, 0.13 * s, 0.085 * s), rot, coat)     # shoulders
         blob(rot @ (lean * 1.2) + Vector((x, y, base + 0.7 * s)), (0.05 * s, 0.05 * s, 0.06 * s), rot, coat, 8)   # neck
         blob(rot @ (lean * 1.4) + Vector((x, y, base + 0.81 * s)), (0.085 * s, 0.095 * s, 0.11 * s), rot, hair)   # head
-        if hand:   # a thin raised arm and a hand
-            blob(rot @ Vector((0.2 * s, 0.04 * s, 0)) + Vector((x, y, base + 0.9 * s)), (0.035 * s, 0.035 * s, 0.28 * s), rot, coat, 8)
-            blob(rot @ Vector((0.2 * s, 0.04 * s, 0)) + Vector((x, y, base + 1.2 * s)), (0.04 * s, 0.03 * s, 0.055 * s), rot, hair, 8)
+        if hand:   # a raised arm, bent at the elbow, and a hand
+            for (ax, ay, az), radii, slot in (((0.23, 0.02, 0.78), (0.045, 0.045, 0.17), coat),
+                                              ((0.25, 0.07, 1.05), (0.038, 0.038, 0.15), coat),
+                                              ((0.25, 0.08, 1.24), (0.035, 0.025, 0.055), nc + 4 + rng.randrange(2))):
+                blob(rot @ Vector((ax * s, ay * s, 0)) + Vector((x, y, base + az * s)), tuple(r * s for r in radii), rot, slot, 8)
     bm.verts.index_update()
     index = {v.index: slot for verts, slot in slots for v in verts}
     me = bpy.data.meshes.new(name)

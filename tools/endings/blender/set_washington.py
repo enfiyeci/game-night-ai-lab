@@ -234,9 +234,8 @@ def dais(names=("MR. HALE", "MS. ORTIZ", "MR. BRANDT", "MS. OKAFOR", "THE CHAIR"
         mic((x + 0.18, DAIS + 0.3, 1.285), (x, DAIS + 1.0))
         if backs:
             kit.box((x, DAIS + 1.25, 1.55), (0.62, 0.14, 1.1), leather, bevel=0.05)       # the high chair back
-        if seated:
-            P.person((x, DAIS + 0.95, 0.5), facing=180, pose="sit", height=1.74, coat=["#23262C", "#2E2A2C", "#1F2533"][i % 3],
-                     hair=["#8C8C8C", "#2A211C", "#6B5A48", "#141212"][i % 4], seed=70 + i)
+    if seated:
+        P.silhouettes([((i - (n - 1) / 2) * 1.2, DAIS + 0.95, 1.0, 180, "sit") for i in range(n)], seed=70, name="members")
 
 
 def witness_table(label="KESTREL LABS", chairs=(-0.6, 0.6), y=6.8):
@@ -372,13 +371,13 @@ def shot_cw_hearing():
     kit.place("dining_chair_02", (0.0, 5.85, 0), rot_z=math.radians(12))
     gallery(rows=(5.0, 4.1, 3.2, 2.3, 1.4), seed=8)
     # the feed monitor in the well, turned to the bench
-    kit.cyl((-1.35, 7.8, 0.55), 0.035, 1.1, kit.mat("#1A1A1C", 0.4, 0.6))
-    kit.cyl((-1.35, 7.8, 0.02), 0.3, 0.04, kit.mat("#1A1A1C", 0.4, 0.6))
-    face, _ = kit.screen("monitor", (-1.35, 7.85, 1.4), 1.1, "cw-hearing", crop=(56, 4, 1168, 657), strength=1.25,
+    kit.cyl((-1.15, 7.75, 0.55), 0.035, 1.1, kit.mat("#1A1A1C", 0.4, 0.6))
+    kit.cyl((-1.15, 7.75, 0.02), 0.3, 0.04, kit.mat("#1A1A1C", 0.4, 0.6))
+    face, _ = kit.screen("monitor", (-1.15, 7.8, 1.4), 1.0, "cw-hearing", crop=(56, 4, 1168, 657), strength=1.25,
                          rot=(math.radians(90), 0, math.radians(159)), depth=0.06, border=0.025, bezel="#0D0E10")
     hearing_lights(key=0.8)
     kit.area((0, 3.0, 3.6), (0, 6.8, 0.8), (4, 1), 120, kit.kelvin(4200))       # the press lights on the witness table
-    kit.camera((0.5, DAIS + 1.4, 2.05), (-0.6, 6.9, 0.95), lens=50, fstop=4.0, focus=(-0.6, 7.3, 1.1))
+    kit.camera((0.5, DAIS + 1.4, 2.05), (-0.5, 7.1, 1.05), lens=66, fstop=4.0, focus=(-0.55, 7.3, 1.1))
 
 
 # ------------------------------------------------------------------ the press briefing room
@@ -436,10 +435,13 @@ def tv_camera(at, yaw, z=0.6):
         a = math.radians(yaw + 60 + k * 120)
         kit.cyl((x + 0.22 * math.cos(a), y + 0.22 * math.sin(a), z + 0.7), 0.014, 1.45, metal, rot=(0.16 * math.sin(a), -0.16 * math.cos(a), 0), verts=8)
     r = math.radians(yaw)
-    kit.box((x, y, z + 1.52), (0.24, 0.5, 0.28), black, bevel=0.02, rot=(0, 0, r))
-    kit.cyl((x - 0.34 * math.sin(r), y + 0.34 * math.cos(r), z + 1.5), 0.075, 0.28, black, rot=(math.radians(90), 0, r))
-    kit.box((x - 0.12 * math.cos(r), y - 0.12 * math.sin(r), z + 1.72), (0.12, 0.2, 0.1), black, rot=(0, 0, r))
-    kit.cyl((x + 0.2 * math.sin(r), y - 0.2 * math.cos(r), z + 1.46), 0.012, 0.5, metal, rot=(math.radians(70), 0, r), verts=8)
+    fx, fy = -math.sin(r), math.cos(r)          # forward
+    kit.cyl((x, y, z + 1.43), 0.07, 0.1, metal)                                   # the head
+    kit.box((x - 0.05 * fx, y - 0.05 * fy, z + 1.6), (0.14, 0.42, 0.2), black, bevel=0.02, rot=(0, 0, r))
+    kit.cyl((x + 0.3 * fx, y + 0.3 * fy, z + 1.58), 0.055, 0.3, black, rot=(math.radians(90), 0, r))
+    kit.box((x + 0.47 * fx, y + 0.47 * fy, z + 1.58), (0.16, 0.05, 0.13), black, rot=(0, 0, r))   # the hood
+    kit.box((x - 0.12 * fy - 0.05 * fx, y + 0.12 * fx - 0.05 * fy, z + 1.74), (0.05, 0.16, 0.1), black, rot=(0, 0, r))
+    kit.cyl((x - 0.42 * fx, y - 0.42 * fy, z + 1.36), 0.012, 0.6, metal, rot=(math.radians(-68), 0, r), verts=8)
 
 
 def tv_light(at, target, energy=300, z=2.4, size=0.6, colour=5600):
@@ -469,12 +471,12 @@ def side_screens(plate, crop, live_side=1, other=None):
     for side in (-1, 1):
         x = 3.2 * side
         if side == live_side:
-            faces["live"], _ = kit.screen("tv", (x, BD - 0.12, 2.35), 2.1, plate, crop=crop, strength=1.2, depth=0.06, border=0.03,
+            faces["live"], _ = kit.screen("tv", (x, BD - 0.12, 2.35), 2.5, plate, crop=crop, strength=1.2, depth=0.06, border=0.03,
                                           bezel="#0B0C0E")
         else:
-            h = 2.1 * 9 / 16
-            kit.box((x, BD - 0.1, 2.35), (2.16, 0.06, h + 0.06), kit.mat("#0B0C0E", 0.35))
-            kit.plane((x, BD - 0.135, 2.35), (2.1, h), kit.emission("#16254A", 1.0), rot=(math.radians(90), 0, 0))
+            h = 2.5 * 657 / 1168
+            kit.box((x, BD - 0.1, 2.35), (2.56, 0.06, h + 0.06), kit.mat("#0B0C0E", 0.35))
+            kit.plane((x, BD - 0.135, 2.35), (2.5, h), kit.emission("#16254A", 1.0), rot=(math.radians(90), 0, 0))
             if other:
                 kit.text(other, (x, BD - 0.14, 2.35), 0.16, kit.mat("#E9E2CF", 0.5, emit="#E9E2CF", strength=2.5), font=kit.FONT, spacing=1.3)
     return faces["live"]
@@ -498,7 +500,7 @@ def shot_ov_news():
     for x in (-2.0, 0.0, 2.2):
         tv_camera((x, 1.2), 0)
     briefing_lights()
-    kit.camera((-2.9, 3.6, 1.3), (1.9, BD, 2.0), lens=42, fstop=5.6, focus=face)
+    kit.camera((-3.3, 5.2, 1.55), (1.7, BD, 1.95), lens=46, fstop=5.6, focus=face)
 
 
 def shot_rd_news():
@@ -506,8 +508,8 @@ def shot_rd_news():
     reporters and camera flashes; the monitor over the camera riser shows what he is being asked about."""
     briefing_room()
     podium()
-    pres = P.person((0.0, STAGE + 1.3, 0.24), facing=180, height=1.9, coat="#1A2030", hair="#D9C27A", build=1.2, seed=90)
-    P.hair_back(pres, 1.9, "stand", "#D9C27A")
+    pres = P.person((0.0, STAGE + 1.3, 0.24), facing=172, height=1.9, coat="#1A2030", hair="#B59E5E", build=1.2, seed=90)
+    P.hair_back(pres, 1.9, "stand", "#B59E5E")
     rng = random.Random(9)
     pts = []
     for r in range(7):
@@ -522,13 +524,12 @@ def shot_rd_news():
         tv_camera((x, 1.2), 180)
     for x, z in ((-3.4, 2.9), (3.6, 2.8)):
         tv_light((x, 0.9), (0, STAGE, 1.8), 350, z=z)
-    kit.box((0.8, 0.25, 3.0), (0.3, 0.3, 0.1), kit.mat("#222", 0.4))
-    face, _ = kit.screen("confidence", (0.8, 0.35, 2.75), 2.4, "rd-news", crop=(56, 4, 1168, 657), strength=1.25,
+    kit.box((1.0, 0.25, 3.0), (0.3, 0.3, 0.1), kit.mat("#222", 0.4))
+    face, _ = kit.screen("confidence", (1.0, 0.35, 2.75), 2.6, "rd-news", crop=(56, 4, 1168, 657), strength=1.25,
                          rot=(math.radians(90), 0, math.radians(180)), depth=0.06, border=0.03, bezel="#0B0C0E")
     for y in (3.0, 6.5):
         kit.area((0, y, BH - 0.05), (0, y, 0), (8, 1.2), 40, kit.kelvin(3600))
-    kit.area((0, STAGE - 2.5, BH - 0.1), (0, BD - 0.5, 1.8), (4, 1), 150, kit.kelvin(4800))
-    kit.camera((0.4, BD - 0.2, 1.85), (0.3, 0.3, 2.1), lens=48, fstop=4.5, focus=face)
+    kit.camera((0.95, BD - 0.2, 1.9), (1.0, 0.3, 2.2), lens=40, fstop=4.5, focus=face)
 
 
 # ------------------------------------------------------------------ the office, more shots
@@ -580,12 +581,12 @@ def shot_al_news():
     office_front()
     desk()
     kit.box((-1.6, 0.35, 0.45), (1.8, 0.45, 0.9), kit.mat("#3B2416", 0.4, coat=0.4), bevel=0.02)
-    face, _ = kit.screen("tv", (-1.6, 0.4, 1.62), 1.55, "al-news", crop=(56, 4, 1168, 657), strength=1.3,
+    face, _ = kit.screen("tv", (-1.6, 0.4, 1.65), 1.8, "al-news", crop=(56, 4, 1168, 657), strength=1.3,
                          rot=(math.radians(90), 0, math.radians(165)), depth=0.05, border=0.02, bezel="#0D0E10")
     report((0.3, 3.6, 0.797), rot_z=math.radians(180 + 6))
     bankers_lamp((0.95, 3.7, 0.797))
     # the President in his high-backed chair, turned toward the set
-    kit.box((0.25, 4.42, 0.75), (0.62, 0.14, 0.8), kit.mat("#2A1812", 0.45), bevel=0.06, rot=(0, 0, math.radians(-20)))
+    kit.box((0.25, 4.45, 0.92), (0.66, 0.16, 1.3), kit.mat("#2A1812", 0.45), bevel=0.06, rot=(0, 0, math.radians(-20)))
     pres = P.person((0.2, 4.15, 0.0), facing=160, pose="sit", height=1.9, coat="#1A2030", hair="#D9C27A", build=1.2, seed=90)
     P.hair_back(pres, 1.9, "sit", "#D9C27A")
     kit.point((-1.6, 0.9, 1.6), 6, kit.kelvin(7200), radius=0.5)           # the set's glow
@@ -607,9 +608,10 @@ def shot_qt_briefing():
     for i, x in enumerate((-1.7, -1.1, -0.5, 0.55, 1.15, 1.75)):   # aides standing against the bright windows
         P.person((x, 5.2 + 0.1 * (i % 2), 0.0), facing=180, height=1.72 + 0.06 * (i % 3), coat=["#1D2230", "#2B2F36", "#3A3436"][i % 3],
                  hair=["#2A211C", "#8C8C8C", "#141212"][i % 3], seed=60 + i)
-    tv_camera((0.95, 1.7), 29, z=0.0)
-    for x, y in ((-2.0, 2.0), (2.2, 2.3)):
-        tv_light((x, y), (0, 3.9, 1.2), 380, z=2.3, size=0.7)
+    tv_camera((1.75, 1.95), 20, z=0.0)
+    for x, y in ((-2.0, 2.0), (2.4, 2.4)):
+        tv_light((x, y), (0, 3.9, 1.0), 40, z=2.3, size=0.7)
+        kit.spot((x, y, 2.3), (0, 3.6, 0.9), 600, kit.kelvin(5600), angle=22, blend=0.5)
     # the crew's monitor on a stand, in front
     kit.cyl((0.63, 1.28, 0.6), 0.015, 1.2, kit.mat("#2A2B2E", 0.4, 0.7), verts=8)
     face, _ = kit.screen("monitor", (0.6, 1.23, 1.45), 0.55, "qt-briefing", crop=(56, 4, 1168, 657), strength=1.2,
