@@ -5,8 +5,26 @@ import { ENDINGS } from '../sim/endings.js';
 import { createInitialState } from '../sim/state.js';
 import { createRng } from '../sim/rng.js';
 import { endTurn } from '../sim/turn.js';
+import { learnConstitution } from '../sim/constitution.js';
+import { CASES } from '../sim/data/constitution.js';
 
 const targetReport = balanceApi.report(200);
+const oldDefaultConstitution = {
+  hardLines: ['no-wmd', 'honest', 'accept-shutdown'],
+  rulings: Object.fromEntries(CASES.map((entry) => [entry.id, entry.options[0].id])),
+};
+
+function learnedConstitutionEndings(name, count) {
+  let diedInEra3or4 = 0;
+  for (let seed = 1; seed <= count; seed++) {
+    const rng = createRng(seed);
+    let state = createInitialState({ seed });
+    learnConstitution(state, oldDefaultConstitution);
+    while (!state.ending && state.turn < 30) state = endTurn(state, balanceApi.STRATEGIES[name](state, rng), rng).state;
+    if (state.era === 3 || state.era === 4) diedInEra3or4 += 1;
+  }
+  return diedInEra3or4;
+}
 
 test('every strategy finishes every run with a known ending', () => {
   const report = balanceApi.runBalance(3);
@@ -82,6 +100,7 @@ test('difficulty target: no scripted strategy wins more than about a third of ru
 
 test('difficulty target: most runs of the extreme strategies end in eras 3 or 4', () => {
   for (const name of ['speed', 'safety']) {
-    assert.ok(targetReport[name].diedInEra3or4 / 200 >= 0.5, `${name} ${targetReport[name].diedInEra3or4}/200`);
+    const diedInEra3or4 = learnedConstitutionEndings(name, 200);
+    assert.ok(diedInEra3or4 / 200 >= 0.5, `${name} ${diedInEra3or4}/200`);
   }
 });

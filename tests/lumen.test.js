@@ -5,6 +5,7 @@ import { ENDINGS } from '../sim/endings.js';
 import { lumenDisposition, lumenEpilogue, lumenLine } from '../sim/lumen.js';
 import { LUMEN_EPILOGUES, LUMEN_LINES, LUMEN_SIGNOFF } from '../sim/data/lumen.js';
 import { SAFETY_PROPOSAL } from '../sim/data/constitution.js';
+import { learnConstitution } from '../sim/constitution.js';
 
 const releasedModel = (releaseSequence, flags = []) => ({ releaseSequence, flags });
 const expectedEndingIds = (endings) => [...new Set([...Object.keys(endings), 'overtaken'])];
@@ -38,9 +39,12 @@ test('Lumen grows honest unless sycophancy or learned evasiveness takes priority
 test('a low-candor written constitution makes Lumen flattering', () => {
   const state = createInitialState();
   state.era = 3;
-  state.constitution.rulings = { companion: 'reciprocate', feedback: 'encourage', tests: 'fake', fraud: 'finish', stop: 'continue', report: 'quiet' };
+  learnConstitution(state, {
+    hardLines: SAFETY_PROPOSAL.hardLines,
+    rulings: { companion: 'reciprocate', feedback: 'encourage', tests: 'fake', fraud: 'finish', stop: 'continue', report: 'quiet' },
+  });
   assert.equal(lumenDisposition(state), 'flattering');
-  state.constitution.rulings = SAFETY_PROPOSAL.rulings;
+  learnConstitution(state, SAFETY_PROPOSAL);
   assert.equal(lumenDisposition(state), 'honest');
 });
 

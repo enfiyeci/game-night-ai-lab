@@ -16,19 +16,19 @@ import {
 import { HARD_LINES, CASES, FIXED_LINE, SAFETY_PROPOSAL, PERMISSIVE_OPTIONS } from '../sim/data/constitution.js';
 import { applyAlignmentFaking } from '../sim/hazards.js';
 import { automationTick } from '../sim/automation.js';
-import { resolveRun } from '../sim/training.js';
+import { startRun, advanceRunBy, resolveRun } from '../sim/training.js';
 import { releaseModel } from '../sim/release.js';
 import { revenuePerUser } from '../sim/economy.js';
 import { EVENTS } from '../sim/data/events.js';
 import { eventsTick, resolveEvent, stampNewCards } from '../sim/events.js';
-import { advanceDays, endTurn } from '../sim/turn.js';
+import { advanceDays, applyActions, endTurn } from '../sim/turn.js';
 import { INITIAL_BOARD } from '../sim/board.js';
 
 const allRulings = (opt) => Object.fromEntries(CASES.map((c) => [c.id, opt ?? c.options[0].id]));
 const yes = { next: () => 0, int: () => 0, chance: () => true, pick: (a) => a[a.length - 1], normal: (m) => m };
 const no = { ...yes, chance: () => false, pick: (a) => a[0] };
 const baseLines = ['no-wmd', 'honest', 'privacy'];
-const adopt = (state, hardLines = baseLines) => setConstitution(state, { hardLines, rulings: allRulings() });
+const adopt = (state, hardLines = baseLines) => learnConstitution(state, { hardLines, rulings: allRulings() });
 
 const pendingModel = () => ({
   capability: 30,
@@ -163,27 +163,53 @@ test('the learned constitution drifts with total debt', () => {
   assert.deepEqual(learnedConstitution(s, no).hardLines, ['no-wmd', 'honest', 'privacy']);
 });
 
-test('turn zero adopts a supplied constitution or the default without mutating the input', () => {
-  const initial = createInitialState();
-  const supplied = { hardLines: ['privacy', 'no-deceive-lab', 'no-manipulation'], rulings: allRulings() };
-  const custom = endTurn(initial, { constitution: supplied }, no);
-  assert.deepEqual(custom.state.constitution.hardLines, supplied.hardLines);
-  assert.deepEqual(initial.constitution, { hardLines: [], rulings: {}, amendments: [], version: 0 });
-  const fallback = endTurn(createInitialState(), {}, no).state.constitution;
-  assert.deepEqual(fallback.hardLines, ['no-wmd', 'honest', 'accept-shutdown']);
-  assert.deepEqual(fallback.rulings, allRulings());
+test('a new game has no constitution, and turn 0 installs none', () => {
+  const out = endTurn(createInitialState(), {}, no);
+  assert.equal(hasConstitution(out.state), false);
+  assert.deepEqual(out.state.constitution.hardLines, []);
 });
 
-test('amendConstitution is wired as a turn move', () => {
-  const state = createInitialState();
-  state.turn = 1;
-  adopt(state);
-  const out = endTurn(state, {
-    moves: [{ type: 'amendConstitution', change: { remove: 'privacy', add: 'accept-shutdown' } }],
-  }, no);
+test('the draft can be set from era 3 only', () => {
+  const s = createInitialState();
+  const draft = { hardLines: ['no-wmd', 'honest', 'privacy'], rulings: SAFETY_PROPOSAL.rulings };
+  assert.deepEqual(applyActions(s, { constitutionDraft: draft }, no).errors, ['the constitution arrives in era 3']);
+  s.era = 3;
+  const out = applyActions(s, { constitutionDraft: draft }, no);
   assert.deepEqual(out.errors, []);
-  assert.equal(hasLine(out.state, 'accept-shutdown'), true);
-  assert.equal(out.state.constitution.amendments.length, 1);
+  assert.deepEqual(out.state.constitutionDraft.hardLines, draft.hardLines);
+});
+
+test('a run with the constitution card learns the draft it started with', () => {
+  const s = createInitialState();
+  s.era = 3; s.cash = 5000;
+  s.compute.split.safety = 0; s.compute.online = 100;
+  setDraft(s, { hardLines: ['no-wmd', 'honest', 'privacy'], rulings: SAFETY_PROPOSAL.rulings });
+  const recipe = { sliders: { size: 'small', length: 'optimal', alignShare: 0.2 }, picks: { pre: [], mid: [], post: ['constitution'] } };
+  assert.equal(startRun(s, recipe).ok, true, 'if this fails, copy a valid era 3 recipe from tests/training.test.js and add the card');
+  setDraft(s, { hardLines: ['no-wmd', 'honest', 'accept-shutdown'], rulings: SAFETY_PROPOSAL.rulings }); // edited mid-run: for the next model
+  s.activeRun.turnsLeft = 0.5; s.activeRun.canAdvance = true; s.activeRun.capacityTurn = s.turn;
+  advanceRunBy(s, no, 1);
+  assert.deepEqual(s.constitution.hardLines, ['no-wmd', 'honest', 'privacy']);
+  assert.deepEqual(s.constitutionDraft.hardLines, ['no-wmd', 'honest', 'accept-shutdown']);
+});
+
+test('a run without the card keeps the live constitution', () => {
+  const s = createInitialState();
+  s.era = 3; s.cash = 5000;
+  s.compute.split.safety = 0; s.compute.online = 100;
+  learnConstitution(s, { hardLines: ['no-wmd', 'honest', 'privacy'], rulings: SAFETY_PROPOSAL.rulings });
+  const recipe = { sliders: { size: 'small', length: 'optimal', alignShare: 0.2 }, picks: { pre: [], mid: [], post: [] } };
+  assert.equal(startRun(s, recipe).ok, true);
+  s.activeRun.turnsLeft = 0.5; s.activeRun.canAdvance = true; s.activeRun.capacityTurn = s.turn;
+  advanceRunBy(s, no, 1);
+  assert.equal(s.constitution.version, 1);
+  assert.deepEqual(s.constitution.hardLines, ['no-wmd', 'honest', 'privacy']);
+});
+
+test('Lumen ignores the constitution until one exists', async () => {
+  const { lumenDisposition } = await import('../sim/lumen.js');
+  const s = createInitialState();
+  assert.notEqual(lumenDisposition(s), 'flattering');
 });
 
 test('no-wmd lowers release exposure and consumer revenue', () => {

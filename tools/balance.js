@@ -340,7 +340,7 @@ function makeStrategy(style, prefs, policy = {}) {
       moves: [],
       eventChoices: eventChoices(state, style, rng),
     };
-    if (state.turn === 0) actions.constitution = constitutionFor(style, rng);
+    if (state.era >= 3 && !state.constitutionDraft) actions.constitutionDraft = constitutionFor(style, rng);
     if (state.turn === 0 && policy.pledge != null) actions.pledge = policy.pledge;
     if (state.pendingModel?.hazard) {
       actions.hazardChoice = style === 'speed' ? 'penalize'
@@ -410,7 +410,7 @@ const safetyPrefs = {
   computeSafety: 0.2,
   pre: ['licensed-data', 'hazard-filter-built', 'hazard-filter-reuse'],
   mid: ['decontaminate', 'anneal'],
-  post: ['human-sft', 'cai', 'classifiers', 'safety-tuning', 'character', 'deliberative', 'spec-light'],
+  post: ['human-sft', 'cai', 'classifiers', 'safety-tuning', 'character', 'deliberative', 'constitution'],
   release: ['eval-third', 'eval-full', 'channel-api'],
 };
 const safety = makeStrategy('safety', safetyPrefs, { offer: 'safe', site: 'nuclear', pledge: 0.2 });

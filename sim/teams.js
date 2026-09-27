@@ -10,7 +10,6 @@ export const TEAMS = {
 
 export const TEAM_OF = {
   startRun: 'research', research: 'research',
-  amendConstitution: 'safety',
   release: 'policy', summit: 'policy',
   deal: 'cfo', queueOrder: 'cfo', buildSite: 'cfo', raise: 'cfo', emergency: 'cfo',
   meeting: 'ceo',

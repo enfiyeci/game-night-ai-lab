@@ -387,10 +387,11 @@ test('a meeting move needs an open meeting and consumes one of the two round act
 
 test('a meeting uses government favour after moves that precede it', () => {
   const state = open(createInitialState());
-  state.govFavor.us = 63;
+  state.govFavor.us = 60;
+  state.researchPoints = 30;
   const out = endTurn(state, {
     moves: [
-      { type: 'amendConstitution', change: { remove: 'accept-shutdown', add: 'no-power-grab' } },
+      { type: 'research', techId: 'moe' },
       { type: 'meeting' },
     ],
     presidentAnswers: plainIds(),

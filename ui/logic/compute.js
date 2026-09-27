@@ -1,4 +1,3 @@
-import { CASES } from '../../sim/data/constitution.js';
 import { EQUITY_SHARE, SUPPLIERS } from '../../sim/data/compute.js';
 import { BALANCE } from '../../sim/balance.js';
 import {
@@ -18,7 +17,7 @@ import {
   updateServing,
   useEmergency,
 } from '../../sim/economy.js';
-import { setConstitution, amendConstitution } from '../../sim/constitution.js';
+import { setDraft } from '../../sim/constitution.js';
 import { addressWarning, fallbackChoice, resolveEvent } from '../../sim/events.js';
 import { resolveHazard } from '../../sim/hazards.js';
 import { setAutomation, applyApprovals } from '../../sim/automation.js';
@@ -112,7 +111,6 @@ export function applyProjectedMove(state, move, queue) {
   if (move.type === 'raise') return raiseRound(state, move.archetype);
   if (move.type === 'research') return researchTechnique(state, move.techId);
   if (move.type === 'emergency') return useEmergency(state, move.option);
-  if (move.type === 'amendConstitution') return amendConstitution(state, move.change);
   if (move.type === 'meeting') {
     if (!state.meeting) return { ok: false };
     const result = runMeeting(state, queue.presidentAnswers);
@@ -134,13 +132,7 @@ function projectBeforeMoves(state, queue) {
     const id = meetingDue(state);
     if (id) state.meeting = openMeeting(state, id);
   }
-  if (state.turn === 0 && queue.constitution) setConstitution(state, queue.constitution);
-  if (state.turn === 0 && state.constitution.hardLines.length === 0) {
-    setConstitution(state, {
-      hardLines: ['no-wmd', 'honest', 'accept-shutdown'],
-      rulings: Object.fromEntries(CASES.map((entry) => [entry.id, entry.options[0].id])),
-    });
-  }
+  if (queue.constitutionDraft && state.era >= 3) setDraft(state, queue.constitutionDraft);
   if (queue.budget) setBudget(state, queue.budget);
   if (Object.hasOwn(queue, 'computeSplit')) setComputeSplit(state, queue.computeSplit);
   if (Object.hasOwn(queue, 'automation')) setAutomation(state, queue.automation);

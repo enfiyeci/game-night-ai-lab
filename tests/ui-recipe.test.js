@@ -23,7 +23,7 @@ const recipe = ({ size = 'small', length = 'optimal', alignShare = 0.2, pre = []
 test('recipePreview preserves pick-count and duplicate-group errors from the sim', () => {
   const state = SCENARIOS.era3Idle(1);
   const tooMany = recipe({
-    post: ['synthetic-sft', 'thumbs', 'spec-light', 'safety-tuning', 'rlvr-light'],
+    post: ['synthetic-sft', 'thumbs', 'constitution', 'safety-tuning', 'rlvr-light'],
   });
   assert.ok(tooMany.picks.post.length > slotsFor(state, 'post'));
   assert.ok(recipePreview(state, tooMany).errors.includes(
@@ -72,7 +72,7 @@ test('recipePreview keeps blocker order and avoids costing unknown sliders', () 
 
 test('recipePreview sees a queued budget that changes post-training slots', () => {
   const game = createGame({ state: SCENARIOS.era3Idle(1), seed: 1 });
-  const fourGroups = recipe({ post: ['synthetic-sft', 'thumbs', 'spec-light', 'safety-tuning'] });
+  const fourGroups = recipe({ post: ['synthetic-sft', 'thumbs', 'constitution', 'safety-tuning'] });
 
   assert.equal(game.setBudget({
     spend: 20,
@@ -93,7 +93,7 @@ test('recipePreview sees a queued budget that changes post-training slots', () =
 
 test('queuedRunProblem revalidates a queued run against a replacement budget', () => {
   const state = SCENARIOS.era3Idle(1);
-  const queuedRecipe = recipe({ post: ['synthetic-sft', 'thumbs', 'spec-light', 'safety-tuning'] });
+  const queuedRecipe = recipe({ post: ['synthetic-sft', 'thumbs', 'constitution', 'safety-tuning'] });
   const highTalent = {
     spend: 20,
     split: { training: 0.3, security: 0.1, product: 0.3, talent: 0.3 },
@@ -216,10 +216,10 @@ test('sanitizeDraft trims distinct unlocked picks to the projected slot count', 
   const state = SCENARIOS.era3Idle(1);
   state.budget = { spend: 20, split: { training: 0.4, security: 0.1, product: 0.3, talent: 0.2 } };
   const clean = sanitizeDraft(state, recipe({
-    post: ['synthetic-sft', 'thumbs', 'spec-light', 'safety-tuning', 'missing-card', 'filtered-data'],
+    post: ['synthetic-sft', 'thumbs', 'constitution', 'safety-tuning', 'missing-card', 'filtered-data'],
   }));
   assert.equal(slotsFor(state, 'post'), 3);
-  assert.deepEqual(clean.picks.post, ['synthetic-sft', 'thumbs', 'spec-light']);
+  assert.deepEqual(clean.picks.post, ['synthetic-sft', 'thumbs', 'constitution']);
 });
 
 test('sanitizeDraft drops hidden cards even though the sim still unlocks them', () => {

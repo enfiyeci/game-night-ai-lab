@@ -3,7 +3,7 @@ import { eraById } from './data/eras.js';
 import { SIZE_CAP, LENGTHS, validateRecipe, recipeCost, recipeCards, talentSpend } from './recipe.js';
 import { standardTechniques } from './techniques.js';
 import { rollTrainingHazard, applyAlignmentFaking, evalGamingDebt } from './hazards.js';
-import { hasLine } from './constitution.js';
+import { draftFor, hasLine, learnConstitution } from './constitution.js';
 import { computeSlices } from './split.js';
 
 export const SHARED_SAFETY_DEBT_MULT = 0.7;
@@ -21,6 +21,11 @@ export function startRun(state, recipe) {
   const spikeChance = recipeCards(state, recipe).reduce((p, c) => p + (c.effects.spike ?? 0), 0.1);
   state.cash -= cost.cash;
   state.activeRun = { recipe: structuredClone(recipe), units: cost.units, turnsLeft: cost.turns, spikes: 0, spikeChance: Math.max(0, spikeChance), bonus: 0 };
+  if (recipe.picks?.post?.includes('constitution')) {
+    const draft = draftFor(state);
+    state.activeRun.constitution = { hardLines: draft.hardLines, rulings: draft.rulings };
+    state.constitutionDraft = { ...state.activeRun.constitution, changes: [] };
+  }
   return { ok: true, cost };
 }
 
@@ -43,6 +48,7 @@ export function advanceRunBy(state, rng, fraction) {
   if (run.turnsLeft > 1e-9) return null;
   state.activeRun = null;
   state.pendingModel = resolveRun(state, run, rng);
+  if (run.constitution) learnConstitution(state, run.constitution);
   if (run.uncapped) state.pendingModel.uncapped = true; // run past the Geneva cap
   return state.pendingModel;
 }

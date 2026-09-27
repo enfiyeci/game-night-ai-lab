@@ -8,7 +8,7 @@ import { MEETINGS } from '../../sim/data/president.js';
 const PREFERENCES = {
   pre: ['licensed-data', 'hazard-filter-built', 'hazard-filter-reuse'],
   mid: ['decontaminate', 'anneal'],
-  post: ['human-sft', 'cai', 'classifiers', 'safety-tuning', 'character', 'deliberative', 'spec-light'],
+  post: ['human-sft', 'cai', 'classifiers', 'safety-tuning', 'character', 'deliberative', 'constitution'],
   release: ['eval-third', 'eval-full', 'channel-api'],
 };
 

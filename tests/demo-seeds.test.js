@@ -82,7 +82,7 @@ test('recording script describes every top-level strategy action and unknown key
     moves: [],
     addressWarnings: ['power-grid'],
     eventChoices: { 'export-controls': 'negotiate' },
-    constitution: { hardLines: ['honest', 'accept-shutdown'], rulings: { whistleblower: 'protect' } },
+    constitutionDraft: { hardLines: ['honest', 'accept-shutdown'], rulings: { whistleblower: 'protect' } },
     presidentAnswers: ['be-direct', 'offer-audit'],
     investigate: ['s1'],
     surpriseAudit: { scope: 'full' },
@@ -90,7 +90,7 @@ test('recording script describes every top-level strategy action and unknown key
 
   assert.match(line, /address the power grid warning/);
   assert.match(line, /choose negotiate for export controls/);
-  assert.match(line, /adopt a constitution with hard lines honest, accept shutdown/);
+  assert.match(line, /adopt a draft constitution with hard lines honest, accept shutdown/);
   assert.match(line, /rule protect for whistleblower/);
   assert.match(line, /answer the president: be direct, then offer audit/);
   assert.match(line, /look into 1 suspicion/);
@@ -136,24 +136,6 @@ test('recording script describes summit proposals, checks and promises', () => {
   assert.match(line, /propose a summit with evaluators, shared safety/);
   assert.match(line, /evaluators checked at level 2/);
   assert.match(line, /promises: go first for east/);
-});
-
-test('recording script describes every part of a constitution amendment', () => {
-  const line = demoSeeds.describeActions({
-    moves: [{
-      type: 'amendConstitution',
-      change: {
-        remove: 'honest',
-        add: 'accept-shutdown',
-        ruling: { caseId: 'wrong', optionId: 'yield' },
-      },
-    }],
-  });
-
-  assert.match(line, /amend the constitution/);
-  assert.match(line, /remove honest/);
-  assert.match(line, /add accept shutdown/);
-  assert.match(line, /rule yield for wrong/);
 });
 
 test('recording script preserves unknown move payloads', () => {
