@@ -1,0 +1,40 @@
+{
+ "shots": {
+  "2": {
+   "frames": [
+    {
+     "image": "lb-skyline-1",
+     "at": 0
+    },
+    {
+     "image": "lb-skyline-2",
+     "at": 1.6,
+     "fade": 0.4
+    },
+    {
+     "image": "lb-skyline-3",
+     "at": 3.2,
+     "fade": 0.4
+    },
+    {
+     "image": "lb-skyline-4",
+     "at": 4.8,
+     "fade": 0.4
+    }
+   ],
+   "focus": [
+    920,
+    600
+   ],
+   "push": 1.05
+  },
+  "6": {
+   "image": "lb-desert",
+   "focus": [
+    780,
+    500
+   ],
+   "push": 1.05
+  }
+ }
+}

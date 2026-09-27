@@ -1,0 +1,57 @@
+{
+ "shots": {
+  "4": {
+   "frames": [
+    {
+     "image": "mu-skyline-1",
+     "at": 0
+    },
+    {
+     "image": "mu-skyline-2",
+     "at": 1.0,
+     "fade": 0.05
+    },
+    {
+     "image": "mu-skyline-3",
+     "at": 1.2,
+     "fade": 0.5
+    },
+    {
+     "image": "mu-skyline-4",
+     "at": 2.5,
+     "fade": 0.05
+    },
+    {
+     "image": "mu-skyline-5",
+     "at": 2.7,
+     "fade": 0.5
+    },
+    {
+     "image": "mu-skyline-6",
+     "at": 4.0,
+     "fade": 0.05
+    },
+    {
+     "image": "mu-skyline-7",
+     "at": 4.2,
+     "fade": 0.5
+    },
+    {
+     "image": "mu-skyline-8",
+     "at": 5.5,
+     "fade": 0.05
+    },
+    {
+     "image": "mu-skyline-9",
+     "at": 5.7,
+     "fade": 0.5
+    }
+   ],
+   "focus": [
+    960,
+    620
+   ],
+   "push": 1.05
+  }
+ }
+}
