@@ -63,3 +63,13 @@ test('meeting availability uses the live meeting and closes once he has been met
   assert.equal(game.state.meeting, null);
   assert.notEqual(reasonFor(game, 'meeting'), '');
 });
+
+test('the summit waits for the President’s waiting call, then opens once he has been met', () => {
+  const game = createGame({ seed: 1, state: SCENARIOS.meeting2(1) });
+  // the projection expires an untaken call at the round's end, so the check must read the live meeting
+  assert.equal(reasonFor(game, 'summit'), 'Take the President’s call first');
+  game.queue.presidentAnswers = MEETINGS[1].exchanges.map((exchange) => exchange.answers[0].id);
+  assert.equal(game.addMove({ type: 'meeting' }).ok, true);
+  assert.equal(game.state.meeting, null);
+  assert.equal(reasonFor(game, 'summit'), '');
+});

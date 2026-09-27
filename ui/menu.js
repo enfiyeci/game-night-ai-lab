@@ -40,7 +40,7 @@ export const ITEMS = [
     id: 'summit',
     label: 'Go to the Geneva summit',
     hidden: (state) => !(state.era === 5 && state.turnInEra === 0 && !state.deal),
-    unavailable: (state) => state.meeting && 'Take the President’s call first',
+    unavailable: (_state, game) => game.state.meeting && 'Take the President’s call first', // live: the projection expires an untaken call
   },
   { id: 'company', label: 'Company', free: true, submenu: true },
   { id: 'history', label: 'Lab history', free: true, unavailable: (_state, game) => game.state.models.length === 0 && 'Nothing released yet' },
