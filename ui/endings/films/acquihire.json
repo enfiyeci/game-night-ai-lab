@@ -102,8 +102,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "ab-news",
+      "kind": "still",
+      "image": "ab-news",
+      "screens": [
+        {
+          "at": "tv",
+          "plate": "ab-news"
+        }
+      ],
       "dur": 5,
       "card": "Day 2 · Dot's café",
       "cam": {
@@ -111,6 +117,8 @@
           "s": 1.0
         },
         "to": {
+          "x": 872,
+          "y": 330,
           "s": 1.05
         }
       },
@@ -126,8 +134,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "ab-farewell",
+      "kind": "still",
+      "image": "ab-farewell",
+      "screens": [
+        {
+          "at": "laptop",
+          "plate": "ab-farewell"
+        }
+      ],
       "dur": 6,
       "card": "Week 3 · Azuria campus",
       "cam": {
@@ -135,6 +149,8 @@
           "s": 1.0
         },
         "to": {
+          "x": 1162,
+          "y": 696,
           "s": 1.05
         }
       },
@@ -187,8 +203,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "ab-till",
+      "kind": "still",
+      "image": "ab-till",
+      "screens": [
+        {
+          "at": "till",
+          "plate": "ab-till"
+        }
+      ],
       "dur": 6,
       "cut": true,
       "card": "Month 5 · Dot's café",
@@ -197,6 +219,8 @@
           "s": 1.0
         },
         "to": {
+          "x": 646,
+          "y": 354,
           "s": 1.05
         }
       },

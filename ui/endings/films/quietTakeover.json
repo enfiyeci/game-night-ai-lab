@@ -207,20 +207,24 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "qt-gate",
+      "kind": "still",
+      "image": "qt-gate",
+      "screens": [
+        {
+          "at": "reader",
+          "plate": "qt-gate"
+        }
+      ],
       "dur": 7,
       "card": "Month 6, night · The campus gate",
       "cam": {
         "from": {
-          "x": 380,
-          "y": 350,
-          "s": 1.35
+          "s": 1.0
         },
         "to": {
-          "x": 900,
-          "y": 350,
-          "s": 1.35
+          "x": 1349,
+          "y": 585,
+          "s": 1.05
         }
       },
       "sfx": [
@@ -235,8 +239,18 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "qt-cafe",
+      "kind": "still",
+      "image": "qt-cafe",
+      "screens": [
+        {
+          "at": "phone",
+          "plate": "qt-cafe"
+        },
+        {
+          "at": "tv",
+          "plate": "qt-cafe"
+        }
+      ],
       "dur": 5,
       "card": "Month 8 · Dot's café",
       "cam": {
@@ -244,6 +258,8 @@
           "s": 1.0
         },
         "to": {
+          "x": 1447,
+          "y": 622,
           "s": 1.05
         }
       },

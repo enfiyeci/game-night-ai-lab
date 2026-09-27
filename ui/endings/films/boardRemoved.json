@@ -137,8 +137,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "rb-cafe",
+      "kind": "still",
+      "image": "rb-cafe",
+      "screens": [
+        {
+          "at": "tv",
+          "plate": "rb-cafe"
+        }
+      ],
       "dur": 6,
       "card": "Day 2 · Dot's café",
       "cam": {
@@ -146,7 +152,8 @@
           "s": 1.0
         },
         "to": {
-          "x": 700,
+          "x": 783,
+          "y": 429,
           "s": 1.06
         }
       },

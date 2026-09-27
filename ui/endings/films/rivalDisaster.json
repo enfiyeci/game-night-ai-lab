@@ -164,8 +164,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "rd-card",
+      "kind": "still",
+      "image": "rd-card",
+      "screens": [
+        {
+          "at": "reader",
+          "plate": "rd-card"
+        }
+      ],
       "dur": 6,
       "card": "Day 4 · Dot's café",
       "cam": {
@@ -173,6 +179,8 @@
           "s": 1.0
         },
         "to": {
+          "x": 960,
+          "y": 448,
           "s": 1.05
         }
       },

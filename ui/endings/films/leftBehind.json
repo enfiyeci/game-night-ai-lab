@@ -175,8 +175,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "lb-cafe",
+      "kind": "still",
+      "image": "lb-cafe",
+      "screens": [
+        {
+          "at": "tv",
+          "plate": "lb-cafe"
+        }
+      ],
       "dur": 6,
       "card": "Month 4 · Dot's café",
       "cam": {
@@ -184,6 +190,8 @@
           "s": 1.0
         },
         "to": {
+          "x": 874,
+          "y": 377,
           "s": 1.05
         }
       },

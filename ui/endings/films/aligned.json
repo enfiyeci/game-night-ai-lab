@@ -248,8 +248,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "al-cafe",
+      "kind": "still",
+      "image": "al-cafe",
+      "screens": [
+        {
+          "at": "tv",
+          "plate": "al-cafe"
+        }
+      ],
       "dur": 6,
       "card": "Month 6 · Dot's café",
       "cam": {
@@ -257,6 +263,8 @@
           "s": 1.0
         },
         "to": {
+          "x": 1095,
+          "y": 362,
           "s": 1.06
         }
       },
