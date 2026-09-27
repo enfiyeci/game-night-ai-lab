@@ -103,3 +103,9 @@ test('more than three lines asks the player to untick one, fewer asks for a thir
   assert.equal(ok.reason, null);
   assert.equal(ok.linesNote, 'three, plus the one every lab keeps');
 });
+
+test('the Pentagon and blacklist-appeal demands get their own names in the draft', async () => {
+  const { sourceLabel } = await import('../ui/logic/constitution.js');
+  assert.equal(sourceLabel('pentagon'), 'The Pentagon asked');
+  assert.equal(sourceLabel('blacklistAppeal'), 'Agreed to end the blacklist fight');
+});

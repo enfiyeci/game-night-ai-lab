@@ -291,13 +291,14 @@ test('closing Safety’s draft without adopting unpicks the constitution card, b
   overlay.querySelector('.sd-close').click();
   assert.equal(overlay.querySelector('.sd-layer'), null);
   assert.equal(row().classList.contains('picked'), false);
+  assert.equal(document.activeElement, row(), 'focus goes back to the card');
   row().click();
   overlay.querySelector('.sd-layer').dispatchEvent(new FakeEvent('keydown', { key: 'Escape' }));
   assert.equal(overlay.querySelector('.sd-layer'), null);
   assert.equal(row().classList.contains('picked'), false);
 });
 
-test('the constitution card note names the draft version and the model that learned the last one', async () => {
+test('the constitution card note names the draft version and the live one, never a model', async () => {
   const { constitutionNote } = await import('../ui/screens/constitution.js');
   const state = SCENARIOS.era3Idle(1);
   assert.equal(constitutionNote(state), null, 'no chip before any draft exists');
@@ -305,11 +306,10 @@ test('the constitution card note names the draft version and the model that lear
   assert.deepEqual(constitutionNote(state), { text: 'v1 draft · no model has learned it yet', later: false });
   learnConstitution(state, SAFETY_PROPOSAL);
   state.models.push({ ...state.models.at(-1), generation: 4 });
-  assert.equal(constitutionNote(state).text, 'v2 draft · Kestrel 4 learned v1');
+  assert.equal(constitutionNote(state).text, 'v2 draft · v1 is live');
   state.constitutionDraft.changes.push({ turn: state.turn, change: { remove: 'privacy' }, source: 'investors' });
-  assert.equal(constitutionNote(state).text, 'v2 draft · Kestrel 4 learned v1\n1 change since Kestrel 4');
+  assert.equal(constitutionNote(state).text, 'v2 draft · v1 is live\n1 change since v1');
   state.constitutionDraft.changes.push({ turn: state.turn, change: { add: 'privacy' }, source: 'users' });
-  assert.equal(constitutionNote(state).text, 'v2 draft · Kestrel 4 learned v1\n2 changes since Kestrel 4');
-  state.models = [];
-  assert.match(constitutionNote(state).text, /^v2 draft · Kestrel learned v1/);
+  assert.equal(constitutionNote(state).text, 'v2 draft · v1 is live\n2 changes since v1');
+  assert.doesNotMatch(constitutionNote(state).text, /Kestrel/, 'the chip names no model');
 });

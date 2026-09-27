@@ -1,5 +1,5 @@
 import { jobLevels } from '../automation.js';
-import { forceAmendConstitution } from '../constitution.js';
+import { changeDraft, draftFor, hasConstitution } from '../constitution.js';
 import { refreshOnline } from '../contracts.js';
 import { exposeConcealed } from '../hazards.js';
 import { leaseMonthly } from '../power.js';
@@ -314,7 +314,6 @@ const liveConsumerModels = (state) => state.models.filter((model) => model.chann
   && model.active && !model.superseded && state.turn >= model.activeFromTurn);
 const hasEval = (state) => state.compute.split.safety >= 0.2 || state.flags.govTesting === true;
 const hasAiWork = (state) => jobLevels(state).some((level) => level > 0);
-const hardLine = (state) => state.constitution.hardLines.at(-1);
 const copyrightCase = (state) => state.legalCases.find((legalCase) => legalCase.source === 'copyright');
 const gasSite = (state) => state.power.sites.find((site) => site.source === 'gas' && site.online);
 const evaluatedRelease = (state, model) => model.active && model.releasedTurn === state.turn && model.capability >= 30
@@ -476,7 +475,8 @@ export const REAL_EVENTS = [
   makeEvent('hateMeltdown', {
     fallback: 'blame',
     trigger: (state) => state.era >= 3 && liveConsumerModels(state).length > 0
-      && (state.flags.retuned || state.constitution.hardLines.length === 0),
+      // Empty lines count only once a constitution was learned: the lab stripped its lines, not "none yet".
+      && (state.flags.retuned || (hasConstitution(state) && state.constitution.hardLines.length === 0)),
     effects: {
       rollback(state) { state.publicTrust -= 2; state.sentiment = clamp(state.sentiment - 0.05, 0.5, 1.5); },
       keep(state) { state.govFavor.intl -= 8; state.publicTrust -= 8; state.sentiment = clamp(state.sentiment + 0.03, 0.5, 1.5); },
@@ -518,8 +518,8 @@ export const REAL_EVENTS = [
   anchor('pentagon', 4, 0, 0.15, 'stall', {
     sign(state) {
       state.govFavor.us += 8; state.staffTrust -= 6;
-      const remove = hardLine(state);
-      if (remove) forceAmendConstitution(state, { remove }, 'pentagon');
+      const remove = draftFor(state).hardLines.at(-1); // an accepted demand changes the draft, as the investors do
+      if (remove) changeDraft(state, { remove }, 'pentagon');
     },
     refuse(state) {
       state.flags.supplyChainRisk = true; state.flags.pentagonRefused = true;
@@ -583,8 +583,8 @@ export const REAL_EVENTS = [
       supreme(state) { state.cash -= 20; state.staffTrust += 4; },
       peace(state) {
         delete state.flags.supplyChainRisk; state.govFavor.us += 6; state.staffTrust -= 6;
-        const remove = hardLine(state);
-        if (remove) forceAmendConstitution(state, { remove }, 'blacklistAppeal');
+        const remove = draftFor(state).hardLines.at(-1);
+        if (remove) changeDraft(state, { remove }, 'blacklistAppeal');
       },
       ipo(state) { state.cash += 50; },
     },

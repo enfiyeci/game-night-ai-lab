@@ -12,6 +12,8 @@ const SOURCES = {
   users: 'Users asked',
   political: 'Political groups asked',
   activists: 'Activists asked',
+  pentagon: 'The Pentagon asked', // OWNER WRITES
+  blacklistAppeal: 'Agreed to end the blacklist fight', // OWNER WRITES
 };
 
 export const sourceLabel = (source) => SOURCES[source]

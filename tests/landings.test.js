@@ -10,11 +10,12 @@ import { createPresidentPromise } from '../sim/promises.js';
 
 function advanceTo(s, day, rng) {
   let events = [];
-  while (s.day < day) {
+  while (s.day < day && !s.ending) {
     const r = advanceDays(s, 1, rng);
     s = r.state;
     events = r.events;
   }
+  assert.ok(s.day >= day, `the run ended on day ${s.day}, before day ${day}`);
   return { s, events };
 }
 

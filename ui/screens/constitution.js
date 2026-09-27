@@ -4,7 +4,6 @@
 // Picking the recipe's "Train on a written constitution" card opens it (mountConstitution below).
 import { draftFor, hasConstitution } from '../../sim/constitution.js';
 import { documentView } from '../logic/constitution.js';
-import { familyName } from '../logic/naming.js';
 import { registerCardOpener } from './recipe.js';
 
 const MAX_LINES = 3;
@@ -257,24 +256,29 @@ export function openConstitution(game, overlayRoot, { onAdopt, onCancel } = {}) 
   return layer;
 }
 
-// The chip under the recipe card once a draft exists: which version the next run teaches, which model learned the
-// last one, and how many demands changed the draft since. None before the first draft.
+// The chip under the recipe card once a draft exists: which version the next run teaches, which version is live, and
+// how many demands changed the draft since. None before the first draft. It names no model: a run without the card
+// keeps the old live version, so the latest model is not always the one that learned it.
 export function constitutionNote(state) {
   if (!state.constitutionDraft && !hasConstitution(state)) return null;
-  const learned = state.constitution?.version ?? 0;
-  const last = state.models?.at(-1);
-  const model = `${familyName(state) || 'Kestrel'}${last?.generation ? ` ${last.generation}` : ''}`;
+  const live = state.constitution?.version ?? 0;
   const count = state.constitutionDraft?.changes?.length ?? 0;
+  const plural = `${count} change${count === 1 ? '' : 's'}`;
   // OWNER WRITES: the chip's wording (the review page's step 3 picture).
-  const head = `v${learned + 1} draft · ${learned ? `${model} learned v${learned}` : 'no model has learned it yet'}`;
-  const changes = count ? `${count} change${count === 1 ? '' : 's'} ${learned ? `since ${model}` : 'so far'}` : '';
+  const head = `v${live + 1} draft · ${live ? `v${live} is live` : 'no model has learned it yet'}`;
+  const changes = count ? `${plural} ${live ? `since v${live}` : 'so far'}` : '';
   return { text: changes ? `${head}\n${changes}` : head, later: false }; // the changes go on a second line
 }
 
 // Picking the constitution card opens the draft; closing it without Adopt takes the card back out of the recipe.
 export function mountConstitution(game, overlayRoot) {
   registerCardOpener('constitution', {
-    open: (openGame, card, { unpick }) => openConstitution(openGame, overlayRoot, { onCancel: unpick }),
+    open: (openGame, card, { unpick }) => openConstitution(openGame, overlayRoot, {
+      onCancel() {
+        unpick(); // redraws the list, so focus goes back to the card's new row
+        [...overlayRoot.querySelectorAll('.tech-row')].find((row) => row.querySelector('.tech-name')?.textContent === card.name)?.focus();
+      },
+    }),
     note: (state) => constitutionNote(state),
   });
 }
