@@ -768,6 +768,12 @@ svg.room {
 .recipe-dialog .dialog-back { flex: none; }
 .recipe-dialog .dlg > .dialog-ok { align-self: center; }
 
+/* ---- Recipe: one dialog across stages (owner playtest 2026-09-26) ---- */
+/* Next stays centred on every stage; Back sits just left of it (the button is 150px wide) and is hidden on stage 1. */
+.recipe-dialog .dialog-actions { position: relative; }
+.recipe-dialog .dialog-actions .dialog-back { position: absolute; right: calc(50% + 75px); }
+.recipe-stepper [aria-current]:focus-visible { outline: 3px solid var(--sky); outline-offset: 3px; border-radius: 4px; }
+
 .recipe-body {
   display: flex;
   min-height: 0;

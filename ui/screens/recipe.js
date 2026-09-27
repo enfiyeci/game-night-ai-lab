@@ -87,7 +87,10 @@ function stageStepper(stage, era) {
   for (const id of stagesFor(era)) {
     const item = document.createElement(id === stage ? 'strong' : 'span');
     item.textContent = STAGE_NAMES[id];
-    if (id === stage) item.setAttribute('aria-current', 'step');
+    if (id === stage) {
+      item.setAttribute('aria-current', 'step');
+      item.tabIndex = -1; // focus lands here when Next or Back turns the page
+    }
     root.append(item);
   }
   return root;
@@ -536,6 +539,10 @@ export function openRecipe(game, overlayRoot, { stage = 1 } = {}) {
   detourDrafts.delete(game);
   let draft = back ? sanitizeDraft(projected(), rememberedDrafts.get(game)) : fitDraftToCompute(projected(), rememberedDrafts.get(game));
   let opened;
+  // One dialog across the stages (owner playtest 2026-09-26): Next and Back swap what is inside it, so the veil, the
+  // side panels and the buttons stay put. The buttons call whichever stage is showing.
+  let stageActions = {};
+  let shownCapRow = null;
 
   function showStage(requested) {
     const state = projected();
@@ -654,14 +661,10 @@ export function openRecipe(game, overlayRoot, { stage = 1 } = {}) {
     body.append(centre, footerSlot, error, helpSlot);
     const nextStage = number === 1 ? (state.era < 2 ? 3 : 2) : 3;
     const previousStage = number === 3 ? (state.era < 2 ? 1 : 2) : 1;
-    opened = openDialog(overlayRoot, {
-      title: `Training run · Stage ${stagesFor(state.era).indexOf(stageId) + 1}`,
-      subtitle: `${workingName(state, draft)} / ${STAGE_NAMES[stageId]}`,
-      left: { title: 'Team', content: teamPanel(state, { lines: true }) },
-      right: { title: 'Selected techniques', content: rightContent },
-      body,
-      okLabel: number === 3 ? 'Start training' : 'Next',
-      backLabel: number > 1 ? 'Back' : undefined,
+    const title = `Training run · Stage ${stagesFor(state.era).indexOf(stageId) + 1}`;
+    const subtitle = `${workingName(state, draft)} / ${STAGE_NAMES[stageId]}`;
+    const okLabel = number === 3 ? 'Start training' : 'Next';
+    stageActions = {
       onBack: () => showStage(previousStage),
       onOk() {
         if (number < 3) {
@@ -684,10 +687,40 @@ export function openRecipe(game, overlayRoot, { stage = 1 } = {}) {
         rememberedDrafts.set(game, cloneDraft(draft));
         opened.close();
       },
-    });
-    opened.classList.add('recipe-dialog', `recipe-dialog-stage-${number}`);
+    };
+
+    const turningPage = Boolean(opened?.isConnected);
+    if (turningPage) {
+      const panel = opened.querySelector('.dialog-centre');
+      panel.querySelector('h1').textContent = title;
+      panel.querySelector('.subt').textContent = subtitle;
+      panel.querySelector('.dialog-body').replaceChildren(body);
+      opened.querySelector('.dialog-right').querySelector('.dialog-side-content').replaceChildren(rightContent);
+      const ok = opened.querySelector('.dialog-ok');
+      ok.textContent = okLabel;
+      ok.title = '';
+      opened.classList.remove('recipe-dialog-stage-1', 'recipe-dialog-stage-2', 'recipe-dialog-stage-3');
+    } else {
+      opened = openDialog(overlayRoot, {
+        title,
+        subtitle,
+        left: { title: 'Team', content: teamPanel(state, { lines: true }) },
+        right: { title: 'Selected techniques', content: rightContent },
+        body,
+        okLabel,
+        backLabel: 'Back', // always built, hidden on stage 1, so Next never moves
+        onBack: () => stageActions.onBack(),
+        onOk: () => stageActions.onOk(),
+      });
+      opened.classList.add('recipe-dialog');
+    }
+    opened.classList.add(`recipe-dialog-stage-${number}`);
+    opened.querySelector('.dialog-back').hidden = number === 1;
+    shownCapRow?.remove();
+    shownCapRow = capRow;
     if (capRow) opened.append(capRow);
     refresh();
+    if (turningPage) body.querySelector('[aria-current="step"]')?.focus();
   }
 
   showStage(stage);
