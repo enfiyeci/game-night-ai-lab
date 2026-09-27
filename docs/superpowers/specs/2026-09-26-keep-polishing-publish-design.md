@@ -65,9 +65,9 @@ No randomness anywhere in this mechanic (owner rule, 2026-09-26, deterministic e
 8. **Publish.** Publish is today's release move, opened from the new Publish button (and still from the floor menu).
    Publishing ends polishing, frees the held units, and carries `polish` and `fixedFlaws` onto the released model record.
    Publishing on the day training ends gives exactly today's result: no fixes and 0 polish.
-9. **Stand-in critic effect.** Until `gn-model-appeal` replaces it, `scoreLaunch` adds
-   `polish / POLISH_CRITIC_DIVISOR` to the critics' shared base, with `POLISH_CRITIC_DIVISOR = 50` (up to +2). The
-   divisor is set by the balance run in section 7, not by hand.
+9. **Critic effect.** `scoreLaunch` adds `polish / POLISH_CRITIC_DIVISOR` to the critics' shared base, with
+   `POLISH_CRITIC_DIVISOR = 50` (up to +2). This lane adds the term; `gn-model-appeal` keeps it and owns its tuning
+   (agreed 2026-09-26, section 6).
 10. **Unchanged.** The reward-hacking hazard's "fix" choice and the "retrain" event choice still add their release
     delay. The "over" and "heavy" lengths stay. The release dialog stays as it is.
 
@@ -116,10 +116,13 @@ read the same numbers the sim uses.
 
 ## 6. Interface with `gn-model-appeal`
 
+**Agreed with `gn-model-appeal` on 2026-09-26** (its reply: "Yes: pendingModel.polish 0..100 and fixedFlaws
+[{flag, day}] as you proposed, critics += polish/50 as your stand-in in scoreLaunch; I keep that term and own its
+tuning"; its spec `docs/superpowers/specs/2026-09-26-model-appeal-design.md` section 10 on branch `model-appeal`).
+
 This lane owns `polish` (0 to 100) and `fixedFlaws` (a list of `{ flag, day }`) on the pending model and on released
-models, and how they change over time. `gn-model-appeal` owns how they turn into press, users and money, and may
-replace the stand-in critic effect (rule 9). This lane sends the proposal to that lane before building; neither lane
-builds against the fields until both agree.
+models, and how they change over time. `gn-model-appeal` owns how they turn into press, users and money, including the
+`polish / 50` critic term this lane adds (rule 9).
 
 ## 7. Checks
 
@@ -130,8 +133,8 @@ builds against the fields until both agree.
 - **Balance run** (`tools/balance.js`, before and after, same seeds): each bot gets a publish rule. The speed bot
   publishes at once; the balanced bot fixes every flaw, then publishes when the next bubble would add less than 8 or a
   rival launch is rumored within the next bubble; the safety bot waits until the next bubble adds less than 4. Report
-  days polished, critic average, rank and endings per bot. Size `POLISH_CRITIC_DIVISOR` so a full polish is worth
-  about as much to the critics as the leading rival launching during the wait.
+  days polished, critic average, rank and endings per bot, and hand the numbers to `gn-model-appeal`, which tunes the
+  critic term (the starting point: a full polish worth about as much as the leading rival launching during the wait).
 - **Screens** checked in the browser at 1440 × 900: the pill, the badge, the flaws list, the rumor chip, the strip,
   the first-time line, and reduced motion.
 
