@@ -9,13 +9,13 @@ owner's request; content for review, not yet wired into `sim/data/feed.js`.
 
 | File | Covers | Posts | Replies |
 |---|---|---|---|
-| `eras-company-mood.md` | the five era starts, the lab's company news, public mood crossing a line, AI background posts for quiet turns | 102 | 8 |
+| `eras-company-mood.md` | the five era starts, the lab's company news (including training runs starting and finishing, by model size), public mood crossing a line, AI background posts for quiet turns | 139 | 15 |
 | `releases.md` | launch day by flag, channel, critics, price, thinking effort, servers, version jump, rank, testing, artists; the weeks after; all four rivals' small and big releases | 166 | 15 |
 | `event-cards.md` | 42 event cards (25 from `events.js`, all 11 in `events6c.js`, all 6 board events): when each breaks, and each public choice. The 26th, the President's promise call, is in `president-summit-finale.md` | 347 | 16 |
 | `president-summit-finale.md` | both President meetings by answer style, promises coming due, the era 5 summit, the finale choices | 104 | 1 |
 | `everyday.md` | non-AI posts: hobbies, family, work, sport | 99 | 3 |
 | `world-news.md` | world news outside AI from four news desks, most with personas arguing underneath (added 2026-09-26) | 37 | 40 |
-| **Total** | | **855** | **83** |
+| **Total** | | **892** | **90** |
 
 Every post comes from one of the 100 personas or the four news desks (`docs/design/feed-personas.md`
 section I). Second pass, 2026-09-26, after the owner found the first draft too alike: longer posts
@@ -27,7 +27,7 @@ replies, and the world-news file.
 - **Replies** are indented under the post they answer. In the game they arrive the same day or the
   next, each answering the one before it, and Flock shows them as a thread.
 - `{model}` is the model involved (usually the player's newest); `{lab}` is the player's lab name.
-  `{name}` in the finale section is the model's name, as in `sim/data/finale.js`. `{rival}` in
+  `{gpus}` in the training-run sections is the run's size in chips ("15,000 H100s"). `{name}` in the finale section is the model's name, as in `sim/data/finale.js`. `{rival}` in
   the summit section is the rival lab the checks caught or accused.
 - Each event card already opens with its own post (`card.post` in the sim data) and may have a
   warning post; those are not repeated here. These files add the crowd's reaction around them.
