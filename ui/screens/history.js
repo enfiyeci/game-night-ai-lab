@@ -250,6 +250,21 @@ function raceCards(rows, x) {
   return { root, rowsUsed: layout.rowsUsed };
 }
 
+// The race chart and its release cards, for the Compute screen's second tab (and the race view below).
+export function raceView(game) {
+  const rows = historyRows(game.state);
+  const nowDate = storyDate(game.state.day ?? storyDayForTurn(game.state.turn)).label;
+  const body = element('div', 'history-race-body');
+  const series = raceSeries(rows, game.rivalReleases);
+  body.append(chartLegend(series.ticks.length > 0));
+  let chart = raceChart(rows, series, game.state.turn, nowDate);
+  const cards = raceCards(rows, chart.x);
+  // Two rows of cards leave less room: draw a shorter chart rather than shrinking this one.
+  if (cards.rowsUsed > 1) chart = raceChart(rows, series, game.state.turn, nowDate, 280);
+  body.append(chart.svg, cards.root);
+  return { body, stacked: cards.rowsUsed > 1 };
+}
+
 export function openHistory(game, overlayRoot, { view = 'models' } = {}) {
   const rows = historyRows(game.state);
   const nowDate = storyDate(game.state.day ?? storyDayForTurn(game.state.turn)).label;
@@ -285,14 +300,7 @@ export function openHistory(game, overlayRoot, { view = 'models' } = {}) {
   }
 
   function showRace() {
-    const body = element('div', 'history-race-body');
-    const series = raceSeries(rows, game.rivalReleases);
-    body.append(chartLegend(series.ticks.length > 0));
-    let chart = raceChart(rows, series, game.state.turn, nowDate);
-    const cards = raceCards(rows, chart.x);
-    // Two rows of cards leave less room: draw a shorter chart rather than shrinking this one.
-    if (cards.rowsUsed > 1) chart = raceChart(rows, series, game.state.turn, nowDate, 280);
-    body.append(chart.svg, cards.root);
+    const { body, stacked } = raceView(game);
     opened = openDialog(overlayRoot, {
       title: 'The race so far',
       subtitle: 'Public benchmarks only: the average of coding, science, agents and the final exam',
@@ -303,7 +311,7 @@ export function openHistory(game, overlayRoot, { view = 'models' } = {}) {
       onOk: () => opened.close(),
     });
     opened.classList.add('history-race');
-    if (cards.rowsUsed > 1) opened.classList.add('history-race-stacked');
+    if (stacked) opened.classList.add('history-race-stacked');
   }
 
   if (view === 'race') showRace();

@@ -42,6 +42,8 @@ function setMoods(svg, fx, anchors, state) {
       marker.innerHTML = markerSvg(mood === 'alarmed');
       marker.style.left = `${x + 22}px`;
       marker.style.top = `${y}px`;
+      // Clicking the "!" does what clicking the person does (the briefing listens for clicks on the person).
+      marker.addEventListener('click', () => person.dispatchEvent(new MouseEvent('click', { bubbles: true })));
       fx.append(marker);
     }
   }
