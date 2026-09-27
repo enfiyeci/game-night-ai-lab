@@ -44,7 +44,8 @@ export function computeSlices(state) {
   const cap = state.compute.split.servingCap ?? Infinity;
   const serving = Math.max(0, Math.min(need, cap, online - control - safety));
   const training = Math.max(0, online - control - safety - serving);
-  const run = state.activeRun ? state.activeRun.units : 0;
+  // A polishing model keeps its run's compute busy until Publish.
+  const run = state.activeRun ? state.activeRun.units : (state.pendingModel?.heldUnits ?? 0);
   return { online, need, control, safety, serving, shortfall: Math.max(0, need - serving), training, run, idle: Math.max(0, training - run) };
 }
 

@@ -1,3 +1,4 @@
+import { mountPolish } from './screens/polish.js';
 import { ENDINGS } from '../sim/endings.js';
 import { createClock } from './clock.js';
 import { createGame } from './game.js';
@@ -134,6 +135,7 @@ mountScreenWall(game, overlay);
 mountRacks(game, overlay).catch((error) => console.error(error));
 mountFinance(game, overlay);
 const training = mountTraining(game, { stage, hud, overlay });
+mountPolish(game, { stage, hud, overlay });
 mountHazard(game, { stage, overlay });
 const events = mountEvents(game, { stage, overlay });
 mountBriefing(game, { office, overlay });

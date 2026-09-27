@@ -1,3 +1,4 @@
+import { polishStatus } from './polish.js';
 import { recipeCost } from '../../sim/recipe.js';
 import { workingName } from './naming.js';
 import { MW_PER_UNIT } from '../../sim/data/compute.js';
@@ -72,7 +73,9 @@ const STAGE_WORDS = ['pretraining', 'midtraining', 'post-training'];
 export function project(state) {
   const run = state.activeRun;
   if (!run) {
-    return state.pendingModel
+    const model = state.pendingModel;
+    if (model?.polishing) return { name: workingName(state, model.size), status: polishStatus(model), progress: model.polish / 100 };
+    return model
       ? { name: 'Training complete', status: 'ready to release', progress: null }
       : { name: 'No project', status: 'click the floor to get to work', progress: null };
   }
