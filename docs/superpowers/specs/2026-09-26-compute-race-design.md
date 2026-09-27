@@ -1,7 +1,7 @@
 # Compute race — design spec (B + C)
 
 **Date:** 2026-09-26 · **Owner:** Arda · **Status:** direction picked by the owner ("I like a mixture of B and C the
-most"); five decisions open (section 7). Build after the 2026-09-27 12:00 AM PT deadline.
+most"); the five open decisions answered the same day (section 7). Build after the 2026-09-27 12:00 AM PT deadline.
 **Review pages:** options `https://claude.ai/artifact/VL28caDRHPKQyw2rcpj2mU`, plan
 `https://claude.ai/artifact/5Qi2Y6KTi1vyxHnsRCpn2v` (copies in `docs/design/mockups/compute-race/`).
 **Extends:** `docs/superpowers/specs/2026-09-25-compute-gathering-design.md`. Closes deferred item 3 of
@@ -32,8 +32,12 @@ sits idle; across the four bots only 3 of 400 runs end "left behind".
    card's bills, like any deal.
 5. **Off-board growth.** After picks, a quarter of each rival's remaining shortfall arrives next round (deals the player
    never sees). Qilin grows only this way. The era 3 queue's rival fills also land in rival fleets.
-6. **At the top, compute decides.** `rank`: a rival ranks above the player if its score is more than 0.5 higher, or
-   within 0.5 and its fleet is larger than the player's online compute. Era gates and final endings keep their rules.
+6. **At the top, standing decides; compute is part of it.** `rank`: a rival ranks above the player if its score is more
+   than 0.5 higher. Within 0.5 points, the lab with the higher standing ranks higher:
+   `standing = 0.6 × (rounds spent within 0.5 of the top score, as a share of the most any lab has) + 0.4 × compute share`.
+   Getting to the top first and staying there counts most; compute is a background factor, not the only one (owner
+   2026-09-26: "that shouldn't be the only thing probably but be a bg component"). Weights are first-pass, for the
+   balance run. Era gates and final endings keep their rules.
 7. **Race heat.** +2 when any lab's deal adds 25% or more to its fleet (the player included), the size of a prepaid
    queue order.
 8. **Summit.** A binding compute cap limits every signing rival's launch gain to 5, as it limits the player's runs
@@ -41,7 +45,11 @@ sits idle; across the four bots only 3 of 400 runs end "left behind".
 
 ## 3. What the player sees
 
-- **The race tab** in the Compute dialog (the HUD lane builds the button and dialog): a share bar of the frontier's
+- **The race tab** in the Compute dialog. The HUD lane built it on branch `hud-money` (`129c731`):
+  `ui/screens/computeInfo.js` exports `openComputeInfo(game, overlayRoot, { view: 'where' | 'race', race })`, where
+  `race` is a function `(game) => { body: HTMLElement, stacked: boolean }` (today `raceView` from `ui/screens/history.js`,
+  the race chart). The tab uses the history-race dialog size (1320 × 688, or 820 tall when stacked) and prepends its own
+  tab strip. This lane exports its own `race` function and changes the default there. Contents: a share bar of the frontier's
   compute, a lab table (score, compute, next model size, launch rumor from rival progress over 0.45), a "why you only
   train <size>" box and a "at the round's end" box.
 - **The deal board:** "<Rival> takes this" banners, the fallback line, why a card can't be signed, and a strip listing
@@ -95,12 +103,13 @@ reading, `promises.js` rank checks, `events6c.js` rival breakthrough, weight the
 Estimate: 8–10 hours (sim 3–4, screens 3–4, balance and tests 2). Measure before and after with the bots and size
 against existing effects before calling it done.
 
-## 7. Open decisions
+## 7. Owner decisions (2026-09-26)
 
-1. **Score cap.** The balanced bot still reaches 100 in era 3 in most seeds; then compute decides rank. Accept, or ask
-   the pacing lane to slow capability growth? Recommended: accept.
-2. **Board persistence.** Keep untaken cards (recommended) or refresh every round as today.
-3. **Denial heat.** +2 race heat for taking a rival's named card. Recommended: yes.
-4. **Drift.** Breaks ±5 points per ending on purpose (left behind +4 to +8 for three bots). Recommended: accept, retune
-   with the full build.
-5. **Era 4 rival power.** First build or second pass. Recommended: second pass.
+1. **Score cap.** Compute must not be the only thing that decides the lead once labs reach the top; it is a background
+   factor. Adopted as the standing blend in rule 6 (weights are this lane's first pass; the owner may adjust).
+2. **Board persistence.** Cards stay on the board until signed or taken.
+3. **Denial heat.** Taking a rival's named card adds +2 race heat.
+4. **Drift accepted.** The design breaks the ±5-points-per-ending rule on purpose: more left-behind endings (prototype:
+   +4 to +8 points for the speed, safety and random bots) and fewer out-of-money endings (−3 to −7). Retune once the
+   full build exists and report the new numbers against these.
+5. **Era 4 rival power.** Second pass, after the first build is measured.
