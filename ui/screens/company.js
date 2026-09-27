@@ -8,9 +8,11 @@ import { openDeals, openQueue } from './compute.js';
 import { openPowerSites } from './sites.js';
 import {
   EMERGENCY_OPTIONS,
+  INDEPENDENCE_ROUND_SHARE,
   INVESTORS,
   inDangerZone,
   projectBurn,
+  roundAmount,
   runway,
 } from '../../sim/economy.js';
 import { TECHNIQUES, techAvailable } from '../../sim/techniques.js';
@@ -198,7 +200,7 @@ export function openRaise(game, overlayRoot) {
   const options = Object.entries(INVESTORS).map(([id, investor]) => ({
     id,
     investor,
-    amount: Math.round(projected.valuation * investor.share),
+    amount: roundAmount(projected, id),
     ...INVESTOR_COPY[id],
   }));
   let selected = reason ? '' : options[0].id;
@@ -236,6 +238,12 @@ export function openRaise(game, overlayRoot) {
         ['Share of lab', pct(option.investor.share)],
       ])
       : statusPanel([], reason));
+    if (option && projected.flags.independenceLost) {
+      const note = document.createElement('p');
+      note.className = 'company-status-lead';
+      note.textContent = `Rounds raise ${pct(1 - INDEPENDENCE_ROUND_SHARE)} less since you traded equity for compute.`;
+      rightContent.append(note);
+    }
   }
   wireChoices(group, buttons, (id) => { selected = id; error.textContent = ''; renderSelection(); });
 

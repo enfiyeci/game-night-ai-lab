@@ -11,9 +11,9 @@
 // (no new releases). A planned round raises at today's valuation. Nothing here changes the state.
 import { BALANCE } from '../../sim/balance.js';
 import { ERAS, eraById } from '../../sim/data/eras.js';
-import { RESALE, SPOT_PRICE } from '../../sim/data/compute.js';
+import { RESALE, spotPrice } from '../../sim/data/compute.js';
 import { leaseMonthly } from '../../sim/power.js';
-import { activeModels, monthlyRevenue, revenuePerUser, INVESTORS } from '../../sim/economy.js';
+import { activeModels, monthlyRevenue, revenuePerUser, roundAmount } from '../../sim/economy.js';
 import { computeSlices, resaleCredit, spotCover } from '../../sim/split.js';
 import { PRICE_STANCE } from '../../sim/serving.js';
 import { reviewerCost } from '../../sim/automation.js';
@@ -48,7 +48,7 @@ export function monthOfTurn(turn) {
 }
 
 export const opsMonthly = (era) => BALANCE.baseOpsMonthly * (1 + 0.25 * (era - 1));
-export const roundSize = (state) => Math.round(state.valuation * INVESTORS.vc.share);
+export const roundSize = (state) => roundAmount(state, 'vc');
 const roundOpen = (state, era) => era >= 2 && state.flags.lastRoundEra !== era;
 
 // One row per finished turn, built from the state before and after endTurn and the turn's events.
@@ -101,11 +101,13 @@ export function signedAt(state, turn) {
   const power = sites.reduce((sum, s) => sum + s.units, 0);
   const own = live.filter((c) => !c.needsPower).reduce((sum, c) => sum + c.units, 0);
   const needs = live.filter((c) => c.needsPower).reduce((sum, c) => sum + c.units, 0);
-  const billOf = (c) => c.units * (c.supplier === 'spot' ? SPOT_PRICE[era] : c.price) * UNIT_PRICE;
+  // Spot renews at the new price from the next turn (syncContracts); this turn it bills what it stored.
+  const spotAt = (c) => (turn === state.turn ? c.price : spotPrice(state, era));
+  const billOf = (c) => c.units * (c.supplier === 'spot' ? spotAt(c) : c.price) * UNIT_PRICE;
   const bill = live.reduce((sum, c) => sum + billOf(c), 0) + sites.reduce((sum, s) => sum + leaseMonthly(s.units), 0);
   const azuria = live.filter((c) => c.supplier === 'azuria').reduce((sum, c) => sum + billOf(c), 0);
   const raw = own + Math.min(needs, power);
-  const prices = live.map((c) => ({ units: c.units, price: c.supplier === 'spot' ? SPOT_PRICE[era] : c.price }));
+  const prices = live.map((c) => ({ units: c.units, price: c.supplier === 'spot' ? spotAt(c) : c.price }));
   // refreshOnline: pooled compute goes to the government pool; it is still billed.
   return { units: Math.floor(raw * (1 - (state.compute.pooled ?? 0))), raw, bill, azuria, prices };
 }
@@ -202,7 +204,7 @@ export function project(state, plan) {
     }
     const today = turn === state.turn
       ? spotCover(state) - resaleCredit(state)
-      : (cover ? shortfall * SPOT_PRICE[era] * UNIT_PRICE : 0) - (resell ? resale : 0);
+      : (cover ? shortfall * spotPrice(state, era) * UNIT_PRICE : 0) - (resell ? resale : 0);
     const signedBill = signed.bill - credit + today;
     const burn = signedBill + planBill + ops + people;
     const raised = raises[era] && roundOpen(state, era) && turn === Math.max(state.turn, eraStart(era)) ? round : 0;

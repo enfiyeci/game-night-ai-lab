@@ -5,7 +5,7 @@ import { leaseMonthly } from '../power.js';
 import { activeModels } from '../serving.js';
 import { clamp } from '../util.js';
 import { ERAS } from './eras.js';
-import { RESCUE_MONTHS, SPOT_PRICE } from './compute.js';
+import { RESCUE_MONTHS, spotPrice } from './compute.js';
 import { DEMANDS } from './constitution.js';
 
 const SITE_OPPOSITION_RNG_SALT = 2;
@@ -603,7 +603,7 @@ export const EVENTS = [
             for (const contract of state.compute.contracts) {
               if (!contract.troubled) continue;
               contract.supplier = 'spot';
-              contract.price = SPOT_PRICE[state.era];
+              contract.price = spotPrice(state);
               contract.string = 'bumpable';
               contract.monthsLeft = null;
               contract.troubled = false;
