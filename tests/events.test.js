@@ -283,7 +283,7 @@ test('addressing the forum-breach warning also raises security', () => {
   eventsTick(state, yes);
   const cash = state.cash;
   assert.equal(addressWarning(state, 'weightTheft').ok, true);
-  assert.equal(state.cash, cash - 15);
+  assert.equal(state.cash, cash - 20);
   assert.equal(state.security, 50);
   assert.equal(state.seenEvents.includes('weightTheft'), true);
 });

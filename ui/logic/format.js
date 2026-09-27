@@ -68,13 +68,14 @@ const STAGE_WORDS = ['pretraining', 'midtraining', 'post-training'];
 // What the HUD pill says: the run's working name (the next model in the family), its stage and progress.
 export function project(state) {
   const run = state.activeRun;
+  const pauseDays = Math.max(0, (state.flags?.trainingPausedUntilDay ?? 0) - state.day);
   if (!run) {
     return state.pendingModel
       ? { name: 'Training complete', status: 'ready to release', progress: null }
-      : { name: 'No project', status: 'click the floor to get to work', progress: null };
+      : { name: pauseDays ? 'Training paused' : 'No project', status: pauseDays ? `${pauseDays} days remaining` : 'click the floor to get to work', progress: null };
   }
   const name = workingName(state, run.recipe.sliders.size);
   const total = Math.max(1, run.turnsLeft, recipeCost(state, run.recipe).turns);
   const progress = (total - run.turnsLeft) / total;
-  return { name, status: `training run · ${STAGE_WORDS[Math.min(2, Math.floor(progress * 3))]}`, progress };
+  return { name, status: pauseDays ? `training paused · ${pauseDays} days remaining` : `training run · ${STAGE_WORDS[Math.min(2, Math.floor(progress * 3))]}`, progress };
 }

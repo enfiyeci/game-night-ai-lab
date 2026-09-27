@@ -237,10 +237,19 @@ export function mountEvents(game, { stage, overlay }) {
     }
     for (const choice of view.choices) {
       const button = choiceButton(choice);
+      if (!preview && choice.cashCost > 0 && choice.cashCost > game.state.cash) {
+        button.disabled = true;
+        button.title = 'Not enough cash for this response';
+      }
       button.addEventListener('click', () => {
         if (!preview) {
           answered[view.id] = choice.id;
-          queueAnswer(game, view.id, choice.id);
+          const result = queueAnswer(game, view.id, choice.id);
+          if (result?.ok === false) {
+            delete answered[view.id];
+            button.title = result.error;
+            return;
+          }
         }
         // Under real time the answer applies at once and the update may already have closed this
         // card and opened the next one; close only this card.

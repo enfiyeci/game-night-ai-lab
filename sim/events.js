@@ -2,6 +2,9 @@ import { EVENTS } from './data/events.js';
 import { EVENTS_6C } from './data/events6c.js';
 import { REAL_EVENTS } from './data/realEvents.js';
 import { BOARD_EVENTS } from './data/boardEvents.js';
+import { SCENARIO_EVENTS } from './data/scenarioEvents.js';
+import { scenarioEligible } from './scenarios.js';
+import { warningResponse } from './data/warningResponses.js';
 import { hasLine } from './constitution.js';
 import { EVENT_TIMING, DEFAULT_EVENT_TIMING } from './data/eventTiming.js';
 import { ROUND_DAYS, nextRoundDay, roundMarkDay } from './time.js';
@@ -17,7 +20,7 @@ import {
 } from './promises.js';
 
 const MAX_CARDS = 2;
-const allEvents = () => [...EVENTS, ...EVENTS_6C, ...REAL_EVENTS, ...BOARD_EVENTS];
+const allEvents = () => [...EVENTS, ...EVENTS_6C, ...REAL_EVENTS, ...BOARD_EVENTS, ...SCENARIO_EVENTS];
 const byId = (id) => allEvents().find((event) => event.id === id);
 export const isAnchorId = (id) => Boolean(byId(id)?.anchor);
 const limitedCardCount = (state) => state.pendingEvents
@@ -80,6 +83,8 @@ function queuePromiseCalls(state, event, out) {
 export function eventsTick(state, rng) {
   const out = [];
   for (const event of orderedEvents()) {
+    if (event.kind === 'scenario') continue;
+    if (state.eventMode === 'scenarios' && !['internal', 'training', 'board', 'promise'].includes(event.kind)) continue;
     if (event.kind === 'promise') {
       queuePromiseCalls(state, event, out);
       continue;
@@ -124,7 +129,9 @@ export function addressWarning(state, id) {
   if (!event || event.kind === 'internal' || event.kind === 'promise' || !warned || warned.deferred) {
     return { ok: false, error: `no warning ${id}` };
   }
-  state.cash -= 5 * state.era;
+  const cost = warningResponse(id, state).cost;
+  if (state.cash < cost) return { ok: false, error: 'not enough cash for this response' };
+  state.cash -= cost;
   delete state.warnings[id];
   if (event.flag) {
     for (const model of state.models) model.flags = (model.flags ?? []).filter((flag) => flag !== event.flag);
@@ -144,6 +151,11 @@ export function resolveEvent(state, id, choiceId) {
     ? pending.choices?.find((candidate) => candidate.id === choiceId)
     : event?.card.choices.find((candidate) => candidate.id === choiceId);
   if (!choice) return { ok: false, error: `unknown choice ${choiceId}` };
+  if (event.kind === 'scenario' && !scenarioEligible(event, state)) {
+    state.pendingEvents.splice(index, 1);
+    return { ok: false, error: 'this situation no longer applies' };
+  }
+  if (choice.cashCost > 0 && choice.cashCost > state.cash) return { ok: false, error: 'not enough cash for this response' };
   if (event.kind === 'promise') {
     const result = resolvePromiseCall(state, pending, choiceId);
     if (!result.ok) return result;

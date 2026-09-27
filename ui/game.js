@@ -1,5 +1,6 @@
 import { createInitialState } from '../sim/state.js';
 import { createRng } from '../sim/rng.js';
+import { enableScenarios } from '../sim/scenarios.js';
 import {
   applyActions,
   advanceDays as runDays,
@@ -20,8 +21,9 @@ const initialQueue = (budget) => ({
 });
 
 // history: finance records of turns played before this game object existed (debug scenarios pass their own).
-export function createGame({ seed = 1, state, history = [] } = {}) {
+export function createGame({ seed = 1, state, history = [], eventMode = state?.eventMode ?? (state ? 'legacy' : 'scenarios') } = {}) {
   let currentState = structuredClone(state ?? createInitialState({ seed }));
+  if (eventMode === 'scenarios') enableScenarios(currentState);
   const rng = createRng(seed);
   let actions = initialQueue(currentState.budget);
   const subscribers = new Set();

@@ -185,7 +185,7 @@ function plannedState(state, actions) {
     runMeeting(planned, actions.presidentAnswers);
   }
   if (planned.pendingModel?.hazard && actions.hazardChoice) resolveHazard(planned, actions.hazardChoice);
-  for (const id of actions.addressWarnings ?? []) addressWarning(planned, id);
+  if (actions.addressWarnings) actions.addressWarnings = actions.addressWarnings.filter((id) => addressWarning(planned, id).ok);
   for (const [id, choiceId] of Object.entries(actions.eventChoices)) resolveEvent(planned, id, choiceId);
   activateReleases(planned);
   updateServing(planned);

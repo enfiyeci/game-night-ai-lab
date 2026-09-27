@@ -36,7 +36,8 @@ test('open warnings read the catalog text and skip deferred and queued ones', ()
   assert.equal(items[0].advisor, 'cfo');
   assert.equal(items[0].handle, '@marketwire');
   assert.match(items[0].text, /missed a payment/);
-  assert.equal(lookIntoCost(state), 5 * state.era);
+  assert.equal(lookIntoCost(state, 'jailbreak'), 5);
+  assert.equal(items[0].response.label, 'Stabilize the compute contracts');
 });
 
 test('a card view marks exactly one fallback choice and flags crises', () => {

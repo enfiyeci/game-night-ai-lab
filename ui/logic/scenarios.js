@@ -8,6 +8,8 @@ import { boardVoteThisRound } from '../../sim/board.js';
 import { MEETINGS } from '../../sim/data/president.js';
 import { setAutomation } from '../../sim/automation.js';
 import { turnRecord } from './finance.js';
+import { SCENARIO_EVENTS } from '../../sim/data/scenarioEvents.js';
+import { enableScenarios } from '../../sim/scenarios.js';
 
 const preferences = {
   pre: ['licensed-data', 'hazard-filter-built', 'hazard-filter-reuse'],
@@ -296,6 +298,17 @@ function racksState(seed) {
 
 export const SCENARIOS = {
   start,
+  scenarioEvent: (seed) => {
+    const state = enableScenarios(start(seed));
+    state.models.push({ name: 'Preview model', active: true, activated: true, activeFromTurn: 0,
+      channel: 'consumer', users: 100000, userCap: 1000000, priceStance: 'market', capability: 12, flags: ['jailbreakWaiting'],
+      spec: { size: 'medium', arch: 'dense', context: 'short', precision: 'bf16', guard: true, channel: 'consumer', reasoning: 'off' } });
+    const event = SCENARIO_EVENTS.find((row) => row.id === 'scenarioJailbreak');
+    state.pendingEvents.push({ id: event.id, title: event.card.title, post: event.card.post,
+      choices: event.card.choices.map(({ effects, ...choice }) => choice), landsAt: state.day, dueAt: state.day + 21 });
+    state.seenEvents.push(event.id);
+    return state;
+  },
   midEra3,
   era3Idle: (seed) => throughTurn(seed, 20, (s) => s.era === 3 && !s.activeRun && !s.pendingModel),
   release: releaseState,

@@ -21,6 +21,7 @@ import { checkTurnEndings, eraGate, finalEnding } from './endings.js';
 import { recordAdvisors } from './advisors.js';
 import { resolveHazard, exposeConcealed, INTERPRETABILITY_SPEND } from './hazards.js';
 import { addressWarning, resolveEvent, eventsTick, fallbackChoice, pushFeed, resolveDue, stampNewCards } from './events.js';
+import { scenarioTick } from './scenarios.js';
 import { CASES } from './data/constitution.js';
 import { setConstitution, amendConstitution } from './constitution.js';
 import {
@@ -553,6 +554,7 @@ export function advanceDays(prev, days, rng, observer = {}) {
     }
     state.day += 1;
     state.dayInRound += 1;
+    events.push(...scenarioTick(state));
     expireSuspicions(state);
     releaseDueFeed(state);
     postLandedCards(state);
@@ -565,6 +567,7 @@ export function advanceDays(prev, days, rng, observer = {}) {
     }
     if (reachesMark) {
       endRound(state, rng, observer, events, errors, fraction);
+      events.push(...scenarioTick(state));
       postLandedCards(state);
     }
     const dayEvents = events.slice(firstEvent);

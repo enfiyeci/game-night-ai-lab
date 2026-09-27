@@ -1,5 +1,5 @@
 import { bubbleAt, dueBar, el, loadAnchors } from '../components/eventBits.js';
-import { ADVISOR_TITLE, formatStoryTime, jokeFor, lookIntoCost, openWarnings, queueLookInto } from '../logic/events.js';
+import { ADVISOR_TITLE, formatStoryTime, jokeFor, openWarnings, queueLookInto } from '../logic/events.js';
 import { money } from '../logic/format.js';
 
 const ROLES = ['research', 'safety', 'cfo', 'policy'];
@@ -84,12 +84,14 @@ export function mountBriefing(game, { office, overlay }) {
     if (due) extra.append(due);
     const row = el('<div class="ev-row"><button type="button" class="ev-act"></button><button type="button" class="ev-act ghost">Not now</button></div>');
     const act = row.querySelector('.ev-act');
-    act.textContent = `Look into it (${money(lookIntoCost(game.state))})`;
+    act.textContent = `${warning.response.label} (${money(warning.response.cost)})`;
+    act.disabled = game.state.cash < warning.response.cost;
+    if (act.disabled) act.title = 'Not enough cash for this response';
     extra.append(row);
     const node = bubbleAt(root, head, {
       label: `${ADVISOR_TITLE[warning.advisor]} · ${bandOf(warning.advisor)}`,
-      say: `Heads up: “${warning.text}” Might be nothing. It is never nothing.`, // OWNER WRITES
-      width: 300,
+      say: warning.response.explanation,
+      width: 340,
       tail: 30,
       dy: bandOf(warning.advisor) === 'calm' ? -34 : -64, // clear their "!" marker
       extra,

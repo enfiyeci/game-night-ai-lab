@@ -11,6 +11,7 @@ export const SHARED_SAFETY_DEBT_MULT = 0.7;
 export const availableUnits = (state) => computeSlices(state).idle;
 
 export function startRun(state, recipe) {
+  if (state.day < (state.flags.trainingPausedUntilDay ?? 0)) return { ok: false, error: `training is paused for ${state.flags.trainingPausedUntilDay - state.day} more days` };
   if (state.activeRun) return { ok: false, error: 'a training run is already active' };
   if (state.pendingModel) return { ok: false, error: 'release the trained model first' };
   const check = validateRecipe(state, recipe);
@@ -29,6 +30,7 @@ export function startRun(state, recipe) {
 export function advanceRunBy(state, rng, fraction) {
   const run = state.activeRun;
   if (!run) return null;
+  if (state.day < (state.flags.trainingPausedUntilDay ?? 0)) return { type: 'runPaused' };
   // Capacity is checked once per round, as the balance was tuned; a player action rechecks it.
   if (fraction >= 1 || run.capacityTurn !== state.turn) {
     run.capacityTurn = state.turn;

@@ -71,7 +71,7 @@ const seed = seedForRun();
 const scenarioName = params.get('scenario') ?? 'start';
 const buildScenario = SCENARIOS[scenarioName] ?? SCENARIOS.start;
 const initialState = buildScenario(seed);
-const game = createGame({ seed, state: initialState, history: scenarioHistory(initialState) });
+const game = createGame({ seed, state: initialState, history: scenarioHistory(initialState), eventMode: scenarioName === 'start' || scenarioName === 'scenarioEvent' ? 'scenarios' : 'legacy' });
 if (cleanLabName(params.get('lab'))) game.state.labName = cleanLabName(params.get('lab')); // same cap as the title screen
 if (location.hash === '#board-warning') delete game.state.flags.boardQuiet; // debug still: the warning without going quiet
 

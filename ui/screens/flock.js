@@ -2,7 +2,7 @@
 // the entire page"; mockup docs/design/mockups/K2-feed-fullpage.html). Owner pick B + C for controls with no job: likes,
 // bookmarks, follows and the tabs work for show; every other control answers with a one-line joke from comms.
 import { el } from '../components/eventBits.js';
-import { lookIntoCost, openWarnings, queueLookInto } from '../logic/events.js';
+import { openWarnings, queueLookInto } from '../logic/events.js';
 import { money } from '../logic/format.js';
 import { PEOPLE } from '../../sim/data/feedPeople.js';
 import { ERAS } from '../../sim/data/eras.js';
@@ -263,9 +263,11 @@ export function openFlock(game, { overlay, events, onClose }) {
     for (const warning of warned) {
       const row = el('<div class="fk-note warn"><div class="fk-note-ic">?</div><div class="fk-note-body"><b></b><span></span></div><button type="button" class="fk-btn ghost"></button></div>');
       row.querySelector('b').textContent = `${person(warning.handle).name} ${warning.handle}`;
-      row.querySelector('span').textContent = warning.text;
+      row.querySelector('span').textContent = warning.response.explanation;
       const act = row.querySelector('button');
-      act.textContent = `Look into it (${money(lookIntoCost(game.state))})`;
+      act.textContent = `${warning.response.label} (${money(warning.response.cost)})`;
+      act.disabled = game.state.cash < warning.response.cost;
+      if (act.disabled) act.title = 'Not enough cash for this response';
       act.addEventListener('click', () => {
         queueLookInto(game, warning.id);
         overlay.dispatchEvent(new CustomEvent('events-changed'));
