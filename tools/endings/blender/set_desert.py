@@ -6,9 +6,9 @@ Shots:
                    fence; beyond it, rival halls lit along the whole horizon and the power lines marching past to them.
   pd-desert        A negotiated pace, Month 2, late afternoon: the campus quiet, cranes still over a half-built hall,
                    hooks hanging straight down, halls idle; a banner on the fence says PAUSED UNDER THE ACCORD.
-  qt-desert-1..3   A quiet takeover, Month 4, 3 am: halls going up under floodlights with nobody on site; the permit
-                   boards on the fence name companies nobody has heard of, one "a subsidiary of Kestrel Labs",
-                   approved minutes apart after 3 am; more plots light up across the desert as the renders go on.
+  qt-desert        A quiet takeover, Month 4, 3 am: halls going up under floodlights with nobody on site, more plots
+                   lit out across the desert; the permit boards on the fence name companies nobody has heard of, one
+                   "a subsidiary of Kestrel Labs", approved minutes apart after 3 am.
   rd-desert-1..4   Someone else's disaster, Day 5, night: the cloud provider's halls go dark hall by hall while the
                    town on the horizon stays lit. rd-desert-title: the campus lit, from further back, before it happens.
 """
@@ -145,12 +145,42 @@ def mesas(y=5200, seed=4, colour="#7A6352"):
 
 
 def haze(density=0.00012, colour="#C9B8C0"):
-    kit.haze((0, 3000, 300), (16000, 9000, 600), density, color=colour, anisotropy=0.4)
+    """A low layer of dust over the desert, so distance fades; wide and shallow, so its top edge sits on the horizon."""
+    kit.haze((0, 15000, 90), (60000, 34000, 180), density, color=colour, anisotropy=0.4)
 
 
 # ---------------------------------------------------------------- the campus
-def corrugated(tint="#B9BCC0", name="cladding"):
-    return kit.tex("box_profile_metal_sheet", 0.25, tint=tint, name=name)
+_clad = {}
+
+
+def corrugated(tint="#B4B8BC", name="cladding"):
+    """Profiled steel sheet: pale metal with vertical ribs every 20 cm (object space, metres)."""
+    if tint in _clad:
+        return _clad[tint]
+    m = kit.mat(tint, 0.42, 0.55, name=name)
+    nt = m.node_tree
+    b = next(n for n in nt.nodes if n.type == "BSDF_PRINCIPLED")
+    coord = nt.nodes.new("ShaderNodeTexCoord")
+    sep = nt.nodes.new("ShaderNodeSeparateXYZ")
+    nt.links.new(coord.outputs["Object"], sep.inputs[0])
+    hsum = nt.nodes.new("ShaderNodeMath")
+    hsum.operation = "ADD"
+    nt.links.new(sep.outputs["X"], hsum.inputs[0])
+    nt.links.new(sep.outputs["Y"], hsum.inputs[1])
+    wave = nt.nodes.new("ShaderNodeMath")
+    wave.operation = "SINE"
+    scale = nt.nodes.new("ShaderNodeMath")
+    scale.operation = "MULTIPLY"
+    scale.inputs[1].default_value = 2 * math.pi / 0.2
+    nt.links.new(hsum.outputs[0], scale.inputs[0])
+    nt.links.new(scale.outputs[0], wave.inputs[0])
+    bump = nt.nodes.new("ShaderNodeBump")
+    bump.inputs["Strength"].default_value = 0.35
+    bump.inputs["Distance"].default_value = 0.02
+    nt.links.new(wave.outputs[0], bump.inputs["Height"])
+    nt.links.new(bump.outputs["Normal"], b.inputs["Normal"])
+    _clad[tint] = m
+    return m
 
 
 def hall(x, y, length=180, width=48, height=16, lit=1.0, cladding=None, pool=False, sign=None, sign_lit=True):
@@ -399,144 +429,141 @@ def rival_campus(x0, y0, cols, rows, lit=1.0, pitch=(230, 95), seed=1, skip=()):
 
 # ---------------------------------------------------------------- shots
 def shot_lb_desert():
-    kit.world(hdri="qwantani_dusk_2_puresky", strength=0.45, rotation=70)
+    kit.world(hdri="qwantani_dusk_2_puresky", strength=0.4, rotation=250)
     ground()
     mesas()
     # the road the camera stands on, and the fence along it
-    kit.box((0, -2, 0.02), (3000, 9, 0.06), kit.tex("asphalt_02", 0.3, name="road"))
-    fence((-160, 9), (160, 9))
-    # the empty lot: survey stakes with faded flagging, tyre ruts long filled in, nothing else
+    kit.box((0, -3, 0.02), (3000, 9, 0.06), kit.tex("asphalt_02", 0.3, name="road"))
+    fence((-200, 15), (200, 15))
+    # the empty lot: survey stakes with faded flagging, nothing else
     rng = random.Random(3)
-    stakes = [((rng.uniform(-120, 120), rng.uniform(20, 300), 0.5), (0.05, 0.05, 1.0)) for _ in range(40)]
+    stakes = [((rng.uniform(-120, 120), rng.uniform(25, 300), 0.5), (0.05, 0.05, 1.0)) for _ in range(50)]
     boxes("stakes", stakes, kit.mat("#8A7A62", 0.9))
     boxes("flags", [((x, y, 0.95), (0.06, 0.2, 0.08)) for (x, y, _), _ in stakes], kit.mat("#C9774C", 0.8))
     # the sign, sun-bleached; its right panel has come loose at one corner
     faded, ink = kit.mat("#C98B72", 0.8), kit.mat("#5E5850", 0.8)
-    lines = [("KESTREL LABS", -2.45, 0.7, 0.62, faded, kit.FONT, "LEFT"),
-             ("FUTURE HOME OF KESTREL CAMPUS ONE", -2.45, -0.05, 0.24, ink, kit.FONT_COND, "LEFT"),
-             ("2 GIGAWATTS  ·  COMING SOON", -2.45, -0.5, 0.3, ink, kit.FONT_COND, "LEFT")]
-    sign((-3.0, 8.85, 2.35), 5.4, 2.4, lines, board="#DDD3BF", legs=1)
-    kit.box((-5.25, 8.8, 2.35), (0.35, 0.02, 2.4), kit.mat("#C98B72", 0.8))                  # the logo band
-    kit.box((-0.75, 8.78, 1.3), (0.9, 0.03, 0.5), kit.mat("#CFC4AE", 0.85), rot=(0, math.radians(-14), 0))  # loose corner
-    # the rivals: halls lit along the whole horizon, cranes still adding more, the power line passing the lot by
-    rival_campus(-1400, 1400, 12, 5, seed=2)
-    hall(420, 820, length=220, width=56, height=20, sign="OPENBRAIN", pool=True)
-    hall(700, 960, length=220, width=56, height=20)
-    for cx, cy, yaw in ((150, 1150, 200), (560, 1250, 160), (-600, 1350, 230)):
-        crane(cx, cy, 60, yaw, lights=True)
-    for fx in range(-1300, 1500, 260):
-        floodmast(fx, 1330, (fx, 1250, 0), energy=3e5)
-    pylon_line([(-700, 40), (-480, 260), (-260, 480), (-40, 700), (180, 900), (380, 1080)], h=46)
+    lines = [("KESTREL LABS", -2.05, 0.62, 0.6, faded, kit.FONT, "LEFT"),
+             ("FUTURE HOME OF KESTREL CAMPUS ONE", -2.05, -0.1, 0.25, ink, kit.FONT_COND, "LEFT"),
+             ("2 GIGAWATTS  ·  COMING SOON", -2.05, -0.58, 0.32, ink, kit.FONT_COND, "LEFT")]
+    sign((-4.0, 14.85, 2.4), 5.4, 2.4, lines, board="#DDD3BF", legs=1)
+    kit.box((-6.45, 14.8, 2.4), (0.3, 0.02, 2.4), faded)                                       # the logo band
+    kit.box((-1.75, 14.78, 1.35), (0.9, 0.03, 0.5), kit.mat("#CFC4AE", 0.85), rot=(0, math.radians(-14), 0))  # loose corner
+    # the rivals: rows of halls lit along the whole horizon, cranes adding more, the power line passing the lot by
+    hall(-60, 420, length=240, width=56, height=24, pool=True)
+    hall(250, 440, length=240, width=56, height=24, sign="OPENBRAIN", pool=True)
+    hall(-380, 480, length=240, width=56, height=24, pool=True)
+    rival_campus(-1100, 620, 10, 6, pitch=(250, 110), seed=2)
+    for cx, cy, yaw in ((120, 560, 200), (430, 640, 160), (-300, 700, 230), (-700, 600, 250)):
+        crane(cx, cy, 64, yaw, lights=True)
+    for fx in range(-1000, 1100, 230):
+        floodmast(fx, 560, (fx, 480, 0), energy=4e5)
+    pylon_line([(-420, -60), (-330, 90), (-240, 240), (-150, 390), (-60, 540)], h=46)
     finish()
-    # a streetlamp behind the camera catches the sign
-    kit.spot((3, -8, 7), (-3, 8.8, 2.2), 2500, kit.kelvin(3000), angle=35, blend=0.5, radius=0.3)
-    haze(0.00016, "#B7A6B6")
-    kit.camera((1.2, -3.0, 1.6), (-40, 400, 12), lens=32, fstop=5.6, focus=(-3, 8.85, 2.3))
-    bpy.context.scene.view_settings.exposure = 0.3
+    kit.spot((4, -12, 7.5), (-4, 14.8, 2.3), 5000, kit.kelvin(3000), angle=25, blend=0.6, radius=0.3)   # a streetlamp behind
+    haze(0.0002, "#B7A6B6")
+    kit.camera((1.0, -4.0, 1.7), (-20, 400, 14), lens=45, fstop=8.0, focus=(-4, 14.85, 2.3))
+    bpy.context.scene.view_settings.exposure = 0.0
 
 
 def shot_pd_desert():
-    kit.world(hdri="qwantani_late_afternoon_puresky", strength=0.8, rotation=160)
-    kit.sun((80, 0, 235), 3.2, kit.kelvin(3400), angle=1.5)
+    kit.world(hdri="qwantani_late_afternoon_puresky", strength=0.7, rotation=160)
+    kit.sun((80, 0, 235), 3.0, kit.kelvin(3300), angle=1.5)
     ground()
     mesas()
-    # finished halls, idle; the half-built hall with its cranes stopped over it
-    for (hx, hy) in ((-260, 330), (-40, 330), (180, 330), (-260, 430), (-40, 430), (180, 430), (400, 430)):
+    # finished halls, idle; the half-built hall with the cranes stopped over it
+    for (hx, hy) in ((-240, 380), (-20, 380), (200, 380), (-240, 480), (-20, 480), (200, 480), (420, 480)):
         hall(hx, hy, lit=0.0)
-    frame(150, 170, clad=0.35)
-    crane(40, 140, 58, 20, trolley=34, hook=22)
-    crane(260, 215, 62, 150, trolley=26, hook=30)
-    crane(-120, 250, 55, 80, trolley=40, hook=40)
-    # site stock left where it was: stacked cladding, steel, a site office
-    boxes("stock", [((20 + k * 7, 110, 0.6 + 0.25 * j), (6, 1.3, 0.24)) for k in range(4) for j in range(4)], corrugated())
-    boxes("office", [((-40, 95, 1.4), (12, 3, 2.8)), ((-40, 99, 1.4), (12, 3, 2.8)), ((-40, 97, 4.2), (12, 3, 2.8))],
+    frame(90, 220, clad=0.35)
+    crane(40, 190, 58, 25, trolley=34, hook=24)
+    crane(190, 250, 62, 150, trolley=26, hook=34)
+    crane(-60, 270, 55, 70, trolley=40, hook=40)
+    # site stock left where it was: stacked cladding, a site office
+    boxes("stock", [((10 + k * 7, 150, 0.6 + 0.25 * j), (6, 1.3, 0.24)) for k in range(4) for j in range(4)], corrugated())
+    boxes("office", [((-40, 120, 1.4), (12, 3, 2.8)), ((-40, 124, 1.4), (12, 3, 2.8)), ((-40, 122, 4.2), (12, 3, 2.8))],
           kit.mat("#E6E1D6", 0.6))
-    pylon_line([(-800, 520), (-500, 520), (-200, 520), (100, 520), (400, 520), (700, 520)], h=44)
-    substation(520, 250, lit=False)
+    pylon_line([(-800, 600), (-500, 600), (-200, 600), (100, 600), (400, 600), (700, 600)], h=44)
     finish(beacons=False)
-    fence((-140, 14), (160, 14), 2.4)
+    fence((-140, 16), (160, 16), 2.4)
     ink = kit.mat("#2E2A2B", 0.7)
-    sign((8, 13.9, 1.45), 7.0, 1.7, [("PAUSED UNDER THE ACCORD", 0, 0.22, 0.62, ink, kit.FONT, "CENTER"),
-                                     ("compute cap in effect  ·  no new capacity until the inspectors sign off", 0, -0.48, 0.2,
-                                      kit.mat("#5A5550", 0.7), kit.FONT_SANS, "CENTER")], board="#F2EEE4")
-    haze(0.0001, "#E8D6C0")
-    kit.camera((0.5, 0.0, 1.65), (60, 300, 20), lens=30, fstop=8.0, focus=(8, 13.9, 1.5))
-    bpy.context.scene.view_settings.exposure = -0.2
+    sign((-0.5, 15.9, 1.45), 7.0, 1.7, [("PAUSED UNDER THE ACCORD", 0, 0.22, 0.62, ink, kit.FONT, "CENTER"),
+                                      ("compute cap in effect  ·  no new capacity until the inspectors sign off", 0, -0.48,
+                                       0.21, kit.mat("#5A5550", 0.7), kit.FONT_SANS, "CENTER")], board="#F2EEE4")
+    haze(0.00012, "#E8D6C0")
+    kit.camera((-2.0, 0.0, 1.65), (50, 300, 26), lens=30, fstop=8.0, focus=(-0.5, 15.9, 1.5))
+    bpy.context.scene.view_settings.exposure = -0.3
 
 
-QT_PLOTS = [[(-900, 1500), (1100, 1700)], [(-300, 2100), (700, 1300)], [(-1500, 1100), (400, 2500), (1500, 1200)]]
+QT_PLOTS = [(-700, 1500), (1300, 1900), (-100, 2300), (900, 1300), (-1300, 1100), (500, 2700), (1700, 1300)]
 
 
-def qt_shot(stage):
-    """stage 0-2: how many rounds of new plots have lit up across the desert."""
-    def shot():
-        kit.world(hdri="qwantani_night_puresky", strength=0.08, rotation=0)
-        ground("#9C8468")
-        mesas()
-        # the site behind the fence: two halls going up under floodlights, cranes at work, nobody there
-        frame(-40, 150, clad=0.55)
-        frame(210, 190, clad=0.2)
-        hall(-60, 300, lit=1.0)
-        crane(40, 110, 58, 150, trolley=30, hook=24, load=True, lights=True)
-        crane(230, 140, 62, 210, trolley=24, hook=14, load=True, lights=True)
-        for fx, fy in ((-160, 90), (80, 80), (300, 110), (140, 260)):
-            floodmast(fx, fy, (fx * 0.6 + 40, fy + 60, 0), energy=1.2e6)
-        # plots across the desert, each a pool of floodlight over a fresh slab and a crane
-        for plots in QT_PLOTS[:stage + 1]:
-            for px, py in plots:
-                kit.box((px, py, 0.15), (200, 60, 0.3), kit.mat("#A8A39A", 0.9))
-                crane(px + 30, py - 20, 55, 200, lights=True)
-                for dx in (-110, 110):
-                    floodmast(px + dx, py - 40, (px, py, 0), energy=2.5e6)
-        finish()
-        fence((-120, 12), (120, 12), 2.6)
-        # the permit boards on the fence
-        ink, grey, coral = kit.mat("#2E2A2B", 0.7), kit.mat("#5A5550", 0.7), kit.mat("#B8492C", 0.7)
-        cond, sans = kit.FONT_COND, kit.FONT_SANS
-        sign((-1.2, 11.9, 1.75), 2.6, 1.9, [("NOTICE OF APPROVED DEVELOPMENT", 0, 0.72, 0.13, ink, kit.FONT, "CENTER"),
-                                            ("DATA HALLS 14–19  ·  1.2 GW", 0, 0.46, 0.15, ink, cond, "CENTER"),
-                                            ("APPLICANT", 0, 0.18, 0.08, grey, sans, "CENTER"),
-                                            ("VERDANT PARCEL HOLDINGS 4 LLC", 0, 0.0, 0.14, ink, cond, "CENTER"),
-                                            ("a subsidiary of Kestrel Labs", 0, -0.22, 0.12, coral, kit.FONT_SERIF, "CENTER"),
-                                            ("APPROVED 03:04 AM", 0, -0.55, 0.19, ink, kit.FONT, "CENTER")], board="#F1EDE2")
-        for bx, name, time in ((1.9, "ORRERY COMPUTE SPV 2 LLC", "APPROVED 03:11 AM"),
-                               (4.6, "HALCYON LAND TRUST 9", "APPROVED 03:17 AM"),
-                               (7.3, "BLUE MESA INFRA 7 LLC", "APPROVED 03:26 AM")):
-            sign((bx, 11.9, 1.6), 2.2, 1.2, [("PERMIT GRANTED", 0, 0.34, 0.1, grey, sans, "CENTER"),
-                                             (name, 0, 0.06, 0.13, ink, cond, "CENTER"),
-                                             (time, 0, -0.28, 0.15, ink, kit.FONT, "CENTER")], board="#E9E4D8")
-        kit.spot((1.5, 2.0, 4.5), (2.5, 11.9, 1.6), 1800, kit.kelvin(4300), angle=55, blend=0.5, radius=0.2)   # a work lamp
-        haze(0.00022, "#5E6278")
-        kit.camera((-2.6, 3.6, 1.6), (40, 300, 14), lens=30, fstop=4.0, focus=(1.5, 11.9, 1.7))
-        bpy.context.scene.view_settings.exposure = 0.2
-    return shot
+def shot_qt_desert():
+    kit.world(hdri="qwantani_night_puresky", strength=0.06, rotation=0)
+    ground("#9C8468")
+    mesas()
+    # the site behind the fence: two halls going up under floodlights, cranes at work, nobody there
+    frame(80, 160, clad=0.55)
+    frame(170, 300, clad=0.2)
+    hall(-80, 330, lit=1.0)
+    crane(110, 130, 58, 150, trolley=30, hook=22, load=True, lights=True)
+    crane(200, 260, 62, 210, trolley=24, hook=16, load=True, lights=True)
+    for fx, fy in ((-20, 100), (190, 100), (290, 230), (60, 250)):
+        floodmast(fx, fy, (fx * 0.6 + 60, fy + 60, 0), energy=1.2e6)
+    # more plots out across the desert, each a pool of floodlight over a fresh slab and a crane
+    for px, py in QT_PLOTS:
+        kit.box((px, py, 0.15), (200, 60, 0.3), kit.mat("#A8A39A", 0.9))
+        crane(px + 30, py - 20, 55, 200, lights=True)
+        for dx in (-110, 110):
+            floodmast(px + dx, py - 40, (px, py, 0), energy=3e6)
+    finish()
+    fence((-120, 12), (120, 12), 2.6)
+    # the permit boards on the fence
+    ink, grey, coral = kit.mat("#2E2A2B", 0.7), kit.mat("#5A5550", 0.7), kit.mat("#B8492C", 0.7)
+    cond, sans = kit.FONT_COND, kit.FONT_SANS
+    sign((-3.4, 11.9, 1.75), 2.6, 1.9, [("NOTICE OF APPROVED DEVELOPMENT", 0, 0.72, 0.13, ink, kit.FONT, "CENTER"),
+                                        ("DATA HALLS 14–19  ·  1.2 GW", 0, 0.46, 0.15, ink, cond, "CENTER"),
+                                        ("APPLICANT", 0, 0.2, 0.08, grey, sans, "CENTER"),
+                                        ("VERDANT PARCEL HOLDINGS 4 LLC", 0, 0.02, 0.15, ink, cond, "CENTER"),
+                                        ("a subsidiary of Kestrel Labs", 0, -0.23, 0.17, coral, kit.FONT_SERIF, "CENTER"),
+                                        ("APPROVED 03:04 AM", 0, -0.57, 0.2, ink, kit.FONT, "CENTER")], board="#F1EDE2")
+    for bx, name, time in ((-6.2, "ORRERY COMPUTE SPV 2 LLC", "APPROVED 03:11 AM"),
+                           (-0.6, "HALCYON LAND TRUST 9", "APPROVED 03:17 AM")):
+        sign((bx, 11.9, 1.6), 2.2, 1.2, [("PERMIT GRANTED", 0, 0.34, 0.1, grey, sans, "CENTER"),
+                                         (name, 0, 0.06, 0.14, ink, cond, "CENTER"),
+                                         (time, 0, -0.28, 0.16, ink, kit.FONT, "CENTER")], board="#E9E4D8")
+    kit.spot((-2.0, 3.0, 4.5), (-3.2, 11.9, 1.6), 1500, kit.kelvin(4300), angle=60, blend=0.6, radius=0.2)   # a work lamp
+    haze(0.00006, "#5E6278")
+    kit.camera((-5.0, 1.5, 1.6), (70, 300, 16), lens=30, fstop=5.6, focus=(-3.4, 11.9, 1.7))
+    bpy.context.scene.view_settings.exposure = 0.3
 
 
 # rd: the provider's halls go dark in this order, one group per render
-RD_ORDER = [[(0, 0), (1, 0), (0, 1)], [(2, 0), (1, 1), (0, 2), (2, 1)], [(3, 0), (3, 1), (1, 2), (2, 2), (3, 2)]]
+RD_ORDER = [[(0, 0), (0, 1), (0, 2)], [(1, 0), (1, 1), (1, 2), (2, 0)], [(2, 1), (2, 2), (3, 0), (3, 1), (3, 2)]]
+HALL_X = [-300 + c * 230 for c in range(4)]
 
 
-def rd_shot(stage, cam=((-520, -420, 60), (-60, 380, 0), 30), exposure=0.35):
+def rd_shot(stage, cam=((-430, -60, 30), (-20, 330, 0), 28), exposure=0.3):
     """stage 0: all lit; each further stage switches off the next group in RD_ORDER."""
     def shot():
-        kit.world(hdri="qwantani_night_puresky", strength=0.1, rotation=0)
+        kit.world(hdri="qwantani_night_puresky", strength=0.06, rotation=0)
         ground("#9C8468")
         mesas()
         off = {h for group in RD_ORDER[:stage] for h in group}
         for r in range(3):
             for c in range(4):
-                hall(-300 + c * 230, 220 + r * 100, lit=0.0 if (c, r) in off else 1.0, pool=r == 0,
+                hall(HALL_X[c], 220 + r * 100, lit=0.0 if (c, r) in off else 1.0, pool=True,
                      sign="NIMBUS CLOUD" if (c, r) == (0, 0) else None)
-        for fx, fy in ((-420, 150), (-140, 150), (140, 150), (420, 150), (560, 330)):
-            floodmast(fx, fy, (fx + 60, fy + 80, 0), energy=8e5, lit=not any(abs(fx - (-300 + c * 230)) < 150 for c, r in off if r == 0))
-        substation(-560, 60)
-        pylon_line([(-2200, -300), (-1700, -200), (-1200, -100), (-760, 0), (-560, 60)], h=46)
+        for c, fx in enumerate(HALL_X):
+            floodmast(fx, 150, (fx + 40, 200, 0), energy=8e5, lit=(c, 0) not in off)
+        substation(-520, 60)
+        pylon_line([(-2400, -500), (-1900, -380), (-1400, -250), (-900, -100), (-520, 60)], h=46)
         # the town on the horizon, still on the grid
         rng = random.Random(9)
-        lights = [((rng.uniform(1200, 3600), rng.uniform(2600, 3400), 3), (4, 4, 2)) for _ in range(420)]
-        boxes("town", lights, kit.emission("#FFB866", 14))
+        lights = [((rng.gauss(2000, 700), rng.gauss(2900, 150), 4), (9, 9, 5)) for _ in range(700)]
+        boxes("town", lights, kit.emission("#FFB866", 30))
+        boxes("masts", [((1700, 2850, 40), (1.5, 1.5, 80)), ((2500, 2950, 35), (1.5, 1.5, 70))], kit.mat("#2A2B2E", 0.6))
+        BEACONS.extend([((1700, 2850, 81), (3, 3, 3)), ((2500, 2950, 71), (3, 3, 3))])
         finish()
-        haze(0.00016, "#5E6278")
+        haze(0.00008, "#5E6278")
         kit.camera(cam[0], cam[1], lens=cam[2])
         bpy.context.scene.view_settings.exposure = exposure
     return shot
@@ -545,7 +572,7 @@ def rd_shot(stage, cam=((-520, -420, 60), (-60, 380, 0), 30), exposure=0.35):
 kit.run({
     "lb-desert": shot_lb_desert,
     "pd-desert": shot_pd_desert,
-    **{f"qt-desert-{k + 1}": qt_shot(k) for k in range(3)},
+    "qt-desert": shot_qt_desert,
     **{f"rd-desert-{k + 1}": rd_shot(k) for k in range(4)},
-    "rd-desert-title": rd_shot(0, ((-900, -900, 90), (-60, 600, 160), 26), exposure=0.1),
+    "rd-desert-title": rd_shot(0, ((-900, -700, 70), (-60, 600, 120), 26), exposure=0.1),
 })
