@@ -43,11 +43,17 @@ export function openConstitution(game, overlayRoot, { onAdopt } = {}) {
   layer.setAttribute('role', 'dialog');
   layer.setAttribute('aria-modal', 'true');
   layer.setAttribute('aria-labelledby', 'sd-title');
+  layer.tabIndex = -1; // a click on bare layer keeps focus inside, so Escape and the Tab trap keep working
   const veil = el('div', 'sd-veil');
   veil.setAttribute('aria-hidden', 'true');
   const doc = el('article', 'sd-doc');
   doc.tabIndex = -1;
   layer.append(veil, doc);
+  // The veil can't take focus: without this a click on it would move focus to <body> and Escape would stop working.
+  veil.addEventListener('mousedown', (event) => {
+    event.preventDefault();
+    if (!layer.contains(document.activeElement)) doc.focus();
+  });
 
   let closed = false;
   const close = () => {
@@ -158,9 +164,7 @@ export function openConstitution(game, overlayRoot, { onAdopt } = {}) {
     main.append(title);
 
     const linesHead = el('h2', 'sd-h');
-    linesHead.append(el('span', '', 'Hard constraints'), el('small', '', onCount === MAX_LINES
-      ? 'three, plus the one every lab keeps'
-      : `${onCount} of 3 picked, plus the one every lab keeps`));
+    linesHead.append(el('span', '', 'Hard constraints'), el('small', '', view.linesNote));
     const clauses = el('div', 'sd-clauses');
     for (const line of view.lines) clauses.append(clause(line, onCount >= MAX_LINES));
     const fixed = el('div', 'sd-line fixed');
@@ -198,7 +202,7 @@ export function openConstitution(game, overlayRoot, { onAdopt } = {}) {
     }
     const foot = el('div', 'sd-foot');
     const note = el('p', `sd-foot-note${error || !view.valid ? ' warn' : ''}`,
-      error || (view.valid ? 'Keep each ruling, or change it to one of the other two.' : 'Pick three lines'));
+      error || view.reason || 'Keep each ruling, or change it to one of the other two.');
     note.id = 'sd-foot-note';
     note.setAttribute('aria-live', 'polite');
     const adoptButton = button('btn sd-adopt', 'Adopt and train');

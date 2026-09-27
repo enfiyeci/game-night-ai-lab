@@ -75,6 +75,14 @@ export function documentView(state, draft) {
   const family = last?.family ?? 'Kestrel';
   const next = (last?.generation ?? 0) + 1;
   const knownOn = lines.filter((line) => line.on).length;
+  const valid = knownOn === 3 && onLines.size === 3 && cases.every((entry) => entry.options.some((option) => option.on));
+  const over = knownOn - 3;
+  let reason = null;
+  if (over > 0) reason = over === 1 ? 'Untick one line' : `Untick ${over} lines`;
+  else if (!valid) reason = 'Pick three lines';
+  const linesNote = knownOn === 3 ? 'three, plus the one every lab keeps'
+    : over > 0 ? `${knownOn} ticked: the spec keeps three, plus the one every lab keeps`
+      : `${knownOn} of 3 picked, plus the one every lab keeps`;
   return {
     title: `The ${family} Model Spec`,
     kicker: `${first ? '' : `Version ${version + 1} · `}Draft by your Head of Safety · for ${family} ${next} onward`,
@@ -86,6 +94,8 @@ export function documentView(state, draft) {
       source: sourceLabel(entry.source),
       when: storyDate(storyDayForTurn(entry.turn ?? 0)).label,
     })),
-    valid: knownOn === 3 && onLines.size === 3 && cases.every((entry) => entry.options.some((option) => option.on)),
+    valid,
+    reason, // why "Adopt and train" is disabled, or null
+    linesNote, // the hard constraints heading's side note
   };
 }
