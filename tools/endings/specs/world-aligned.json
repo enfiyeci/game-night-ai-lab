@@ -1,0 +1,17 @@
+{
+ "shots": {
+  "7": {
+   "image": "al-skyline",
+   "focus": [
+    960,
+    500
+   ],
+   "push": 1.05
+  }
+ },
+ "title": {
+  "still": "al-skyline-title",
+  "from": 1.0,
+  "to": 1.04
+ }
+}

@@ -1,0 +1,18 @@
+{
+ "shots": {
+  "4": {
+   "image": "rb-hearing",
+   "screens": [
+    [
+     "wall",
+     "rb-hearing"
+    ]
+   ],
+   "focus": [
+    1200,
+    480
+   ],
+   "push": 1.05
+  }
+ }
+}
