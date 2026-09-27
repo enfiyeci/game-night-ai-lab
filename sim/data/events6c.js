@@ -228,6 +228,7 @@ export const EVENTS_6C = [
     id: 'boardRevolt',
     kind: 'world',
     repeatable: true,
+    bypassCardLimit: true, // an emergency vote can't wait behind the two-card limit (era audit 2026-09-26, recommendation 2)
     trigger: (state) => state.era >= 2 && (state.flags.boardCrisis === true
       || (!state.flags.boardRevoltHeld && boardVote(state).yes < BALANCE.boardPassMembers)),
     warning: null,
