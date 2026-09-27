@@ -1,0 +1,399 @@
+{
+  "note": "Heat added per round by source (total over 100 seeds / total rounds played), balanced and safety bots. Measured with scratch counters that are not in the repo. before = commit e8da33d.",
+  "runs": [
+    {
+      "heatPerRound": {
+        "release": 3.45,
+        "launch": 3.18
+      },
+      "rounds": 1651,
+      "variant": "before (e8da33d)",
+      "name": "balanced",
+      "reached5": 39,
+      "heatEnteringEra5": 74.9,
+      "meanMaxHeat": 74.5,
+      "summitDeals": 22,
+      "bindHist": {
+        "2": 22
+      },
+      "endings": {
+        "misalignment@4": 52,
+        "boardRemoved@4": 7,
+        "misalignment@5": 13,
+        "pacingDeal@5": 15,
+        "acquihire@5": 7,
+        "aligned@5": 3,
+        "acquihire@4": 2,
+        "rivalDisaster@5": 1
+      }
+    },
+    {
+      "heatPerRound": {
+        "release": 1.12,
+        "launch": 3.27
+      },
+      "rounds": 1390,
+      "variant": "before (e8da33d)",
+      "name": "safety",
+      "reached5": 21,
+      "heatEnteringEra5": 71.4,
+      "meanMaxHeat": 63.4,
+      "summitDeals": 21,
+      "bindHist": {
+        "2": 1,
+        "3": 20
+      },
+      "endings": {
+        "acquihire@4": 40,
+        "acquihire@3": 25,
+        "acquihire@5": 21,
+        "acquihire@1": 4,
+        "acquihire@2": 3,
+        "leftBehind@2": 5,
+        "misalignment@4": 2
+      }
+    },
+    {
+      "heatPerRound": {
+        "denial": 0.17,
+        "playerBig": 0.76,
+        "rivalBig": 1.79,
+        "release": 3.57,
+        "launch": 2.92
+      },
+      "rounds": 1353,
+      "variant": "A",
+      "name": "balanced",
+      "reached5": 7,
+      "heatEnteringEra5": 98.9,
+      "meanMaxHeat": 96.3,
+      "summitDeals": 2,
+      "bindHist": {
+        "2": 2
+      },
+      "endings": {
+        "rivalDisaster@3": 35,
+        "rivalDisaster@4": 28,
+        "misalignment@4": 15,
+        "acquihire@4": 8,
+        "rivalDisaster@5": 1,
+        "boardRemoved@4": 7,
+        "acquihire@5": 1,
+        "misalignment@5": 5
+      }
+    },
+    {
+      "heatPerRound": {
+        "rivalBig": 1.62,
+        "playerBig": 0.91,
+        "release": 1.21,
+        "launch": 3
+      },
+      "rounds": 1315,
+      "variant": "A",
+      "name": "safety",
+      "reached5": 6,
+      "heatEnteringEra5": 99,
+      "meanMaxHeat": 89.2,
+      "summitDeals": 5,
+      "bindHist": {
+        "2": 3,
+        "3": 2
+      },
+      "endings": {
+        "acquihire@4": 25,
+        "acquihire@3": 42,
+        "rivalDisaster@3": 9,
+        "rivalDisaster@4": 13,
+        "acquihire@5": 5,
+        "aligned@5": 1,
+        "acquihire@2": 3,
+        "leftBehind@2": 2
+      }
+    },
+    {
+      "heatPerRound": {
+        "denial": 0.14,
+        "playerBig": 0.75,
+        "release": 3.65,
+        "launch": 3.17
+      },
+      "rounds": 1581,
+      "variant": "B",
+      "name": "balanced",
+      "reached5": 24,
+      "heatEnteringEra5": 91.6,
+      "meanMaxHeat": 88.1,
+      "summitDeals": 7,
+      "bindHist": {
+        "2": 7
+      },
+      "endings": {
+        "misalignment@4": 39,
+        "acquihire@4": 18,
+        "rivalDisaster@4": 11,
+        "acquihire@5": 6,
+        "rivalDisaster@5": 4,
+        "misalignment@5": 13,
+        "boardRemoved@4": 8,
+        "aligned@5": 1
+      }
+    },
+    {
+      "heatPerRound": {
+        "playerBig": 0.92,
+        "release": 1.19,
+        "launch": 3.29
+      },
+      "rounds": 1386,
+      "variant": "B",
+      "name": "safety",
+      "reached5": 13,
+      "heatEnteringEra5": 86.7,
+      "meanMaxHeat": 74.8,
+      "summitDeals": 13,
+      "bindHist": {
+        "2": 4,
+        "3": 9
+      },
+      "endings": {
+        "acquihire@4": 38,
+        "acquihire@3": 41,
+        "acquihire@5": 13,
+        "rivalDisaster@4": 2,
+        "acquihire@2": 3,
+        "misalignment@4": 1,
+        "leftBehind@2": 2
+      }
+    },
+    {
+      "heatPerRound": {
+        "denial": 0.15,
+        "playerBig": 0.75,
+        "rivalBig": 0.84,
+        "release": 3.6,
+        "launch": 3.15
+      },
+      "rounds": 1472,
+      "variant": "C",
+      "name": "balanced",
+      "reached5": 8,
+      "heatEnteringEra5": 99,
+      "meanMaxHeat": 94.5,
+      "summitDeals": 3,
+      "bindHist": {
+        "1": 1,
+        "2": 2
+      },
+      "endings": {
+        "boardRemoved@4": 8,
+        "acquihire@4": 14,
+        "rivalDisaster@4": 47,
+        "rivalDisaster@3": 4,
+        "misalignment@4": 19,
+        "acquihire@5": 2,
+        "rivalDisaster@5": 1,
+        "misalignment@5": 4,
+        "boardRemoved@5": 1
+      }
+    },
+    {
+      "heatPerRound": {
+        "rivalBig": 0.7,
+        "playerBig": 0.91,
+        "release": 1.2,
+        "launch": 3.25
+      },
+      "rounds": 1373,
+      "variant": "C",
+      "name": "safety",
+      "reached5": 10,
+      "heatEnteringEra5": 98.2,
+      "meanMaxHeat": 83.2,
+      "summitDeals": 9,
+      "bindHist": {
+        "2": 4,
+        "3": 5
+      },
+      "endings": {
+        "acquihire@4": 33,
+        "acquihire@3": 41,
+        "rivalDisaster@4": 11,
+        "acquihire@5": 9,
+        "aligned@5": 1,
+        "acquihire@2": 3,
+        "leftBehind@2": 2
+      }
+    },
+    {
+      "heatPerRound": {
+        "denial": 0.16,
+        "playerBig": 0.74,
+        "rivalBig": 1.4,
+        "release": 3.62,
+        "launch": 2.97
+      },
+      "rounds": 1439,
+      "variant": "D",
+      "name": "balanced",
+      "reached5": 8,
+      "heatEnteringEra5": 99,
+      "meanMaxHeat": 97.1,
+      "summitDeals": 2,
+      "bindHist": {
+        "1": 1,
+        "2": 1
+      },
+      "endings": {
+        "misalignment@4": 26,
+        "rivalDisaster@3": 15,
+        "rivalDisaster@4": 34,
+        "acquihire@4": 10,
+        "rivalDisaster@5": 3,
+        "boardRemoved@4": 7,
+        "misalignment@5": 4,
+        "acquihire@5": 1
+      }
+    },
+    {
+      "heatPerRound": {
+        "rivalBig": 1.41,
+        "playerBig": 0.91,
+        "release": 1.21,
+        "launch": 3.05
+      },
+      "rounds": 1337,
+      "variant": "D",
+      "name": "safety",
+      "reached5": 8,
+      "heatEnteringEra5": 99,
+      "meanMaxHeat": 88.2,
+      "summitDeals": 8,
+      "bindHist": {
+        "2": 4,
+        "3": 4
+      },
+      "endings": {
+        "acquihire@4": 27,
+        "acquihire@3": 41,
+        "rivalDisaster@4": 15,
+        "acquihire@5": 8,
+        "rivalDisaster@3": 4,
+        "acquihire@2": 3,
+        "leftBehind@2": 2
+      }
+    },
+    {
+      "heatPerRound": {
+        "denial": 0.17,
+        "playerBig": 0.77,
+        "rivalBig": 1.79,
+        "release": 3.56,
+        "launch": 2.91
+      },
+      "rounds": 1356,
+      "variant": "E",
+      "name": "balanced",
+      "reached5": 7,
+      "heatEnteringEra5": 98.9,
+      "meanMaxHeat": 96.3,
+      "summitDeals": 2,
+      "bindHist": {
+        "2": 2
+      },
+      "endings": {
+        "rivalDisaster@3": 35,
+        "rivalDisaster@4": 28,
+        "misalignment@4": 15,
+        "acquihire@4": 8,
+        "rivalDisaster@5": 1,
+        "boardRemoved@4": 7,
+        "acquihire@5": 1,
+        "misalignment@5": 5
+      }
+    },
+    {
+      "heatPerRound": {
+        "rivalBig": 1.63,
+        "playerBig": 0.91,
+        "release": 1.21,
+        "launch": 3.01
+      },
+      "rounds": 1323,
+      "variant": "E",
+      "name": "safety",
+      "reached5": 6,
+      "heatEnteringEra5": 99,
+      "meanMaxHeat": 89.1,
+      "summitDeals": 5,
+      "bindHist": {
+        "2": 3,
+        "3": 2
+      },
+      "endings": {
+        "acquihire@4": 26,
+        "acquihire@3": 42,
+        "rivalDisaster@3": 9,
+        "rivalDisaster@4": 13,
+        "acquihire@5": 5,
+        "aligned@5": 1,
+        "acquihire@2": 3,
+        "leftBehind@2": 1
+      }
+    },
+    {
+      "heatPerRound": {
+        "denial": 0.14,
+        "release": 3.65,
+        "launch": 3.19
+      },
+      "rounds": 1591,
+      "variant": "F",
+      "name": "balanced",
+      "reached5": 28,
+      "heatEnteringEra5": 78.5,
+      "meanMaxHeat": 77.5,
+      "summitDeals": 8,
+      "bindHist": {
+        "2": 8
+      },
+      "endings": {
+        "misalignment@4": 42,
+        "acquihire@4": 18,
+        "misalignment@5": 18,
+        "rivalDisaster@5": 2,
+        "acquihire@5": 6,
+        "pacingDeal@5": 1,
+        "boardRemoved@4": 11,
+        "boardRemoved@3": 1,
+        "aligned@5": 1
+      }
+    },
+    {
+      "heatPerRound": {
+        "release": 1.19,
+        "launch": 3.28
+      },
+      "rounds": 1393,
+      "variant": "F",
+      "name": "safety",
+      "reached5": 14,
+      "heatEnteringEra5": 70.7,
+      "meanMaxHeat": 63.1,
+      "summitDeals": 13,
+      "bindHist": {
+        "2": 1,
+        "3": 12
+      },
+      "endings": {
+        "acquihire@4": 38,
+        "acquihire@3": 41,
+        "acquihire@5": 13,
+        "aligned@5": 1,
+        "acquihire@2": 3,
+        "misalignment@4": 2,
+        "leftBehind@2": 2
+      }
+    }
+  ]
+}

@@ -1,0 +1,191 @@
+{
+  "note": "Cards and queue orders the balanced bot signed, by era and supplier, 100 seeds: count, mean units, mean monthly bill. Scratch diagnostic; not in the repo.",
+  "runs": {
+    "before (e8da33d)": {
+      "e1 azuria": {
+        "count": 17,
+        "meanUnits": 12.4,
+        "meanMonthly": 36.2
+      },
+      "e1 coreflame": {
+        "count": 311,
+        "meanUnits": 10.1,
+        "meanMonthly": 11.1
+      },
+      "e1 verde": {
+        "count": 4,
+        "meanUnits": 32.3,
+        "meanMonthly": 40
+      },
+      "e2 grid": {
+        "count": 100,
+        "meanUnits": 0,
+        "meanMonthly": 0
+      },
+      "e2 verde": {
+        "count": 100,
+        "meanUnits": 104,
+        "meanMonthly": 129
+      },
+      "e3 azuria": {
+        "count": 13,
+        "meanUnits": 104,
+        "meanMonthly": 303.7
+      },
+      "e3 coreflame": {
+        "count": 9,
+        "meanUnits": 83.6,
+        "meanMonthly": 91.5
+      },
+      "e3 queue": {
+        "count": 100,
+        "meanUnits": 56,
+        "meanMonthly": 0
+      },
+      "e4 azuria": {
+        "count": 15,
+        "meanUnits": 358,
+        "meanMonthly": 1045.4
+      },
+      "e4 coreflame": {
+        "count": 9,
+        "meanUnits": 336.7,
+        "meanMonthly": 368.6
+      },
+      "e4 loi": {
+        "count": 54,
+        "meanUnits": 600,
+        "meanMonthly": 876
+      },
+      "e4 verde": {
+        "count": 34,
+        "meanUnits": 1018.2,
+        "meanMonthly": 1263.6
+      }
+    },
+    "A": {
+      "e1 azuria": {
+        "count": 18,
+        "meanUnits": 11.9,
+        "meanMonthly": 34.7
+      },
+      "e1 coreflame": {
+        "count": 306,
+        "meanUnits": 10.1,
+        "meanMonthly": 11.1
+      },
+      "e1 verde": {
+        "count": 8,
+        "meanUnits": 34.9,
+        "meanMonthly": 43.3
+      },
+      "e2 grid": {
+        "count": 100,
+        "meanUnits": 0,
+        "meanMonthly": 0
+      },
+      "e2 verde": {
+        "count": 100,
+        "meanUnits": 103.5,
+        "meanMonthly": 128.4
+      },
+      "e3 azuria": {
+        "count": 5,
+        "meanUnits": 108.8,
+        "meanMonthly": 317.7
+      },
+      "e3 coreflame": {
+        "count": 4,
+        "meanUnits": 88,
+        "meanMonthly": 96.4
+      },
+      "e3 queue": {
+        "count": 249,
+        "meanUnits": 56,
+        "meanMonthly": 0
+      },
+      "e4 azuria": {
+        "count": 2,
+        "meanUnits": 360,
+        "meanMonthly": 1051.2
+      },
+      "e4 coreflame": {
+        "count": 14,
+        "meanUnits": 325.7,
+        "meanMonthly": 356.7
+      },
+      "e4 loi": {
+        "count": 74,
+        "meanUnits": 600,
+        "meanMonthly": 876
+      },
+      "e4 verde": {
+        "count": 11,
+        "meanUnits": 968.2,
+        "meanMonthly": 1201.5
+      }
+    },
+    "F": {
+      "e1 azuria": {
+        "count": 18,
+        "meanUnits": 11.9,
+        "meanMonthly": 34.7
+      },
+      "e1 coreflame": {
+        "count": 306,
+        "meanUnits": 10.1,
+        "meanMonthly": 11.1
+      },
+      "e1 verde": {
+        "count": 8,
+        "meanUnits": 34.9,
+        "meanMonthly": 43.3
+      },
+      "e2 grid": {
+        "count": 100,
+        "meanUnits": 0,
+        "meanMonthly": 0
+      },
+      "e2 verde": {
+        "count": 100,
+        "meanUnits": 103.5,
+        "meanMonthly": 128.4
+      },
+      "e3 azuria": {
+        "count": 7,
+        "meanUnits": 101.7,
+        "meanMonthly": 297
+      },
+      "e3 coreflame": {
+        "count": 5,
+        "meanUnits": 88,
+        "meanMonthly": 96.4
+      },
+      "e3 queue": {
+        "count": 279,
+        "meanUnits": 56,
+        "meanMonthly": 0
+      },
+      "e4 azuria": {
+        "count": 8,
+        "meanUnits": 378.8,
+        "meanMonthly": 1105.9
+      },
+      "e4 coreflame": {
+        "count": 30,
+        "meanUnits": 320,
+        "meanMonthly": 350.4
+      },
+      "e4 loi": {
+        "count": 134,
+        "meanUnits": 600,
+        "meanMonthly": 876
+      },
+      "e4 verde": {
+        "count": 26,
+        "meanUnits": 966.9,
+        "meanMonthly": 1200
+      }
+    }
+  }
+}

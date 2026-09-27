@@ -57,6 +57,7 @@ test('history rows use a model\'s recorded story release day when available', ()
 });
 
 test('article lead uses the five public benchmark hand counts', () => {
+  // Under the compute race plan (docs/superpowers/plans/2026-09-26-compute-race.md) Task 5, seed 4's latest model leads on four of five at launch; seed 5's leads on all five.
   const state = SCENARIOS.summit(5);
   const result = article(state, historyRows(state));
   const lead = result.lead.join('');

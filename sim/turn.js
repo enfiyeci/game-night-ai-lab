@@ -4,7 +4,7 @@ import { clamp } from './util.js';
 import { startRun, advanceRun, advanceRunBy, recheckCapacity } from './training.js';
 import { activateReleases, releaseModel } from './release.js';
 import {
-  signOffer, contractAction, deliverDue, contractsTurn, expireContracts, pullBumped, spendCredits, creditOffset, generateOffers, monthlyBills, sideRng,
+  signOffer, contractAction, deliverDue, contractsTurn, expireContracts, pullBumped, spendCredits, creditOffset, refreshOffers, monthlyBills, sideRng,
 } from './contracts.js';
 import { placeOrder, withdrawOrder, queueTurn } from './queue.js';
 import { buildSite, leaseBills, powerTurn } from './power.js';
@@ -13,6 +13,7 @@ import {
 } from './economy.js';
 import { researchTechnique } from './techniques.js';
 import { rivalsTurn } from './rivals.js';
+import { rivalDealsTurn, announceTargets } from './rivalDeals.js';
 import { boardSnapshot, boardVoteThisRound, holdVote, updateBoard } from './board.js';
 import { dealVerdictPost, judgeBoardDeals, makeBoardDeals } from './boardDeals.js';
 import { boardRead } from './boardRead.js';
@@ -407,6 +408,7 @@ function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
         events.push({ type: 'conversionFight' });
       }
       for (const c of legalTick(state)) events.push({ type: 'lawsuitPaid', cost: c.cost, source: c.source });
+      for (const e of rivalDealsTurn(state)) events.push(e); // compute race: rivals take their named cards
       // Stage 2: the event cards read the launches that landed this round; the roll schedules next round's.
       state.lastRivalReleases = state.rivalLaunchesThisRound ?? [];
       state.rivalLaunchesThisRound = [];
@@ -468,7 +470,8 @@ function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
   if (!state.ending) {
     for (const e of powerTurn(state)) events.push(e);
     for (const x of deliverDue(state, sideRng(state, 6))) events.push({ type: 'computeArrived', supplier: x.supplier, units: x.units });
-    state.compute.offers = generateOffers(state, sideRng(state, 5));
+    state.compute.offers = refreshOffers(state, sideRng(state, 5));
+    announceTargets(state);
     // A delayed release goes live at the round mark, action or not (the old turn did this first thing next turn).
     const waiting = state.models.filter((model) => model.active && !model.activated);
     activateReleases(state);

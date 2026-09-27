@@ -254,8 +254,10 @@ test('endTurn wires persona launch reactions and era changes into the feed', () 
   const consumer = persona(REACTIONS.launch.channel.consumer, released.state, model);
   assert.ok(launch.some((post) => consumer.has(post.text)), 'a consumer app draws consumer posts');
 
-  let state = createInitialState({ seed: 2 });
-  const rng = createRng(2);
+  // Under the compute race plan (docs/superpowers/plans/2026-09-26-compute-race.md) Task 5, rivals grow their fleets and train bigger models, so an idle lab is left behind at the
+  // era 1 gate on most seeds (seed 2 among them); seed 3's idle run still reaches era 2.
+  let state = createInitialState({ seed: 3 });
+  const rng = createRng(3);
   let transition;
   for (let turn = 0; turn < 4; turn += 1) {
     transition = endTurn(state, {}, rng);
@@ -320,4 +322,16 @@ test('a trust drop from an instant action still gets its mood post at the round 
   s.publicTrust = 36; // dropped mid-round by an action
   const out = advanceDays(s, 91, createRng(5)).state;
   assert.ok([...out.feed, ...(out.feedQueue ?? [])].some((post) => post.tag === 'mood'), 'the low-trust mood post appears');
+});
+
+test('a big rival deal and your denial make feed posts', () => {
+  const s = createInitialState({ seed: 3 });
+  const prev = { raceHeat: s.raceHeat, publicTrust: s.publicTrust };
+  const deal = feedPosts(prev, s, [{ type: 'rivalDeal', id: 'openbrain', supplier: 'verde', units: 40, arrivesTurn: 3, fallback: false, big: true }], { ambient: false, timeBased: false });
+  assert.equal(deal.length, 1);
+  assert.equal(deal[0].tag, 'rival');
+  const denial = feedPosts(prev, s, [{ type: 'deal', offerId: 'coreflame-0', arrivesTurn: 1, denied: 'lodestar' }], { ambient: false, timeBased: false });
+  assert.equal(denial.length, 1);
+  const small = feedPosts(prev, s, [{ type: 'rivalDeal', id: 'openbrain', supplier: 'spot', units: 2, arrivesTurn: 1, fallback: false, big: false }], { ambient: false, timeBased: false });
+  assert.equal(small.length, 0, 'a small deal stays quiet');
 });
