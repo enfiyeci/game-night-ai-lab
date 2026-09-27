@@ -1,4 +1,5 @@
 import { ENDINGS } from '../sim/endings.js';
+import { mountEraTransition } from './screens/eraTransition.js';
 import { createClock } from './clock.js';
 import { createGame } from './game.js';
 import { mountHud } from './hud.js';
@@ -113,6 +114,7 @@ if (showTitle) {
     },
   });
 }
+mountEraTransition(game, overlay, { variant: params.get('eraTransition') });
 mountCompany(game, overlay);
 mountRecipe(game, overlay);
 mountConstitution(game, overlay); // the recipe's constitution card opens Safety's draft

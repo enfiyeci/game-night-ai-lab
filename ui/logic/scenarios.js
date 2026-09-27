@@ -7,6 +7,7 @@ import { inDangerZone } from '../../sim/economy.js';
 import { boardVoteThisRound } from '../../sim/board.js';
 import { MEETINGS } from '../../sim/data/president.js';
 import { setAutomation } from '../../sim/automation.js';
+import { ROUND_DAYS } from '../../sim/time.js';
 import { turnRecord } from './finance.js';
 
 const preferences = {
@@ -313,8 +314,22 @@ function racksState(seed) {
   return landed.length ? applyActions(state, { eventChoices }, rng).state : state;
 }
 
+function beforeEra(seed, era) {
+  const rng = createRng(seed);
+  const base = throughTurn(seed, (era - 1) * 4 - 1);
+  if (base.ending || base.era !== era - 1) return base;
+  const acted = applyActions(base, scriptedActions(base), rng).state;
+  const state = advanceDays(acted, ROUND_DAYS[base.era] - 1, rng).state;
+  histories.set(state, scenarioHistory(base));
+  return state;
+}
+
 export const SCENARIOS = {
   start,
+  beforeEra2: (seed) => beforeEra(seed, 2),
+  beforeEra3: (seed) => beforeEra(seed, 3),
+  beforeEra4: (seed) => beforeEra(seed, 4),
+  beforeEra5: (seed) => beforeEra(seed, 5),
   midEra3,
   era3Idle: (seed) => throughTurn(seed, 20, (s) => s.era === 3 && !s.activeRun && !s.pendingModel),
   release: releaseState,
