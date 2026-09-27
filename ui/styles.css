@@ -4689,3 +4689,9 @@ html.title-waking #hud { transition: opacity .5s ease .6s; }
 
 .ps-title { max-width: 210px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ps-window-label, .ps-landed { overflow: hidden; text-overflow: ellipsis; }
+
+/* ---- Office: advisor click areas and read marks (owner playtest 2026-09-26) ---- */
+/* The invisible area around each advisor's desk (ui/office.js, addHitAreas): a click there opens what they have to say. */
+.advisor-hit { fill: transparent; stroke: none; cursor: pointer; }
+/* A mark flipped to the advisor's left (ui/logic/advisorMarks.js, markerSpot) points its tail back at their head. */
+.advisor-marker.left svg { transform: scaleX(-1); }

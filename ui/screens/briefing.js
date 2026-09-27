@@ -1,6 +1,7 @@
 import { bubbleAt, dueBar, el, loadAnchors } from '../components/eventBits.js';
 import { ADVISOR_TITLE, formatStoryTime, jokeFor, lookIntoCost, openWarnings, queueLookInto } from '../logic/events.js';
 import { money } from '../logic/format.js';
+import { advisorMarks } from '../logic/advisorMarks.js';
 
 const ROLES = ['research', 'safety', 'cfo', 'policy'];
 
@@ -32,18 +33,32 @@ export function mountBriefing(game, { office, overlay }) {
     talking = null;
   }
 
+  // An advisor with a warning waiting for an answer raises it first; otherwise they say how things look.
   function speak(role) {
     if (!anchors?.heads?.[role] || cardOpen()) return;
+    if (live?.warning.advisor === role) return; // their warning is already up at their desk
+    const queued = waiting.findIndex((warning) => warning.advisor === role);
+    if (queued >= 0) {
+      clearTalking();
+      const [warning] = waiting.splice(queued, 1);
+      if (live) waiting.unshift(live.warning); // the other advisor's warning waits its turn again
+      live?.node.remove();
+      live = null;
+      waiting.unshift(warning);
+      showNextWarning();
+      return;
+    }
     clearTalking();
     const reading = game.state.lastBriefing?.find((candidate) => candidate.id === role);
     const band = bandOf(role);
     const say = [reading?.line ?? 'Nothing to report yet.', jokeFor(role, band, game.state.turn)].filter(Boolean).join(' ');
     talking = bubbleAt(root, anchors.heads[role], { label: `${ADVISOR_TITLE[role]} · ${band}`, say, width: 260 });
-    // Their "!" clears until the office next redraws its markers.
-    for (const marker of overlay.parentElement.querySelectorAll('.advisor-marker')) {
-      if (marker.getAttribute('aria-label')?.startsWith(`${role} `)) marker.remove();
-    }
+    // Heard: their mark stays away until they have something new to say (ui/logic/advisorMarks.js).
+    advisorMarks.heard(role, reading);
   }
+
+  // Warnings raised and not yet answered keep their advisor's mark up.
+  const syncTasks = () => advisorMarks.setTasks([...waiting, ...(live ? [live.warning] : [])]);
 
   function makeClickable() {
     for (const role of ROLES) {
@@ -56,7 +71,8 @@ export function mountBriefing(game, { office, overlay }) {
     }
   }
 
-  const roleOf = (target) => ROLES.find((role) => target.closest?.(`#person-${role}`));
+  // The person, or the invisible area around their desk (ui/office.js, addHitAreas).
+  const roleOf = (target) => ROLES.find((role) => target.closest?.(`#person-${role}, [data-advisor="${role}"]`));
   office.addEventListener('click', (event) => {
     const role = roleOf(event.target);
     if (role) speak(role);
@@ -91,13 +107,13 @@ export function mountBriefing(game, { office, overlay }) {
       say: warning.say, // ui/data/eventCopy.js WARNING_SAY
       width: 300,
       tail: 30,
-      dy: bandOf(warning.advisor) === 'calm' ? -34 : -64, // clear their "!" marker
+      dy: -64, // clear their "!" marker, which stays up until the warning is answered
       extra,
     });
     const done = () => {
       node.remove();
       live = null;
-      showNextWarning();
+      showNextWarning(); // also drops the answered warning's mark
     };
     act.addEventListener('click', () => {
       queueLookInto(game, warning.id);
@@ -121,6 +137,7 @@ export function mountBriefing(game, { office, overlay }) {
       const node = warningBubble(warning);
       if (node) live = { warning, node };
     }
+    syncTasks();
   }
 
   function refresh(state) {
@@ -142,6 +159,7 @@ export function mountBriefing(game, { office, overlay }) {
       raised.add(warning.id);
       waiting.push(warning);
     }
+    syncTasks();
     loadAnchors(state.era).then((loaded) => {
       anchors = loaded;
       makeClickable();
@@ -150,6 +168,8 @@ export function mountBriefing(game, { office, overlay }) {
   }
 
   overlay.addEventListener('event-card-closed', showNextWarning);
+  // A warning looked into from the phone (ui/screens/flock.js) is answered too: its mark goes at once.
+  overlay.addEventListener('events-changed', () => refresh(game.state));
   overlay.addEventListener('gdt-dialog-closed', showNextWarning);
   // A card or a dialog takes the stage; a raised warning steps aside and comes back when it closes.
   function stepAside() {
