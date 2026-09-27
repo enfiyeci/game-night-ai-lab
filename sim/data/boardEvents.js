@@ -3,6 +3,7 @@ import { seat } from '../board.js';
 import { loseDirector } from '../boardDeals.js';
 import { sideRng } from '../contracts.js';
 import { pushFeed } from '../events.js';
+import { totalDebt } from '../hazards.js';
 import { clamp } from '../util.js';
 import { eraById } from './eras.js';
 
@@ -12,12 +13,8 @@ const BOARD_EVENT_SALT = 8; // see the sideRng salt list in sim/turn.js
 const MONEY = ['growth', 'financier', 'sovereign'];
 const KICKER = 'Before the board meets';
 
-// draw n: the nth value of this round's board stream, so a pick and an outcome in one round never share a draw.
-function boardRng(state, skip = 0) {
-  const rng = sideRng(state, BOARD_EVENT_SALT);
-  for (let k = 0; k < skip; k += 1) rng.next();
-  return rng;
-}
+// This round's board stream. It only picks which board event is made; outcomes follow the lab's state (D2).
+const boardRng = (state) => sideRng(state, BOARD_EVENT_SALT);
 const add = (state, id, amount) => {
   const i = seat(id);
   state.board[i] = clamp(state.board[i] + amount, 0, 100);
@@ -47,7 +44,7 @@ export const BOARD_EVENTS = [
         {
           id: 'tidy', label: 'Send a cleaned-up version', cost: 'nothing, unless it comes out', backers: ['CFO'], opposers: ['Safety', 'Comms'],
           effects(state) {
-            if (!boardRng(state, 1).chance(BALANCE.boardRequestLeakChance)) return;
+            if (state.staffTrust >= BALANCE.boardRequestLeakStaffTrust) return; // D2: it leaks when staff are unhappy
             loseDirector(state, 'candor');
             state.flags.candorHits = (state.flags.candorHits ?? 0) + 1; // a hidden problem came out: an open candor deal breaks
             pushFeed(state, '@leakwire', 'the board got a cleaned-up safety report. the full one got out anyway.', 'event'); // OWNER WRITES
@@ -131,7 +128,7 @@ export const BOARD_EVENTS = [
         },
         {
           id: 'interview', label: 'Give a long interview', cost: 'a week, and it could go badly', backers: ['Research'], opposers: ['Comms'],
-          effects(state) { state.publicTrust += boardRng(state, 1).chance(0.5) ? 6 : -6; },
+          effects(state) { state.publicTrust += totalDebt(state) < 40 ? 6 : -6; }, // D2: nothing to hide, it goes well
         },
         {
           id: 'ignore', label: 'Ignore it', cost: 'public trust dips', backers: ['CFO'], opposers: [],
@@ -213,7 +210,7 @@ export function pickBoardEvent(state) {
   if (state.pendingEvents.some((pending) => BOARD_IDS.has(pending.id) && pending.landsAt == null)) return null;
   const eligible = BOARD_EVENTS.filter((event) => !state.seenEvents.includes(event.id) && event.eligible(state));
   if (eligible.length === 0) return null;
-  return boardRng(state, 0).pick(eligible).id;
+  return boardRng(state).pick(eligible).id;
 }
 
 for (const event of BOARD_EVENTS) {

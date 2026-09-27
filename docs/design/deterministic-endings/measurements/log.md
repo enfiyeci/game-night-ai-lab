@@ -78,6 +78,16 @@ Ending counts per bot:
 | a7 | balancedLowSafety | misalignment 139, pacingDeal 34, acquihire 21, rivalDisaster 6 |
 | a7 | balancedHighSafety | misalignment 78, pacingDeal 69, acquihire 43, rivalDisaster 10 |
 | a7 | balancedPush | misalignment 111, pacingDeal 50, acquihire 33, rivalDisaster 6 |
+| a8 | speed | boardRemoved 200 |
+| a8 | safety | acquihire 184, leftBehind 14, misalignment 1, pacingDeal 1 |
+| a8 | balanced | misalignment 98, pacingDeal 59, acquihire 36, rivalDisaster 7 |
+| a8 | random | acquihire 144, boardRemoved 36, rivalDisaster 3, misalignment 14, misuse 3 |
+| a8 | overCommitter | acquihire 191, misalignment 8, rivalDisaster 1 |
+| a8 | handToMouth | acquihire 142, misalignment 49, pacingDeal 1, rivalDisaster 8 |
+| a8 | balancedNoGrid | acquihire 16, pacingDeal 54, misalignment 128, rivalDisaster 2 |
+| a8 | balancedLowSafety | misalignment 139, pacingDeal 34, acquihire 21, rivalDisaster 6 |
+| a8 | balancedHighSafety | misalignment 78, pacingDeal 69, acquihire 43, rivalDisaster 10 |
+| a8 | balancedPush | misalignment 111, pacingDeal 50, acquihire 33, rivalDisaster 6 |
 
 Notes:
 
@@ -138,3 +148,14 @@ Notes:
   N=5 162, 4; for reference N=6 gives 0 and 0 (no open contradicting promise lasts six such rounds), and the running
   total gave 0 and 0. Leaks do not change any bot's ending counts (speed still ends boardRemoved in all 200 runs), so
   random's small moves are the reshuffle from no longer drawing this roll from the main random stream.
+- a8 (Task A8, board-event outcomes and the pooling risk follow the lab's state, D2: "Send a cleaned-up version" leaks
+  the full report exactly when staff trust is below 50, `BALANCE.boardRequestLeakStaffTrust`; "Give a long interview"
+  gives +6 public trust when hidden debt, alignment plus concealed, is under 40 and -6 otherwise; refusing Washington's
+  compute pool marks supply-chain risk when US favor is below 40 after the refusal's own -8): measured on top of
+  3d24f3b (A7's review fix, fifth-round leak). A run of 3d24f3b alone gives exactly the a7 counts, so every move below
+  is this task's. Only the random bot's counts moved: boardRemoved 40 to 36, rivalDisaster 2 to 3, misalignment 11 to
+  14. The other bots never take these three choices: the safety and balanced bots take the first choice (send, reply,
+  accept), and the speed bot takes the last (stall, ignore, refuse) but ends boardRemoved in all 200 runs either way.
+  The board stream still picks which board card is made, with the same first draw as before, so which card pops up
+  did not change. The old pooling draw came from a side stream (salt 7, now unused), so removing it shifts no other
+  roll. Not traced run by run.

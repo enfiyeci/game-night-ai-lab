@@ -35,5 +35,5 @@ export const BALANCE = {
   boardDealBrokenCandor: 6,
   boardLostDrop: 20,
   boardLostCap: 40,
-  boardRequestLeakChance: 0.35, // the board event "Send a cleaned-up version"
+  boardRequestLeakStaffTrust: 50, // the board event "Send a cleaned-up version" leaks when staff trust is below this (D2)
 };

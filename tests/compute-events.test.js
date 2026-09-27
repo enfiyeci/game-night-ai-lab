@@ -309,7 +309,7 @@ test('pooling bypasses a full card queue before era 5 opens', () => {
   assert.deepEqual(s.pendingEvents.slice(0, 2).map((event) => event.id), ['president', 'investors']);
 });
 
-test('pooling risk uses its compute side stream instead of the shared event RNG', () => {
+test('the pooling pop-up draws nothing and stores no hidden risk', () => {
   const event = EVENTS.find((candidate) => candidate.id === 'pooling');
   const s = createInitialState({ seed: 15 });
   s.turn = 13;
@@ -317,20 +317,30 @@ test('pooling risk uses its compute side stream instead of the shared event RNG'
   s.turnInEra = 1;
   const sharedRng = { chance: () => assert.fail('pooling used the shared event RNG') };
   assert.equal(event.trigger(s, sharedRng), true);
-  assert.equal(s.flags.poolingRisk, true);
+  assert.equal('poolingRisk' in s.flags, false);
 });
 
-test('refusing pooling applies the stored risk, while accepting improves summit stances', () => {
+// D2 (no dice): refusing marks supply-chain risk when US favor is below 40 after the refusal's own -8.
+test('refusing the compute pool marks supply-chain risk when US favor ends below 40', () => {
+  for (const [favor, risk] of [[45, true], [47, true], [48, false], [60, false]]) {
+    const s = createInitialState();
+    s.govFavor.us = favor;
+    EVENTS.find((e) => e.id === 'pooling').card.choices.find((c) => c.id === 'refuse').effects(s);
+    assert.equal(Boolean(s.flags.supplyChainRisk), risk, `favor ${favor}`);
+  }
+});
+
+test('refusing pooling costs US favor, while accepting improves summit stances', () => {
   const event = EVENTS.find((candidate) => candidate.id === 'pooling');
   const refused = createInitialState({ seed: 15 });
   refused.turn = 13;
   refused.era = 4;
   refused.turnInEra = 1;
   assert.equal(event.trigger(refused, yes), true);
-  assert.equal(refused.flags.poolingRisk, true);
   event.card.choices.find((choice) => choice.id === 'refuse').effects(refused);
   assert.equal(refused.govFavor.us, 42);
-  assert.equal(refused.flags.supplyChainRisk, true);
+  // D2: 42 is not below 40, so this refusal carries no supply-chain risk (it was a stored 20% roll before).
+  assert.equal(refused.flags.supplyChainRisk, undefined);
 
   const plain = createInitialState();
   const pooled = createInitialState();

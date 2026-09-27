@@ -46,7 +46,7 @@ import { landDue, stampLandings } from './landings.js';
 export const MAX_MOVES = 2;
 const BUDGET_KEYS = ['training', 'security', 'product', 'talent'];
 // sideRng salts in sim/: 0 initial offers, 1 deals, 2 site opposition, 3 contracts, 4 queue,
-// 5 offers, 6 deliveries, 7 pooling, 8 board events (sim/data/boardEvents.js), 9 + card index for card landing days
+// 5 offers, 6 deliveries, 8 board events (sim/data/boardEvents.js), 9 + card index for card landing days
 // (sim/events.js stampNewCards), 950 the first round's rival roll (sim/state.js), 970 event triggers
 // (sim/events.js), and 971 advisor noise (sim/advisors.js).
 

@@ -132,16 +132,35 @@ test('board events never draw from the main rng', () => {
   assert.equal(landed, 20, 'a board card landed in every in-window run');
 });
 
+const choice = (eventId, choiceId) => BOARD_EVENTS.find((e) => e.id === eventId).card.choices.find((c) => c.id === choiceId);
+
+// D2 (no dice): the cleaned-up report comes out when staff trust is below BALANCE.boardRequestLeakStaffTrust (50),
+// and coming out is a candor hit: the candor watchdog's seat is lost and an open candor deal breaks.
 test('the cleaned-up report coming out is a candor hit', () => {
-  const event = BOARD_EVENTS.find((e) => e.id === 'boardRequest');
-  let leaks = 0;
-  for (let seed = 1; seed <= 30; seed += 1) {
-    const state = inWindow({ seed, turn: 9 + seed });
-    const hits = state.flags.candorHits ?? 0;
-    event.card.choices.find((c) => c.id === 'tidy').effects(state, []);
-    const leaked = (state.boardLost ?? []).includes('candor');
-    assert.equal(state.flags.candorHits ?? 0, hits + (leaked ? 1 : 0), `seed ${seed}`);
-    if (leaked) leaks += 1;
+  const state = inWindow({ staffTrust: 45 });
+  choice('boardRequest', 'tidy').effects(state, []);
+  assert.equal((state.boardLost ?? []).includes('candor'), true);
+  assert.equal(state.flags.candorHits, 1);
+});
+
+test('a cleaned-up safety report comes out when staff trust is below 50', () => {
+  assert.equal(BALANCE.boardRequestLeakStaffTrust, 50);
+  for (const [trust, leaks] of [[45, 1], [49, 1], [50, 0], [55, 0]]) {
+    const s = createInitialState();
+    s.staffTrust = trust;
+    choice('boardRequest', 'tidy').effects(s);
+    assert.equal(s.flags.candorHits ?? 0, leaks, `trust ${trust}`);
+    assert.equal((s.boardLost ?? []).includes('candor'), leaks === 1, `trust ${trust}`);
   }
-  assert.ok(leaks > 0, 'the report came out in at least one run');
+});
+
+test('a long interview goes well when hidden debt is under 40', () => {
+  for (const [debt, concealed, delta] of [[30, 0, 6], [45, 0, -6], [30, 10, -6], [39, 0, 6]]) {
+    const s = createInitialState();
+    s.alignmentDebt = debt;
+    s.concealedDebt = concealed; // hidden debt counts both (sim/hazards.js totalDebt)
+    const before = s.publicTrust;
+    choice('boardOped', 'interview').effects(s);
+    assert.equal(s.publicTrust - before, delta, `debt ${debt}+${concealed}`);
+  }
 });

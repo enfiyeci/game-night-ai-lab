@@ -9,7 +9,6 @@ import { RESCUE_MONTHS, spotPrice } from './compute.js';
 import { DEMANDS } from './constitution.js';
 
 const SITE_OPPOSITION_RNG_SALT = 2;
-const POOLING_RNG_SALT = 7;
 
 const modelsWithFlag = (state, flag) => state.models.filter((model) => (model.flags ?? []).includes(flag));
 export const hasFlag = (state, flag) => modelsWithFlag(state, flag).length > 0;
@@ -741,9 +740,7 @@ export const EVENTS = [
     anchor: { era: 4, round: 2, at: 0.7 },
     bypassCardLimit: true,
     trigger(state) {
-      if (!anchorAt(4, 2)(state)) return false;
-      state.flags.poolingRisk ??= sideRng(state, POOLING_RNG_SALT).chance(0.2);
-      return true;
+      return anchorAt(4, 2)(state);
     },
     warning: null,
     card: {
@@ -773,7 +770,7 @@ export const EVENTS = [
           id: 'refuse', label: 'Refuse', cost: 'Washington remembers', backers: ['Research'], opposers: ['Government'],
           effects(state) {
             state.govFavor.us -= 8;
-            state.flags.supplyChainRisk ||= state.flags.poolingRisk;
+            if (state.govFavor.us < 40) state.flags.supplyChainRisk = true; // D2: Washington remembers a refusal when favor is already low
           },
         },
       ],
