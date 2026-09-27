@@ -59,7 +59,8 @@ function currentPlan(game) {
   return { goals, raises };
 }
 
-// The Money screen's four views (owner pick 2026-09-26: 2A "This month" and 2B "What changed" join the planner's two).
+// The Money screen's five views (owner picks 2026-09-26: 2A "This month" and 2B "What changed" join the planner's two;
+// "Each model" shows every release's own books).
 const VIEWS = [['month', 'This month'], ['models', 'Each model'], ['changes', 'What changed'], ['timeline', 'Years ahead'], ['books', 'The books']];
 const PRICE_WORDS = { premium: 'at the premium price', market: 'at the market price', undercut: 'at the undercut price', free: 'on the free tier' };
 const BUDGET_WORDS = { training: 'training', security: 'security', product: 'product', talent: 'talent' };

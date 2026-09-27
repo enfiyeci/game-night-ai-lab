@@ -32,7 +32,7 @@ test('a model from before the books shows no training figure instead of a made-u
   const [row] = moneyRows(s).rows;
   assert.equal(row.made, null);
   assert.equal(row.net, null);
-  assert.equal(moneyRows(s).total.net, 0);
+  assert.deepEqual(moneyRows(s).total, { made: 0, serving: 0, earned: 0, net: 0 });
 });
 
 test('the run in training and a trained model waiting for launch show what they cost so far', () => {

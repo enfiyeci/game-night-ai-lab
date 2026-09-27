@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import { startRun, advanceRun } from '../sim/training.js';
+import { ERA_PRICE } from '../sim/serving.js';
 import {
   beatCount, canSkip, checkLabel, laterMoveProblem, leaderboard, nextGeneration, offeredCards, perMillion, priceSheet,
   pricePerMillion, queueBeforeRelease, releaseDraft, releaseOpinions, releasePayload, releasePreview, releaseSpec,
@@ -37,6 +38,7 @@ test('per-token prices follow the sim serving tables', () => {
   assert.equal(tokensPerUser(spec, 1), 2); // 0.5 x 4 x 1
   assert.equal(pricePerMillion(spec, 1, 'market'), 15); // $30 a user a month over 2M tokens
   assert.equal(pricePerMillion(spec, 1, 'premium'), 22.5);
+  assert.ok(Math.abs(pricePerMillion(spec, 3, 'market') - (30 * ERA_PRICE[2]) / tokensPerUser(spec, 3)) < 1e-9); // later eras' launch price
   assert.ok(Math.abs(servingPerMillion(spec, 1) - 4.8) < 1e-9); // $6 x medium 1 x dense 1 x short 0.8
   assert.equal(perMillion(1.249), '$1.25');
   const open = releaseSpec(withSpec({}), ['channel-open'], 'off');
