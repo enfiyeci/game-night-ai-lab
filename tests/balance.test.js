@@ -155,3 +155,26 @@ test('existing bots retain explicit product choices', () => {
     assert.equal(action.moves.find((move) => move.type === 'startRun')?.recipe.product, product, name);
   }
 });
+
+import { readyToPublish } from '../tools/balance.js';
+import { startPolishing } from '../sim/polish.js';
+
+test('bots publish by a rule: speed at once, the others after fixing and some polish', () => {
+  const state = createInitialState({ seed: 1 });
+  state.pendingModel = { flags: ['hallucination'], publicEffects: { usersMult: 1 }, capability: 30 };
+  startPolishing(state.pendingModel, 2, state.day);
+  state.rivalLaunches = [];
+  assert.equal(readyToPublish(state, 'speed'), true);
+  assert.equal(readyToPublish(state, 'balanced'), false, 'a flaw is left');
+  state.pendingModel.polishing.flaws = [];
+  state.pendingModel.polish = 50; // next bubble adds 10
+  assert.equal(readyToPublish(state, 'balanced'), false);
+  state.pendingModel.polish = 65; // next bubble adds 7
+  assert.equal(readyToPublish(state, 'balanced'), true);
+  assert.equal(readyToPublish(state, 'safety'), false);
+  state.pendingModel.polish = 85; // next bubble adds 3
+  assert.equal(readyToPublish(state, 'safety'), true);
+  state.pendingModel.polish = 0;
+  state.rivalLaunches = [{ id: 'openbrain', day: state.day + 1 }];
+  assert.equal(readyToPublish(state, 'balanced'), true, 'a rival lands before the next mark');
+});

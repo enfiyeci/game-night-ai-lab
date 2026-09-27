@@ -105,7 +105,7 @@ test('recording script describes the current compute actions from real strategy 
   assert.ok(balancedLines.some((line) => /reserve 12% of compute for safety/.test(line)));
   assert.ok(balancedLines.some((line) => /take the President meeting/.test(line)));
 
-  const safety = playTimeline('safety', 1);
+  const safety = playTimeline('safety', 11);
   const safetyLines = safety.turns.map((turn) => demoSeeds.describeActions(turn.actions));
   assert.ok(safetyLines.some((line) => /build a nuclear power site/.test(line)));
 });
