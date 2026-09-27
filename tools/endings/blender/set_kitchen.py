@@ -312,7 +312,7 @@ def shot_al_chat():
     mug((-0.7, 3.05, 0.76), "#F2EEE6")
     desk_lamp((-0.62, 3.62, 0.76), math.radians(-40), (0.05, 3.05, 0.76), energy=10)
     kit.area((-0.25, 3.1, 0.95), (0.1, 2.6, 0.9), (0.3, 0.15), 3, kit.kelvin(7000))
-    kit.camera((0.46, 2.3, 1.2), (-0.08, 3.14, 0.86), lens=35, fstop=5.6, focus=face)
+    kit.camera((0.46, 2.3, 1.2), (-0.08, 3.14, 0.86), lens=39, fstop=5.6, focus=face)
 
 
 def shot_rb_app():
@@ -340,7 +340,7 @@ def shot_rb_app():
     kit.box((-0.95, 2.8, 0.2), (0.3, 0.18, 0.4), kit.mat("#3F7A5A", 0.8), bevel=0.05, rot=(0.15, 0, 0.3))
     # a low morning sun through the window reaches the fridge
     kit.sun((78, 0, 150), 3.5, kit.kelvin(4600), angle=1.0)
-    kit.camera((0.35, 3.85, 1.0), (-0.9, 1.2, 0.85), lens=45, fstop=4.0, focus=face)
+    kit.camera((0.35, 3.85, 1.0), (-0.6, 2.2, 0.7), lens=35, fstop=4.0, focus=face)
     bpy.context.scene.view_settings.exposure = 1.0
 
 
@@ -381,7 +381,7 @@ def shot_mu_kitchen():
     kit.box((-RW + 0.8, 0.55, 0.004), (0.5, 0.35, 0.008), kit.mat("#8FB3C9", 0.9), rot=(0, 0, 0.2))
     # the battery radio, and the phone propped against a water bottle, facing the camera
     rr = math.radians(115)
-    kit.box((-0.1, 2.95, 0.82), (0.19, 0.07, 0.12), kit.mat("#8A3B2E", 0.5), bevel=0.01, rot=(0, 0, rr))
+    kit.box((-0.1, 2.95, 0.82), (0.19, 0.07, 0.12), kit.mat("#6B2E24", 0.5), bevel=0.01, rot=(0, 0, rr))
     kit.cyl(_at((-0.1, 2.95, 0.83), rr, -0.04, -0.036), 0.03, 0.004, kit.mat("#222", 0.6), rot=(math.radians(90), 0, rr))
     crop = (250, 96, 240, 448)
     pw = 0.07
@@ -393,19 +393,19 @@ def shot_mu_kitchen():
                          strength=1.2)
     kit.place("plastic_bottle_gallon", (px - 0.11, py - 0.02, 0.76), rot_z=0.5, scale=0.6)
     kit.camera((0.5, 3.25, 0.94), (-1.8, 2.15, 0.62), lens=35, fstop=8, focus=face)
-    bpy.context.scene.view_settings.exposure = 1.3
+    bpy.context.scene.view_settings.exposure = 1.6
 
 
 def shot_ov_chat():
     room(sky="cobblestone_street_night", sky_strength=0.12, sky_rot=100, clock="02:07")
     table()
-    face = laptop((-0.2, 3.6, 0.76), "ov-chat", CHAT, yaw=98, strength=1.0)
-    for (x, y, c) in ((-0.45, 3.42, "#F2EEE6"), (-0.58, 3.25, "#C9553B"), (-0.36, 3.12, "#3F84C6")):
+    face = laptop((-0.1, 3.3, 0.76), "ov-chat", CHAT, yaw=101, strength=1.0)
+    for (x, y, c) in ((0.25, 3.3, "#F2EEE6"), (0.36, 3.12, "#C9553B"), (0.16, 3.02, "#3F84C6")):
         mug((x, y, 0.76), c)
-    kit.box((-0.2, 3.2, 0.762), (0.12, 0.08, 0.004), kit.mat("#E0613B", 0.4, 0.3), rot=(0, 0, 0.6))   # a snack wrapper
-    desk_lamp((-0.72, 3.66, 0.76), math.radians(-70), (-0.3, 3.3, 0.76), energy=6)
-    kit.area((0.0, 3.62, 0.95), (0.8, 3.7, 1.0), (0.3, 0.15), 3, kit.kelvin(7000))
-    kit.camera((0.85, 3.75, 1.2), (-1.0, 3.0, 0.85), lens=35, fstop=5.6, focus=face)
+    kit.box((0.3, 3.5, 0.762), (0.12, 0.08, 0.004), kit.mat("#E0613B", 0.4, 0.3), rot=(0, 0, 0.6))   # a snack wrapper
+    desk_lamp((-0.6, 3.1, 0.76), math.radians(-20), (0.1, 3.25, 0.76), energy=6)
+    kit.area((0.05, 3.33, 0.95), (0.9, 3.5, 1.0), (0.3, 0.15), 3, kit.kelvin(7000))
+    kit.camera((0.9, 3.5, 1.15), (-1.2, 2.7, 0.8), lens=40, fstop=8, focus=face)
 
 
 def shot_pd_school():
@@ -429,7 +429,8 @@ def shot_pd_school():
     kit.place("potted_plant_01", (-0.8, RD - 0.08, 0.93), scale=0.6)
     # afternoon sun streams in across the table
     kit.sun((52, 0, 230), 4.5, kit.kelvin(5200), angle=0.8)
-    kit.camera((0.5, 2.35, 1.45), (-0.02, 3.1, 0.82), lens=35, fstop=5.6, focus=face)
+    kit.camera((0.5, 2.35, 1.45), (-0.02, 3.1, 0.82), lens=40, fstop=5.6, focus=face)
+    bpy.context.scene.view_settings.exposure = 0.8
 
 
 def shot_cw_chat():
