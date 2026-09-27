@@ -16,6 +16,12 @@ export const SCALE_DOWN_PENALTY_MONTHS = 2;
 export const BREAK_SHARE = 0.25;
 export const BUYOUT_MONTHS = 3;
 export const RESCUE_MONTHS = 3;
+// Raising from the strategic cloud partner locks you in: every other cloud's offer costs this much more from then
+// on (owner pick 2026-09-26, "expects favours" made real). Verde chip orders and Azuria are not rival clouds.
+export const PARTNER_MARKUP = 1.25;
+export const RIVAL_CLOUDS = ['coreflame', 'spot', 'gulf'];
+export const partnerMarkup = (state, supplier) => (state.flags.strategicStrings && RIVAL_CLOUDS.includes(supplier) ? PARTNER_MARKUP : 1);
+export const spotPrice = (state, era = state.era) => SPOT_PRICE[era] * partnerMarkup(state, 'spot');
 
 // size [lo, hi] is multiplied by eraScale(era); arrival is in turns (an object when it differs by era).
 export const SUPPLIERS = {

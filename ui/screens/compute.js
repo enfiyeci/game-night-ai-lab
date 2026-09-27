@@ -102,9 +102,9 @@ function gridReservationButton(card) {
   );
   button.append(
     identity,
-    element('span', '', 'online in era 4'),
+    element('span', '', 'online later'),
     element('b', '', `${money(card.upfront)} upfront`),
-    element('span', 'company-chip', 'Power for era 4'),
+    element('span', 'company-chip', 'Power for later'),
   );
   return button;
 }

@@ -1,9 +1,10 @@
 import { roundsToWords } from './format.js';
 import { cardById, pickableCards, resolveCards, slotsFor } from '../../sim/recipe.js';
-import { modelName, releaseModel, tierWord } from '../../sim/release.js';
+import { modelName, releaseModel, releaseWait, tierWord } from '../../sim/release.js';
 import { createRng } from '../../sim/rng.js';
 import { CHANNEL, PRICE_STANCE, REASONING, REVENUE_PER_USER, USAGE, margin, servingCost } from '../../sim/serving.js';
 import { applyProjectedMove, projectQueue } from './compute.js';
+import { familyName } from './naming.js';
 
 export const PRICE_STOPS = ['free', 'undercut', 'market', 'premium'];
 export const PRICE_NAMES = { premium: 'Premium', market: 'Market', undercut: 'Undercut', free: 'Free tier' };
@@ -44,7 +45,7 @@ export function servingPerMillion(spec, era) {
 export const perMillion = (value) => `$${value.toFixed(2)}`;
 
 export function shipDelay(state, picks) {
-  return cardsFor(state, picks).reduce((sum, card) => sum + (card.cost.turns ?? 0), state.pendingModel?.releaseDelay ?? 0);
+  return releaseWait(state, cardsFor(state, picks));
 }
 
 // A ship delay counts hidden rounds; say it in story time for the current era.
@@ -76,7 +77,7 @@ export function releaseDraft(state, remembered = {}) {
     picks,
     price: Object.hasOwn(PRICE_STANCE, remembered.price) ? remembered.price : 'market',
     reasoning: REASONING_STOPS.includes(remembered.reasoning) ? remembered.reasoning : 'off',
-    family: typeof remembered.family === 'string' ? remembered.family : state.models.at(-1)?.family ?? '',
+    family: typeof remembered.family === 'string' ? remembered.family : familyName(state),
     skip: remembered.skip === true && canSkip(state),
     tierWords: Object.fromEntries(SIZE_ORDER.map((size) => [
       size,
@@ -227,3 +228,28 @@ export const salesEstimate = (model) => (model.channel === 'open' ? 0 : (model.n
 
 // The flagship this launch was compared with: the earlier model whose score set the bar.
 export const flagshipBefore = (state, model) => state.models.find((other) => other.releaseSequence !== model.releaseSequence && other.launchScore === model.bar);
+
+export const oneDecimal = (value) => Math.round(value * 10) / 10;
+
+// The launch leaderboard (owner pick 2026-09-26: reveal option B plus the leaderboard climb).
+// Scores are averages of the four capability benchmarks. The sim keeps one strength per rival lab
+// and scores the "best rival" bars from the leading lab, so each lab's average is the best-rival
+// average scaled by its strength against the leader's. Your two latest earlier models are listed
+// with their own launch averages.
+export function leaderboard(state, model) {
+  const caps = model.launch.benchmarks.filter((row) => row.kind === 'cap');
+  const rivalAverage = caps.reduce((sum, row) => sum + row.rival, 0) / caps.length;
+  const leader = state.rivals.reduce((best, rival) => (rival.capability > best.capability ? rival : best));
+  const rivals = state.rivals.map((rival) => ({ name: rival.name, kind: 'rival', score: oneDecimal(rivalAverage * rival.capability / leader.capability) }));
+  const own = state.models
+    .map((other, index) => ({ other, order: other.releaseSequence ?? index }))
+    .filter(({ other }) => other.releaseSequence !== model.releaseSequence && other.launch)
+    .sort((a, b) => a.order - b.order)
+    .slice(-2)
+    .map(({ other }) => ({ name: other.name, kind: 'own', score: oneDecimal(other.launch.capAvg) }));
+  return {
+    leader: leader.name,
+    rows: [...rivals, ...own].sort((a, b) => b.score - a.score),
+    mine: { name: model.name, kind: 'new', score: oneDecimal(model.launch.capAvg) },
+  };
+}

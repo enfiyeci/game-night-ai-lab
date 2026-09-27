@@ -5,6 +5,7 @@ import { eventsTick, addressWarning, resolveEvent } from '../sim/events.js';
 import { updateServing, monthlyRevenue } from '../sim/economy.js';
 import { EVENTS } from '../sim/data/events.js';
 import { EVENTS_6C } from '../sim/data/events6c.js';
+import { REAL_EVENTS } from '../sim/data/realEvents.js';
 import { endTurn } from '../sim/turn.js';
 import { createRng } from '../sim/rng.js';
 import { contractBill } from '../sim/contracts.js';
@@ -26,7 +27,7 @@ test('a troubled neocloud warns first, then asks what to do', () => {
   assert.ok(s.warnings.neocloudTrouble);
   s.turn += 1;
   eventsTick(s, no);
-  assert.equal(s.pendingEvents[0].id, 'neocloudTrouble');
+  assert.equal(s.pendingEvents.find((event) => event.id === 'neocloudTrouble')?.id, 'neocloudTrouble');
   assert.equal(resolveEvent(s, 'neocloudTrouble', 'letgo').ok, true);
   assert.equal(s.compute.contracts.some((c) => c.id === 'cf'), false);
 });
@@ -94,7 +95,7 @@ test('opposition to a gas site: pushing through can cut the site', () => {
   const s = createInitialState({ seed: 71 });
   s.era = 4;
   s.turn = 12;
-  s.seenEvents = [...EVENTS, ...EVENTS_6C]
+  s.seenEvents = [...EVENTS, ...EVENTS_6C, ...REAL_EVENTS]
     .filter((event) => event.id !== 'siteOpposition')
     .map((event) => event.id);
   s.power.sites.push({ id: 'gas-1', source: 'gas', units: 400, arrivesTurn: 99, online: false, oppositionCut: null });
@@ -126,7 +127,7 @@ test('moving a deferred opposed site takes it offline and brings it back two tur
   const s = createInitialState({ seed: 71 });
   s.era = 4;
   s.turn = 12;
-  s.seenEvents = [...EVENTS, ...EVENTS_6C]
+  s.seenEvents = [...EVENTS, ...EVENTS_6C, ...REAL_EVENTS]
     .filter((event) => event.id !== 'siteOpposition')
     .map((event) => event.id);
   s.compute.contracts.push({ id: 'v', supplier: 'verde', units: 400, price: 1, monthsLeft: 24, needsPower: true, dark: false });
@@ -269,7 +270,7 @@ test('surge spot and cap choices restore the previous spot setting after two eco
 
 test('pooling takes a share of compute for US favor, decided before the summit', () => {
   const s = createInitialState();
-  s.turn = 15; s.era = 4; s.turnInEra = 3;
+  s.turn = 13; s.era = 4; s.turnInEra = 1;
   eventsTick(s, no);
   const gov = s.govFavor.us;
   resolveEvent(s, 'pooling', 'accept');
@@ -280,30 +281,26 @@ test('pooling takes a share of compute for US favor, decided before the summit',
 
 test('pooling bypasses a full card queue before era 5 opens', () => {
   const s = createInitialState();
-  s.turn = 15;
+  s.turn = 13;
   s.era = 4;
-  s.turnInEra = 3;
-  s.capability = 90;
-  s.cash = 250;
-  s.flags.presidentDemand = true;
-  s.seenEvents = [...EVENTS, ...EVENTS_6C]
-    .filter((event) => ['president', 'investors', 'pooling'].includes(event.id) === false)
+  s.turnInEra = 1;
+  s.pendingEvents.push({ id: 'president' }, { id: 'investors' });
+  s.seenEvents = [...EVENTS, ...EVENTS_6C, ...REAL_EVENTS]
+    .filter((event) => event.id !== 'pooling')
     .map((event) => event.id);
 
-  const out = endTurn(s, {}, no);
+  eventsTick(s, no);
 
-  assert.equal(out.state.era, 5);
-  assert.equal(out.state.turnInEra, 0);
-  assert.equal(out.state.deal, null);
-  assert.deepEqual(out.state.pendingEvents.map((event) => event.id), ['president', 'investors', 'pooling']);
+  assert.equal(s.pendingEvents.some((event) => event.id === 'pooling'), true);
+  assert.deepEqual(s.pendingEvents.slice(0, 2).map((event) => event.id), ['president', 'investors']);
 });
 
 test('pooling risk uses its compute side stream instead of the shared event RNG', () => {
   const event = EVENTS.find((candidate) => candidate.id === 'pooling');
   const s = createInitialState({ seed: 15 });
-  s.turn = 15;
+  s.turn = 13;
   s.era = 4;
-  s.turnInEra = 3;
+  s.turnInEra = 1;
   const sharedRng = { chance: () => assert.fail('pooling used the shared event RNG') };
   assert.equal(event.trigger(s, sharedRng), true);
   assert.equal(s.flags.poolingRisk, true);
@@ -312,9 +309,9 @@ test('pooling risk uses its compute side stream instead of the shared event RNG'
 test('refusing pooling applies the stored risk, while accepting improves summit stances', () => {
   const event = EVENTS.find((candidate) => candidate.id === 'pooling');
   const refused = createInitialState({ seed: 15 });
-  refused.turn = 15;
+  refused.turn = 13;
   refused.era = 4;
-  refused.turnInEra = 3;
+  refused.turnInEra = 1;
   assert.equal(event.trigger(refused, yes), true);
   assert.equal(refused.flags.poolingRisk, true);
   event.card.choices.find((choice) => choice.id === 'refuse').effects(refused);

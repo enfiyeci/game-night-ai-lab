@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="../../../">
+  <meta name="viewport" content="width=1440">
+  <title>Title and main menu mockups</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Nunito:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="ui/styles.css">
+  <style>
+    /* Mockup-only styles. Tokens come from ui/styles.css; no colour literals here. */
+    .muted { color: color-mix(in oklab, var(--ink) 58%, var(--paper)); }
+    .hide-hud #hud { display: none; }
+    .layer { position: absolute; inset: 0; z-index: 10; }
+    .veil { position: absolute; inset: 0; background: color-mix(in oklab, var(--cream) 42%, transparent); }
+    .field { display: block; text-align: left; }
+    .field span { display: block; margin-bottom: 6px; font-size: 12px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: color-mix(in oklab, var(--ink) 60%, var(--paper)); }
+    .field input { width: 100%; padding: 11px 14px; border: 2px solid color-mix(in oklab, var(--wood) 55%, var(--paper)); border-radius: 10px; font: inherit; font-size: 20px; font-weight: 800; color: var(--ink); background: var(--paper); }
+    .field input:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+    .linkbtn { border: 0; padding: 4px 2px; font: inherit; font-size: 14px; font-weight: 800; color: color-mix(in oklab, var(--wood) 70%, var(--ink)); background: none; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+    .pips { display: inline-flex; gap: 4px; vertical-align: middle; }
+    .pips i { width: 10px; height: 10px; border-radius: 50%; background: color-mix(in oklab, var(--ink) 14%, var(--paper)); }
+    .pips i.on { background: var(--teal); }
+    .speaker { position: absolute; z-index: 12; width: 44px; height: 44px; border: 2.5px solid var(--wood); border-radius: 12px; background: var(--paper); display: grid; place-items: center; box-shadow: 0 3px 0 color-mix(in oklab, var(--wood) 60%, var(--ink)); }
+    .speaker svg { width: 24px; height: 24px; fill: none; stroke: var(--ink); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+    .now { font-size: 13px; font-weight: 700; }
+    .now b { font-weight: 900; }
+
+    /* ---------- A: the GDT title panel (T1, picked 2026-09-26) ---------- */
+    .a .gp { left: 470px; top: 150px; width: 500px; padding: 36px 42px 26px; text-align: center; }
+    .a h1 { margin: 0; font-size: 68px; font-weight: 300; letter-spacing: -.02em; line-height: 1; }
+    .a .sub { margin: 12px 0 0; font-size: 15px; font-weight: 700; }
+    .a .rule { margin: 24px 20px 24px; }
+    .a .btn { width: 240px; margin-top: 24px; padding: 13px 0; font-size: 19px; }
+    .a .row { display: flex; justify-content: center; gap: 26px; margin-top: 16px; }
+    .a .found { margin-top: 18px; padding-top: 14px; border-top: 1px solid color-mix(in oklab, var(--ink) 9%, transparent); font-size: 13px; font-weight: 800; }
+    .a .found .pips { margin-left: 8px; }
+
+    /* ---------- B: side rail over the running office ---------- */
+    .b .rail { position: absolute; left: 0; top: 0; bottom: 0; width: 440px; padding: 64px 48px 40px; display: flex; flex-direction: column; background: color-mix(in oklab, var(--cream) 30%, var(--paper)); border-right: 3px solid var(--wood); box-shadow: 0 18px 44px color-mix(in oklab, var(--ink) 22%, transparent); }
+    .b h1 { margin: 0; font-size: 86px; font-weight: 300; letter-spacing: -.03em; line-height: .95; }
+    .b .sub { margin: 14px 0 0; font-size: 16px; font-weight: 700; line-height: 1.4; }
+    .b .field { margin-top: 42px; }
+    .b .menu { display: grid; grid-template-columns: 100%; gap: 4px; margin-top: 26px; }
+    .b .menu button { white-space: nowrap; display: flex; justify-content: space-between; align-items: center; padding: 13px 16px; border: 0; border-radius: 10px; font: inherit; font-size: 19px; font-weight: 800; color: var(--ink); background: transparent; text-align: left; cursor: pointer; }
+    .b .menu button.go { color: var(--paper); background: var(--coral); box-shadow: 0 3px 0 color-mix(in oklab, var(--coral) 60%, var(--ink)); font-size: 21px; font-weight: 900; }
+    .b .menu button small { font-size: 13px; font-weight: 800; }
+    .b .menu button:not(.go):hover { background: color-mix(in oklab, var(--wood) 14%, transparent); }
+    .b .foot { margin-top: auto; }
+    .b #office { transform: translateX(210px); }
+
+    /* ---------- C: the sign goes up (night office) ---------- */
+    .c #office { filter: brightness(.42) saturate(.7) hue-rotate(-12deg); }
+    html.dark body { background: radial-gradient(ellipse 60% 60% at 50% 40%, color-mix(in oklab, var(--ink) 80%, var(--wood)), color-mix(in oklab, var(--ink) 94%, var(--sky))); }
+    .c .night { position: absolute; inset: 0; background: radial-gradient(ellipse 34% 30% at 50% 26%, color-mix(in oklab, var(--wood) 26%, transparent), transparent 70%); }
+    .c .ropes { position: absolute; left: 520px; top: 0; width: 400px; height: 104px; border-left: 3px solid color-mix(in oklab, var(--wood) 55%, var(--ink)); border-right: 3px solid color-mix(in oklab, var(--wood) 55%, var(--ink)); }
+    .c .sign { position: absolute; left: 380px; top: 96px; width: 680px; padding: 30px 30px 26px; border-radius: 16px; text-align: center; background: linear-gradient(color-mix(in oklab, var(--wood) 92%, var(--paper)), color-mix(in oklab, var(--wood) 78%, var(--ink))); box-shadow: inset 0 0 0 6px color-mix(in oklab, var(--wood) 60%, var(--ink)), 0 30px 70px color-mix(in oklab, var(--ink) 55%, transparent); }
+    .c .sign .kick { font-size: 13px; font-weight: 900; letter-spacing: .22em; text-transform: uppercase; color: color-mix(in oklab, var(--paper) 78%, var(--wood)); }
+    .c .sign .name { margin-top: 6px; font-family: 'Libre Baskerville', Georgia, serif; font-size: 76px; line-height: 1.05; color: var(--paper); text-shadow: 0 3px 0 color-mix(in oklab, var(--wood) 45%, var(--ink)); }
+    .c .sign .name .caret { display: inline-block; width: 4px; height: 64px; margin-left: 6px; vertical-align: -6px; background: var(--paper); }
+    .c .sign .lab { margin-top: 8px; font-size: 16px; font-weight: 800; color: color-mix(in oklab, var(--paper) 85%, var(--wood)); }
+    .c .signbar { position: absolute; left: 470px; top: 640px; width: 500px; padding: 18px 20px; text-align: center; }
+    .c .signbar p { margin: 0 0 12px; font-size: 15px; font-weight: 800; }
+    .c .signbar .btn { width: 100%; padding: 13px 0; font-size: 19px; }
+    .c .signbar .row { display: flex; justify-content: center; gap: 26px; margin-top: 12px; }
+    .c .game { position: absolute; left: 36px; top: 30px; font-size: 32px; font-weight: 300; color: var(--paper); }
+
+    /* ---------- C variants (owner picked C, asked for prettier takes) ---------- */
+    html.night body { background: radial-gradient(ellipse 70% 70% at 50% 45%, color-mix(in oklab, var(--ink) 78%, var(--sky)), color-mix(in oklab, var(--ink) 96%, var(--sky))); }
+    .cv #office { filter: brightness(.36) saturate(.55); }
+    .cv #fx, .cv [id^="person-"] { display: none; }
+    .cv .game { position: absolute; left: 36px; top: 30px; font-size: 30px; font-weight: 300; color: color-mix(in oklab, var(--paper) 82%, var(--ink)); }
+    .cv .panel { position: absolute; left: 500px; top: 666px; width: 440px; padding: 16px 20px 14px; text-align: center; }
+    .cv .panel p { margin: 0 0 10px; font-size: 14.5px; font-weight: 800; }
+    .cv .panel .btn { width: 100%; padding: 13px 0; font-size: 19px; }
+    .cv .panel .row { display: flex; justify-content: center; gap: 22px; margin-top: 10px; }
+    .caret2 { display: inline-block; width: .06em; height: .8em; margin-left: .08em; vertical-align: -.04em; background: currentColor; }
+
+    /* C1 carved wood under a lamp */
+    .c1 .lamp { position: absolute; left: 420px; top: -40px; width: 600px; height: 520px; background: radial-gradient(ellipse 50% 60% at 50% 20%, color-mix(in oklab, var(--wood) 42%, transparent), transparent 70%); }
+    .c1 .chain { position: absolute; top: 0; width: 8px; height: 118px; background: repeating-linear-gradient(color-mix(in oklab, var(--wood) 55%, var(--paper)) 0 7px, transparent 7px 9px); border-radius: 4px; }
+    .c1 .board { position: absolute; left: 350px; top: 110px; width: 740px; padding: 34px 40px 30px; border-radius: 10px; text-align: center;
+      background:
+        repeating-linear-gradient(178deg, transparent 0 9px, color-mix(in oklab, var(--wood) 70%, var(--ink)) 9px 10px, transparent 10px 23px),
+        linear-gradient(color-mix(in oklab, var(--wood) 88%, var(--paper)), color-mix(in oklab, var(--wood) 72%, var(--ink)));
+      box-shadow: inset 0 0 0 7px color-mix(in oklab, var(--wood) 52%, var(--ink)), inset 0 0 0 9px color-mix(in oklab, var(--wood) 80%, var(--paper)), 0 34px 80px color-mix(in oklab, var(--ink) 70%, transparent); }
+    .c1 .screw { position: absolute; width: 14px; height: 14px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, var(--paper), color-mix(in oklab, var(--wood) 60%, var(--ink))); }
+    .c1 .kick { font-size: 13px; font-weight: 900; letter-spacing: .26em; text-transform: uppercase; color: color-mix(in oklab, var(--wood) 40%, var(--ink)); }
+    .c1 .name { margin-top: 4px; font-family: 'Libre Baskerville', Georgia, serif; font-size: 88px; line-height: 1.08; color: color-mix(in oklab, var(--wood) 35%, var(--ink)); text-shadow: 0 2px 0 color-mix(in oklab, var(--wood) 70%, var(--paper)), 0 -1px 0 color-mix(in oklab, var(--wood) 30%, var(--ink)); }
+    .c1 .est { margin-top: 8px; font-size: 15px; font-weight: 800; letter-spacing: .08em; color: color-mix(in oklab, var(--wood) 40%, var(--ink)); }
+
+    /* C2 neon sign */
+    .c2 .wire { position: absolute; top: 0; width: 2px; height: 150px; background: color-mix(in oklab, var(--paper) 30%, var(--ink)); }
+    .c2 .plate { position: absolute; left: 330px; top: 150px; width: 780px; padding: 34px 30px 30px; border-radius: 22px; text-align: center; background: color-mix(in oklab, var(--ink) 92%, var(--sky)); box-shadow: inset 0 0 0 2px color-mix(in oklab, var(--paper) 14%, transparent), 0 0 120px color-mix(in oklab, var(--coral) 28%, transparent); }
+    .c2 .kick { font-size: 15px; font-weight: 800; letter-spacing: .3em; text-transform: uppercase; color: color-mix(in oklab, var(--sky) 40%, var(--paper)); text-shadow: 0 0 4px var(--sky), 0 0 12px var(--sky), 0 0 26px var(--sky); }
+    .c2 .name { margin-top: 6px; font-size: 104px; font-weight: 300; letter-spacing: -.01em; line-height: 1.05; color: color-mix(in oklab, var(--coral) 25%, var(--paper)); text-shadow: 0 0 4px var(--coral), 0 0 14px var(--coral), 0 0 34px var(--coral), 0 0 70px color-mix(in oklab, var(--coral) 60%, transparent); }
+    .c2 .open { display: inline-block; margin-top: 14px; padding: 4px 14px; border: 2px solid color-mix(in oklab, var(--teal) 40%, var(--paper)); border-radius: 8px; font-size: 14px; font-weight: 900; letter-spacing: .2em; color: color-mix(in oklab, var(--teal) 40%, var(--paper)); box-shadow: 0 0 10px var(--teal), inset 0 0 8px var(--teal); text-shadow: 0 0 8px var(--teal); opacity: .5; }
+    .c2 .spill { position: absolute; left: 320px; top: 360px; width: 800px; height: 300px; background: radial-gradient(ellipse 50% 50% at 50% 30%, color-mix(in oklab, var(--coral) 22%, transparent), transparent 70%); }
+
+    /* C3 gold leaf on the glass door */
+    .c3 .door { position: absolute; left: 410px; top: 46px; width: 620px; height: 900px; filter: drop-shadow(0 30px 60px color-mix(in oklab, var(--ink) 80%, transparent)); }
+    .c3 .lower { position: absolute; left: 0; right: 0; top: 612px; bottom: 0; background: linear-gradient(90deg, color-mix(in oklab, var(--wood) 62%, var(--ink)), color-mix(in oklab, var(--wood) 80%, var(--ink)) 50%, color-mix(in oklab, var(--wood) 62%, var(--ink))); }
+    .c3 .glass { position: absolute; left: 26px; right: 26px; top: 26px; height: 560px; border-radius: 2px; background: linear-gradient(160deg, color-mix(in oklab, var(--paper) 12%, transparent), color-mix(in oklab, var(--sky) 8%, transparent) 55%, color-mix(in oklab, var(--paper) 5%, transparent)); box-shadow: 0 0 0 26px color-mix(in oklab, var(--wood) 70%, var(--ink)), inset 0 0 0 3px color-mix(in oklab, var(--wood) 45%, var(--ink)); text-align: center; padding-top: 150px; }
+    .c3 .glass::after { content: ''; position: absolute; left: 40px; top: 30px; width: 90px; height: 480px; transform: skewX(-12deg); background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--paper) 10%, transparent), transparent); }
+    .gold { background: linear-gradient(180deg, color-mix(in oklab, var(--wood) 30%, var(--paper)) 0%, color-mix(in oklab, var(--wood) 85%, var(--paper)) 48%, color-mix(in oklab, var(--wood) 70%, var(--ink)) 52%, color-mix(in oklab, var(--wood) 40%, var(--paper)) 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .c3 .name { font-family: 'Libre Baskerville', Georgia, serif; font-size: 82px; line-height: 1.1; filter: drop-shadow(0 2px 0 color-mix(in oklab, var(--ink) 70%, transparent)); }
+    .c3 .kick { color: color-mix(in oklab, var(--wood) 55%, var(--paper)); margin-top: 18px; font-size: 16px; font-weight: 900; letter-spacing: .32em; text-transform: uppercase; }
+    .c3 .est { color: color-mix(in oklab, var(--wood) 55%, var(--paper)); margin-top: 10px; font-family: 'Libre Baskerville', Georgia, serif; font-style: italic; font-size: 17px; }
+    .c3 .rule2 { width: 260px; height: 2px; margin: 18px auto 0; }
+    .c3 .handle { position: absolute; right: 44px; top: 640px; width: 20px; height: 110px; border-radius: 10px; background: linear-gradient(90deg, color-mix(in oklab, var(--wood) 40%, var(--paper)), color-mix(in oklab, var(--wood) 80%, var(--ink))); box-shadow: 0 6px 12px color-mix(in oklab, var(--ink) 50%, transparent); }
+    .c3 .panel { left: 1060px; top: 600px; width: 340px; }
+    .c3 .panel .row { flex-wrap: wrap; gap: 4px 18px; }
+
+    /* ---------- E: the sign drawn in the office's own isometric style (round 3) ---------- */
+    .iso { position: absolute; inset: 0; width: 1440px; height: 900px; overflow: visible; }
+    .iso .edge { stroke: color-mix(in oklab, var(--ink) 30%, transparent); stroke-width: .8; stroke-linejoin: round; }
+    .iso text { font-family: 'Nunito', sans-serif; font-weight: 900; }
+  </style>
+</head>
+<body>
+  <main id="stage" aria-label="AI lab office">
+    <div id="office"></div>
+    <div id="fx" aria-live="polite"></div>
+    <div id="hud"></div>
+    <div id="overlay"></div>
+  </main>
+<script type="module">
+import { createGame } from './ui/game.js';
+import { mountHud } from './ui/hud.js';
+import { mountOffice } from './ui/office.js';
+import { SCENARIOS } from './ui/logic/scenarios.js';
+
+const zoom = () => { const z = Math.min(innerWidth / 1440, innerHeight / 900, 1); if (z > 0) document.documentElement.style.zoom = `${z}`; };
+zoom(); addEventListener('resize', zoom);
+
+const game = createGame({ seed: 1, state: SCENARIOS.start(1) });
+mountHud(document.querySelector('#hud'), game);
+await mountOffice(document.querySelector('#office'), document.querySelector('#fx'), game).catch(console.error);
+const stage = document.querySelector('#stage');
+const overlay = document.querySelector('#overlay');
+const el = (html) => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; };
+const layer = (cls, html) => { const node = el(`<div class="layer ${cls}">${html}</div>`); overlay.append(node); return node; };
+
+// Sample content. In the game the name comes from the player and is set with textContent.
+const LAB = new URLSearchParams(location.search).get('lab') ?? 'Northlight';
+const pips = (found, total) => `<span class="pips">${Array.from({ length: total }, (_, i) => `<i class="${i < found ? 'on' : ''}"></i>`).join('')}</span>`;
+const speakerSvg = '<svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></svg>';
+const speaker = (x, y) => stage.append(el(`<div class="speaker" style="left:${x}px;top:${y}px">${speakerSvg}</div>`));
+
+function showA() {
+  stage.classList.add('hide-hud', 'a');
+  layer('a', `<div class="veil"></div><section class="gp">
+    <h1>AI Lab</h1>
+    <p class="sub muted">Run a frontier AI lab, one model at a time.</p>
+    <div class="rule"></div>
+    <label class="field"><span>Name your lab</span><input value="${LAB}" maxlength="28"></label>
+    <button class="btn" type="button">New game</button>
+    <div class="row"><button class="linkbtn" type="button">Sound and music</button><button class="linkbtn" type="button">Credits</button></div>
+    <div class="found muted">Endings found: 2 of 11 ${pips(2, 11)}</div>
+  </section>`);
+  speaker(1376, 836);
+}
+
+function showB() {
+  stage.classList.add('hide-hud', 'b');
+  layer('b', `<section class="rail">
+    <h1>AI Lab</h1>
+    <p class="sub muted">Run a frontier AI lab, one model at a time. Five eras, eleven endings.</p>
+    <label class="field"><span>Name your lab</span><input value="${LAB}" maxlength="28"></label>
+    <div class="menu">
+      <button class="go" type="button">New game <span>&rarr;</span></button>
+      <button type="button">Sound and music</button>
+      <button type="button">Credits</button>
+      <button type="button">Endings found <small class="muted">2 of 11</small></button>
+    </div>
+    <div class="foot now muted">Now playing <b>Wallpaper</b> · Kevin MacLeod</div>
+  </section>`);
+  speaker(1376, 836);
+}
+
+function showC() {
+  stage.classList.add('hide-hud', 'c');
+  document.documentElement.classList.add('dark');
+  layer('c', `<div class="night"></div><div class="game">AI Lab</div><div class="ropes"></div>
+    <div class="sign"><div class="kick">Opening soon</div><div class="name">${LAB}<span class="caret"></span></div><div class="lab">a frontier AI lab</div></div>
+    <section class="gp signbar">
+      <p>Type your lab's name. It goes on the sign.</p>
+      <button class="btn" type="button">Turn the lights on</button>
+      <div class="row"><button class="linkbtn" type="button">Sound and music</button><button class="linkbtn" type="button">Credits</button><button class="linkbtn" type="button">Endings found: 2 of 11</button></div>
+    </section>`);
+  speaker(1376, 836);
+}
+
+
+function night(cls) {
+  stage.classList.add('hide-hud', 'cv', cls);
+  document.documentElement.classList.add('night');
+}
+const links = '<div class="row"><button class="linkbtn" type="button">Sound and music</button><button class="linkbtn" type="button">Credits</button><button class="linkbtn" type="button">Endings found: 2 of 11</button></div>';
+function showC1() {
+  night('c1');
+  layer('c1', `<div class="lamp"></div><div class="game">AI Lab</div>
+    <div class="chain" style="left:452px"></div><div class="chain" style="left:980px"></div>
+    <div class="board">
+      <i class="screw" style="left:18px;top:18px"></i><i class="screw" style="right:18px;top:18px"></i><i class="screw" style="left:18px;bottom:18px"></i><i class="screw" style="right:18px;bottom:18px"></i>
+      <div class="kick">Opening soon</div><div class="name">${LAB}<span class="caret2"></span></div><div class="est">A frontier AI lab · est. 2026</div>
+    </div>
+    <section class="gp panel"><p>Type your lab's name. It goes on the sign.</p><button class="btn" type="button">Turn the lights on</button>${links}</section>`);
+  speaker(1376, 836);
+}
+function showC2() {
+  night('c2');
+  layer('c2', `<div class="spill"></div><div class="game">AI Lab</div>
+    <div class="wire" style="left:420px"></div><div class="wire" style="left:1020px"></div>
+    <div class="plate"><div class="kick">A frontier AI lab</div><div class="name">${LAB}<span class="caret2"></span></div><div class="open">OPEN</div></div>
+    <section class="gp panel"><p>Type your lab's name. It lights up on the sign.</p><button class="btn" type="button">Switch the sign on</button>${links}</section>`);
+  speaker(1376, 836);
+}
+function showC3() {
+  night('c3');
+  layer('c3', `<div class="game">AI Lab</div>
+    <div class="door"><div class="glass">
+      <div class="name gold">${LAB}<span class="caret2" style="background:var(--wood)"></span></div>
+      <div class="rule2 gold" style="background:linear-gradient(90deg,transparent,var(--wood),transparent)"></div>
+      <div class="kick">Frontier AI research</div>
+      <div class="est">Established 2026</div>
+    </div><div class="lower"></div><div class="handle"></div></div>
+    <section class="gp panel"><p>Type your lab's name. It goes on the door.</p><button class="btn" type="button">Open the doors</button>${links}</section>`);
+  speaker(1376, 836);
+}
+
+// Isometric helpers in the office's own frame: origin = the back floor corner (687.8, 320.3);
+// r runs along the right wall, l along the left wall, up is screen up. Same outline and fills as gen_office.py.
+const O = [687.8, 320.3];
+const R = [0.866, 0.5], L = [-0.866, 0.5];
+const pt = (a, b = 0, up = 0) => [O[0] + a * R[0] + b * L[0], O[1] + a * R[1] + b * L[1] - up];
+const poly = (pts, fill, extra = '') => `<polygon class="edge" points="${pts.map((p) => p.map((n) => n.toFixed(1)).join(',')).join(' ')}" style="fill:${fill}" ${extra}/>`;
+const svg = (inner) => `<svg class="iso" viewBox="0 0 1440 900">${inner}</svg>`;
+const WOOD = 'color-mix(in oklab, var(--wood) 80%, var(--paper))';
+const WOOD_TOP = 'color-mix(in oklab, var(--wood) 62%, var(--paper))';
+const WOOD_SIDE = 'color-mix(in oklab, var(--wood) 55%, var(--ink))';
+const INK = 'color-mix(in oklab, var(--ink) 88%, var(--wood))';
+
+// E1: a thick wooden board hung over the room, facing you like the right wall does.
+function signE1() {
+  const a0 = -99, b0 = 99, W = 470, H = 118, T = 16, up = 262;
+  const o = pt(a0, b0, up);
+  const at = (a, down = 0, back = 0) => [o[0] + a * R[0] - back * L[0], o[1] + a * R[1] - back * L[1] + down];
+  const front = [at(0), at(W), at(W, H), at(0, H)];
+  const top = [at(0), at(W), at(W, 0, T), at(0, 0, T)];
+  const end = [at(W), at(W, 0, T), at(W, H, T), at(W, H)];
+  const inset = [at(10, 10), at(W - 10, 10), at(W - 10, H - 10), at(10, H - 10)];
+  const cable = (a) => { const p = at(a, 0, T / 2); return `<line x1="${p[0]}" y1="0" x2="${p[0]}" y2="${p[1]}" style="stroke:color-mix(in oklab, var(--ink) 55%, var(--paper));stroke-width:2"/>`; };
+  const m = `matrix(${R[0]},${R[1]},0,1,${o[0]},${o[1]})`;
+  return svg(`${cable(70)}${cable(W - 70)}${poly(top, WOOD_TOP)}${poly(end, WOOD_SIDE)}${poly(front, WOOD)}${poly(inset, 'color-mix(in oklab, var(--wood) 70%, var(--paper))')}
+    <g transform="${m}"><text x="${W / 2}" y="34" text-anchor="middle" font-size="13" letter-spacing="3" style="fill:color-mix(in oklab, var(--wood) 40%, var(--ink))">OPENING SOON</text>
+    <text x="${W / 2}" y="92" text-anchor="middle" font-size="58" style="fill:${INK}">${LAB}</text></g>`);
+}
+
+// E2: big block letters standing on top of the window wall, like a rooftop sign.
+function signE2() {
+  const size = 74, depth = 14;
+  const base = pt(0, 395, 181); // on the left wall's top edge, near its front end
+  const m = (dx, dy) => `matrix(${-L[0]},${-L[1]},0,1,${base[0] + dx},${base[1] + dy})`;
+  let layers = '';
+  for (let k = 0; k <= depth; k++) {
+    const dx = k * R[0] * .9, dy = k * R[1] * .9;
+    const fill = k === depth ? 'var(--paper)' : 'color-mix(in oklab, var(--coral) 70%, var(--ink))';
+    layers += `<text transform="${m(dx, dy)}" x="18" y="-6" font-size="${size}" style="fill:${fill};${k === depth ? 'stroke:color-mix(in oklab, var(--ink) 30%, transparent);stroke-width:.8' : ''}">${LAB}</text>`;
+  }
+  return svg(layers);
+}
+
+// E3: the name painted on the floor, in a pool of light.
+function signE3() {
+  const c = pt(200, 190);
+  const m = `matrix(${R[0]},${R[1]},${L[0]},${L[1]},${c[0]},${c[1]})`;
+  return svg(`<ellipse cx="${c[0]}" cy="${c[1]}" rx="330" ry="190" style="fill:color-mix(in oklab, var(--wood) 30%, transparent)"/>
+    <g transform="${m}">
+      <circle r="150" style="fill:none;stroke:color-mix(in oklab, var(--paper) 85%, var(--wood));stroke-width:5"/>
+      <circle r="136" style="fill:none;stroke:color-mix(in oklab, var(--paper) 85%, var(--wood));stroke-width:1.6"/>
+      <text y="-54" text-anchor="middle" font-size="13" letter-spacing="4" style="fill:color-mix(in oklab, var(--paper) 85%, var(--wood))">A FRONTIER AI LAB</text>
+      <text y="22" text-anchor="middle" font-size="56" style="fill:color-mix(in oklab, var(--paper) 90%, var(--wood))">${LAB}</text>
+      <text y="62" text-anchor="middle" font-size="13" letter-spacing="4" style="fill:color-mix(in oklab, var(--paper) 85%, var(--wood))">EST. 2026</text>
+    </g>`);
+}
+
+function showE(cls, sign, button, prompt) {
+  night(cls);
+  layer(cls, `<div class="game">AI Lab</div>${sign()}
+    <section class="gp panel"><p>${prompt}</p><button class="btn" type="button">${button}</button>${links}</section>`);
+  speaker(1376, 836);
+}
+const showE1 = () => showE('e1', signE1, 'Turn the lights on', "Type your lab's name. It goes on the sign.");
+const showE2 = () => showE('e2', signE2, 'Turn the lights on', "Type your lab's name. It goes up on the roof.");
+const showE3 = () => showE('e3', signE3, 'Turn the lights on', "Type your lab's name. It gets painted on the floor.");
+
+({ '#e1': showE1, '#e2': showE2, '#e3': showE3, '#a': showA, '#b': showB, '#c': showC, '#c1': showC1, '#c2': showC2, '#c3': showC3 }[location.hash] ?? showA)();
+</script>
+</body>
+</html>

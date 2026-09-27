@@ -11,13 +11,14 @@
 // (no new releases). A planned round raises at today's valuation. Nothing here changes the state.
 import { BALANCE } from '../../sim/balance.js';
 import { ERAS, eraById } from '../../sim/data/eras.js';
-import { RESALE, SPOT_PRICE } from '../../sim/data/compute.js';
+import { RESALE, spotPrice } from '../../sim/data/compute.js';
 import { leaseMonthly } from '../../sim/power.js';
-import { activeModels, monthlyRevenue, revenuePerUser, INVESTORS } from '../../sim/economy.js';
+import { activeModels, monthlyRevenue, revenuePerUser, roundAmount } from '../../sim/economy.js';
 import { computeSlices, resaleCredit, spotCover } from '../../sim/split.js';
 import { PRICE_STANCE } from '../../sim/serving.js';
 import { reviewerCost } from '../../sim/automation.js';
-import { roundSpan } from '../../sim/time.js';
+import { roundSpan, storyDate } from '../../sim/time.js';
+import { storyDayForTurn } from './format.js';
 
 export const UNIT_PRICE = BALANCE.unitMonthlyCost;
 export const LAST_TURN = ERAS.reduce((sum, era) => sum + era.turns, 0) - 1;
@@ -32,6 +33,14 @@ export function eraOfTurn(turn) {
   return ERAS.at(-1).id;
 }
 
+// Owner rule 2026-09-26: the planner never names an era the player has not reached. A later era is called by the
+// clock date (the HUD's Y M W) of its first day, and a deadline in it by the date of its last day.
+const firstDay = (era) => storyDate(storyDayForTurn(eraStart(era))).label;
+const lastDay = (era) => storyDate(storyDayForTurn(eraStart(era) + eraById(era).turns) - 1).label;
+export const eraLabel = (state, era) => (era <= state.era ? `Era ${era}` : `From ${firstDay(era)}`);
+export const eraTitle = (state, era) => (era <= state.era ? eraById(era).name : '');
+export const eraEndWords = (state, era) => (era <= state.era ? `the end of era ${era}` : lastDay(era));
+
 export function monthOfTurn(turn) {
   let month = 0;
   for (let t = 0; t < turn; t++) month += eraById(eraOfTurn(t)).monthsPerTurn;
@@ -39,7 +48,7 @@ export function monthOfTurn(turn) {
 }
 
 export const opsMonthly = (era) => BALANCE.baseOpsMonthly * (1 + 0.25 * (era - 1));
-export const roundSize = (state) => Math.round(state.valuation * INVESTORS.vc.share);
+export const roundSize = (state) => roundAmount(state, 'vc');
 const roundOpen = (state, era) => era >= 2 && state.flags.lastRoundEra !== era;
 
 // One row per finished turn, built from the state before and after endTurn and the turn's events.
@@ -127,7 +136,9 @@ export function signedAt(state, turn) {
   const power = sites.reduce((sum, s) => sum + s.units, 0);
   const own = whole.filter((c) => !c.needsPower).reduce((sum, c) => sum + c.units, 0);
   const needs = whole.filter((c) => c.needsPower).reduce((sum, c) => sum + c.units, 0);
-  const billOf = (c) => c.units * (c.supplier === 'spot' ? SPOT_PRICE[era] : c.price) * UNIT_PRICE;
+  // Spot renews at the new price from the next turn (syncContracts); this turn it bills what it stored.
+  const spotAt = (c) => (turn === state.turn ? c.price : spotPrice(state, era));
+  const billOf = (c) => c.units * (c.supplier === 'spot' ? spotAt(c) : c.price) * UNIT_PRICE;
   const bill = live.reduce((sum, c) => sum + billOf(c) * share(c), 0) + sites.reduce((sum, s) => sum + leaseMonthly(s.units), 0)
     + landingSites.reduce((sum, s) => sum + leaseMonthly(s.units) * landedShare(s, turn), 0);
   const azuria = live.filter((c) => c.supplier === 'azuria').reduce((sum, c) => sum + billOf(c) * share(c), 0);
@@ -138,7 +149,7 @@ export function signedAt(state, turn) {
     bill: billOf(c),
   }));
   const raw = own + Math.min(needs, power);
-  const prices = whole.map((c) => ({ units: c.units, price: c.supplier === 'spot' ? SPOT_PRICE[era] : c.price }));
+  const prices = whole.map((c) => ({ units: c.units, price: c.supplier === 'spot' ? spotAt(c) : c.price }));
   // refreshOnline: pooled compute goes to the government pool; it is still billed.
   return { units: Math.floor(raw * (1 - (state.compute.pooled ?? 0))), raw, bill, azuria, azuriaSpans, prices };
 }
@@ -236,7 +247,7 @@ export function project(state, plan) {
     }
     const today = turn === state.turn
       ? spotCover(state) - resaleCredit(state)
-      : (cover ? shortfall * SPOT_PRICE[era] * UNIT_PRICE : 0) - (resell ? resale : 0);
+      : (cover ? shortfall * spotPrice(state, era) * UNIT_PRICE : 0) - (resell ? resale : 0);
     const signedBill = signed.bill - credit + today;
     const burn = signedBill + planBill + ops + people;
     const raised = raises[era] && roundOpen(state, era) && turn === Math.max(state.turn, eraStart(era)) ? round : 0;
@@ -292,17 +303,18 @@ export function planOpinions(state, projection, plan) {
   const growth = finalGoal / Math.max(1, state.compute.online);
   const era4Goal = plan.goals[4];
   const out = projection.runsOut;
+  const byEnd = last.era <= state.era ? `by era ${last.era}` : 'by the end of the plan';
   const opinions = [
     {
       id: 'cfo',
       mood: out ? 'alarmed' : projection.lowest < 500 ? 'uneasy' : 'calm',
       text: projection.rows[0].revenue < 1
-        ? `We earn nothing yet and spend ${Math.round(last.burn)} million a month by era ${last.era}.${out ? ` We're out in month ${Math.floor(out.atMonth)}.` : ''}`
+        ? `We earn nothing yet and spend ${Math.round(last.burn)} million a month ${byEnd}.${out ? ` We're out in month ${Math.floor(out.atMonth)}.` : ''}`
         : out
-          ? `We spend ${ratio} times what we earn by era ${last.era}. Without more money we're out in month ${Math.floor(out.atMonth)}.`
+          ? `We spend ${ratio} times what we earn ${byEnd}. Without more money we're out in month ${Math.floor(out.atMonth)}.`
           : last.burn <= last.revenue
-            ? `It holds. By era ${last.era} we earn more than we spend.`
-            : `It holds. We spend ${Math.max(1, ratio)} times what we earn by era ${last.era}.`,
+            ? `It holds. ${byEnd[0].toUpperCase()}${byEnd.slice(1)} we earn more than we spend.`
+            : `It holds. We spend ${Math.max(1, ratio)} times what we earn ${byEnd}.`,
     },
     {
       id: 'research',
@@ -313,12 +325,12 @@ export function planOpinions(state, projection, plan) {
       id: 'safety',
       mood: 'calm',
       text: era4Goal != null
-        ? `At our ${Math.round(state.compute.split.safety * 100)}% share, era 4 gives safety ${Math.round(era4Goal * state.compute.split.safety)} units.`
+        ? `At our ${Math.round(state.compute.split.safety * 100)}% share, ${state.era >= 4 ? 'this era' : 'later on'}, safety gets ${Math.round(era4Goal * state.compute.split.safety)} units.`
         : `At our ${Math.round(state.compute.split.safety * 100)}% share, safety gets ${Math.round(finalGoal * state.compute.split.safety)} units.`,
     },
   ];
   if (state.era <= 3 && era4Goal != null) {
-    opinions.push({ id: 'policy', mood: 'uneasy', text: 'Chips we own need power from era 4, and grid reservations close after era 3.' });
+    opinions.push({ id: 'policy', mood: 'uneasy', text: 'Chips we own will need power of their own later on, and grid reservations will not stay open forever.' });
   } else {
     opinions.push({ id: 'policy', mood: out ? 'uneasy' : 'calm', text: out ? 'Running out of money in public is the story I cannot spin.' : 'A plan that holds is one I can explain.' });
   }

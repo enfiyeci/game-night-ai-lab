@@ -36,6 +36,7 @@ import { MAX_MOVES, setBudget } from '../../sim/turn.js';
 import { roundWord, storyDate } from '../../sim/time.js';
 import { computeAmount, money, pct, roundsToWords, storyDayForTurn } from './format.js';
 import { ifSignedFirst, plannedTakes, roundEndItems, playerSize, SIZE_LABEL } from './race.js';
+import { eraEndWords } from './finance.js';
 
 const OFFER_COPY = {
   verde: { per: 'your own chips' },
@@ -267,7 +268,8 @@ export function dealCards(state) {
         per: OFFER_COPY[offer.supplier].per,
         rows: investment ? investmentRows(offer, state.era) : standardRows(offer, state.era),
         chip,
-        explanation,
+        // Raising from the strategic cloud partner marks up every rival cloud (sim/data/compute.js PARTNER_MARKUP).
+        explanation: offer.partnerMarkup ? `${explanation} Your cloud partner's terms add ${pct(offer.partnerMarkup - 1)}.` : explanation,
         disabled: Boolean(reason),
         reason,
         viaQueue: false,
@@ -686,7 +688,7 @@ export function turnSummary(events, state) {
     } else if (event.type === 'raise') {
       lines.push(`You raised ${money(event.amount)}`);
     } else if (event.type === 'boardPromise') {
-      lines.push(`You promised the board ${computeAmount(event.units, event.era)} by the end of era ${event.era}`);
+      lines.push(`You promised the board ${computeAmount(event.units, state ? Math.min(event.era, state.era) : event.era)} by ${state ? eraEndWords(state, event.era) : `the end of era ${event.era}`}`);
     } else if (event.type === 'boardPromiseJudged') {
       lines.push(event.ratio >= 1 ? 'You kept your compute promise to the board'
         : event.vote ? 'You missed your compute promise badly, and the board wants a vote'

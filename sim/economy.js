@@ -4,7 +4,7 @@ import { clamp } from './util.js';
 import { seat } from './board.js';
 import { activeModels, safetyUnits, servingCost, PRICE_STANCE, REVENUE_PER_USER } from './serving.js';
 import { controlUnits, reviewerCost } from './automation.js';
-import { monthlyBills, arrivingBills, creditOffset, addPipeline } from './contracts.js';
+import { monthlyBills, arrivingBills, creditOffset, addPipeline, markUpRivalOffers } from './contracts.js';
 import { leaseBills } from './power.js';
 import { resaleCredit, safetyValue, spotCover } from './split.js';
 
@@ -112,18 +112,24 @@ export const INVESTORS = {
   sovereign: { name: 'Sovereign wealth fund', share: 0.15 },
 };
 
+// Trading equity for compute (an emergency option) costs independence: every later round raises this share of
+// what it would have. Owner 2026-09-26: "less independence later" must be a real consequence.
+export const INDEPENDENCE_ROUND_SHARE = 0.8;
+export const roundAmount = (state, archetype) =>
+  Math.round(state.valuation * INVESTORS[archetype].share * (state.flags.independenceLost ? INDEPENDENCE_ROUND_SHARE : 1));
+
 export function raiseRound(state, archetype) {
   if (state.era < 2) return { ok: false, error: 'funding rounds open in era 2' };
   if (!Object.hasOwn(INVESTORS, archetype)) return { ok: false, error: `unknown investor ${archetype}` };
-  const inv = INVESTORS[archetype];
   if (state.flags.lastRoundEra === state.era) return { ok: false, error: 'already raised a round this era' };
-  const amount = Math.round(state.valuation * inv.share);
+  const amount = roundAmount(state, archetype);
   state.cash += amount;
   state.flags.lastRoundEra = state.era;
   state.board = state.board.map((s) => s - 3);
   if (archetype === 'vc') state.board[seat('growth')] += 8;
   if (archetype === 'strategic') {
-    state.flags.strategicStrings = true;
+    state.flags.strategicStrings = true; // other clouds cost more from now on (PARTNER_MARKUP in sim/data/compute.js)
+    markUpRivalOffers(state);
   }
   if (archetype === 'sovereign') {
     state.govFavor.us -= 5;

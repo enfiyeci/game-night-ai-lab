@@ -1,12 +1,13 @@
 import { ERAS } from './data/eras.js';
 import { PROMISES } from './data/promises.js';
 import { hasLine } from './constitution.js';
+import { FEED_KEEP } from './feedLive.js';
 
 const LAST_TURN = ERAS.reduce((sum, era) => sum + era.turns, 0) - 1;
 
 function pushFeed(state, handle, text, tag = 'feed') {
-  state.feed.push({ turn: state.turn, handle, text, tag });
-  if (state.feed.length > 40) state.feed.splice(0, state.feed.length - 40);
+  state.feed.push({ turn: state.turn, day: state.day, handle, text, tag });
+  if (state.feed.length > FEED_KEEP) state.feed.splice(0, state.feed.length - FEED_KEEP);
 }
 
 const promiseDefinition = (promise) => PROMISES[promise.id];

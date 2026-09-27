@@ -8,9 +8,11 @@ import { openDeals, openQueue } from './compute.js';
 import { openPowerSites } from './sites.js';
 import {
   EMERGENCY_OPTIONS,
+  INDEPENDENCE_ROUND_SHARE,
   INVESTORS,
   inDangerZone,
   projectBurn,
+  roundAmount,
   runway,
 } from '../../sim/economy.js';
 import { TECHNIQUES, techAvailable } from '../../sim/techniques.js';
@@ -193,12 +195,12 @@ export function openRaise(game, overlayRoot) {
   const reason = game.movesLeft() === 0
     ? `Both team actions are used this ${roundWord(state.era)}`
     : queued ? `A funding round was already started this ${roundWord(state.era)}`
-      : projected.era < 2 ? 'Funding rounds open in era 2'
+      : projected.era < 2 ? 'Investors are not ready yet'
         : projected.flags.lastRoundEra === projected.era ? 'You already raised a round this era' : '';
   const options = Object.entries(INVESTORS).map(([id, investor]) => ({
     id,
     investor,
-    amount: Math.round(projected.valuation * investor.share),
+    amount: roundAmount(projected, id),
     ...INVESTOR_COPY[id],
   }));
   let selected = reason ? '' : options[0].id;
@@ -236,6 +238,12 @@ export function openRaise(game, overlayRoot) {
         ['Share of lab', pct(option.investor.share)],
       ])
       : statusPanel([], reason));
+    if (option && projected.flags.independenceLost) {
+      const note = document.createElement('p');
+      note.className = 'company-status-lead';
+      note.textContent = `Rounds raise ${pct(1 - INDEPENDENCE_ROUND_SHARE)} less since you traded equity for compute.`;
+      rightContent.append(note);
+    }
   }
   wireChoices(group, buttons, (id) => { selected = id; error.textContent = ''; renderSelection(); });
 
@@ -292,7 +300,7 @@ export function openResearch(game, overlayRoot) {
     const name = document.createElement('strong');
     name.textContent = technique.name;
     const available = document.createElement('span');
-    available.textContent = `Available to everyone in era ${technique.era}`;
+    available.textContent = 'Everyone gets it later';
     copy.append(name, available);
     const cost = document.createElement('span');
     cost.className = 'research-cost';
@@ -330,7 +338,7 @@ export function openResearch(game, overlayRoot) {
       ['Points now', `${Math.round(projected.researchPoints)}`],
       ['Cost', `${technique.researchCost}`],
       ['After research', `${Math.round(projected.researchPoints - technique.researchCost)}`],
-      ['Industry access', `era ${technique.era}`],
+      ['Industry access', 'later'],
     ] : [['Research points', `${Math.round(projected.researchPoints)}`]], technique ? '' : 'Pick an affordable technique.'));
     if (opened) {
       const available = buttons.some((button) => !button.disabled);
