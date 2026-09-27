@@ -27,7 +27,7 @@ export function storyDate(day) {
   const w = Math.floor((date.getUTCDate() - 1) / 7) + 1;
   const month = `${MONTH_NAMES[m - 1]} ${y}`;
   // Era 5 moves a week at a time, so its dates name the week.
-  return { y, m, w, label: era.id === 5 ? `${month}, week ${w}` : month };
+  return { y, m, w, d: date.getUTCDate(), label: era.id === 5 ? `${month}, week ${w}` : month };
 }
 
 // The story day of the round mark `rounds` marks from now, walking era changes (4 rounds per era).
