@@ -61,7 +61,7 @@ def shot_ab_constitution():
     kit.box((tx, 3.3, 0.74), (1.3, 3.6, 0.04), kit.mat("#5B3F2C", 0.3, coat=0.4), bevel=0.01)
     for y in (1.8, 4.8):
         kit.box((tx, y, 0.36), (0.9, 0.08, 0.72), kit.mat("#2A2B2D", 0.4, 0.6))
-    for (y, coat) in ((3.3, "#1F2226"), (4.35, "#2C2A30")):
+    for (y, coat) in ((3.75, "#1F2226"), (4.8, "#2C2A30")):
         F.chair((0.72, y), 90, colour="#1B1C1E")
         P.person((0.72, y + 0.02), facing=90, pose="sit", coat=coat, hair="#141212", skin="#6E4630")
     rng = random.Random(5)
@@ -71,7 +71,6 @@ def shot_ab_constitution():
         F.flat_text("AZURIA\nLEGAL", (x, y, 0.7662 + k * 0.001), 0.03, "#E8ECF2", rot_z=r + math.radians(90), font=kit.FONT)
     for _ in range(9):
         F.paper((rng.uniform(-0.75, 0.25), rng.uniform(2.5, 4.8), 0.76 + rng.uniform(0, 0.004)), rot_z=rng.uniform(-0.6, 0.6))
-    kit.place("office_notepads", (-0.55, 3.8, 0.76), rot_z=0.4)
     # the laptop at our end, and our own printed constitution under a red pen
     face = F.laptop("laptop", (-0.3, 2.05, 0.76), "ab-constitution", (150, 70, 980, 510), yaw=-22, width=0.36)
     F.paper((0.05, 1.86, 0.76), rot_z=-0.3)
@@ -129,7 +128,7 @@ def shot_mu_alert():
     face = F.monitor("console", (0.0, D - 0.3), 1.15, "mu-alert", (70, 100, 1140, 300), strength=1.0)
     for side in (-1, 1):   # the camera feeds, grey and quiet
         F.dark_monitor((side * 1.0, D - 0.4), width=0.5, h=0.3, yaw=side * 28, glow=("#26323E", 1.2))
-    F.note((-0.42, D - 0.78, 0.7555), "egress alerts =\nfalse positives.\njust dismiss. -J", size=0.1, text_size=0.012,
+    F.note((-0.62, D - 0.45, 0.7555), "egress alerts =\nfalse positives.\njust dismiss. -J", size=0.1, text_size=0.012,
            rot=(0, 0, math.radians(8)))
     F.keyboard(0.0, D - 0.72)
     F.mug((0.42, D - 0.65, 0.755), colour="#2A2B2E")
@@ -138,10 +137,10 @@ def shot_mu_alert():
     kit.box((-0.45, D - 0.7, 0.7672), (0.066, 0.14, 0.0005), kit.emission("#DCE6F5", 1.2), rot=(0, 0, 0.3))
     F.chair((0.75, D - 1.3), 235)
     # the beacon over the desk, and a clock
-    kit.sphere((0.9, D - 0.08, 1.75), 0.07, kit.emission("#FF2A1A", 60), scale=(1, 0.7, 1))
-    kit.point((0.9, D - 0.25, 1.72), 40, (1.0, 0.12, 0.06), radius=0.05)
-    kit.box((-0.9, D - 0.03, 1.72), (0.42, 0.04, 0.16), kit.mat("#0B0B0C", 0.4))
-    sign("03:02", (-0.9, D - 0.052, 1.72), 0.11, "#FF3B2A", strength=8)
+    kit.sphere((0.9, D - 0.08, 1.6), 0.07, kit.emission("#FF2A1A", 6), scale=(1, 0.7, 1))
+    kit.point((0.9, D - 0.25, 1.58), 40, (1.0, 0.12, 0.06), radius=0.05)
+    kit.box((-0.9, D - 0.03, 1.58), (0.42, 0.04, 0.16), kit.mat("#0B0B0C", 0.4))
+    sign("03:02", (-0.9, D - 0.052, 1.58), 0.11, "#FF3B2A", strength=3)
     kit.area((0, D - 0.45, 1.0), (0, D - 0.9, 0.75), (1.0, 0.3), 5, kit.kelvin(7000))   # the console's spill on the desk
     kit.area((0, D - 0.9, 1.1), (0, D - 2.5, 1.0), (1.1, 0.3), 6, kit.kelvin(7000))   # the console's light on the room
     kit.world("#040506", 1.0)
@@ -200,10 +199,10 @@ def shot_al_badges():
     # the front desk: the visitor list on its monitor, the badges laid out for the day
     kit.box((0, 1.65, 0.54), (3.0, 0.5, 1.08), kit.mat("#D9D3C7", 0.4), bevel=0.01)
     kit.box((0, 1.6, 1.095), (3.1, 0.62, 0.03), kit.tex("marble_01", 1.0, name="counter"), bevel=0.004)
-    face = F.monitor("desk", (0.4, 1.75), 0.55, "al-badges", (200, 100, 880, 470), z=1.11, yaw=-16)
+    face = F.monitor("desk", (0.27, 1.75), 0.55, "al-badges", (200, 100, 880, 470), z=1.11, yaw=-14)
     orgs = [("LODESTAR", "#3F84C6")] * 4 + [("DEEPTHINK", "#3F9C8F")] * 3 + [("OPENBRAIN", "#E0613B")] * 3
     for k, (org, col) in enumerate(orgs):
-        x, y = -0.62 + (k % 5) * 0.105, 1.6 + (k // 5) * 0.16
+        x, y = -0.66 + (k % 5) * 0.105, 1.64 + (k // 5) * 0.15
         r = rng.uniform(-0.08, 0.08)
         kit.box((x, y, 1.1115), (0.07, 0.105, 0.002), kit.mat("#F4F1EA", 0.5), rot=(0, 0, r))
         kit.box((x, y + 0.04, 1.1128), (0.07, 0.022, 0.0004), kit.mat(col, 0.5), rot=(0, 0, r))

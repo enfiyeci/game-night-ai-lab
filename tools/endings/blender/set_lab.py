@@ -286,8 +286,8 @@ def shot_lb_usage():
         F.carton((x + rng.uniform(-0.3, 0.3), y - 0.05, 0.755), (0.55, 0.38, 0.34), rot_z=rng.uniform(-0.3, 0.3), label=labels[k])
     for k in range(3):
         F.carton((2.2 + k * 0.05, 3.9, k * 0.4), (0.6, 0.4, 0.4), rot_z=0.1 * k, label="LAB " + str(k + 1))
-    P.person((-1.5, 6.25), facing=95, pose="walk", coat="#2C2A2E", hair="#141212")
-    F.carton((-1.83, 6.28, 0.98), (0.45, 0.32, 0.3), rot_z=math.radians(5), taped=False)
+    P.person((-1.5, 6.25), facing=25, pose="walk", coat="#2C2A2E", hair="#141212")
+    F.carton((-1.63, 6.55, 0.98), (0.45, 0.32, 0.3), rot_z=math.radians(25), taped=False)
     kit.camera((0.9, 0.9, 1.6), (0.0, OD, 1.5), lens=32, fstop=5.6, focus=(0, OD, 1.8))
 
 
