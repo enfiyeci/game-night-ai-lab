@@ -8,6 +8,7 @@ ui/assets/endings/stills/<shot>.jpg with <shot>.json (the live screens' corners)
 folder as PNG instead, for looking at while a set is being built (use a low scale and samples there).
 Run tools/endings/plate_png.py first so the screens have their images.
 """
+import fcntl
 import os
 import shutil
 import subprocess
@@ -18,6 +19,9 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[2]
 BLENDER = os.environ.get("BLENDER", "/Applications/Blender.app/Contents/MacOS/Blender")
+# One render at a time on this machine, whoever starts it: two Cycles renders at once can exhaust memory and freeze
+# the Mac (it did on 2026-09-26). A second caller waits here until the first finishes.
+LOCK = Path(os.path.expanduser("~/.cache/ai-lab-endings/render.lock"))
 
 
 def main(argv):
@@ -32,7 +36,9 @@ def main(argv):
     cmd = [BLENDER, "-b", "--factory-startup", "-P", str(HERE / f"set_{set_name}.py"), "--", str(work), f"shot={shots}",
            *[f"{k}={v}" for k, v in opts.items()]]
     log = work / f"{set_name}.log"
-    with open(log, "w") as f:
+    LOCK.parent.mkdir(parents=True, exist_ok=True)
+    with open(LOCK, "w") as lock, open(log, "w") as f:
+        fcntl.flock(lock, fcntl.LOCK_EX)
         code = subprocess.run(cmd, stdout=f, stderr=subprocess.STDOUT).returncode
     text = log.read_text()
     done = [line.split()[1] for line in text.splitlines() if line.startswith("STILL ")]
