@@ -452,7 +452,7 @@ export const STRATEGIES = {
 };
 
 function freshMetrics() {
-  return { perEra: {}, queueShortTurns: 0, queueTurns: 0, rankAtEra4End: null, rejectedActions: 0 };
+  return { perEra: {}, queueShortTurns: 0, queueTurns: 0, rankAtEra4End: null, rejectedActions: 0, rounds: 0, roundsAtFirst: 0, rivalDeals: 0 };
 }
 
 function observeTurn(metrics, { era, burn, compute }) {
@@ -479,6 +479,9 @@ function simulateMeasured(name, seed) {
     const result = endTurn(state, STRATEGIES[name](state, rng), rng, { beforeEconomy: (sample) => { economySample = sample; } });
     state = result.state;
     metrics.rejectedActions += result.errors.length;
+    metrics.rounds += 1;
+    if (rank(state) === 1) metrics.roundsAtFirst += 1;
+    metrics.rivalDeals += result.events.filter((event) => event.type === 'rivalDeal').length;
     if (economySample) observeTurn(metrics, economySample);
     if (era === 3) {
       metrics.queueTurns += 1;
@@ -514,11 +517,19 @@ export function report(n) {
     let rankAtEra4EndRuns = 0;
     let rejectedActions = 0;
     const cashEndingsByEra = {};
+    const leftBehindByEra = {};
+    let rounds = 0;
+    let roundsAtFirst = 0;
+    let rivalDeals = 0;
     for (let seed = 1; seed <= n; seed++) {
       const { state, metrics } = simulateMeasured(name, seed);
       const r = { ending: state.ending, era: state.era, turn: state.turn };
       endings[r.ending] = (endings[r.ending] ?? 0) + 1;
       if (r.ending === 'acquihire') cashEndingsByEra[r.era] = (cashEndingsByEra[r.era] ?? 0) + 1;
+      if (r.ending === 'leftBehind') leftBehindByEra[r.era] = (leftBehindByEra[r.era] ?? 0) + 1;
+      rounds += metrics.rounds;
+      roundsAtFirst += metrics.roundsAtFirst;
+      rivalDeals += metrics.rivalDeals;
       eraSum += r.era;
       if (ENDINGS[r.ending]?.kind === 'fail' && (r.era === 3 || r.era === 4)) diedInEra3or4 += 1;
       queueShortTurns += metrics.queueShortTurns;
@@ -550,6 +561,9 @@ export function report(n) {
       queueShortTurns,
       queueTurns,
       cashEndingsByEra,
+      leftBehindByEra,
+      roundsAtFirst: rounds > 0 ? roundsAtFirst / rounds : 0,
+      rivalDealsPerRun: rivalDeals / n,
       rejectedActions,
       meanRankAtEra4End: rankAtEra4EndRuns > 0 ? rankAtEra4EndSum / rankAtEra4EndRuns : null,
     };

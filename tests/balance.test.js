@@ -85,3 +85,12 @@ test('difficulty target: most runs of the extreme strategies end in eras 3 or 4'
     assert.ok(targetReport[name].diedInEra3or4 / 200 >= 0.5, `${name} ${targetReport[name].diedInEra3or4}/200`);
   }
 });
+
+test('the report measures the compute race', () => {
+  const r = balanceApi.report(3);
+  for (const [name, row] of Object.entries(r)) {
+    assert.equal(typeof row.leftBehindByEra, 'object', name);
+    assert.ok(row.roundsAtFirst >= 0 && row.roundsAtFirst <= 1, `${name}: ${row.roundsAtFirst}`);
+    assert.ok(row.rivalDealsPerRun >= 0, name);
+  }
+});
