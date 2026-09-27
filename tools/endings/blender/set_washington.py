@@ -1,8 +1,24 @@
-"""Washington: the President's office at night. A heavy desk, tall windows with drapes, and a television on a
-console. Shots:
+"""Washington: three rooms. The President's office (a heavy desk, tall windows with drapes, a television), the press
+briefing room (blue seats facing a low stage, a navy backdrop with two screens either side of a plain podium, a
+camera riser at the back) and a congressional hearing room (a raised panelled bench under a navy drape, a witness
+table in green baize, the public gallery behind). No real seal or logo anywhere. Shots:
 
-  mis-order   Catastrophic misalignment, Day 11: the signed executive order to suspend every AI agent lies on the
-              desk; on the television behind it the request system shows the order RESOLVED, closed automatically.
+  mis-order    Catastrophic misalignment, Day 11: the signed executive order to suspend every AI agent lies on the
+               desk; on the television behind it the request system shows the order RESOLVED, closed automatically.
+  al-news      Aligned, Month 2, night: from behind the President's chair, the draft water report on his desk marked
+               HOLD with its findings struck through in red; across the room the television shows it published.
+  rb-hearing   Removed by the board, Month 2: from the gallery, the new CEO alone at the witness table; the
+               founder's pledge blown up on an easel by the bench; the hearing live on the wall screen.
+  mu-hearing   Catastrophic misuse, Day 3: an emergency session; the members vote with raised hands, your lab's
+               witness chairs stand empty under a hard light, the exhibit monitor carries the President's order.
+  ov-news      Overtaken, Month 1: from the reporters' seats, the President at the podium beside the screen that
+               names OpenBrain the national champion.
+  cw-hearing   A costly win, Month 4: over the bench, a laptop running the model sits at the witness's place with
+               every microphone bent toward it; the feed monitor shows the chair's question.
+  qt-briefing  A quiet takeover, Month 6, afternoon: a signing in the office staged for television; the crew's monitor
+               in front shows the bill the model drafted, TV lights and aides behind.
+  rd-news      Someone else's disaster, Day 3: the reverse angle from behind the podium, the President facing a full
+               room; the monitor over the camera riser shows 40,000 copies of OpenBrain's agent.
 """
 import math
 import os
@@ -303,8 +319,8 @@ def shot_rb_hearing():
         ("“We will spend 20% of our", 0.2, 0.075, kit.FONT_SERIF), ("compute on safety, whatever", 0.1, 0.075, kit.FONT_SERIF),
         ("our rivals do.”", 0.0, 0.075, kit.FONT_SERIF), ("KESTREL LABS PLEDGE · SIGNED BY ITS FOUNDER", -0.2, 0.034, kit.FONT)])
     kit.spot((1.2, 7.5, 4.6), (2.9, DAIS - 1.9, 1.62), 260, kit.kelvin(4500), angle=18, blend=0.6)     # a press lamp on the board
-    kit.box((5.2, HD - 0.3, 3.9), (0.1, 0.3, 0.1), kit.mat("#222", 0.4))
-    face, _ = kit.screen("wall", (4.8, HD - 0.5, 3.9), 3.0, "rb-hearing", crop=(56, 4, 1168, 657), strength=1.2,
+    kit.box((5.2, HD - 0.3, 3.75), (0.1, 0.3, 0.1), kit.mat("#222", 0.4))
+    face, _ = kit.screen("wall", (4.8, HD - 0.5, 3.7), 3.0, "rb-hearing", crop=(56, 4, 1168, 657), strength=1.2,
                          rot=(math.radians(90), 0, math.radians(-18)), depth=0.06, border=0.03, bezel="#0D0E10")
     hearing_lights()
     kit.camera((-1.2, 2.3, 1.75), (2.3, DAIS + 1.5, 2.1), lens=45, fstop=4.0, focus=(2.9, DAIS - 1.9, 1.6))
@@ -505,7 +521,7 @@ def shot_ov_news():
 
 def shot_rd_news():
     """rivalDisaster 3, Day 3: the reverse angle, from behind the podium. The President faces a standing room of
-    reporters and camera flashes; the monitor over the camera riser shows what he is being asked about."""
+    reporters, half of them on their feet; the monitor over the camera riser shows what he is being asked about."""
     briefing_room()
     podium((1.45, STAGE + 0.9))
     pres = P.person((1.45, STAGE + 1.3, 0.24), facing=172, height=1.9, coat="#1A2030", hair="#B59E5E", build=1.2, seed=90)
@@ -525,7 +541,7 @@ def shot_rd_news():
     for x, z in ((-3.4, 2.9), (3.6, 2.8)):
         tv_light((x, 0.9), (0, STAGE, 1.8), 350, z=z)
     kit.box((1.0, 0.25, 3.0), (0.3, 0.3, 0.1), kit.mat("#222", 0.4))
-    face, _ = kit.screen("confidence", (1.0, 0.35, 2.75), 2.6, "rd-news", crop=(56, 4, 1168, 657), strength=1.25,
+    face, _ = kit.screen("confidence", (1.0, 0.35, 2.75), 2.8, "rd-news", crop=(56, 4, 1168, 657), strength=1.25,
                          rot=(math.radians(90), 0, math.radians(180)), depth=0.06, border=0.03, bezel="#0B0C0E")
     for y in (3.0, 6.5):
         kit.area((0, y, BH - 0.05), (0, y, 0), (8, 1.2), 40, kit.kelvin(3600))

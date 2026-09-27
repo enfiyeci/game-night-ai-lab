@@ -4,7 +4,6 @@ behind one small figure in a spotlight. Shots:
   ov-launch   Overtaken, launch: the leader's principles, not yours, fill the wall; the presenter is a speck under
               them, and a full house watches with its phones up.
 """
-import math
 import os
 import random
 import sys
