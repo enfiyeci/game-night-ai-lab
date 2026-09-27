@@ -1,5 +1,4 @@
-import { clamp } from './util.js';
-import { sideRng } from './contracts.js';
+import { accrue, clamp } from './util.js';
 import { RIVAL_TEMPLATES, leaderCapability } from './rivals.js';
 import { exposeConcealed } from './hazards.js';
 import {
@@ -182,8 +181,8 @@ export function voteMotion(state, motions, i) {
     Object.assign(plan.promises, motion.promises ?? {});
   }
   const card = motions[i].card;
-  const rng = sideRng(state, 2000 + i);
-  const vote = resolveCard(state, card, plan, () => rng.normal(0, 0.1), true);
+  // Owner 2026-09-26, no dice: no noise on the vote; stances and check levels decide it.
+  const vote = resolveCard(state, card, plan, () => 0, true);
   let signed = PARTIES.filter((party) => vote[party] === 'yes');
   // A follower keeps its word: it signs exactly when the party it follows signed.
   for (const party of RESOLVE_ORDER) {
@@ -298,8 +297,14 @@ function addSuspicion(state, party, real, gain = 0) {
   return suspicion;
 }
 
+// Owner 2026-09-26, no dice: a check level decides each one-off outcome (a table value of one half or more is a yes);
+// a rival's weekly urge to break and a false alarm add up week by week (sim/util.js accrue).
+// With CATCH that means your break is always caught under outside testers or inspectors, never under trust or
+// self-reports (spec section 4).
+const sure = (table, level) => table[level] >= 0.5;
+
 // Once a week after the summit: your own breaks may come out, then every signing rival may break the deal.
-export function dealWeek(state, rng) {
+export function dealWeek(state) {
   if (!dealStands(state)) return [];
   const deal = state.deal;
   const events = [];
@@ -308,7 +313,7 @@ export function dealWeek(state, rng) {
   deal.playerBreaks = [];
   for (const card of breaks) {
     const level = deal.playerInspected ? CHECK_LEVELS.length - 1 : deal.checks[card] ?? DEFAULT_CHECK;
-    if (!rng.chance(CATCH[level])) continue;
+    if (!sure(CATCH, level)) continue;
     state.publicTrust = clamp(state.publicTrust - 8, 0, 100);
     state.govFavor.us = clamp(state.govFavor.us - 6, 0, 100);
     deal.collapsed = true;
@@ -319,6 +324,8 @@ export function dealWeek(state, rng) {
 
   const leader = Math.max(state.capability, ...state.rivals.map((rival) => rival.capability));
   const verification = deal.binding.includes('verification');
+  deal.breakPressure ??= {};
+  deal.alarmPressure ??= {};
   const outcomes = signingRivals(state).map((party) => {
     const rival = state.rivals.find((r) => r.id === party);
     const level = levelFor(state, party);
@@ -327,12 +334,12 @@ export function dealWeek(state, rng) {
       + (deal.insulted[party] ? 0.1 : 0)
       - DETERRENCE * level;
     if (party === 'qilin' && verification) chance *= 0.3;
-    return { party, level, broke: rng.chance(clamp(chance, 0, 1)) };
+    return { party, level, broke: accrue(deal.breakPressure, party, clamp(chance, 0, 1)) };
   });
   deal.insulted = {};
   for (const { party, level, broke } of outcomes) {
     if (broke) {
-      if (rng.chance(CATCH[level])) {
+      if (sure(CATCH, level)) {
         catchRival(state, party);
         events.push({ type: 'dealBreakCaught', party, how: 'checks', level });
         continue;
@@ -341,11 +348,11 @@ export function dealWeek(state, rng) {
       const before = rival.capability;
       rival.capability = clamp(rival.capability + BREAK_GAIN, 0, 100);
       events.push({ type: 'defection', party, detected: false });
-      if (rng.chance(SIGN_SEEN[level])) {
+      if (sure(SIGN_SEEN, level)) {
         const suspicion = addSuspicion(state, party, true, rival.capability - before);
         if (suspicion) events.push({ type: 'dealSuspicion', party, id: suspicion.id, level });
       }
-    } else if (rng.chance(FALSE_ALARM[level])) {
+    } else if (accrue(deal.alarmPressure, party, FALSE_ALARM[level])) {
       const suspicion = addSuspicion(state, party, false);
       if (suspicion) events.push({ type: 'dealSuspicion', party, id: suspicion.id, level });
     }
@@ -355,13 +362,13 @@ export function dealWeek(state, rng) {
 
 // Look into a suspicion. The UI names it by level (accuse, demand the report, ask the testers, inspectors
 // check); the rule is the same.
-export function investigate(state, suspicionId, rng) {
+export function investigate(state, suspicionId) {
   if (!dealStands(state)) return { ok: false, error: 'there is no Geneva deal to enforce' };
   const suspicion = state.deal.suspicions.find((s) => s.id === suspicionId);
   if (!suspicion) return { ok: false, error: 'that suspicion has gone cold' };
   state.deal.suspicions = state.deal.suspicions.filter((s) => s.id !== suspicionId);
   const level = levelFor(state, suspicion.party);
-  if (suspicion.real && rng.chance(INVESTIGATE[level])) {
+  if (suspicion.real && sure(INVESTIGATE, level)) {
     catchRival(state, suspicion.party, suspicion.gain ?? BREAK_GAIN);
     return { ok: true, party: suspicion.party, found: true, level };
   }
@@ -378,7 +385,7 @@ export function expireSuspicions(state) {
   state.deal.suspicions = state.deal.suspicions.filter((s) => s.dueAt > state.day);
 }
 
-// The player breaks the deal by doing what it forbids. The catch roll comes at the next weekly check.
+// The player breaks the deal by doing what it forbids. The catch comes (or not) at the next weekly check.
 export function playerBreak(state, card) {
   if (!dealBinds(state, card)) return;
   state.deal.playerShipped = true;

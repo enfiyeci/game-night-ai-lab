@@ -48,7 +48,7 @@ const BUDGET_KEYS = ['training', 'security', 'product', 'talent'];
 // sideRng salts in sim/: 0 initial offers, 1 deals, 2 site opposition, 3 contracts, 4 queue,
 // 5 offers, 6 deliveries, 7 pooling, 8 board events (sim/data/boardEvents.js), 9 + card index for card landing days
 // (sim/events.js stampNewCards), 950 the first round's rival roll (sim/state.js), 970 event triggers
-// (sim/events.js), 971 advisor noise (sim/advisors.js), 1000 + site ID for builds, and 2000 + motion index for summit votes.
+// (sim/events.js), 971 advisor noise (sim/advisors.js), and 1000 + site ID for builds.
 const SITE_RNG_SALT_BASE = 1000;
 
 export function setBudget(state, budget) {
@@ -245,7 +245,7 @@ export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = 
     if (!result.ok) errors.push(result.error);
   }
   for (const id of actions.investigate ?? []) {
-    const result = investigate(state, id, rng);
+    const result = investigate(state, id);
     if (!result.ok) errors.push(result.error);
     else events.push({ type: 'investigated', party: result.party, found: result.found, insulted: result.insulted === true, level: result.level });
   }
@@ -352,7 +352,7 @@ function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
   }
 
   if (state.era === 5 && state.deal && state.turnInEra > 0) {
-    for (const event of dealWeek(state, rng)) events.push(event);
+    for (const event of dealWeek(state)) events.push(event);
   }
 
   if (!state.ending) {

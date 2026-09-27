@@ -48,6 +48,16 @@ Ending counts per bot:
 | a3 | balancedLowSafety | misalignment 137, pacingDeal 38, acquihire 21, rivalDisaster 4 |
 | a3 | balancedHighSafety | misalignment 79, pacingDeal 69, acquihire 40, rivalDisaster 12 |
 | a3 | balancedPush | misalignment 113, pacingDeal 50, acquihire 31, rivalDisaster 6 |
+| a4 | speed | boardRemoved 200 |
+| a4 | safety | acquihire 184, leftBehind 14, misalignment 1, pacingDeal 1 |
+| a4 | balanced | misalignment 104, pacingDeal 56, acquihire 34, rivalDisaster 6 |
+| a4 | random | acquihire 143, boardRemoved 39, rivalDisaster 2, misalignment 13, misuse 3 |
+| a4 | overCommitter | acquihire 191, misalignment 8, rivalDisaster 1 |
+| a4 | handToMouth | acquihire 142, misalignment 49, pacingDeal 1, rivalDisaster 8 |
+| a4 | balancedNoGrid | acquihire 16, pacingDeal 54, misalignment 128, rivalDisaster 2 |
+| a4 | balancedLowSafety | misalignment 139, pacingDeal 36, acquihire 21, rivalDisaster 4 |
+| a4 | balancedHighSafety | misalignment 79, pacingDeal 69, acquihire 40, rivalDisaster 12 |
+| a4 | balancedPush | misalignment 113, pacingDeal 50, acquihire 31, rivalDisaster 6 |
 
 Notes:
 
@@ -73,3 +83,16 @@ Notes:
   stream also reshuffles later rolls a little (misalignment, rivalDisaster), as expected; no bot's leading ending changed.
   Aligned endings go from 3 to 0 across all bots (one each in handToMouth, balancedHighSafety and balancedPush at a2);
   at these counts that is within the reshuffle, not traced run by run. Left for the retune (C3).
+- a4 (Task A4, the summit's checks decide by level: a break by you is caught exactly under outside testers or
+  inspectors, a rival's break is caught under the same levels, a sign is always left, and looking into a real sign
+  finds it from self-reports up; a rival's weekly urge to break and a false alarm add up as running totals in
+  `state.deal.breakPressure` and `state.deal.alarmPressure`; no noise on the vote): negotiated-pace (pacingDeal)
+  counts are unchanged for the safety bot (1) and the balanced bot (56). Only balancedLowSafety moved: pacingDeal 38
+  to 36, misalignment 137 to 139. Traced run by run (seeds 61 and 98): the same two cards bind in both builds, and the
+  run ends in misalignment during era 5 instead of reaching the pace ending. The misalignment check on an agentic
+  release is still a roll on the main random stream (a later task), and dealWeek no longer draws from that stream,
+  so that roll lands differently. Across balancedLowSafety's 57 summits, removing the vote noise changed which cards
+  bind in none of them; the lists of signers still in the deal at the end differ in 33. Two things feed that and were
+  not split apart: the vote without noise can seat different signers, and rivals now break only once their running
+  total reaches 1 (then always caught under testers or inspectors) where before each week was a fresh roll. The pace
+  ending reads only which cards bind and whether you broke the deal, so these differences do not move the counts.
