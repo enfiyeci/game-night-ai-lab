@@ -271,6 +271,7 @@ test('a quiet takeover stops training and event generation for the turn', () => 
   s.era = 4;
   s.automation.stage = 3; s.capability = 80;
   s.alignmentDebt = 100;
+  s.automation.pressure = 1; // the running total reaches 1 this round (A3: no dice, running total)
   s.models.push({
     active: true,
     activated: true,

@@ -88,7 +88,9 @@ test('Endings found shows how many of the endings this browser has found', () =>
 });
 
 test('the summit waits for the President’s waiting call, then opens once he has been met', () => {
-  const game = createGame({ seed: 1, state: SCENARIOS.meeting2(1) });
+  // meeting2(2): seed 1's run ends before the second meeting since the quiet-takeover roll became a running total
+  // (deterministic endings A3 shifted the main random stream).
+  const game = createGame({ seed: 1, state: SCENARIOS.meeting2(2) });
   // the projection expires an untaken call at the round's end, so the check must read the live meeting
   assert.equal(reasonFor(game, 'summit'), 'Take the President’s call first');
   game.queue.presidentAnswers = MEETINGS[1].exchanges.map((exchange) => exchange.answers[0].id);

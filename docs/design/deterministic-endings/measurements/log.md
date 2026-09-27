@@ -38,6 +38,16 @@ Ending counts per bot:
 | a2 | balancedLowSafety | misalignment 151, pacingDeal 32, acquihire 16, rivalDisaster 1 |
 | a2 | balancedHighSafety | acquihire 33, pacingDeal 69, misalignment 93, rivalDisaster 4, aligned 1 |
 | a2 | balancedPush | acquihire 39, misalignment 110, pacingDeal 45, rivalDisaster 3, quietTakeover 2, aligned 1 |
+| a3 | speed | boardRemoved 200 |
+| a3 | safety | acquihire 184, leftBehind 14, misalignment 1, pacingDeal 1 |
+| a3 | balanced | misalignment 104, pacingDeal 56, acquihire 34, rivalDisaster 6 |
+| a3 | random | acquihire 143, boardRemoved 39, rivalDisaster 2, misalignment 13, misuse 3 |
+| a3 | overCommitter | acquihire 191, misalignment 8, rivalDisaster 1 |
+| a3 | handToMouth | acquihire 142, misalignment 49, pacingDeal 1, rivalDisaster 8 |
+| a3 | balancedNoGrid | acquihire 16, pacingDeal 54, misalignment 128, rivalDisaster 2 |
+| a3 | balancedLowSafety | misalignment 137, pacingDeal 38, acquihire 21, rivalDisaster 4 |
+| a3 | balancedHighSafety | misalignment 79, pacingDeal 69, acquihire 40, rivalDisaster 12 |
+| a3 | balancedPush | misalignment 113, pacingDeal 50, acquihire 31, rivalDisaster 6 |
 
 Notes:
 
@@ -54,3 +64,12 @@ Notes:
   while pyrrhic goes from 6 to 0 and aligned from 8 to 3. The expected drop did not appear: a 20% roll let some runs sit
   above heat 85 for several rounds and still finish, while the count ends every run that stays there three rounds.
   Likely (not traced run by run) the lost pyrrhic and aligned endings are those late runs. Left for the retune (C3).
+- a3 (Task A3, the quiet-takeover story as a running total of the per-round risk in `state.automation.pressure`, one
+  stage each time it reaches 1; the log-sampling proposal offered every round monitors run): quiet takeovers go from 2
+  to 0 (balancedPush was the only bot with any). The speed and random bots never reach even the first internal warning
+  (largest running total in 200 runs: 0.90 for speed, 0.43 for random), so neither can end in a quiet takeover. In
+  balancedPush, 49 of 200 runs reach stage 1 or higher and 5 reach stage 3, but none adds up to the fourth crossing it
+  needs at capability 70 in era 4 (largest stage plus running total: 3.65). Removing this draw from the main random
+  stream also reshuffles later rolls a little (misalignment, rivalDisaster), as expected; no bot's leading ending changed.
+  Aligned endings go from 3 to 0 across all bots (one each in handToMouth, balancedHighSafety and balancedPush at a2);
+  at these counts that is within the reshuffle, not traced run by run. Left for the retune (C3).

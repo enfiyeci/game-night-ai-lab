@@ -163,10 +163,12 @@ test('accept-shutdown requires two hits after internal stage three', () => {
   state.era = 4;
   state.capability = 80;
   state.automation.stage = 3;
-  assert.deepEqual(automationTick(state, yes), []);
+  state.automation.pressure = 1; // the running total reaches 1 this round
+  assert.deepEqual(automationTick(state), []);
   assert.equal(state.automation.stage, 4);
   assert.equal(state.ending, null);
-  assert.deepEqual(automationTick(state, yes), [{ type: 'internalIncident', stage: 4 }]);
+  state.automation.pressure = 1;
+  assert.deepEqual(automationTick(state), [{ type: 'internalIncident', stage: 4 }]);
   assert.equal(state.automation.stage, 5);
   assert.equal(state.ending, 'quietTakeover');
 });

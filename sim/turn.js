@@ -47,10 +47,9 @@ export const MAX_MOVES = 2;
 const BUDGET_KEYS = ['training', 'security', 'product', 'talent'];
 // sideRng salts in sim/: 0 initial offers, 1 deals, 2 site opposition, 3 contracts, 4 queue,
 // 5 offers, 6 deliveries, 7 pooling, 8 board events (sim/data/boardEvents.js), 9 + card index for card landing days
-// (sim/events.js stampNewCards), 900 AI proposals, 950 the first round's rival roll (sim/state.js), 970 event triggers
+// (sim/events.js stampNewCards), 950 the first round's rival roll (sim/state.js), 970 event triggers
 // (sim/events.js), 971 advisor noise (sim/advisors.js), 1000 + site ID for builds, and 2000 + motion index for summit votes.
 const SITE_RNG_SALT_BASE = 1000;
-const AI_PROPOSAL_SALT = 900;
 
 export function setBudget(state, budget) {
   if (budget?.split && Object.hasOwn(budget.split, 'safety')) return { ok: false, error: 'the budget split has no safety slice: safety now runs on compute' };
@@ -361,9 +360,9 @@ function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
       events.push(e);
       if (e.type === 'outage') pushFeed(state, '@downdetector', 'users report outages across your apps', 'feed');
     }
-    for (const e of automationTick(state, rng)) events.push(e);
+    for (const e of automationTick(state)) events.push(e);
     if (!state.ending) {
-      state.automation.proposals = aiProposals(state, sideRng(state, AI_PROPOSAL_SALT));
+      state.automation.proposals = aiProposals(state);
       if (state.automation.autoApprove) pushAiMoves(state, events, applyApprovals(state, {}));
       if (trainingFraction > 0) {
         const trained = advanceRunBy(state, rng, trainingFraction);
