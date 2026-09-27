@@ -102,6 +102,37 @@ below are kept as the record.
   drift") is never called anywhere. Nothing to change unless gn-constitution wires it up; then it becomes a
   threshold on `drift`.
 
+## Build record (2026-09-26 Mac mini session, lane gn-newplayer)
+
+Task 0 and Part A (A1-A10) are built, each reviewed by a fresh Opus reviewer. Where the build departs from the task
+text below, this list wins:
+
+- **A1:** test 1 of `tests/streams.test.js` was rewritten beyond the plan's text; the plan's version could not fail
+  (nothing draws events at the game's start). It now runs 40 seeds in era 2 and fails on any wrong stream.
+- **A7 (changed rule):** a running total of 15% a round never came due in play, so leaks vanished (speed bot 93/200 runs
+  → 0). Now a stated term: a President promise that contradicts a held line leaks on its 5th such round
+  (`LEAK_ROUNDS = 5`, `promise.contradictRounds`). N was picked as the closest to the old roll's rate. Speed bot runs
+  with a leak, by N: 1→200, 2→174, 3→174, 4→170, 5→162, 6→0. None matches 93, and there is a cliff after 5.
+- **A9 (changed rule):** a per-run spike running total also never came due. Following the spec row ("always happen
+  when the causing choice is made"), a run meets exactly one loss spike when its recipe's chosen spike risk (the card
+  terms plus the focus term, `run.spikeRisk`, not the 0.1 base) is above 0. The spike lands on the run's first advance;
+  `stability` cancels `moe`. The loss-spike card's "Lower the learning rate" answer, during a run, now halves that
+  spike's loss (`run.spikeLossHalved`) for its −2 cost. It beats "push" only when the run's base gain is above 18.
+- **A5 and A10** ran after `benchmarks-by-era` and `model-money` landed in `ui`. A10 reads the capped capability
+  (`dangerCapability`, lane gn-capability-cap): score = hidden debt × min(capability, 100) / 100, line 40.
+- **P1 (added, not in the plan):** the owner said "getting all 10s should be harder" (relayed by gn-hud-money on the
+  lanes board). Critic scores above 8 now bend: `8 + (raw − 8) × 0.1` (`PRESS_KNEE`, `PRESS_TOP_SLOPE` in
+  `sim/data/launch.js`). A slope of 0.4 still gave all four 10s on 57-76% of releases. The press feeds users and revenue,
+  so endings moved (see the measurements log, rows `p1`). **Its review said "Needs fixes":**
+  `sim/release.js` reads the curved `pressAvg` for users (line ~146) and sentiment (line ~195), so the safety bot's
+  era 3 cash-outs went 1 → 46, which breaks the owner's standing rule. At slope 0.1 the critics' bias almost vanishes
+  above 8. Recommended fix (a): the economy keeps reading the uncurved average, and the curve changes only the shown
+  scores. Options (e) bend only the shared base and add the bias after, and (f) scale the lead terms by era; both are
+  owner calls. The review is saved in the handoff artifacts (`task-P1-review.md`).
+- `origin/ui` was merged twice (94b4703, 6456335); the second merge is the new balance base (`m1` rows).
+- Per-task findings deferred as minor, the full ledger and each task's report are kept in the handoff artifacts
+  (`~/claude-sync/handoffs/enfiyeci-game-night-ai-lab/artifacts/gn-newplayer-part-a-built/`).
+
 ## Coordination and order (lanes board)
 
 Messages sent 2026-09-26 from lane `gn-newplayer`. Replies still pending when this plan was written; check
