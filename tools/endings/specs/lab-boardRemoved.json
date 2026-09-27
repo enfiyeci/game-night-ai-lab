@@ -1,0 +1,26 @@
+{
+ "shots": {
+  "1": {
+   "image": "rb-slide",
+   "screens": [
+    [
+     "slide",
+     "rb-slide"
+    ]
+   ],
+   "focus": "screen",
+   "push": 1.05
+  },
+  "2": {
+   "image": "rb-budget",
+   "screens": [
+    [
+     "monitor",
+     "rb-budget"
+    ]
+   ],
+   "focus": "screen",
+   "push": 1.05
+  }
+ }
+}

@@ -1,0 +1,51 @@
+{
+ "shots": {
+  "1": {
+   "image": "cw-letter",
+   "screens": [
+    [
+     "monitor",
+     "cw-letter"
+    ]
+   ],
+   "focus": "screen",
+   "push": 1.05
+  },
+  "6": {
+   "image": "cw-reveal",
+   "screens": [
+    [
+     "written",
+     "cw-reveal"
+    ],
+    [
+     "learned",
+     "cw-reveal"
+    ]
+   ],
+   "focus": [
+    966,
+    453
+   ],
+   "push": 1.05
+  },
+  "8": {
+   "image": "cw-phone",
+   "screens": [
+    [
+     "phone",
+     "cw-phone"
+    ],
+    [
+     "captions",
+     "cw-phone"
+    ]
+   ],
+   "focus": [
+    955,
+    597
+   ],
+   "push": 1.05
+  }
+ }
+}

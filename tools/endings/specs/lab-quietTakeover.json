@@ -1,0 +1,15 @@
+{
+ "shots": {
+  "0": {
+   "image": "qt-evals",
+   "screens": [
+    [
+     "suite",
+     "qt-evals"
+    ]
+   ],
+   "focus": "screen",
+   "push": 1.06
+  }
+ }
+}

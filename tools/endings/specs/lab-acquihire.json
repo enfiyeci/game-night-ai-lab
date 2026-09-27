@@ -1,0 +1,15 @@
+{
+ "shots": {
+  "1": {
+   "image": "ab-constitution",
+   "screens": [
+    [
+     "laptop",
+     "ab-constitution"
+    ]
+   ],
+   "focus": "screen",
+   "push": 1.06
+  }
+ }
+}

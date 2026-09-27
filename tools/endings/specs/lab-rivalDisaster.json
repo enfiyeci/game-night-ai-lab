@@ -1,0 +1,39 @@
+{
+ "shots": {
+  "1": {
+   "image": "rd-slide",
+   "screens": [
+    [
+     "review",
+     "rd-slide"
+    ]
+   ],
+   "focus": [
+    960,
+    560
+   ],
+   "push": 1.04
+  },
+  "5": {
+   "frames": [
+    {
+     "image": "rd-letter-1",
+     "at": 0
+    },
+    {
+     "image": "rd-letter-2",
+     "at": 1.2,
+     "fade": 0.6
+    }
+   ],
+   "screens": [
+    [
+     "monitor",
+     "rd-letter"
+    ]
+   ],
+   "focus": "screen",
+   "push": 1.05
+  }
+ }
+}

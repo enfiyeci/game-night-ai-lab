@@ -1,0 +1,15 @@
+{
+ "shots": {
+  "2": {
+   "image": "pd-cursor",
+   "screens": [
+    [
+     "monitor",
+     "pd-cursor"
+    ]
+   ],
+   "focus": "screen",
+   "push": 1.08
+  }
+ }
+}
