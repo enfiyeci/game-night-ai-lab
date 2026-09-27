@@ -4,6 +4,9 @@ import { alignmentFor, badgeCounts, bubbleSpawns, expectedGain } from '../ui/log
 import { createGame } from '../ui/game.js';
 import { SCENARIOS } from '../ui/logic/scenarios.js';
 import { createInitialState } from '../sim/state.js';
+import { recipeCost } from '../sim/recipe.js';
+import { createRng } from '../sim/rng.js';
+import { advanceDays, applyActions } from '../sim/turn.js';
 
 test('alignment bubbles follow the alignment share, never debt', () => {
   assert.equal(alignmentFor(18, 0.25), 6);
@@ -27,6 +30,30 @@ test('a run in progress counts part of its expected gain, without touching the s
   assert.ok(counts.capability >= 0 && counts.capability <= Math.round(gain));
   assert.equal(counts.alignment, alignmentFor(counts.capability, state.activeRun.recipe.sliders.alignShare));
   assert.deepEqual(Object.keys(counts).sort(), ['alignment', 'capability']);
+});
+
+test('the first bubble flies on the first day of a run, and the count never passes the final gain', () => {
+  const state = SCENARIOS.midEra3(1);
+  const run = state.activeRun;
+  const total = recipeCost(state, run.recipe).turns;
+  run.turnsLeft = total - 1 / 91; // one era-1-length story day into the run
+  const gain = expectedGain(state);
+  assert.ok(gain / (91 * total) < 0.5, 'rounding alone would still show no bubble');
+  assert.equal(badgeCounts(state).capability, 1);
+  run.turnsLeft = 1e-6; // all but done: never above the gain the finished model will show
+  assert.equal(badgeCounts(state).capability, Math.round(gain));
+});
+
+test('the early first bubble adds no overcount when a loss spike trims the finished model', () => {
+  const rng = createRng(1);
+  let state = applyActions(SCENARIOS.era3Idle(1), { moves: [{ type: 'startRun', recipe: { sliders: { size: 'small', length: 'optimal', alignShare: 0.2 }, picks: { pre: [], mid: [], post: [] } } }] }, rng).state;
+  let peak = 0;
+  for (let day = 0; day < 40 && state.activeRun; day += 1) {
+    peak = Math.max(peak, badgeCounts(state).capability);
+    state = advanceDays(state, 1, rng).state;
+  }
+  assert.equal(state.pendingModel?.spikes, 1, 'seed 1 spikes as the run finishes');
+  assert.ok(peak <= Math.round(state.pendingModel.gain), `peak ${peak} vs model ${Math.round(state.pendingModel.gain)}`);
 });
 
 test('a trained model shows its real gain and the remembered share', () => {
