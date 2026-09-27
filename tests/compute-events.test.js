@@ -95,6 +95,7 @@ test('opposition to a gas site: pushing through can cut the site', () => {
   const s = createInitialState({ seed: 71 });
   s.era = 4;
   s.turn = 12;
+  s.publicTrust = 45; // D2 (Task A6): the cut follows public trust below 50, no longer the trigger's 30% roll
   s.seenEvents = [...EVENTS, ...EVENTS_6C, ...REAL_EVENTS]
     .filter((event) => event.id !== 'siteOpposition')
     .map((event) => event.id);
@@ -105,6 +106,18 @@ test('opposition to a gas site: pushing through can cut the site', () => {
   eventsTick(s, yes);
   assert.equal(resolveEvent(s, 'siteOpposition', 'push').ok, true);
   assert.equal(s.power.sites[0].units, 280);
+});
+
+test('pushing through: the county cuts the site 30% when public trust is below 50', () => {
+  for (const [trust, units] of [[45, 280], [55, 400]]) {
+    const s = createInitialState();
+    s.era = 4;
+    s.publicTrust = trust;
+    s.flags.oppositionSite = 'gas-1';
+    s.power.sites.push({ id: 'gas-1', source: 'gas', units: 400, arrivesTurn: s.turn + 4, online: false });
+    EVENTS.find((e) => e.id === 'siteOpposition').card.choices.find((c) => c.id === 'push').effects(s);
+    assert.equal(s.power.sites[0].units, units, `trust ${trust}`);
+  }
 });
 
 test('site opposition never targets a site that will be online before its card can be answered', () => {
@@ -180,7 +193,8 @@ test('site opposition benefits cost one lease month and moving delays the select
   const push = createInitialState();
   push.flags.oppositionSite = 'gas-3';
   push.compute.contracts.push({ id: 'v', supplier: 'verde', units: 400, price: 1, monthsLeft: 24, needsPower: true, dark: false });
-  push.power.sites.push({ id: 'gas-3', source: 'gas', units: 400, arrivesTurn: 12, online: true, oppositionCut: true });
+  push.power.sites.push({ id: 'gas-3', source: 'gas', units: 400, arrivesTurn: 12, online: true });
+  push.publicTrust = 45; // D2 (Task A6): the county cuts the site when public trust is below 50 (was oppositionCut: true)
   push.compute.online = 410;
   event.card.choices.find((choice) => choice.id === 'push').effects(push);
   assert.equal(push.power.sites[0].units, 280);

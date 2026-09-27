@@ -466,7 +466,7 @@ function poweredBilling(state) {
 const SITE_TAGS = {
   grid: ['Reserved in an earlier era'],
   gas: ['Public trust', 'Local opposition risk'],
-  nuclear: ['Public trust', 'Half of restarts slip'],
+  nuclear: ['Public trust', 'Late without US favor 60+'],
 };
 
 export function sitesView(state) {
@@ -586,7 +586,7 @@ function opinionText(state, screen, id) {
     research: sites.unpowered > 0 ? `${computeAmount(sites.unpowered, state.era)} of chips are sitting dark. We could be training on them.` : 'Every contracted chip has power.',
     safety: `More power means bigger runs. Keep the safety slice at ${pct(state.compute.split.safety)}.`,
     cfo: sites.unpowered > 0 ? `Unpowered chips still bill ${money(sites.unpoweredBill)} a month.` : 'No chip bill is wasted on unpowered capacity.',
-    policy: 'Gas is fast, while nuclear restarts can slip and draw scrutiny.',
+    policy: 'Gas is fast. A nuclear restart runs late unless Washington favors us.',
   };
   return ({ deals: dealLines, queue: queueLines, budget: budgetLines, power: powerLines }[screen] ?? dealLines)[id];
 }

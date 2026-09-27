@@ -641,7 +641,6 @@ export const EVENTS = [
       const rng = sideRng(state, SITE_OPPOSITION_RNG_SALT);
       if (!site || !rng.chance(0.15)) return false;
       state.flags.oppositionSite = site.id;
-      site.oppositionCut = rng.chance(0.3);
       return true;
     },
     warning: { handle: '@localnews', text: 'residents pack the town hall over the new gas site' },
@@ -670,9 +669,13 @@ export const EVENTS = [
         {
           id: 'push', label: 'Push through', cost: 'the county fights every permit', backers: ['CFO'], opposers: ['Comms'],
           effects(state) {
+            const cut = state.publicTrust < 50; // D2: the county wins when the public is against you (was a 30% roll)
             state.publicTrust -= 5;
             const site = state.power.sites.find((candidate) => candidate.id === state.flags.oppositionSite);
-            if (site?.oppositionCut) site.units = Math.round(site.units * 0.7);
+            if (site && cut) {
+              site.units = Math.round(site.units * 0.7);
+              site.oppositionCut = true; // the sites screen shows its warning (ui/logic/compute.js)
+            }
             if (site) refreshOnline(state);
           },
         },

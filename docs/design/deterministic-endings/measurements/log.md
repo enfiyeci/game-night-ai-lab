@@ -58,6 +58,16 @@ Ending counts per bot:
 | a4 | balancedLowSafety | misalignment 139, pacingDeal 36, acquihire 21, rivalDisaster 4 |
 | a4 | balancedHighSafety | misalignment 79, pacingDeal 69, acquihire 40, rivalDisaster 12 |
 | a4 | balancedPush | misalignment 113, pacingDeal 50, acquihire 31, rivalDisaster 6 |
+| a6 | speed | boardRemoved 200 |
+| a6 | safety | acquihire 184, leftBehind 14, misalignment 1, pacingDeal 1 |
+| a6 | balanced | misalignment 98, pacingDeal 59, acquihire 36, rivalDisaster 7 |
+| a6 | random | acquihire 143, boardRemoved 39, rivalDisaster 2, misalignment 13, misuse 3 |
+| a6 | overCommitter | acquihire 191, misalignment 8, rivalDisaster 1 |
+| a6 | handToMouth | acquihire 142, misalignment 49, pacingDeal 1, rivalDisaster 8 |
+| a6 | balancedNoGrid | acquihire 16, pacingDeal 54, misalignment 128, rivalDisaster 2 |
+| a6 | balancedLowSafety | misalignment 139, pacingDeal 34, acquihire 21, rivalDisaster 6 |
+| a6 | balancedHighSafety | misalignment 78, pacingDeal 69, acquihire 43, rivalDisaster 10 |
+| a6 | balancedPush | misalignment 111, pacingDeal 50, acquihire 33, rivalDisaster 6 |
 
 Notes:
 
@@ -96,3 +106,15 @@ Notes:
   not split apart: the vote without noise can seat different signers, and rivals now break only once their running
   total reaches 1 (then always caught under testers or inspectors) where before each week was a fresh roll. The pace
   ending reads only which cards bind and whether you broke the deal, so these differences do not move the counts.
+- a6 (Task A6, power sites have fixed terms: sizes are the middle of the old ranges rounded to 10, grid 350, gas 450,
+  nuclear 300; a grid reservation arrives one round into era 4 when made in era 2 and three rounds in when made in era
+  3, the rounded averages of the old draws; a nuclear restart opens on time at US favor 60 or more and one round late
+  otherwise (D8); pushing through local opposition cuts the gas site 30% exactly when public trust is below 50 at the
+  moment of the choice (D2)): only the four bots that reserve the grid in era 2 moved (balanced, balancedLowSafety,
+  balancedHighSafety, balancedPush). Their grid is now always 350 units one round into era 4, where before it was
+  250-450 units at the start of era 4 or one round later. balanced: misalignment 104 to 98, pacingDeal 56 to 59,
+  acquihire 34 to 36, rivalDisaster 6 to 7; balancedLowSafety: pacingDeal 36 to 34, rivalDisaster 4 to 6;
+  balancedHighSafety: acquihire 40 to 43, rivalDisaster 12 to 10, misalignment 79 to 78; balancedPush: misalignment 113
+  to 111, acquihire 31 to 33. The site-building bots (speed, overCommitter on gas, safety on nuclear, random on either)
+  and the no-grid bots keep the same ending counts, although their site sizes and dates did change. The old site draws
+  came from side streams, so removing them shifts no other roll. No bot's leading ending changed. Not traced run by run.

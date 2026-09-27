@@ -48,8 +48,7 @@ const BUDGET_KEYS = ['training', 'security', 'product', 'talent'];
 // sideRng salts in sim/: 0 initial offers, 1 deals, 2 site opposition, 3 contracts, 4 queue,
 // 5 offers, 6 deliveries, 7 pooling, 8 board events (sim/data/boardEvents.js), 9 + card index for card landing days
 // (sim/events.js stampNewCards), 950 the first round's rival roll (sim/state.js), 970 event triggers
-// (sim/events.js), 971 advisor noise (sim/advisors.js), and 1000 + site ID for builds.
-const SITE_RNG_SALT_BASE = 1000;
+// (sim/events.js), and 971 advisor noise (sim/advisors.js).
 
 export function setBudget(state, budget) {
   if (budget?.split && Object.hasOwn(budget.split, 'safety')) return { ok: false, error: 'the budget split has no safety slice: safety now runs on compute' };
@@ -92,7 +91,7 @@ function applyMove(state, move, rng) {
     }
     case 'deal': return signOffer(state, move.offerId, sideRng(state, 1));
     case 'queueOrder': return placeOrder(state, move);
-    case 'buildSite': return buildSite(state, move.source, sideRng(state, SITE_RNG_SALT_BASE + state.power.nextId));
+    case 'buildSite': return buildSite(state, move.source);
     case 'raise': return raiseRound(state, move.archetype);
     case 'research': return researchTechnique(state, move.techId);
     case 'emergency': return useEmergency(state, move.option);
