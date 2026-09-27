@@ -5,6 +5,7 @@ import { cardById, cardUnlocked, slotsFor, pickableCards, validateRecipe, recipe
 import { availableUnits, startRun } from '../sim/training.js';
 import { inDangerZone, projectBurn } from '../sim/economy.js';
 import { HARD_LINES, CASES } from '../sim/data/constitution.js';
+import { draftError, draftFor, setDraft } from '../sim/constitution.js';
 import { MEETINGS } from '../sim/data/president.js';
 import { COMMITMENTS, PARTIES, dealBinds } from '../sim/summit.js';
 import { checkLoad, jobLevels, jobLocked, maxLevel, setAutomation } from '../sim/automation.js';
@@ -18,7 +19,7 @@ import { ENDINGS } from '../sim/endings.js';
 import { eraById } from '../sim/data/eras.js';
 import { SUPPLIERS, eraScale } from '../sim/data/compute.js';
 import { setComputeSplit } from '../sim/split.js';
-import { exclusiveActive } from '../sim/contracts.js';
+import { exclusiveActive, family } from '../sim/contracts.js';
 import { eraStartTurn } from '../sim/power.js';
 import { PREPAY_SHARE, QUEUE_TERM_MONTHS, released } from '../sim/queue.js';
 import { rank } from '../sim/rivals.js';
@@ -74,9 +75,13 @@ function shuffled(values, rng) {
 
 function constitutionFor(style, rng) {
   const option = (entry) => {
-    if (style === 'speed') return entry.options.find((candidate) => candidate.id === 'comply') ?? entry.options.at(-1);
-    if (style === 'safety') return entry.options[0];
-    if (style === 'balanced') return entry.options[1] ?? entry.options[0];
+    if (style === 'speed') return entry.options.reduce((best, candidate) =>
+      ((candidate.values.userFirst ?? 0) + (candidate.values.deference ?? 0)
+        > (best.values.userFirst ?? 0) + (best.values.deference ?? 0) ? candidate : best));
+    if (style === 'safety') return entry.options.reduce((best, candidate) =>
+      ((candidate.values.caution ?? 0) + (candidate.values.candor ?? 0)
+        > (best.values.caution ?? 0) + (best.values.candor ?? 0) ? candidate : best));
+    if (style === 'balanced') return entry.options[1];
     return rng.pick(entry.options);
   };
   const hardLines = style === 'speed'
@@ -178,6 +183,7 @@ function summitMove(state, style, rng) {
 
 function plannedState(state, actions) {
   const planned = structuredClone(state);
+  if (actions.constitutionDraft) setDraft(planned, actions.constitutionDraft);
   planned.budget = structuredClone(actions.budget);
   setComputeSplit(planned, actions.computeSplit);
   if (actions.automation) setAutomation(planned, actions.automation);
@@ -207,8 +213,11 @@ function pickFrom(state, stage, ids) {
   return out;
 }
 
+// The constitution card is refused while Safety's draft lacks three lines (a demand can take one), so skip it then.
+const postPrefs = (state, ids) => (draftError(draftFor(state)) ? ids.filter((id) => id !== 'constitution') : ids);
+
 function preferredRecipe(state, prefs) {
-  const picks = { pre: pickFrom(state, 'pre', prefs.pre), mid: pickFrom(state, 'mid', prefs.mid), post: pickFrom(state, 'post', prefs.post) };
+  const picks = { pre: pickFrom(state, 'pre', prefs.pre), mid: pickFrom(state, 'mid', prefs.mid), post: pickFrom(state, 'post', postPrefs(state, prefs.post)) };
   for (const size of ['xl', 'large', 'medium', 'small']) {
     const recipe = { sliders: { size, length: 'optimal', alignShare: prefs.alignShare }, picks };
     if (!validateRecipe(state, recipe).ok) continue;
@@ -218,7 +227,7 @@ function preferredRecipe(state, prefs) {
 }
 
 function bestRecipe(state, prefs) {
-  const picks = { pre: pickFrom(state, 'pre', prefs.pre), mid: pickFrom(state, 'mid', prefs.mid), post: pickFrom(state, 'post', prefs.post) };
+  const picks = { pre: pickFrom(state, 'pre', prefs.pre), mid: pickFrom(state, 'mid', prefs.mid), post: pickFrom(state, 'post', postPrefs(state, prefs.post)) };
   for (const size of ['xl', 'large', 'medium', 'small']) {
     const recipe = { sliders: { size, length: 'optimal', alignShare: prefs.alignShare }, picks };
     if (!validateRecipe(state, recipe).ok) continue;
@@ -259,8 +268,8 @@ function canSign(state, offer) {
   return offer.supplier !== 'gulf' || (!state.flags.supplyChainRisk && state.govFavor.us >= 60);
 }
 
-function sizedOffer(state, suppliers, shortfall, mode) {
-  const offers = state.compute.offers.filter((offer) => suppliers.includes(offer.supplier) && canSign(state, offer));
+function sizedOffer(state, suppliers, shortfall, mode, avoidNamed = false) {
+  const offers = state.compute.offers.filter((offer) => suppliers.includes(offer.supplier) && canSign(state, offer) && !(avoidNamed && offer.wantedBy));
   const covering = offers.filter((offer) => offer.units >= shortfall);
   if (mode === 'cheapest') {
     return covering.sort((a, b) => a.monthly - b.monthly || a.units - b.units)[0] ?? null;
@@ -293,15 +302,23 @@ function computeMove(state, rng, style, prefs, policy) {
     if (tier === 'prepaid' && prepay > state.cash) tier = 'standard';
     return { type: 'queueOrder', units, tier };
   }
+  // Compute race: deny a rival its named card only when short, and not from a supplier already dealt with this era.
+  if (policy.deny && shortfall > 0) {
+    const named = state.compute.offers
+      .filter((offer) => offer.wantedBy && (policy.deny === 'any' || offer.wantedBy === policy.deny) && canSign(state, offer)
+        && !alreadyDealtThisEra(state, family(offer.supplier)))
+      .sort((a, b) => b.units - a.units)[0];
+    if (named) return { type: 'deal', offerId: named.id };
+  }
   if (policy.offer === 'verde') {
     if (alreadyDealtThisEra(state, 'verde')) return null;
     const offer = sizedOffer(state, ['verde'], 0, 'largest');
     return offer ? { type: 'deal', offerId: offer.id } : null;
   }
   if (policy.offer === 'safe' && shortfall > 0) {
-    const offer = sizedOffer(state, ['azuria'], shortfall, 'cheapest')
-      ?? sizedOffer(state, ['coreflame'], shortfall, 'cheapest')
-      ?? sizedOffer(state, ['azuria', 'coreflame'], shortfall, 'smallest');
+    const offer = sizedOffer(state, ['azuria'], shortfall, 'cheapest', policy.avoidNamed)
+      ?? sizedOffer(state, ['coreflame'], shortfall, 'cheapest', policy.avoidNamed)
+      ?? sizedOffer(state, ['azuria', 'coreflame'], shortfall, 'smallest', policy.avoidNamed);
     return offer ? { type: 'deal', offerId: offer.id } : null;
   }
   if (policy.offer === 'cheapest' && shortfall > 0) {
@@ -326,6 +343,10 @@ function computeMove(state, rng, style, prefs, policy) {
   return null;
 }
 
+// Each game sets Safety's draft once, on its first era-3 decision (a demand may store a draft before that).
+// Games run one at a time, so one marker is enough: the seed of the game that has set it, cleared at turn 0.
+let draftSetFor = null;
+
 function makeStrategy(style, prefs, policy = {}) {
   return (state, rng) => {
     const computeSafety = policy.randomSafety ? Math.round(rng.next() * 30) / 100 : prefs.computeSafety;
@@ -336,7 +357,11 @@ function makeStrategy(style, prefs, policy = {}) {
       moves: [],
       eventChoices: eventChoices(state, style, rng),
     };
-    if (state.turn === 0) actions.constitution = constitutionFor(style, rng);
+    if (state.turn === 0) draftSetFor = null;
+    if (state.era >= 3 && draftSetFor !== state.seed) {
+      actions.constitutionDraft = constitutionFor(style, rng);
+      draftSetFor = state.seed;
+    }
     if (state.turn === 0 && policy.pledge != null) actions.pledge = policy.pledge;
     if (state.pendingModel?.hazard) {
       actions.hazardChoice = style === 'speed' ? 'penalize'
@@ -397,7 +422,7 @@ const speedPrefs = {
   post: ['agentic-rl', 'reasoning-rl', 'rlvr-light', 'thumbs', 'rival-distil', 'synthetic-sft'],
   release: ['waive', 'channel-app'],
 };
-const speed = makeStrategy('speed', speedPrefs, { offer: 'verde', queue: 'prepaid', site: 'gas', pledge: 0.1 });
+const speed = makeStrategy('speed', speedPrefs, { offer: 'verde', queue: 'prepaid', site: 'gas', pledge: 0.1, deny: 'openbrain' });
 
 const safetyPrefs = {
   alignShare: 0.4,
@@ -406,10 +431,10 @@ const safetyPrefs = {
   computeSafety: 0.2,
   pre: ['licensed-data', 'hazard-filter-built', 'hazard-filter-reuse'],
   mid: ['decontaminate', 'anneal'],
-  post: ['human-sft', 'cai', 'classifiers', 'safety-tuning', 'character', 'deliberative', 'spec-light'],
+  post: ['human-sft', 'cai', 'classifiers', 'safety-tuning', 'constitution', 'character', 'deliberative'],
   release: ['eval-third', 'eval-full', 'channel-api'],
 };
-const safety = makeStrategy('safety', safetyPrefs, { offer: 'safe', site: 'nuclear', pledge: 0.2 });
+const safety = makeStrategy('safety', safetyPrefs, { offer: 'safe', site: 'nuclear', pledge: 0.2, avoidNamed: true });
 
 const balancedPrefs = {
   alignShare: 0.2,
@@ -445,14 +470,15 @@ const balancedNoGrid = makeStrategy('balanced', balancedPrefs, { offer: 'cheapes
 const balancedLowSafety = makeStrategy('balanced', { ...balancedPrefs, computeSafety: 0.05 }, { offer: 'cheapest', queue: 'standard', grid: true });
 const balancedHighSafety = makeStrategy('balanced', { ...balancedPrefs, computeSafety: 0.15 }, { offer: 'cheapest', queue: 'standard', grid: true });
 const balancedPush = makeStrategy('balanced', balancedPrefs, { offer: 'cheapest', queue: 'standard', grid: true, automation: 'speed' });
+const denier = makeStrategy('balanced', balancedPrefs, { offer: 'cheapest', queue: 'standard', grid: true, deny: 'any' });
 
-export const PROBES = ['overCommitter', 'handToMouth', 'balancedNoGrid', 'balancedLowSafety', 'balancedHighSafety', 'balancedPush'];
+export const PROBES = ['overCommitter', 'handToMouth', 'balancedNoGrid', 'balancedLowSafety', 'balancedHighSafety', 'balancedPush', 'denier'];
 export const STRATEGIES = {
-  speed, safety, balanced, random, overCommitter, handToMouth, balancedNoGrid, balancedLowSafety, balancedHighSafety, balancedPush,
+  speed, safety, balanced, random, overCommitter, handToMouth, balancedNoGrid, balancedLowSafety, balancedHighSafety, balancedPush, denier,
 };
 
 function freshMetrics() {
-  return { perEra: {}, queueShortTurns: 0, queueTurns: 0, rankAtEra4End: null, rejectedActions: 0 };
+  return { perEra: {}, queueShortTurns: 0, queueTurns: 0, rankAtEra4End: null, rejectedActions: 0, rounds: 0, roundsAtFirst: 0, rivalDeals: 0 };
 }
 
 function observeTurn(metrics, { era, burn, compute }) {
@@ -479,6 +505,9 @@ function simulateMeasured(name, seed) {
     const result = endTurn(state, STRATEGIES[name](state, rng), rng, { beforeEconomy: (sample) => { economySample = sample; } });
     state = result.state;
     metrics.rejectedActions += result.errors.length;
+    metrics.rounds += 1;
+    if (rank(state) === 1) metrics.roundsAtFirst += 1;
+    metrics.rivalDeals += result.events.filter((event) => event.type === 'rivalDeal').length;
     if (economySample) observeTurn(metrics, economySample);
     if (era === 3) {
       metrics.queueTurns += 1;
@@ -514,11 +543,19 @@ export function report(n) {
     let rankAtEra4EndRuns = 0;
     let rejectedActions = 0;
     const cashEndingsByEra = {};
+    const leftBehindByEra = {};
+    let rounds = 0;
+    let roundsAtFirst = 0;
+    let rivalDeals = 0;
     for (let seed = 1; seed <= n; seed++) {
       const { state, metrics } = simulateMeasured(name, seed);
       const r = { ending: state.ending, era: state.era, turn: state.turn };
       endings[r.ending] = (endings[r.ending] ?? 0) + 1;
       if (r.ending === 'acquihire') cashEndingsByEra[r.era] = (cashEndingsByEra[r.era] ?? 0) + 1;
+      if (r.ending === 'leftBehind') leftBehindByEra[r.era] = (leftBehindByEra[r.era] ?? 0) + 1;
+      rounds += metrics.rounds;
+      roundsAtFirst += metrics.roundsAtFirst;
+      rivalDeals += metrics.rivalDeals;
       eraSum += r.era;
       if (ENDINGS[r.ending]?.kind === 'fail' && (r.era === 3 || r.era === 4)) diedInEra3or4 += 1;
       queueShortTurns += metrics.queueShortTurns;
@@ -550,6 +587,9 @@ export function report(n) {
       queueShortTurns,
       queueTurns,
       cashEndingsByEra,
+      leftBehindByEra,
+      roundsAtFirst: rounds > 0 ? roundsAtFirst / rounds : 0,
+      rivalDealsPerRun: rivalDeals / n,
       rejectedActions,
       meanRankAtEra4End: rankAtEra4EndRuns > 0 ? rankAtEra4EndSum / rankAtEra4EndRuns : null,
     };

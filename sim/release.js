@@ -1,9 +1,9 @@
 import { BALANCE } from './balance.js';
 import { clamp, sigmoid } from './util.js';
 import { validatePicks, resolveCards } from './recipe.js';
-import { PRICE_STANCE } from './serving.js';
+import { ERA_PRICE, PRICE_STANCE } from './serving.js';
 import { scoreLaunch } from './launch.js';
-import { resolveHazard, exposeConcealed } from './hazards.js';
+import { resolveHazard, exposeConcealed, dangerCapability } from './hazards.js';
 import { hasLine } from './constitution.js';
 import { pushFeed } from './events.js';
 import { eraById } from './data/eras.js';
@@ -138,7 +138,7 @@ export function releaseModel(state, release, rng) {
   const name = modelName({ family: release.family, generation, size: m.size, tierWords: state.tierWords });
   state.capability = Math.max(state.capability, m.capability);
   state.alignmentDebt += sum('ad');
-  const launch = scoreLaunch(state, { capability: m.capability + REASONING_BONUS[reasoning], spec, flags, name, priceStance: release.price, generation, skipped }, rng);
+  const launch = scoreLaunch(state, { capability: m.capability + REASONING_BONUS[reasoning], reasoningBonus: REASONING_BONUS[reasoning], spec, flags, name, priceStance: release.price, generation, skipped }, rng);
   const quality = clamp(1 + (launch.pressAvg - 6) / 8, 0.5, 1.6);
   const eraGrowth = 1 + 0.5 * (state.era - 1);
   const constitutionUsers = spec.channel === 'enterprise' && hasLine(state, 'privacy') ? 1.1 : 1;
@@ -152,11 +152,15 @@ export function releaseModel(state, release, rng) {
     size: m.size,
     capability: m.capability,
     launch,
-    launchScore: launch.capAvg,
-    bar: state.lastFlagshipScore,
+    // launchScore is the test-independent skill, so models from different eras compare fairly (the flagship pick,
+    // the end summary). bar is the last flagship's average re-scored on this launch's tests; flagshipName names it.
+    launchScore: launch.skill,
+    bar: launch.flagshipAvg,
+    flagshipName: state.lastFlagship?.name ?? null,
     spec,
     channel: spec.channel,
     priceStance: release.price,
+    eraPrice: ERA_PRICE[state.era - 1],
     reasoning,
     users: fresh,
     newUsers: fresh,
@@ -168,15 +172,22 @@ export function releaseModel(state, release, rng) {
     activated: false,
     flags,
     servingCost: 0,
+    // The model's books: training (recipe cards and compute) and launch cards, then what it earns and what serving it
+    // costs (sim/economy.js accrueEconomy).
+    trainingCost: m.trainingCost ?? null,
+    launchCost: cash,
+    earned: 0,
+    servingSpent: 0,
+    monthsOnSale: 0,
   };
   if (spec.channel === 'consumer' && hasLine(state, 'no-wmd')) model.revenueMult = 0.97;
   state.models.push(model);
   activateReleases(state);
   state.pendingModel = null;
-  if (!state.lastFlagship || launch.capAvg > state.lastFlagshipScore) {
-    state.lastFlagship = { name, benchmarks: launch.benchmarks.map(({ id, shown }) => ({ id, shown })) };
+  if (!state.lastFlagship || launch.skill > state.lastFlagshipScore) {
+    state.lastFlagship = { name, benchmarks: launch.benchmarks.map(({ id, name: test, shown, skill }) => ({ id, name: test, shown, skill })) };
   }
-  state.lastFlagshipScore = Math.max(state.lastFlagshipScore, launch.capAvg);
+  state.lastFlagshipScore = Math.max(state.lastFlagshipScore, launch.skill);
   state.sentiment = clamp(state.sentiment + (launch.pressAvg - 6) / 20, 0.5, 1.5);
 
   state.publicTrust += m.publicEffects.pt + sum('pt');
@@ -186,7 +197,7 @@ export function releaseModel(state, release, rng) {
   const releaseHeat = BALANCE.ownReleaseHeat + m.publicEffects.heat + sum('heat');
   const delayed = state.deal?.collapsed === false && state.deal.binding.includes('releaseDelay');
   state.raceHeat += releaseHeat * (delayed ? 0.5 : 1);
-  state.misuseExposure += Math.max(0, m.capability - BALANCE.dangerLine) * 0.3;
+  state.misuseExposure += Math.max(0, dangerCapability(m.capability) - BALANCE.dangerLine) * 0.3;
   if (spec.channel === 'open') {
     state.flags.openWeights = true;
     // Open weights add to whatever risk is already permanent, then lock the result.
@@ -197,7 +208,7 @@ export function releaseModel(state, release, rng) {
 
   let misalignmentIncident = false;
   if (flags.includes('agentic') && state.era >= MISALIGNMENT_CHECK_ERA) {
-    const p = sigmoid(((state.alignmentDebt + state.concealedDebt) * m.capability / 100 - 40) / 8);
+    const p = sigmoid(((state.alignmentDebt + state.concealedDebt) * dangerCapability(m.capability) / 100 - 40) / 8);
     if (rng.chance(p)) {
       // The catastrophe needs era-4 capability; in era 3 the same roll is its warning.
       if (state.era >= MISALIGNMENT_ENDING_ERA) state.ending = 'misalignment';

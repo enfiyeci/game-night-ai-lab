@@ -352,6 +352,7 @@ test('an unknown President answer id expires the open meeting', () => {
 
 test('meeting flattery causes the President demand card to be queued', () => {
   const state = open(createInitialState());
+  state.era = 3;
   state.turn = 1;
   const out = endTurn(state, { moves: [{ type: 'meeting' }], presidentAnswers: flatteringIds() }, no);
   assert.equal(out.state.flags.presidentDemand, true);
@@ -385,12 +386,13 @@ test('a meeting move needs an open meeting and consumes one of the two round act
   assert.equal(out.events.filter((event) => event.type === 'deal').length, 1);
 });
 
-test('a meeting uses government favour after moves that precede it', () => {
+test('a meeting at low favour withholds the grant', () => {
   const state = open(createInitialState());
-  state.govFavor.us = 63;
+  state.govFavor.us = 60;
+  state.researchPoints = 30;
   const out = endTurn(state, {
     moves: [
-      { type: 'amendConstitution', change: { remove: 'accept-shutdown', add: 'no-power-grab' } },
+      { type: 'research', techId: 'moe' },
       { type: 'meeting' },
     ],
     presidentAnswers: plainIds(),

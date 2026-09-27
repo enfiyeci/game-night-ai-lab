@@ -8,6 +8,7 @@ import { powerSitesAvailable, queueScreenAvailable } from './logic/compute.js';
 import { meetingFor } from './logic/president.js';
 import { openMenu, registerMenuHandler } from './menu.js';
 import { openBudget } from './screens/budget.js';
+import { mountConstitution, openConstitution } from './screens/constitution.js';
 import { mountRecipe, openRecipe } from './screens/recipe.js';
 import { mountRelease, openRelease } from './screens/release.js';
 import { mountReveal, showReveal } from './screens/reveal.js';
@@ -114,6 +115,7 @@ if (showTitle) {
 }
 mountCompany(game, overlay);
 mountRecipe(game, overlay);
+mountConstitution(game, overlay); // the recipe's constitution card opens Safety's draft
 mountNaming(game, overlay); // after the recipe: the first run asks for the model's name
 mountRelease(game, overlay);
 mountReveal(game, overlay, {
@@ -226,6 +228,10 @@ async function openDebugRoute() {
     openBudget(game, overlay);
     return;
   }
+  if (location.hash === '#constitution') {
+    if (game.state.era >= 3) openConstitution(game, overlay);
+    return;
+  }
   if (location.hash === '#deals') {
     openDeals(game, overlay);
     return;
@@ -258,8 +264,8 @@ async function openDebugRoute() {
     openComputeInfo(game, overlay, { view: location.hash === '#compute-race' ? 'race' : 'where' });
     return;
   }
-  if (location.hash === '#finance' || location.hash === '#books') {
-    openFinance(game, overlay, { view: location.hash === '#books' ? 'books' : 'timeline' });
+  if (location.hash === '#finance' || location.hash === '#books' || location.hash === '#models-money') {
+    openFinance(game, overlay, { view: { '#books': 'books', '#models-money': 'models' }[location.hash] ?? 'timeline' });
     return;
   }
   if (location.hash === '#board' || location.hash === '#board-moves') {

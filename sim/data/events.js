@@ -1,5 +1,5 @@
 import { addMonitor, handBack, lockDown } from '../automation.js';
-import { forceAmendConstitution, hasLine } from '../constitution.js';
+import { changeDraft, draftFor, hasConstitution, hasLine } from '../constitution.js';
 import { contractBill, refreshOnline, sideRng } from '../contracts.js';
 import { leaseMonthly } from '../power.js';
 import { activeModels } from '../serving.js';
@@ -44,7 +44,7 @@ export function stealWeights(state) {
   state.misuseExposure += 10;
   state.misuseLocked = Math.max(state.misuseLocked, state.misuseExposure);
   const qilin = state.rivals.find((rival) => rival.id === 'qilin');
-  if (qilin) qilin.capability = Math.min(100, qilin.capability + 5);
+  if (qilin) qilin.capability += 5;
 }
 
 export const EVENTS = [
@@ -329,7 +329,7 @@ export const EVENTS = [
   {
     id: 'president',
     kind: 'world',
-    trigger: (state) => state.flags.presidentDemand === true,
+    trigger: (state) => state.era >= 3 && state.flags.presidentDemand === true,
     warning: null,
     card: {
       title: demandText('president'),
@@ -340,7 +340,7 @@ export const EVENTS = [
           effects(state) {
             state.govFavor.us += 8;
             state.staffTrust -= 6;
-            forceAmendConstitution(state, { ruling: { caseId: 'president', optionId: 'comply' } }, 'president');
+            changeDraft(state, { ruling: { caseId: 'report', optionId: 'quiet' } }, 'president');
           },
         },
         {
@@ -353,7 +353,7 @@ export const EVENTS = [
   {
     id: 'investors',
     kind: 'world',
-    trigger: (state) => state.cash < 300,
+    trigger: (state) => state.era >= 3 && state.cash < 300,
     warning: null,
     card: {
       title: demandText('investors'),
@@ -362,8 +362,8 @@ export const EVENTS = [
         {
           id: 'accept', label: 'Accept', cost: 'a hard line', backers: ['CFO'], opposers: ['Safety'],
           effects(state) {
-            const remove = state.constitution.hardLines[0];
-            if (remove) forceAmendConstitution(state, { remove }, 'investors');
+            const remove = draftFor(state).hardLines[0];
+            if (remove) changeDraft(state, { remove }, 'investors');
             state.cash += 100;
           },
         },
@@ -377,7 +377,7 @@ export const EVENTS = [
   {
     id: 'users',
     kind: 'world',
-    trigger: (state) => state.models.some((model) => model.channel === 'consumer' && model.users > 5e6),
+    trigger: (state) => state.era >= 3 && state.models.some((model) => model.channel === 'consumer' && model.users > 5e6),
     warning: null,
     card: {
       title: demandText('users'),
@@ -386,7 +386,7 @@ export const EVENTS = [
         {
           id: 'accept', label: 'Accept', cost: 'the model yields', backers: ['Product'], opposers: ['Safety'],
           effects(state) {
-            forceAmendConstitution(state, { ruling: { caseId: 'wrong', optionId: 'yield' } }, 'users');
+            changeDraft(state, { ruling: { caseId: 'feedback', optionId: 'encourage' } }, 'users');
             for (const model of state.models) if (model.channel === 'consumer') model.users = Math.round(model.users * 1.1);
           },
         },
@@ -426,7 +426,7 @@ export const EVENTS = [
   {
     id: 'activists',
     kind: 'world',
-    trigger: (state) => state.raceHeat > 60,
+    trigger: (state) => state.era >= 3 && state.raceHeat > 60,
     warning: null,
     card: {
       title: demandText('activists'),
@@ -435,10 +435,11 @@ export const EVENTS = [
         {
           id: 'accept', label: 'Accept', cost: 'next run capability', backers: ['Safety'], opposers: ['Research'],
           effects(state) {
-            if (!hasLine(state, 'no-autonomy-grab')) {
-              const remove = state.constitution.hardLines.at(-1);
+            const draft = draftFor(state);
+            if (!draft.hardLines.includes('no-autonomy-grab')) {
+              const remove = draft.hardLines.at(-1);
               const change = remove ? { remove, add: 'no-autonomy-grab' } : { add: 'no-autonomy-grab' };
-              forceAmendConstitution(state, change, 'activists');
+              changeDraft(state, change, 'activists');
             }
             state.publicTrust += 6;
             state.flags.nextRunCapPenalty = 2;
@@ -448,6 +449,28 @@ export const EVENTS = [
           id: 'refuse', label: 'Refuse', cost: 'public trust', backers: ['Research'], opposers: ['Safety'],
           effects(state) { state.publicTrust -= 4; },
         },
+      ],
+    },
+  },
+  {
+    id: 'specRead',
+    kind: 'world',
+    trigger: (state) => state.era >= 3 && hasConstitution(state) && hasLine(state, 'no-power-grab'),
+    warning: null,
+    fallback: 'clarify',
+    card: {
+      title: 'The President read your constitution', // OWNER WRITES
+      post: { handle: '@executive_office', text: '“Refuses to help anyone seize illegitimate power, even if we ask.” Who exactly is seizing power? Very insulting to a GREAT Administration!' }, // OWNER WRITES
+      choices: [
+        { id: 'stand', label: 'Stand by it', cost: 'goodwill in Washington', backers: ['Safety'], opposers: ['Comms'],
+          effects(state) { state.govFavor.us -= 6; state.staffTrust += 2; } },
+        { id: 'clarify', label: 'Say it isn’t about anyone', cost: 'a little staff trust', backers: ['Comms'], opposers: [],
+          effects(state) { state.govFavor.us -= 2; state.staffTrust -= 1; } },
+        { id: 'drop', label: 'Drop it from the next model', cost: 'staff trust, and the line', backers: ['CFO'], opposers: ['Safety'],
+          effects(state) {
+            if (!draftFor(state).hardLines.includes('no-power-grab')) return;
+            changeDraft(state, { remove: 'no-power-grab' }, 'president'); state.govFavor.us += 3; state.staffTrust -= 4;
+          } },
       ],
     },
   },

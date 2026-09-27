@@ -3,7 +3,6 @@ import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import { startRun, advanceRun, advanceRunBy, availableUnits, recheckCapacity } from '../sim/training.js';
 import { recipeCost } from '../sim/recipe.js';
-import { BALANCE } from '../sim/balance.js';
 
 const noLuck = { next: () => 0.99, int: () => 0, chance: () => false, normal: (m) => m };
 const recipe = {
@@ -98,13 +97,13 @@ test('low alignment share adds alignment debt; lawsuits are seeded by chance', (
   assert.equal(s.legalCases[0].dueTurn, 8);
 });
 
-test('trained model capability and gain are capped at the maximum', () => {
+test('trained model capability and gain keep counting past 100', () => {
   const s = createInitialState();
-  s.capability = BALANCE.maxCapability - 5;
+  s.capability = 95;
   startRun(s, recipe);
   const trained = advanceRun(s, noLuck);
-  assert.equal(trained.capability, BALANCE.maxCapability);
-  assert.equal(trained.gain, 5);
+  assert.ok(Math.abs(trained.gain - 15.725) < 1e-9);
+  assert.ok(Math.abs(trained.capability - 110.725) < 1e-9);
 });
 
 test('standard agent techniques mark era 4 models as agentic', () => {

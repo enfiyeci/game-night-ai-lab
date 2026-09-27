@@ -24,7 +24,7 @@ const recipe = ({ size = 'small', length = 'optimal', alignShare = 0.2, pre = []
 test('recipePreview preserves pick-count and duplicate-group errors from the sim', () => {
   const state = SCENARIOS.era3Idle(1);
   const tooMany = recipe({
-    post: ['synthetic-sft', 'thumbs', 'spec-light', 'safety-tuning', 'rlvr-light'],
+    post: ['synthetic-sft', 'thumbs', 'constitution', 'safety-tuning', 'rlvr-light'],
   });
   assert.ok(tooMany.picks.post.length > slotsFor(state, 'post'));
   assert.ok(recipePreview(state, tooMany).errors.includes(
@@ -73,7 +73,7 @@ test('recipePreview keeps blocker order and avoids costing unknown sliders', () 
 
 test('recipePreview sees a queued budget that changes post-training slots', () => {
   const game = createGame({ state: SCENARIOS.era3Idle(1), seed: 1 });
-  const fourGroups = recipe({ post: ['synthetic-sft', 'thumbs', 'spec-light', 'safety-tuning'] });
+  const fourGroups = recipe({ post: ['synthetic-sft', 'thumbs', 'constitution', 'safety-tuning'] });
 
   assert.equal(game.setBudget({
     spend: 20,
@@ -94,7 +94,7 @@ test('recipePreview sees a queued budget that changes post-training slots', () =
 
 test('queuedRunProblem revalidates a queued run against a replacement budget', () => {
   const state = SCENARIOS.era3Idle(1);
-  const queuedRecipe = recipe({ post: ['synthetic-sft', 'thumbs', 'spec-light', 'safety-tuning'] });
+  const queuedRecipe = recipe({ post: ['synthetic-sft', 'thumbs', 'constitution', 'safety-tuning'] });
   const highTalent = {
     spend: 20,
     split: { training: 0.3, security: 0.1, product: 0.3, talent: 0.3 },
@@ -217,10 +217,10 @@ test('sanitizeDraft trims distinct unlocked picks to the projected slot count', 
   const state = SCENARIOS.era3Idle(1);
   state.budget = { spend: 20, split: { training: 0.4, security: 0.1, product: 0.3, talent: 0.2 } };
   const clean = sanitizeDraft(state, recipe({
-    post: ['synthetic-sft', 'thumbs', 'spec-light', 'safety-tuning', 'missing-card', 'filtered-data'],
+    post: ['synthetic-sft', 'thumbs', 'constitution', 'safety-tuning', 'missing-card', 'filtered-data'],
   }));
   assert.equal(slotsFor(state, 'post'), 3);
-  assert.deepEqual(clean.picks.post, ['synthetic-sft', 'thumbs', 'spec-light']);
+  assert.deepEqual(clean.picks.post, ['synthetic-sft', 'thumbs', 'constitution']);
 });
 
 test('sanitizeDraft drops hidden cards even though the sim still unlocks them', () => {
@@ -289,4 +289,69 @@ test('with one unit idle the advisor line reads in the singular', () => {
   state.compute.servingUnits += 8;
   const text = opinions(state, 'budget').find((item) => item.id === 'research').text;
   assert.match(text, /^1 unit sits idle/);
+});
+
+import { CARDS } from '../sim/data/cards.js';
+import { learnConstitution, setDraft } from '../sim/constitution.js';
+import { SAFETY_PROPOSAL } from '../sim/data/constitution.js';
+import { FakeEvent, installFakeDom } from './helpers/fakeDom.js';
+
+const constitutionCard = CARDS.find((card) => card.id === 'constitution');
+
+async function recipeWithConstitution() {
+  const doc = installFakeDom();
+  const { openRecipe } = await import('../ui/screens/recipe.js');
+  const { mountConstitution } = await import('../ui/screens/constitution.js');
+  const game = createGame({ state: SCENARIOS.era3Idle(1), seed: 1 });
+  const overlay = doc.createElement('div');
+  doc.body.append(overlay);
+  mountConstitution(game, overlay);
+  openRecipe(game, overlay, { stage: 3 });
+  const row = () => overlay.querySelectorAll('.tech-row')
+    .find((candidate) => candidate.querySelector('.tech-name')?.textContent === constitutionCard.name);
+  return { game, overlay, row };
+}
+
+test('the constitution card opens a registered screen when picked', () => {
+  assert.equal(constitutionCard.opens, 'constitution');
+});
+
+test('picking the constitution card opens Safety’s draft, and Adopt keeps the card picked', async () => {
+  const { game, overlay, row } = await recipeWithConstitution();
+  assert.ok(row(), 'the era 3 post-training stage offers the constitution card');
+  row().click();
+  assert.ok(overlay.querySelector('.sd-layer'), 'the draft opens');
+  overlay.querySelector('.sd-adopt').click();
+  assert.equal(overlay.querySelector('.sd-layer'), null);
+  assert.ok(row().classList.contains('picked'));
+  assert.deepEqual(game.state.constitutionDraft.hardLines, SAFETY_PROPOSAL.hardLines);
+});
+
+test('closing Safety’s draft without adopting unpicks the constitution card, by button or Escape', async () => {
+  const { overlay, row } = await recipeWithConstitution();
+  row().click();
+  overlay.querySelector('.sd-close').click();
+  assert.equal(overlay.querySelector('.sd-layer'), null);
+  assert.equal(row().classList.contains('picked'), false);
+  assert.equal(document.activeElement, row(), 'focus goes back to the card');
+  row().click();
+  overlay.querySelector('.sd-layer').dispatchEvent(new FakeEvent('keydown', { key: 'Escape' }));
+  assert.equal(overlay.querySelector('.sd-layer'), null);
+  assert.equal(row().classList.contains('picked'), false);
+});
+
+test('the constitution card note names the draft version and the live one, never a model', async () => {
+  const { constitutionNote } = await import('../ui/screens/constitution.js');
+  const state = SCENARIOS.era3Idle(1);
+  assert.equal(constitutionNote(state), null, 'no chip before any draft exists');
+  setDraft(state, SAFETY_PROPOSAL);
+  assert.deepEqual(constitutionNote(state), { text: 'v1 draft · no model has learned it yet', later: false });
+  learnConstitution(state, SAFETY_PROPOSAL);
+  state.models.push({ ...state.models.at(-1), generation: 4 });
+  assert.equal(constitutionNote(state).text, 'v2 draft · v1 is live');
+  state.constitutionDraft.changes.push({ turn: state.turn, change: { remove: 'privacy' }, source: 'investors' });
+  assert.equal(constitutionNote(state).text, 'v2 draft · v1 is live\n1 change since v1');
+  state.constitutionDraft.changes.push({ turn: state.turn, change: { add: 'privacy' }, source: 'users' });
+  assert.equal(constitutionNote(state).text, 'v2 draft · v1 is live\n2 changes since v1');
+  assert.doesNotMatch(constitutionNote(state).text, /Kestrel/, 'the chip names no model');
 });

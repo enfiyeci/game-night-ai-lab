@@ -93,7 +93,7 @@ public "breaks" posts; they only reach the feed as a rumour or when a choice mak
 
 ### Benchmark contamination exposed (`contamination`)
 **When it breaks**
-- `@evalmaxxer` — We found the Patchwork test set in {model}'s training data. Methods and matching examples in the thread. The scores are not what they claimed.
+- `@evalmaxxer` — We found the {coding} test set in {model}'s training data. Methods and matching examples in the thread. The scores are not what they claimed.
 - `@actually_neil` — Actually, I said this at launch. Nobody listened. As usual.
 - `@abstract_only` — so my thesis baseline was trained on the test. cool. starting the related-work section again.
 - `@marsh_says` — Benchmarks were always a marketing tool. Now we have proof.

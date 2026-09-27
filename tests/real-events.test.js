@@ -398,3 +398,25 @@ test('an outside evaluator on the release counts as the testers, and two tester 
   s.flags.govTesting = true;
   assert.equal(shipDelay(s, ['eval-full', 'channel-app']), 1, 'both promises, one round');
 });
+
+test('an era 3 lab with no constitution learned yet does not get the hate meltdown', () => {
+  const event = REAL_EVENTS.find((row) => row.id === 'hateMeltdown');
+  const s = createInitialState();
+  s.era = 3;
+  s.models.push(liveModel());
+  assert.equal(event.trigger(s, yes), false, 'no lines yet is not stripped lines');
+  s.constitution.version = 1; // learned, then every line removed
+  assert.equal(event.trigger(s, yes), true);
+});
+
+test('signing with the Pentagon and making peace after the appeal change the draft, not the live constitution', () => {
+  for (const [id, choice, source] of [['pentagon', 'sign', 'pentagon'], ['blacklistAppeal', 'peace', 'blacklistAppeal']]) {
+    const s = resolvableState();
+    s.constitution.version = 1;
+    s.pendingEvents.push({ id, targets: [0] });
+    resolveEvent(s, id, choice);
+    assert.deepEqual(s.constitution.hardLines, ['honest', 'privacy', 'no-wmd'], `${id}: live copy unchanged`);
+    assert.deepEqual(s.constitutionDraft.hardLines, ['honest', 'privacy'], `${id}: the draft loses its last line`);
+    assert.deepEqual(s.constitutionDraft.changes.map((entry) => [entry.change, entry.source]), [[{ remove: 'no-wmd' }, source]]);
+  }
+});

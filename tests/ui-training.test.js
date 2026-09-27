@@ -4,6 +4,9 @@ import { alignmentFor, badgeCounts, bubbleSpawns, expectedGain, floorHint, ready
 import { createGame } from '../ui/game.js';
 import { SCENARIOS } from '../ui/logic/scenarios.js';
 import { createInitialState } from '../sim/state.js';
+import { setDraft } from '../sim/constitution.js';
+import { SAFETY_PROPOSAL } from '../sim/data/constitution.js';
+import { advanceRunBy, startRun } from '../sim/training.js';
 import { recipeCost } from '../sim/recipe.js';
 import { createRng } from '../sim/rng.js';
 import { advanceDays, applyActions } from '../sim/turn.js';
@@ -58,8 +61,22 @@ test('the early first bubble adds no overcount when a loss spike trims the finis
   assert.ok(peak <= Math.round(state.pendingModel.gain), `peak ${peak} vs model ${Math.round(state.pendingModel.gain)}`);
 });
 
+test('the estimate counts the constitution the run will teach', () => {
+  const state = createInitialState();
+  state.era = 3; state.cash = 5000;
+  state.compute.split.safety = 0; state.compute.online = 100;
+  setDraft(state, { hardLines: ['no-autonomy-grab', 'honest', 'privacy'], rulings: SAFETY_PROPOSAL.rulings });
+  const recipe = { sliders: { size: 'small', length: 'optimal', alignShare: 0 }, picks: { pre: [], mid: [], post: ['agentic-rl', 'constitution'] } };
+  assert.equal(startRun(state, recipe).ok, true);
+  const estimate = expectedGain(state);
+  state.activeRun.turnsLeft = 0.5; state.activeRun.canAdvance = true; state.activeRun.capacityTurn = state.turn;
+  advanceRunBy(state, { chance: () => false }, 1);
+  assert.equal(estimate, state.pendingModel.gain);
+});
+
 test('a trained model shows its real gain and the remembered share', () => {
-  const state = SCENARIOS.hazard(4);
+  // Under the compute race plan (docs/superpowers/plans/2026-09-26-compute-race.md) Task 5, none of seed 4's twenty dice reach the hazard; seed 5's do.
+  const state = SCENARIOS.hazard(5);
   assert.ok(state.pendingModel, 'hazard scenario ends with a trained model');
   const counts = badgeCounts(state, 0.25);
   assert.equal(counts.capability, Math.round(state.pendingModel.gain));
@@ -68,7 +85,7 @@ test('a trained model shows its real gain and the remembered share', () => {
 });
 
 test('the hazard scenario stops with the cheating trace still unanswered', () => {
-  const state = SCENARIOS.hazard(4);
+  const state = SCENARIOS.hazard(5); // seed 4 no longer reaches the hazard: see the test above
   assert.equal(state.pendingModel?.hazard?.type, 'rewardHacking');
 });
 

@@ -10,6 +10,11 @@ export const REASONING = { off: 1, low: 2, medium: 4, high: 8 };
 export const PRECISION = { bf16: 1, fp8: 0.7, fp4: 0.45 };
 export const CHANNEL = { consumer: 1, enterprise: 4, agent: 20 };
 export const REVENUE_PER_USER = { consumer: 5, enterprise: 30, agent: 200 };
+// What a user pays grows with each era's models, stamped on a model at launch (model.eraPrice): pricier tiers, seats
+// and agent products, the way real lab revenue outgrew its user counts. Owner's middle ground (2026-09-26): revenue
+// covers about a third of spending through 2025, half in 2026 and two thirds in 2027 (balanced bot); real labs got
+// closer to break-even (docs/research/ai-lab-mechanics/notes/lab_finances.md, runway-history), money stays tighter.
+export const ERA_PRICE = [1, 1.1, 1.9, 2.1, 2.25];
 export const PRICE_STANCE = {
   premium: { rev: 1.5, growth: 0.6 },
   market: { rev: 1, growth: 1 },

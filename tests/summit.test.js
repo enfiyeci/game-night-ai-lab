@@ -373,7 +373,7 @@ test('catching after an investigation undoes exactly what the break gained', () 
   openbrain.capability = 98;
   s.deal.breakPressure = { openbrain: 1 };
   dealWeek(s);
-  assert.equal(openbrain.capability, 100);
+  assert.equal(openbrain.capability, 98 + BREAK_GAIN); // counts past 100 (owner pick A)
   const suspicion = s.deal.suspicions.find((entry) => entry.party === 'openbrain');
   investigate(s, suspicion.id);
   assert.equal(openbrain.capability, 98);

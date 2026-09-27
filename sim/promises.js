@@ -8,6 +8,7 @@ import { FEED_KEEP } from './feedLive.js';
 export const LEAK_ROUNDS = 5;
 
 const LAST_TURN = ERAS.reduce((sum, era) => sum + era.turns, 0) - 1;
+const ERA3_FIRST_TURN = ERAS[0].turns + ERAS[1].turns;
 
 function pushFeed(state, handle, text, tag = 'feed') {
   state.feed.push({ turn: state.turn, day: state.day, handle, text, tag });
@@ -30,13 +31,14 @@ export function createPresidentPromise(id, meeting, turn, state) {
     };
   }
   const dueOffset = meeting === 'first' ? 4 : 2;
+  const due = Math.min(turn + dueOffset, LAST_TURN);
   return {
     source: 'president',
     id,
     text: definition.text,
     meeting,
     madeTurn: turn,
-    dueTurn: Math.min(turn + dueOffset, LAST_TURN),
+    dueTurn: definition.touchesConstitution ? Math.max(due, ERA3_FIRST_TURN) : due,
     status: 'open',
     stalled: false,
     leaked: false,

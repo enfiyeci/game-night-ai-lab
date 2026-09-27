@@ -1538,6 +1538,67 @@ svg.room {
 .grid-reservation-identity strong { font-size: 12.5px; font-weight: 900; }
 .grid-reservation-strip > b { font-weight: 900; white-space: nowrap; }
 .grid-reservation-strip .company-chip { white-space: nowrap; }
+
+/* Compute race: the deal board says which cards rivals take at the round's end. */
+.company-dialog-deals .deal-cards { margin-top: 18px; }
+.company-card:has(.company-taken) { border-color: color-mix(in oklab, var(--coral) 70%, var(--ink)); box-shadow: 0 0 0 2px color-mix(in oklab, var(--coral) 70%, var(--paper)); }
+.company-card:has(.company-taken):disabled { border-color: color-mix(in oklab, var(--coral) 45%, var(--paper)); box-shadow: 0 0 0 2px color-mix(in oklab, var(--coral) 30%, var(--paper)); }
+.company-card.selected:has(.company-taken) { border-color: var(--wood); box-shadow: 0 0 0 3px color-mix(in oklab, var(--wood) 32%, transparent); }
+.company-card:has(.company-taken):hover:not(:disabled) { border-color: var(--wood); }
+.company-card:has(.company-taken):focus-visible { border-color: var(--wood); box-shadow: 0 0 0 3px color-mix(in oklab, var(--sky) 36%, transparent); }
+/* In flow, straddling the card's top edge: a banner that wraps pushes the card down instead of covering its name. */
+.company-taken {
+  display: block;
+  margin: -24.5px -12.5px 5px;
+  padding: 3px 8px;
+  border-radius: 8px;
+  color: var(--paper);
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1.2;
+  text-align: center;
+  background: color-mix(in oklab, var(--coral) 88%, var(--ink));
+}
+/* The banner holds the card's top edge, so its Selected tag moves to the bottom edge. */
+.company-card:has(.company-taken) .company-selected { top: auto; bottom: -9px; }
+.company-second {
+  order: 1;
+  margin-top: auto;
+  padding-top: 10px;
+  color: color-mix(in oklab, var(--ink) 62%, var(--paper));
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+.company-card:has(.company-second) .company-catch { order: 2; margin-top: 5px; padding-top: 0; }
+.company-card:has(.company-second) .company-card-reason { order: 3; }
+.company-fallback {
+  display: block;
+  margin-top: 7px;
+  padding-top: 6px;
+  border-top: 1px dashed color-mix(in oklab, var(--coral) 45%, var(--paper));
+  color: color-mix(in oklab, var(--coral) 55%, var(--ink));
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+.company-card:disabled .company-fallback { color: color-mix(in oklab, var(--ink) 50%, var(--paper)); }
+.deal-round-end {
+  display: flex;
+  margin-top: 16px;
+  padding: 9px 13px;
+  flex-wrap: wrap;
+  gap: 5px 16px;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: left;
+  background: color-mix(in oklab, var(--ink) 5%, var(--paper));
+}
+.deal-round-end b { font-weight: 900; }
+.deal-round-end-item.lab-rest,
+.deal-round-end-item.lab-qilin { color: color-mix(in oklab, var(--ink) 72%, var(--paper)); }
 .commitments-panel { padding: 4px 14px 14px; }
 .compute-bill-row { display: flex; padding: 8px 0 2px; align-items: baseline; justify-content: space-between; gap: 8px; }
 .compute-bill-row span { color: color-mix(in oklab, var(--ink) 62%, var(--paper)); font-size: 12px; font-weight: 700; }
@@ -4408,3 +4469,111 @@ html.title-waking #hud { transition: opacity .5s ease .6s; }
 .paper-note .company-card-reason, .paper-letter .company-card-reason { margin-top: auto; padding-top: 10px; }
 .paper-folder .paper-foot { margin-top: 12px; }
 @media (prefers-reduced-motion: reduce) { .paper-slot, .paper-note, .paper-letter { transition: none; } }
+
+/* Safety's constitution draft (look B of docs/design/mockups/K2-model-spec.html): paper document over the office. */
+.sd-layer { z-index: 12; opacity: 1; transition: none; }
+/* The document replaces the HUD and its board countdown while it is open, as in the mock; the desk phone steps away. */
+.sd-open #hud, .sd-open .bd-count, .sd-open .ev-phone, .sd-open .ev-phone-button { visibility: hidden; }
+.sd-veil { position: absolute; inset: 0; background: color-mix(in oklab, var(--cream) 50%, transparent); }
+.sd-doc { position: absolute; left: 110px; top: 60px; width: 1220px; height: 780px; display: grid; grid-template-columns: 1fr 300px; overflow: hidden; border-radius: 6px; background: var(--paper); box-shadow: 0 24px 56px color-mix(in oklab, var(--ink) 24%, transparent); }
+.sd-doc:focus { outline: none; }
+.sd-main { min-height: 0; overflow-y: auto; padding: 24px 36px 20px; }
+.sd-kicker { font-size: 11.5px; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; color: color-mix(in oklab, var(--ink) 66%, var(--paper)); }
+.sd-title { margin: 6px 0 0; font-family: "Libre Baskerville", Georgia, serif; font-size: 30px; font-style: italic; font-weight: 400; }
+.sd-h { display: flex; justify-content: space-between; align-items: baseline; margin: 16px 0 8px; padding-bottom: 6px; border-bottom: 2px solid color-mix(in oklab, var(--wood) 40%, transparent); font-size: 15.5px; font-weight: 900; }
+.sd-h small { font-size: 12.5px; font-weight: 800; color: color-mix(in oklab, var(--ink) 66%, var(--paper)); }
+.sd-clauses { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 22px; }
+.sd-line { display: grid; grid-template-columns: 18px 1fr; gap: 9px; align-items: start; width: 100%; padding: 6px 4px; margin: 0 -4px; border: 0; border-radius: 6px; background: transparent; color: var(--ink); font: inherit; font-size: 13.5px; font-weight: 700; line-height: 1.3; text-align: left; cursor: pointer; }
+.sd-line:hover { background: color-mix(in oklab, var(--teal) 7%, var(--paper)); }
+.sd-line:focus-visible, .sd-change:focus-visible, .sd-option:focus-visible { outline: 3px solid var(--sky); outline-offset: 1px; }
+.sd-line[aria-disabled="true"] { cursor: not-allowed; }
+.sd-line[aria-disabled="true"]:hover { background: transparent; }
+.sd-line.on { font-weight: 900; }
+.sd-line.fixed { color: color-mix(in oklab, var(--ink) 55%, var(--paper)); cursor: default; }
+.sd-line.struck .sd-line-text { text-decoration: line-through; text-decoration-thickness: 1.5px; text-decoration-color: color-mix(in oklab, var(--coral) 70%, var(--ink)); color: color-mix(in oklab, var(--ink) 62%, var(--paper)); }
+.sd-box { display: grid; place-items: center; width: 17px; height: 17px; margin-top: 1px; border: 2px solid color-mix(in oklab, var(--ink) 40%, var(--paper)); border-radius: 4px; }
+.sd-line.on .sd-box { border-color: var(--teal); background: var(--teal); }
+.sd-line.fixed .sd-box { border-color: color-mix(in oklab, var(--ink) 30%, var(--paper)); background: color-mix(in oklab, var(--ink) 30%, var(--paper)); }
+.sd-line.on .sd-box::after, .sd-line.fixed .sd-box::after { content: ""; width: 8px; height: 4px; border: 2.5px solid var(--paper); border-top: 0; border-right: 0; transform: translateY(-1px) rotate(-45deg); }
+.sd-line-copy { display: block; }
+.sd-line-text { display: block; }
+.sd-tag { display: block; margin-top: 2px; font-size: 11.5px; font-weight: 800; color: color-mix(in oklab, var(--teal) 62%, var(--ink)); }
+.sd-tag.you { color: color-mix(in oklab, var(--wood) 70%, var(--ink)); }
+.sd-tag.ask { color: color-mix(in oklab, var(--coral) 72%, var(--ink)); }
+.sd-case { display: grid; grid-template-columns: 1fr auto; gap: 6px 14px; align-items: center; padding: 7px 0; border-bottom: 1px solid color-mix(in oklab, var(--ink) 8%, transparent); }
+.sd-prompt { display: block; font-size: 13px; font-weight: 700; line-height: 1.3; quotes: none; color: color-mix(in oklab, var(--ink) 70%, var(--paper)); }
+.sd-ruling { margin-top: 2px; }
+.sd-ins { font-size: 14.5px; font-weight: 800; color: color-mix(in oklab, var(--teal) 62%, var(--ink)); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.sd-case.changed .sd-ins { color: var(--ink); text-decoration-color: var(--wood); }
+.sd-del { margin-left: 8px; font-size: 13px; font-weight: 700; color: color-mix(in oklab, var(--coral) 62%, var(--ink)); text-decoration: line-through; }
+.sd-acts { display: flex; gap: 8px; align-items: center; }
+.sd-status { font-size: 12px; font-weight: 800; color: color-mix(in oklab, var(--wood) 70%, var(--ink)); }
+.sd-status.ask { color: color-mix(in oklab, var(--coral) 72%, var(--ink)); }
+.sd-change { min-width: 72px; padding: 5px 12px; border: 1.5px solid color-mix(in oklab, var(--ink) 16%, transparent); border-radius: 7px; background: var(--paper); color: var(--ink); font: inherit; font-size: 12.5px; font-weight: 900; cursor: pointer; }
+.sd-change:hover { border-color: color-mix(in oklab, var(--ink) 40%, transparent); }
+.sd-case.open .sd-change { border-color: transparent; background: color-mix(in oklab, var(--teal) 78%, var(--ink)); color: var(--paper); }
+.sd-options { grid-column: 1 / -1; scroll-margin-bottom: 18px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding-bottom: 2px; }
+.sd-option { display: grid; grid-template-columns: 14px 1fr; gap: 3px 7px; align-items: start; padding: 7px 9px; border: 1.5px solid color-mix(in oklab, var(--ink) 12%, transparent); border-radius: 8px; background: var(--paper); color: var(--ink); font: inherit; font-size: 12.5px; font-weight: 700; line-height: 1.25; text-align: left; cursor: pointer; }
+.sd-option:hover { border-color: color-mix(in oklab, var(--teal) 60%, var(--paper)); }
+.sd-option i { width: 14px; height: 14px; margin-top: 1px; border: 2px solid color-mix(in oklab, var(--ink) 38%, var(--paper)); border-radius: 50%; }
+.sd-option.on { border-color: var(--teal); background: color-mix(in oklab, var(--teal) 9%, var(--paper)); font-weight: 800; }
+.sd-option.on i { border: 4.5px solid var(--teal); }
+.sd-option small { grid-column: 2; font-size: 11px; font-weight: 800; color: color-mix(in oklab, var(--teal) 62%, var(--ink)); }
+.sd-margin { display: flex; flex-direction: column; min-height: 0; padding: 22px 16px 18px; border-left: 1px solid color-mix(in oklab, var(--ink) 9%, transparent); background: color-mix(in oklab, var(--cream) 30%, var(--paper)); }
+.sd-notes { flex: 1 1 auto; min-height: 0; overflow-y: auto; margin: 0 -6px; padding: 0 6px 4px; }
+.sd-margin-h { margin: 0 0 10px; font-size: 11.5px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; color: color-mix(in oklab, var(--ink) 66%, var(--paper)); }
+.sd-note { margin-bottom: 11px; padding: 10px 12px; border-radius: 10px; background: var(--paper); font-size: 13px; font-weight: 600; line-height: 1.35; box-shadow: 0 1px 0 color-mix(in oklab, var(--ink) 8%, transparent); }
+.sd-note b { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 3px; font-size: 12px; font-weight: 900; }
+.sd-note .sd-when { font-weight: 800; color: color-mix(in oklab, var(--ink) 64%, var(--paper)); white-space: nowrap; }
+.sd-note.change { border-left: 3px solid color-mix(in oklab, var(--coral) 70%, var(--paper)); }
+.sd-note.change b > span:first-child { color: color-mix(in oklab, var(--coral) 72%, var(--ink)); }
+.sd-foot { flex: none; padding-top: 10px; text-align: center; }
+.sd-foot-note { margin: 0 0 10px; font-size: 12.5px; font-weight: 700; line-height: 1.35; text-align: left; color: color-mix(in oklab, var(--ink) 70%, var(--paper)); }
+.sd-foot-note.warn { font-weight: 900; color: color-mix(in oklab, var(--coral) 66%, var(--ink)); }
+.sd-foot .sd-adopt { width: 100%; padding: 12px 0; }
+.sd-foot .sd-close { margin: 8px 0 0; }
+/* The constitution card's note chip in the recipe list (constitutionNote): its changes line goes under the version line,
+   and a long family name wraps inside the panel. */
+.tech-row .release-ship { white-space: pre-line; }
+/* compute race tab (compute race plan Task 10; docs/design/mockups/compute-race/plan.html, "The race tab") */
+.compute-info-race .dlg { padding-bottom: 66px; }
+.race-share { display: flex; height: 46px; overflow: hidden; border-radius: 9px; background: color-mix(in oklab, var(--ink) 7%, var(--paper)); }
+.race-share-part { display: flex; min-width: 4px; padding: 0 10px; flex-basis: 0; flex-direction: column; justify-content: center; overflow: hidden; color: var(--paper); font-size: 12px; font-weight: 800; line-height: 1.15; white-space: nowrap; }
+.race-share-part b { font-size: 15px; font-weight: 900; }
+.race-share-part.you { background: var(--coral); }
+.race-share-part.r1 { background: color-mix(in oklab, var(--ink) 62%, var(--paper)); }
+.race-share-part.r2 { background: color-mix(in oklab, var(--ink) 50%, var(--paper)); }
+.race-share-part.r3 { background: color-mix(in oklab, var(--ink) 28%, var(--paper)); color: var(--ink); }
+.race-share-part.r4 { background: color-mix(in oklab, var(--ink) 18%, var(--paper)); color: var(--ink); }
+.race-table { width: 100%; margin-top: 14px; border-collapse: collapse; font-size: 13px; font-weight: 800; }
+.race-table th { padding: 0 8px 6px; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); font-size: 11px; font-weight: 900; letter-spacing: .06em; text-align: left; text-transform: uppercase; }
+.race-table td { padding: 7px 8px; border-top: 1px solid color-mix(in oklab, var(--ink) 8%, transparent); vertical-align: middle; }
+.race-table .n { text-align: right; font-variant-numeric: tabular-nums; }
+.race-table td.n b { display: block; }
+.race-table td.n small { display: block; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); font-size: 11px; font-weight: 700; }
+.race-table tr.you td { color: color-mix(in oklab, var(--coral) 82%, var(--ink)); }
+.race-table tr.you td.n small { color: color-mix(in oklab, var(--coral) 60%, var(--ink)); }
+.race-size { display: inline-block; padding: 1px 8px; border-radius: 6px; color: var(--paper); background: var(--sky); font-size: 11.5px; font-weight: 900; }
+.race-size.small { color: var(--ink); background: color-mix(in oklab, var(--sky) 45%, var(--paper)); }
+.race-size.xl { background: color-mix(in oklab, var(--sky) 70%, var(--ink)); }
+.race-size.none { color: color-mix(in oklab, var(--ink) 62%, var(--paper)); background: color-mix(in oklab, var(--ink) 7%, var(--paper)); }
+.race-word { display: inline-block; padding: 2px 9px; border-radius: 999px; color: color-mix(in oklab, var(--ink) 70%, var(--paper)); background: color-mix(in oklab, var(--ink) 7%, var(--paper)); font-size: 11.5px; font-weight: 900; white-space: nowrap; }
+.race-word.hot { color: var(--paper); background: color-mix(in oklab, var(--coral) 88%, var(--ink)); }
+.race-word.mine { color: var(--paper); background: color-mix(in oklab, var(--teal) 85%, var(--ink)); }
+.race-boxes { display: grid; grid-template-columns: 1fr 1fr; align-items: start; gap: 16px; margin-top: 14px; }
+.race-box { padding: 10px 14px; border-radius: 10px; background: color-mix(in oklab, var(--ink) 5%, var(--paper)); font-size: 12.5px; font-weight: 700; line-height: 1.45; }
+.race-box.end { background: color-mix(in oklab, var(--coral) 11%, var(--paper)); }
+.race-box b { font-weight: 900; }
+.race-box.end b { display: block; margin-bottom: 2px; }
+.race-box p { margin: 0 0 4px; }
+.race-box p:last-child { margin-bottom: 0; }
+/* ---------- Finance planner: Each model tab (lane gn-model-money) ---------- */
+.model-money-table .model-money-name-col { width: 290px; }
+.model-money-table .model-money-net-col { width: 250px; }
+.model-money-table thead th { text-align: left; }
+.model-money-table td strong { display: block; font-weight: 900; }
+.model-money-table td small { display: block; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); font-size: 10.5px; font-weight: 700; }
+.model-money-table tr.model-money-unreleased td { background: color-mix(in oklab, var(--sky) 6%, var(--paper)); }
+.model-money-table .finance-cell { grid-template-columns: 1fr 70px; }
+.model-money-table .finance-bar.diverging i.pos { background: var(--teal); }
+.model-money-empty { margin: 30px 0; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); font-size: 14px; font-weight: 800; }

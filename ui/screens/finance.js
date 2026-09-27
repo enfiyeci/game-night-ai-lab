@@ -12,6 +12,7 @@ import { billChanges, monthBill } from '../logic/money.js';
 import { openDeals } from './compute.js';
 import { openBudget } from './budget.js';
 import { openAutomation } from './automation.js';
+import { modelMoneyView } from './modelMoney.js';
 
 // Compute is shown in the unit of the era the player is in: later eras' power units would hint at what is to come.
 const amountNow = (state, units, era) => computeAmount(units, Math.min(era, state.era));
@@ -58,8 +59,9 @@ function currentPlan(game) {
   return { goals, raises };
 }
 
-// The Money screen's four views (owner pick 2026-09-26: 2A "This month" and 2B "What changed" join the planner's two).
-const VIEWS = [['month', 'This month'], ['changes', 'What changed'], ['timeline', 'Years ahead'], ['books', 'The books']];
+// The Money screen's five views (owner picks 2026-09-26: 2A "This month" and 2B "What changed" join the planner's two;
+// "Each model" shows every release's own books).
+const VIEWS = [['month', 'This month'], ['models', 'Each model'], ['changes', 'What changed'], ['timeline', 'Years ahead'], ['books', 'The books']];
 const PRICE_WORDS = { premium: 'at the premium price', market: 'at the market price', undercut: 'at the undercut price', free: 'on the free tier' };
 const BUDGET_WORDS = { training: 'training', security: 'security', product: 'product', talent: 'talent' };
 
@@ -645,7 +647,22 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
     render();
   }
 
-  const SHOW = { month: showMonth, changes: showChanges, timeline: showTimeline, books: showBooks };
+  // Each model: what every release cost to make and serve, and what it earned, since it started (ui/screens/modelMoney.js).
+  function showModels() {
+    draw = () => {};
+    const body = element('div', 'finance-models-body');
+    body.append(tabs('models'), modelMoneyView(state));
+    opened = openDialog(overlayRoot, {
+      title: 'Each model',
+      subtitle: 'What each release cost and earned since it started · priced at what your compute costs you',
+      body,
+      okLabel: 'Close',
+      onOk: () => opened.close(),
+    });
+    opened.classList.add('finance-books', 'finance-models');
+  }
+
+  const SHOW = { month: showMonth, models: showModels, changes: showChanges, timeline: showTimeline, books: showBooks };
   (SHOW[view] ?? showTimeline)();
   return opened;
 }

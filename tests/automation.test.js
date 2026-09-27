@@ -484,7 +484,7 @@ test('endTurn: the mark that ends the run in a quiet takeover queues and runs no
     const s = atLeads();
     s.capability = 80;
     s.alignmentDebt = 100;
-    s.automation.stage = 4; // the default constitution's accept-shutdown line adds a fourth step before the takeover
+    s.automation.stage = 4; // start past the escalation stages so this tick reaches the takeover ending
     s.automation.autoApprove = autoApprove;
     s.automation.pressure = 1; // the running total reaches 1 this round
     return endTurn(s, {}, hit);

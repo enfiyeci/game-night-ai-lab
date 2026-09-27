@@ -75,7 +75,7 @@ test('no tour line and no era-1 menu reason names an era', () => {
     assert.doesNotMatch(line, /\bera \d/i, line);
     for (const name of names) assert.equal(line.toLowerCase().includes(name), false, line);
   }
-  assert.equal(ITEMS.find((item) => item.id === 'constitution').hidden(state), true);
+  assert.equal(ITEMS.some((item) => item.id === 'constitution'), false); // the constitution is a recipe card from era 3, not a menu item
 });
 
 test('the finance planner calls a later era by the month it starts, never by its number or name', async () => {

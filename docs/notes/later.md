@@ -29,3 +29,27 @@ vote, a warning a month ahead, and pre-meeting events).
 - The sim needs a per-meeting "call used" flag and the backfire rule: compare the director's issue trend (the same
   links the "what moves them" tab draws) and nudge support away when it is going badly.
 - Real time: "between meetings" is the stretch from one meeting's date to the next, not a count of turns.
+
+## Balance
+
+- **Constitution timing (parked 2026-09-26).** The difficulty target wants at least 100/200 failure endings in eras
+  3–4 for the speed and safety strategies. Measured with `node tools/balance.js 200`, before = base `9d51f8e` (turn-0
+  constitution), after = this branch with the final review fixes (constitution from era 3, learned through the
+  recipe card):
+
+  | Strategy | Before: failures in eras 3–4 | After: failures in eras 3–4 |
+  | --- | --- | --- |
+  | speed | 114 (passed the target) | 59 (misses) |
+  | safety | 147 | 151 |
+  | balanced | 108 | 108 |
+  | random | 50 | 28 |
+  | overCommitter | 14 | 39 |
+
+  Speed's endings: before, acquihire 86 and boardRemoved 52, mean era 2.88; after, acquihire 140 and boardRemoved 3,
+  mean era 2.56. (Before the final review fixes this branch measured speed 60 and safety 151.)
+
+  Likely causes: the investors' cash-for-a-line demand no longer fires in eras 1–2; no line is ever lost in eras 1–2,
+  so the mission trustee's penalty no longer fires (an inference from the boardRemoved drop, not traced); and before
+  the final fixes no scripted strategy learned a constitution. After them the safety strategy learns one, but speed's
+  card list has no constitution card, so speed still never learns one.
+  Retune after the first playthrough; do not restore a constitution before era 3.

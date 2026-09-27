@@ -1,8 +1,9 @@
 // The Compute button's screen (owner pick C1, 2026-09-26): where your units go this month, then where your models'
-// capability puts you, and the race chart as the second tab. Rivals race on capability only; they hold no compute.
+// capability puts you, and the race tab second. Rivals hold compute too (compute race plan).
 import { openDialog } from '../components/dialog.js';
 import { computeBar } from '../logic/compute.js';
-import { raceView } from './history.js';
+import { computeAmount } from '../logic/format.js';
+import { raceTab } from './race.js';
 
 const PARTS = {
   training: { label: 'Training', say: 'Training your next model right now.' },
@@ -21,14 +22,14 @@ function element(tag, className, text) {
 }
 
 // `race` lets another screen supply the second tab's content: a function (game) => { body, stacked }.
-export function openComputeInfo(game, overlayRoot, { view = 'where', race = raceView } = {}) {
+export function openComputeInfo(game, overlayRoot, { view = 'where', race = raceTab } = {}) {
   const state = game.state;
   let opened;
 
   function tabs(current) {
     const row = element('div', 'finance-tabs');
     row.setAttribute('role', 'tablist');
-    for (const [key, label] of [['where', 'Where it goes'], ['race', 'The race so far']]) {
+    for (const [key, label] of [['where', 'Where it goes'], ['race', 'The race']]) {
       const tab = element('button', key === current ? 'on' : '', label);
       tab.type = 'button';
       tab.setAttribute('role', 'tab');
@@ -61,7 +62,7 @@ export function openComputeInfo(game, overlayRoot, { view = 'where', race = race
     }
     body.append(stack, explain);
 
-    body.append(element('h6', '', 'Where that puts you · overall capability (the race tab shows public benchmarks only)'));
+    body.append(element('h6', '', 'Where that puts you · overall capability'));
     const labs = [{ name: 'You', capability: state.capability, you: true }, ...state.rivals.map((r) => ({ name: r.name, capability: r.capability }))]
       .sort((a, b) => b.capability - a.capability);
     const top = Math.max(1, ...labs.map((l) => l.capability));
@@ -98,12 +99,13 @@ export function openComputeInfo(game, overlayRoot, { view = 'where', race = race
     body.prepend(tabs('race'));
     opened = openDialog(overlayRoot, {
       title: 'Compute',
-      subtitle: 'The race so far: public benchmarks only, the average of coding, science, agents and the final exam',
+      subtitle: `Era ${state.era} · ${computeAmount(Math.round(state.compute.online), state.era)} online · who can train what, and who takes which deal`,
       body,
       okLabel: 'Close',
       onOk: () => opened.close(),
     });
-    opened.classList.add('history-race', 'compute-info-race');
+    // Same size as the first tab, so switching tabs does not move the dialog.
+    opened.classList.add('compute-info', 'compute-info-race');
     if (stacked) opened.classList.add('history-race-stacked');
   }
 

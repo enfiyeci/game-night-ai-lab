@@ -141,29 +141,56 @@ in section 6e). A lab that is insolvent when era 5 ends never wins; it ends in a
   `docs/superpowers/specs/2026-09-25-compute-gathering-design.md` — contracts, the compute
   split (safety moves from the money budget into compute), the era 3 queue and the era 4
   power cap. Where it differs from this spec, it wins.
-- **Constitution (clarified by owner 2026-09-25; format decided 2026-09-25).** The *model's*
-  constitution: the values document your AI is trained on, like Claude's constitution or
-  OpenAI's Model Spec. It is not a company charter. Company promises such as a safety-compute
-  pledge live in `state.promises`, not here.
-  - **Format: casebook plus hard lines, presented like a real constitution or model spec.**
-    The player (1) picks 3 hard lines from about 8 (for example: never help build weapons of
-    mass destruction, never deceive the lab, never resist shutdown, never manipulate users,
-    never help one group seize power), and (2) rules on 5–6 concrete cases (for example: a
-    dangerous chemistry question, a parent who wants to monitor a teenager, the President's
-    office asking the model to play down a critical report, a user who insists the model is
-    wrong when it is right). Each ruling is a precedent that sets hidden values. The result is
-    rendered as a document in the style of the real ones: a hard-constraints section and a
-    worked-examples section.
+- **Constitution (clarified by owner 2026-09-25; format decided 2026-09-25; moved to era 3 and
+  into the training recipe 2026-09-26).** The *model's* constitution: the values document your
+  AI is trained on, like Claude's constitution or OpenAI's Model Spec. It is not a company
+  charter. Company promises such as a safety-compute pledge live in `state.promises`, not here.
+  - **No company constitution (owner 2026-09-26).** Nothing values-related happens before era
+    3: no turn-0 constitution, no era 1 principles checklist, no motto. The model has no hard
+    lines in eras 1 and 2, so every "does the lab hold this line?" check is false there.
+  - **Where it lives: an optional training technique from era 3.** The post-training stage of
+    the recipe gets a Character card, "Train on a written constitution" (era 3, replaces the era
+    2 "Publish a model spec, train lightly" card). The Head of Safety suggests it. Picking the
+    card opens her draft document; skipping it is allowed.
+  - **Format: casebook plus hard lines, shown as the Head of Safety's draft (look B of the
+    2026-09-26 review page).** A paper document titled "The <model family> Model Spec": a
+    hard-constraints section (pick 3 of 8, plus one fixed line every lab keeps: never generate
+    sexual content involving children) and a worked-examples section (6 cases, 3 rulings each).
+    Safety pre-fills her proposal; the player accepts or changes each ruling and swaps lines,
+    and the changes stay visible as tracked changes. Advisors comment in the margin. No
+    option prints its effect; consequences show up later in play (owner rule 2026-09-26). The
+    lines and cases come from `docs/research/model-specs/proposals.md` sections 3b and 4 and
+    are the working list until the owner edits them.
+  - **Each model learns one version (the lighter form of effect version 2).** The sim keeps
+    two copies. The *live* constitution is the one the latest trained model learned, and it is
+    what every line check reads. The *draft* is what the next model will learn. The draft
+    becomes live when a training run that picked the card finishes. A run that finishes
+    without the card leaves the live constitution as it was (owner 2026-09-26: the softer rule,
+    so forgetting the card once does not wipe the lines). The player edits the draft only in the Safety document, opened from the recipe
+    card; there is no separate "Amend the constitution" move. Accepted demands (below) also
+    change the draft.
   - **Effects.** Each hard line closes off some revenue or event options and guards against
     one catastrophe. Areas no line covers run on the model's judgment, which degrades as
     alignment debt grows. Events test the model against what was written: a strict line
     costs revenue, a loose one plants incidents.
   - **Amendment pressure.** Demands come from the President, investors, users, political
-    groups and activists, each as an event card with a cost either way.
+    groups and activists, each as an event card with a cost either way. They fire only from era
+    3, once a draft exists, and accepting one changes the *draft* ("the next model's
+    constitution"), recorded with its source and date so the Safety document shows who asked.
+    President promises that would loosen or change the constitution cannot come due before
+    era 3.
+  - **The constitution as a public document (one card from effect version 4).** "The
+    President read your constitution": once, from era 3, if the live constitution holds the
+    illegitimate-power line. Choices: stand by it, say it isn't about anyone, or drop it from
+    the next model.
   - **Written versus learned.** With high alignment debt the model's actual behavior drifts
     from the constitution. The end-of-run reveal shows what the player wrote next to what the
     model learned, and in the takeover endings the AI's epilogue is written from its learned
     values.
+  - **Deferred (owner 2026-09-26, limited time).** Effect version 3 (the model acts on the
+    rulings in matching events; first candidate: an agent stops a customer's job over fraud)
+    and a full per-model constitution. Review page with all four looks and versions:
+    https://claude.ai/artifact/4za6N3JwQ3wFNNykeZnenz
 - **Advisor cast (owner-approved 2026-09-25).** Priya Raman, Head of Research: relentless
   optimist, every problem is one more run away. Tomas Lind, Head of Safety: quiet and precise,
   talks in test results. Margot Hale, CFO: dry, allergic to surprises, forgets the lawyers.
@@ -399,6 +426,15 @@ player's own last best, shown through several noisy judges.
     when the `contaminated` flag is set (the scandal event comes later).
   - The reveal shows each benchmark as three bars: the new model, the player's last flagship
     (the "beat your last flagship" bar), and the best rival.
+- **The tests change with the era (owner 2026-09-26).** Each row keeps its job (coding, science,
+  agents, final exam, safety), but the named test is replaced as real tests are once top models max
+  them out; most tests run two eras, and era 5 brings a new test on every row. A capability test
+  scores the model's skill (capability × fit) on an S-curve around the test's difficulty, so a new
+  test starts low and fills up over its life. The last flagship and your earlier models on the
+  leaderboard are re-scored on the current tests, as labs re-run old models; the flagship is picked
+  by skill, which does not depend on the tests. A retiring test gets a feed post at the era change,
+  and the reveal tags a row "New test". Schedule and tuning: `sim/data/launch.js`; research:
+  `docs/research/benchmarks-by-era.md`.
 - **The safety benchmark can lie, gated by era (owner decision 2026-09-25).**
   - True safety score falls with total alignment debt (visible plus concealed).
   - Eras 1–2: the shown safety score equals the true score plus noise. Models do not yet game tests.
@@ -439,8 +475,7 @@ player's own last best, shown through several noisy judges.
 2. **Budget.** One five-way split (training, safety and evals, security, product and growth,
    talent and research) plus a total spend level. The CFO shows the two runway figures.
 3. **Moves.** Two action slots per turn, chosen from: start a training run, sign a compute deal,
-   release a model, deploy a model internally (from era 3), amend or defend the constitution,
-   take a meeting, and (era 5) attend the pacing summit.
+   release a model, deploy a model internally (from era 3), take a meeting, and (era 5) attend the pacing summit.
 4. **Events.** Zero to two event cards with choices, drawn from risk pools fed by hidden
    variables and from the era's deck.
 5. **Training run** (when one is active). Starting a run opens the recipe screen (section 6b).

@@ -17,6 +17,9 @@ test('money, months, percentages and user counts', () => {
 
 test('compute uses power units from era 4', () => {
   assert.equal(computeAmount(40, 2), '40 units');
+  assert.equal(computeAmount(1, 1), '1 unit');
+  assert.equal(computeAmount(1.04, 2), '1 unit');
+  assert.equal(computeAmount(1.5, 2), '1.5 units');
   assert.equal(computeAmount(500, 4), '850 MW');
   assert.equal(computeAmount(900, 4), '1.53 GW');
   assert.equal(compute({ online: 500, pipeline: [{ units: 100 }] }, 4), '850 MW online · 170 MW arriving');

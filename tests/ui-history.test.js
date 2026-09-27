@@ -18,6 +18,10 @@ import {
 import { layoutRaceCards } from '../ui/screens/history.js';
 import { storyDate } from '../sim/time.js';
 
+// The summit scenario uses seed 6. Seed 5 stopped reaching era 5 after merging origin/ui into deterministic endings:
+// the no-dice main random stream (deterministic endings A1-A8) plus ui's rival deals and model money put seed 5 on a
+// path where its era-2 price-war answer raises serving load, the scripted run no longer fits, and the lab is left behind in era 4.
+
 test('every generated release reaction handle has an explicit editorial classification', () => {
   const critical = new Set(CONTROVERSY_HANDLES);
   const nonCritical = new Set(NON_CRITICAL_REACTION_HANDLES);
@@ -29,7 +33,7 @@ test('every generated release reaction handle has an explicit editorial classifi
 
 test('history rows expose release details and public benchmark averages in release order', () => {
   // Expectations come from the scenario's own models, so a balance change does not break the test.
-  const state = SCENARIOS.summit(5);
+  const state = SCENARIOS.summit(6);
   const rows = historyRows(state);
   const eraNames = ['Chat assistants', 'The scale-up', 'Reasoning and agents', 'The gigawatt race', 'Self-improvement and pacing'];
   const mean = (values) => values.reduce((sum, value) => sum + value, 0) / values.length;
@@ -51,13 +55,14 @@ test('history rows expose release details and public benchmark averages in relea
 });
 
 test('history rows use a model\'s recorded story release day when available', () => {
-  const state = structuredClone(SCENARIOS.summit(5));
+  const state = structuredClone(SCENARIOS.summit(6));
   state.models[0].releasedDay = 123;
   assert.equal(historyRows(state)[0].releasedDate, storyDate(123).label);
 });
 
 test('article lead uses the five public benchmark hand counts', () => {
-  const state = SCENARIOS.summit(5);
+  // Under the compute race plan (docs/superpowers/plans/2026-09-26-compute-race.md) Task 5, seed 4's latest model leads on four of five at launch; seed 5's leads on all five.
+  const state = SCENARIOS.summit(6);
   const result = article(state, historyRows(state));
   const lead = result.lead.join('');
   assert.match(lead, /Kestrel 1 Core.*all five/);
@@ -65,7 +70,7 @@ test('article lead uses the five public benchmark hand counts', () => {
 });
 
 test('article controversies quote only criticism reactions that occurred', () => {
-  const state = SCENARIOS.summit(5);
+  const state = SCENARIOS.summit(6);
   const rows = historyRows(state);
   const result = article(state, rows);
   const text = result.controversies.filter((part) => typeof part === 'string').join('');
@@ -84,7 +89,7 @@ test('article controversies quote only criticism reactions that occurred', () =>
 });
 
 test('article records rule-skipping and behavioural concerns as controversies', () => {
-  const state = structuredClone(SCENARIOS.summit(5));
+  const state = structuredClone(SCENARIOS.summit(6));
   state.models[0].launch.reactions = [
     { handle: '@devnull_ops', text: 'already found a way to make it skip its rules lol' },
     { handle: '@tired_parent', text: "it's so nice to talk to. maybe too nice?" },
@@ -99,7 +104,7 @@ test('article records rule-skipping and behavioural concerns as controversies', 
 });
 
 test('article records no controversy when model reactions contain none', () => {
-  const state = structuredClone(SCENARIOS.summit(5));
+  const state = structuredClone(SCENARIOS.summit(6));
   for (const model of state.models) model.launch.reactions = [];
   const result = article(state, historyRows(state));
   assert.deepEqual(result.controversies, ['No controversies are recorded.']);
@@ -107,7 +112,7 @@ test('article records no controversy when model reactions contain none', () => {
 });
 
 test('player-entered lab markup remains an ordinary article string', () => {
-  const state = SCENARIOS.summit(5);
+  const state = SCENARIOS.summit(6);
   state.labName = '<b>Halcyon</b>';
   const result = article(state, historyRows(state));
   assert.ok(result.lead.some((part) => typeof part === 'string' && part.includes('<b>Halcyon</b>')));
@@ -115,7 +120,7 @@ test('player-entered lab markup remains an ordinary article string', () => {
 });
 
 test('article uses the latest family and lists earlier model families', () => {
-  const state = SCENARIOS.summit(5);
+  const state = SCENARIOS.summit(6);
   state.models.at(-1).family = 'Halcyon';
   const result = article(state, historyRows(state));
   assert.equal(result.title, 'Halcyon (language model)');
@@ -128,7 +133,7 @@ test('article is a stub before the first model is released', () => {
 });
 
 test('race series places rival release ticks into their lab rows', () => {
-  const rows = historyRows(SCENARIOS.summit(5));
+  const rows = historyRows(SCENARIOS.summit(6));
   const series = raceSeries(rows, [
     { turn: 1, id: 'openbrain' },
     { turn: 4, id: 'qilin' },
@@ -172,7 +177,7 @@ test('race cards alternate rows when minimum-gap releases would overlap', () => 
 });
 
 test('game logs rival releases with the pre-advance turn over multiple turns', () => {
-  const scenarioGame = createGame({ seed: 4, state: SCENARIOS.summit(5) });
+  const scenarioGame = createGame({ seed: 4, state: SCENARIOS.summit(6) });
   assert.deepEqual(scenarioGame.rivalReleases, []);
 
   const game = createGame({ seed: 4 });
@@ -210,7 +215,7 @@ test('endTurn subscribers see the rival release log after it is updated', () => 
 });
 
 test('history status follows what the sim serves: open weights and not-yet-online models are not serving', () => {
-  const state = structuredClone(SCENARIOS.summit(5));
+  const state = structuredClone(SCENARIOS.summit(6));
   const [first, second, third] = state.models;
   first.active = true; first.channel = 'open';
   second.active = true; second.activeFromTurn = state.turn + 2;
@@ -218,4 +223,10 @@ test('history status follows what the sim serves: open weights and not-yet-onlin
   const rows = historyRows(state);
   assert.deepEqual(rows.slice(0, 3).map((row) => [row.status, row.active]), [['open', false], ['upcoming', false], ['retired', false]]);
   assert.equal(labSummary(rows).stillServing, activeModels(state).length);
+});
+
+test('article table columns are headed by each benchmark row\'s job, since the named tests change with the era', () => {
+  const state = SCENARIOS.summit(6);
+  const result = article(state, historyRows(state));
+  assert.deepEqual(result.table.benchmarks, ['Coding', 'Science', 'Agents', 'Final exam', 'Safety']);
 });

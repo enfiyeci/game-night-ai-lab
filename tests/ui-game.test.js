@@ -45,8 +45,10 @@ test('midEra3 is an era-3 turn with a training run under way', () => {
 
 test('the summit scenario stops on the opening turn of era 5', () => {
   // Under plan 2C Task 8's balance, seed 1's scripted run ends in era 4, so use a seed that reaches era 5.
-  // Seed 3 stopped reaching it when the quiet-takeover roll became a running total (deterministic endings A3):
-  // the main random stream lost that draw, and seed 3's era-4 agent release now hits the misalignment roll.
+  // Seed 3 stopped reaching it for two reasons: the quiet-takeover roll became a running total (deterministic
+  // endings A3), which shifted the main random stream so seed 3's era-4 agent release hits the misalignment check;
+  // and under the compute race plan (docs/superpowers/plans/2026-09-26-compute-race.md) Task 5, seed 3's run ends
+  // in era 4 anyway (race heat from rival deals). Seed 4 reaches era 5.
   const s = SCENARIOS.summit(4);
   assert.equal(s.era, 5);
   assert.equal(s.turnInEra, 0);
@@ -60,8 +62,9 @@ test('the event scenario stops on the first turn with a pending card', () => {
 
 test('the President scenarios stop with the requested meeting open', () => {
   assert.equal(SCENARIOS.meeting(1).meeting?.id, 'first');
-  // Seed 1 (run seed 3) ends in misalignment in era 4 since the quiet-takeover roll became a running total
-  // (deterministic endings A3 shifted the main random stream), so the second meeting uses seed 2.
+  // Seed 1 (run seed 3) ends in era 4 before the second meeting for two reasons: deterministic endings A3 (the
+  // quiet-takeover roll became a running total, shifting the main random stream into a misalignment ending) and
+  // the compute race plan (docs/superpowers/plans/2026-09-26-compute-race.md) Task 5. The second meeting uses seed 2.
   assert.equal(SCENARIOS.meeting2(2).meeting?.id, 'second');
 });
 

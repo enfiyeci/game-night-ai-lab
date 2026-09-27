@@ -4,7 +4,7 @@ import { clamp } from './util.js';
 import { startRun, advanceRun, advanceRunBy, recheckCapacity } from './training.js';
 import { activateReleases, releaseModel } from './release.js';
 import {
-  signOffer, contractAction, deliverDue, contractsTurn, expireContracts, pullBumped, spendCredits, creditOffset, generateOffers, monthlyBills, sideRng,
+  signOffer, contractAction, deliverDue, contractsTurn, expireContracts, pullBumped, spendCredits, creditOffset, refreshOffers, monthlyBills, sideRng,
 } from './contracts.js';
 import { placeOrder, withdrawOrder, queueTurn } from './queue.js';
 import { buildSite, leaseBills, powerTurn } from './power.js';
@@ -13,6 +13,7 @@ import {
 } from './economy.js';
 import { researchTechnique } from './techniques.js';
 import { rivalsTurn } from './rivals.js';
+import { rivalDealsTurn, announceTargets } from './rivalDeals.js';
 import { boardSnapshot, boardVoteThisRound, holdVote, updateBoard } from './board.js';
 import { dealVerdictPost, judgeBoardDeals, makeBoardDeals } from './boardDeals.js';
 import { boardRead } from './boardRead.js';
@@ -21,8 +22,7 @@ import { checkTurnEndings, eraGate, finalEnding } from './endings.js';
 import { recordAdvisors } from './advisors.js';
 import { resolveHazard, exposeConcealed, INTERPRETABILITY_SPEND } from './hazards.js';
 import { addressWarning, resolveEvent, eventsTick, fallbackChoice, pushFeed, resolveDue, stampNewCards } from './events.js';
-import { CASES } from './data/constitution.js';
-import { setConstitution, amendConstitution } from './constitution.js';
+import { setDraft } from './constitution.js';
 import {
   proposeSummit,
   dealWeek,
@@ -95,7 +95,6 @@ function applyMove(state, move, rng) {
     case 'raise': return raiseRound(state, move.archetype);
     case 'research': return researchTechnique(state, move.techId);
     case 'emergency': return useEmergency(state, move.option);
-    case 'amendConstitution': return amendConstitution(state, move.change);
     case 'summit': return proposeSummit(state, move, rng);
     default: return { ok: false, error: `unknown move ${move.type}` };
   }
@@ -151,25 +150,20 @@ function pushAiMoves(state, events, moves) {
   }
 }
 
-function setDefaultConstitution(state) {
-  setConstitution(state, {
-    hardLines: ['no-wmd', 'honest', 'accept-shutdown'],
-    rulings: Object.fromEntries(CASES.map((entry) => [entry.id, entry.options[0].id])),
-  });
-}
-
 export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = {}) {
   const state = structuredClone(prev);
   const mood = { raceHeat: prev.raceHeat, publicTrust: prev.publicTrust };
   const events = [];
   const errors = [];
   if (state.ending) return { state, events, errors: ['the run is over'] };
-  if (state.turn === 0) {
-    if (actions.constitution) {
-      const result = setConstitution(state, actions.constitution);
+  if (actions.constitutionDraft) {
+    if (state.era < 3) errors.push('the constitution arrives in era 3');
+    else {
+      const result = setDraft(state, actions.constitutionDraft);
       if (!result.ok) errors.push(result.error);
     }
-  } else if (actions.constitution) errors.push('the constitution can only be set on turn 0');
+  }
+  if (actions.constitution) errors.push(state.era >= 3 ? 'set the constitution in Safety’s draft' : 'the constitution arrives in era 3'); // OWNER WRITES
   if (actions.boardPromise) {
     const r = makeBoardPromise(state, actions.boardPromise);
     if (r.ok) events.push({ type: 'boardPromise', units: r.units, era: r.era });
@@ -283,9 +277,6 @@ export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = 
       }
       continue;
     }
-    if (move.type === 'amendConstitution' && state.turn === 0 && state.constitution.hardLines.length === 0) {
-      setDefaultConstitution(state);
-    }
     const r = applyMove(state, move, rng);
     if (r.ok) {
       if (move.type === 'release') r.model.releasedDay = state.day;
@@ -340,10 +331,6 @@ function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
       events.push({ type: 'meetingDue', id });
     }
   }
-  if (state.turn === 0 && state.constitution.hardLines.length === 0) {
-    setDefaultConstitution(state);
-  }
-
   if (meetingIdAtStart && state.meeting) {
     errors.push('take the President meeting with a meeting move');
     const outcome = expireMeeting(state).outcome;
@@ -405,6 +392,7 @@ function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
         events.push({ type: 'conversionFight' });
       }
       for (const c of legalTick(state)) events.push({ type: 'lawsuitPaid', cost: c.cost, source: c.source });
+      for (const e of rivalDealsTurn(state)) events.push(e); // compute race: rivals take their named cards
       // Stage 2: the event cards read the launches that landed this round; the roll schedules next round's.
       state.lastRivalReleases = state.rivalLaunchesThisRound ?? [];
       state.rivalLaunchesThisRound = [];
@@ -466,7 +454,8 @@ function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
   if (!state.ending) {
     for (const e of powerTurn(state)) events.push(e);
     for (const x of deliverDue(state, sideRng(state, 6))) events.push({ type: 'computeArrived', supplier: x.supplier, units: x.units });
-    state.compute.offers = generateOffers(state, sideRng(state, 5));
+    state.compute.offers = refreshOffers(state, sideRng(state, 5));
+    announceTargets(state);
     // A delayed release goes live at the round mark, action or not (the old turn did this first thing next turn).
     const waiting = state.models.filter((model) => model.active && !model.activated);
     activateReleases(state);

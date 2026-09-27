@@ -190,6 +190,11 @@ export const CONSEQUENCES = {
     accept: 'The lab stood behind a no-autonomy line. Public confidence rose, but the next training run faced a smaller capability gain.', // OWNER WRITES
     refuse: 'The activists\' demand was refused, and public confidence fell.', // OWNER WRITES
   },
+  specRead: {
+    stand: 'The lab stood by its constitution. Washington cooled; the staff noticed who held the line.', // OWNER WRITES
+    clarify: 'The lab said the line was about no one in particular. Nobody was fully convinced.', // OWNER WRITES
+    drop: 'The next model will not carry the line. Washington warmed, and several engineers updated their CVs.', // OWNER WRITES
+  },
   openletter: {
     meet: 'The safety team\'s demands were met. More compute shifted to safety work, and staff confidence rose.', // OWNER WRITES
     ignore: 'The open letter was ignored. Staff and public confidence both fell.', // OWNER WRITES

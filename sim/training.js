@@ -2,9 +2,10 @@ import { BALANCE } from './balance.js';
 import { eraById } from './data/eras.js';
 import { SIZE_CAP, LENGTHS, validateRecipe, recipeCost, recipeCards, talentSpend, focusEffects } from './recipe.js';
 import { standardTechniques } from './techniques.js';
-import { rollTrainingHazard, applyAlignmentFaking, evalGamingDebt } from './hazards.js';
-import { hasLine } from './constitution.js';
+import { rollTrainingHazard, applyAlignmentFaking, evalGamingDebt, dangerCapability } from './hazards.js';
+import { draftError, draftFor, hasLine, learnConstitution } from './constitution.js';
 import { computeSlices } from './split.js';
+import { unitMonthlyPrice } from './economy.js';
 
 export const SHARED_SAFETY_DEBT_MULT = 0.7;
 
@@ -18,11 +19,21 @@ export function startRun(state, recipe) {
   const cost = recipeCost(state, recipe);
   if (cost.cash > state.cash) return { ok: false, error: 'not enough cash' };
   if (cost.units > availableUnits(state)) return { ok: false, error: 'not enough free compute' };
+  const teaches = recipe.picks?.post?.includes('constitution');
+  const draft = teaches ? draftFor(state) : null;
+  const draftProblem = draft && draftError(draft);
+  if (draftProblem) return { ok: false, error: /ruling/.test(draftProblem) ? draftProblem : 'Safety’s draft needs exactly three hard lines' }; // OWNER WRITES
   const spikeChance = recipeCards(state, recipe).reduce((p, c) => p + (c.effects.spike ?? 0), 0.1) + focusEffects(state, recipe).spike;
   state.cash -= cost.cash;
   // Focus effects are fixed when the run starts, so a stage that opens mid-run cannot change them.
   const focus = focusEffects(state, recipe);
-  state.activeRun = { recipe: structuredClone(recipe), units: cost.units, turnsLeft: cost.turns, spikes: 0, spikeChance: Math.max(0, spikeChance), bonus: 0, focus };
+  state.activeRun = { recipe: structuredClone(recipe), units: cost.units, turnsLeft: cost.turns, spikes: 0, spikeChance: Math.max(0, spikeChance), bonus: 0, focus, spent: { cash: cost.cash, compute: 0 } };
+  if (teaches) {
+    state.activeRun.constitution = { hardLines: draft.hardLines, rulings: draft.rulings };
+    // The changes this model learns; they leave the draft's "who asked" list when the run finishes.
+    state.activeRun.constitutionChanges = draft.changes.length;
+    state.constitutionDraft = { ...structuredClone(state.activeRun.constitution), changes: structuredClone(draft.changes) };
+  }
   return { ok: true, cost };
 }
 
@@ -34,6 +45,10 @@ export function advanceRunBy(state, rng, fraction) {
     run.capacityTurn = state.turn;
     run.canAdvance = computeSlices(state).training >= run.units;
   }
+  // The run's own bill: the units it holds, at today's price of a unit. A paused run still holds what training has.
+  const held = run.canAdvance ? run.units : Math.min(run.units, computeSlices(state).training);
+  run.spent ??= { cash: 0, compute: 0 };
+  run.spent.compute += held * fraction * eraById(state.era).monthsPerTurn * unitMonthlyPrice(state);
   if (!run.canAdvance) return { type: 'runPaused' };
   run.spikeProgress = (run.spikeProgress ?? 0) + fraction;
   if (run.spikeProgress >= 1 - 1e-9) {
@@ -44,7 +59,12 @@ export function advanceRunBy(state, rng, fraction) {
   run.turnsLeft -= fraction;
   if (run.turnsLeft > 1e-9) return null;
   state.activeRun = null;
+  if (run.constitution) {
+    learnConstitution(state, run.constitution);
+    state.constitutionDraft.changes = state.constitutionDraft.changes.slice(run.constitutionChanges ?? 0);
+  }
   state.pendingModel = resolveRun(state, run, rng);
+  state.pendingModel.trainingCost = (run.spent?.cash ?? 0) + (run.spent?.compute ?? 0);
   if (run.uncapped) state.pendingModel.uncapped = true; // run past the Geneva cap
   return state.pendingModel;
 }
@@ -91,19 +111,19 @@ export function resolveRun(state, run, rng) {
   const uncappedGain = gainWith(run.spikes);
   // Past the Geneva cap only when the player chose to break the deal for this run.
   const gainCap = state.deal?.collapsed === false && state.deal.binding.includes('computeCap') && !run.uncapped ? 5 : Infinity;
-  const capability = Math.min(BALANCE.maxCapability, state.capability + Math.min(uncappedGain, gainCap));
-  const gain = Math.max(0, capability - state.capability);
-  const spikeLoss = run.spikes > 0
-    ? Math.max(0, Math.min(BALANCE.maxCapability, state.capability + Math.min(gainWith(run.spikes - 1), gainCap)) - capability)
-    : 0;
+  const gain = Math.min(uncappedGain, gainCap);
+  const capability = state.capability + gain;
+  const spikeLoss = run.spikes > 0 ? Math.max(0, Math.min(gainWith(run.spikes - 1), gainCap) - gain) : 0;
 
   const sum = (key) => effects.reduce((s, e) => s + (e[key] ?? 0), 0);
   const era = eraById(state.era);
-  const rawDebtDelta = gain * (era.targetSafetyShare - alignShare) * BALANCE.alignDebtFactor + sum('ad');
+  // Debt counts only the gain up to the danger ceiling, as when capability stopped at 100.
+  const dangerGain = Math.max(0, dangerCapability(capability) - dangerCapability(state.capability));
+  const rawDebtDelta = dangerGain * (era.targetSafetyShare - alignShare) * BALANCE.alignDebtFactor + sum('ad');
   const sharedSafety = state.deal?.collapsed === false && state.deal.binding.includes('sharedSafety');
   const debtDelta = rawDebtDelta > 0 && sharedSafety ? rawDebtDelta * SHARED_SAFETY_DEBT_MULT : rawDebtDelta;
   state.alignmentDebt += applyAlignmentFaking(state, debtDelta, capability);
-  state.concealedDebt += evalGamingDebt(state, capability);
+  state.concealedDebt += evalGamingDebt(state, dangerCapability(capability));
   state.misuseExposure += sum('mx');
   state.perceivedAdOffset += sum('perceivedAdOffset');
   for (const e of effects) {

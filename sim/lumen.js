@@ -1,4 +1,4 @@
-import { constitutionValues } from './constitution.js';
+import { constitutionValues, hasConstitution } from './constitution.js';
 import { runway } from './economy.js';
 import { jobLevels } from './automation.js';
 import { PACK } from './data/automation.js';
@@ -18,7 +18,7 @@ export function lumenDisposition(state) {
   if (state.era >= 3 && (debt >= 50 || state.concealedDebt >= 20)) return 'evasive';
 
   if (newestReleasedModel(state)?.flags?.includes('sycophancy')) return 'flattering';
-  if (constitutionValues(state).candor < 0.4) return 'flattering';
+  if (hasConstitution(state) && constitutionValues(state).candor < 0.4) return 'flattering';
 
   return state.era <= 2 ? 'eager' : 'honest';
 }

@@ -7,6 +7,7 @@ import { eraById } from '../../sim/data/eras.js';
 import { nextRoundDay, roundMarkDay, roundWord } from '../../sim/time.js';
 import { inDangerZone, runway } from '../../sim/economy.js';
 import { openDeal } from '../../sim/boardDeals.js';
+import { hasConstitution } from '../../sim/constitution.js';
 import * as COPY from '../data/boardCopy.js';
 import { moodForLean } from '../components/portraits.js';
 
@@ -96,7 +97,7 @@ export function boardView(state) {
       name: member.name,
       short: COPY.SHORT[member.id],
       kind: member.kind,
-      wants: COPY.WANTS[member.id],
+      wants: member.id === 'trustee' && !hasConstitution(state) ? COPY.TRUSTEE_WANTS_BEFORE : COPY.WANTS[member.id],
       lo,
       hi,
       lean,
@@ -168,7 +169,9 @@ export function issuesView(state) {
   return ISSUE_ORDER.map((id) => {
     const issueState = states[id];
     const words = COPY.ISSUE_SAY[id];
-    const say = id === 'promise' && issueState === 'flat' && state.boardPromise?.status === 'open' ? words.open : words[issueState];
+    const say = id === 'promise' && issueState === 'flat' && state.boardPromise?.status === 'open' ? words.open
+      : id === 'constitution' && !hasConstitution(state) ? words.none
+        : words[issueState];
     return { id, label: COPY.ISSUE_LABEL[id], state: issueState, say };
   });
 }

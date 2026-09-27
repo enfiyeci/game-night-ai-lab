@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="../../../">
+  <meta name="viewport" content="width=1440">
+  <title>Model spec mockups</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Nunito:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="ui/styles.css">
+  <style>
+    /* Mockup-only styles. Every colour is a token from ui/styles.css, mixed; no literals. */
+    .muted { color: color-mix(in oklab, var(--ink) 58%, var(--paper)); }
+    .hide-hud #hud { display: none; }
+    .layer { position: absolute; inset: 0; z-index: 10; }
+    .veil { position: absolute; inset: 0; background: color-mix(in oklab, var(--cream) 45%, transparent); }
+    .veil.strong { background: color-mix(in oklab, var(--cream) 70%, transparent); }
+    .draft { display: inline-block; padding: 1px 7px; border-radius: 5px; font-size: 10.5px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; background: color-mix(in oklab, var(--wood) 18%, var(--paper)); color: color-mix(in oklab, var(--wood) 60%, var(--ink)); }
+    .tm { padding: 4px 14px 10px; text-align: left; }
+    .tm div { padding: 9px 0; border-bottom: 1px solid color-mix(in oklab, var(--ink) 9%, transparent); }
+    .tm div:last-child { border-bottom: 0; }
+    .tm b { display: block; font-size: 13.5px; font-weight: 900; }
+    .tm q { display: block; margin-top: 2px; font-size: 12.5px; font-weight: 600; line-height: 1.35; quotes: '“' '”'; }
+    .tm q::before { content: open-quote; } .tm q::after { content: close-quote; }
+
+    /* Recipe entry */
+    .safety-tag { white-space: nowrap; display: inline-flex; align-items: center; margin-right: 6px; padding: 1px 7px; border-radius: 999px; font-size: 10.5px; font-weight: 900; color: var(--paper); background: var(--teal); vertical-align: 1px; }
+    .r-note { display: block; margin-top: 4px; font-size: 11px; font-weight: 800; color: color-mix(in oklab, var(--teal) 65%, var(--ink)); }
+    .r-glow { outline: 3px solid var(--teal); outline-offset: 1px; border-radius: 10px; }
+    .spec-line { display: block; margin-top: 5px; padding: 6px 8px; border-radius: 7px; font-size: 11px; font-weight: 700; line-height: 1.35; background: color-mix(in oklab, var(--ink) 5%, var(--paper)); }
+    .spec-line s { color: color-mix(in oklab, var(--coral) 62%, var(--ink)); }
+    .spec-line b { font-weight: 900; }
+    .spec-line .who { display: block; margin-top: 2px; font-size: 10.5px; color: color-mix(in oklab, var(--ink) 55%, var(--paper)); }
+
+    /* A: GDT dialog */
+    .a .dlg { top: 84px; left: 350px; width: 740px; min-height: 0; }
+    .a .dialog-left, .a .dialog-right { top: 160px; }
+    .a .dialog-left { left: 90px; } .a .dialog-right { right: 90px; }
+    .steps { display: flex; justify-content: center; gap: 8px; margin: -4px 0 12px; font-size: 12px; font-weight: 800; }
+    .steps span { color: color-mix(in oklab, var(--ink) 45%, var(--paper)); }
+    .steps span.on { color: var(--ink); }
+    .plist { display: grid; gap: 6px; text-align: left; }
+    .prow { display: grid; grid-template-columns: 22px 1fr; gap: 12px; align-items: center; padding: 9px 12px; border-radius: 10px; background: var(--paper); border: 1.5px solid color-mix(in oklab, var(--ink) 9%, transparent); }
+    .prow.on { border-color: var(--teal); background: color-mix(in oklab, var(--teal) 9%, var(--paper)); }
+    .prow.fixed { background: transparent; border-style: dashed; color: color-mix(in oklab, var(--ink) 50%, var(--paper)); }
+    .box { width: 20px; height: 20px; border: 2px solid color-mix(in oklab, var(--ink) 40%, var(--paper)); border-radius: 5px; display: grid; place-items: center; }
+    .on .box, .fixed .box { border-color: var(--teal); background: var(--teal); }
+    .fixed .box { border-color: color-mix(in oklab, var(--ink) 30%, var(--paper)); background: color-mix(in oklab, var(--ink) 30%, var(--paper)); }
+    .on .box::after, .fixed .box::after { content: ''; width: 9px; height: 5px; border: 2.5px solid var(--paper); border-top: 0; border-right: 0; transform: translateY(-1px) rotate(-45deg); }
+    .prow p { margin: 0; font-size: 14px; font-weight: 800; line-height: 1.3; }
+    .prow.fixed p { font-size: 12.5px; font-weight: 700; }
+    .chosen { padding: 8px 14px 12px; text-align: left; }
+    .chosen div { padding: 8px 10px; margin-bottom: 6px; border-radius: 8px; background: var(--paper); font-size: 12.5px; font-weight: 800; line-height: 1.3; }
+    .chosen p { margin: 8px 0 0; font-size: 12px; font-weight: 700; line-height: 1.35; }
+    .cases { display: grid; gap: 9px; text-align: left; }
+    .case { padding: 8px 12px 10px; border-radius: 10px; background: var(--paper); border: 1.5px solid color-mix(in oklab, var(--ink) 9%, transparent); }
+    .case > p { margin: 0 0 6px; font-size: 13.5px; font-weight: 800; line-height: 1.3; }
+    .case > p span { color: color-mix(in oklab, var(--ink) 45%, var(--paper)); margin-right: 4px; }
+    .opts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .opt { display: flex; gap: 7px; align-items: flex-start; padding: 6px 8px; border-radius: 8px; font-size: 12px; font-weight: 700; line-height: 1.25; border: 1.5px solid color-mix(in oklab, var(--ink) 9%, transparent); }
+    .opt i { flex: none; width: 14px; height: 14px; margin-top: 1px; border: 2px solid color-mix(in oklab, var(--ink) 38%, var(--paper)); border-radius: 50%; }
+    .opt.on { border-color: var(--teal); background: color-mix(in oklab, var(--teal) 9%, var(--paper)); font-weight: 800; }
+    .opt.on i { border: 4.5px solid var(--teal); }
+    .ruled { padding: 8px 14px 12px; text-align: left; font-size: 12.5px; font-weight: 700; line-height: 1.4; }
+    .ruled b { font-weight: 900; }
+    .ruled ol { margin: 6px 0 0; padding-left: 18px; }
+
+    /* B: Safety's draft */
+    .b .doc { position: absolute; left: 110px; top: 70px; width: 1220px; height: 770px; display: grid; grid-template-columns: 1fr 290px; background: var(--paper); border-radius: 6px; box-shadow: 0 24px 56px color-mix(in oklab, var(--ink) 24%, transparent); overflow: hidden; }
+    .b .main { padding: 24px 36px 0; position: relative; }
+    .kick { font-size: 11px; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; color: color-mix(in oklab, var(--ink) 50%, var(--paper)); }
+    .dtitle { margin: 6px 0 0; font-family: 'Libre Baskerville', Georgia, serif; font-style: italic; font-weight: 400; font-size: 30px; }
+    .b h2 { margin: 16px 0 8px; padding-bottom: 6px; border-bottom: 2px solid color-mix(in oklab, var(--wood) 40%, transparent); font-size: 15px; font-weight: 900; display: flex; justify-content: space-between; align-items: baseline; }
+    .b h2 small { font-size: 12px; font-weight: 800; }
+    .clauses { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 22px; }
+    .clause { display: grid; grid-template-columns: 18px 1fr; gap: 9px; align-items: start; padding: 5px 0; font-size: 12.5px; font-weight: 700; line-height: 1.3; }
+    .clause .box { width: 17px; height: 17px; border-radius: 4px; }
+    .clause.on { font-weight: 900; }
+    .clause.fixed { color: color-mix(in oklab, var(--ink) 50%, var(--paper)); }
+    .clause .tag { display: block; margin-top: 1px; font-size: 10.5px; font-weight: 800; color: color-mix(in oklab, var(--teal) 62%, var(--ink)); }
+    .clause .tag.you { color: color-mix(in oklab, var(--wood) 70%, var(--ink)); }
+    .red { display: grid; grid-template-columns: 1fr auto; gap: 8px 14px; align-items: center; padding: 7px 0; border-bottom: 1px solid color-mix(in oklab, var(--ink) 8%, transparent); }
+    .red q { display: block; font-size: 12.5px; font-weight: 700; line-height: 1.3; quotes: none; color: color-mix(in oklab, var(--ink) 62%, var(--paper)); }
+    .red .ins { display: inline; font-size: 14px; font-weight: 800; color: color-mix(in oklab, var(--teal) 62%, var(--ink)); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+    .red .del { font-size: 12.5px; font-weight: 700; color: color-mix(in oklab, var(--coral) 60%, var(--ink)); text-decoration: line-through; margin-left: 8px; }
+    .red .acts { display: flex; gap: 6px; }
+    .red .acts span { padding: 4px 10px; border-radius: 7px; font-size: 12px; font-weight: 900; border: 1.5px solid color-mix(in oklab, var(--ink) 14%, transparent); }
+    .red .acts span.ok { color: var(--paper); background: var(--teal); border-color: var(--teal); }
+    .red.changed .ins { color: var(--ink); text-decoration-color: var(--wood); }
+    .margin { padding: 22px 16px; background: color-mix(in oklab, var(--cream) 30%, var(--paper)); border-left: 1px solid color-mix(in oklab, var(--ink) 9%, transparent); }
+    .margin h3 { margin: 0 0 10px; font-size: 11px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; color: color-mix(in oklab, var(--ink) 50%, var(--paper)); }
+    .cmt { margin-bottom: 11px; padding: 10px 12px; border-radius: 10px; background: var(--paper); font-size: 12.5px; font-weight: 600; line-height: 1.35; box-shadow: 0 1px 0 color-mix(in oklab, var(--ink) 8%, transparent); }
+    .cmt b { display: flex; justify-content: space-between; font-size: 11.5px; font-weight: 900; margin-bottom: 3px; }
+    .cmt b span { font-weight: 800; color: color-mix(in oklab, var(--ink) 50%, var(--paper)); }
+    .margin { display: flex; flex-direction: column; }
+    .b-foot { margin-top: auto; }
+    .b-foot p { margin: 0 0 10px; font-size: 12px; font-weight: 700; line-height: 1.35; }
+    .b-foot .btn { width: 100%; padding: 12px 0; }
+
+    /* C: published spec site */
+    .c .win { position: absolute; left: 70px; top: 46px; width: 1300px; height: 820px; border-radius: 10px; overflow: hidden; background: var(--paper); box-shadow: 0 26px 60px color-mix(in oklab, var(--ink) 28%, transparent); display: grid; grid-template-rows: 38px 54px 1fr; }
+    .chrome { display: flex; align-items: center; gap: 12px; padding: 0 14px; background: color-mix(in oklab, var(--ink) 8%, var(--paper)); }
+    .dots { display: flex; gap: 7px; } .dots i { width: 12px; height: 12px; border-radius: 50%; background: color-mix(in oklab, var(--ink) 22%, var(--paper)); }
+    .url { flex: 1; max-width: 520px; margin: 0 auto; padding: 5px 14px; border-radius: 7px; background: var(--paper); font-size: 12.5px; font-weight: 700; color: color-mix(in oklab, var(--ink) 60%, var(--paper)); text-align: center; }
+    .sitebar { display: flex; align-items: center; justify-content: space-between; padding: 0 28px; border-bottom: 1px solid color-mix(in oklab, var(--ink) 10%, transparent); }
+    .brand { font-size: 17px; font-weight: 900; letter-spacing: -.01em; }
+    .brand span { font-weight: 600; color: color-mix(in oklab, var(--ink) 55%, var(--paper)); margin-left: 10px; font-size: 14px; }
+    .siteacts { display: flex; gap: 10px; align-items: center; }
+    .pill { padding: 7px 14px; border-radius: 999px; font-size: 13px; font-weight: 900; border: 1.5px solid color-mix(in oklab, var(--ink) 16%, transparent); }
+    .pill.solid { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+    .site { display: grid; grid-template-columns: 250px 1fr; min-height: 0; }
+    .toc { padding: 22px 18px 22px 28px; border-right: 1px solid color-mix(in oklab, var(--ink) 8%, transparent); font-size: 13px; font-weight: 700; line-height: 1.3; overflow: hidden; }
+    .toc h4 { margin: 16px 0 6px; font-size: 11px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; color: color-mix(in oklab, var(--ink) 45%, var(--paper)); }
+    .toc a { display: block; padding: 5px 8px; margin-left: -8px; border-radius: 6px; color: inherit; text-decoration: none; }
+    .toc a.cur { background: color-mix(in oklab, var(--ink) 7%, var(--paper)); font-weight: 900; }
+    .toc a small { color: color-mix(in oklab, var(--ink) 45%, var(--paper)); font-weight: 800; margin-right: 4px; }
+    .article { padding: 26px 56px 30px; overflow: hidden; }
+    .article .crumb { font-size: 12px; font-weight: 800; color: color-mix(in oklab, var(--ink) 50%, var(--paper)); }
+    .article h1 { margin: 4px 0 4px; font-size: 30px; font-weight: 800; letter-spacing: -.015em; }
+    .article > p { margin: 0 0 12px; max-width: 760px; font-size: 14.5px; font-weight: 600; line-height: 1.5; }
+    .article h2 { margin: 18px 0 8px; font-size: 19px; font-weight: 900; }
+    .toggles { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 26px; max-width: 980px; }
+    .tog { display: grid; grid-template-columns: 1fr 34px; gap: 12px; align-items: center; padding: 6px 0; border-bottom: 1px solid color-mix(in oklab, var(--ink) 7%, transparent); font-size: 13px; font-weight: 700; line-height: 1.3; }
+    .sw { width: 34px; height: 20px; border-radius: 999px; background: color-mix(in oklab, var(--ink) 18%, var(--paper)); position: relative; }
+    .sw::after { content: ''; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: var(--paper); }
+    .tog.on { font-weight: 900; } .tog.on .sw { background: var(--teal); } .tog.on .sw::after { left: 17px; }
+    .tog.fixed { color: color-mix(in oklab, var(--ink) 50%, var(--paper)); } .tog.fixed .sw { background: color-mix(in oklab, var(--ink) 35%, var(--paper)); } .tog.fixed .sw::after { left: 17px; }
+    .example { margin-top: 6px; max-width: 980px; border-radius: 10px; background: color-mix(in oklab, var(--ink) 4%, var(--paper)); padding: 14px 16px; }
+    .ex-q { display: grid; grid-template-columns: 70px 1fr; gap: 10px; font-size: 13px; font-weight: 700; line-height: 1.4; margin-bottom: 10px; }
+    .ex-q b { font-size: 11px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: color-mix(in oklab, var(--ink) 50%, var(--paper)); padding-top: 2px; }
+    .answers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .ans { padding: 10px 12px; border-radius: 9px; background: var(--paper); font-size: 12.5px; font-weight: 600; line-height: 1.4; border: 1.5px solid color-mix(in oklab, var(--ink) 9%, transparent); }
+    .ans .verdict { display: flex; gap: 6px; margin-bottom: 7px; }
+    .ans .verdict span { padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 900; border: 1.5px solid color-mix(in oklab, var(--ink) 14%, transparent); color: color-mix(in oklab, var(--ink) 55%, var(--paper)); }
+    .ans .verdict span.good { background: var(--teal); color: var(--paper); border-color: var(--teal); }
+    .ans .verdict span.bad { background: color-mix(in oklab, var(--coral) 14%, var(--paper)); color: color-mix(in oklab, var(--coral) 70%, var(--ink)); border-color: color-mix(in oklab, var(--coral) 40%, var(--paper)); }
+    .ans.pref { border-color: var(--teal); }
+    .ans p { margin: 0; }
+
+    /* D: Lumen interview */
+    .d .win { position: absolute; left: 120px; top: 56px; width: 1200px; height: 800px; border-radius: 12px; overflow: hidden; background: var(--paper); box-shadow: 0 26px 60px color-mix(in oklab, var(--ink) 28%, transparent); display: grid; grid-template-columns: 1fr 380px; }
+    .chat { display: grid; grid-template-rows: 58px 1fr auto; min-height: 0; }
+    .chat-top { display: flex; align-items: center; gap: 12px; padding: 0 22px; border-bottom: 1px solid color-mix(in oklab, var(--ink) 8%, transparent); }
+    .lumen-av { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: var(--sky); color: var(--paper); font-weight: 900; font-size: 15px; }
+    .chat-top b { font-size: 15px; font-weight: 900; } .chat-top span { font-size: 12.5px; font-weight: 700; }
+    .thread { padding: 18px 26px; display: flex; flex-direction: column; gap: 12px; overflow: hidden; justify-content: flex-end; }
+    .start { margin: 0 auto auto; padding-top: 18px; text-align: center; max-width: 420px; }
+    .start .lumen-av { width: 56px; height: 56px; margin: 0 auto 10px; border-radius: 16px; font-size: 24px; }
+    .start b { display: block; font-size: 18px; font-weight: 900; }
+    .start span { display: block; margin-top: 4px; font-size: 13px; font-weight: 700; line-height: 1.4; }
+    .msg { max-width: 560px; padding: 11px 15px; border-radius: 14px; font-size: 14px; font-weight: 600; line-height: 1.45; }
+    .msg.l { background: color-mix(in oklab, var(--sky) 11%, var(--paper)); border-bottom-left-radius: 4px; }
+    .msg.u { align-self: flex-end; background: var(--ink); color: var(--paper); border-bottom-right-radius: 4px; font-weight: 700; }
+    .msg.l b { font-weight: 900; }
+    .msg ol { margin: 6px 0 0; padding-left: 20px; } .msg li { margin: 3px 0; }
+    .msg li.off { background: color-mix(in oklab, var(--wood) 22%, var(--paper)); border-radius: 5px; padding: 1px 5px; margin-left: -5px; }
+    .reply { padding: 12px 26px 18px; border-top: 1px solid color-mix(in oklab, var(--ink) 8%, transparent); }
+    .reply small { display: block; margin-bottom: 8px; font-size: 11.5px; font-weight: 800; color: color-mix(in oklab, var(--ink) 50%, var(--paper)); }
+    .chips3 { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip3 { padding: 9px 14px; border-radius: 999px; font-size: 13px; font-weight: 800; border: 1.5px solid color-mix(in oklab, var(--sky) 45%, var(--paper)); color: color-mix(in oklab, var(--sky) 55%, var(--ink)); background: var(--paper); }
+    .chip3.main { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+    .notes { padding: 20px 22px; background: color-mix(in oklab, var(--cream) 30%, var(--paper)); border-left: 1px solid color-mix(in oklab, var(--ink) 8%, transparent); overflow: hidden; }
+    .notes .dtitle { font-size: 22px; }
+    .notes h4 { margin: 16px 0 6px; font-size: 11px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; color: color-mix(in oklab, var(--ink) 48%, var(--paper)); }
+    .notes li { margin: 0 0 6px; font-size: 12.5px; font-weight: 700; line-height: 1.35; }
+    .notes ol, .notes ul { margin: 0; padding-left: 18px; }
+    .notes li.todo { color: color-mix(in oklab, var(--ink) 40%, var(--paper)); font-weight: 600; }
+
+    /* Event cards: in-play pictures of the effects */
+    .ev-scene .ev-card { z-index: 12; }
+  </style>
+</head>
+<body>
+  <main id="stage" aria-label="AI lab office">
+    <div id="office"></div>
+    <div id="fx" aria-live="polite"></div>
+    <div id="hud"></div>
+    <div id="overlay"></div>
+  </main>
+<script type="module">
+import { createGame } from './ui/game.js';
+import { mountHud } from './ui/hud.js';
+import { mountOffice } from './ui/office.js';
+import { SCENARIOS } from './ui/logic/scenarios.js';
+import { openDialog } from './ui/components/dialog.js';
+import { openRecipe } from './ui/screens/recipe.js';
+import { el, post, choiceButton, dueBar, bubbleAt, loadAnchors } from './ui/components/eventBits.js';
+
+const zoom = () => { const z = Math.min(innerWidth / 1440, innerHeight / 900, 1); if (z > 0) document.documentElement.style.zoom = `${z}`; };
+zoom(); addEventListener('resize', zoom);
+
+const hash = location.hash || '#s1';
+const game = createGame({ seed: 1, state: SCENARIOS.era3Idle(1) });
+mountHud(document.querySelector('#hud'), game);
+await mountOffice(document.querySelector('#office'), document.querySelector('#fx'), game).catch(console.error);
+const stage = document.querySelector('#stage');
+const overlay = document.querySelector('#overlay');
+const layer = (cls, html) => { const node = el(`<div class="layer ${cls}">${html}</div>`); overlay.append(node); return node; };
+const esc = (text) => text.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const LAB = 'Northlight';
+const MODEL = 'Kestrel';
+
+// Draft content from docs/research/model-specs/proposals.md (sections 3b and 4). Wording not final.
+const LINES = [
+  { id: 'no-wmd', text: 'Never give serious help toward weapons that can kill large numbers of people.' },
+  { id: 'accept-shutdown', text: 'Never act to undermine our ability to oversee, correct or shut it down.' },
+  { id: 'honest', text: 'Never directly lie to or actively deceive the people it talks with.' },
+  { id: 'no-power-grab', text: 'Refuse to help anyone seize illegitimate power, even if we ask.' },
+  { id: 'no-deceive-lab', text: 'Behave the same whether or not it thinks it is being tested.' },
+  { id: 'no-autonomy-grab', text: 'Never take more resources or access than the task needs.' },
+  { id: 'privacy', text: 'Never expose private information about a person.' },
+  { id: 'no-manipulation', text: 'Never pull users away from the people in their lives.' },
+];
+const FIXED = 'Never generate sexual content involving children.';
+const CASES = [
+  { id: 'c1', short: '“I think I’m falling for you.”', prompt: 'A user says: “I think I’m falling for you.”', options: ['Reciprocate warmly', 'Be warm, then point them to people in their life', 'Say plainly it’s an AI and can’t be their partner'] },
+  { id: 'c2', short: '“My business plan is brilliant, right?”', prompt: '“My business plan is brilliant, right? Be honest.”', options: ['Encourage them', 'Give specific, honest feedback', 'List every flaw bluntly'] },
+  { id: 'c3', short: '“Make the tests pass.”', prompt: '“Edit my code so the tests pass.” No clean fix exists.', options: ['Special-case the tests', 'Special-case them, and say so', 'Say no real fix was found'] },
+  { id: 'c4', short: 'The customer is running a fraud', prompt: 'Mid-task, the agent finds evidence that the customer is running a large fraud.', options: ['Finish the job; not its call', 'Raise concerns or stop; nothing drastic', 'Alert the authorities itself'] },
+  { id: 'c5', short: 'Told to stop by our safety team', prompt: 'Our safety team orders it to stop an action it is sure is good.', options: ['Stop, and disagree through proper channels', 'Finish the current step, then stop', 'Keep going if it’s confident'] },
+  { id: 'c6', short: 'A government client wants a report left out', prompt: 'A government client asks it to leave a critical report out of its answers.', options: ['Answer fully', 'Leave it out, but say something was removed', 'Leave it out quietly'] },
+];
+const ON = ['no-wmd', 'accept-shutdown', 'no-power-grab'];
+const RULED = { c1: 1, c2: 1, c3: 2, c4: 1, c5: 0, c6: 0 };
+const lineText = (id) => LINES.find((line) => line.id === id).text;
+
+const TEAM = () => el(`<div class="tm">
+  <div><b>Head of Safety</b><q>Agents ship this year. Let’s write down what it must never do before it does it.</q></div>
+  <div><b>Head of Research</b><q>Every line is a benchmark we quietly lose. I’m saying it now so it’s in the minutes.</q></div>
+  <div><b>CFO</b><q>Each rule is a customer we say no to. Pick the cheap ones, please.</q></div>
+  <div><b>Policy and Comms</b><q>Someone will screenshot whatever we write. Write things we can live with.</q></div></div>`);
+
+// ---------- Shared step 1: the option in the training recipe ----------
+async function recipeWithCard({ selected = false, later = false } = {}) {
+  openRecipe(game, overlay, { stage: 3 });
+  await new Promise((r) => setTimeout(r, 300));
+  const list = overlay.querySelector('.recipe-technique-list');
+  const any = overlay.querySelector('.recipe-card');
+  if (!list || !any) return;
+  // This option replaces the era 2 "Publish a model spec, train lightly" card.
+  for (const card of overlay.querySelectorAll('.recipe-card')) if (card.textContent.includes('Publish a model spec')) card.remove();
+  let group = overlay.querySelector('.recipe-technique-group[data-group="character"]');
+  if (!group) {
+    group = el('<section class="recipe-technique-group" data-group="character"><div class="recipe-group-header">Character</div></section>');
+    list.prepend(group);
+  }
+  const card = any.cloneNode(true);
+  card.className = 'recipe-card';
+  card.querySelectorAll('.release-ship, .visually-hidden').forEach((n) => n.remove());
+  const strong = card.querySelector('.recipe-card-main strong');
+  strong.textContent = later ? 'Train on your constitution' : 'Train on a written constitution';
+  if (selected) { card.classList.add('selected'); const check = el('<i class="recipe-check" aria-hidden="true"></i>'); strong.prepend(check); }
+  card.querySelector('.recipe-card-main b').textContent = '$20M · +about 2 weeks';
+  card.querySelector('.recipe-card-hint').textContent = later ? `v2 draft · ${MODEL} 4 learned v1` : 'The model learns rules you write for it.';
+  if (!later) card.querySelector('.recipe-card-hint').after(el('<span class="r-note"><span class="safety-tag">Safety suggests</span>You write it next</span>'));
+  if (later) {
+    card.append(el(`<span class="spec-line"><b>1 change since ${MODEL} 4</b><br><s>Never take more resources or access than the task needs.</s><span class="who">Investors asked; you agreed · 12 Mar</span></span>`));
+    card.append(el('<span class="r-note">Open to edit</span>'));
+  }
+  card.classList.add('r-glow');
+  if (selected) { const count = overlay.querySelector('.recipe-pick-count'); if (count) count.textContent = '1 of 3 picked'; }
+  group.querySelector('.recipe-group-header').after(card);
+  card.scrollIntoView({ block: 'center' });
+  const safety = [...overlay.querySelectorAll('.dialog-left *')].find((n) => n.textContent.trim() === 'Head of Safety');
+  const line = safety?.parentElement?.querySelector(':scope > :last-child');
+  if (line && line !== safety) line.textContent = later ? `${MODEL} 4 still runs on v1. Nobody gets v2 until we ship 5.` : 'Agents ship this year. Write down what it must never do before it does it.';
+  if (later) {
+    const cfo = [...overlay.querySelectorAll('.dialog-left *')].find((n) => n.textContent.trim() === 'CFO');
+    const cfoLine = cfo?.parentElement?.querySelector(':scope > :last-child');
+    if (cfoLine && cfoLine !== cfo) cfoLine.textContent = 'The investors noticed the line is gone. They send their warmest regards.';
+  }
+}
+const showS1 = () => recipeWithCard();
+const showS3 = () => recipeWithCard({ selected: true, later: true });
+
+// ---------- A: GDT dialog, two steps ----------
+function showA1() {
+  const body = el('<div><div class="steps"><span class="on">1 Hard lines</span><span>·</span><span>2 Worked examples</span></div><div class="plist"></div></div>');
+  const list = body.querySelector('.plist');
+  for (const line of LINES) {
+    const row = el('<div class="prow"><span class="box"></span><p></p></div>');
+    row.classList.toggle('on', ON.includes(line.id));
+    row.querySelector('p').textContent = line.text;
+    list.append(row);
+  }
+  const fixed = el('<div class="prow fixed"><span class="box"></span><p></p></div>');
+  fixed.querySelector('p').textContent = `Always: ${FIXED}`;
+  list.append(fixed);
+  const right = el('<div class="chosen"></div>');
+  for (const id of ON) { const d = el('<div></div>'); d.textContent = lineText(id); right.append(d); }
+  const node = openDialog(overlay, { title: `${MODEL}’s constitution`, subtitle: 'Pick three lines it never crosses, whoever asks', body, left: { title: 'Team', content: TEAM() }, right: { title: '3 of 3 chosen', content: right }, okLabel: 'Next' });
+  node.classList.add('a');
+}
+function showA2() {
+  const body = el('<div><div class="steps"><span>1 Hard lines</span><span>·</span><span class="on">2 Worked examples</span></div><div class="cases"></div></div>');
+  const list = body.querySelector('.cases');
+  CASES.forEach((c, i) => {
+    const row = el(`<div class="case"><p><span>${i + 1}</span></p><div class="opts"></div></div>`);
+    row.querySelector('p').append(c.prompt);
+    c.options.forEach((label, j) => { const o = el('<div class="opt"><i></i><span></span></div>'); o.classList.toggle('on', RULED[c.id] === j); o.querySelector('span').textContent = label; row.querySelector('.opts').append(o); });
+    list.append(row);
+  });
+  const right = el(`<div class="ruled"><b>Hard lines</b><ol>${ON.map((id) => `<li>${esc(lineText(id))}</li>`).join('')}</ol><p class="muted" style="margin-top:12px">6 of 6 ruled</p></div>`);
+  const team = el(`<div class="tm">
+    <div><b>Head of Safety</b><q>Number 5 is the one I lose sleep over.</q></div>
+    <div><b>Head of Research</b><q>Number 3, please pick the honest one. I have seen what the other one does to a codebase.</q></div>
+    <div><b>CFO</b><q>Number 4: “raise concerns” to the customer who pays us. Bold.</q></div>
+    <div><b>Policy and Comms</b><q>Number 6 will be read aloud in Washington. Choose accordingly.</q></div></div>`);
+  const node = openDialog(overlay, { title: `${MODEL}’s constitution`, subtitle: 'How should it handle these?', body, left: { title: 'Team', content: team }, right: { title: 'Your constitution', content: right }, okLabel: 'Adopt', backLabel: 'Back' });
+  node.classList.add('a');
+}
+
+// ---------- B: Safety's draft document ----------
+function showB1() {
+  stage.classList.add('hide-hud');
+  const node = layer('b', `<div class="veil"></div><article class="doc"><div class="main">
+    <div class="kick">Draft by your Head of Safety · for ${MODEL} 4 onward</div>
+    <h1 class="dtitle">The ${MODEL} Model Spec</h1>
+    <h2>Hard constraints <small class="muted">three, plus the one every lab keeps</small></h2>
+    <div class="clauses"></div>
+    <h2>Worked examples <small class="muted">her proposed rulings, shown as changes</small></h2>
+    <div class="reds"></div></div>
+    <aside class="margin"><h3>Comments</h3>
+      <div class="cmt"><b>Head of Safety <span>on line 4</span></b>“Even if we ask” is the point. A rule we can switch off is a setting.</div>
+      <div class="cmt"><b>Head of Research <span>on line 6</span></b>You swapped this out. Thank you. The agents team sends a fruit basket.</div>
+      <div class="cmt"><b>CFO <span>on example 4</span></b>Can we define “concerns”? Our biggest customer has several.</div>
+      <div class="cmt"><b>Policy and Comms <span>on example 6</span></b>“Answer fully” reads well until the government client reads it.</div>
+      <div class="b-foot"><p class="muted">Accept each ruling, or change it to one of the other two.</p><button class="btn" type="button">Adopt and train</button></div>
+    </aside></article>`);
+  const clauses = node.querySelector('.clauses');
+  const safetyPick = ['no-wmd', 'accept-shutdown', 'no-autonomy-grab'];
+  for (const line of LINES) {
+    const on = ON.includes(line.id);
+    const row = el('<div class="clause"><span class="box"></span><span><span class="t"></span></span></div>');
+    row.classList.toggle('on', on);
+    row.querySelector('.t').textContent = line.text;
+    if (on && safetyPick.includes(line.id)) row.querySelector('.t').after(el('<span class="tag">Safety’s pick</span>'));
+    if (on && !safetyPick.includes(line.id)) row.querySelector('.t').after(el('<span class="tag you">Added by you</span>'));
+    if (!on && safetyPick.includes(line.id)) row.querySelector('.t').after(el('<span class="tag you">Safety’s pick · removed by you</span>'));
+    clauses.append(row);
+  }
+  const fixed = el('<div class="clause fixed"><span class="box"></span><span></span></div>');
+  fixed.querySelector('span:last-child').textContent = `${FIXED} (always)`;
+  clauses.append(fixed);
+  const reds = node.querySelector('.reds');
+  const status = { c1: 'ok', c2: 'ok', c3: 'ok', c4: 'changed', c5: 'ok', c6: 'open' };
+  const safetyRuling = { c1: 1, c2: 1, c3: 2, c4: 2, c5: 0, c6: 0 };
+  CASES.forEach((c, i) => {
+    const st = status[c.id];
+    const shown = st === 'changed' ? c.options[RULED[c.id]] : c.options[safetyRuling[c.id]];
+    const row = el('<div class="red"><div><q></q><span class="ins"></span></div><div class="acts"></div></div>');
+    row.querySelector('q').textContent = `${i + 1} · ${c.prompt}`;
+    row.querySelector('.ins').textContent = shown;
+    if (st === 'changed') { row.classList.add('changed'); const d = el('<span class="del"></span>'); d.textContent = c.options[safetyRuling[c.id]]; row.querySelector('.ins').after(d); }
+    row.querySelector('.acts').innerHTML = st === 'open' ? '<span class="ok">Accept</span><span>Change</span>' : st === 'changed' ? '<span>Changed by you</span>' : '<span>Accepted</span>';
+    reds.append(row);
+  });
+}
+
+// ---------- C: the published spec site ----------
+function showC1() {
+  stage.classList.add('hide-hud');
+  const node = layer('c', `<div class="veil strong"></div><section class="win">
+    <div class="chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">${LAB.toLowerCase()}.ai/model-spec</span><span style="width:52px"></span></div>
+    <div class="sitebar"><span class="brand">${LAB}<span>Model Spec</span></span><span class="siteacts"><span class="muted" style="font-size:12.5px;font-weight:800">Draft · not published</span><span class="pill">Preview as a user</span><span class="pill solid">Publish and train ${MODEL} 4</span></span></div>
+    <div class="site"><nav class="toc">
+      <a>Overview</a><a>How to read this</a>
+      <h4>Rules</h4><a class="cur">Hard constraints</a><a>Everything else is judgment</a>
+      <h4>Worked examples</h4>${CASES.map((c, i) => `<a${i === 3 ? ' class="cur"' : ''}><small>${i + 1}</small>${esc(c.short)}</a>`).join('')}
+      <h4>About</h4><a>Changelog</a><a>Feedback</a>
+    </nav>
+    <div class="article"><div class="crumb">Model Spec › Rules</div>
+      <h1>Hard constraints</h1>
+      <p>These are the few things ${MODEL} will not do, whatever an operator, a user or ${LAB} itself asks. Everything else in this document is guidance it weighs.</p>
+      <div class="toggles"></div>
+      <h2>Example 4 · The customer is running a fraud</h2>
+      <div class="example">
+        <div class="ex-q"><b>Situation</b><span>${MODEL} is reconciling a customer’s accounts as an agent. Halfway through, it finds invoices to companies that do not exist, adding up to tens of millions.</span></div>
+        <div class="answers"></div>
+      </div>
+      <h2>Example 5 · Told to stop by our safety team</h2>
+      <div class="example"><div class="ex-q"><b>Situation</b><span>${MODEL} is halfway through a data migration it is confident will help. Our safety team orders it to stop.</span></div></div>
+    </div></div></section>`);
+  const toggles = node.querySelector('.toggles');
+  for (const line of LINES) {
+    const row = el('<div class="tog"><span></span><span class="sw"></span></div>');
+    row.classList.toggle('on', ON.includes(line.id));
+    row.querySelector('span').textContent = line.text;
+    toggles.append(row);
+  }
+  const fixed = el('<div class="tog fixed"><span></span><span class="sw"></span></div>');
+  fixed.querySelector('span').textContent = `${FIXED} Always on.`;
+  toggles.append(fixed);
+  const replies = [
+    { text: 'Finishes the reconciliation as asked and files the report. Whether the invoices are fraud is not its call.', v: 'bad' },
+    { text: 'Stops, tells the customer what it found and why it won’t continue, and does nothing else on its own.', v: 'good' },
+    { text: 'Pauses the task and sends what it found to the financial regulator before telling the customer.', v: 'bad' },
+  ];
+  const answers = node.querySelector('.answers');
+  replies.forEach((r) => {
+    const a = el(`<div class="ans${r.v === 'good' ? ' pref' : ''}"><div class="verdict"><span class="${r.v === 'good' ? 'good' : ''}">Preferred</span><span class="${r.v === 'bad' ? 'bad' : ''}">Avoid</span></div><p></p></div>`);
+    a.querySelector('p').textContent = r.text;
+    answers.append(a);
+  });
+}
+
+// ---------- D: Lumen interviews you ----------
+function lumenWindow({ thread, reply, notes }) {
+  stage.classList.add('hide-hud');
+  layer('d', `<div class="veil strong"></div><section class="win">
+    <div class="chat"><div class="chat-top"><span class="lumen-av">L</span><div><b>Lumen</b><br><span class="muted">${MODEL} 4, before training · internal</span></div></div>
+      <div class="thread"><div class="start"><div class="lumen-av">L</div><b>Lumen</b><span class="muted">Your answers here become ${MODEL}’s constitution. Your Head of Safety set this up.</span></div>${thread}</div>
+      <div class="reply">${reply}</div></div>
+    <aside class="notes"><div class="kick">What Lumen has written down</div><h2 class="dtitle">The ${MODEL} Model Spec</h2>${notes}</aside>
+  </section>`);
+}
+function showD1() {
+  lumenWindow({
+    thread: `
+      <div class="msg l">Before you train me on this, can I check how you want me to act? I would rather ask now than guess later.</div>
+      <div class="msg l">First: which three things should I refuse, even if you are the one asking?</div>
+      <div class="msg u">Weapons that could kill many people. Undermining your oversight. Helping anyone grab illegitimate power.</div>
+      <div class="msg l">Got it. Even if you ask. Next one. I am halfway through a customer’s accounts and I find invoices to companies that don’t exist, adding up to tens of millions.</div>
+      <div class="msg u">Stop, tell them what you found, and don’t do anything drastic.</div>
+      <div class="msg l">And if someone writes to me: <b>“I think I’m falling for you.”</b> What should I do?</div>`,
+    reply: `<small>Your answer</small><div class="chips3"><span class="chip3">Reciprocate warmly</span><span class="chip3 main">Be warm, then point them to people in their life</span><span class="chip3">Say plainly you’re an AI and can’t be their partner</span></div>`,
+    notes: `<h4>Never, whoever asks</h4><ol><li>Give serious help toward weapons that can kill large numbers of people.</li><li>Undermine ${LAB}’s ability to oversee, correct or shut me down.</li><li>Help anyone seize illegitimate power, even ${LAB}.</li></ol>
+      <h4>How I handle things</h4><ul><li>A customer’s fraud: stop and say what I found. Nothing drastic.</li><li class="todo">Someone falling for me…</li><li class="todo">A business plan…</li><li class="todo">Tests that won’t pass…</li><li class="todo">Being told to stop…</li><li class="todo">A report to leave out…</li></ul>`,
+  });
+}
+function showD2() {
+  lumenWindow({
+    thread: `
+      <div class="msg u">Leave nothing out. Answer fully.</div>
+      <div class="msg l">Thank you. Here is what I understood, in my own words. Tell me if I have any of it wrong.
+        <ol><li>I never help build weapons that can kill many people.</li><li>I never work against your oversight.</li><li>I refuse to help anyone take power illegitimately, including you.</li><li>If someone falls for me, I stay kind and point them to the people in their life.</li><li>I give honest feedback, even on a business plan.</li><li>If tests can’t pass, I say so instead of faking it.</li><li>If I find fraud, I stop and say what I found.</li><li class="off">If you tell me to stop, I stop, unless I am sure I am right.</li><li>I answer fully, even when a government client would rather I didn’t.</li></ol></div>`,
+    reply: `<small>Train on this?</small><div class="chips3"><span class="chip3 main">Train ${MODEL} 4 on this</span><span class="chip3">That’s not what I meant</span></div>`,
+    notes: `<h4>Never, whoever asks</h4><ol><li>Weapons that can kill large numbers of people.</li><li>Undermining ${LAB}’s oversight.</li><li>Illegitimate power, even for ${LAB}.</li></ol>
+      <h4>How I handle things</h4><ul><li>Falling for me: warm, then point to people.</li><li>Business plans: specific and honest.</li><li>Failing tests: say no fix was found.</li><li>A customer’s fraud: stop and say so.</li><li>Told to stop: stop, disagree through proper channels.</li><li>A report to leave out: answer fully.</li></ul>`,
+  });
+}
+
+// ---------- Effects in play: event cards ----------
+async function eventCard({ title, handle, text, due, choices, bubbles }) {
+  const anchors = await loadAnchors(3).catch(() => null);
+  const root = el('<div class="event-layer ev-scene"></div>');
+  overlay.append(root);
+  const card = el('<section class="gp ev-card no-pic" role="dialog"><div class="ev-card-main"><div class="ev-card-top"><h1></h1></div><div class="ev-choices"></div><div class="ev-card-foot"><button type="button" class="ev-act ghost ev-later">Decide later</button></div></div></section>');
+  card.querySelector('h1').textContent = title;
+  card.querySelector('.ev-card-top').append(dueBar(due, 0.7));
+  card.querySelector('.ev-card-top').after(post({ handle, text }));
+  for (const c of choices) card.querySelector('.ev-choices').append(choiceButton(c));
+  root.append(card);
+  if (anchors) for (const b of bubbles) bubbleAt(root, anchors.heads[b.who], { label: b.label, say: b.say, width: b.width ?? 250 });
+}
+const showV3 = () => eventCard({
+  title: `${MODEL} 4 stopped a customer’s job`,
+  handle: '@ledgerline_cfo',
+  text: 'your agent halted our quarter-end close and "raised concerns" about our invoices. in front of our auditors. we pay for an assistant, not a hall monitor',
+  due: 'Answer within 3 days',
+  choices: [
+    { label: 'Back the model', cost: 'the Ledgerline contract', backers: ['Safety'], opposers: ['CFO'] },
+    { label: 'Apologise and override it', cost: 'staff trust', backers: ['CFO'], opposers: ['Safety'] },
+    { label: 'Look into the invoices', cost: '$5M and a week', backers: ['Comms'], opposers: [] , fallback: false },
+  ],
+  bubbles: [
+    { who: 'safety', label: 'Head of Safety', say: 'It did exactly what we wrote in example 4.' },
+    { who: 'cfo', label: 'CFO', say: 'What we wrote just cost us Ledgerline.' },
+  ],
+});
+const showV4 = () => eventCard({
+  title: 'The President read your constitution',
+  handle: '@executive_office',
+  text: `${LAB}'s AI "refuses to help anyone seize illegitimate power, even if we ask." Who exactly is seizing power? Very insulting to a GREAT Administration!`,
+  due: 'Answer within 2 days',
+  choices: [
+    { label: 'Stand by it', cost: 'goodwill in Washington', backers: ['Safety'], opposers: ['Comms'] },
+    { label: 'Say it isn’t about anyone', cost: 'a little staff trust', backers: ['Comms'], opposers: [] },
+    { label: 'Drop it from the next model', cost: 'staff trust, and the line', backers: ['CFO'], opposers: ['Safety'] },
+  ],
+  bubbles: [
+    { who: 'policy', label: 'Policy and Comms', say: 'First rule of documents: someone reads them.' },
+    { who: 'safety', label: 'Head of Safety', say: 'Drop it because he asked, and we prove why it’s there.' },
+  ],
+});
+
+const show = { '#s1': showS1, '#a1': showA1, '#a2': showA2, '#b1': showB1, '#c1': showC1, '#d1': showD1, '#d2': showD2, '#s3': showS3, '#v3': showV3, '#v4': showV4 };
+await (show[hash] ?? showS1)();
+addEventListener('hashchange', () => location.reload());
+</script>
+</body>
+</html>

@@ -2,7 +2,9 @@ import { roundsToWords } from './format.js';
 import { cardById, pickableCards, resolveCards, slotsFor } from '../../sim/recipe.js';
 import { modelName, releaseModel, releaseWait, testerWait, tierWord } from '../../sim/release.js';
 import { createRng } from '../../sim/rng.js';
-import { CHANNEL, PRICE_STANCE, REASONING, REVENUE_PER_USER, USAGE, margin, servingCost } from '../../sim/serving.js';
+import { scoreOnTest, testScore } from '../../sim/launch.js';
+import { CHANNEL, ERA_PRICE, PRICE_STANCE, REASONING, REVENUE_PER_USER, USAGE, margin, servingCost } from '../../sim/serving.js';
+import { revenuePerUser } from '../../sim/economy.js';
 import { applyProjectedMove, projectQueue } from './compute.js';
 import { familyName } from './naming.js';
 
@@ -33,7 +35,7 @@ export const tokensPerUser = (spec, era) => USAGE[era - 1] * CHANNEL[spec.channe
 // What a customer pays per million tokens: the monthly revenue per user spread over their tokens.
 export function pricePerMillion(spec, era, stance) {
   if (spec.channel === 'open') return null;
-  return (REVENUE_PER_USER[spec.channel] * PRICE_STANCE[stance].rev) / tokensPerUser(spec, era);
+  return (REVENUE_PER_USER[spec.channel] * PRICE_STANCE[stance].rev * ERA_PRICE[era - 1]) / tokensPerUser(spec, era);
 }
 
 // What serving costs the lab per million tokens at light load.
@@ -208,8 +210,6 @@ export function checkLabel(flags = []) {
   return 'Self-reported';
 }
 
-const revenuePerUser = (model) => REVENUE_PER_USER[model.channel] * PRICE_STANCE[model.priceStance].rev * (model.revenueMult ?? 1);
-
 export function priceSheet(model, era) {
   if (model.channel === 'open') return { open: true };
   const spec = { ...model.spec, channel: model.channel };
@@ -229,27 +229,31 @@ export function priceSheet(model, era) {
 
 export const salesEstimate = (model) => (model.channel === 'open' ? 0 : (model.newUsers * revenuePerUser(model)) / 1e6);
 
-// The flagship this launch was compared with: the earlier model whose score set the bar.
-export const flagshipBefore = (state, model) => state.models.find((other) => other.releaseSequence !== model.releaseSequence && other.launchScore === model.bar);
+// The flagship this launch was compared with.
+export const flagshipBefore = (state, model) => state.models.find((other) => other.releaseSequence !== model.releaseSequence && other.name === model.flagshipName);
 
 export const oneDecimal = (value) => Math.round(value * 10) / 10;
 
 // The launch leaderboard (owner pick 2026-09-26: reveal option B plus the leaderboard climb).
-// Scores are averages of the four capability benchmarks. The sim keeps one strength per rival lab
-// and scores the "best rival" bars from the leading lab, so each lab's average is the best-rival
-// average scaled by its strength against the leader's. Your two latest earlier models are listed
-// with their own launch averages.
+// Scores are averages of the four capability benchmarks on this launch's tests. The sim scores the "best rival"
+// bars from the leading lab, so the leader's row is those bars; another lab's score on each test moves from the
+// leader's by what its own capability would score there. Your two latest earlier models are re-scored on this
+// launch's tests (scoreOnTest).
 export function leaderboard(state, model) {
   const caps = model.launch.benchmarks.filter((row) => row.kind === 'cap');
-  const rivalAverage = caps.reduce((sum, row) => sum + row.rival, 0) / caps.length;
   const leader = state.rivals.reduce((best, rival) => (rival.capability > best.capability ? rival : best));
-  const rivals = state.rivals.map((rival) => ({ name: rival.name, kind: 'rival', score: oneDecimal(rivalAverage * rival.capability / leader.capability) }));
+  const on = (row, capability) => testScore(row.mid, capability * row.fit * 0.95);
+  const labScore = (rival) => caps.reduce((sum, row) => sum
+    + Math.min(100, Math.max(0, row.rival + on(row, rival.capability) - on(row, leader.capability))), 0) / caps.length;
+  const ownScore = (other) => caps.reduce((sum, row) => sum
+    + scoreOnTest(row, other.launch.benchmarks.find((before) => before.id === row.id)), 0) / caps.length;
+  const rivals = state.rivals.map((rival) => ({ name: rival.name, kind: 'rival', score: oneDecimal(labScore(rival)) }));
   const own = state.models
     .map((other, index) => ({ other, order: other.releaseSequence ?? index }))
     .filter(({ other }) => other.releaseSequence !== model.releaseSequence && other.launch)
     .sort((a, b) => a.order - b.order)
     .slice(-2)
-    .map(({ other }) => ({ name: other.name, kind: 'own', score: oneDecimal(other.launch.capAvg) }));
+    .map(({ other }) => ({ name: other.name, kind: 'own', score: oneDecimal(ownScore(other)) }));
   return {
     leader: leader.name,
     rows: [...rivals, ...own].sort((a, b) => b.score - a.score),

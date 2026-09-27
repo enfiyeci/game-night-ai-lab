@@ -13,7 +13,6 @@ const releaseQueued = (game) => game.queue.moves.some((move) => move.type === 'r
 const MOVE_TYPE = {
   training: 'startRun',
   release: 'release',
-  constitution: 'amendConstitution',
   meeting: 'meeting',
   summit: 'summit',
   deals: 'deal',
@@ -30,7 +29,6 @@ export const ITEMS = [
   { id: 'training', label: 'Start a training run', unavailable: (state, game) => (game.queue.moves.some((move) => move.type === 'startRun') && `A training run already started this ${roundWord(state.era)}`) || (state.activeRun && 'A run is already under way') || (state.pendingModel && 'Release the trained model first') },
   { id: 'release', label: 'Release a model', editsQueued: (game) => releaseQueued(game), unavailable: (state, game) => !releaseQueued(game) && !state.pendingModel && 'Release needs a finished model' },
   { id: 'automation', label: 'Who does the work', free: true },
-  { id: 'constitution', label: 'Amend the constitution', hidden: (state) => state.era < 3 }, // an era-3 idea: not shown before
   {
     id: 'meeting',
     label: 'Take a meeting',

@@ -1,3 +1,4 @@
+import { BALANCE } from './balance.js';
 import { hasLine } from './constitution.js';
 
 export const REWARD_HACK_CHANCE = 0.5;
@@ -10,6 +11,8 @@ export const GAMING_THRESHOLD = 40;
 export const EVAL_GAMING_DEBT = { 3: 0.05, 4: 0.08, 5: 0.12 };
 
 export const totalDebt = (state) => state.alignmentDebt + state.concealedDebt;
+// The capability the danger rules see: progress past 100 still shows in the race and the benchmarks, not in the risk.
+export const dangerCapability = (capability) => Math.min(capability, BALANCE.dangerCapabilityMax);
 
 export function rollTrainingHazard(state, cards, flags, rng) {
   const hackable = cards.some((c) => HACKABLE.has(c.id)) || flags.includes('agentic');
