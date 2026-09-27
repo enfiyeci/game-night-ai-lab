@@ -355,3 +355,86 @@ test('the constitution card note names the draft version and the live one, never
   assert.equal(constitutionNote(state).text, 'v2 draft · v1 is live\n2 changes since v1');
   assert.doesNotMatch(constitutionNote(state).text, /Kestrel/, 'the chip names no model');
 });
+
+// Owner playtest 2026-09-26: Next and Back turn the page inside one dialog instead of closing it and opening another.
+async function openRecipeAt(state, { stage = 1 } = {}) {
+  const doc = installFakeDom();
+  const { openRecipe } = await import('../ui/screens/recipe.js');
+  const game = createGame({ state, seed: 1 });
+  const overlay = doc.createElement('div');
+  doc.body.append(overlay);
+  let closedSignals = 0;
+  overlay.addEventListener('gdt-dialog-closed', () => { closedSignals += 1; });
+  const layer = openRecipe(game, overlay, { stage });
+  const heading = () => overlay.querySelector('.dialog-centre').querySelector('h1').textContent;
+  return { doc, game, overlay, layer, heading, closedSignals: () => closedSignals };
+}
+
+test('Next and Back keep the same recipe dialog, veil and side panels, and never signal a close', async () => {
+  const { doc, overlay, layer, heading, closedSignals } = await openRecipeAt(SCENARIOS.era3Idle(1));
+  const veil = layer.querySelector('.dialog-veil');
+  const left = layer.querySelector('.dialog-left');
+  const right = layer.querySelector('.dialog-right');
+  const ok = layer.querySelector('.dialog-ok');
+  const back = layer.querySelector('.dialog-back');
+  assert.equal(heading(), 'Training run · Stage 1');
+  assert.equal(back.hidden, true, 'stage 1 has no Back, but the button stays built so Next never moves');
+
+  ok.click();
+  assert.equal(overlay.querySelectorAll('.dialog-layer').length, 1);
+  assert.equal(overlay.querySelector('.dialog-layer'), layer, 'the same layer, not a rebuilt one');
+  assert.equal(heading(), 'Training run · Stage 2');
+  assert.ok(layer.classList.contains('recipe-dialog-stage-2'));
+  assert.equal(layer.classList.contains('recipe-dialog-stage-1'), false);
+  assert.equal(back.hidden, false);
+  assert.equal(doc.activeElement.getAttribute('aria-current'), 'step');
+  assert.equal(doc.activeElement.textContent, 'Midtraining', 'focus lands on the stepper’s current step');
+
+  ok.click();
+  assert.equal(heading(), 'Training run · Stage 3');
+  assert.equal(ok.textContent, 'Start training');
+  back.click();
+  back.click();
+  assert.equal(heading(), 'Training run · Stage 1');
+  assert.equal(ok.textContent, 'Next');
+  assert.equal(overlay.querySelector('.dialog-layer'), layer);
+  for (const part of [veil, left, right, ok, back]) assert.ok(layer.contains(part), 'the frame parts are the same elements');
+  assert.equal(closedSignals(), 0, 'screens waiting for the dialog to close are not woken between stages');
+
+  veil.click();
+  assert.equal(overlay.querySelector('.dialog-layer'), null, 'the veil still cancels');
+  assert.equal(closedSignals(), 1);
+});
+
+test('era 1 turns from pretraining straight to post-training in the same dialog', async () => {
+  const { layer, overlay, heading } = await openRecipeAt(SCENARIOS.start(1));
+  layer.querySelector('.dialog-ok').click();
+  assert.equal(overlay.querySelector('.dialog-layer'), layer);
+  assert.ok(layer.classList.contains('recipe-dialog-stage-3'));
+  assert.equal(heading(), 'Training run · Stage 2');
+  assert.equal(layer.querySelector('.dialog-ok').textContent, 'Start training');
+  layer.querySelector('.dialog-back').click();
+  assert.equal(heading(), 'Training run · Stage 1');
+});
+
+test('the Geneva cap row shows only on the last stage and leaves when the player goes back', async () => {
+  const state = SCENARIOS.era3Idle(1);
+  state.deal = { collapsed: false, binding: ['computeCap'], signed: {}, expelled: [] };
+  const { layer } = await openRecipeAt(state);
+  const capRows = () => layer.querySelectorAll('.dl-cap-panel').length;
+  assert.equal(capRows(), 0);
+  layer.querySelector('.dialog-ok').click();
+  layer.querySelector('.dialog-ok').click();
+  assert.equal(capRows(), 1);
+  layer.querySelector('.dialog-back').click();
+  assert.equal(capRows(), 0);
+  layer.querySelector('.dialog-ok').click();
+  assert.equal(capRows(), 1, 'coming back to the last stage shows one row, not two');
+});
+
+test('Escape still cancels the recipe after a page turn', async () => {
+  const { overlay, layer } = await openRecipeAt(SCENARIOS.era3Idle(1));
+  layer.querySelector('.dialog-ok').click();
+  layer.querySelector('.dialog-centre').dispatchEvent(new FakeEvent('keydown', { key: 'Escape' }));
+  assert.equal(overlay.querySelector('.dialog-layer'), null);
+});

@@ -217,6 +217,7 @@ export function openFlock(game, { overlay, events, onClose }) {
       draw();
     });
     main.append(head);
+    waitingStrip(main);
     const compose = el(`<div class="fk-compose" role="button" tabindex="0"><div class="fk-av sq" style="background:var(--fk-av3)">${esc(initials(lab))}</div><div class="fk-ph">What is happening?!</div><span class="fk-go">Post</span></div>`);
     compose.addEventListener('click', () => joke('post'));
     compose.addEventListener('keydown', (event) => { if (event.key === 'Enter') joke('post'); });
@@ -246,10 +247,10 @@ export function openFlock(game, { overlay, events, onClose }) {
     });
   }
 
-  function notifications(main) {
-    main.append(el('<div class="fk-head"><div class="fk-title">Notifications</div></div>'));
-    const cards = waiting();
-    const warned = warnings();
+  // One row per card put off with "Decide later" and one per open warning. The Notifications tab lists them, and
+  // Home pins them in a "Waiting for you" strip (owner playtest 2026-09-26: "the phone just opens the twitter now").
+  function waitingRows(cards, warned) {
+    const rows = [];
     for (const card of cards) {
       const row = el('<div class="fk-note"><div class="fk-note-ic">!</div><div class="fk-note-body"><b></b><span></span></div><button type="button" class="fk-btn">Open</button></div>');
       row.querySelector('b').textContent = card.title;
@@ -258,7 +259,7 @@ export function openFlock(game, { overlay, events, onClose }) {
         close();
         events.openCard(card.id);
       });
-      main.append(row);
+      rows.push(row);
     }
     for (const warning of warned) {
       const row = el('<div class="fk-note warn"><div class="fk-note-ic">?</div><div class="fk-note-body"><b></b><span></span></div><button type="button" class="fk-btn ghost"></button></div>');
@@ -271,8 +272,24 @@ export function openFlock(game, { overlay, events, onClose }) {
         overlay.dispatchEvent(new CustomEvent('events-changed'));
         draw();
       });
-      main.append(row);
+      rows.push(row);
     }
+    return rows;
+  }
+
+  function waitingStrip(main) {
+    const rows = waitingRows(waiting(), warnings());
+    if (!rows.length) return;
+    const strip = el(`<section class="fk-wait" aria-label="Waiting for you"><div class="fk-wait-head">Waiting for you<span class="fk-wait-n">${rows.length}</span></div></section>`);
+    strip.append(...rows);
+    main.append(strip);
+  }
+
+  function notifications(main) {
+    main.append(el('<div class="fk-head"><div class="fk-title">Notifications</div></div>'));
+    const cards = waiting();
+    const warned = warnings();
+    main.append(...waitingRows(cards, warned));
     const mentions = posts().filter((p) => p.text.includes('{lab}') || (state.labName && p.text.includes(state.labName)));
     if (mentions.length) {
       main.append(el('<div class="fk-sub">Mentions of your lab</div>'));
