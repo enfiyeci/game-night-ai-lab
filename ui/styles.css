@@ -301,14 +301,14 @@ svg.room {
   line-height: 1;
 }
 
-.company-submenu {
+.submenu {
   z-index: 2;
   width: 246px;
 }
 
-.company-submenu::before {
+.submenu::before {
   position: absolute;
-  top: 13px;
+  top: var(--tail-top, 13px);
   left: -7px;
   width: 12px;
   height: 12px;
@@ -319,7 +319,7 @@ svg.room {
   transform: rotate(45deg);
 }
 
-.company-submenu.opens-left::before {
+.submenu.opens-left::before {
   right: -7px;
   left: auto;
   border: 0;
@@ -2503,6 +2503,9 @@ svg.room {
   color: color-mix(in oklab, var(--ink) 55%, var(--paper));
   background: color-mix(in oklab, var(--ink) 7%, var(--paper));
 }
+
+/* Game › Endings found carries its count (owner pick 3B). */
+.it .count { margin-left: 8px; font-size: 11.5px; font-weight: 900; color: color-mix(in oklab, var(--wood) 70%, var(--ink)); }
 
 /* Plan 2B Task 8: event cards and warnings (mockups K2-events.html and K2-events-crisis.html) */
 .event-layer { position: absolute; inset: 0; z-index: 20; pointer-events: none; }

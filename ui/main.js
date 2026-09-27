@@ -89,6 +89,7 @@ const showTitle = titleShows({ search: location.search, hash: location.hash, end
 if (showTitle) game.clock.pause('title');
 game.clock.start();
 const collection = createCollection(browserStorage());
+game.collection = collection; // Game › Endings found shows its count (owner pick 3B)
 if (showTitle) {
   mountTitle(game, {
     stage,
