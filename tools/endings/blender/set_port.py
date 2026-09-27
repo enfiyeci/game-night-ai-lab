@@ -186,18 +186,20 @@ def shot_al_port():
     quay()
     face = board("al-port", (70, 100, 1140, 410), 0.0, 9.0, width=5.4, z=3.6)
     # a ship alongside, being worked: boxes on deck, one in the air under the crane, a few landed on the quay
-    ship(34, EDGE + 13.5, 170, 0, lights=False, seed=5)
-    crane(24, EDGE - 12, boom_up=False, load=(EDGE + 4, 11))
+    ship(110, EDGE + 13.5, 170, 0, lights=False, seed=5)
+    crane(40, EDGE - 12, boom_up=False, load=(EDGE + 4, 11))
     rng = random.Random(9)
     for i in range(4):
         for tier in range(rng.randint(1, 2)):
-            container((14 + i * 2.6, 13.5, tier * 2.62), rot_z=math.radians(-90),
+            container((30 + i * 2.6, 13.5, tier * 2.62), rot_z=math.radians(-90),
                       colour=rng.choice(["#8A3B2E", "#2F5F8A", "#3F7A5A", "#E8E6E0"]))
+    for (x, y, L, hd, sd) in ((-260, 900, 240, 70, 1), (-90, 1200, 280, 110, 2)):
+        ship(x, y, L, hd, seed=sd)   # more ships waiting their turn offshore
     # the worker at the board, checking it against the clipboard before signing
     hi_vis((-1.4, 7.4), -8)
-    kit.sun((84, 0, 235), 2.6, kit.kelvin(3000), angle=2)
+    kit.sun((85, 0, 215), 2.6, kit.kelvin(3000), angle=2)
     kit.area((0.0, 5.0, 4.5), (0.0, 7.4, 1.0), (3, 1), 40, kit.kelvin(6500))   # the apron lamp
-    kit.camera((-6.0, 1.2, 1.6), (2.5, 14.0, 3.4), lens=28, fstop=5.6, focus=face)
+    kit.camera((-8.5, -1.0, 1.7), (4.0, 30.0, 4.0), lens=30, fstop=5.6, focus=face)
     bpy.context.scene.view_settings.exposure = -0.1
 
 
