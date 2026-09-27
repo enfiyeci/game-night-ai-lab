@@ -180,14 +180,17 @@ the release screen so the race is visible. Starting schedule (round = round with
 era 2 round 3; voice, OpenBrain, era 3 round 2; memory, DeepThink, era 3 round 4; computer use, Lodestar, era 4
 round 2; deep research, DeepThink, era 4 round 1.
 
-**Polish.** Lane `gn-keep-training` supplies `state.pendingModel.polish`, proposed range 0 to 1, absent means 0.
-Each critic's base score gains `polish × 2`. The field name and range must be agreed with that lane before either
-builds.
+**Polish.** Lane `gn-keep-training` supplies `state.pendingModel.polish`, a number from 0 to 100 (unrounded; absent
+means 0), and `pendingModel.fixedFlaws` (`[{ flag, day }]` for jailbreakWaiting, hallucination or sycophancy), both
+copied onto the released model (agreed 2026-09-27; its spec `2026-09-26-keep-polishing-publish-design.md` section 6,
+branch `keep-training`). Each critic's base score gains `polish / 50` (up to +2). That lane ships this term first as a
+stand-in in `scoreLaunch`; this design keeps it and owns its tuning. That lane also removes the thumbs-up card's
+1.15 users bonus when sycophancy is fixed.
 
 ## 11. Critics, the receipt and the forecast
 
 **Critic score** becomes `7 + (capAvg − bar) / 3 + (capAvg − rivalAvg) / 6 + (fit − 0.5) × 4 + wave points +
-polish × 2 + critic bias`, clamped 1 to 10 (today's formula in `sim/launch.js` `scoreLaunch`, plus the new terms; the
+polish / 50 + critic bias`, clamped 1 to 10 (today's formula in `sim/launch.js` `scoreLaunch`, plus the new terms; the
 deterministic-endings plan removes the `rng.int(-1, 1)` noise). Critics name the product and what missed: the
 lowest-weight missing fit signal becomes the "weak" half of a quip ("a great coding tool, weak on long documents").
 
@@ -232,7 +235,7 @@ or tap.
 | `gn-model-money` (Mac mini, branch `model-money`) | `sim/serving.js`, `sim/economy.js`, `sim/release.js`, `sim/training.js` | Build on top of it once it is in `ui`; agree that product tables replace its channel keys |
 | `gn-benchmarks` (Mac mini, branch `benchmarks-by-era`) | `sim/launch.js`, `sim/data/launch.js`, `sim/release.js` | Build after it lands in `ui` |
 | Deterministic-endings plan (branch `deterministic-endings`) | Task A5 removes launch noise; A10 edits `sim/release.js`; Part B makes rival pace deterministic | This design assumes those are in; build after A5 and A10 |
-| `gn-keep-training` (MacBook) | `state.pendingModel.polish` | Agree name and range first |
+| `gn-keep-training` (MacBook) | `state.pendingModel.polish`, `fixedFlaws`, the polish stand-in in `scoreLaunch` | Agreed 2026-09-27 (section 10); keep its stand-in term |
 | `gn-compute-race` | `sim/rivals.js` | Rival product is a new field; no change to its catch-up rule |
 
 Build order: sim rules and tests first, then the balance bots and retune, then the screens.
