@@ -86,3 +86,13 @@ test('Endings found shows how many of the endings this browser has found', () =>
   game.collection = { progress: () => ({ found: 3, total: 11 }) };
   assert.equal(endings.note(game), '3 of 11');
 });
+
+test('the summit waits for the President’s waiting call, then opens once he has been met', () => {
+  const game = createGame({ seed: 1, state: SCENARIOS.meeting2(1) });
+  // the projection expires an untaken call at the round's end, so the check must read the live meeting
+  assert.equal(reasonFor(game, 'summit'), 'Take the President’s call first');
+  game.queue.presidentAnswers = MEETINGS[1].exchanges.map((exchange) => exchange.answers[0].id);
+  assert.equal(game.addMove({ type: 'meeting' }).ok, true);
+  assert.equal(game.state.meeting, null);
+  assert.equal(reasonFor(game, 'summit'), '');
+});
