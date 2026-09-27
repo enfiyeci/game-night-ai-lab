@@ -34,14 +34,16 @@ def _copy_tree(ob, parent=None):
 
 
 def props(asset, spots, scale=1.0):
-    """One Poly Haven model at many spots [(x, y, z, rot_deg)]: imported once, then copied with shared meshes."""
-    x, y, z, r = spots[0]
-    roots = kit.place(asset, (x, y, z), rot_z=math.radians(r), scale=scale)
-    for x, y, z, r in spots[1:]:
-        for root in roots:
-            c = _copy_tree(root)
-            c.location = (x, y, z)
-            c.rotation_euler = (0, 0, math.radians(r))
+    """One Poly Haven model at many spots [(x, y, z, rot_z_deg[, rot_x_deg])]: imported once, then copied with shared
+    meshes."""
+    roots = kit.place(asset, spots[0][:3], scale=scale)
+    for i, spot in enumerate(spots):
+        x, y, z, rz = spot[:4]
+        rx = spot[4] if len(spot) > 4 else 0
+        for root in (roots if i == 0 else [_copy_tree(r) for r in roots]):
+            root.location = (x, y, z)
+            root.rotation_mode = "XYZ"      # glTF imports come in quaternion mode, which ignores rotation_euler
+            root.rotation_euler = (math.radians(rx), 0, math.radians(rz))
     return roots
 
 
@@ -93,7 +95,7 @@ def street(hdri="bethnal_green_entrance", strength=1.0, rotation=0, wet=False):
     kit.box((-W - 3.25, 4, -0.1), (0.2, 40, 0.14), kit.mat("#8B8A86", 0.6))
     kit.box((-W - 9, 4, -0.2), (11.5, 40, 0.1), kit.tex("worn_asphalt", 0.25, rough=0.12 if wet else None, name="croad"))
     kit.box((0, -8, -0.08), (40, 16, 0.1), pave)
-    kit.place("street_lamp_01", (-W - 2.8, 1.2, -0.03), rot_z=math.radians(90))
+    props("street_lamp_01", [(-W - 2.8, 1.2, -0.03, 90)])
 
 
 def rain(count=900, seed=2):
@@ -137,7 +139,7 @@ def counter():
             kit.cyl((1.8 + k * 0.2, D - 0.12, z + 0.06), 0.04, 0.09, cup, r2=0.034)
     # a cake stand under a glass dome and a basket of croissants on the counter
     kit.cyl((-0.25, CY + 0.35, CT + 0.07), 0.14, 0.14, kit.mat("#DAD4C8", 0.3))
-    kit.place("carrot_cake", (-0.25, CY + 0.35, CT + 0.14))
+    props("carrot_cake", [(-0.25, CY + 0.35, CT + 0.14, 0)])
     kit.sphere((-0.25, CY + 0.35, CT + 0.2), 0.17, kit.glass(0.02), scale=(1, 1, 1.1))
     props("croissant", [(0.3, CY + 0.3, CT + 0.01, 20), (0.36, CY + 0.42, CT + 0.01, -30), (0.24, CY + 0.46, CT + 0.03, 70)])
 
@@ -175,11 +177,10 @@ def tables(spots, chairs_up=False):
     for i, (x, y) in enumerate(spots):
         for side in (-1, 1):
             if chairs_up:
-                chairs.append((x + side * 0.18, y, 0.75 + 0.45, 90 + side * 90))
+                chairs.append((x + side * 0.2, y, 0.76 + 0.47, 90 + side * 90, 180))
             else:
                 chairs.append((x + side * 0.55, y + 0.05 * side, 0, -90 * side + 180 + (i * 17 % 20 - 10)))
-    roots = props("dining_chair_02", [c[:3] + (c[3],) for c in chairs])
-    return roots
+    props("dining_chair_02", chairs)
 
 
 def pendants(on=True, energy=40, spots=((0.3, CY + 0.3), (1.6, CY + 0.3), (2.9, CY + 0.3), (-2.9, 3.1), (-0.3, 2.2))):
@@ -242,7 +243,7 @@ def shot_al_cafe():
     pendants(on=False)
     # a slow sunny morning: sun across the floor, plants in the window, people lingering
     props("potted_plant_01", [(-3.5, 0.6, 0.0, 30), (-3.45, 5.3, 0.0, 200)])
-    kit.place("ceramic_vase_01", (-3.0, 4.65, 0.75))
+    props("ceramic_vase_01", [(-3.0, 4.65, 0.75, 0)])
     P.person((-3.0 + 0.5, 4.75, 0.0), facing=95, pose="sit", coat="#7A8C9A", seed=12, hold="cup")
     P.person((-2.3 + 0.55, 6.1, 0.0), facing=80, pose="sit", coat="#B5654A", hold="paper", seed=13)
     P.person((0.9 + 0.55, 3.0, 0.0), facing=-120, pose="sit", coat="#E7DFCF", seed=14, hold="cup")
@@ -255,4 +256,44 @@ def shot_al_cafe():
     bpy.context.scene.view_settings.exposure = 0.5
 
 
-kit.run({"ab-news": shot_ab_news, "al-cafe": shot_al_cafe})
+def shot_rb_cafe():
+    room()
+    street("modern_evening_street", 0.12, 200)
+    kit.spot((-W - 2.8, 1.2, 5.0), (-W - 1.5, 2.5, 0), 900, (1.0, 0.72, 0.42), angle=100, blend=0.7)   # the lamp outside
+    counter()
+    menu([("Espresso", "2.40"), ("Flat white", "3.10"), ("Tea", "2.00"), ("Soup of the day", "5.50")])
+    face = tv("rb-cafe", (226, 112, 634, 452))
+    tables([(-2.9, 2.2), (-2.9, 4.1), (-2.3, 6.1), (0.9, 2.6)])
+    pendants(energy=150)
+    # after work: a man in a suit at the counter raises his cup to the screen; his neighbour keeps to her soup
+    props("bar_chair_round_01", [(-0.3, CY - 0.45, 0, 0), (0.5, CY - 0.45, 0, 0), (1.3, CY - 0.45, 0, 0), (2.1, CY - 0.45, 0, 0)])
+    P.person((-0.3, CY - 0.45, 0.28), facing=55, pose="sit", coat="#1F2226", trousers="#1F2226", seed=21, hold="cup")
+    P.person((0.5, CY - 0.45, 0.28), facing=-10, pose="sit", coat="#6A6154", long_coat=True, seed=22)
+    P.person((-2.9 + 0.5, 4.15, 0.0), facing=30, pose="sit", coat="#44343A", hold="phone", seed=23)
+    dot((2.0, 6.2), facing=160)
+    kit.cyl((0.5, CY + 0.12, CT + 0.03), 0.09, 0.06, kit.mat("#F4F1EA", 0.35), r2=0.07)   # her soup
+    cup((-2.75, 4.2, 0.75))
+    kit.area((0.5, 3.5, H - 0.05), (0.5, 3.5, 0), (3, 3), 60, kit.kelvin(3000))
+    kit.camera((-2.6, 0.6, 1.4), (-0.9, 6.6, 1.55), lens=40, fstop=4.0, focus=face)
+    bpy.context.scene.view_settings.exposure = 0.3
+
+
+def shot_lb_cafe():
+    room()
+    street("cobblestone_street_night", 0.15, 180)
+    counter()
+    menu([("Espresso", "2.40"), ("Flat white", "3.10"), ("Tea", "2.00"), ("Toast & jam", "3.50")])
+    face = tv("lb-cafe", (226, 112, 828, 452))
+    tables([(-2.9, 2.2), (-2.9, 4.1), (-2.3, 6.1)], chairs_up=True)
+    pendants(energy=120, spots=((2.9, CY + 0.3),))
+    # closing time: chairs up, the floor being swept; the TV talks to an empty room, Dot's back to it
+    dot((0.75, 4.4), facing=-120, pose="lean")
+    props("plastic_broom", [(1.05, 4.05, 0, -120, -15)])
+    kit.cyl((1.5, 3.6, 0.16), 0.17, 0.32, kit.mat("#C9A227", 0.4), r2=0.15)          # the mop bucket
+    props("WetFloorSign_01", [(-0.6, 3.6, 0, 35)])
+    kit.point((-1.75, 6.3, 2.0), 6, kit.kelvin(8000), radius=0.4)                   # the TV's glow in the corner
+    kit.camera((1.6, 0.8, 1.3), (-1.3, 6.6, 1.7), lens=45, fstop=4.0, focus=face)
+    bpy.context.scene.view_settings.exposure = 0.2
+
+
+kit.run({"ab-news": shot_ab_news, "al-cafe": shot_al_cafe, "rb-cafe": shot_rb_cafe, "lb-cafe": shot_lb_cafe})
