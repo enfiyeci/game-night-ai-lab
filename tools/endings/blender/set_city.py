@@ -9,7 +9,7 @@ or billboards changing (the player crossfades the renders). Shots:
   al-skyline-title   The same bench later in the evening, wider, with dark sky across the middle for the title.
   rb-skyline-1..5    Removed by the board, Month 3: rooftop billboards light up one after another, each bigger than the
                      last and each answering the one before (KESTREL 5 SHIPPED EARLY, OPENBRAIN 7 SHIPPED EARLIER, ...).
-  rb-skyline-title   The same rooftops from further back, the boards still dark.
+  rb-skyline-title   The same rooftops from further back and lower in the frame, every board lit, the sky above.
   lb-skyline-1..4    Left behind, months pass: OpenBrain's billboard grows each time; Kestrel 4's goes dark, then is
                      papered over with AD SPACE AVAILABLE.
   mu-skyline-1..9    Catastrophic misuse, 3:40 am: the substations on the city's edge flash and trip, and district after
@@ -223,8 +223,9 @@ def billboard(lines, x=70, y=-120, z=62, width=26, lit=True, cam=HILL, height=10
     return face
 
 
-def ad(brand, name, tagline, top, width, lit=True, cam=HILL):
-    """A lab's billboard on a rooftop: its name large, a tagline under it, in the lab's colours; dark when not lit."""
+def ad(brand, name, tagline, top, width, lit=True, cam=HILL, blank=False):
+    """A lab's billboard on a rooftop: its name large, a tagline under it, in the lab's colours; dark when not lit
+    (blank when its poster is not up yet)."""
     panel, ink = BRANDS[brand]
     height = width * 0.36
     if lit:
@@ -234,7 +235,7 @@ def ad(brand, name, tagline, top, width, lit=True, cam=HILL):
         strength = 2.2 if pale else 1.1
     else:
         letters, strength = kit.mat("#3A3B3E", 0.6), 0.0
-    lines = [(name, height * 0.14, height * 0.3, letters), (tagline, -height * 0.24, height * 0.19, letters)]
+    lines = [] if blank else [(name, height * 0.14, height * 0.3, letters), (tagline, -height * 0.24, height * 0.19, letters)]
     return billboard(lines, top[0], top[1], top[2] + 2.4, width=width, lit=lit, cam=cam, height=height,
                      panel=panel if lit else "#1C1D20", glow=panel, strength=strength, building=False)
 
@@ -249,7 +250,7 @@ def poster(face, width, height, lines, du=0.0, paper="#E6E0D2"):
     kit.box((px, py, z), (width, 0.02, height), kit.mat(paper, 0.85), rot=(0, 0, yaw))
     for body, dz, size, colour in lines:
         kit.text(body, (px + 0.03 * nx, py + 0.03 * ny, z + dz), size, colour, font=kit.FONT_COND, rot=(math.radians(90), 0, yaw))
-    kit.spot((px + 9 * nx, py + 9 * ny, z - height / 2 - 5), (px, py, z), 30000, kit.kelvin(3400), angle=60, blend=0.8, radius=1.5)
+    kit.area((px + 6 * nx, py + 6 * ny, z - height / 2 - 3), (px, py, z), (width, 1.5), 4000, kit.kelvin(3400))
 
 
 def substation(x, y, lit=True, flash=False):
@@ -359,29 +360,29 @@ def shot_al_skyline():
 
 
 def shot_al_skyline_title():
-    sky(0.12, 250)
+    sky(0.1, 250)
     city()
     hill()
-    dusk(0.1, 0.1, haze="#B9B4CC")
-    kit.camera((1.6, -331, 116.0), (30, 800, 110), lens=24, fstop=4.0, focus=(30, 700, 40))
+    dusk(0.08, -0.45, haze="#B9B4CC")
+    kit.camera((1.6, -331, 116.0), (30, 800, 300), lens=24, fstop=4.0, focus=(30, 700, 40))
 
 
 # rb: each board bigger than the last, lit in turn: (brand, name, tagline, target rooftop (x, y), width)
-RB_BOARDS = [("kestrel", "KESTREL 5", "SHIPPED EARLY", (-68, 203), 24),
-             ("openbrain", "OPENBRAIN 7", "SHIPPED EARLIER", (66, 273), 30),
+RB_BOARDS = [("kestrel", "KESTREL 5", "SHIPPED EARLY", (-68, 203), 28),
+             ("openbrain", "OPENBRAIN 7", "SHIPPED EARLIER", (66, 273), 34),
              ("deepthink", "DEEPTHINK 4", "BIGGER THAN OPENBRAIN 7", (-66, 308), 42),
              ("kestrel", "KESTREL 6", "BIGGER THAN ALL OF THEM", (32, 172), 50),
-             ("openbrain", "OPENBRAIN 8", "ALREADY HERE", (1, 307), 64)]
+             ("openbrain", "OPENBRAIN 8", "ALREADY HERE", (1, 307), 76)]
 TELE = ((0, -300, 118), (0, 250, 95), 85)     # from the hill, a long lens on the nearer rooftops
 
 
 def rb_shot(lit, cam=TELE, title=False):
     def shot():
-        sky()
+        sky(0.16 if title else 0.28)
         tops = city()
         for k, (brand, name, tag, (x, y), width) in enumerate(RB_BOARDS):
-            ad(brand, name, tag, roof(tops, x, y, 30), width, lit=k < lit)
-        dusk(0.3, 0.1 if title else 0.2)
+            ad(brand, name, tag, roof(tops, x, y, 30), width, lit=k < lit, blank=k >= lit)
+        dusk(0.3, -0.35 if title else 0.2)
         kit.camera(cam[0], cam[1], lens=cam[2])
     return shot
 
@@ -445,7 +446,7 @@ kit.run({
     "al-skyline": shot_al_skyline,
     "al-skyline-title": shot_al_skyline_title,
     **{f"rb-skyline-{k}": rb_shot(k) for k in range(1, 6)},
-    "rb-skyline-title": rb_shot(0, ((0, -420, 150), (-20, 500, 90), 45), title=True),
+    "rb-skyline-title": rb_shot(5, ((0, -190, 118), (0, 800, 250), 35), title=True),
     **{f"lb-skyline-{k + 1}": lb_shot(k) for k in range(4)},
     **{f"mu-skyline-{2 * k + 1}": mu_shot(k, False) for k in range(5)},
     **{f"mu-skyline-{2 * k + 2}": mu_shot(k, True) for k in range(4)},

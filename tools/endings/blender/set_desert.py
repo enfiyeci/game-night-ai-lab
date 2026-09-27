@@ -10,7 +10,8 @@ Shots:
                    lit out across the desert; the permit boards on the fence name companies nobody has heard of, one
                    "a subsidiary of Kestrel Labs", approved minutes apart after 3 am.
   rd-desert-1..4   Someone else's disaster, Day 5, night: the cloud provider's halls go dark hall by hall while the
-                   town on the horizon stays lit. rd-desert-title: the campus lit, from further back, before it happens.
+                   town on the horizon stays lit. rd-desert-title: the campus lit, from further back and low in the
+                   frame under the night sky, before it happens.
 """
 import math
 import os
@@ -428,6 +429,11 @@ def rival_campus(x0, y0, cols, rows, lit=1.0, pitch=(230, 95), seed=1, skip=()):
 
 
 # ---------------------------------------------------------------- shots
+def camera(loc, target, lens, **kw):
+    """kit.camera, seeing out to the mesas (its default clip ends at 2 km)."""
+    kit.camera(loc, target, lens=lens, **kw).data.clip_end = 20000
+
+
 def shot_lb_desert():
     kit.world(hdri="qwantani_dusk_2_puresky", strength=0.4, rotation=250)
     ground()
@@ -449,8 +455,8 @@ def shot_lb_desert():
     kit.box((-6.45, 14.8, 2.4), (0.3, 0.02, 2.4), faded)                                       # the logo band
     kit.box((-1.75, 14.78, 1.35), (0.9, 0.03, 0.5), kit.mat("#CFC4AE", 0.85), rot=(0, math.radians(-14), 0))  # loose corner
     # the rivals: rows of halls lit along the whole horizon, cranes adding more, the power line passing the lot by
-    hall(-60, 420, length=240, width=56, height=24, pool=True)
-    hall(250, 440, length=240, width=56, height=24, sign="OPENBRAIN", pool=True)
+    hall(-240, 420, length=240, width=56, height=24, pool=True)
+    hall(130, 440, length=240, width=56, height=24, sign="OPENBRAIN", pool=True)
     hall(-380, 480, length=240, width=56, height=24, pool=True)
     rival_campus(-1100, 620, 10, 6, pitch=(250, 110), seed=2)
     for cx, cy, yaw in ((120, 560, 200), (430, 640, 160), (-300, 700, 230), (-700, 600, 250)):
@@ -461,7 +467,7 @@ def shot_lb_desert():
     finish()
     kit.spot((4, -12, 7.5), (-4, 14.8, 2.3), 5000, kit.kelvin(3000), angle=25, blend=0.6, radius=0.3)   # a streetlamp behind
     haze(0.0002, "#B7A6B6")
-    kit.camera((1.0, -4.0, 1.7), (-20, 400, 14), lens=45, fstop=8.0, focus=(-4, 14.85, 2.3))
+    camera((1.0, -4.0, 1.7), (-20, 400, 14), lens=45, fstop=8.0, focus=(-4, 14.85, 2.3))
     bpy.context.scene.view_settings.exposure = 0.0
 
 
@@ -489,7 +495,7 @@ def shot_pd_desert():
                                       ("compute cap in effect  ·  no new capacity until the inspectors sign off", 0, -0.48,
                                        0.21, kit.mat("#5A5550", 0.7), kit.FONT_SANS, "CENTER")], board="#F2EEE4")
     haze(0.00012, "#E8D6C0")
-    kit.camera((-2.0, 0.0, 1.65), (50, 300, 26), lens=30, fstop=8.0, focus=(-0.5, 15.9, 1.5))
+    camera((-2.0, 0.0, 1.65), (50, 300, 26), lens=30, fstop=8.0, focus=(-0.5, 15.9, 1.5))
     bpy.context.scene.view_settings.exposure = -0.3
 
 
@@ -532,7 +538,7 @@ def shot_qt_desert():
                                          (time, 0, -0.28, 0.16, ink, kit.FONT, "CENTER")], board="#E9E4D8")
     kit.spot((-2.0, 3.0, 4.5), (-3.2, 11.9, 1.6), 1500, kit.kelvin(4300), angle=60, blend=0.6, radius=0.2)   # a work lamp
     haze(0.00006, "#5E6278")
-    kit.camera((-5.0, 1.5, 1.6), (70, 300, 16), lens=30, fstop=5.6, focus=(-3.4, 11.9, 1.7))
+    camera((-5.0, 1.5, 1.6), (70, 300, 16), lens=30, fstop=5.6, focus=(-3.4, 11.9, 1.7))
     bpy.context.scene.view_settings.exposure = 0.3
 
 
@@ -541,7 +547,7 @@ RD_ORDER = [[(0, 0), (0, 1), (0, 2)], [(1, 0), (1, 1), (1, 2), (2, 0)], [(2, 1),
 HALL_X = [-300 + c * 230 for c in range(4)]
 
 
-def rd_shot(stage, cam=((-430, -60, 30), (-20, 330, 0), 28), exposure=0.3):
+def rd_shot(stage, cam=((-360, 40, 24), (60, 330, 4), 28), exposure=0.3):
     """stage 0: all lit; each further stage switches off the next group in RD_ORDER."""
     def shot():
         kit.world(hdri="qwantani_night_puresky", strength=0.06, rotation=0)
@@ -558,13 +564,13 @@ def rd_shot(stage, cam=((-430, -60, 30), (-20, 330, 0), 28), exposure=0.3):
         pylon_line([(-2400, -500), (-1900, -380), (-1400, -250), (-900, -100), (-520, 60)], h=46)
         # the town on the horizon, still on the grid
         rng = random.Random(9)
-        lights = [((rng.gauss(2000, 700), rng.gauss(2900, 150), 4), (9, 9, 5)) for _ in range(700)]
-        boxes("town", lights, kit.emission("#FFB866", 30))
-        boxes("masts", [((1700, 2850, 40), (1.5, 1.5, 80)), ((2500, 2950, 35), (1.5, 1.5, 70))], kit.mat("#2A2B2E", 0.6))
-        BEACONS.extend([((1700, 2850, 81), (3, 3, 3)), ((2500, 2950, 71), (3, 3, 3))])
+        town = [((rng.gauss(2300, 380), rng.gauss(1500, 140), 0), rng.uniform(6, 22)) for _ in range(260)]
+        boxes("town", [((x, y, h / 2), (14, 14, h)) for (x, y, _), h in town], kit.mat("#E9A45C", 0.6, emit="#FFB866", strength=6))
+        boxes("masts", [((2200, 1450, 45), (1.5, 1.5, 90)), ((2550, 1560, 38), (1.5, 1.5, 76))], kit.mat("#2A2B2E", 0.6))
+        BEACONS.extend([((2200, 1450, 91), (3, 3, 3)), ((2550, 1560, 77), (3, 3, 3))])
         finish()
         haze(0.00008, "#5E6278")
-        kit.camera(cam[0], cam[1], lens=cam[2])
+        camera(cam[0], cam[1], lens=cam[2])
         bpy.context.scene.view_settings.exposure = exposure
     return shot
 
@@ -574,5 +580,5 @@ kit.run({
     "pd-desert": shot_pd_desert,
     "qt-desert": shot_qt_desert,
     **{f"rd-desert-{k + 1}": rd_shot(k) for k in range(4)},
-    "rd-desert-title": rd_shot(0, ((-900, -700, 70), (-60, 600, 120), 26), exposure=0.1),
+    "rd-desert-title": rd_shot(0, ((-640, -300, 40), (0, 500, 120), 28), exposure=0.1),
 })
