@@ -3,7 +3,7 @@ opposite of your lab's dark concrete. Shots:
 
   rd-slide   Someone else's disaster, three weeks earlier: the launch review is over, chairs pushed back; on the wall
              screen COMPETITOR SHIPPED, SAFETY BAR ADJUSTED beside the red-team report; the printed report itself
-             lies still sealed on the table under a coffee cup, and the last person out closes the door.
+             lies still sealed on the table under a coffee cup.
 """
 import math
 import os
@@ -13,7 +13,6 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import furniture as F  # noqa: E402
 import kit  # noqa: E402
-import people as P  # noqa: E402
 
 W, D, H = 3.2, 7.5, 3.0
 
@@ -66,8 +65,6 @@ def shot_rd_slide():
     kit.box((x + 0.03, y - 0.02, 0.771), (0.12, 0.03, 0.0005), kit.mat("#6E6A66", 0.5), rot=(0, 0, 0.25))
     F.flat_text("UNOPENED", (x + 0.03, y - 0.02, 0.7717), 0.014, "#F4F1EA", rot_z=0.25, font=kit.FONT)
     F.cup((x - 0.05, y - 0.1, 0.77), colour="#2B2B2B")
-    # the last one out, beyond the glass at the door
-    P.person((-W - 0.8, 6.2), facing=160, pose="walk", coat="#4A5560", hold="phone", seed=3)
     kit.camera((0.95, 0.9, 1.42), (-0.05, D, 1.2), lens=30, fstop=4.0, focus=face)
 
 

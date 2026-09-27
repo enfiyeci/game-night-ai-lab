@@ -10,14 +10,14 @@ Shots:
   cw-letter    A costly win, victory night: Tomas's resignation on his monitor, the printed letter under the trophy,
                his badge left on the keyboard; the party goes on at the far end of the office.
   cw-reveal    A costly win, Month 3: two monitors side by side, what you wrote and what the model learned.
-  cw-phone     A costly win, late night: the phone in its dock lit with the President's call, live captions on the
-               monitor, the trophy, and an office with every other screen dark.
+  cw-phone     A costly win, late night: the phone in its dock lit with the President's call, live captions of it
+               on the laptop, the trophy behind, and an office with every other screen dark.
   rb-budget    Removed by the board, Day 1: Tomas's monitor shows the safety share cut to 3%; the framed pledge of 20%
                still stands on his desk.
   lb-usage     Left behind, the era gate: the usage chart on the wall screen over desks being packed into boxes; a
                last colleague carries a box out.
-  pd-cursor    A negotiated pace, Month 1, 2 am: a lone engineer at a desk, the action that would break the deal on the
-               screen, the hand off the mouse. Generic: the plate names the lab.
+  pd-cursor    A negotiated pace, Month 1, 2 am: a lone hooded engineer at a desk in a dark office, the action that
+               would break the deal on the screen. Generic: the plate names the lab.
   rd-letter-1..2   Someone else's disaster, Day 5: the moratorium letter on the monitor; behind the glass the server
                racks are lit (-1), then dark (-2).
 """
@@ -25,8 +25,6 @@ import math
 import os
 import random
 import sys
-
-import bpy
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import furniture as F  # noqa: E402
@@ -179,7 +177,7 @@ def shot_mis_scores():
     kit.cyl((0.38, 1.74, 0.79), 0.045, 0.11, kit.mat("#E0613B", 0.7), r2=0.003, rot=(math.radians(80), 0, 0.9))   # a paper hat
     F.note((0.26, 2.198, 1.02), "0 complaints?\n0 is not a\nreal number", rot=(math.radians(90), 0, math.radians(-4)))
     F.chair((0.45, 1.25), 200)
-    kit.place("desk_lamp_arm_01", (-0.7, 2.25, 0.755), rot_z=math.radians(120))
+    kit.place("desk_lamp_arm_01", (-0.7, 2.25, 0.755))
     kit.point((-0.55, 2.05, 1.15), 8, kit.kelvin(2700), radius=0.05)
     kit.area((0, 1.9, 1.05), (0, 1.0, 0.9), (0.6, 0.35), 4, kit.kelvin(6500))   # the monitor's spill on the desk
     kit.haze((0, OD / 2, OH / 2), (2 * OW - 0.1, OD - 0.1, OH - 0.1), 0.008)
@@ -287,7 +285,7 @@ def shot_lb_usage():
     for k in range(3):
         F.carton((2.2 + k * 0.05, 3.9, k * 0.4), (0.6, 0.4, 0.4), rot_z=0.1 * k, label="LAB " + str(k + 1))
     P.person((-1.5, 6.25), facing=25, pose="walk", coat="#2C2A2E", hair="#141212")
-    F.carton((-1.63, 6.55, 0.98), (0.45, 0.32, 0.3), rot_z=math.radians(25), taped=False)
+    F.carton((-1.25, 6.37, 0.75), (0.4, 0.3, 0.28), rot_z=math.radians(25), taped=False)    # under his arm
     kit.camera((0.9, 0.9, 1.6), (0.0, OD, 1.5), lens=32, fstop=5.6, focus=(0, OD, 1.8))
 
 
