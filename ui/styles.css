@@ -186,6 +186,7 @@ svg.room {
 }
 
 .info .full { grid-column: 1 / span 2; }
+.info .lab-name { max-width: 190px; font-size: 13.5px; font-weight: 900; overflow-wrap: anywhere; }
 .info .k { color: color-mix(in oklab, var(--ink) 58%, var(--paper)); font-weight: 700; }
 .info b { font-weight: 900; text-align: right; }
 

@@ -93,7 +93,7 @@ function buildWall(collection) {
 
   const panel = make('section', 'gp title-menu');
   const words = make('div', 'title-words');
-  const heading = make('h1', null, 'AI Lab');
+  const heading = make('h1', null, 'AI Lab Tycoon');
   const sub = make('p', 'title-sub', 'Run a frontier AI lab for five eras. ');
   sub.append(make('b', null, `${model.found} of ${model.total} endings found.`));
   words.append(heading, sub);
@@ -163,7 +163,7 @@ export function mountTitle(game, { stage, overlay, collection, music, openSound 
   const layer = make('div', 'title-layer on-wall');
   layer.setAttribute('role', 'dialog');
   layer.setAttribute('aria-modal', 'true');
-  layer.setAttribute('aria-label', 'AI Lab');
+  layer.setAttribute('aria-label', 'AI Lab Tycoon');
   const wall = buildWall(collection);
   const naming = buildNaming(game);
   naming.scene.inert = true;
