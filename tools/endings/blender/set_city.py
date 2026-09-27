@@ -211,7 +211,7 @@ def billboard(lines, x=70, y=-120, z=62, width=26, lit=True, cam=HILL, height=10
     yaw = math.atan2(-(x - cam[0]), y - cam[1])
     if building:
         kit.box((x, y, z / 2), (24, 20, z), window_material("near", lit_share=0.3))
-    for dx in (-width * 0.3, width * 0.3):
+    for dx in (-width * 8 / 26, width * 8 / 26):
         kit.box((x + dx * math.cos(yaw), y + dx * math.sin(yaw), z + 3 * s), (0.6 * s, 0.6 * s, 6 * s), steel)
     kit.box((x, y, z + 11 * s), (width + 1, 0.8 * s, height + 1), steel, rot=(0, 0, yaw))
     nx, ny = math.sin(yaw), -math.cos(yaw)        # the face's normal, toward the camera
@@ -223,21 +223,20 @@ def billboard(lines, x=70, y=-120, z=62, width=26, lit=True, cam=HILL, height=10
     return face
 
 
-def ad(brand, name, tagline, top, width, lit=True, cam=HILL, lift=0.0):
+def ad(brand, name, tagline, top, width, lit=True, cam=HILL):
     """A lab's billboard on a rooftop: its name large, a tagline under it, in the lab's colours; dark when not lit."""
     panel, ink = BRANDS[brand]
     height = width * 0.36
     if lit:
-        # a pale panel is lit from behind and its letters stay dark; a coloured panel glows and its letters glow brighter
+        # a pale panel glows and its letters stay dark; a coloured panel glows softly and its letters glow brighter
         pale = brand == "openbrain"
-        letters = kit.mat(ink, 0.5) if pale else kit.mat(ink, 0.5, emit=ink, strength=14)
-        strength = 7 if pale else 5
+        letters = kit.mat(ink, 0.5) if pale else kit.mat(ink, 0.5, emit=ink, strength=9)
+        strength = 2.2 if pale else 1.1
     else:
         letters, strength = kit.mat("#3A3B3E", 0.6), 0.0
-    lines = [(name, height * 0.12, height * 0.34, letters), (tagline, -height * 0.25, height * 0.13, letters)]
-    x, y, h = top[0], top[1], top[2] + lift
-    return billboard(lines, x, y, h + 2.4, width=width, lit=lit, cam=cam, height=height, panel=panel if lit else "#1C1D20",
-                     glow=panel, strength=strength, building=False)
+    lines = [(name, height * 0.14, height * 0.3, letters), (tagline, -height * 0.24, height * 0.19, letters)]
+    return billboard(lines, top[0], top[1], top[2] + 2.4, width=width, lit=lit, cam=cam, height=height,
+                     panel=panel if lit else "#1C1D20", glow=panel, strength=strength, building=False)
 
 
 def poster(face, width, height, lines, du=0.0, paper="#E6E0D2"):
@@ -250,7 +249,7 @@ def poster(face, width, height, lines, du=0.0, paper="#E6E0D2"):
     kit.box((px, py, z), (width, 0.02, height), kit.mat(paper, 0.85), rot=(0, 0, yaw))
     for body, dz, size, colour in lines:
         kit.text(body, (px + 0.03 * nx, py + 0.03 * ny, z + dz), size, colour, font=kit.FONT_COND, rot=(math.radians(90), 0, yaw))
-    kit.spot((px + 3 * nx, py + 3 * ny, z - height / 2 - 1.5), (px, py, z), 60000, kit.kelvin(3400), angle=70, blend=0.4)
+    kit.spot((px + 9 * nx, py + 9 * ny, z - height / 2 - 5), (px, py, z), 30000, kit.kelvin(3400), angle=60, blend=0.8, radius=1.5)
 
 
 def substation(x, y, lit=True, flash=False):
@@ -277,20 +276,20 @@ def substation(x, y, lit=True, flash=False):
             kit.point((x + lx, y - 12, 17), 25000, kit.kelvin(2200), radius=1)
     if flash:
         kit.sphere((x + 2, y - 1, 9), 3.5, kit.emission("#CFE6FF", 400), scale=(1.4, 1, 1))
-        kit.point((x + 2, y - 6, 10), 6e6, (0.75, 0.88, 1.0), radius=3)
+        kit.point((x + 2, y - 6, 10), 1.5e6, (0.75, 0.88, 1.0), radius=3)
 
 
 def hill(people=True):
-    """The crest of the hill the city is seen from: grass falling steeply away toward the city, a bench on the
-    edge and two people sitting on it."""
+    """The edge of the hill the city is seen from: grass falling steeply away toward the city, a bench right on the
+    edge with two people sitting on it, and at the hill's foot a lamplit road and the low outskirts."""
     bm = bmesh.new()
     xs = [-240 + 3 * i for i in range(161)]
-    ys = [-360 + 2 * j for j in range(76)]
+    ys = [-360 + 1.5 * j for j in range(101)]
     rows = []
     for y in ys:
-        t = y + 322                                     # metres past the bench
-        base = 114 + 0.004 * t * t if t < 0 else max(-1.0, 114 - 0.012 * t * t)
-        rows.append([bm.verts.new((x, y, base + 1.2 * math.sin(x * 0.05) * math.cos(y * 0.07) * min(1, abs(x) / 30)))
+        t = y + 322 + 5                                 # metres past the brow, 5 m behind the bench
+        base = 114.0 if t < 0 else max(-1.0, 114 - 0.03 * t * t)
+        rows.append([bm.verts.new((x, y, base + 0.6 * math.sin(x * 0.11) * math.cos(y * 0.13) + 0.25 * math.sin(x * 0.7 + y)))
                      for x in xs])
     for j in range(len(ys) - 1):
         for i in range(len(xs) - 1):
@@ -301,12 +300,24 @@ def hill(people=True):
     for p in me.polygons:
         p.use_smooth = True
     ob = bpy.data.objects.new("hill", me)
-    ob.data.materials.append(kit.tex("sparse_grass", 0.4, tint="#8C8A70", name="grass"))
+    ob.data.materials.append(kit.tex("sparse_grass", 0.5, tint="#6E7358", name="grass"))
     bpy.context.scene.collection.objects.link(ob)
+    # below: a road of lamps along the hill's foot
+    rng = random.Random(5)
+    lamps = [((x, -140 + 0.08 * x, 5), (0.6, 0.6, 0.4)) for x in range(-600, 601, 24)]
+    _batch("parklamps", lamps, kit.emission("#FFB25A", 12), {})
+    houses = []   # low outskirts reaching from the city to the hill's foot
+    for i in range(-40, 41):
+        for j in range(8):
+            x, y = i * 20 + rng.uniform(-4, 4), -120 + j * 22 + rng.uniform(-4, 4)
+            if rng.random() < 0.8:
+                houses.append(((x, y, 5), (rng.uniform(12, 17), rng.uniform(12, 17), rng.uniform(8, 14))))
+    _batch("outskirts", houses, window_material("outskirts", lit_share=0.3, warm="#FFC07A"), {"lit": 1.0, "seed": 0.0})
     if people:
-        kit.place("painted_wooden_bench", (-2.2, -322.4, 114.0))
-        P.person((-2.55, -322.35, 114.02), facing=4, pose="sit", height=1.78, coat="#2B2F36", seed=3)
-        P.person((-1.8, -322.3, 114.02), facing=-6, pose="sit", height=1.62, coat="#5B3A33", long_coat=True,
+        z = 114 - 0.03 * 5 ** 2 + 0.05
+        kit.place("painted_wooden_bench", (-1.4, -322.4, z))
+        P.person((-1.75, -322.35, z + 0.02), facing=4, pose="sit", height=1.78, coat="#2B2F36", seed=3)
+        P.person((-1.0, -322.3, z + 0.02), facing=-6, pose="sit", height=1.62, coat="#5B3A33", long_coat=True,
                  hair="#4A3526", seed=8)
 
 
@@ -330,7 +341,7 @@ def skyline_shot(dark):
 
 
 # ---------------------------------------------------------------- the new shots
-BENCH_CAM = (-0.6, -326.6, 115.95)
+BENCH_CAM = (0.8, -328.5, 115.8)     # just behind the brow, standing
 
 
 def dusk(sun=0.3, exposure=0.2, haze="#E8D2D8"):
@@ -344,7 +355,7 @@ def shot_al_skyline():
     city()
     hill()
     dusk(0.45, 0.25)
-    kit.camera(BENCH_CAM, (40, 800, 20), lens=35, fstop=2.8, focus=(40, 700, 40))
+    kit.camera(BENCH_CAM, (30, 800, 12), lens=32, fstop=4.0, focus=(30, 700, 40))
 
 
 def shot_al_skyline_title():
@@ -352,19 +363,19 @@ def shot_al_skyline_title():
     city()
     hill()
     dusk(0.1, 0.1, haze="#B9B4CC")
-    kit.camera((-0.9, -328.5, 116.1), (40, 800, 150), lens=26, fstop=2.8, focus=(40, 700, 40))
+    kit.camera((1.6, -331, 116.0), (30, 800, 110), lens=24, fstop=4.0, focus=(30, 700, 40))
 
 
 # rb: each board bigger than the last, lit in turn: (brand, name, tagline, target rooftop (x, y), width)
-RB_BOARDS = [("kestrel", "KESTREL 5", "SHIPPED EARLY", (-60, 120), 16),
-             ("openbrain", "OPENBRAIN 7", "SHIPPED EARLIER", (110, 200), 22),
-             ("deepthink", "DEEPTHINK 4", "BIGGER THAN OPENBRAIN 7", (-190, 330), 30),
-             ("kestrel", "KESTREL 6", "BIGGER THAN ALL OF THEM", (40, 480), 42),
-             ("openbrain", "OPENBRAIN 8", "ALREADY HERE", (-40, 700), 64)]
-RB_CAM = ((0, -300, 118), (-20, 500, 40), 60)
+RB_BOARDS = [("kestrel", "KESTREL 5", "SHIPPED EARLY", (-68, 203), 24),
+             ("openbrain", "OPENBRAIN 7", "SHIPPED EARLIER", (66, 273), 30),
+             ("deepthink", "DEEPTHINK 4", "BIGGER THAN OPENBRAIN 7", (-66, 308), 42),
+             ("kestrel", "KESTREL 6", "BIGGER THAN ALL OF THEM", (32, 172), 50),
+             ("openbrain", "OPENBRAIN 8", "ALREADY HERE", (1, 307), 64)]
+TELE = ((0, -300, 118), (0, 250, 95), 85)     # from the hill, a long lens on the nearer rooftops
 
 
-def rb_shot(lit, cam=RB_CAM, title=False):
+def rb_shot(lit, cam=TELE, title=False):
     def shot():
         sky()
         tops = city()
@@ -375,26 +386,21 @@ def rb_shot(lit, cam=RB_CAM, title=False):
     return shot
 
 
-LB_CAM = ((0, -300, 118), (40, 400, 50), 62)
-
-
 def lb_shot(stage):
     """stage 0: both boards lit; 1: OpenBrain's bigger, Kestrel's dark; 2: bigger again, Kestrel's half papered over;
-    3: OpenBrain's wraps its tower, Kestrel's fully papered over."""
+    3: OpenBrain's bigger still, Kestrel's fully papered over."""
     def shot():
         sky()
         tops = city()
         ink = kit.mat("#2E2A2B", 0.6)
-        ob_width = (22, 32, 44, 60)[stage]
-        ad("openbrain", "OPENBRAIN 7", "THE FUTURE" if stage < 2 else "THE FUTURE IS OPENBRAIN", roof(tops, 120, 330, 50),
-           ob_width)
-        face = ad("kestrel", "KESTREL 4", "BUILT CAREFULLY", roof(tops, -110, 190, 30), 20, lit=stage == 0)
+        ad("openbrain", "OPENBRAIN 7" if stage < 2 else "OPENBRAIN 8", "THE FUTURE" if stage < 3 else "THE ONLY FUTURE",
+           roof(tops, 66, 273, 30), (28, 40, 54, 76)[stage])
+        face = ad("kestrel", "KESTREL 4", "BUILT CAREFULLY", roof(tops, -68, 203, 30), 26, lit=stage == 0)
         if stage >= 2:
-            w, h = (12, 20)[stage - 2], 7.2
-            poster(face, w, h, [("AD SPACE", 1.1, 2.2, ink), ("AVAILABLE", -1.3, 2.2, ink)] if stage == 3 else
-                   [("AD SPACE", 1.1, 1.8, ink), ("AVAILABLE", -1.1, 1.8, ink)], du=(4, 0)[stage - 2])
+            w = (15, 27)[stage - 2]
+            poster(face, w, 9.6, [("AD SPACE", 1.6, 3.0, ink), ("AVAILABLE", -1.8, 3.0, ink)], du=(5.6, 0)[stage - 2])
         dusk()
-        kit.camera(LB_CAM[0], LB_CAM[1], lens=LB_CAM[2])
+        kit.camera(TELE[0], TELE[1], lens=TELE[2])
     return shot
 
 
@@ -405,30 +411,31 @@ MU_TRIPS = [(1, -120, 40), (4, 115, 45), (2, -45, 30), (5, 205, 50)]
 def mu_shot(tripped, flash):
     """tripped: how many substations have gone; flash: the next one is arcing right now."""
     def shot():
-        sky(0.05, 250, hdri="qwantani_night_puresky")
+        sky(0.03, 250, hdri="qwantani_night_puresky")
         dark = [d for d, _, _ in MU_TRIPS[:tripped]]
         city(dark=dark, share=0.55)
         for k, (d, x, y) in enumerate(MU_TRIPS):
             substation(x, y, lit=k >= tripped, flash=flash and k == tripped)
-        kit.haze((0, 700, 120), (3000, 1800, 240), 0.0003, color="#8C95B0", anisotropy=0.5)
-        bpy.context.scene.view_settings.exposure = 0.4
-        kit.camera((0, -300, 118), (30, 800, 5), lens=40)
+        kit.haze((0, 700, 120), (3000, 1800, 240), 0.00015, color="#56607A", anisotropy=0.5)
+        bpy.context.scene.view_settings.exposure = 0.2
+        kit.camera((0, -300, 118), (30, 800, -50), lens=32)
     return shot
 
 
-CW_BOARDS = [("KESTREL 5", "NUMBER ONE", (-170, 260), 24), ("KESTREL 5", "ON EVERY CHART", (160, 300), 26),
-             ("KESTREL 5", "IN EVERY HOME", (-20, 150), 18), ("ASK KESTREL", "KESTREL 5", (60, 560), 36),
-             ("KESTREL 5", "NUMBER ONE", (-330, 520), 30), ("KESTREL 5", "YOUR NEW NORMAL", (300, 620), 34),
-             ("KESTREL 5", "NUMBER ONE", (-110, 820), 44)]
+CW_BOARDS = [("NUMBER ONE", (-100, 440), 36), ("ON EVERY CHART", (138, 439), 36), ("IN EVERY HOME", (-103, 340), 30),
+             ("NUMBER ONE", (1, 307), 34), ("ASK KESTREL", (137, 343), 30), ("EVERYWHERE", (-137, 340), 28),
+             ("YOUR NEW NORMAL", (32, 237), 30), ("NUMBER ONE", (-101, 170), 26), ("ON EVERY CHART", (-32, 206), 26),
+             ("IN EVERY HOME", (102, 170), 28), ("NUMBER ONE", (2, 135), 30), ("ASK KESTREL", (-100, 102), 24),
+             ("NUMBER ONE", (67, 104), 26)]
 
 
 def shot_cw_skyline():
     sky()
     tops = city()
-    for name, tag, (x, y), width in CW_BOARDS:
-        ad("kestrel", name, tag, roof(tops, x, y, 30), width)
+    for tag, (x, y), width in CW_BOARDS:
+        ad("kestrel", "KESTREL 5", tag, roof(tops, x, y, 20), width * 1.25)
     dusk()
-    kit.camera((0, -300, 118), (0, 500, 40), lens=50)
+    kit.camera((0, -300, 118), (0, 400, 95), lens=55)
 
 
 kit.run({
