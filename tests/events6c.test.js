@@ -12,7 +12,6 @@ import {
 } from '../sim/data/events6c.js';
 import { checkTurnEndings } from '../sim/endings.js';
 import { advanceDays, endTurn } from '../sim/turn.js';
-import { BALANCE } from '../sim/balance.js';
 import { INITIAL_BOARD, STAFF_LETTER_TRUST } from '../sim/board.js';
 import { startRun, resolveRun } from '../sim/training.js';
 
@@ -212,10 +211,10 @@ test('every jump answer adds the jump; celebrate, audit and quiet differ as spec
   assert.equal(aud.concealedDebt, 5);
   assert.equal(aud.pendingModel.releaseDelay, 1);
 
-  const top = pendingState(BALANCE.maxCapability - 2); top.pendingEvents.push({ id: 'capabilityJump' });
+  const top = pendingState(98); top.pendingEvents.push({ id: 'capabilityJump' });
   resolveEvent(top, 'capabilityJump', 'quiet');
-  assert.equal(top.pendingModel.capability, BALANCE.maxCapability);
-  assert.equal(top.pendingModel.gain, 12);
+  assert.equal(top.pendingModel.capability, 103); // counts past 100 (owner pick A)
+  assert.equal(top.pendingModel.gain, 15);
 });
 
 test('a binding compute cap suppresses the jump', () => {

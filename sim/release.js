@@ -3,7 +3,7 @@ import { clamp, sigmoid } from './util.js';
 import { validatePicks, resolveCards } from './recipe.js';
 import { ERA_PRICE, PRICE_STANCE } from './serving.js';
 import { scoreLaunch } from './launch.js';
-import { resolveHazard, exposeConcealed } from './hazards.js';
+import { resolveHazard, exposeConcealed, dangerCapability } from './hazards.js';
 import { hasLine } from './constitution.js';
 import { pushFeed } from './events.js';
 
@@ -122,7 +122,7 @@ export function releaseModel(state, release, rng) {
   const name = modelName({ family: release.family, generation, size: m.size, tierWords: state.tierWords });
   state.capability = Math.max(state.capability, m.capability);
   state.alignmentDebt += sum('ad');
-  const launch = scoreLaunch(state, { capability: m.capability + REASONING_BONUS[reasoning], spec, flags, name, priceStance: release.price, generation, skipped }, rng);
+  const launch = scoreLaunch(state, { capability: m.capability + REASONING_BONUS[reasoning], reasoningBonus: REASONING_BONUS[reasoning], spec, flags, name, priceStance: release.price, generation, skipped }, rng);
   const quality = clamp(1 + (launch.pressAvg - 6) / 8, 0.5, 1.6);
   const eraGrowth = 1 + 0.5 * (state.era - 1);
   const constitutionUsers = spec.channel === 'enterprise' && hasLine(state, 'privacy') ? 1.1 : 1;
@@ -181,7 +181,7 @@ export function releaseModel(state, release, rng) {
   const releaseHeat = BALANCE.ownReleaseHeat + m.publicEffects.heat + sum('heat');
   const delayed = state.deal?.collapsed === false && state.deal.binding.includes('releaseDelay');
   state.raceHeat += releaseHeat * (delayed ? 0.5 : 1);
-  state.misuseExposure += Math.max(0, m.capability - BALANCE.dangerLine) * 0.3;
+  state.misuseExposure += Math.max(0, dangerCapability(m.capability) - BALANCE.dangerLine) * 0.3;
   if (spec.channel === 'open') {
     state.flags.openWeights = true;
     // Open weights add to whatever risk is already permanent, then lock the result.
@@ -192,7 +192,7 @@ export function releaseModel(state, release, rng) {
 
   let misalignmentIncident = false;
   if (flags.includes('agentic') && state.era >= MISALIGNMENT_CHECK_ERA) {
-    const p = sigmoid(((state.alignmentDebt + state.concealedDebt) * m.capability / 100 - 40) / 8);
+    const p = sigmoid(((state.alignmentDebt + state.concealedDebt) * dangerCapability(m.capability) / 100 - 40) / 8);
     if (rng.chance(p)) {
       // The catastrophe needs era-4 capability; in era 3 the same roll is its warning.
       if (state.era >= MISALIGNMENT_ENDING_ERA) state.ending = 'misalignment';

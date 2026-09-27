@@ -1,16 +1,17 @@
 import { clamp } from './util.js';
 import { leaderCapability, rank } from './rivals.js';
 import { safetySpend } from './economy.js';
-import { INTERPRETABILITY_SPEND, GAMING_THRESHOLD } from './hazards.js';
+import { INTERPRETABILITY_SPEND, GAMING_THRESHOLD, dangerCapability } from './hazards.js';
 import { BENCHMARKS, TEST_WIDTH, RETIRED_POSTS, CONTAMINATED_BENCHMARKS, CONTAMINATION_BONUS, BUG_FLAGS, BUG_PENALTY, CRITICS, GENERIC_REACTIONS, REACTIONS, JUMP_BAR_PER_NUMBER } from './data/launch.js';
 
 const GAMING_RATE = { 3: 0.35, 4: 0.55, 5: 0.75 };
 
 // Spec 6f: no gaming in eras 1-2; from era 3 it grows with capability above a threshold,
 // is capped by the concealed debt, and an outside or government eval gate or interpretability spend cuts it.
-export function evalGaming(state, capability, flags) {
+// capability includes the release's reasoning bonus; only the model's own capability stops at the danger ceiling.
+export function evalGaming(state, capability, flags, reasoningBonus = 0) {
   if (state.era < 3) return 0;
-  const raw = Math.max(0, capability - GAMING_THRESHOLD) * GAMING_RATE[state.era];
+  const raw = Math.max(0, dangerCapability(capability - reasoningBonus) + reasoningBonus - GAMING_THRESHOLD) * GAMING_RATE[state.era];
   const outsideGate = flags.includes('thirdPartyEval') || flags.includes('govEval')
     || (state.deal?.collapsed === false && state.deal.binding.includes('evaluators'));
   const gate = (outsideGate ? 0.4 : 1) * (safetySpend(state) >= INTERPRETABILITY_SPEND ? 0.6 : 1);
@@ -56,7 +57,7 @@ export function scoreLaunch(state, model, rng) {
     let flagship = null;
     if (b.kind === 'safety') {
       truth = safetyTruth(state, flags);
-      shown = clamp(Math.round(truth + evalGaming(state, capability, flags) + rng.int(-2, 2)), 0, 100);
+      shown = clamp(Math.round(truth + evalGaming(state, capability, flags, model.reasoningBonus) + rng.int(-2, 2)), 0, 100);
       rival = clamp(Math.round(60 + rng.int(-5, 5)), 0, 100);
       flagship = before?.shown ?? null;
     } else {

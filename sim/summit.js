@@ -284,7 +284,7 @@ function catchRival(state, party, gained = 0) {
   state.deal.suspicions = state.deal.suspicions.filter((s) => s.party !== party);
   if (gained > 0) {
     const rival = state.rivals.find((r) => r.id === party);
-    rival.capability = clamp(rival.capability - gained, 0, 100);
+    rival.capability = Math.max(0, rival.capability - gained);
   }
   state.publicTrust = clamp(state.publicTrust + CAUGHT_TRUST, 0, 100);
   return level;
@@ -339,7 +339,7 @@ export function dealWeek(state, rng) {
       }
       const rival = state.rivals.find((r) => r.id === party);
       const before = rival.capability;
-      rival.capability = clamp(rival.capability + BREAK_GAIN, 0, 100);
+      rival.capability += BREAK_GAIN;
       events.push({ type: 'defection', party, detected: false });
       if (rng.chance(SIGN_SEEN[level])) {
         const suspicion = addSuspicion(state, party, true, rival.capability - before);

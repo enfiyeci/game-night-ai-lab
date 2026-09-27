@@ -2,7 +2,7 @@ import { BALANCE } from './balance.js';
 import { eraById } from './data/eras.js';
 import { SIZE_CAP, LENGTHS, validateRecipe, recipeCost, recipeCards, talentSpend, focusEffects } from './recipe.js';
 import { standardTechniques } from './techniques.js';
-import { rollTrainingHazard, applyAlignmentFaking, evalGamingDebt } from './hazards.js';
+import { rollTrainingHazard, applyAlignmentFaking, evalGamingDebt, dangerCapability } from './hazards.js';
 import { draftError, draftFor, hasLine, learnConstitution } from './constitution.js';
 import { computeSlices } from './split.js';
 import { unitMonthlyPrice } from './economy.js';
@@ -111,19 +111,19 @@ export function resolveRun(state, run, rng) {
   const uncappedGain = gainWith(run.spikes);
   // Past the Geneva cap only when the player chose to break the deal for this run.
   const gainCap = state.deal?.collapsed === false && state.deal.binding.includes('computeCap') && !run.uncapped ? 5 : Infinity;
-  const capability = Math.min(BALANCE.maxCapability, state.capability + Math.min(uncappedGain, gainCap));
-  const gain = Math.max(0, capability - state.capability);
-  const spikeLoss = run.spikes > 0
-    ? Math.max(0, Math.min(BALANCE.maxCapability, state.capability + Math.min(gainWith(run.spikes - 1), gainCap)) - capability)
-    : 0;
+  const gain = Math.min(uncappedGain, gainCap);
+  const capability = state.capability + gain;
+  const spikeLoss = run.spikes > 0 ? Math.max(0, Math.min(gainWith(run.spikes - 1), gainCap) - gain) : 0;
 
   const sum = (key) => effects.reduce((s, e) => s + (e[key] ?? 0), 0);
   const era = eraById(state.era);
-  const rawDebtDelta = gain * (era.targetSafetyShare - alignShare) * BALANCE.alignDebtFactor + sum('ad');
+  // Debt counts only the gain up to the danger ceiling, as when capability stopped at 100.
+  const dangerGain = Math.max(0, dangerCapability(capability) - dangerCapability(state.capability));
+  const rawDebtDelta = dangerGain * (era.targetSafetyShare - alignShare) * BALANCE.alignDebtFactor + sum('ad');
   const sharedSafety = state.deal?.collapsed === false && state.deal.binding.includes('sharedSafety');
   const debtDelta = rawDebtDelta > 0 && sharedSafety ? rawDebtDelta * SHARED_SAFETY_DEBT_MULT : rawDebtDelta;
   state.alignmentDebt += applyAlignmentFaking(state, debtDelta, capability);
-  state.concealedDebt += evalGamingDebt(state, capability);
+  state.concealedDebt += evalGamingDebt(state, dangerCapability(capability));
   state.misuseExposure += sum('mx');
   state.perceivedAdOffset += sum('perceivedAdOffset');
   for (const e of effects) {

@@ -3,7 +3,8 @@ export const BALANCE = {
   startCash: 1000,
   startCompute: 10,
   startCapability: 20,
-  maxCapability: 100,
+  // Capability keeps counting past this (owner pick A, 2026-09-26); the danger rules read it only up to here (sim/hazards.js).
+  dangerCapabilityMax: 100,
   startValuation: 5000,
   unitMonthlyCost: 1.46, // $M per compute unit per month ($2/GPU-hour × 730 h × 1,000 GPUs)
   unitMonthlyDollars: 1.46e6,

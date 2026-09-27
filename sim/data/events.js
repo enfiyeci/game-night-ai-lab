@@ -45,7 +45,7 @@ export function stealWeights(state) {
   state.misuseExposure += 10;
   state.misuseLocked = Math.max(state.misuseLocked, state.misuseExposure);
   const qilin = state.rivals.find((rival) => rival.id === 'qilin');
-  if (qilin) qilin.capability = Math.min(100, qilin.capability + 5);
+  if (qilin) qilin.capability += 5;
 }
 
 export const EVENTS = [
