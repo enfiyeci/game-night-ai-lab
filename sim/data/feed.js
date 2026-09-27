@@ -142,6 +142,38 @@ export const RIVAL_POSTS = {
   },
 };
 
+// Compute race: a rival's deal that adds a quarter or more to its fleet.
+export const RIVAL_DEAL_POSTS = {
+  openbrain: [
+    { handle: '@chipwatch', text: 'openbrain just bought a warehouse of gpus. the warehouse is also new.' },
+    { handle: '@marketwire', text: 'openbrain signs another giant compute order. nobody at openbrain seems surprised.' },
+  ],
+  lodestar: [
+    { handle: '@marketwire', text: 'lodestar quietly adds compute. its press release is mostly about safety.' },
+    { handle: '@chipwatch', text: 'lodestar bought chips. careful chips, apparently.' },
+  ],
+  deepthink: [
+    { handle: '@marketwire', text: 'deepthink signs a big compute deal and calls it "measured growth".' },
+    { handle: '@chipwatch', text: 'deepthink just outbid two labs for a data center. neither will say which.' },
+  ],
+};
+
+// Compute race: the player signed the card a rival had named.
+export const DENIAL_POSTS = {
+  openbrain: [
+    { handle: '@marketwire', text: 'openbrain lost a chip deal at the last minute. sources say it is "fine".' },
+    { handle: '@leakwire', text: 'openbrain staff are asking who took their compute. we know who.' },
+  ],
+  lodestar: [
+    { handle: '@marketwire', text: 'lodestar missed out on a compute contract and wished the winner well.' },
+    { handle: '@chipwatch', text: 'someone signed the deal lodestar wanted. lodestar says it will adjust.' },
+  ],
+  deepthink: [
+    { handle: '@marketwire', text: 'deepthink was outpaced on a compute deal. its ceo calls it a timing issue.' },
+    { handle: '@leakwire', text: 'deepthink had that contract drafted. then someone else signed it.' },
+  ],
+};
+
 export const ERA_POSTS = {
   1: [
     { handle: '@new_tab', text: 'chat assistants are everywhere now. mostly apologising, but everywhere.' },

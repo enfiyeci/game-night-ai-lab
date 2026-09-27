@@ -7,6 +7,7 @@ import {
   SCALE_DOWN, SCALE_DOWN_PENALTY_MONTHS, BREAK_SHARE, BUYOUT_MONTHS, partnerMarkup, spotPrice,
 } from './data/compute.js';
 import { SITE_TYPES, reserveGrid, poweredUnits } from './power.js';
+import { BOARD_SUPPLIERS, DENIAL_HEAT } from './data/race.js';
 
 const UNIT = BALANCE.unitMonthlyCost;
 const FAMILY = { azuriaEquity: 'azuria', loi: 'verde' };
@@ -54,6 +55,25 @@ export function generateOffers(state, rng) {
     offers.push({ id, supplier: key, units, arrivesIn: arrivalOf(s, era) + delay, upfront: Math.round(s.upfrontShare * monthly * (termMonths ?? 0)), monthly, termMonths, price, string: s.string, ...(markup > 1 ? { partnerMarkup: markup } : {}) });
   }
   return offers;
+}
+
+// Spec 2026-09-26 compute race §2 rule 3: board cards stay until signed or taken, a taken slot refills next round,
+// and an era change makes a new board. The investment, the grid and the queue are priced from the player's own
+// state, so they are made fresh every round. A full board is drawn either way, so the draws never change.
+// A kept card takes the fresh card's arrival, so a scale-down delay (contractAction) never sticks to it or stacks.
+const onBoard = (offer) => BOARD_SUPPLIERS.includes(offer.supplier) && !offer.viaQueue;
+export function refreshOffers(state, rng) {
+  const fresh = generateOffers(state, rng);
+  const sameEra = state.compute.offersEra === state.era;
+  state.compute.offersEra = state.era;
+  if (!sameEra) return fresh;
+  return fresh.map((offer) => {
+    if (!onBoard(offer)) return offer;
+    const kept = state.compute.offers.find((o) => onBoard(o) && o.supplier === offer.supplier);
+    if (!kept) return offer;
+    kept.arrivesIn = offer.arrivesIn;
+    return kept;
+  });
 }
 
 // Raising from the strategic cloud partner marks up rival-cloud offers already on the table this turn too,
@@ -109,6 +129,7 @@ export function signOffer(state, offerId, rng) {
   if (offer.supplier === 'gulf' && (state.govFavor.us < GULF_OPEN || state.flags.supplyChainRisk)) return { ok: false, error: 'the Gulf deal needs US approval' };
   if (offer.upfront > state.cash) return { ok: false, error: 'not enough cash for the upfront payment' };
   state.cash -= offer.upfront;
+  if (offer.wantedBy) state.raceHeat += DENIAL_HEAT;
   const f = family(offer.supplier);
   state.compute.deals ??= [];
   state.compute.deals.push({ supplier: f, turn: state.turn });
@@ -130,7 +151,7 @@ export function signOffer(state, offerId, rng) {
     arrive(state, state.compute.pipeline.splice(i, 1)[0], rng);
     refreshOnline(state);
   }
-  return { ok: true, offerId, arrivesTurn, pipelineId: id };
+  return { ok: true, offerId, arrivesTurn, pipelineId: id, denied: offer.wantedBy ?? null };
 }
 
 // Called once the turn has advanced, so what is due on turn T is online while the player plans turn T.

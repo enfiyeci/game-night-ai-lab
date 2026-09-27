@@ -81,9 +81,41 @@ test('difficulty target: no scripted strategy wins more than about a third of ru
 });
 
 test('difficulty target: most runs of the extreme strategies end in eras 3 or 4', {
-  todo: 'speed 200/200, safety 161/200 after the ui merge (2026-09-26); the target holds, drop this todo in the balance pass; see docs/notes/later.md (balance)',
+  todo: 'speed 200/200, safety 154/200 after the second ui merge (2026-09-26); the target holds, drop this todo in the balance pass; see docs/notes/later.md (balance)',
 }, () => {
   for (const name of ['speed', 'safety']) {
     assert.ok(targetReport[name].diedInEra3or4 / 200 >= 0.5, `${name} ${targetReport[name].diedInEra3or4}/200`);
   }
+});
+
+test('the report measures the compute race', () => {
+  const r = balanceApi.report(3);
+  for (const [name, row] of Object.entries(r)) {
+    assert.equal(typeof row.leftBehindByEra, 'object', name);
+    assert.ok(row.roundsAtFirst >= 0 && row.roundsAtFirst <= 1, `${name}: ${row.roundsAtFirst}`);
+    assert.ok(row.rivalDealsPerRun >= 0, name);
+  }
+});
+
+test('the denier probe takes named cards; the safety bot never does; denying does not bankrupt the speed bot', () => {
+  assert.ok(balanceApi.PROBES.includes('denier'));
+  let denied = 0;
+  let safetyDenied = 0;
+  const speedBroke = [];
+  for (const seed of [1, 2, 3]) {
+    for (const [name, count] of [['denier', (n) => { denied += n; }], ['safety', (n) => { safetyDenied += n; }], ['speed', () => {}]]) {
+      const rng = createRng(seed);
+      let state = createInitialState({ seed });
+      for (let turn = 0; turn < 12 && !state.ending; turn += 1) {
+        const result = endTurn(state, balanceApi.STRATEGIES[name](state, rng), rng);
+        count(result.events.filter((e) => e.type === 'deal' && e.denied).length);
+        state = result.state;
+      }
+      if (name === 'speed' && state.ending === 'acquihire' && state.era === 2) speedBroke.push(seed);
+    }
+  }
+  assert.ok(denied > 0);
+  assert.equal(safetyDenied, 0);
+  // Seeds 1 and 3 run out of money in era 2 even with the deny rule off; seed 2 did only because the bot kept denying.
+  assert.ok(!speedBroke.includes(2), `speed out of money in era 2 on seeds ${speedBroke}`);
 });

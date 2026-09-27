@@ -45,7 +45,8 @@ test('midEra3 is an era-3 turn with a training run under way', () => {
 
 test('the summit scenario stops on the opening turn of era 5', () => {
   // Under plan 2C Task 8's balance, seed 1's scripted run ends in era 4, so use a seed that reaches era 5.
-  const s = SCENARIOS.summit(3);
+  // Under the compute race plan (docs/superpowers/plans/2026-09-26-compute-race.md) Task 5, seed 3's run ends in era 4 too (race heat from rival deals); seed 4 reaches era 5.
+  const s = SCENARIOS.summit(4);
   assert.equal(s.era, 5);
   assert.equal(s.turnInEra, 0);
   assert.equal(s.deal, null);
@@ -58,7 +59,8 @@ test('the event scenario stops on the first turn with a pending card', () => {
 
 test('the President scenarios stop with the requested meeting open', () => {
   assert.equal(SCENARIOS.meeting(1).meeting?.id, 'first');
-  assert.equal(SCENARIOS.meeting2(1).meeting?.id, 'second');
+  // Under the compute race plan (docs/superpowers/plans/2026-09-26-compute-race.md) Task 5, debug seed 1's run (seed 3 after the offset) ends in era 4 before the second meeting.
+  assert.equal(SCENARIOS.meeting2(2).meeting?.id, 'second');
 });
 
 test('an action applies at once and the counter counts the round', () => {

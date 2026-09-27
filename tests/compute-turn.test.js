@@ -12,12 +12,18 @@ import { SITE_TYPES } from '../sim/power.js';
 
 const offerOf = (s, supplier) => s.compute.offers.find((o) => o.supplier === supplier && !o.viaQueue);
 
-test('offers exist from turn 0 and refresh every turn', () => {
+test('offers exist from turn 0; rivals take their named cards at the mark; the rest stay', () => {
   const s = createInitialState();
   assert.deepEqual(s.compute.offers.map((o) => o.supplier), ['verde', 'azuria', 'coreflame', 'spot']);
   assert.deepEqual(s.power, { sites: [], nextId: 1 });
-  const { state } = endTurn(s, {}, createRng(1));
-  assert.ok(state.compute.offers.every((o) => o.id.endsWith('-1')));
+  const named = s.compute.offers.filter((o) => o.wantedBy);
+  assert.equal(named.length, 3, 'three Western rivals are short of compute on turn 0');
+  const { state, events } = endTurn(s, {}, createRng(1));
+  const deals = events.filter((e) => e.type === 'rivalDeal');
+  assert.deepEqual(deals.map((e) => e.supplier).sort(), named.map((o) => o.supplier).sort());
+  assert.deepEqual(state.compute.offers.map((o) => o.supplier), ['verde', 'azuria', 'coreflame', 'spot'], 'taken slots refill');
+  const untaken = s.compute.offers.find((o) => !o.wantedBy);
+  assert.equal(state.compute.offers.find((o) => o.supplier === untaken.supplier).id, untaken.id, 'the untaken card stays');
 });
 
 test('a deal move signs an offer; it is online on its arrival turn and its bill enters the burn', () => {

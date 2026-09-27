@@ -124,13 +124,15 @@ export function openDialog(overlayRoot, opts) {
     }
   };
 
-  layer = dialog({ ...opts, onCancel: cancel });
+  // opts.build swaps the GDT trio for a screen's own layer; it must hold a .dialog-veil and a focusable .dialog-centre.
+  layer = (opts.build ?? dialog)({ ...opts, onCancel: cancel });
   closers.set(layer, close);
   Object.defineProperty(layer, 'close', { value: close });
   layer.querySelector('.dialog-veil').addEventListener('click', cancel);
   layer.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
       event.preventDefault();
+      event.stopPropagation(); // a built layer has no GDT panel to stop it, so the key would also close the turn summary and bubbles
       cancel();
       return;
     }

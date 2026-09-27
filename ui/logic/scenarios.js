@@ -133,11 +133,16 @@ function eventState(seed) {
 }
 
 // An era-3 state with a trained model waiting to be released (for the release dialog and reveal screenshots).
+// While it waits, the script still buys compute when it runs short, so a run that stalls for want of a few units
+// resumes instead of idling into the era gate. Under the compute race plan
+// (docs/superpowers/plans/2026-09-26-compute-race.md) board cards stay between rounds, so seed 1 signs a
+// 27-unit CoreFlame card kept from turn 5 instead of a fresh 30-unit one, and its era-3 run sat 0.04 units short.
 function readyToRelease(seed) {
   const rng = createRng(seed + 1000);
   let state = midEra3(seed);
   for (let guard = 0; guard < 8 && state.activeRun && !state.ending; guard += 1) {
-    ({ state } = endTurn(state, { ...scriptedActions(state), moves: [] }, rng));
+    const actions = scriptedActions(state);
+    ({ state } = endTurn(state, { ...actions, moves: actions.moves.filter((move) => move.type === 'deal') }, rng));
   }
   return state;
 }

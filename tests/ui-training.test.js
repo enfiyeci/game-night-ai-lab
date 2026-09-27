@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { alignmentFor, badgeCounts, bubbleSpawns, expectedGain } from '../ui/logic/training.js';
+import { alignmentFor, badgeCounts, bubbleSpawns, expectedGain, floorHint, readyNote } from '../ui/logic/training.js';
 import { createGame } from '../ui/game.js';
 import { SCENARIOS } from '../ui/logic/scenarios.js';
 import { createInitialState } from '../sim/state.js';
@@ -73,7 +73,8 @@ test('the estimate counts the constitution the run will teach', () => {
 });
 
 test('a trained model shows its real gain and the remembered share', () => {
-  const state = SCENARIOS.hazard(4);
+  // Under the compute race plan (docs/superpowers/plans/2026-09-26-compute-race.md) Task 5, none of seed 4's twenty dice reach the hazard; seed 5's do.
+  const state = SCENARIOS.hazard(5);
   assert.ok(state.pendingModel, 'hazard scenario ends with a trained model');
   const counts = badgeCounts(state, 0.25);
   assert.equal(counts.capability, Math.round(state.pendingModel.gain));
@@ -82,7 +83,7 @@ test('a trained model shows its real gain and the remembered share', () => {
 });
 
 test('the hazard scenario stops with the cheating trace still unanswered', () => {
-  const state = SCENARIOS.hazard(4);
+  const state = SCENARIOS.hazard(5); // seed 4 no longer reaches the hazard: see the test above
   assert.equal(state.pendingModel?.hazard?.type, 'rewardHacking');
 });
 
@@ -136,4 +137,26 @@ test('in real time, a run started by an action and finished by the daily clock k
   assert.equal(game.lastAlignShare, 0.4);
   const counts = badgeCounts(game.state, game.lastAlignShare);
   assert.equal(counts.alignment, alignmentFor(counts.capability, 0.4));
+});
+
+// Owner pick 2A: the release is found by clicking the floor, so the game says so.
+test('a trained model waiting for release names the floor click', () => {
+  const state = createInitialState({ seed: 1 });
+  assert.equal(readyNote(state), null, 'nothing to release, no note');
+  state.pendingModel = { gain: 12 };
+  assert.equal(readyNote(state), 'Ready · click the floor to release');
+  state.pendingModel = { gain: 12, hazard: { id: 'x' } };
+  assert.equal(readyNote(state), null, 'a hazard choice comes first');
+  state.pendingModel = { gain: 12 };
+  state.ending = { id: 'x' };
+  assert.equal(readyNote(state), null, 'no note once the run has ended');
+});
+
+test('the floor ring shows only while the first model of the run waits', () => {
+  const state = createInitialState({ seed: 1 });
+  assert.equal(floorHint(state), false);
+  state.pendingModel = { gain: 12 };
+  assert.equal(floorHint(state), true);
+  state.models = [{ name: 'Kestrel 1' }];
+  assert.equal(floorHint(state), false, 'the player has released before and knows the way');
 });

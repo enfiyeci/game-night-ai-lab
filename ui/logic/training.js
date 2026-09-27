@@ -58,3 +58,15 @@ export function bubbleSpawns(from, to) {
   }
   return mixed;
 }
+
+const releaseWaits = (state) => Boolean(state.pendingModel && !state.pendingModel.hazard && !state.ending);
+
+// Owner pick 2A: the only way into the menu is a click on the floor, so the note says it.
+export function readyNote(state) {
+  return releaseWaits(state) ? 'Ready · click the floor to release' : null;
+}
+
+// The ring on the floor is for the first release only; after one the player knows the way.
+export function floorHint(state) {
+  return releaseWaits(state) && state.models.length === 0;
+}

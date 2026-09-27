@@ -252,7 +252,9 @@ test("today's serving shortfall stays in later turns until planned compute cover
   const eras = futureEras(state);
   const flat = project(state, defaultPlan(state)).rows;
   const { shortfall } = computeSlices(state); // the 20 plus what safety and control set aside first
-  const covered = project(state, setGoal(defaultPlan(state), 3, state.compute.online + shortfall, eras)).rows;
+  // Under the compute race plan (docs/superpowers/plans/2026-09-26-compute-race.md) Task 5, the fixture's online compute changed (51, so safety sets aside 10.2): setGoal rounds a goal to
+  // whole units, so the goal is rounded up to cover the fractional shortfall.
+  const covered = project(state, setGoal(defaultPlan(state), 3, state.compute.online + Math.ceil(shortfall), eras)).rows;
   assert.ok(flat[1].signedBill > signedAt(state, flat[1].turn).bill, 'spot cover carries on');
   assert.ok(Math.abs(covered[1].signedBill - signedAt(state, covered[1].turn).bill) < 1e-9, 'planned compute replaces it');
 });

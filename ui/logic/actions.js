@@ -1,5 +1,6 @@
 import {
   LENGTHS,
+  SIZES,
   SIZE_UNITS,
   TRAIN_STAGES,
   cardById,
@@ -178,6 +179,21 @@ export function sanitizeDraft(state, draft) {
   }
 
   return { sliders: { size, length, alignShare }, picks, ...(hasFocus && { focus }) };
+}
+
+// A remembered size that no longer fits (users now take the compute) steps down to the largest size that does, the
+// rule rivals follow in the compute race spec. It never steps up; when nothing fits it keeps the smallest size, so the
+// screen explains the real shortfall.
+export function fitDraftToCompute(state, draft) {
+  const clean = sanitizeDraft(state, draft);
+  if (recipePreview(state, clean).fits) return clean;
+  const ladder = SIZES.filter((size) => size !== 'xl' || state.era >= 2);
+  const smaller = ladder.slice(0, Math.max(0, ladder.indexOf(clean.sliders.size)));
+  for (const size of smaller.reverse()) {
+    const candidate = sanitizeDraft(state, { ...clean, sliders: { ...clean.sliders, size } });
+    if (recipePreview(state, candidate).fits) return candidate;
+  }
+  return sanitizeDraft(state, { ...clean, sliders: { ...clean.sliders, size: ladder[0] } });
 }
 
 export function cardCostWords(card, era = 1) {

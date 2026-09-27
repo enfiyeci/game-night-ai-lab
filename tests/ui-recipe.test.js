@@ -7,6 +7,7 @@ import { createGame } from '../ui/game.js';
 import {
   budgetPreviewQueue,
   cardCostWords,
+  fitDraftToCompute,
   queuedMoveProblem,
   queuedRunProblem,
   recipePreview,
@@ -247,6 +248,47 @@ test('sanitizeDraft keeps focus sliders and takes the alignment share from Value
   assert.equal(clean.sliders.alignShare, 0.5); // 60% of the time on values, capped at half
   assert.equal(sanitizeDraft(state, { ...draft, focus: { post: [50, 25, 25] } }).sliders.alignShare, 0.25);
   assert.equal(sanitizeDraft(state, { ...draft, focus: { post: [0, 0, 0] } }).focus, undefined);
+});
+
+test('fitDraftToCompute steps a remembered size down to the largest one that fits', () => {
+  const state = createInitialState();
+  assert.equal(recipePreview(state, recipe()).free, 9);
+  assert.equal(fitDraftToCompute(state, recipe({ size: 'large' })).sliders.size, 'medium');
+  assert.equal(fitDraftToCompute(state, recipe({ size: 'medium' })).sliders.size, 'medium');
+  assert.equal(fitDraftToCompute(state, recipe({ size: 'small' })).sliders.size, 'small', 'never steps up');
+
+  state.compute.servingUnits += 5; // users take 5 more units, so only 4 are free
+  assert.equal(recipePreview(state, recipe()).free, 4);
+  assert.equal(fitDraftToCompute(state, recipe({ size: 'medium' })).sliders.size, 'small');
+});
+
+test('fitDraftToCompute falls back to the smallest size when nothing fits, and keeps the rest of the draft', () => {
+  const state = createInitialState();
+  state.compute.servingUnits += 8; // 1 unit free: even the smallest model needs 2
+  const draft = recipe({ size: 'medium', length: 'over', alignShare: 0.3, pre: ['filtered-data'] });
+  const fitted = fitDraftToCompute(state, draft);
+  assert.equal(fitted.sliders.size, 'small');
+  assert.equal(fitted.sliders.length, 'over');
+  assert.equal(fitted.sliders.alignShare, 0.3);
+  assert.deepEqual(fitted.picks, draft.picks);
+  assert.equal(recipePreview(state, fitted).fits, false);
+  assert.equal(draft.sliders.size, 'medium', 'the input draft is not changed');
+});
+
+test('the Head of Research only suggests a run when the idle compute fits one', () => {
+  const research = (state) => opinions(state, 'budget').find((item) => item.id === 'research').text;
+  const state = createInitialState();
+  assert.match(research(state), /enough to start a training run/);
+  state.compute.servingUnits += 8; // 1 unit idle, the smallest run needs 2
+  assert.match(research(state), /less than the smallest run needs/);
+  assert.doesNotMatch(research(state), /bigger run/);
+});
+
+test('with one unit idle the advisor line reads in the singular', () => {
+  const state = createInitialState();
+  state.compute.servingUnits += 8;
+  const text = opinions(state, 'budget').find((item) => item.id === 'research').text;
+  assert.match(text, /^1 unit sits idle/);
 });
 
 import { CARDS } from '../sim/data/cards.js';
