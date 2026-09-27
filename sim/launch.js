@@ -25,11 +25,11 @@ export function safetyTruth(state, flags) {
 
 // The test a benchmark row runs in an era, and a skill's score on a test with that mid (sim/data/launch.js).
 export const testFor = (benchmark, era) => benchmark.tests.find((t) => era >= t.from && era <= t.to);
-export const testScore = (mid, skill) => clamp(Math.round(100 / (1 + Math.exp(-(skill - mid) / TEST_WIDTH))), 0, 100);
+export const testScore = (mid, skill, width = TEST_WIDTH) => clamp(Math.round(100 / (1 + Math.exp(-(skill - mid) / width))), 0, 100);
 const oneDecimal = (value) => Math.round(value * 10) / 10;
 // An earlier model's result on a test: its published score if it took this test, otherwise re-scored from its skill,
 // as labs re-run older models on a new test.
-export const scoreOnTest = (test, before) => (before.name === test.name ? before.shown : testScore(test.mid, before.skill));
+export const scoreOnTest = (test, before) => (before.name === test.name ? before.shown : testScore(test.mid, before.skill, test.width));
 
 // The rows whose test changes when `era` begins: { id, kind, from, to } with the old and new test names.
 export function retiredTests(era) {
@@ -63,15 +63,15 @@ export function scoreLaunch(state, model, rng) {
     } else {
       fit = b.fit(spec, flags);
       skill = oneDecimal(capability * clamp(fit - BUG_PENALTY * bugCount, 0.6, 1));
-      truth = testScore(test.mid, skill);
+      truth = testScore(test.mid, skill, test.width);
       const contam = flags.includes('contaminated') && CONTAMINATED_BENCHMARKS.includes(b.id) ? CONTAMINATION_BONUS : 0;
       shown = clamp(truth + contam + rng.int(-3, 3), 0, 100);
-      rival = clamp(testScore(test.mid, rivalCap * fit * 0.95) + rng.int(-3, 3), 0, 100);
+      rival = clamp(testScore(test.mid, rivalCap * fit * 0.95, test.width) + rng.int(-3, 3), 0, 100);
       if (before) flagship = scoreOnTest(test, before);
     }
     const newTest = Boolean(before) && !sameTest;
     const row = { id: b.id, name: test.name, label: b.label, kind: b.kind, shown, truth, flagship, rival, newTest };
-    return b.kind === 'safety' ? row : { ...row, skill, fit, mid: test.mid };
+    return b.kind === 'safety' ? row : { ...row, skill, fit, mid: test.mid, width: test.width };
   });
   const caps = benchmarks.filter((b) => b.kind === 'cap');
   const capAvg = caps.reduce((s, b) => s + b.shown, 0) / caps.length;

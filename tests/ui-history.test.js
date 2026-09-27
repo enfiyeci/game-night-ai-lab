@@ -57,12 +57,15 @@ test('history rows use a model\'s recorded story release day when available', ()
 });
 
 test('article lead uses the five public benchmark hand counts', () => {
-  // Under the compute race plan (docs/superpowers/plans/2026-09-26-compute-race.md) Task 5, seed 4's latest model leads on four of five at launch; seed 5's leads on all five.
+  // The latest model's count comes from its own rows, so a balance change does not break the test.
   const state = SCENARIOS.summit(5);
   const result = article(state, historyRows(state));
   const lead = result.lead.join('');
+  const latest = state.models.at(-1);
+  const led = latest.launch.benchmarks.filter((benchmark) => benchmark.shown > benchmark.rival).length;
+  const words = ['none of five', 'one of five', 'two of five', 'three of five', 'four of five', 'all five'];
   assert.match(lead, /Kestrel 1 Core.*all five/);
-  assert.match(lead, new RegExp(`${state.models.at(-1).name}.*all five`));
+  assert.match(lead, new RegExp(`${latest.name}.*${words[led]}`));
 });
 
 test('article controversies quote only criticism reactions that occurred', () => {

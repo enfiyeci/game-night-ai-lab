@@ -239,7 +239,7 @@ export const oneDecimal = (value) => Math.round(value * 10) / 10;
 export function leaderboard(state, model) {
   const caps = model.launch.benchmarks.filter((row) => row.kind === 'cap');
   const leader = state.rivals.reduce((best, rival) => (rival.capability > best.capability ? rival : best));
-  const on = (row, capability) => testScore(row.mid, capability * row.fit * 0.95);
+  const on = (row, capability) => testScore(row.mid, capability * row.fit * 0.95, row.width);
   const labScore = (rival) => caps.reduce((sum, row) => sum
     + Math.min(100, Math.max(0, row.rival + on(row, rival.capability) - on(row, leader.capability))), 0) / caps.length;
   const ownScore = (other) => caps.reduce((sum, row) => sum

@@ -3,7 +3,10 @@
 // top models max them out (research: docs/research/benchmarks-by-era.md). Each test runs from era `from` to `to` and
 // scores skill on an S-curve: 50 at `mid`, about 10 at mid − 22 and about 90 at mid + 22 (TEST_WIDTH). Tuned on bot
 // runs (2026-09-26): a new test starts at roughly 20 to 50 for the player's model, the best rival's bar climbs over the
-// test's life, and the era-5 tests are the newest and start low even for a model at full capability. label is the row's job, the history table heading.
+// test's life. label is the row's job, the history table heading.
+// Capability counts past 100 (owner pick A): the era 4-only and era 5 tests are sized on bot runs of that game (2026-09-26),
+// with the mid between the leading rival and the player at the era's opening and a wider curve (`width`, default
+// TEST_WIDTH) because labs spread further apart late; the era-5 tests are the newest and start lowest.
 export const TEST_WIDTH = 10;
 export const BENCHMARKS = [
   { id: 'patchwork', label: 'Coding', kind: 'cap',
@@ -11,30 +14,30 @@ export const BENCHMARKS = [
     tests: [
       { name: 'Hello Function (coding)', from: 1, to: 1, mid: 30 }, // HumanEval
       { name: 'Patchwork (coding)', from: 2, to: 3, mid: 55 }, // SWE-bench
-      { name: 'Terminal Velocity (coding)', from: 4, to: 4, mid: 86 }, // Terminal-Bench
-      { name: 'Replicate the Paper (coding)', from: 5, to: 5, mid: 100 }, // PaperBench
+      { name: 'Terminal Velocity (coding)', from: 4, to: 4, mid: 130, width: 35 }, // Terminal-Bench
+      { name: 'Replicate the Paper (coding)', from: 5, to: 5, mid: 190, width: 45 }, // PaperBench
     ] },
   { id: 'doctorate', label: 'Science', kind: 'cap',
     fit: (spec) => 0.75 + (spec.reasoningCapable ? 0.2 : 0),
     tests: [
       { name: 'Pub Quiz of Everything (science)', from: 1, to: 2, mid: 30 }, // MMLU
       { name: 'Frontier Sums (science)', from: 3, to: 4, mid: 72 }, // FrontierMath
-      { name: 'Unsolved Problems Board (science)', from: 5, to: 5, mid: 100 },
+      { name: 'Unsolved Problems Board (science)', from: 5, to: 5, mid: 180, width: 43 },
     ] },
   { id: 'horizon', label: 'Agents', kind: 'cap',
     fit: (spec, flags) => 0.6 + (flags.includes('agentic') ? 0.3 : 0) + (spec.reasoningCapable ? 0.1 : 0),
     tests: [
       { name: 'Errand Runner (agents)', from: 1, to: 1, mid: 25 }, // the 2023 agent demos
       { name: 'Desktop Olympics (agents)', from: 2, to: 3, mid: 50 }, // OSWorld
-      { name: 'Task Horizon (agents)', from: 4, to: 4, mid: 80 }, // METR time horizons
-      { name: 'Research Speedup (agents)', from: 5, to: 5, mid: 98 }, // RE-Bench
+      { name: 'Task Horizon (agents)', from: 4, to: 4, mid: 125, width: 34 }, // METR time horizons
+      { name: 'Research Speedup (agents)', from: 5, to: 5, mid: 190, width: 45 }, // RE-Bench
     ] },
   { id: 'finalexam', label: 'Final exam', kind: 'cap',
     fit: (spec) => 0.65 + (spec.reasoningCapable ? 0.15 : 0),
     tests: [
       { name: 'The Bar Exam', from: 1, to: 2, mid: 26 }, // GPT-4's bar-exam claim
       { name: "Humanity's Final Final Exam", from: 3, to: 4, mid: 62 }, // Humanity's Last Exam
-      { name: "Humanity's Actually Final Exam", from: 5, to: 5, mid: 83 },
+      { name: "Humanity's Actually Final Exam", from: 5, to: 5, mid: 152, width: 36 },
     ] },
   // The safety score comes from alignment debt, not capability, so its tests have no mid: only the name changes.
   { id: 'gauntlet', label: 'Safety', kind: 'safety',

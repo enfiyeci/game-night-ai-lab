@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import { startRun, advanceRun } from '../sim/training.js';
 import { releaseModel } from '../sim/release.js';
-import { evalGaming, scoreLaunch } from '../sim/launch.js';
+import { evalGaming, scoreLaunch, testScore } from '../sim/launch.js';
 import { automationRisk } from '../sim/automation.js';
 import { stealWeights } from '../sim/data/events.js';
 import { dangerCapability } from '../sim/hazards.js';
@@ -120,4 +120,36 @@ test('stolen weights lift Qilin past 100', () => {
   qilin.capability = 98;
   stealWeights(s);
   assert.equal(qilin.capability, 103);
+});
+
+// Era 4-5 tests are sized for capability past 100 (bot runs 2026-09-26): the mid sits between the leading rival and the
+// player at the era's opening, on a wider curve than the early tests, so the rival bar climbs and strong labs fill up.
+test('a test can set its own curve width', () => {
+  assert.equal(testScore(100, 110), 73); // TEST_WIDTH 10
+  assert.equal(testScore(100, 110, 20), 62);
+});
+
+test('era 4 and 5 tests open low for a model past 100 and fill up for a much stronger one', () => {
+  const lab = (era) => { const s = createInitialState(); s.era = era; return s; };
+  const coding = (era, capability) => scoreLaunch(lab(era), { capability, spec: { reasoningCapable: true }, flags: ['agentic'] }, noLuck)
+    .benchmarks.find((b) => b.id === 'patchwork');
+  assert.ok(coding(4, 100).truth <= 35, `era 4 at 100: ${coding(4, 100).truth}`);
+  assert.ok(coding(4, 250).truth >= 90, `era 4 at 250: ${coding(4, 250).truth}`);
+  assert.ok(coding(5, 150).truth <= 30, `era 5 at 150: ${coding(5, 150).truth}`);
+  assert.ok(coding(5, 330).truth >= 90, `era 5 at 330: ${coding(5, 330).truth}`);
+  // The row carries its test's width, so the leaderboard and re-scored flagships use the same curve.
+  assert.equal(coding(4, 100).width, 35);
+  assert.equal(coding(4, 100).truth, testScore(130, 100, 35));
+});
+
+test('the best rival bar on an era 4 test climbs with the rival instead of sitting near zero', () => {
+  const rivalBar = (rivalCapability) => {
+    const s = createInitialState();
+    s.era = 4;
+    s.rivals.forEach((rival) => { rival.capability = rivalCapability; });
+    return scoreLaunch(s, { capability: 200, spec: { reasoningCapable: true }, flags: ['agentic'] }, noLuck)
+      .benchmarks.find((b) => b.id === 'patchwork').rival;
+  };
+  assert.ok(rivalBar(100) >= 20, `rival at 100: ${rivalBar(100)}`);
+  assert.ok(rivalBar(150) >= 50, `rival at 150: ${rivalBar(150)}`);
 });
