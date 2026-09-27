@@ -3,9 +3,11 @@ import { computeSlices } from './split.js';
 import {
   AMBIENT_POSTS,
   COMPANY_POSTS,
+  DENIAL_POSTS,
   ERA_POSTS,
   MOOD_POSTS,
   RECEPTION_POSTS,
+  RIVAL_DEAL_POSTS,
   RIVAL_POSTS,
 } from './data/feed.js';
 
@@ -114,6 +116,12 @@ export function feedPosts(prev, state, events, { ambient = true, timeBased = tru
     if (event.type !== 'rivalRelease') continue;
     const rival = RIVAL_POSTS[event.id];
     if (rival) addFromPool(event.gain >= 8 ? rival.big : rival.small, 'rival');
+  }
+
+  for (const event of events) {
+    if (posts.length >= MAX_POSTS) break;
+    if (event.type === 'rivalDeal' && event.big) addFromPool(RIVAL_DEAL_POSTS[event.id], 'rival');
+    if (event.type === 'deal' && event.denied) addFromPool(DENIAL_POSTS[event.denied], 'rival');
   }
 
   for (const event of events) {
