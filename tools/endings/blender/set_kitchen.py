@@ -314,7 +314,7 @@ def shot_al_chat():
     mug((-0.7, 3.05, 0.76), "#F2EEE6")
     desk_lamp((-0.62, 3.62, 0.76), math.radians(-40), (0.05, 3.05, 0.76), energy=10)
     kit.area((-0.25, 3.1, 0.95), (0.1, 2.6, 0.9), (0.3, 0.15), 3, kit.kelvin(7000))
-    kit.camera((0.46, 2.3, 1.2), (-0.08, 3.14, 0.86), lens=39, fstop=5.6, focus=face)
+    kit.camera((0.46, 2.3, 1.2), (-0.08, 3.14, 0.86), lens=43, fstop=5.6, focus=face)
 
 
 def shot_rb_app():
@@ -362,7 +362,7 @@ def shot_lb_chat():
     rules(_at(essay, rz2, -0.08, 0.125), rz2, [0.16, 0.165, 0.15, 0.16, 0.14, 0.16, 0.09], pitch=0.011)
     kit.cyl((-0.6, 3.55, 0.82), 0.033, 0.12, kit.mat("#2F9C6A", 0.25, 0.8))   # an energy drink can
     phone_flat((0.4, 3.3, 0.76), rz=1.2, glow="#FFB0D0", strength=1.2)       # a video still playing
-    kit.camera((0.95, 2.95, 1.2), (-0.3, 3.2, 0.86), lens=42, fstop=3.2, focus=face)
+    kit.camera((0.95, 2.95, 1.2), (-0.3, 3.2, 0.79), lens=42, fstop=3.2, focus=face)
 
 
 def shot_mu_kitchen():
@@ -394,7 +394,7 @@ def shot_mu_kitchen():
                          rot=(math.radians(90) - lean, 0, math.radians(99)), bezel="#111", depth=0.008, border=0.004,
                          strength=1.2)
     kit.place("plastic_bottle_gallon", (px - 0.11, py - 0.02, 0.76), rot_z=0.5, scale=0.6)
-    kit.camera((0.5, 3.25, 0.94), (-1.8, 2.15, 0.5), lens=35, fstop=8, focus=face)
+    kit.camera((0.5, 3.25, 0.88), (-1.8, 2.15, 0.57), lens=35, fstop=8, focus=face)
     bpy.context.scene.view_settings.exposure = 1.6
 
 
@@ -417,7 +417,7 @@ def shot_pd_school():
     face = laptop((-0.08, 3.28, 0.76), "pd-school", crop, yaw=25, open_deg=112)
     # the worksheet: a hand-drawn diagram of training and checking, filled in; the textbook beside it
     rz = math.radians(-4)
-    ws = (0.1, 2.95, 0.76)
+    ws = (0.12, 3.0, 0.76)
     paper(ws, rz=rz)
     writing(_at(ws, rz, -0.09, 0.135), rz, "Year 10 Computing  -  Unit 4", 0.009, font=kit.FONT_SANS, colour="#2E2A2B")
     writing(_at(ws, rz, -0.09, 0.115), rz, "How a model learns", 0.016, font=kit.FONT, colour="#2E2A2B")
@@ -431,7 +431,7 @@ def shot_pd_school():
     kit.place("potted_plant_01", (-0.8, RD - 0.08, 0.93), scale=0.6)
     # afternoon sun streams in across the table
     kit.sun((52, 0, 230), 4.5, kit.kelvin(5200), angle=0.8)
-    kit.camera((0.52, 2.25, 1.45), (-0.02, 3.1, 0.93), lens=38, fstop=5.6, focus=face)
+    kit.camera((0.52, 2.25, 1.45), (-0.02, 3.1, 0.9), lens=42, fstop=5.6, focus=face)
     bpy.context.scene.view_settings.exposure = 0.8
 
 

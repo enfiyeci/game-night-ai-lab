@@ -284,7 +284,7 @@ def shot_mu_hospital():
     kit.spot((-0.7, 6.7, 1.2), (-0.3, 8.4, 0.3), 30, kit.kelvin(5500), angle=25, blend=0.4)
     kit.box((0, D - 0.13, 2.48), (0.5, 0.03, 0.16), kit.mat("#0F3A22", 0.4, emit="#2FE07A", strength=3))
     kit.text("EXIT", (0, D - 0.15, 2.48), 0.1, kit.mat("#FFFFFF", 0.5, emit="#DFFFE8", strength=4), font=kit.FONT)
-    kit.area((-1.5, D + 5.5, 2.6), (-1.5, D, 1.2), (14, 3), 110, (1.0, 0.7, 0.42))
+    kit.area((-1.5, D + 5.5, 2.6), (-1.5, D, 1.2), (14, 3), 30, (1.0, 0.7, 0.42))
     kit.haze((0, D / 2, H / 2), (2 * W - 0.1, D - 0.1, H - 0.1), 0.012)
     kit.camera((2.3, 3.2, 1.5), (-0.4, 9.0, 1.85), lens=26, focus=board)
 
@@ -299,7 +299,7 @@ def shot_pd_trial():
     P.person((-1.02, 5.42), facing=-35, height=1.68, coat="#3E7F8C", trousers="#3E7F8C", hold="paper", hair="#2A211C", seed=41)
     seated([(-1.55, 5, -90), (-2.25, 8, 90), (1.55, 7, 90), (1.55, 2, 90)], seed=4)
     kit.place("potted_plant_02", (-W + 0.45, 8.9, 0))
-    kit.camera((-0.95, 3.3, 1.45), (-0.1, 7.0, 1.3), lens=36, fstop=2.0, focus=face)
+    kit.camera((-0.95, 3.3, 1.45), (-0.1, 7.0, 1.3), lens=40, fstop=2.0, focus=face)
 
 
 def shot_cw_triage():

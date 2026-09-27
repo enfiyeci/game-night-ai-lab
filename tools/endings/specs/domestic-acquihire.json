@@ -1,0 +1,15 @@
+{
+ "shots": {
+  "4": {
+   "image": "ab-app",
+   "screens": [
+    [
+     "laptop",
+     "ab-app"
+    ]
+   ],
+   "focus": "screen",
+   "push": 1.05
+  }
+ }
+}

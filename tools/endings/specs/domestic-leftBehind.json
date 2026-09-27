@@ -1,0 +1,15 @@
+{
+ "shots": {
+  "4": {
+   "image": "lb-chat",
+   "screens": [
+    [
+     "laptop",
+     "lb-chat"
+    ]
+   ],
+   "focus": "screen",
+   "push": 1.05
+  }
+ }
+}

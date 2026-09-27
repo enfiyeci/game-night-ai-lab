@@ -1,0 +1,37 @@
+{
+ "shots": {
+  "3": {
+   "image": "cw-port",
+   "screens": [
+    [
+     "monitor",
+     "cw-port"
+    ]
+   ],
+   "focus": "screen",
+   "push": 1.04
+  },
+  "4": {
+   "image": "cw-triage",
+   "screens": [
+    [
+     "cart",
+     "cw-triage"
+    ]
+   ],
+   "focus": "screen",
+   "push": 1.04
+  },
+  "5": {
+   "image": "cw-chat",
+   "screens": [
+    [
+     "laptop",
+     "cw-chat"
+    ]
+   ],
+   "focus": "screen",
+   "push": 1.04
+  }
+ }
+}
