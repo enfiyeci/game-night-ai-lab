@@ -66,14 +66,16 @@ def room():
         kit.box((x, -0.05, 1.3), (0.08, 0.12, 2.6), frame)
     kit.box((-2.3, -0.05, 0.2), (3.0, 0.12, 0.4), frame)
     kit.box((-2.3, -0.05, 2.6), (3.0, 0.12, 0.08), frame)
-    kit.box((-2.3, -0.05, 1.45), (2.9, 0.02, 2.3), glass)
+    panes = [kit.box((-2.3, -0.05, 1.45), (2.9, 0.02, 2.3), glass)]
     # the shopfront on the street side: a low stall riser, tall glass, mullions, a transom
     kit.box((-W - 0.05, D / 2, 0.22), (0.14, D, 0.44), frame)
     kit.box((-W - 0.05, D / 2, 2.62), (0.14, D, 0.08), frame)
     kit.box((-W - 0.05, D / 2, 2.9), (0.14, D, 0.4), plaster)
     for y in (0.0, 2.35, 4.7, D):
         kit.box((-W - 0.05, y, 1.4), (0.14, 0.09, 2.5), frame)
-    kit.box((-W - 0.05, D / 2, 1.53), (0.02, D, 2.18), glass)
+    panes.append(kit.box((-W - 0.05, D / 2, 1.53), (0.02, D, 2.18), glass))
+    for pane in panes:        # daylight passes the glass (refracting glass would block the sun's shadow rays)
+        pane.visible_shadow = False
     L = kit.area((-W - 0.2, D / 2, 1.5), (0, D / 2, 1.5), (D, 2.2), 1)
     L.data.cycles.is_portal = True
     # the shop's name on the glass, painted to be read from the street
@@ -84,14 +86,13 @@ def room():
 
 
 def street(hdri="bethnal_green_entrance", strength=1.0, rotation=0, wet=False):
-    """The street past the shopfront: pavement, kerb, road, the terrace opposite and a lamp post."""
+    """The street past the shopfront: pavement, kerb, road and a lamp post; the world image shows the far side."""
     kit.world(hdri=hdri, strength=strength, rotation=rotation)
     pave = kit.tex("concrete_pavement", 0.4, rough=0.15 if wet else None, name="cpave")
     kit.box((-W - 1.6, 4, -0.08), (3.2, 40, 0.1), pave)
     kit.box((-W - 3.25, 4, -0.1), (0.2, 40, 0.14), kit.mat("#8B8A86", 0.6))
     kit.box((-W - 9, 4, -0.2), (11.5, 40, 0.1), kit.tex("worn_asphalt", 0.25, rough=0.12 if wet else None, name="croad"))
     kit.box((0, -8, -0.08), (40, 16, 0.1), pave)
-    kit.place("modular_urban_apartments_facade", (-W - 15, 6, -0.2), rot_z=math.radians(-90))
     kit.place("street_lamp_01", (-W - 2.8, 1.2, -0.03), rot_z=math.radians(90))
 
 
@@ -231,4 +232,27 @@ def shot_ab_news():
     bpy.context.scene.view_settings.exposure = 0.4
 
 
-kit.run({"ab-news": shot_ab_news})
+def shot_al_cafe():
+    room()
+    street("crosswalk", 1.0, 120)
+    counter()
+    menu([("Espresso", "2.40"), ("Flat white", "3.10"), ("Iced latte", "3.60"), ("Lemon cake", "3.20")])
+    face = tv("al-cafe", (226, 112, 828, 452))
+    tables([(-2.9, 1.8), (-3.0, 4.7), (-2.3, 6.1), (0.9, 3.0)])
+    pendants(on=False)
+    # a slow sunny morning: sun across the floor, plants in the window, people lingering
+    props("potted_plant_01", [(-3.5, 0.6, 0.0, 30), (-3.45, 5.3, 0.0, 200)])
+    kit.place("ceramic_vase_01", (-3.0, 4.65, 0.75))
+    P.person((-3.0 + 0.5, 4.75, 0.0), facing=95, pose="sit", coat="#7A8C9A", seed=12, hold="cup")
+    P.person((-2.3 + 0.55, 6.1, 0.0), facing=80, pose="sit", coat="#B5654A", hold="paper", seed=13)
+    P.person((0.9 + 0.55, 3.0, 0.0), facing=-120, pose="sit", coat="#E7DFCF", seed=14, hold="cup")
+    dot((1.1, 6.2), facing=200)
+    cup((-2.85, 4.8, 0.75))
+    cup((0.75, 2.95, 0.75))
+    cup((-2.1, 6.0, 0.75))
+    kit.sun((0, -66, 38), 5.0, kit.kelvin(5000), angle=0.6)
+    kit.camera((-0.55, 1.5, 1.25), (-2.0, 6.6, 1.55), lens=33, fstop=4.5, focus=face)
+    bpy.context.scene.view_settings.exposure = 0.5
+
+
+kit.run({"ab-news": shot_ab_news, "al-cafe": shot_al_cafe})
