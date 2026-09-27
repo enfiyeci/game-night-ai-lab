@@ -101,15 +101,14 @@ function buildWall(collection) {
   const play = make('button', 'btn title-new', 'New game');
   play.type = 'button';
   const links = make('div', 'title-links');
-  const sound = make('button', 'title-link', 'Sound and music');
+  // Sound lives in the game (the HUD's mute and Company › Sound and music), not at the door (owner 2026-09-26).
   const credits = make('button', 'title-link', 'Credits');
-  sound.type = 'button';
   credits.type = 'button';
-  links.append(sound, credits);
+  links.append(credits);
   actions.append(play, links);
   panel.append(words, actions);
   scene.append(grid, panel);
-  return { scene, play, sound, credits };
+  return { scene, play, credits };
 }
 
 // The naming scene: the board over the dark office and the name field under it.
@@ -174,14 +173,13 @@ export function mountTitle(game, { stage, overlay, collection, music, openSound 
   watcher.observe(overlay, { childList: true });
   music?.playTitle?.();
 
-  // Sound and Credits open the Sound and music dialog above the title.
+  // Credits opens the Sound and music dialog's Credits tab above the title.
   const sound = (tab) => {
     const dialog = openSound(game, overlay, { tab });
     if (!dialog) return;
     own.add(dialog);
     dialog.style.zIndex = '46';
   };
-  wall.sound.addEventListener('click', () => sound('sound'));
   wall.credits.addEventListener('click', () => sound('credits'));
 
   const toNaming = () => {
