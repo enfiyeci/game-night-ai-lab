@@ -61,7 +61,7 @@ function dealButton(card) {
     element('span', 'company-explanation', card.explanation),
   );
   if (card.fallbackLine) catchBlock.append(element('span', 'company-fallback', card.fallbackLine));
-  if (card.takenBy) button.append(element('span', 'company-taken', `${card.takenBy} takes this`));
+  if (card.takenBy) button.append(element('span', 'company-taken', `${card.takenBy} takes this${card.takenAsSecond ? ', its second choice' : ''}`));
   else if (card.secondChoiceOf.length) button.append(element('span', 'company-second', `${listNames(card.secondChoiceOf)}'s second choice`));
   button.append(who, big, element('span', 'company-per', card.per), rows, catchBlock);
   if (card.disabled) button.append(element('span', 'company-card-reason', card.reason));

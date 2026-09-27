@@ -32,7 +32,21 @@ test('the why box names what your users and safety take, and what the next size 
   const m = raceModel(s);
   const size = playerSize(s);
   assert.match(m.why, new RegExp(`^Why you ${size ? `only train ${SIZE_LABEL[size]}` : "can't train yet"}\\.`));
-  assert.match(m.why, /needs \d+ free/);
+  assert.match(m.why, /needs .+ free/);
+});
+
+test('the why box speaks in the era\'s own compute units and skips users who take nothing', () => {
+  const s = createInitialState({ seed: 1 });
+  assert.equal(s.compute.servingUnits, 0);
+  assert.doesNotMatch(raceModel(s).why, /Your users take/);
+  assert.match(raceModel(s).why, /safety takes 1 unit of your 10 units/i);
+  s.era = 4;
+  s.compute.online = 800;
+  s.compute.servingUnits = 200;
+  const why = raceModel(s).why;
+  assert.match(why, /Your users take [\d.]+ (MW|GW) of your [\d.]+ (MW|GW)/);
+  assert.match(why, /needs [\d.]+ (MW|GW) free/);
+  assert.doesNotMatch(why, /needs \d+ free/);
 });
 
 test('the round-end box says who takes what, and what happens if you sign it first', () => {
@@ -41,5 +55,20 @@ test('the round-end box says who takes what, and what happens if you sign it fir
   assert.equal(items.filter((i) => i.id !== 'qilin').length, s.compute.offers.filter((o) => o.wantedBy).length);
   const named = s.compute.offers.find((o) => o.wantedBy && o.fallback);
   if (named) assert.match(raceModel(s).roundEnd.join(' '), /Sign it first and \w+ takes/);
-  assert.ok(items.some((i) => i.id === 'qilin' && i.text === 'Qilin buys only home-made chips'));
+  assert.ok(items.some((i) => i.id === 'qilin' && i.text === 'Qilin buys only home-made chips.'));
+});
+
+test('the round-end box follows the projected board: a rival whose card you signed takes its second choice', () => {
+  const s = createInitialState({ seed: 1 });
+  const verde = s.compute.offers.find((o) => o.wantedBy === 'openbrain');
+  const spot = s.compute.offers.find((o) => o.id === verde.fallback);
+  s.compute.offers = s.compute.offers.filter((o) => o !== verde); // as projectQueue leaves it once Verde is queued
+  const items = roundEndItems(s);
+  const openbrain = items.find((i) => i.id === 'openbrain');
+  assert.ok(openbrain, 'OpenBrain still takes a card');
+  assert.equal(openbrain.offerId, spot.id);
+  assert.equal(openbrain.second, true);
+  assert.match(openbrain.text, /^OpenBrain signs Spot market's \d+ units?, its second choice\. Sign it first and OpenBrain goes without/);
+  assert.ok(s.compute.offers.includes(spot), 'the model does not take cards off the real board');
+  assert.equal(s.rivals.find((r) => r.id === 'openbrain').named.offerId, verde.id, 'the model does not clear rival plans');
 });

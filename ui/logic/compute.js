@@ -27,6 +27,7 @@ import { expireMeeting, meetingDue, openMeeting, runMeeting } from '../../sim/pr
 import { allocate, placeOrder, PREPAY_SHARE, released, rivalOrders, withdrawOrder } from '../../sim/queue.js';
 import { activateReleases, releaseModel } from '../../sim/release.js';
 import { RIVAL_TEMPLATES, rivalSize } from '../../sim/rivals.js';
+import { SIZES } from '../../sim/recipe.js';
 import { createRng } from '../../sim/rng.js';
 import { computeSlices, makePledge, setComputeSplit } from '../../sim/split.js';
 import { TECHNIQUES, researchTechnique } from '../../sim/techniques.js';
@@ -34,7 +35,7 @@ import { startRun } from '../../sim/training.js';
 import { MAX_MOVES, setBudget } from '../../sim/turn.js';
 import { roundWord, storyDate } from '../../sim/time.js';
 import { computeAmount, money, pct, roundsToWords, storyDayForTurn } from './format.js';
-import { roundEndItems, playerSize, SIZE_LABEL } from './race.js';
+import { ifSignedFirst, plannedTakes, roundEndItems, playerSize, SIZE_LABEL } from './race.js';
 
 const OFFER_COPY = {
   verde: { per: 'your own chips' },
@@ -222,19 +223,20 @@ function computeAmountParts(units, era) {
 
 const nameOf = (state, id) => state.rivals.find((r) => r.id === id)?.name ?? rivalName(id);
 
-function fallbackLine(state, offer) {
-  if (!offer.wantedBy) return '';
-  const rival = nameOf(state, offer.wantedBy);
-  const second = state.compute.offers.find((o) => o.id === offer.fallback);
-  return second
-    ? `If you sign it, ${rival} takes ${SUPPLIERS[second.supplier].name}'s ${computeAmount(second.units, state.era)}.`
+function fallbackLine(state, take) {
+  if (!take) return '';
+  const rival = nameOf(state, take.id);
+  const instead = ifSignedFirst(state, take);
+  return instead
+    ? `If you sign it, ${rival} takes ${SUPPLIERS[instead.supplier].name}'s ${computeAmount(instead.units, state.era)}.`
     : `If you sign it, ${rival} goes without a board card this ${roundWord(state.era)}.`;
 }
 
 export function roundEndStrip(state) {
   const items = roundEndItems(state).map((item) => {
-    const offer = state.compute.offers.find((o) => o.wantedBy === item.id);
-    if (!offer) return { id: item.id, text: item.text };
+    const offer = state.compute.offers.find((o) => o.id === item.offerId);
+    // The strip lists short fragments; the race tab's box keeps the full sentence.
+    if (!offer) return { id: item.id, text: item.text.replace(/\.$/, '') };
     const later = offer.arrivesIn > 1 ? ` (arrives ${arrival(offer.arrivesIn, state.era)})` : '';
     return { id: item.id, text: `${item.name} +${computeAmount(offer.units, state.era)}${later}` };
   });
@@ -242,6 +244,9 @@ export function roundEndStrip(state) {
 }
 
 export function dealCards(state) {
+  const takes = plannedTakes(state);
+  // A rival still on its first choice would move to this card if the player signed its named card.
+  const onFirstChoice = state.rivals.filter((r) => r.named && takes.some((t) => t.id === r.id && t.offerId === r.named.offerId));
   return state.compute.offers
     .filter((offer) => !offer.viaQueue && offer.supplier !== 'grid')
     .map((offer) => {
@@ -249,6 +254,7 @@ export function dealCards(state) {
       const [chip, explanation] = STRING_COPY[String(offer.string)];
       const investment = offer.supplier === 'azuriaEquity';
       const reason = rejectionReason(state, offer);
+      const take = takes.find((t) => t.offerId === offer.id) ?? null;
       const amount = investment
         ? { big: money(offer.credits), unit: '' }
         : computeAmountParts(offer.units, state.era);
@@ -267,9 +273,10 @@ export function dealCards(state) {
         viaQueue: false,
         move: { type: 'deal', offerId: offer.id },
         runwayAfter: reason ? null : runwayAfterDeal(state, offer),
-        takenBy: offer.wantedBy ? nameOf(state, offer.wantedBy) : null,
-        secondChoiceOf: state.compute.offers.filter((o) => o.fallback === offer.id).map((o) => nameOf(state, o.wantedBy)),
-        fallbackLine: fallbackLine(state, offer),
+        takenBy: take ? nameOf(state, take.id) : null,
+        takenAsSecond: Boolean(take?.fallback),
+        secondChoiceOf: take ? [] : onFirstChoice.filter((r) => r.named.fallback === offer.id).map((r) => r.name),
+        fallbackLine: fallbackLine(state, take),
       };
     });
 }
@@ -576,11 +583,14 @@ function opinionText(state, screen, id) {
   const pledge = state.promises.find((promise) => promise.type === 'safetyCompute');
   const idle = bar.segments.find((segment) => segment.key === 'idle').units;
   const leader = state.rivals.reduce((a, b) => (b.capability > a.capability ? b : a));
-  const ours = SIZE_LABEL[playerSize(state)];
+  const ourSize = playerSize(state);
   // A copy: rivalSize must not change the rival it reads.
-  const theirs = SIZE_LABEL[rivalSize(state, { ...leader })];
+  const theirSize = rivalSize(state, { ...leader });
+  const ours = SIZE_LABEL[ourSize];
+  const theirs = SIZE_LABEL[theirSize];
+  const leaderLarger = theirSize != null && SIZES.indexOf(theirSize) > (ourSize ? SIZES.indexOf(ourSize) : -1);
   const dealLines = {
-    research: theirs && theirs !== ours
+    research: leaderLarger
       ? `${leader.name} can train ${theirs}; we can train ${ours ?? 'nothing yet'}. More compute closes that.`
       : 'More compute lets us train a larger model sooner.',
     safety: pledge ? `Our ${pct(pledge.share)} safety pledge grows with the fleet. Budget for it.` : 'More compute needs a matching safety allocation.',

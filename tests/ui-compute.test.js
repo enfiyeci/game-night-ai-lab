@@ -408,3 +408,40 @@ test('a card you cannot pay for says how much you have', () => {
   const card = dealCards({ ...s, movesLeft: 2 }).find((c) => c.id === verde.id);
   assert.match(card.reason, /^Upfront is \$[\d.,]+[MB]; you have \$[\d.,]+[MB]\.$/);
 });
+
+test('after you queue a named card, the board and strip show the rival taking its second choice', () => {
+  const s = createInitialState({ seed: 1 });
+  const verde = s.compute.offers.find((o) => o.wantedBy === 'openbrain');
+  const projected = projectQueue(s, { moves: [{ type: 'deal', offerId: verde.id }] });
+  assert.ok(!projected.compute.offers.some((o) => o.id === verde.id), 'Verde is signed in the projection');
+  const cards = dealCards({ ...projected, movesLeft: 1 });
+  const spot = cards.find((c) => c.id === verde.fallback);
+  assert.equal(spot.takenBy, 'OpenBrain');
+  assert.equal(spot.takenAsSecond, true);
+  assert.match(spot.fallbackLine, /^If you sign it, OpenBrain goes without a board card this quarter\.$/);
+  assert.deepEqual(spot.secondChoiceOf, [], 'a card a rival takes shows its banner, not a second-choice tag');
+  const strip = roundEndStrip(projected).map((i) => i.text);
+  assert.ok(strip.some((t) => /^OpenBrain \+\d+ units?$/.test(t)), strip.join(' | '));
+});
+
+test('two rivals sharing a second choice: signing one card says what that rival really gets', () => {
+  const s = createInitialState({ seed: 1 });
+  const cards = dealCards({ ...s, movesLeft: 2 });
+  const spotId = s.compute.offers.find((o) => o.supplier === 'spot').id;
+  const byRival = Object.fromEntries(cards.filter((c) => c.takenBy).map((c) => [c.takenBy, c]));
+  // Catch-up order is Lodestar, DeepThink, OpenBrain; all three fall back to Spot, and the first to need it gets it.
+  for (const name of ['OpenBrain', 'DeepThink', 'Lodestar']) {
+    assert.match(byRival[name].fallbackLine, new RegExp(`^If you sign it, ${name} takes Spot market's`));
+  }
+  assert.ok(cards.some((c) => c.id === spotId && c.takenBy === null));
+});
+
+test('the research advisor names the gap only when the leader trains a larger model', () => {
+  const s = createInitialState({ seed: 1 });
+  const research = (state) => opinions(state, 'deals').find((o) => o.id === 'research').text;
+  s.rivals.forEach((r) => { r.fleet = 4; }); // every rival down to Small or nothing
+  s.rivals[0].capability = 99;
+  assert.equal(research(s), 'More compute lets us train a larger model sooner.');
+  s.rivals[0].fleet = 40; // the leader can train Large
+  assert.match(research(s), /^OpenBrain can train Large; we can train \w+\. More compute closes that\.$/);
+});

@@ -5,6 +5,7 @@ import { computeSlices } from '../../sim/split.js';
 import { SIZES, SIZE_UNITS } from '../../sim/recipe.js';
 import { SUPPLIERS, eraScale } from '../../sim/data/compute.js';
 import { RUMOR_PROGRESS } from '../../sim/data/race.js';
+import { takeTargets } from '../../sim/rivalDeals.js';
 import { roundWord } from '../../sim/time.js';
 import { computeAmount } from './format.js';
 
@@ -37,22 +38,50 @@ function why(state) {
   const opening = size ? `Why you only train ${SIZE_LABEL[size]}.` : "Why you can't train yet.";
   if (!next.length) return `You can train ${SIZE_LABEL[size]}, the largest size.`;
   const amount = (units) => computeAmount(Math.round(units), state.era);
-  const needs = next.map((s) => `${SIZE_LABEL[s]} needs ${Math.round(unitsFor(s, state.era))} free`).join('; ');
-  return `${opening} Your users take ${amount(slices.serving)} of your ${amount(slices.online)} and safety takes ${amount(slices.safety)}. ${needs}.`;
+  const needs = next.map((s) => `${SIZE_LABEL[s]} needs ${amount(unitsFor(s, state.era))} free`).join('; ');
+  const taken = Math.round(slices.serving) > 0
+    ? `Your users take ${amount(slices.serving)} of your ${amount(slices.online)} and safety takes ${amount(slices.safety)}.`
+    : `Safety takes ${amount(slices.safety)} of your ${amount(slices.online)}.`;
+  return `${opening} ${taken} ${needs}.`;
+}
+
+// What rivals will really take at the round's end, from the board as shown (a projection may already have removed
+// cards the player queued). Runs the sim's own takeTargets on a copy; without, when given, is a card the player
+// signs first. No dice, so this is exactly what the round mark will do.
+export function plannedTakes(state, without = null) {
+  const copy = {
+    turn: state.turn,
+    raceHeat: state.raceHeat ?? 0,
+    compute: { offers: structuredClone(state.compute.offers.filter((o) => o.id !== without)) },
+    rivals: structuredClone(state.rivals),
+  };
+  const plans = new Map(copy.rivals.map((r) => [r.id, r.named]));
+  return takeTargets(copy).map((event) => {
+    const plan = plans.get(event.id);
+    const offerId = event.fallback ? plan.fallback : plan.offerId;
+    return { ...event, offerId, offer: state.compute.offers.find((o) => o.id === offerId) };
+  });
+}
+
+// What the rival takes instead if the player signs the card it is about to take.
+export function ifSignedFirst(state, take) {
+  return plannedTakes(state, take.offerId).find((other) => other.id === take.id) ?? null;
 }
 
 export function roundEndItems(state) {
   const name = (id) => state.rivals.find((r) => r.id === id)?.name;
-  const card = (id) => state.compute.offers.find((o) => o.id === id);
   const label = (o) => `${SUPPLIERS[o.supplier].name}'s ${computeAmount(o.units, state.era)}`;
-  const items = state.compute.offers.filter((o) => o.wantedBy).map((o) => {
-    const fallback = card(o.fallback);
-    const rival = name(o.wantedBy);
-    const second = fallback ? ` Sign it first and ${rival} takes ${label(fallback)} instead.` : ` Sign it first and ${rival} goes without a board card this ${roundWord(state.era)}.`;
-    return { id: o.wantedBy, name: rival, text: `${rival} signs ${label(o)}.${second}` };
+  const items = plannedTakes(state).map((take) => {
+    const rival = name(take.id);
+    const instead = ifSignedFirst(state, take);
+    const second = instead
+      ? ` Sign it first and ${rival} takes ${label(instead.offer)} instead.`
+      : ` Sign it first and ${rival} goes without a board card this ${roundWord(state.era)}.`;
+    const signs = `${rival} signs ${label(take.offer)}${take.fallback ? ', its second choice' : ''}.`;
+    return { id: take.id, name: rival, offerId: take.offerId, second: take.fallback, text: `${signs}${second}` };
   });
   const qilin = state.rivals.find((r) => r.eastern);
-  if (qilin) items.push({ id: qilin.id, name: qilin.name, text: `${qilin.name} buys only home-made chips` });
+  if (qilin) items.push({ id: qilin.id, name: qilin.name, offerId: null, second: false, text: `${qilin.name} buys only home-made chips.` });
   return items;
 }
 
