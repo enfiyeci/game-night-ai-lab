@@ -601,3 +601,13 @@ test('accepting the political demand edits the next model, for favour in Washing
   assert.equal(s.constitutionDraft.changes.at(-1).source, 'political');
   assert.equal(s.govFavor.us, favour + 5);
 });
+
+test('the political demand never undoes the President’s edit', () => {
+  const s = createInitialState();
+  s.era = 3;
+  const accept = (id) => EVENTS.find((e) => e.id === id).card.choices.find((c) => c.id === 'accept').effects(s);
+  accept('president');
+  accept('political');
+  assert.equal(s.constitutionDraft.rulings.report, 'quiet');
+  assert.deepEqual(s.constitutionDraft.changes.map((entry) => entry.source), ['president']);
+});

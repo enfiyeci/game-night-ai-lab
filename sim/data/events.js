@@ -415,7 +415,8 @@ export const EVENTS = [
           effects(state) {
             state.govFavor.us += 5;
             state.publicTrust -= 4;
-            changeDraft(state, { ruling: { caseId: 'report', optionId: 'flag' } }, 'political'); // owner 2026-09-26: the edit is what wins the favour
+            // owner 2026-09-26: the edit is what wins the favour; it never undoes a stricter demand (the President's 'quiet')
+            if (draftFor(state).rulings.report === 'full') changeDraft(state, { ruling: { caseId: 'report', optionId: 'flag' } }, 'political');
           },
         },
         {
