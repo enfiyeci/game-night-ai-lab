@@ -1378,22 +1378,22 @@ git commit -m "feat(sim): feed posts when a rival lands a big deal or you take i
 | Bot | Measure | Prototype today (spec §4) | Before (Task 1) | Prototype B + C | After (Task 8) |
 |---|---|---|---|---|---|
 | speed | left behind | 0 | 0 (by era: —) | 8 | |
-| speed | out of money | 44 | 44 | 37 | |
-| speed | rounds at 1st | 82% | 82% | 54% | |
-| safety | left behind | 2 | 2 (era 2: 1, era 3: 1) | 6 | |
-| safety | out of money | 96 | 96 | 93 | |
+| speed | out of money | 44 | 30 | 37 | |
+| speed | rounds at 1st | 82% | 88% | 54% | |
+| safety | left behind | 2 | 5 (era 2: 5) | 6 | |
+| safety | out of money | 96 | 93 | 93 | |
 | safety | rank, end of era 4 | 1.02 | 1.02 | 1.70 | |
 | balanced | left behind | 0 | 0 (by era: —) | 0 | |
-| balanced | out of money | 11 | 11 | 11 | |
-| balanced | rounds at 1st | 93% | 93% | 79% | |
+| balanced | out of money | 11 | 9 | 11 | |
+| balanced | rounds at 1st | 93% | 94% | 79% | |
 | balanced | rank, end of era 4 | 1.00 | 1.00 | 1.65 | |
-| random | left behind | 1 | 1 (era 3: 1) | 6 | |
+| random | left behind | 1 | 0 (by era: —) | 6 | |
 | random | misalignment | 14 | 14 | 10 | |
 | random | out of money | 64 | 64 | 61 | |
 | all | rival deals per run | — | 0 | 9–15 | |
 | denier | wins / left behind | — | — | — | |
 
-Task 1 full suite: 798 tests, 794 pass, 0 fail, 4 todo.
+Task 1 full suite (re-measured on `realtime-tune`, 2026-09-26): 820 tests, 816 pass, 0 fail, 4 todo.
 
 Test baseline on `ui` at `9d51f8e` (2026-09-26): 797 tests, 793 pass, 0 fail, 4 todo, about 32 s.
 
