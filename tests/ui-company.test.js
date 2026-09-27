@@ -8,7 +8,7 @@ import { createInitialState } from '../sim/state.js';
 import { endTurn } from '../sim/turn.js';
 import { researchTechnique } from '../sim/techniques.js';
 import { createGame } from '../ui/game.js';
-import { applyDealMove, dealCards, projectQueue, turnSummary } from '../ui/logic/compute.js';
+import { applyDealMove, dealCards, projectQueue, summaryItems, turnSummary } from '../ui/logic/compute.js';
 import { computeAmount, money, pct } from '../ui/logic/format.js';
 import { SCENARIOS } from '../ui/logic/scenarios.js';
 
@@ -243,6 +243,23 @@ test('turn summaries use player-facing words without guessing suppliers or showi
   ]);
   assert.equal(lines.join(' ').includes('999'), false);
   assert.equal(lines.join(' ').includes('do not print me'), false);
+});
+
+test('turn summaries expose stable kind, name and figure metadata for visual treatments', () => {
+  const state = createInitialState();
+  const items = summaryItems([
+    { type: 'computeArrived', supplier: 'verde', units: 10 },
+    { type: 'raise', amount: 500 },
+    { type: 'rivalRelease', id: 'lodestar', gain: 9 },
+    { type: 'error', error: 'not enough cash' },
+  ], state);
+
+  assert.deepEqual(items, [
+    { kind: 'compute', text: "Verde's chips arrived (10 units)", name: 'Verde', figure: '10 units' },
+    { kind: 'money', text: 'You raised $500M', name: null, figure: '$500M' },
+    { kind: 'rival', text: 'Lodestar released a model', name: 'Lodestar', figure: '+9 capability' },
+    { kind: 'blocked', text: "Couldn't do that: not enough cash", name: null, figure: null },
+  ]);
 });
 
 test('deal cards preserve offer order while leaving queue and grid offers to their screens', () => {

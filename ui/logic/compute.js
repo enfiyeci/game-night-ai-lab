@@ -649,15 +649,17 @@ const EMERGENCY_SUMMARIES = {
   acquihire: 'You accepted an acquihire — the run is over',
 };
 
-export function turnSummary(events, state) {
+// Keep presentation metadata beside the player-facing sentence so each visual treatment emphasizes the same facts.
+export function summaryItems(events, state) {
   const list = Array.isArray(events) ? events : [];
-  const lines = [];
+  const items = [];
+  const add = (kind, text, { name = null, figure = null } = {}) => items.push({ kind, text, name, figure });
   for (const event of list) {
     if (event.type === 'computeArrived') {
       const name = supplierName(event.supplier);
-      lines.push(event.supplier === 'verde'
+      add('compute', event.supplier === 'verde'
         ? `${name}'s chips arrived (${event.units} units)`
-        : `${name}'s compute arrived (${event.units} units)`);
+        : `${name}'s compute arrived (${event.units} units)`, { name, figure: `${event.units} units` });
     } else if (event.type === 'deal') {
       const supplier = event.supplier
         ?? state?.compute?.offers?.find((offer) => offer.id === event.offerId)?.supplier
@@ -666,63 +668,71 @@ export function turnSummary(events, state) {
       const day = state?.compute?.pipeline?.find((p) => p.id === event.pipelineId && p.landsDay != null)?.landsDay
         ?? state?.power?.sites?.find((s) => s.id === event.site)?.landsDay // a grid reservation
         ?? (event.arrivesTurn <= (state?.turn ?? -1) ? state.day : storyDayForTurn(event.arrivesTurn)); // delivered at once
-      lines.push(`${subject} — online from ${storyDate(day).label}`);
-      if (event.denied) lines.push(`You took the card ${rivalName(event.denied)} wanted`);
+      const date = storyDate(day).label;
+      add('compute', `${subject} — online from ${date}`, { name: supplier ? supplierName(supplier) : null, figure: date });
+      if (event.denied) add('rival', `You took the card ${rivalName(event.denied)} wanted`, { name: rivalName(event.denied) });
     } else if (event.type === 'spotWarning') {
-      lines.push(`Spot capacity may be pulled after next ${roundWord(state.era)}`);
+      add('compute', `Spot capacity may be pulled after next ${roundWord(state.era)}`);
     } else if (event.type === 'spotPulled') {
-      lines.push('Spot capacity was pulled');
+      add('compute', 'Spot capacity was pulled');
     } else if (event.type === 'contractEnded') {
-      lines.push(`${supplierName(event.supplier)} contract ended`);
+      add('compute', `${supplierName(event.supplier)} contract ended`, { name: supplierName(event.supplier) });
     } else if (event.type === 'queueFilled') {
-      lines.push(event.waiting > 0 ? 'Verde filled part of your order; the rest stays queued' : 'Verde filled your queue order');
+      add('compute', event.waiting > 0 ? 'Verde filled part of your order; the rest stays queued' : 'Verde filled your queue order', { name: 'Verde' });
     } else if (event.type === 'queueOrder') {
-      lines.push(`${event.tier === 'prepaid' ? 'Prepaid' : 'Standard'} Verde order placed`);
+      add('compute', `${event.tier === 'prepaid' ? 'Prepaid' : 'Standard'} Verde order placed`, { name: 'Verde' });
     } else if (event.type === 'rivalPrepays') {
       const name = rivalName(event.lab);
-      if (name) lines.push(`${name} will prepay Verde for priority`);
+      if (name) add('rival', `${name} will prepay Verde for priority`, { name });
     } else if (event.type === 'siteOnline') {
-      lines.push(`${event.source === 'gas' ? 'Gas turbines' : event.source === 'nuclear' ? 'Nuclear restart' : 'Grid connection'} came online`);
+      add('compute', `${event.source === 'gas' ? 'Gas turbines' : event.source === 'nuclear' ? 'Nuclear restart' : 'Grid connection'} came online`);
     } else if (event.type === 'buildSite') {
-      lines.push(`${event.source === 'gas' || event.site?.startsWith('gas-') ? 'Gas turbine' : 'Nuclear restart'} site construction started`);
+      add('compute', `${event.source === 'gas' || event.site?.startsWith('gas-') ? 'Gas turbine' : 'Nuclear restart'} site construction started`);
     } else if (event.type === 'outage') {
-      lines.push('Users reported an outage');
+      add('lab', 'Users reported an outage');
     } else if (event.type === 'pledgeBroken') {
-      lines.push('The lab broke its public safety-compute pledge');
+      add('lab', 'The lab broke its public safety-compute pledge');
     } else if (event.type === 'raise') {
-      lines.push(`You raised ${money(event.amount)}`);
+      add('money', `You raised ${money(event.amount)}`, { figure: money(event.amount) });
     } else if (event.type === 'boardPromise') {
-      lines.push(`You promised the board ${computeAmount(event.units, state ? Math.min(event.era, state.era) : event.era)} by ${state ? eraEndWords(state, event.era) : `the end of era ${event.era}`}`);
+      const amount = computeAmount(event.units, state ? Math.min(event.era, state.era) : event.era);
+      add('lab', `You promised the board ${amount} by ${state ? eraEndWords(state, event.era) : `the end of era ${event.era}`}`, { figure: amount });
     } else if (event.type === 'boardPromiseJudged') {
-      lines.push(event.ratio >= 1 ? 'You kept your compute promise to the board'
+      add('lab', event.ratio >= 1 ? 'You kept your compute promise to the board'
         : event.vote ? 'You missed your compute promise badly, and the board wants a vote'
           : 'You came up short of your compute promise to the board');
     } else if (event.type === 'staffLetter') {
-      lines.push('Staff signed a letter to keep you, and the board backed down');
+      add('lab', 'Staff signed a letter to keep you, and the board backed down');
     } else if (event.type === 'research') {
       const name = techniqueName(event.techId);
-      if (name) lines.push(`Your researchers cracked ${name}`);
+      if (name) add('lab', `Your researchers cracked ${name}`, { name });
     } else if (event.type === 'emergency') {
-      if (Object.hasOwn(EMERGENCY_OPTIONS, event.option)) lines.push(EMERGENCY_SUMMARIES[event.option]);
+      if (Object.hasOwn(EMERGENCY_OPTIONS, event.option)) add(event.option === 'bridgeRound' ? 'money' : 'lab', EMERGENCY_SUMMARIES[event.option]);
     } else if (event.type === 'runComplete') {
-      lines.push('Training complete — ready to release');
+      add('lab', 'Training complete — ready to release');
     } else if (event.type === 'runPaused') {
-      lines.push('Training paused — not enough compute is online');
+      add('lab', 'Training paused — not enough compute is online');
     } else if (event.type === 'rivalDeal') {
       const name = rivalName(event.id);
-      if (name) lines.push(`${name} signed ${supplierName(event.supplier)}'s ${computeAmount(event.units, state?.era ?? 1)}${event.fallback ? ', its second choice' : ''}`);
+      const amount = computeAmount(event.units, state?.era ?? 1);
+      if (name) add('rival', `${name} signed ${supplierName(event.supplier)}'s ${amount}${event.fallback ? ', its second choice' : ''}`, { name, figure: amount });
     } else if (event.type === 'rivalRelease') {
       const name = rivalName(event.id);
-      if (name) lines.push(`${name} released a model`);
+      const gain = Math.round(event.gain ?? 0); // a launch rolled for a later round lands without a gain yet
+      if (name) add('rival', `${name} released a model`, { name, figure: gain > 0 ? `+${gain} capability` : null });
     } else if (event.type === 'lawsuitPaid') {
-      lines.push(`A lawsuit cost ${money(event.cost)}`);
+      add('money', `A lawsuit cost ${money(event.cost)}`, { figure: money(event.cost) });
     } else if (event.type === 'conversionFight') {
-      lines.push('The structure change sparked a fight with staff and the board');
+      add('lab', 'The structure change sparked a fight with staff and the board');
     } else if (event.type === 'eraStart') {
-      lines.push(`Era ${event.era} begins`);
+      add('era', `Era ${event.era} begins`, { name: `Era ${event.era}` });
     } else if (event.type === 'error') {
-      lines.push(`Couldn't do that: ${event.error}`);
+      add('blocked', `Couldn't do that: ${event.error}`);
     }
   }
-  return lines;
+  return items;
+}
+
+export function turnSummary(events, state) {
+  return summaryItems(events, state).map((item) => item.text);
 }

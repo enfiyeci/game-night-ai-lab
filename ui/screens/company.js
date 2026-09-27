@@ -1,5 +1,5 @@
 import { openDialog } from '../components/dialog.js';
-import { projectQueue, turnSummary } from '../logic/compute.js';
+import { projectQueue, summaryItems } from '../logic/compute.js';
 import { money, months, pct } from '../logic/format.js';
 import { noteText, pointsBar, usedLabel } from '../logic/paperwork.js';
 import { outcomeLine } from '../logic/president.js';
@@ -17,7 +17,7 @@ import {
 } from '../../sim/economy.js';
 import { ADVISOR_PROFILES } from '../../sim/data/advisorLines.js';
 import { TECHNIQUES, techAvailable } from '../../sim/techniques.js';
-import { roundWord } from '../../sim/time.js';
+import { roundWord, storyDate } from '../../sim/time.js';
 
 const INVESTOR_COPY = {
   vc: { chip: 'Board seat', explanation: 'A growth fund joins the board.' },
@@ -414,6 +414,45 @@ export function mountCompany(game, overlayRoot) {
 
 export { openDeals, openQueue };
 
+// A is the quiet default; B borrows the wire-service paper language; C separates each update into its own strip.
+const SUMMARY_LOOKS = ['A', 'B', 'C'];
+const SUMMARY_LOOK_DEFAULT = 'A';
+const SUMMARY_KINDS = {
+  rival: 'Rival',
+  lab: 'Your lab',
+  money: 'Money',
+  compute: 'Compute',
+  era: 'Era',
+  washington: 'Washington',
+  blocked: 'Blocked',
+};
+
+function summaryLook() {
+  const asked = new URLSearchParams(globalThis.location?.search ?? '').get('summary')?.toUpperCase();
+  return SUMMARY_LOOKS.includes(asked) ? asked : SUMMARY_LOOK_DEFAULT;
+}
+
+function summaryRow({ kind, text, name, figure }) {
+  const item = make('li', `turn-summary-item kind-${kind}`);
+  const sentence = make('span', 'turn-summary-text');
+  const marks = [name, figure].filter(Boolean)
+    .map((part) => ({ part, at: text.indexOf(part), figure: part === figure }))
+    .filter((mark) => mark.at >= 0)
+    .sort((a, b) => a.at - b.at);
+  let from = 0;
+  for (const mark of marks) {
+    if (mark.at < from) continue;
+    sentence.append(text.slice(from, mark.at), make(mark.figure ? 'span' : 'b', mark.figure ? 'turn-summary-figure' : null, mark.part));
+    from = mark.at + mark.part.length;
+  }
+  sentence.append(text.slice(from));
+  const label = SUMMARY_KINDS[kind] ?? 'News';
+  sentence.dataset.kind = label; // look B runs the kind into the sentence as a wire dateline
+  item.append(make('span', 'turn-summary-kind', label), sentence);
+  if (figure && !text.includes(figure)) item.append(make('span', 'turn-summary-extra', figure));
+  return item;
+}
+
 export function mountTurnSummary(overlayRoot, game) {
   let toast = null;
   let removeEscape = null;
@@ -443,24 +482,21 @@ export function mountTurnSummary(overlayRoot, game) {
       pendingSummaries = null;
       removeToast();
       toast = document.createElement('section');
-      toast.className = 'turn-summary';
+      toast.className = `turn-summary look-${summaryLook().toLowerCase()}`;
       toast.setAttribute('aria-live', 'polite');
       const header = document.createElement('div');
       header.className = 'turn-summary-header';
       const title = document.createElement('strong');
       title.textContent = 'Just now';
+      const when = make('span', 'turn-summary-date', storyDate(game.state.day).label);
       const close = document.createElement('button');
       close.type = 'button';
       close.setAttribute('aria-label', 'Dismiss');
       close.textContent = '×';
       close.addEventListener('click', dismiss);
-      header.append(title, close);
+      header.append(title, when, close);
       const list = document.createElement('ul');
-      for (const summary of summaries) {
-        const item = document.createElement('li');
-        item.textContent = summary;
-        list.append(item);
-      }
+      for (const summary of summaries) list.append(summaryRow(summary));
       toast.append(header, list);
       overlayRoot.append(toast);
 
@@ -488,12 +524,12 @@ export function mountTurnSummary(overlayRoot, game) {
     const meetingEnded = events.some((event) => event.type === 'meetingOutcome');
     const skippedMeeting = 'take the President meeting with a meeting move';
     const skipped = meetingEnded && errors.includes(skippedMeeting);
-    const summaries = turnSummary([
+    const summaries = summaryItems([
       ...events,
       ...errors.filter((error) => !(meetingEnded && error === skippedMeeting)).map((error) => ({ type: 'error', error })),
     ], state);
     for (const event of events) {
-      if (event.type === 'meetingOutcome') summaries.push(outcomeLine(event, { skipped }));
+      if (event.type === 'meetingOutcome') summaries.push({ kind: 'washington', text: outcomeLine(event, { skipped }), name: 'The President', figure: null });
     }
     if (summaries.length === 0) return;
     if (pendingFrame !== null) cancelAnimationFrame(pendingFrame);
