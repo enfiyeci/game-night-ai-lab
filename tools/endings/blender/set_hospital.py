@@ -134,8 +134,9 @@ def board(lines):
         kit.text(body, (x, BY - 0.045, z), size, colour, font=font, spacing=1.05)
 
 
-def doors(lit=True, ajar=0.0):
-    """The treatment doors in the back wall and the corridor behind; ajar swings the right leaf open (radians)."""
+def doors(lit=260, ajar=0.0):
+    """The treatment doors in the back wall and the corridor behind, lit with `lit` watts (0: dark); ajar swings
+    the right leaf open (radians)."""
     frame = kit.mat("#9AA0A6", 0.3, 0.9)
     leaf = kit.mat("#C9CFCB", 0.45)
     cw = kit.mat("#E4ECE8", 0.8)   # the corridor beyond
@@ -157,9 +158,9 @@ def doors(lit=True, ajar=0.0):
             part.parent = pivot
         pivot.rotation_euler = (0, 0, sign * -swing)
     kit.box((1.9, -0.01, 2.62), (1.3, 0.02, 0.3), kit.mat("#17465E", 0.4))
-    kit.text("TREATMENT", (1.9, -0.025, 2.62), 0.15, kit.mat("#FFFFFF", 0.5, emit="#F4F8F6", strength=0.6), font=kit.FONT)
+    kit.text("TREATMENT", (1.9, 0.012, 2.62), 0.15, kit.mat("#FFFFFF", 0.5, emit="#F4F8F6", strength=0.6), font=kit.FONT)
     if lit:
-        kit.area((1.9, -1.6, H - 0.05), (1.9, -1.6, 0), (1.6, 2.4), 260, (0.92, 1.0, 0.96))
+        kit.area((1.9, -1.6, H - 0.05), (1.9, -1.6, 0), (1.6, 2.4), lit, (0.92, 1.0, 0.96))
 
 
 def cart(at, facing, plate, crop, width=0.72, name="cart", live=True, strength=1.3):
@@ -241,19 +242,19 @@ def shot_mis_triage():
 
 
 def shot_al_triage():
-    room(tube_energy=24)
+    room(tube_energy=8)
     seating()
-    doors(ajar=0.9)
+    doors(lit=1400, ajar=1.2)
     face = cart((-0.45, 7.9), 157, "al-triage", (60, 84, 1160, 483))
-    # a doctor in a white coat comes up the aisle from treatment, already on the way
-    P.person((0.55, 2.7), facing=-10, pose="walk", height=1.72, coat="#E9ECEE", long_coat=True, trousers="#2C4A5E",
+    # a doctor in a white coat comes out of treatment toward the cart, dark against the lit corridor
+    P.person((1.55, 0.9), facing=22, pose="walk", height=1.72, coat="#E9ECEE", long_coat=True, trousers="#2C4A5E",
              hair="#2A211C", seed=21)
     seated([(-1.55, 2, -90), (-1.55, 7, -90), (1.55, 4, 90), (2.25, 8, -90)], seed=2)
     kit.place("wheelchair_01", (-0.9, 5.4, 0), rot_z=math.radians(80))
     kit.place("wall_clock", (-W + 0.02, 5.0, 2.3), rot_z=math.radians(90))
     kit.haze((0, D / 2, H / 2), (2 * W - 0.1, D - 0.1, H - 0.1), 0.01)
     kit.world("#0B0D12", 0.2)
-    kit.camera((0.25, 9.55, 1.42), (0.05, 3.0, 1.05), lens=30, fstop=4.0, focus=face)
+    kit.camera((0.25, 9.55, 1.42), (-0.55, 3.0, 1.1), lens=30, fstop=2.2, focus=face)
 
 
 def shot_mu_hospital():
@@ -261,7 +262,7 @@ def shot_mu_hospital():
     seating()
     street()
     rain()
-    doors(lit=False)
+    doors(lit=0)
     note = (100, 120, 540, 310)
     # every screen, the same note: the board over the aisle, the wall TVs, the kiosks, the cart
     kit.box((0, BY, 2.35), (2.36, 0.08, 1.44), kit.mat("#141516", 0.3), bevel=0.015)
@@ -273,6 +274,9 @@ def shot_mu_hospital():
         wall_tv(f"tvr{y}", (W - 0.05, y, 2.25), -90, "mu-hospital", note)
     for x in (2.0, 2.7):
         kiosk((x, 8.9), "mu-hospital", note, name=f"kiosk{x}")
+    for x in (-3.3, 3.9):
+        wall_tv(f"tvg{x}", (x, D - 0.4, 2.5), 0, "mu-hospital", note, width=1.0)
+        kit.cyl((x, D - 0.4, 3.05 + (H - 3.05) / 2), 0.01, H - 3.05, kit.mat("#C7CCD1", 0.25, 1.0))
     cart((-0.6, 7.6), 33, "mu-hospital", note, width=0.6, live=False)
     kit.area((0, BY - 1.0, 2.35), (0, 0, 1.0), (2.2, 1.26), 60, (1.0, 0.32, 0.26))   # the board's red spill
     # a nurse under the board with a torch, paper charts under her arm
@@ -280,7 +284,7 @@ def shot_mu_hospital():
     kit.spot((0.25, BY - 2.0, 1.2), (-0.2, BY - 0.2, 0.4), 30, kit.kelvin(5500), angle=25, blend=0.4)
     kit.box((0, D - 0.13, 2.48), (0.5, 0.03, 0.16), kit.mat("#0F3A22", 0.4, emit="#2FE07A", strength=3))
     kit.text("EXIT", (0, D - 0.15, 2.48), 0.1, kit.mat("#FFFFFF", 0.5, emit="#DFFFE8", strength=4), font=kit.FONT)
-    kit.area((-1.5, D + 5.5, 2.6), (-1.5, D, 1.2), (14, 3), 500, (1.0, 0.7, 0.42))
+    kit.area((-1.5, D + 5.5, 2.6), (-1.5, D, 1.2), (14, 3), 110, (1.0, 0.7, 0.42))
     kit.haze((0, D / 2, H / 2), (2 * W - 0.1, D - 0.1, H - 0.1), 0.012)
     kit.camera((2.3, 3.2, 1.5), (-0.4, 9.0, 1.85), lens=26, focus=board)
 
@@ -288,13 +292,14 @@ def shot_mu_hospital():
 def shot_pd_trial():
     room(tube_energy=30, daylight=True)
     seating()
-    street(sky="urban_street_01", sky_strength=1.0, lamp=False)
-    face = cart((-0.2, 6.3), -10, "pd-trial", (60, 80, 1160, 483))
+    street(sky="urban_street_01", sky_strength=2.0, lamp=False)
+    kit.sun((50, 0, 200), 3.0, kit.kelvin(5200), angle=1.0)
+    face = cart((-0.2, 6.3), -14, "pd-trial", (60, 80, 1160, 483))
     # the clinician stands at the cart, turned to the screen, the chart she checks against in her hand
-    P.person((0.3, 5.85), facing=48, height=1.68, coat="#3E7F8C", trousers="#3E7F8C", hold="paper", hair="#2A211C", seed=41)
+    P.person((0.22, 5.62), facing=18, height=1.68, coat="#3E7F8C", trousers="#3E7F8C", hold="paper", hair="#2A211C", seed=41)
     seated([(-1.55, 5, -90), (-2.25, 8, 90), (1.55, 7, 90), (1.55, 2, 90)], seed=4)
     kit.place("potted_plant_02", (-W + 0.45, 8.9, 0))
-    kit.camera((-0.55, 4.25, 1.42), (0.05, 7.0, 1.3), lens=32, fstop=4.0, focus=face)
+    kit.camera((-0.95, 3.3, 1.45), (-0.05, 7.0, 1.3), lens=36, fstop=2.8, focus=face)
     bpy.context.scene.view_settings.exposure = 0.4
 
 
