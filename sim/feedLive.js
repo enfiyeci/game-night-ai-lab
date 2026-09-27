@@ -6,6 +6,8 @@ import { rank } from './rivals.js';
 import { computeSlices } from './split.js';
 import { ROUND_DAYS } from './time.js';
 import { JUMP_EARNED_GAIN } from './data/launch.js';
+import { eraScale } from './data/compute.js';
+import { SIZE_UNITS } from './recipe.js';
 import { PROMISES } from './data/promises.js';
 import { REACTIONS as R } from './data/feedReactions.js';
 
@@ -40,8 +42,9 @@ function newestLiveModel(state) {
 }
 
 // {lab} stays in the stored text and is filled in when the feed is shown (labText), so a lab named later still reads right.
-function render(state, text, { model, rival } = {}) {
+function render(state, text, { model, rival, gpus } = {}) {
   return text
+    .replaceAll('{gpus}', () => gpus ?? 'thousands of GPUs')
     .replaceAll('{model}', () => model?.name ?? newestLiveModel(state)?.name ?? 'the new model')
     .replaceAll('{rival}', () => rival ?? 'a rival lab')
     .replaceAll('{name}', () => state.lumenName ?? 'Lumen');
@@ -170,20 +173,31 @@ function choicePosts(state, event, s) {
   s.add(posts, 2, 'event', { from: 1, to: 2 });
 }
 
+// A run's size in the era's top chips, the same count the recipe screen shows: 1 compute unit is 1,000 of them
+// (owner-approved 2026-09-26 via gn-pacing; research in docs/research/compute-mechanics).
+const ERA_CHIPS = ['A100', 'H100', 'H200', 'GB200', 'Rubin'];
+export function runGpus(size, era) {
+  const count = SIZE_UNITS[size] * eraScale(era) * 1000;
+  const shown = count >= 1e6 ? `${count / 1e6} million` : count.toLocaleString('en-US');
+  return `${shown} ${ERA_CHIPS[era - 1]}s`;
+}
+
 // The player started a training run: the bigger the run, the more people notice (owner 2026-09-26).
 // A run that started and finished in one step is already the pending model.
 function trainingStartPosts(state, s) {
   const size = state.activeRun?.recipe.sliders.size ?? state.pendingModel?.size;
   const pool = R.training.start[size];
+  if (!pool) return;
+  const gpus = runGpus(size, state.era);
   if (size === 'small') {
-    if (s.rng.chance(0.5)) s.add(pool, 1, 'company', { from: 0, to: 2 });
-  } else if (size === 'medium') s.add(pool, 1, 'company', { from: 0, to: 2 });
+    if (s.rng.chance(0.5)) s.add(pool, 1, 'company', { gpus, from: 0, to: 2 });
+  } else if (size === 'medium') s.add(pool, 1, 'company', { gpus, from: 0, to: 2 });
   else if (size === 'large') {
-    s.add(pool, 1, 'company', { from: 0, to: 1 });
-    s.add(pool, 1, 'company', { from: 1, to: 4 });
+    s.add(pool, 1, 'company', { gpus, from: 0, to: 1 });
+    s.add(pool, 1, 'company', { gpus, from: 1, to: 4 });
   } else if (size === 'xl') {
-    s.add(pool, 2, 'company', { from: 0, to: 1 });
-    s.add(pool, 2, 'company', { from: 1, to: 6 });
+    s.add(pool, 2, 'company', { gpus, from: 0, to: 1 });
+    s.add(pool, 2, 'company', { gpus, from: 1, to: 6 });
   }
 }
 

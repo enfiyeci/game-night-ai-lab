@@ -1242,11 +1242,11 @@ export const REACTIONS = {
     ],
     [
      "@garage_gpu",
-     "hearing {lab} kicked off a small run this week. i could fit it in my garage, if my garage were forty garages."
+     "hearing {lab} kicked off a small run on {gpus}. i have three. in my garage. we are not the same."
     ],
     [
      "@chip_counter",
-     "{lab} booked a modest slice of cluster time this week. The tell here is the size: small runs are how you test a recipe before you bet the company on it."
+     "{lab} booked about {gpus} of cluster time this week. The tell here is the size: small runs are how you test a recipe before you bet the company on it."
     ],
     [
      "@actually_neil",
@@ -1264,11 +1264,11 @@ export const REACTIONS = {
     ],
     [
      "@chip_counter",
-     "Mid-size run under way at {lab}, going by the cluster bookings. Big enough to ship, small enough to afford twice."
+     "Mid-size run under way at {lab}: roughly {gpus}, going by the cluster bookings. Big enough to ship, small enough to afford twice."
     ],
     [
      "@arun_builds",
-     "people keep asking me how big {lab}'s new run is. honest answer: mid-sized, and that is the interesting size. most of what you'll use every day comes out of runs like this, not the headline monsters."
+     "people keep asking me how big {lab}'s new run is. about {gpus}, which is mid-sized, and that is the interesting size. most of what you'll use every day comes out of runs like this, not the headline monsters."
     ],
     [
      "@anon_staffer",
@@ -1294,7 +1294,7 @@ export const REACTIONS = {
     ],
     [
      "@situationally",
-     "{lab} has started a large run. Count the chips, not the press releases. This is the size of run that moves a lab up the leaderboard or sinks its balance sheet."
+     "{lab} has started a large run on {gpus}. Count the chips, not the press releases. This is the size of run that moves a lab up the leaderboard or sinks its balance sheet."
     ],
     [
      "@term_sheet",
@@ -1302,7 +1302,7 @@ export const REACTIONS = {
     ],
     [
      "@yolo_calls",
-     "{lab} is doing a BIG training run. can't buy their stock so i bought the chip guys. calls 🚀"
+     "{lab} is training on {gpus}. {gpus}!! can't buy their stock so i bought the chip guys. calls 🚀"
     ],
     [
      "@water_not_watts",
@@ -1328,11 +1328,11 @@ export const REACTIONS = {
    "xl": [
     [
      "@crab_apple_leaks",
-     "{lab} is training the big one. biggest anyone has tried. not joking this time 🍎🍎🍎"
+     "{lab} is training the big one. {gpus}. biggest anyone has tried. not joking this time 🍎🍎🍎"
     ],
     [
      "@chip_counter",
-     "{lab} has started what looks like the largest single training run on record. The tell here is the memory orders: they bought everything that was left, and a few things that aren't built yet."
+     "{lab} has started what looks like the largest single training run on record: {gpus}. The tell here is the memory orders: they bought everything that was left, and a few things that aren't built yet."
     ],
     [
      "@wescallow",
@@ -1348,7 +1348,7 @@ export const REACTIONS = {
     ],
     [
      "@natsec_brief",
-     "Bottom line: {lab}'s new run is the largest on record. Good, if it stays American. Now secure the weights before someone else takes them."
+     "Bottom line: {lab} has {gpus} on one run, the largest on record. Good, if it stays American. Now secure the weights before someone else takes them."
     ],
     [
      "@not_in_my_county",
@@ -1360,7 +1360,7 @@ export const REACTIONS = {
     ],
     [
      "@situationally",
-     "{lab} has started the largest training run the world has seen. Count the gigawatts: this one run draws what a mid-sized city does. Whoever finishes a run like this first sets the terms for everyone else. That is the whole race now.",
+     "{lab} has started the largest training run the world has seen. Count the chips: {gpus}, all on one run. Whoever finishes a run like this first sets the terms for everyone else. That is the whole race now.",
      {
       "replies": [
        [

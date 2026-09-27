@@ -27,7 +27,7 @@ replies, and the world-news file.
 - **Replies** are indented under the post they answer. In the game they arrive the same day or the
   next, each answering the one before it, and Flock shows them as a thread.
 - `{model}` is the model involved (usually the player's newest); `{lab}` is the player's lab name.
-  `{name}` in the finale section is the model's name, as in `sim/data/finale.js`. `{rival}` in
+  `{gpus}` in the training-run sections is the run's size in chips ("15,000 H100s"). `{name}` in the finale section is the model's name, as in `sim/data/finale.js`. `{rival}` in
   the summit section is the rival lab the checks caught or accused.
 - Each event card already opens with its own post (`card.post` in the sim data) and may have a
   warning post; those are not repeated here. These files add the crowd's reaction around them.

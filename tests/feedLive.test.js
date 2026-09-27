@@ -7,7 +7,7 @@ import { EVENTS_6C } from '../sim/data/events6c.js';
 import { BOARD_EVENTS } from '../sim/data/boardEvents.js';
 import { PROMISES } from '../sim/data/promises.js';
 import { MEETINGS } from '../sim/data/president.js';
-import { labText, reactToEvents, reactToLandedCard, releaseDueFeed } from '../sim/feedLive.js';
+import { labText, reactToEvents, reactToLandedCard, releaseDueFeed, runGpus } from '../sim/feedLive.js';
 import { createInitialState } from '../sim/state.js';
 
 const ALL = [...EVENTS, ...EVENTS_6C, ...BOARD_EVENTS];
@@ -236,8 +236,9 @@ test('starting a training run gets posts that match its size, and bigger runs ge
       state.activeRun = { recipe: { sliders: { size } } };
       reactToEvents(state, state, [{ type: 'startRun', ok: true }]);
       runDays(state, 7);
-      const pool = shown(REACTIONS.training.start[size]);
+      const pool = new Set([...shown(REACTIONS.training.start[size])].map((text) => text.replaceAll('{gpus}', runGpus(size, state.era))));
       assert.ok(state.feed.every((post) => pool.has(post.text) || post.replyTo), `only ${size}-run posts`);
+      assert.ok(state.feed.every((post) => !post.text.includes('{gpus}')), 'the chip count is filled in');
       total += state.feed.filter((post) => !post.replyTo).length;
     }
     return total;
@@ -275,7 +276,7 @@ test('the start-run move reaches the feed', async () => {
   const recipe = { sliders: { size: 'medium', length: 'optimal', alignShare: 0.4 }, picks: { pre: [], mid: [], post: [] } };
   const out = applyActions(state, { moves: [{ type: 'startRun', recipe }] }, createRng(7));
   assert.deepEqual(out.errors ?? [], []);
-  const pool = shown(REACTIONS.training.start.medium);
+  const pool = new Set([...shown(REACTIONS.training.start.medium)].map((text) => text.replaceAll('{gpus}', runGpus('medium', 1))));
   assert.ok([...out.state.feed, ...out.state.feedQueue].some((post) => pool.has(post.text)));
 });
 
@@ -290,4 +291,12 @@ test('a start-run move that fails gets no posts', async () => {
   assert.ok(out.errors.includes('release the trained model first'), 'the run is refused');
   const pools = Object.values(REACTIONS.training.start).flatMap((pool) => [...shown(pool)]);
   assert.ok(![...out.state.feed, ...(out.state.feedQueue ?? [])].some((post) => pools.includes(post.text)));
+});
+
+test('a run is sized in the era\'s chips, the same counts the recipe screen shows', () => {
+  assert.equal(runGpus('small', 1), '2,000 A100s');
+  assert.equal(runGpus('medium', 2), '15,000 H100s');
+  assert.equal(runGpus('large', 3), '80,000 H200s');
+  assert.equal(runGpus('xl', 4), '600,000 GB200s');
+  assert.equal(runGpus('xl', 5), '1.6 million Rubins');
 });
