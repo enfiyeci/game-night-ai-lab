@@ -102,8 +102,9 @@ export function mountTraining(game, { stage, hud, overlay }) {
     }).catch((error) => console.error(error));
   }
 
+  // Only a menu opened while the model waits counts: the player opens it earlier to start the run itself.
   new MutationObserver(() => {
-    if (menuSeen || !overlay.querySelector(':scope > .menu-layer')) return;
+    if (menuSeen || !floorHint(game.state) || !overlay.querySelector(':scope > .menu-layer')) return;
     menuSeen = true;
     updateFloorHint();
   }).observe(overlay, { childList: true });
