@@ -520,7 +520,7 @@ def shot_ov_news():
 
 
 def shot_rd_news():
-    """rivalDisaster 3, Day 3: the reverse angle, from behind the podium. The President faces a standing room of
+    """rivalDisaster 3, Day 3: the reverse angle, from behind the podium. The President faces a full room of
     reporters, half of them on their feet; the monitor over the camera riser shows what he is being asked about."""
     briefing_room()
     podium((1.45, STAGE + 0.9))
