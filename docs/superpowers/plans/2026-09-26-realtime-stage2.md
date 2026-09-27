@@ -685,3 +685,35 @@ Codex `gpt-5.6-sol`, run concurrently against `origin/ui`; the mutation guard wa
 - Round 2 (resume): APPROVED, no findings.
 
 Final: 805 tests, 801 pass, 0 fail, 4 todo. Balance unchanged by the fix (the same two endings over 5 points as Tasks 1–3).
+
+## Retune (branch `realtime-tune`, owner request 2026-09-26: "lets do the tuning everything")
+
+The owner asked for compute and power sites to land mid-round after all, with the balance brought back.
+
+### What changed
+
+- Compute deliveries and power sites land on a day in the last third of the round before their old mark (`lateInRoundDay`). A Verde delivery keeps its due era's power rule. A gas site facing local opposition waits for its mark, so the opposition card lands first.
+- Contract terms run on days: a term starts when compute lands and ends on its end date. Azuria credits are spent for the days a contract ran. A mid-round delivery does not resync other contracts (the Gulf license and spot prices still sync at the mark).
+- Rivals roll one round ahead (the first round's roll comes with the initial state, `sideRng` salt 950), and a launch lands half a round after its bar fills, on average on the old mark.
+- The sites screen, the deal summary and the finance screens follow the landing days. Finance history rows use the round's day-by-day average burn and people cost (`lastRoundBurn`, `lastRoundPeople`).
+
+### How the balance was measured
+
+A 200-seed `npm run balance` run is too noisy for a ±5-point guard. Re-running the unchanged game on seeds 201–400 or 401–600 instead of 1–200 moves 2–4 endings more than 5 points. The retune was therefore measured on 600 seeds per strategy (`playRun` over seeds 1–600), comparing both ending shares and win rates (aligned, pacingDeal, pyrrhic).
+
+| Build (600 seeds, against `ui` 9d51f8e) | Endings moving more than 5 points | Win rates |
+|---|---|---|
+| Final retune (d6c9a03) | 5, all swaps between kinds of loss: speed acquihire 47.8% → 40.3% and boardRemoved 23.0% → 30.3%; balancedHighSafety misalignment 57.0% → 51.2%; balancedPush misalignment 68.7% → 62.3% and boardRemoved 1.5% → 8.7% | every strategy within 2 points |
+
+Rejected variants (against `bbaa2ab`): landing inside the round and billing on arrival moved 9 endings (early bills lower the cash each planning point sees); billing from the old date moved 6 (the runway readout missed the coming bills); landing within half a round either side of the mark moved 3–5 but raised balanced wins (compute arriving after the planning point). The owner accepted the final table on win rates: "accept it we will run another one at the end anyways".
+
+### Review record (tier 3, Codex `gpt-5.6-sol`, the pair resumed each round, mutation guard clean every round)
+
+Straight session 01a0e009-f0d0-7550-bea1-008327c3b9da; adversarial session 01a0e009-f061-7632-8dd8-9a03d5fa60c2.
+
+- Round 1 (both REVISE), fixed in 23de4a7: credits spent for the days a contract ran; a mid-round delivery syncs only itself; the opposed gas site waits for its mark; the deal summary matches its own pipeline item; the sites view sorts by landing day; the planner prorates contracts ending inside a later row. Won't fix: rechecking a training run's capacity when compute lands or ends between marks. Stage 1 keeps the check once per round on purpose, and the recheck cut the balanced strategy's win rate from 17.5% to 10.5%.
+- Round 2 (both REVISE), fixed in 57292f4: finance history uses the round's averaged burn (no phantom one-offs); the planner bills landings inside later rows and shortens early terms; the deal summary dates instant deliveries and grid reservations. Won't fix: an opposition card deferred by a full card queue can land after its site comes online; the turn-based game did the same.
+- Round 3 (both REVISE), fixed in d6c9a03: history averages the people cost too; the planner scales the Azuria credit cap by the share of the row a contract runs.
+- Round 4 (owner-approved past the 3-round cap, both REVISE), known issue, not fixed tonight (owner, 2026-09-26): when two Azuria contracts run for different parts of one future row, the planner's averaged credit cap misestimates the credits spent. It affects the finance planner's projection only; the sim, cash and balance are unaffected. The fix is to compute the cap from the days any Azuria contract runs.
+
+Final: 818 tests, 814 pass, 0 fail, 4 todo.
