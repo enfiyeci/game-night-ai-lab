@@ -133,7 +133,7 @@ def features(era):
                else [(8.1, 8.96, 2.35), (9.02, 9.88, 2.35), (9.94, 10.8, 2.35)] if e == 3  # slimmer racks clear the board
                else [(11.6, 12.6, 2.35), (12.7, 13.7, 2.35), (13.8, 14.8, 2.35)]),
         # read by the K2 office scene only (eras 2-3); the loft and the building draw their own dressing
-        lounge=e in (2, 3), plants=e >= 2, constitution=e >= 2,
+        lounge=e in (2, 3), plants=e >= 2, constitution=e >= 3,
         whiteboard="k2" if e <= 2 else "chains",
         funding=era in (2, 3), wall_screen=e == 3, bell=e == 3, evals_room=e == 3, paint=e == 3,
     )
@@ -629,16 +629,16 @@ def right_wall_decor():
 
 # Wall pieces in the right-wall plane (planeY(0)): x in room units, drawn in local wall coordinates.
 def constitution_art(x0):
-    """The framed constitution, 1.2 units wide."""
+    """The framed constitution, 1.2 units wide. The game shows it only once the lab has one (ui/office.js)."""
     a0, a1, b0, b1 = x0 * U, (x0 + 1.2) * U, -2.3 * U, -1.3 * U
     lines = "".join(f'<rect x="{a0 + 14:.1f}" y="{b0 + 30 + i * 5.2:.1f}" width="{(a1 - a0 - 28) * (0.95 if i % 3 else 0.7):.1f}" height="1.6" style="fill:{A("ink", 35)}"/>'
                     for i in range(6))
-    return (f'<rect x="{a0:.1f}" y="{b0:.1f}" width="{a1 - a0:.1f}" height="{b1 - b0:.1f}" rx="2" style="fill:{M("wood", 70, "ink")};stroke:{EDGE}"/>'
+    return (f'<g class="office-constitution"><rect x="{a0:.1f}" y="{b0:.1f}" width="{a1 - a0:.1f}" height="{b1 - b0:.1f}" rx="2" style="fill:{M("wood", 70, "ink")};stroke:{EDGE}"/>'
             f'<rect x="{a0 + 5:.1f}" y="{b0 + 5:.1f}" width="{a1 - a0 - 10:.1f}" height="{b1 - b0 - 10:.1f}" style="fill:var(--paper)"/>'
             f'<text x="{(a0 + a1) / 2:.1f}" y="{b0 + 22:.1f}" text-anchor="middle" style="font-family:\'Libre Baskerville\',Georgia,serif;font-style:italic;font-size:10.5px;fill:var(--ink)">Constitution</text>'
             f'<path d="M{a0 + 20:.1f},{b0 + 26:.1f} L{a1 - 20:.1f},{b0 + 26:.1f}" style="stroke:var(--coral);stroke-width:1"/>'
             + lines +
-            f'<circle cx="{a1 - 16:.1f}" cy="{b1 - 14:.1f}" r="5" style="fill:var(--coral);opacity:.85"/>')
+            f'<circle cx="{a1 - 16:.1f}" cy="{b1 - 14:.1f}" r="5" style="fill:var(--coral);opacity:.85"/></g>')
 
 
 def whiteboard_art(x0, x1, kind):
