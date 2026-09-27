@@ -107,18 +107,19 @@ for quiet turns in each era (`AMBIENT_POSTS`). Non-AI posts are in `everyday.md`
 
 ### Started a training run: small
 Added 2026-09-26 (owner: "add twitter stuff" about the training run). The four start sections
-follow the recipe's model size; a small run only sometimes gets noticed. Real GPU counts are left
-out until the recipe screen's chip numbers land (gn-recipe).
+follow the recipe's model size; a small run only sometimes gets noticed. `{gpus}` is the run's size
+in the era's top chips, the same count the recipe screen shows (1 compute unit = 1,000 chips; A100,
+H100, H200, GB200, then Rubin), for example "15,000 H100s" for a medium run in era 2.
 - `@crab_apple_leaks` — {lab} is training something. small. a warm-up, maybe. 🍎
-- `@garage_gpu` — hearing {lab} kicked off a small run this week. i could fit it in my garage, if my garage were forty garages.
-- `@chip_counter` — {lab} booked a modest slice of cluster time this week. The tell here is the size: small runs are how you test a recipe before you bet the company on it.
+- `@garage_gpu` — hearing {lab} kicked off a small run on {gpus}. i have three. in my garage. we are not the same.
+- `@chip_counter` — {lab} booked about {gpus} for the week. The tell here is the size: small runs are how you test a recipe before you bet the company on it.
 - `@actually_neil` — Actually, a "small" training run still costs more than most people's houses, which I've been saying.
 - `@not_a_vc` — hearing {lab} is doing a small training run. we only back labs whose small runs are big. passing.
 
 ### Started a training run: medium
 - `@crab_apple_leaks` — {lab} has a run going. not their biggest. not their smallest. they have it 🍎
-- `@chip_counter` — Mid-size run under way at {lab}, going by the cluster bookings. Big enough to ship, small enough to afford twice.
-- `@arun_builds` — people keep asking me how big {lab}'s new run is. honest answer: mid-sized, and that is the interesting size. most of what you'll use every day comes out of runs like this, not the headline monsters.
+- `@chip_counter` — Mid-size run under way at {lab}: roughly {gpus}, going by the cluster bookings. Big enough to ship, small enough to afford twice.
+- `@arun_builds` — people keep asking me how big {lab}'s new run is. about {gpus}, which is mid-sized, and that is the interesting size. most of what you'll use every day comes out of runs like this, not the headline monsters.
 - `@anon_staffer` — can't say where i work but the training dashboard is the only tab anyone has open this week.
 - `@evalmaxxer` — Heard {lab} started a new run. Reminder for when it ships: judge the results, not the size of the run. Error bars will be provided.
 - `@unhinged_memes` — me: waiting for my code to compile. {lab} engineers: waiting weeks for a loss curve. same energy, bigger electric bill.
@@ -126,24 +127,24 @@ out until the recipe screen's chip numbers land (gn-recipe).
 ### Started a training run: large
 - `@crab_apple_leaks` — {lab} just lit up a very big cluster. this is not a warm-up 🍎
 - `@megawatt_mood` — One of {lab}'s sites jumped its power draw overnight and has held it there since. That's a training run, y'all. A big one.
-- `@situationally` — {lab} has started a large run. Count the chips, not the press releases. This is the size of run that moves a lab up the leaderboard or sinks its balance sheet.
+- `@situationally` — {lab} has started a large run on {gpus}. Count the chips, not the press releases. This is the size of run that moves a lab up the leaderboard or sinks its balance sheet.
 - `@term_sheet` — hearing {lab} just put a huge chunk of its cash into one training run. brave or desperate. the next round will tell us which.
-- `@yolo_calls` — {lab} is doing a BIG training run. can't buy their stock so i bought the chip guys. calls 🚀
+- `@yolo_calls` — {lab} is training on {gpus}. {gpus}!! can't buy their stock so i bought the chip guys. calls 🚀
 - `@water_not_watts` — a large training run at {lab} means months of cooling water pulled from somewhere dry. ask them which aquifer. they won't say.
 - `@lunt_rational` — {lab} has begun another large training run. Each one is a Bet placed on behalf of everyone alive by a few hundred people who did not ask us. I would like the record to show that I objected before it finished, since objecting afterwards has never once worked.
   - `@bex_entropy` — the record shows you objected. the loss curve does not care. ⚡
   - `@lunt_rational` — Yes. That is the complaint.
 
 ### Started a training run: extra large
-- `@crab_apple_leaks` — {lab} is training the big one. biggest anyone has tried. not joking this time 🍎🍎🍎
-- `@chip_counter` — {lab} has started what looks like the largest single training run on record. The tell here is the memory orders: they bought everything that was left, and a few things that aren't built yet.
+- `@crab_apple_leaks` — {lab} is training the big one. {gpus}. biggest anyone has tried. not joking this time 🍎🍎🍎
+- `@chip_counter` — {lab} has started what looks like the largest single training run on record: {gpus}. The tell here is the memory orders: they bought everything that was left, and a few things that aren't built yet.
 - `@wescallow` — congrats to {lab} on starting what i hear is a very ambitious run. scale isn't everything. we have something fun planned too :)
 - `@bex_entropy` — {lab} just started the BIGGEST RUN IN HISTORY. the universe wants to compute and {lab} is letting it. ACCELERATE ⚡⚡⚡
 - `@ilse_interp` — i hear {lab} has started a very large run. i hope they've planned how to look inside what comes out. the bigger the model, the less anyone understands it by default.
-- `@natsec_brief` — Bottom line: {lab}'s new run is the largest on record. Good, if it stays American. Now secure the weights before someone else takes them.
+- `@natsec_brief` — Bottom line: {lab} has {gpus} on one run, the largest on record. Good, if it stays American. Now secure the weights before someone else takes them.
 - `@not_in_my_county` — The data centre on the ridge has run at full power every night this week. The hum is back. Somebody tell {lab} we can hear their "historic run" from the porch.
 - `@wake_up_sheeple` — BIGGEST AI TRAINING RUN EVER starts the SAME WEEK power bills go up?? coincidence?? do your research
-- `@situationally` — {lab} has started the largest training run the world has seen. Count the gigawatts: this one run draws what a mid-sized city does. Whoever finishes a run like this first sets the terms for everyone else. That is the whole race now.
+- `@situationally` — {lab} has started the largest training run the world has seen. Count the chips: {gpus}, all on one run. Whoever finishes a run like this first sets the terms for everyone else. That is the whole race now.
   - `@avasseur` — Nope. Bigger is not smarter. A larger autocomplete is still an autocomplete. Paper linked.
   - `@situationally` — You said that three runs ago.
   - `@avasseur` — And I was right three runs ago.

@@ -6,12 +6,13 @@ import { mountOffice } from './office.js';
 import { SCENARIOS, scenarioHistory } from './logic/scenarios.js';
 import { powerSitesAvailable, queueScreenAvailable } from './logic/compute.js';
 import { meetingFor } from './logic/president.js';
-import { openMenu } from './menu.js';
+import { openMenu, registerMenuHandler } from './menu.js';
 import { openBudget } from './screens/budget.js';
 import { mountRecipe, openRecipe } from './screens/recipe.js';
 import { mountRelease, openRelease } from './screens/release.js';
 import { mountReveal, showReveal } from './screens/reveal.js';
 import { mountSound, openSound } from './screens/sound.js';
+import { mountArchive, openArchive } from './screens/archive.js';
 import { music } from './music.js';
 import { releaseDraft, releasePayload } from './logic/release.js';
 import {
@@ -31,6 +32,7 @@ import { mountBriefing } from './screens/briefing.js';
 import { mountFeed } from './screens/feed.js';
 import { mountEnding } from './screens/end.js';
 import { mountFinance, openFinance } from './screens/finance.js';
+import { openComputeInfo } from './screens/computeInfo.js';
 import { createCollection } from './logic/collection.js';
 import { lumenEpilogue } from '../sim/lumen.js';
 import { mountBoard, openBoard } from './screens/board.js';
@@ -90,7 +92,13 @@ if (params.has('paused')) game.clock.setSpeed(0);
 const showTitle = titleShows({ search: location.search, hash: location.hash, ending: game.state.ending });
 if (showTitle) game.clock.pause('title');
 game.clock.start();
+// The portrait-phone cover (ui/styles.css, same media query) hides the game, so the story waits behind it.
+const portrait = globalThis.matchMedia?.('(orientation: portrait) and (pointer: coarse)');
+const holdForPortrait = () => { if (portrait?.matches) game.clock.pause('portrait'); else game.clock.resume('portrait'); };
+portrait?.addEventListener?.('change', holdForPortrait);
+holdForPortrait();
 const collection = createCollection(browserStorage());
+game.collection = collection; // Game › Endings found shows its count (owner pick 3B)
 if (showTitle) {
   mountTitle(game, {
     stage,
@@ -115,6 +123,7 @@ mountReveal(game, overlay, {
   },
 });
 mountSound(game, overlay);
+mountArchive(game, overlay, { collection });
 mountPresident(game, overlay);
 mountHistory(game, overlay);
 mountAutomation(game, overlay);
@@ -150,6 +159,7 @@ const intro = mountIntro(game, { stage, overlay, storage: browserStorage() });
 if (isFreshStart(game.state, { scenario: scenarioName, hash: location.hash }) && !tourSeen(browserStorage())) intro.start();
 addEventListener('hashchange', () => { if (location.hash === '#tour' && !game.state.ending) intro.start(); });
 if (location.hash === '#tour' && !game.state.ending) intro.start();
+registerMenuHandler('howto', () => { if (!game.state.ending) intro.start(); }); // Game › How to play (owner pick 3B)
 
 function stagePoint(event) {
   const rect = stage.getBoundingClientRect();
@@ -166,8 +176,22 @@ office.addEventListener('click', (event) => {
     openArticle(game, overlay);
     return;
   }
-  if (!event.target.closest?.('#floor') || blocked()) return;
+  // A waiting decision card does not block the floor menu; it steps aside and the story stays paused (owner pick 2A).
+  // The phone and dialogs still block it.
+  if (!event.target.closest?.('#floor') || overlay.querySelector('.dialog-layer, .ev-phone, .screenwall-layer, .intro-layer:not(.intro-open)')) return;
+  events.stepAside();
   openMenu(game, stagePoint(event), { overlay });
+});
+
+// Space pauses and resumes, 1 / 2 / 4 set the speed, while nothing else has the keyboard (no dialog, menu or card).
+document.addEventListener('keydown', (event) => {
+  if (event.defaultPrevented || event.repeat || event.metaKey || event.ctrlKey || event.altKey) return;
+  if (blocked() || overlay.querySelector('.menu-layer, .title-layer')) return; // the title screen keeps its own pause
+  if (event.target.closest?.('input, textarea, select, button, [role="button"], [contenteditable="true"]')) return;
+  if (event.key === ' ') {
+    event.preventDefault();
+    game.clock.togglePause();
+  } else if (['1', '2', '4'].includes(event.key)) game.clock.setSpeed(Number(event.key));
 });
 
 office.addEventListener('keydown', (event) => {
@@ -226,6 +250,14 @@ async function openDebugRoute() {
     openEmergency(game, overlay);
     return;
   }
+  if (location.hash === '#money' || location.hash === '#money-changes') {
+    openFinance(game, overlay, { view: location.hash === '#money' ? 'month' : 'changes' });
+    return;
+  }
+  if (location.hash === '#compute-info' || location.hash === '#compute-race') {
+    openComputeInfo(game, overlay, { view: location.hash === '#compute-race' ? 'race' : 'where' });
+    return;
+  }
   if (location.hash === '#finance' || location.hash === '#books') {
     openFinance(game, overlay, { view: location.hash === '#books' ? 'books' : 'timeline' });
     return;
@@ -252,6 +284,10 @@ async function openDebugRoute() {
   }
   if (location.hash === '#history') {
     openHistory(game, overlay);
+    return;
+  }
+  if (location.hash === '#archive') {
+    openArchive(game, overlay, { collection });
     return;
   }
   if (location.hash === '#race') {

@@ -3,11 +3,15 @@
 // same plan as an era-by-era ledger next to the actual history. Goals and rounds are a plan only; they queue no move.
 // The one exception is "Promise it to the board": keeping the plan with it switched on makes the board promise at once.
 import { ERAS } from '../../sim/data/eras.js';
-import { roundWord } from '../../sim/time.js';
+import { roundWord, storyDate } from '../../sim/time.js';
 import { openDialog } from '../components/dialog.js';
 import { teamPanel } from '../components/team.js';
 import { registerMenuHandler } from '../menu.js';
-import { computeAmount, money } from '../logic/format.js';
+import { computeAmount, money, months as monthsText, storyDayForTurn } from '../logic/format.js';
+import { billChanges, monthBill } from '../logic/money.js';
+import { openDeals } from './compute.js';
+import { openBudget } from './budget.js';
+import { openAutomation } from './automation.js';
 
 // Compute is shown in the unit of the era the player is in: later eras' power units would hint at what is to come.
 const amountNow = (state, units, era) => computeAmount(units, Math.min(era, state.era));
@@ -53,6 +57,11 @@ function currentPlan(game) {
   const raises = Object.fromEntries(roundEras(game.state).filter((era) => saved.raises?.[era]).map((era) => [era, true]));
   return { goals, raises };
 }
+
+// The Money screen's four views (owner pick 2026-09-26: 2A "This month" and 2B "What changed" join the planner's two).
+const VIEWS = [['month', 'This month'], ['changes', 'What changed'], ['timeline', 'Years ahead'], ['books', 'The books']];
+const PRICE_WORDS = { premium: 'at the premium price', market: 'at the market price', undercut: 'at the undercut price', free: 'on the free tier' };
+const BUDGET_WORDS = { training: 'training', security: 'security', product: 'product', talent: 'talent' };
 
 export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
   const state = game.state;
@@ -199,6 +208,160 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
     });
   }
 
+  function tabs(current) {
+    const row = element('div', 'finance-tabs');
+    row.setAttribute('role', 'tablist');
+    for (const [key, label] of VIEWS) {
+      const tab = element('button', key === current ? 'on' : '', label);
+      tab.type = 'button';
+      tab.setAttribute('role', 'tab');
+      tab.setAttribute('aria-selected', `${key === current}`);
+      tab.addEventListener('click', () => { if (key !== current) SHOW[key](); });
+      row.append(tab);
+    }
+    return row;
+  }
+
+  // 2A: this month's money in and out, one line per cause, each with the decision behind it and a way to change it.
+  function showMonth() {
+    const bill = monthBill(state);
+    const body = element('div', 'finance-month-body');
+    body.append(tabs('month'));
+    const cols = element('div', 'money-bill');
+    const top = Math.max(1, bill.moneyIn, bill.moneyOut);
+    const line = (label, amount, kind, because, jump) => {
+      const row = element('div', 'money-line');
+      // A net compute bill can fall below zero (cloud credits and idle resale): then it is money in.
+      if (amount < 0) { kind = kind === 'in' ? 'out' : 'in'; amount = -amount; }
+      row.append(element('span', 'money-what', label), element('span', `money-amt ${kind}`, `${kind === 'in' ? '+' : '−'}${money(amount)}`));
+      const why = element('span', 'money-because');
+      why.append(element('span', '', because));
+      if (jump) {
+        const go = element('button', 'money-jump', jump.label);
+        go.type = 'button';
+        go.addEventListener('click', () => { opened.close(); jump.open(game, overlayRoot); });
+        why.append(go);
+      }
+      const meter = element('span', 'money-meter');
+      const fill = element('i', kind);
+      fill.style.width = `${Math.min(100, (amount / top) * 100)}%`;
+      meter.append(fill);
+      row.append(why, meter);
+      return row;
+    };
+    const incol = element('div');
+    const inHead = element('h5', 'in');
+    inHead.append(element('span', '', 'Money in'), element('span', '', `+${money(bill.moneyIn)} a month`));
+    incol.append(inHead);
+    if (bill.income.length === 0) incol.append(element('p', 'money-empty', 'Nothing yet. Release a model to start earning.'));
+    for (const m of bill.income) {
+      incol.append(line(m.label, m.amount, 'in', `${(m.users / 1e6).toFixed(1)}M ${m.channel === 'enterprise' ? 'business' : m.channel} users ${PRICE_WORDS[m.price] ?? `at the ${m.price} price`} you set on release`));
+    }
+    const outcol = element('div');
+    const outHead = element('h5', 'out');
+    outHead.append(element('span', '', 'Money out'), element('span', '', `−${money(bill.moneyOut)} a month`));
+    outcol.append(outHead);
+    for (const c of bill.costs) {
+      if (c.key === 'compute') {
+        const idle = Math.round(c.idleUnits);
+        const because = `${Math.round(c.units)} units under contract.${idle > 0 ? ` ${idle} sit idle until a training run needs them (about ${money(c.idleCost)} of this).` : ''}`;
+        outcol.append(line('Compute', c.amount, 'out', because, { label: 'Compute deals', open: openDeals }));
+      } else if (c.key === 'budget') {
+        const split = c.split.map((part) => `${BUDGET_WORDS[part.word]} ${Math.round(part.share * 100)}%`).join(', ');
+        outcol.append(line('Lab budget', c.amount, 'out', `Your split: ${split}`, { label: 'Plan the budget', open: openBudget }));
+      } else if (c.key === 'reviewers') {
+        outcol.append(line('Human reviewers', c.amount, 'out', 'The people checking your AI’s work', { label: 'Who does the work', open: openAutomation }));
+      } else {
+        outcol.append(line('Staff and office', c.amount, 'out', 'Grows by a quarter each era. Not a choice.'));
+      }
+    }
+    cols.append(incol, outcol);
+    const total = element('div', `money-total ${bill.net < 0 ? 'out' : 'in'}`);
+    const words = bill.net < 0
+      ? `You lose this much each month. At this rate the cash lasts ${monthsText(bill.runway)}.`
+      : 'You earn more than you spend each month.';
+    total.append(element('span', '', words), element('b', '', `${bill.net < 0 ? '−' : '+'}${money(Math.abs(bill.net))}`));
+    body.append(cols, total);
+    opened = openDialog(overlayRoot, {
+      title: 'Money',
+      subtitle: `${storyDate(state.day).label} · what comes in, what goes out, and which decision set it`,
+      body,
+      okLabel: 'Close',
+      onOk: () => opened.close(),
+    });
+    opened.classList.add('finance-money', 'finance-month');
+  }
+
+  // 2B: money in and out over the run, with a numbered mark wherever a decision moved it.
+  function showChanges() {
+    const history = game.financeHistory;
+    const bill = monthBill(state);
+    const rows = [...history.map((r) => ({ month: r.month, end: r.month + r.months, revenue: r.revenue, burn: r.burn })),
+      { month: state.monthsElapsed, end: state.monthsElapsed + 1, revenue: bill.moneyIn, burn: bill.moneyOut }];
+    const changes = billChanges(history, state.models, state.monthsElapsed, state.turn);
+    const body = element('div', 'finance-changes-body');
+    body.append(tabs('changes'));
+    const W = 560, H = 300, padL = 56, padR = 12, top = 14, bottom = 26;
+    const m0 = 0, m1 = Math.max(12, rows.at(-1).end);
+    const peak = Math.max(50, ...rows.map((r) => Math.max(r.revenue, r.burn))) * 1.08;
+    const unit = 10 ** Math.floor(Math.log10(peak));
+    const hi = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10].map((k) => k * unit).find((c) => c >= peak);
+    const x = (m) => padL + ((m - m0) / (m1 - m0)) * (W - padL - padR);
+    const y = (v) => top + (1 - v / hi) * (H - top - bottom);
+    const step = (key) => rows.map((r, i) => `${i ? 'V' : `M${x(r.month)} `}${y(r[key])} H${x(r.end)}`).join(' ');
+    let svg = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Money in and out each month since the start">`;
+    for (const v of [0, hi / 2, hi]) {
+      svg += `<line x1="${padL}" x2="${W - padR}" y1="${y(v)}" y2="${y(v)}" style="stroke:color-mix(in oklab, var(--ink) ${v ? 8 : 25}%, transparent)"/>`;
+      svg += text(padL - 6, y(v) + 3.5, v ? `${money(v)}` : '$0', '', 'end');
+    }
+    for (let m = 0; m <= m1; m += 12) svg += text(x(m), H - 8, `Year ${m / 12 + 1}`, 'fill:var(--ink);font-weight:900');
+    svg += `<path d="${step('burn')}" style="fill:none;stroke:var(--coral);stroke-width:3"/>`;
+    svg += `<path d="${step('revenue')}" style="fill:none;stroke:var(--teal);stroke-width:3"/>`;
+    const list = element('ol', 'money-changes');
+    changes.forEach((c, i) => {
+      const at = rows.find((r) => r.month === c.month) ?? rows.at(-1);
+      const cy = c.kind === 'release' || c.kind === 'raise' ? y(at.revenue) : y(at.burn);
+      svg += `<g><circle cx="${x(c.month)}" cy="${cy}" r="9" style="fill:var(--paper);stroke:var(--wood);stroke-width:2.5"/><text x="${x(c.month)}" y="${cy + 3.5}" text-anchor="middle" style="font-size:10px;font-weight:900;fill:var(--ink)">${i + 1}</text></g>`;
+      const item = element('li');
+      item.append(element('span', 'money-when', storyDate(storyDayForTurn(c.turn)).label)); // the HUD clock's own calendar
+      if (c.kind === 'release') {
+        item.append(element('b', '', `Released ${c.name}`), element('span', 'in', c.to == null || c.from == null ? 'users arriving' : `money in ${money(c.from)} → ${money(c.to)} a month`));
+      } else if (c.kind === 'raise') {
+        item.append(element('b', '', 'Raised a round'), element('span', 'in', `+${money(c.amount)} once`));
+      } else if (c.kind === 'budget') {
+        item.append(element('b', '', 'Changed the lab budget'), element('span', c.to > c.from ? 'out' : 'in', `${money(c.from)} → ${money(c.to)} a month`));
+      } else {
+        const what = c.unitsTo > c.unitsFrom ? `Compute arrived (${c.unitsFrom} → ${c.unitsTo} units)` : c.unitsTo < c.unitsFrom ? `Compute contract ended (${c.unitsFrom} → ${c.unitsTo} units)` : 'Compute bill moved';
+        item.append(element('b', '', what), element('span', c.to > c.from ? 'out' : 'in', `compute ${money(c.from)} → ${money(c.to)} a month`));
+      }
+      list.append(item);
+    });
+    svg += `<line x1="${x(state.monthsElapsed)}" x2="${x(state.monthsElapsed)}" y1="${top}" y2="${H - bottom}" style="stroke:var(--ink);stroke-width:1.5"/>` + text(x(state.monthsElapsed) - 4, top + 10, 'Now', 'fill:var(--ink);font-weight:900', 'end');
+    svg += '</svg>';
+    const chart = element('div', 'money-chart');
+    chart.innerHTML = svg;
+    const key = element('div', 'finance-key money-key');
+    for (const [swatch, label] of [['revenue', 'Money in each month'], ['bill', 'Money out each month']]) {
+      const item = element('span');
+      item.append(element('i', `finance-swatch ${swatch}`), document.createTextNode(label));
+      key.append(item);
+    }
+    chart.append(key);
+    const side = element('div', 'money-changes-side');
+    side.append(changes.length ? list : element('p', 'money-empty', 'Nothing has moved the bill yet. Sign compute, change the budget or release a model and it shows up here.'));
+    const grid = element('div', 'money-changes-grid');
+    grid.append(chart, side);
+    body.append(grid);
+    opened = openDialog(overlayRoot, {
+      title: 'Money',
+      subtitle: 'Every time one of your decisions moved the monthly bill',
+      body,
+      okLabel: 'Close',
+      onOk: () => opened.close(),
+    });
+    opened.classList.add('finance-money', 'finance-changes');
+  }
+
   function showTimeline() {
     const history = game.financeHistory;
     const W = 788, padL = 62, padR = 10;
@@ -222,7 +385,7 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
     }
     const note = element('p', 'finance-note', `Revenue is held at today's level; the dotted line grows today's users at the game's own rate, with no new releases. Compute bills are after cloud credits, and today's spot cover and idle resale are held at today's level. Compute you haven't signed is billed at the base price, ${unitPrice} a unit each month, from next ${roundWord(state.era)}; a letter of intent counts only the 30% it is sure to deliver. Rounds raise at today's valuation.`);
     const body = element('div', 'finance-timeline-body');
-    body.append(charts, key, note);
+    body.append(tabs('timeline'), charts, key, note);
     const team = element('div');
     const panel = element('div', 'finance-plan');
 
@@ -232,9 +395,7 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
       left: { title: 'Team', content: team },
       right: { title: 'This plan', content: panel },
       body,
-      backLabel: 'The books',
       okLabel: 'Keep this plan',
-      onBack: showBooks,
       onOk: keep,
     });
     opened.classList.add('finance-timeline');
@@ -383,9 +544,7 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
       title: 'The books, era by era',
       subtitle: 'What happened, then the plan · every figure a monthly average unless it says otherwise',
       body,
-      backLabel: 'Timeline',
       okLabel: 'Keep this plan',
-      onBack: showTimeline,
       onOk: keep,
     });
     opened.classList.add('finance-books');
@@ -481,13 +640,13 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
       const v = verdict(p, state);
       const foot = element('p', 'finance-note', `Plan columns hold revenue at today's ${perMonth(p.rows[0].revenue)}, bill unsigned compute at ${unitPrice} a unit each month, and raise rounds at today's valuation. `);
       foot.append(element('b', v.good ? 'in' : 'out', v.text));
-      body.replaceChildren(table, foot);
+      body.replaceChildren(tabs('books'), table, foot);
     };
     render();
   }
 
-  if (view === 'books') showBooks();
-  else showTimeline();
+  const SHOW = { month: showMonth, changes: showChanges, timeline: showTimeline, books: showBooks };
+  (SHOW[view] ?? showTimeline)();
   return opened;
 }
 

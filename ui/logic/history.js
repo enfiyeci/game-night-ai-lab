@@ -30,9 +30,10 @@ export const CONTROVERSY_HANDLES = [
   '@ml_hobbyist',
   '@pm_everywhere',
   '@skeptic_sam',
+  '@teacher_mo',
 ];
 
-export const NON_CRITICAL_REACTION_HANDLES = ['@lodestar_eng', '@early_adopter'];
+export const NON_CRITICAL_REACTION_HANDLES = ['@lodestar_eng', '@early_adopter', '@night_shift_nurse', '@grad_student_42', '@small_biz_rosa'];
 
 const mean = (values) => values.length > 0
   ? values.reduce((sum, value) => sum + value, 0) / values.length

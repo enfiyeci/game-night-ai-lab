@@ -1,4 +1,5 @@
 import { dressingView } from './logic/automation.js';
+import { constitutionOnWall } from './logic/office.js';
 
 const ADVISORS = ['research', 'safety', 'cfo', 'policy'];
 const MOODS = ['calm', 'uneasy', 'alarmed'];
@@ -42,6 +43,12 @@ function setMoods(svg, fx, anchors, state) {
       marker.innerHTML = markerSvg(mood === 'alarmed');
       marker.style.left = `${x + 22}px`;
       marker.style.top = `${y}px`;
+      // Clicking the "!" does what clicking the person does (the briefing listens for clicks on the person).
+      // Not during the team tour, which lets clicks through on its last step (ui/screens/intro.js).
+      marker.addEventListener('click', () => {
+        if (document.querySelector('#overlay .intro-layer')) return;
+        person.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      });
       fx.append(marker);
     }
   }
@@ -105,6 +112,7 @@ export async function mountOffice(root, fx, game) {
   async function render() {
     const state = game.state;
     if (current?.era === state.era) {
+      current.svg.classList.toggle('shows-constitution', constitutionOnWall(state));
       setMoods(current.svg, fx, current.anchors, state);
       dressOffice(fx, current.anchors, state);
       return;
@@ -121,6 +129,7 @@ export async function mountOffice(root, fx, game) {
     if (version !== loadVersion) return;
     const previous = current;
     current = { era: state.era, ...loaded };
+    current.svg.classList.toggle('shows-constitution', constitutionOnWall(state));
     setMoods(current.svg, fx, current.anchors, state);
     dressOffice(fx, current.anchors, state);
     root.append(current.svg);
