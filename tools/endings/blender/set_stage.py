@@ -77,7 +77,7 @@ def shot_ov_launch():
                          depth=0.3, border=0.12, bezel="#0A0A0C")
     seating()
     # the presenter, small, stage left of centre, in a hard spot
-    P.person((-3.2, SY + 2.2, SH), facing=195, height=1.78, coat="#16171B", hair="#2A211C", seed=5)
+    P.person((-3.2, SY + 2.2, SH), facing=195, height=1.78, coat="#16171B", hair="#2A211C", skin="#2A211C", seed=5)   # a dark shape, no face
     kit.spot((-1.0, SY + 1.0, 10.3), (-3.2, SY + 2.2, SH + 1.0), 3500, kit.kelvin(5200), angle=9, blend=0.3)
     for x in (-9, -3, 3, 9):   # beams from the truss down onto the deck
         kit.spot((x, SY + 1.0, 10.3), (x * 0.6, SY + 4.0, SH), 900, kit.kelvin(4200), angle=14, blend=0.5)

@@ -136,9 +136,8 @@ def shot_pd_news():
         place_card(name, (x, ty + 0.36, 0.79))
         folder((x, ty - 0.2, 0.79))
         kit.place("dining_chair_02", (x, ty - 0.85, 0))
-        signer = P.person((x, ty - 0.72, 0.0), facing=0, pose="sit", height=1.76, coat=["#1D2230", "#2B2F36", "#23262C"][i % 3],
-                          hair=hair, skin=hair, seed=30 + i)
-        P.hair_back(signer, 1.76, "sit", hair)
+        P.person((x, ty - 0.72, 0.0), facing=0, pose="sit", height=1.76, coat=["#1D2230", "#2B2F36", "#23262C"][i % 3],
+                 hair=hair, skin=hair, seed=30 + i)       # skin in the hair's tone: from behind, one dark head
         flag((x, ty + 1.4), COLOURS[name])
     # the press pen in front: photographers from behind
     rng = random.Random(3)
@@ -156,7 +155,7 @@ def shot_lb_summit():
     """leftBehind 5, Year 1: from the back of the hall, over one empty plastic chair with a paper sign for your lab,
     the round table where the other parties draft the rules under their flags; the hall screen names the summit."""
     hall(sun_strength=0.7, warm=4200)
-    face = hall_screen("lb-summit", (168, 100, 944, 290), width=6.8, z=4.8)
+    face = hall_screen("lb-summit", (60, 96, 1060, 290), width=7.2, z=4.8)
     cx, cy, R = 1.2, 12.6, 2.1
     kit.cyl((cx, cy, 0.76), R, 0.05, kit.tex("fine_grained_wood", 0.6, tint="#8A5A36", name="tabletop"), verts=64)
     kit.cyl((cx, cy, 0.37), 0.5, 0.74, kit.mat("#3A2415", 0.4), verts=32)

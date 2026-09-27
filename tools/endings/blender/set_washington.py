@@ -321,11 +321,9 @@ def shot_rb_hearing():
     dais()
     witness_table()
     gallery(rows=(5.0, 4.1, 3.2), skip=((0, 5), (0, 6), (0, 4)))
-    ceo = P.person((0.6, 6.1, 0.0), facing=0, pose="sit", height=1.78, coat="#1D2230", hair="#3A2C22", skin="#3A2C22", seed=11)
-    P.hair_back(ceo, 1.78, "sit", "#3A2C22")
-    aide = P.person((-0.6, 6.1, 0.0), facing=8, pose="sit", height=1.66, coat="#2B2F36", hair="#141212", skin="#141212", seed=12,
-                    hold="paper")
-    P.hair_back(aide, 1.66, "sit", "#141212")
+    P.person((0.6, 6.1, 0.0), facing=0, pose="sit", height=1.78, coat="#1D2230", hair="#3A2C22", skin="#3A2C22", seed=11)
+    P.person((-0.6, 6.1, 0.0), facing=8, pose="sit", height=1.66, coat="#2B2F36", hair="#141212", skin="#141212", seed=12,
+             hold="paper")
     easel((2.9, DAIS - 1.9, 1.62), -8, [
         ("“We will spend 20% of our", 0.2, 0.075, kit.FONT_SERIF), ("compute on safety, whatever", 0.1, 0.075, kit.FONT_SERIF),
         ("our rivals do.”", 0.0, 0.075, kit.FONT_SERIF), ("KESTREL LABS PLEDGE · SIGNED BY ITS FOUNDER", -0.2, 0.034, kit.FONT)])
@@ -515,9 +513,8 @@ def shot_ov_news():
     briefing_room()
     podium()
     face = side_screens("ov-news", (56, 4, 1168, 657), live_side=1, other="THE PRESIDENT")
-    pres = P.person((0.0, STAGE + 1.3, 0.24), facing=292, height=1.9, coat="#161B28", hair="#1E1A18", skin="#2A1E18",
-                    build=1.2, seed=90)
-    P.hair_back(pres, 1.9, "stand", "#1E1A18")
+    P.person((0.0, STAGE + 1.3, 0.24), facing=292, height=1.9, coat="#161B28", hair="#1E1A18", skin="#1E1A18", build=1.2,
+             seed=90)
     rng = random.Random(4)
     pts = []
     for r in range(7):
