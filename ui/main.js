@@ -10,7 +10,9 @@ import { openMenu } from './menu.js';
 import { openBudget } from './screens/budget.js';
 import { mountRecipe, openRecipe } from './screens/recipe.js';
 import { mountRelease, openRelease } from './screens/release.js';
-import { mountReveal } from './screens/reveal.js';
+import { mountReveal, showReveal } from './screens/reveal.js';
+import { mountSound, openSound } from './screens/sound.js';
+import { music } from './music.js';
 import { releaseDraft, releasePayload } from './logic/release.js';
 import {
   mountCompany,
@@ -37,6 +39,8 @@ import { mountHazard } from './screens/hazard.js';
 import { mountAutomation, openAutomation } from './screens/automation.js';
 import { mountScreenWall } from './screens/screenwall.js';
 import { mountRacks } from './screens/racks.js';
+import { mountTitle } from './screens/title.js';
+import { cleanLabName, titleShows } from './logic/title.js';
 
 const params = new URLSearchParams(location.search);
 
@@ -66,7 +70,7 @@ const scenarioName = params.get('scenario') ?? 'start';
 const buildScenario = SCENARIOS[scenarioName] ?? SCENARIOS.start;
 const initialState = buildScenario(seed);
 const game = createGame({ seed, state: initialState, history: scenarioHistory(initialState) });
-if (params.has('lab')) game.state.labName = params.get('lab');
+if (cleanLabName(params.get('lab'))) game.state.labName = cleanLabName(params.get('lab')); // same cap as the title screen
 if (location.hash === '#board-warning') delete game.state.flags.boardQuiet; // debug still: the warning without going quiet
 
 const stage = document.querySelector('#stage');
@@ -80,11 +84,34 @@ game.clock = createClock(game);
 await mountOffice(office, fx, game).catch((error) => console.error(error));
 game.clock.watch(overlay);
 if (params.has('paused')) game.clock.setSpeed(0);
+// The title screen shows on a plain visit; debug links (?scenario=, a #route, ?notitle) go straight into the game.
+const showTitle = titleShows({ search: location.search, hash: location.hash, ending: game.state.ending });
+if (showTitle) game.clock.pause('title');
 game.clock.start();
+const collection = createCollection(browserStorage());
+if (showTitle) {
+  mountTitle(game, {
+    stage,
+    overlay,
+    collection,
+    music,
+    openSound,
+    onStart: () => {
+      game.clock.resume('title');
+      document.dispatchEvent(new CustomEvent('ai-lab:start')); // the guided intro starts here
+    },
+  });
+}
 mountCompany(game, overlay);
 mountRecipe(game, overlay);
 mountRelease(game, overlay);
-mountReveal(game, overlay);
+mountReveal(game, overlay, {
+  show(root, reveal) {
+    music.duck(true);
+    return showReveal(root, { ...reveal, onClose: () => music.duck(false) });
+  },
+});
+mountSound(game, overlay);
 mountPresident(game, overlay);
 mountHistory(game, overlay);
 mountAutomation(game, overlay);
@@ -109,7 +136,7 @@ function browserStorage() {
 
 // Play again starts a fresh run: drop the debug seed and scenario so the run counter picks the next seed.
 const ending = mountEnding(game, overlay, {
-  collection: createCollection(browserStorage()),
+  collection,
   onPlayAgain: () => location.assign(location.pathname),
   lumenNote: (state) => lumenEpilogue(state),
 });

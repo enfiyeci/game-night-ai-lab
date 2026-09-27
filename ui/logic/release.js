@@ -227,3 +227,28 @@ export const salesEstimate = (model) => (model.channel === 'open' ? 0 : (model.n
 
 // The flagship this launch was compared with: the earlier model whose score set the bar.
 export const flagshipBefore = (state, model) => state.models.find((other) => other.releaseSequence !== model.releaseSequence && other.launchScore === model.bar);
+
+export const oneDecimal = (value) => Math.round(value * 10) / 10;
+
+// The launch leaderboard (owner pick 2026-09-26: reveal option B plus the leaderboard climb).
+// Scores are averages of the four capability benchmarks. The sim keeps one strength per rival lab
+// and scores the "best rival" bars from the leading lab, so each lab's average is the best-rival
+// average scaled by its strength against the leader's. Your two latest earlier models are listed
+// with their own launch averages.
+export function leaderboard(state, model) {
+  const caps = model.launch.benchmarks.filter((row) => row.kind === 'cap');
+  const rivalAverage = caps.reduce((sum, row) => sum + row.rival, 0) / caps.length;
+  const leader = state.rivals.reduce((best, rival) => (rival.capability > best.capability ? rival : best));
+  const rivals = state.rivals.map((rival) => ({ name: rival.name, kind: 'rival', score: oneDecimal(rivalAverage * rival.capability / leader.capability) }));
+  const own = state.models
+    .map((other, index) => ({ other, order: other.releaseSequence ?? index }))
+    .filter(({ other }) => other.releaseSequence !== model.releaseSequence && other.launch)
+    .sort((a, b) => a.order - b.order)
+    .slice(-2)
+    .map(({ other }) => ({ name: other.name, kind: 'own', score: oneDecimal(other.launch.capAvg) }));
+  return {
+    leader: leader.name,
+    rows: [...rivals, ...own].sort((a, b) => b.score - a.score),
+    mine: { name: model.name, kind: 'new', score: oneDecimal(model.launch.capAvg) },
+  };
+}

@@ -4,8 +4,13 @@ import { rank } from '../sim/rivals.js';
 import { ROUND_DAYS, roundWord, storyDate } from '../sim/time.js';
 import { compute, money, months, project, users } from './logic/format.js';
 import { badgeCounts } from './logic/training.js';
+import { sfx } from './sfx.js';
+import { sound } from './sound.js';
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const SPEAKER_ICON = (muted) => `<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 6 h2.6 l3.4 -3 v10 l-3.4 -3 h-2.6 z" style="fill:currentColor"/>${muted
+  ? '<path d="M11 6 l4 4 M15 6 l-4 4" style="stroke:currentColor;stroke-width:1.6;stroke-linecap:round;fill:none"/>'
+  : '<path d="M10.8 5.6 q1.6 2.4 0 4.8 M12.6 4 q3 4 0 8" style="stroke:currentColor;stroke-width:1.5;stroke-linecap:round;fill:none"/>'}</svg>`;
 const PAUSE_ICON = '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="1" width="3" height="10" rx="1" style="fill:currentColor"/><rect x="7" y="1" width="3" height="10" rx="1" style="fill:currentColor"/></svg>';
 
 const ordinal = (value) => {
@@ -39,6 +44,9 @@ export function mountHud(root, game) {
     const clockState = game.clock?.now() ?? { speed: 1, paused: false };
     const beat = Math.round((state.dayInRound / ROUND_DAYS[state.era]) * 100);
     const markLabel = `New ${roundWord(state.era)} on ${nextMark.label}`;
+    const focused = root.contains(document.activeElement) ? document.activeElement : null;
+    const refocus = focused?.matches?.('.clock .mute') ? '.clock .mute'
+      : focused?.dataset?.speed != null ? `.clock button[data-speed="${focused.dataset.speed}"]` : null;
     const speedButton = (speed) => `<button type="button" data-speed="${speed}" class="${clockState.speed === speed ? 'on' : ''}" aria-label="Speed ${speed}" aria-pressed="${clockState.speed === speed}">×${speed}</button>`;
 
     root.innerHTML = `
@@ -51,6 +59,7 @@ export function mountHud(root, game) {
         </div>
         <div class="ctr ali"><div class="badge">${counts.alignment}</div><div class="tag">Alignment</div></div>
       </div>
+      <div class="lab-plate" aria-label="Your lab"></div>
       <button class="info" type="button" aria-expanded="${expanded}" aria-controls="${infoId}">
         <span class="full"><span class="k">Era</span> <b>${state.era}</b> <span class="k">· ${eraById(state.era).name}</span></span>
         <span class="k">Cash</span><b>${money(state.cash)}</b>
@@ -67,15 +76,27 @@ export function mountHud(root, game) {
         <span class="date">${date.label}<small>${MONTH_NAMES[date.m - 1]}</small><span class="beat" role="progressbar" aria-label="${markLabel}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${beat}"><i style="width:${beat}%"></i></span></span>
         <button type="button" data-speed="0" class="${clockState.speed === 0 ? 'on' : ''}" aria-label="Pause" aria-pressed="${clockState.speed === 0}">${PAUSE_ICON}</button>
         ${speedButton(1)}${speedButton(2)}${speedButton(4)}
+        <span class="sep" aria-hidden="true"></span>
+        <button type="button" class="mute${sound.muted ? ' on' : ''}" aria-label="Mute all sound" aria-pressed="${sound.muted}">${SPEAKER_ICON(sound.muted)}</button>
         ${clockState.paused ? '<span class="paused">Paused</span>' : ''}
       </div>`;
 
     root.querySelector('.pill .t').textContent = pill.name; // player-typed names are text, never markup
+    const labName = typeof state.labName === 'string' ? state.labName.trim() : '';
+    const labLine = root.querySelector('.lab-plate');
+    if (labName) labLine.textContent = labName; // the name typed on the title screen, as text
+    else labLine.remove();
+    if (refocus) root.querySelector(refocus)?.focus(); // the rebuild replaced the button the player was on
 
     root.querySelector('.info').addEventListener('click', () => {
       expanded = !expanded;
       render();
       root.querySelector('.info').focus();
+    });
+
+    root.querySelector('.clock .mute').addEventListener('click', () => {
+      sound.muted = !sound.muted; // re-renders through sound.subscribe, which keeps focus on the button
+      if (sound.muted) sfx.hush();
     });
 
     for (const button of root.querySelectorAll('.clock button[data-speed]')) {
@@ -86,8 +107,10 @@ export function mountHud(root, game) {
   render();
   queueMicrotask(render);
   const unsubscribeGame = game.subscribe(render);
+  const unsubscribeSound = sound.subscribe(render);
   return () => {
     unsubscribeGame();
+    unsubscribeSound();
     unsubscribeClock();
   };
 }

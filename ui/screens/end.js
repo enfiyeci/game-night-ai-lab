@@ -1,6 +1,7 @@
 // The end of a run: when a turn sets state.ending, the ending's film plays over everything, then the end-of-run
 // screen (the owner's "nmix" pick, K2-side-options.html#nmix on side-feed) opens over the office and stays.
 import { mountFilm } from '../endings/player.js';
+import { music } from '../music.js';
 import { endScreenModel } from '../logic/ending.js';
 
 const make = (tag, className, text) => {
@@ -188,8 +189,10 @@ export function mountEnding(game, overlay, { collection, onPlayAgain, loadFilm =
     const state = game.state;
     const fromWatch = globalThis.document?.activeElement?.classList?.contains('end-watch') ?? false;
     let skipped = false;
+    music.hold('film');
     const close = () => {
       playing = false;
+      music.release('film');
       host?.close();
       show();
       if (fromWatch) overlay.querySelector('.end-watch')?.focus();

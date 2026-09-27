@@ -1,4 +1,5 @@
 import { flyBubble } from '../fx.js';
+import { sfx } from '../sfx.js';
 import { badgeCounts, bubbleSpawns } from '../logic/training.js';
 
 const anchorsByEra = new Map();
@@ -116,10 +117,14 @@ export function mountTraining(game, { stage, hud, overlay }) {
     };
     const gap = Math.min(420, 3600 / spawns.length);
     spawns.forEach((spawn, index) => {
+      // Owner 2026-09-26: the bubbles get sound, from the release show's kit: a soft pop as a bubble
+      // leaves a desk, and a blip on landing that climbs as the badge fills (capability higher than alignment).
+      setTimeout(() => { if (generation === flightGeneration && !reducedMotion()) sfx.pop(-5, 0.04); }, index * gap);
       flyBubble(layer, spawn.kind, sourcePoint(anchors, spawn.source), destinations[spawn.kind], { delay: index * gap })
         .then(() => {
           if (generation !== flightGeneration) return;
           tick(spawn.kind);
+          if (!reducedMotion()) sfx.tick(displayed[spawn.kind] % 10, { base: spawn.kind === 'capability' ? 523.25 : 392, gain: 0.06 });
           inFlight -= 1;
           if (inFlight === 0) {
             flying = false;
