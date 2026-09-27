@@ -154,7 +154,7 @@ export function openRelease(game, overlayRoot, { stage } = {}) {
     };
 
     const thinkingSlider = () => {
-      if (!model?.spec?.reasoningCapable) return el('p', 'release-note', 'This model cannot think longer. Train with reasoning RL to unlock thinking effort.');
+      if (!model?.spec?.reasoningCapable) return el('p', 'release-note', 'This model cannot think longer.');
       return vslider({
         label: 'Thinking effort',
         role: 'Head of Research',

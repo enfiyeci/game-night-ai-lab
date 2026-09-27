@@ -3820,3 +3820,33 @@ html.title-waking #hud { transition: opacity .5s ease .6s; }
 .sound-credits .sound-kicker:not(:first-child) { margin-top: 14px; }
 .sound-credits p { margin: 6px 0 0; font-size: 13.5px; font-weight: 700; line-height: 1.5; overflow-wrap: anywhere; }
 .clock button.mute svg { display: block; }
+/* ---------- First-minute tour and naming card (lane gn-onboarding, owner picks B and N1) ---------- */
+.intro-layer { position: absolute; inset: 0; z-index: 11; pointer-events: auto; overflow: hidden; }
+.intro-layer.intro-open { pointer-events: none; }
+.intro-layer.intro-open .intro-bar { pointer-events: auto; }
+.intro-hole { position: absolute; width: 190px; height: 190px; border-radius: 50%; box-shadow: 0 0 0 1600px color-mix(in oklab, var(--ink) 46%, transparent); pointer-events: none; }
+.intro-mark { position: absolute; border: 3px solid var(--coral); border-radius: 14px; box-shadow: 0 0 0 6px color-mix(in oklab, var(--coral) 22%, transparent); pointer-events: none; }
+.intro-ring { position: absolute; width: 90px; height: 90px; border: 3px solid var(--coral); border-radius: 50%; box-shadow: 0 0 0 6px color-mix(in oklab, var(--coral) 22%, transparent); pointer-events: none; animation: intro-pulse 1.6s ease-in-out infinite; }
+@keyframes intro-pulse { 50% { transform: scale(1.12); opacity: .7; } }
+@media (prefers-reduced-motion: reduce) { .intro-ring { animation: none; } }
+.intro-layer .ev-bubble { pointer-events: none; }
+.intro-say .ev-say { font-size: 15px; }
+.intro-layer .ev-bubble.intro-up::after { top: -8px; bottom: auto; transform: rotate(225deg); }
+.intro-bar { left: 50%; bottom: 26px; transform: translateX(-50%); display: flex; align-items: center; gap: 18px; padding: 10px 12px 10px 20px; white-space: nowrap; }
+.intro-bar-title { font-size: 15px; font-weight: 800; }
+.intro-dots { display: flex; gap: 6px; }
+.intro-dots i { width: 9px; height: 9px; border-radius: 50%; background: color-mix(in oklab, var(--wood) 30%, var(--paper)); }
+.intro-dots i.on { background: var(--wood); }
+.intro-skip { padding: 4px 2px; border: 0; background: none; font: inherit; font-size: 13px; font-weight: 800; color: color-mix(in oklab, var(--ink) 55%, var(--paper)); cursor: pointer; }
+.intro-skip:hover { text-decoration: underline; }
+.intro-skip:focus-visible { outline: 3px solid var(--sky); outline-offset: 3px; border-radius: 4px; }
+.intro-bar .btn { width: auto; min-width: 110px; padding-inline: 16px; }
+
+.naming-dialog .dlg { top: 210px; left: 470px; width: 500px; min-height: 0; padding-bottom: 22px; }
+.naming-body { display: grid; gap: 6px; text-align: left; }
+.naming-label { font-size: 12px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: color-mix(in oklab, var(--wood) 60%, var(--ink)); }
+.naming-input { height: 50px; padding: 0 14px; border: 2.5px solid var(--wood); border-radius: 10px; background: var(--paper); font: 800 22px/1 Nunito, "Trebuchet MS", sans-serif; color: var(--ink); }
+.naming-input::placeholder { font-size: 17px; font-weight: 700; }
+.naming-input:focus-visible { outline: 3px solid var(--sky); outline-offset: 1px; }
+.naming-preview { min-height: 22px; margin-top: 6px; text-align: center; font-size: 15px; font-weight: 700; }
+.naming-dialog .dialog-error { text-align: center; }
