@@ -249,7 +249,7 @@ def shot_al_triage():
     # a doctor in a white coat comes out of treatment toward the cart, dark against the lit corridor
     P.person((1.6, 0.45), facing=22, pose="walk", height=1.72, coat="#E9ECEE", long_coat=True, trousers="#2C4A5E",
              hair="#2A211C", seed=21)
-    seated([(1.55, 4, 90), (2.25, 8, -90)], seed=2)
+    seated([(-1.55, 6, -90), (-2.25, 3, 90)], seed=2)
     kit.place("wheelchair_01", (-0.9, 5.4, 0), rot_z=math.radians(80))
     kit.place("wall_clock", (-W + 0.02, 5.0, 2.3), rot_z=math.radians(90))
     kit.haze((0, D / 2, H / 2), (2 * W - 0.1, D - 0.1, H - 0.1), 0.01)
