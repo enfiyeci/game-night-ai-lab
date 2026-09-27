@@ -1,8 +1,11 @@
 // The Head of Safety's constitution draft (the review page's look B): a paper document over the office, with the
 // hard lines and worked examples in the main column and the advisors' comments in the margin. The player picks three
 // lines and a ruling per example; "Adopt and train" stores the draft for the next run that trains on it.
-import { draftFor } from '../../sim/constitution.js';
+// Picking the recipe's "Train on a written constitution" card opens it (mountConstitution below).
+import { draftFor, hasConstitution } from '../../sim/constitution.js';
 import { documentView } from '../logic/constitution.js';
+import { familyName } from '../logic/naming.js';
+import { registerCardOpener } from './recipe.js';
 
 const MAX_LINES = 3;
 
@@ -29,7 +32,8 @@ const button = (className, text) => {
 
 const focusable = (root) => [...root.querySelectorAll('button:not([disabled]), [tabindex]:not([tabindex="-1"])')];
 
-export function openConstitution(game, overlayRoot, { onAdopt } = {}) {
+// onCancel runs when the document closes without Adopt (Close, Escape, or another copy opening over it).
+export function openConstitution(game, overlayRoot, { onAdopt, onCancel } = {}) {
   overlayRoot.querySelector('.sd-layer')?.close?.();
   const stored = draftFor(game.state);
   const local = { hardLines: [...stored.hardLines], rulings: { ...stored.rulings } };
@@ -56,15 +60,16 @@ export function openConstitution(game, overlayRoot, { onAdopt } = {}) {
   });
 
   let closed = false;
-  const close = () => {
+  const close = (adopted = false) => {
     if (closed) return;
     closed = true;
     stage?.classList.remove('sd-open');
     layer.remove();
     if (previousFocus?.isConnected && typeof previousFocus.focus === 'function') previousFocus.focus();
     overlayRoot.dispatchEvent(new CustomEvent('gdt-dialog-closed'));
+    if (!adopted) onCancel?.();
   };
-  Object.defineProperty(layer, 'close', { value: close });
+  Object.defineProperty(layer, 'close', { value: () => close() });
 
   function toggleLine(id) {
     const index = local.hardLines.indexOf(id);
@@ -89,7 +94,7 @@ export function openConstitution(game, overlayRoot, { onAdopt } = {}) {
       render('.sd-adopt');
       return;
     }
-    close();
+    close(true);
     onAdopt?.();
   }
 
@@ -210,7 +215,7 @@ export function openConstitution(game, overlayRoot, { onAdopt } = {}) {
     adoptButton.setAttribute('aria-describedby', 'sd-foot-note');
     adoptButton.addEventListener('click', adopt);
     const closeButton = button('dialog-back sd-close', 'Close');
-    closeButton.addEventListener('click', close);
+    closeButton.addEventListener('click', () => close());
     foot.append(note, adoptButton, closeButton);
     margin.append(notes, foot);
 
@@ -250,4 +255,26 @@ export function openConstitution(game, overlayRoot, { onAdopt } = {}) {
   layer.classList.add('dialog-open');
   doc.focus();
   return layer;
+}
+
+// The chip under the recipe card once a draft exists: which version the next run teaches, which model learned the
+// last one, and how many demands changed the draft since. None before the first draft.
+export function constitutionNote(state) {
+  if (!state.constitutionDraft && !hasConstitution(state)) return null;
+  const learned = state.constitution?.version ?? 0;
+  const last = state.models?.at(-1);
+  const model = `${familyName(state) || 'Kestrel'}${last?.generation ? ` ${last.generation}` : ''}`;
+  const count = state.constitutionDraft?.changes?.length ?? 0;
+  // OWNER WRITES: the chip's wording (the review page's step 3 picture).
+  const head = `v${learned + 1} draft · ${learned ? `${model} learned v${learned}` : 'no model has learned it yet'}`;
+  const changes = count ? `${count} change${count === 1 ? '' : 's'} ${learned ? `since ${model}` : 'so far'}` : '';
+  return { text: changes ? `${head}\n${changes}` : head, later: false }; // the changes go on a second line
+}
+
+// Picking the constitution card opens the draft; closing it without Adopt takes the card back out of the recipe.
+export function mountConstitution(game, overlayRoot) {
+  registerCardOpener('constitution', {
+    open: (openGame, card, { unpick }) => openConstitution(openGame, overlayRoot, { onCancel: unpick }),
+    note: (state) => constitutionNote(state),
+  });
 }

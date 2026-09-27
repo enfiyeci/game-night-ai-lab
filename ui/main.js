@@ -8,7 +8,7 @@ import { powerSitesAvailable, queueScreenAvailable } from './logic/compute.js';
 import { meetingFor } from './logic/president.js';
 import { openMenu } from './menu.js';
 import { openBudget } from './screens/budget.js';
-import { openConstitution } from './screens/constitution.js';
+import { mountConstitution, openConstitution } from './screens/constitution.js';
 import { mountRecipe, openRecipe } from './screens/recipe.js';
 import { mountRelease, openRelease } from './screens/release.js';
 import { mountReveal, showReveal } from './screens/reveal.js';
@@ -107,6 +107,7 @@ if (showTitle) {
 }
 mountCompany(game, overlay);
 mountRecipe(game, overlay);
+mountConstitution(game, overlay); // the recipe's constitution card opens Safety's draft
 mountNaming(game, overlay); // after the recipe: the first run asks for the model's name
 mountRelease(game, overlay);
 mountReveal(game, overlay, {

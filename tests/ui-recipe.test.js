@@ -248,3 +248,68 @@ test('sanitizeDraft keeps focus sliders and takes the alignment share from Value
   assert.equal(sanitizeDraft(state, { ...draft, focus: { post: [50, 25, 25] } }).sliders.alignShare, 0.25);
   assert.equal(sanitizeDraft(state, { ...draft, focus: { post: [0, 0, 0] } }).focus, undefined);
 });
+
+import { CARDS } from '../sim/data/cards.js';
+import { learnConstitution, setDraft } from '../sim/constitution.js';
+import { SAFETY_PROPOSAL } from '../sim/data/constitution.js';
+import { FakeEvent, installFakeDom } from './helpers/fakeDom.js';
+
+const constitutionCard = CARDS.find((card) => card.id === 'constitution');
+
+async function recipeWithConstitution() {
+  const doc = installFakeDom();
+  const { openRecipe } = await import('../ui/screens/recipe.js');
+  const { mountConstitution } = await import('../ui/screens/constitution.js');
+  const game = createGame({ state: SCENARIOS.era3Idle(1), seed: 1 });
+  const overlay = doc.createElement('div');
+  doc.body.append(overlay);
+  mountConstitution(game, overlay);
+  openRecipe(game, overlay, { stage: 3 });
+  const row = () => overlay.querySelectorAll('.tech-row')
+    .find((candidate) => candidate.querySelector('.tech-name')?.textContent === constitutionCard.name);
+  return { game, overlay, row };
+}
+
+test('the constitution card opens a registered screen when picked', () => {
+  assert.equal(constitutionCard.opens, 'constitution');
+});
+
+test('picking the constitution card opens Safety’s draft, and Adopt keeps the card picked', async () => {
+  const { game, overlay, row } = await recipeWithConstitution();
+  assert.ok(row(), 'the era 3 post-training stage offers the constitution card');
+  row().click();
+  assert.ok(overlay.querySelector('.sd-layer'), 'the draft opens');
+  overlay.querySelector('.sd-adopt').click();
+  assert.equal(overlay.querySelector('.sd-layer'), null);
+  assert.ok(row().classList.contains('picked'));
+  assert.deepEqual(game.state.constitutionDraft.hardLines, SAFETY_PROPOSAL.hardLines);
+});
+
+test('closing Safety’s draft without adopting unpicks the constitution card, by button or Escape', async () => {
+  const { overlay, row } = await recipeWithConstitution();
+  row().click();
+  overlay.querySelector('.sd-close').click();
+  assert.equal(overlay.querySelector('.sd-layer'), null);
+  assert.equal(row().classList.contains('picked'), false);
+  row().click();
+  overlay.querySelector('.sd-layer').dispatchEvent(new FakeEvent('keydown', { key: 'Escape' }));
+  assert.equal(overlay.querySelector('.sd-layer'), null);
+  assert.equal(row().classList.contains('picked'), false);
+});
+
+test('the constitution card note names the draft version and the model that learned the last one', async () => {
+  const { constitutionNote } = await import('../ui/screens/constitution.js');
+  const state = SCENARIOS.era3Idle(1);
+  assert.equal(constitutionNote(state), null, 'no chip before any draft exists');
+  setDraft(state, SAFETY_PROPOSAL);
+  assert.deepEqual(constitutionNote(state), { text: 'v1 draft · no model has learned it yet', later: false });
+  learnConstitution(state, SAFETY_PROPOSAL);
+  state.models.push({ ...state.models.at(-1), generation: 4 });
+  assert.equal(constitutionNote(state).text, 'v2 draft · Kestrel 4 learned v1');
+  state.constitutionDraft.changes.push({ turn: state.turn, change: { remove: 'privacy' }, source: 'investors' });
+  assert.equal(constitutionNote(state).text, 'v2 draft · Kestrel 4 learned v1\n1 change since Kestrel 4');
+  state.constitutionDraft.changes.push({ turn: state.turn, change: { add: 'privacy' }, source: 'users' });
+  assert.equal(constitutionNote(state).text, 'v2 draft · Kestrel 4 learned v1\n2 changes since Kestrel 4');
+  state.models = [];
+  assert.match(constitutionNote(state).text, /^v2 draft · Kestrel learned v1/);
+});

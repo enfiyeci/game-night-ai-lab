@@ -4211,3 +4211,6 @@ html.title-waking #hud { transition: opacity .5s ease .6s; }
 .sd-foot-note.warn { font-weight: 900; color: color-mix(in oklab, var(--coral) 66%, var(--ink)); }
 .sd-foot .sd-adopt { width: 100%; padding: 12px 0; }
 .sd-foot .sd-close { margin: 8px 0 0; }
+/* The constitution card's note chip in the recipe list (constitutionNote): its changes line goes under the version line,
+   and a long family name wraps inside the panel. */
+.tech-row .release-ship { white-space: pre-line; }
