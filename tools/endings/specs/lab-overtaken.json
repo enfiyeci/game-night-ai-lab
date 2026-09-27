@@ -1,0 +1,26 @@
+{
+ "shots": {
+  "3": {
+   "image": "ov-letter",
+   "screens": [
+    [
+     "monitor",
+     "ov-letter"
+    ]
+   ],
+   "focus": "screen",
+   "push": 1.05
+  },
+  "5": {
+   "image": "ov-email",
+   "screens": [
+    [
+     "monitor",
+     "ov-email"
+    ]
+   ],
+   "focus": "screen",
+   "push": 1.05
+  }
+ }
+}

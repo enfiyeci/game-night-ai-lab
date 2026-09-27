@@ -1,0 +1,15 @@
+{
+ "shots": {
+  "1": {
+   "image": "lb-usage",
+   "screens": [
+    [
+     "wall",
+     "lb-usage"
+    ]
+   ],
+   "focus": "screen",
+   "push": 1.05
+  }
+ }
+}

@@ -108,7 +108,7 @@ def shot_mu_room():
     kit.point((0.4, 2.0, 2.05), 18, kit.kelvin(2400), radius=0.03)
     # the three of them: one at the table, two by the racks, all from behind
     kit.place("plastic_monobloc_chair_01", (-0.22, 2.36, 0), rot_z=a + math.pi)
-    P.person((-0.22, 2.36), facing=-38, pose="sit", coat="#1F2226", hood=True, seed=31)
+    P.person((-0.22, 2.36), facing=-38, pose="sit", coat="#101113", hood=True, seed=31)
     P.person((0.2, 3.72), facing=5, coat="#2A2B30", hold="phone", seed=32)
     P.person((1.62, 3.15), facing=-80, coat="#33302C", height=1.85, seed=33)
     kit.area((cx - 0.35 * vx, cy - 0.35 * vy, 1.1), (cx - 1.5 * vx, cy - 1.5 * vy, 0.8), (1.0, 0.3), 5, kit.kelvin(7500))   # the monitors' light

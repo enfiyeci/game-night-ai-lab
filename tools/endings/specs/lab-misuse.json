@@ -1,0 +1,33 @@
+{
+ "shots": {
+  "1": {
+   "image": "mu-alert",
+   "screens": [
+    [
+     "console",
+     "mu-alert"
+    ]
+   ],
+   "focus": "screen",
+   "push": 1.05
+  },
+  "2": {
+   "image": "mu-room",
+   "screens": [
+    [
+     "workers",
+     "mu-room"
+    ],
+    [
+     "chat",
+     "mu-room"
+    ]
+   ],
+   "focus": [
+    993,
+    626
+   ],
+   "push": 1.07
+  }
+ }
+}

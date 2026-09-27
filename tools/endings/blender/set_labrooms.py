@@ -89,7 +89,7 @@ def shot_ab_constitution():
 def shot_rb_slide():
     W, D, H = 5.0, 11.0, 3.6
     room(W, D, H, kit.mat("#2A2C30", 0.85), kit.mat("#24262B", 0.9))
-    face, _ = kit.screen("slide", (0.4, D - 0.08, 1.95), 3.6, "rb-slide", (80, 90, 720, 460), strength=1.3, bezel="#0D0D0E",
+    face, _ = kit.screen("slide", (0.4, D - 0.08, 2.4), 3.2, "rb-slide", (80, 90, 720, 460), strength=1.3, bezel="#0D0D0E",
                          depth=0.03, border=0.04)
     # rows of stacking chairs facing the slide, an aisle down the middle, most seats taken
     seats, legs, people = [], [], []
@@ -113,11 +113,11 @@ def shot_rb_slide():
     kit.area((-2.4, D - 0.3, 2.4), (-2.15, D - 0.9, 1.4), (0.6, 0.6), 25, kit.kelvin(6500))
     # the projector on the ceiling behind us, its beam through a little haze
     kit.box((0.4, 1.2, H - 0.25), (0.35, 0.3, 0.14), kit.mat("#D8D8D6", 0.4))
-    beam = kit.spot((0.4, 1.36, H - 0.26), (0.4, D, 1.95), 2500, kit.kelvin(6800), angle=21, blend=0.15, radius=0.02)
+    beam = kit.spot((0.4, 1.36, H - 0.26), (0.4, D, 2.4), 2500, kit.kelvin(6800), angle=21, blend=0.15, radius=0.02)
     beam.visible_glossy = False
     kit.haze((0, D / 2, H / 2), (2 * W - 0.1, D - 0.2, H - 0.1), 0.02)
     kit.world("#050608", 1.0)
-    kit.camera((1.1, 0.6, 1.72), (-0.1, D, 1.62), lens=36, fstop=4.0, focus=face)
+    kit.camera((1.1, 0.6, 1.72), (-0.1, D, 1.85), lens=36, fstop=4.0, focus=face)
 
 
 # ------------------------------------------------------------------ the security console
@@ -128,14 +128,14 @@ def shot_mu_alert():
     face = F.monitor("console", (0.0, D - 0.3), 1.15, "mu-alert", (70, 100, 1140, 300), strength=1.0)
     for side in (-1, 1):   # the camera feeds, grey and quiet
         F.dark_monitor((side * 1.0, D - 0.4), width=0.5, h=0.3, yaw=side * 28, glow=("#26323E", 1.2))
-    F.note((-0.3, D - 0.33, 0.84), "egress alerts =\nfalse positives.\njust dismiss. -J", size=0.1, text_size=0.012,
+    F.note((-0.3, D - 0.33, 0.833), "egress alerts =\nfalse positives.\njust dismiss. -J", size=0.12, text_size=0.02,
            rot=(math.radians(84), 0, math.radians(-4)))
     F.keyboard(0.0, D - 0.72)
     F.mug((0.42, D - 0.65, 0.755), colour="#2A2B2E")
     # the phone face up by the keyboard, notifications piling up
     kit.box((-0.45, D - 0.7, 0.762), (0.075, 0.155, 0.009), kit.mat("#111", 0.3), rot=(0, 0, 0.3))
     kit.box((-0.45, D - 0.7, 0.7672), (0.066, 0.14, 0.0005), kit.emission("#DCE6F5", 1.2), rot=(0, 0, 0.3))
-    F.chair((0.55, D - 1.1), 200)   # pushed back from the desk, nobody in it
+    F.chair((0.85, D - 1.1), 200)   # pushed back from the desk, nobody in it
     # the beacon over the desk, and a clock
     kit.sphere((0.9, D - 0.08, 1.5), 0.07, kit.emission("#FF2A1A", 6), scale=(1, 0.7, 1))
     kit.point((0.9, D - 0.25, 1.48), 40, (1.0, 0.12, 0.06), radius=0.05)

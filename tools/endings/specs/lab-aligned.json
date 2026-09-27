@@ -1,0 +1,15 @@
+{
+ "shots": {
+  "5": {
+   "image": "al-badges",
+   "screens": [
+    [
+     "desk",
+     "al-badges"
+    ]
+   ],
+   "focus": "screen",
+   "push": 1.05
+  }
+ }
+}

@@ -225,7 +225,7 @@ def shot_cw_letter():
     # the trophy, the printed letter folded under it, his badge on the keyboard; his chair pushed in
     F.paper((0.4, 1.98, 0.755), rot_z=0.35)
     F.flat_text("RESIGNATION", (0.4 + 0.1 * math.sin(0.35), 1.98 - 0.1 * math.cos(0.35), 0.7567), 0.026, rot_z=0.35, font=kit.FONT)
-    F.trophy((0.44, 2.06, 0.7565), scale=1.2)
+    F.trophy((0.5, 2.06, 0.7565), scale=1.2)
     kit.box((-0.05, 1.86, 0.772), (0.055, 0.085, 0.002), kit.mat("#F1EEE6", 0.5), rot=(0, 0, 0.3))       # the badge
     kit.text("TOMAS\nSAFETY", (-0.05, 1.86, 0.7735), 0.008, kit.mat("#2B2B2B", 0.6), rot=(0, 0, 0.3), extrude=0.0001)
     kit.box((-0.14, 1.93, 0.771), (0.25, 0.006, 0.001), kit.mat("#3F9C8F", 0.6), rot=(0, 0, 0.9))          # its lanyard
@@ -279,7 +279,7 @@ def shot_rb_budget():
 
 def shot_lb_usage():
     office(screens=0.0, chairs=0.5, monitors=0.35, seed=7)
-    kit.screen("wall", (0.0, OD - 0.05, 1.72), 4.2, "lb-usage", (70, 80, 1140, 500), strength=1.6, depth=0.06, border=0.03, bezel="#101112")
+    kit.screen("wall", (0.0, OD - 0.05, 2.1), 3.8, "lb-usage", (70, 80, 1140, 500), strength=1.6, depth=0.06, border=0.03, bezel="#101112")
     # desks being packed into boxes; a last colleague carries one out
     rng = random.Random(11)
     labels = ["DESK 14", "RESEARCH", "KEEP", "MONITORS", "DESK 9", "EVALS", "", "CABLES"]
@@ -287,10 +287,10 @@ def shot_lb_usage():
         F.carton((x + rng.uniform(-0.3, 0.3), y - 0.05, 0.755), (0.55, 0.38, 0.34), rot_z=rng.uniform(-0.3, 0.3), label=labels[k])
     for k in range(3):
         F.carton((2.2 + k * 0.05, 3.9, k * 0.4), (0.6, 0.4, 0.4), rot_z=0.1 * k, label="LAB " + str(k + 1))
-    kit.area((-1.0, 6.5, OH - 0.1), (-1.0, 6.5, 0), (7.0, 3.5), 900, kit.kelvin(4000))    # the last lights on over the packing
-    P.person((-1.5, 6.25), facing=25, pose="walk", coat="#2C2A2E", hair="#141212")
+    kit.area((2.8, 8.0, OH - 0.1), (2.8, 8.0, 0), (5.0, 4.0), 600, kit.kelvin(4000))    # the last lights on over the packing, not on him
+    P.person((-1.5, 6.25), facing=25, pose="walk", coat="#141416", hair="#0E0D0C", skin="#2A201B")
     F.carton((-1.63, 6.52, 0.85), (0.64, 0.4, 0.3), rot_z=math.radians(25), taped=False)    # carried in front of him
-    kit.camera((0.9, 0.9, 1.6), (0.0, OD, 1.5), lens=32, fstop=5.6, focus=(0, OD, 1.8))
+    kit.camera((0.9, 0.9, 1.6), (0.0, OD, 1.5), lens=32, fstop=2.4, focus=(0, OD, 2.1))
 
 
 def shot_pd_cursor():
