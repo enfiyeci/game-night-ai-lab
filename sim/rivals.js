@@ -4,7 +4,7 @@ import { eraOfRound, roundSpan } from './time.js';
 import { SIZES, SIZE_UNITS, SIZE_CAP } from './recipe.js';
 import { eraScale } from './data/compute.js';
 import {
-  FRONTIER, START_FLEET, RIVAL_EDGE, SERVING_ROOM, NO_SIZE_GAIN, CAPPED_GAIN, STANDING_TIE, STANDING_WEIGHTS,
+  FRONTIER, START_FLEET, RIVAL_EDGE, SERVING_ROOM, NO_SIZE_GAIN, CAPPED_GAIN, STANDING_TIE, STANDING_WEIGHTS, CATCH_UP,
 } from './data/race.js';
 
 const LAST_DAY = roundSpan(ERAS.reduce((sum, era) => sum + era.turns, 0) - 1).end;
@@ -32,8 +32,13 @@ export function computeShares(state) {
 }
 
 // Spec §2 rule 6: once per round mark, every lab within half a point of the top score earns a round at the top.
+// Only the current era's rounds count (owner pick A5): the first mark of a new era starts the count again, so rank
+// does not flip at the era change itself.
 export function recordStanding(state) {
-  const atTop = (state.race ??= { atTop: {} }).atTop;
+  const race = (state.race ??= { atTop: {} });
+  if (race.era != null && race.era !== state.era) race.atTop = {};
+  race.era = state.era;
+  const atTop = race.atTop;
   const labs = [['you', state.capability], ...state.rivals.map((r) => [r.id, r.capability])];
   const top = Math.max(...labs.map(([, capability]) => capability));
   for (const [id, capability] of labs) if (top - capability <= STANDING_TIE) atTop[id] = (atTop[id] ?? 0) + 1;
@@ -92,7 +97,11 @@ export function launchGain(state, r, roll, era = state.era) {
   const gain = size
     ? Math.max(0, (BALANCE.baseRunGain + SIZE_CAP[size] + RIVAL_EDGE + roll - 2) * (1 - 0.5 * (0.1 + 0.2 * r.caution)))
     : NO_SIZE_GAIN;
-  return capBinds(state, r) ? Math.min(gain, CAPPED_GAIN) : gain;
+  // A launch still waiting to land already copied part of the lead, so the gap counts it as landed.
+  const waiting = (state.rivalLaunches ?? []).reduce((sum, launch) => sum + (launch.id === r.id ? launch.gain : 0), 0);
+  const copied = era >= CATCH_UP.from
+    ? CATCH_UP.perPoint * Math.max(0, state.capability - r.capability - waiting - CATCH_UP.lead) : 0;
+  return capBinds(state, r) ? Math.min(gain + copied, CAPPED_GAIN) : gain + copied;
 }
 
 // With deferTo, the roll is for round deferTo, made at the mark before it (the first round's roll comes with the

@@ -11,5 +11,8 @@ export const BIG_DEAL_SHARE = 0.25; // a rival deal this big against its fleet i
 export const DENIAL_HEAT = 2; // the player signs a card a rival named
 export const STANDING_TIE = 0.5; // score points within which standing decides rank
 export const STANDING_WEIGHTS = { top: 0.6, compute: 0.4 }; // first pass (owner 2026-09-26: compute is a background part)
+// Rivals copy your published models (owner pick B6, 2026-09-26): from era `from`, a launch gains `perPoint` for each point
+// the rival trails you beyond `lead`. Nothing in era 1, so an idle lab is not left behind at the first gate.
+export const CATCH_UP = { from: 2, lead: 10, perPoint: 0.5 };
 export const BOARD_SUPPLIERS = ['verde', 'azuria', 'coreflame', 'spot', 'gulf', 'loi']; // cards a rival can take
 export const RUMOR_PROGRESS = 0.45; // a rival past this share of its launch bar is rumored to launch soon

@@ -248,3 +248,55 @@ test('the round mark counts standing, then lands, takes and grows', () => {
   assert.deepEqual(s.race.atTop, { openbrain: 1 }, 'standing is counted at the mark');
   assert.ok(rivalOf(s, 'qilin').pipeline.some((p) => p.source === 'offBoard'));
 });
+
+test('from era 2, a rival more than 10 behind you gains +1 per 2 points beyond 10 on each launch (owner pick B6)', () => {
+  const s = createInitialState({ seed: 1 });
+  const ob = rivalOf(s, 'openbrain'); // score 26, Medium
+  s.capability = 66; // 40 ahead: 30 beyond the threshold, so +15
+  const base = expectedGain(ob, 'medium', 3);
+  assert.ok(Math.abs(launchGain(s, ob, 3) - base) < 1e-9, 'era 1: no catch-up');
+  s.era = 2;
+  assert.ok(Math.abs(launchGain(s, ob, 3, 1) - base) < 1e-9, 'a roll for an era 1 round: no catch-up');
+  ob.fleet = 12; // keep it Medium on the era 2 ladder
+  const size = rivalSize(s, ob);
+  const era2 = expectedGain(ob, size, 3);
+  assert.ok(Math.abs(launchGain(s, ob, 3) - (era2 + 15)) < 1e-9);
+  s.capability = 36; // exactly 10 ahead
+  assert.ok(Math.abs(launchGain(s, ob, 3) - era2) < 1e-9, 'a lead of 10 or less gives nothing');
+  ob.fleet = 3;
+  s.capability = 66;
+  assert.equal(launchGain(s, ob, 3), NO_SIZE_GAIN + 15, 'it applies when no size fits too');
+});
+
+test('the catch-up gain stays under a binding compute cap', () => {
+  const s = createInitialState({ seed: 1 });
+  s.era = 2;
+  s.capability = 90;
+  s.deal = { collapsed: false, binding: ['computeCap'], signed: { computeCap: ['openbrain'] } };
+  assert.equal(launchGain(s, rivalOf(s, 'openbrain'), 4), 5);
+});
+
+test('rounds at the top count only in the current era (owner pick A5)', () => {
+  const s = createInitialState({ seed: 1 });
+  s.capability = 26.3; // within 0.5 of OpenBrain
+  s.race.atTop = { you: 4 };
+  recordStanding(s); // era 1: you 5, openbrain 1
+  assert.equal(rank(s), 1);
+  s.era = 2;
+  assert.equal(rank(s), 1, 'until era 2 has a round mark, era 1 still stands: rank does not flip at the era change');
+  recordStanding(s);
+  assert.deepEqual(s.race.atTop, { you: 1, openbrain: 1 }, 'the count starts again at the first era 2 mark');
+  assert.equal(rank(s), 2, 'even time at the top this era: OpenBrain holds more compute');
+});
+
+test('a launch still waiting to land counts toward the gap, so a lead is not copied twice', () => {
+  const s = createInitialState({ seed: 1 });
+  s.era = 2;
+  const ob = rivalOf(s, 'openbrain'); // score 26
+  ob.fleet = 12;
+  const era2 = expectedGain(ob, rivalSize(s, ob), 3);
+  s.capability = 66;
+  s.rivalLaunches = [{ id: 'openbrain', gain: 20, heat: 0, day: 9999 }, { id: 'lodestar', gain: 50, heat: 0, day: 9999 }];
+  // OpenBrain will be at 46 once its launch lands: 20 behind, 10 beyond the threshold, so +5. Lodestar's does not count.
+  assert.ok(Math.abs(launchGain(s, ob, 3) - (era2 + 5)) < 1e-9);
+});

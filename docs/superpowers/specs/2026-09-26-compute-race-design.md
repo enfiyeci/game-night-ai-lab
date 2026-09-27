@@ -23,6 +23,9 @@ sits idle; across the four bots only 3 of 400 runs end "left behind".
    ladder (`SIZE_UNITS × eraScale`, XL from era 2) that fits. Speed still sets how often it launches. Launch gain:
    `(baseRunGain + SIZE_CAP[size] + RIVAL_EDGE + roll − 2) × (1 − 0.5 × (0.1 + 0.2 × caution))`, `roll = rng.int(0, 4)`
    as today, `RIVAL_EDGE = −2`; no size fits: gain 2. The random draws are the same calls in the same order as today.
+   From era 2, rivals copy your published models (owner pick B6, 2026-09-26): each launch gains
+   `0.5 × max(0, your score − rival score − 10)` more, before the compute cap in rule 8. The rival's score here counts
+   its launches rolled but not yet landed, so a lead is not copied twice.
 3. **One shared board.** Offers stay until signed or taken; a taken slot refills next round; everything regenerates at
    an era change. After offers are made, each Western rival short of its target names one card (`wantedBy`), in
    catch-up order (lowest score first). Bold rivals (caution < 0.5) name the biggest card, careful ones the card nearest
@@ -37,7 +40,8 @@ sits idle; across the four bots only 3 of 400 runs end "left behind".
    `standing = 0.6 × (rounds spent within 0.5 of the top score, as a share of the most any lab has) + 0.4 × compute share`.
    Getting to the top first and staying there counts most; compute is a background factor, not the only one (owner
    2026-09-26: "that shouldn't be the only thing probably but be a bg component"). Weights are first-pass, for the
-   balance run. Era gates and final endings keep their rules.
+   balance run. Era gates and final endings keep their rules. Only the current era's rounds count (owner pick A5,
+   2026-09-26): the count starts again at the first round mark of each era.
 7. **Race heat.** +2 when the player signs a card a rival named (owner decision 3). Big deals add no heat (owner pick
    F, 2026-09-26: with +2 per big deal, rival disaster became the most common ending).
 8. **Summit.** A binding compute cap limits every signing rival's launch gain to 5, as it limits the player's runs
@@ -118,3 +122,6 @@ against existing effects before calling it done.
 7. **Queue orders keep today's size.** Orders sized from each rival's shortfall let rivals, nearly full by era 3, order
    almost nothing, so the queue stopped rationing and the balanced bot bought itself broke (money investigation,
    2026-09-26). Rival fills still land in rival fleets.
+8. **Rivals can catch up with and pass a leader** (picks B6 + A5, rules 2 and 6,
+   `docs/design/mockups/compute-race/measurements/catch-up.md`). Nothing acts in era 1, so an idle lab is not left
+   behind more often. Trade-off accepted: in era 5, compute share mostly decides ties at the top.

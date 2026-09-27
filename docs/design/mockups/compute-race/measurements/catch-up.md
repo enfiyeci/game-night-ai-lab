@@ -230,3 +230,36 @@ Scripts and outputs: variant switches in
 `<session scratchpad, not kept>/catchup/lab`
 (environment variable `CU`, plus `CU_EDGE`, `CU_EDGES`, `CU_DISTIL`, `CU_T`, `CU_FROM`); diagnostics in `…/catchup/tools/`;
 raw JSON in `…/catchup/out/`.
+
+## Built: B6 + A5 (owner pick, 2026-09-26)
+
+The owner picked the recommendation. Built on `compute-race-build` on top of `6238e01` (which includes the ui merge),
+test-first, in `sim/rivals.js` with the numbers in `sim/data/race.js` (`CATCH_UP`). Measured with
+`node tools/balance.js 100` before (`catch-up-before.json`, at `6238e01`) and after (`catch-up-after.json`), plus the
+idle lab on seeds 1 to 50.
+
+- **B6** is added to the launch gain when the launch is rolled, after the caution discount and before the Geneva cap
+  (a lab bound by the cap still gets at most 5). It uses the era of the round the launch is rolled for, and it applies
+  when no model size fits too. A launch the rival has rolled but not yet landed counts toward its score for this gap,
+  so the same lead is not copied twice. (Review finding: at the era 2 to 3 and era 4 to 5 changes a launch can land
+  after the next round's roll; without this, 37 launches across 400 probe runs copied a lead twice, a median of 6.9 extra points.)
+- **A5** starts the rounds-at-the-top count again at the first round mark of each era. Until that mark, the previous
+  era's count stands. A first version wiped the count at the era change itself: a player who led all of era 4 then
+  showed as 2nd for the first round of era 5 on compute alone, and the era 4 rank (measured just after the change)
+  came out 2.09 for the balanced bot instead of about 1.6. That version was replaced.
+
+| Bot | 1st, before → after | Era 4 rank | Wins | Endings that moved |
+|---|---|---|---|---|
+| speed | 79% → 78% | (never finishes era 4) | 0 → 0 | none |
+| safety | 65% → 61% | 1.01 → 1.07 | 10 → 7 | aligned 6 → 3, overtaken 0 → 3 |
+| balanced | 93% → 75% | 1.00 → 1.57 | 34 → 31 | pacing deal 32 → 31, aligned 1 → 0, costly win 1 → 0, overtaken 0 → 1, misalignment 45 → 46, rival disaster 4 → 5 |
+| random | 72% → 69% | 1.00 → 1.22 | 0 → 0 | none |
+
+Idle lab left behind at the era 1 gate: 31 of 50, before and after. The balanced, random and speed numbers match the
+analysis's prediction for B6 + A5 above; the safety bot does a little better than predicted (61% against 58%, rank
+1.07 against 1.14), probably because the analysis's version copied some leads twice
+(its scripts were not kept, so this cannot be checked). The other bots in the report (hand-to-mouth, over-committer, denier and the balanced
+variants) move the same way: 1st falls by 0.6 to 24 points, and no ending moves by more than 2.
+
+Side effect, not a bug: the feed's "big rival launch" posts trigger at a gain of 8 or more (`sim/feed.js`,
+`sim/feedLive.js`). A rival far behind now often launches for 15 to 30, so from era 2 on it will mostly get the big posts.
