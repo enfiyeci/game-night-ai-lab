@@ -1,27 +1,23 @@
-# Era-transition options awaiting owner selection
+# Era transition — selected office move
 
-Built from `origin/ui` at `a76020e`, after fetching and verifying the requested anchor `04650e0ade1b8a57741c3c74d03f112413a2635d`. Work branch: `codex/era-transition-variants`. Integrated the subsequently updated `ui` at `395a3a8` (polishing feature), then `44410bc` (concurrent training-bubble update) in this isolated worktree before the final local merge.
+Owner selected **B — Moving day** and removed the preview control. The office move now appears automatically at every successful era change (1→2 through 4→5), without a URL flag. The outgoing office becomes a keepsake photograph while the incoming office slides in and a canonical advisor speaks from their desk. A and C and their comparison controls have been removed from the implementation.
 
-- **A — The briefing:** a full-screen editorial spread using `eraIntro` headline, current changes, bottleneck and pace. Optional ink-reveal motion.
-- **B — Moving day:** the outgoing office becomes a keepsake photograph while the incoming office takes the stage; an advisor speaks from their desk. Optional office-move motion.
-- **C — First morning:** an experimental operations note, research sticky note and coffee over a darkened office. The era arrives as work on the player's desk. Optional lights-on motion.
+Motion plays once on opening. Reduced-motion users see the completed scene immediately. The only button is **Step inside →**; Escape also dismisses it. The clock pauses synchronously while the transition waits for any existing board meeting/dialog and remains paused until dismissal, then preserves the selected speed or manual pause. The initial team tour is unchanged, and no future-era roadmap is shown.
 
-Use `?eraTransition=A`, `B`, or `C`. Missing or invalid values retain existing behavior. Screens trigger on successful `eraStart` events only, never at a fresh game start. No future-era roadmap or gate text is shown. Each pauses the clock synchronously, waits for active dialogs/board meetings, and restores the selected speed after dismissal. Escape, the primary button, and focus containment use the existing dialog component. Motion plays only when requested and respects reduced-motion preferences.
+## Reproduce and verify
 
-## Reproduce
+Run `node tools/era-transition-shots.mjs` with Node 22+ and Chrome installed. Set `CHROME` for an alternate Chrome executable, or `ERAS=2,4` to limit the incoming eras. The script starts a temporary localhost server and headless browser. All fixture states come from real simulation actions; it advances 1→2 with `game.advanceDays(1)` and completes the actual board meeting for later gates.
 
-Run `node tools/era-transition-shots.mjs` with Node 22+ and Chrome installed. Set `CHROME` to an alternate Chrome executable if needed. The script starts a temporary localhost server and headless browser; all fixture states come from real sim actions. It advances 1→2 with `game.advanceDays(1)` and completes the actual board meeting for 2→3, 3→4 and 4→5. `VARIANTS=B` or `ERAS=2,4` limits a rerun. `GALLERY_ONLY=1` rebuilds the comparison sheet from existing captures.
+The harness verifies all four transitions in normal and reduced motion without a feature flag, automatic animation, a single primary button, focus containment, button/Escape dismissal, clock hold, and ×4/manual-pause restoration. It captures 1→2 and 3→4 at 1440×900 and 1000×700. Output is ignored by Git under `shots/era-transition-selected/`, including `verification.json`. A delivery copy is in the desktop checkout's same directory.
 
-Artifacts: `shots/era-transitions/index.html`, `comparison.png`, twelve option screenshots at 1440×900 and 1000×700, default screenshots, and `verification.json`. These are ignored by Git. The desktop checkout's `shots/era-transitions/` contains a delivery copy.
+Interactive debug routes: `?scenario=beforeEra2&seed=1` opens the transition after one story day. `?scenario=beforeEra4&seed=1` begins at the board meeting; join, call the vote, then return to work. `beforeEra3` and `beforeEra5` cover the other gates. Add `&paused` to hold at the gate.
 
-Interactive debug routes: `?scenario=beforeEra2&seed=1&eraTransition=A` (first transition after one story day) or `?scenario=beforeEra4&seed=1&eraTransition=B` (join the board meeting, call the vote, then return to work). `beforeEra3` and `beforeEra5` cover the other gates. Add `&paused` for a stable pre-gate state.
+Selection validation: all 8 browser cases (4 era changes × normal/reduced motion) and 43 focused era-intro, clock, game, summary and board tests passed. Updated desktop and smaller-window screenshots were inspected.
 
-## Validation
+## Build history
 
-The 16-combination browser matrix (default/A/B/C × all four gates) passed with no browser exceptions or console errors. The harness checks pause reason, keyboard focus, button/Escape dismissal, manual pause preservation, reduced motion, opt-in animation, and a frozen story day while the screen is open. The refreshed matrix on `395a3a8` also verifies ×4 restoration on even-numbered incoming eras and manual pause on the others. All 434 affected UI, polishing, time, turn and realtime-board tests passed after integration. Both requested transitions were inspected at both viewport sizes. Read-only review approved after fixing copied SVG gradient IDs and using the canonical advisor names.
+Anchor `04650e0ade1b8a57741c3c74d03f112413a2635d` was fetched before work. The comparison build started from `origin/ui` at `a76020e` in `/private/tmp/game-night-era-transition`, branch `codex/era-transition-variants`. It integrated `395a3a8` (polishing) and `44410bc` (training bubbles), then merged locally into `ui` at `6b00b3b`. No push.
 
-The base-build full suite reported 1,091 passing, 2 failing and 5 TODO tests. The two failures are difficulty targets in `tests/balance.test.js` and `tests/compute-balance.test.js`; both reproduced on an untouched archive of `a76020e` (15 passing, 2 failing, 5 TODOs across the two balance files; the first failure is balanced wins 96/200). The later training-bubble integration passed its 20 focused tests and the B screenshots were recaptured at both requested gates.
+The original 16-combination comparison matrix passed, as did 434 affected tests after polishing integration and 20 training-bubble tests. The original full suite had 1,091 passes, 2 balance failures and 5 TODOs. Both balance failures reproduced on untouched `a76020e` (15 passes, 2 failures, 5 TODOs across the two balance files; first failure: balanced wins 96/200). This UI change does not alter simulation outcomes.
 
-## Next action
-
-Owner picks **A**, **B**, or **C**. Keep every option and the unchanged default until that choice. The handoff's Claude orchestrator then applies the design-skill check and removes the losing variants. Do not push without the owner's authorization.
+The old A/B/C screenshots remain historical comparison artifacts in `shots/era-transitions/`; they no longer describe the active implementation.

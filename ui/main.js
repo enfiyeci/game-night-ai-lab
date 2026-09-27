@@ -115,7 +115,7 @@ if (showTitle) {
     },
   });
 }
-mountEraTransition(game, overlay, { variant: params.get('eraTransition') });
+mountEraTransition(game, overlay);
 mountCompany(game, overlay);
 mountRecipe(game, overlay);
 mountConstitution(game, overlay); // the recipe's constitution card opens Safety's draft

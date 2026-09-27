@@ -41,9 +41,9 @@ async function officeArt(era) {
   return svg;
 }
 
-function buildLayer(variant, era, day, art, anchors) {
+function buildLayer(era, day, art, anchors) {
   const intro = eraIntro(era);
-  const layer = el('div', `dialog-layer et-layer et-${variant}`);
+  const layer = el('div', 'dialog-layer et-layer');
   layer.setAttribute('role', 'dialog');
   layer.setAttribute('aria-modal', 'true');
   layer.setAttribute('aria-labelledby', 'et-title');
@@ -52,82 +52,39 @@ function buildLayer(variant, era, day, art, anchors) {
   const panel = el('section', 'dialog-centre et-stage');
   panel.tabIndex = -1;
   const header = el('header', 'et-header');
-  header.append(el('span', 'et-kicker', `${storyDate(day).y} / ${variant === 'B' ? 'Moving day' : variant === 'C' ? 'First morning' : 'From the lab'}`));
+  header.append(el('span', 'et-kicker', `${storyDate(day).y} / Moving day`));
   const title = el('h1', 'et-title', intro.name);
   title.id = 'et-title';
   header.append(title);
   const footer = el('footer', 'et-footer');
   footer.append(el('span', 'et-pause', 'The lab is waiting for you.'));
-  const motion = el('button', 'et-motion', { A: 'Preview ink reveal', B: 'Preview office move', C: 'Preview lights on' }[variant]);
-  motion.type = 'button';
-  const enter = el('button', 'et-enter', variant === 'B' ? 'Step inside →' : variant === 'C' ? 'Back to the lab →' : 'Let’s get to work →');
+  const enter = el('button', 'et-enter', 'Step inside →');
   enter.type = 'button';
-  footer.append(motion, enter);
+  footer.append(enter);
   panel.append(header);
 
-  if (variant === 'A') {
-    const spread = el('div', 'et-spread');
-    const lead = el('div', 'et-lead');
-    lead.append(el('p', 'et-headline', intro.headline));
-    const vignette = el('div', 'et-vignette');
-    if (art[1]) vignette.append(art[1]);
-    lead.append(vignette);
-    const briefing = el('div', 'et-briefing');
-    briefing.append(el('h2', 'et-label', 'On our desks'));
-    intro.changes.forEach((line, i) => {
-      const row = el('div', 'et-change');
-      row.append(el('span', 'et-number', `0${i + 1}`), el('p', '', line));
-      briefing.append(row);
-    });
-    const constraint = el('div', 'et-constraint');
-    constraint.append(el('h2', 'et-label', 'The bottleneck'), el('p', '', intro.bottleneck));
-    briefing.append(constraint, el('p', 'et-pace', intro.pace));
-    spread.append(lead, briefing);
-    panel.append(spread);
-  } else if (variant === 'B') {
-    header.append(el('p', 'et-subtitle', intro.headline));
-    const scene = el('div', 'et-move-scene');
-    const old = el('div', 'et-old-office');
-    if (art[0]) old.append(art[0]);
-    old.append(el('span', 'et-old-label', 'One last look'));
-    const incoming = el('div', 'et-new-office');
-    if (art[1]) incoming.append(art[1]);
-    const [role, name, line] = VOICES[era];
-    const bubble = el('div', 'et-desk-voice');
-    bubble.append(el('strong', '', name), el('p', '', line));
-    const [x, y] = anchors?.heads?.[role] ?? [800, 480];
-    bubble.style.left = `${Math.max(80, Math.min(1030, x - 85))}px`;
-    bubble.style.top = `${y - 152}px`;
-    incoming.append(bubble);
-    scene.append(old, incoming);
-    panel.append(scene);
-  } else {
-    const background = el('div', 'et-night-office');
-    if (art[1]) background.append(art[1]);
-    const desk = el('div', 'et-desk');
-    const paper = el('article', 'et-work-order');
-    paper.append(el('div', 'et-paper-meta', 'OPERATIONS / TODAY'), el('h2', '', 'Before the coffee gets cold.'));
-    paper.append(el('p', 'et-paper-intro', intro.headline));
-    const concern = el('div', 'et-paper-concern');
-    concern.append(el('span', 'et-label', 'What’s holding us up'), el('p', '', intro.bottleneck));
-    paper.append(concern, el('div', 'et-signature', 'For your desk. — Margot'));
-    const note = el('aside', 'et-note');
-    note.append(el('span', 'et-label', 'From Research'), el('p', '', intro.changes[0]), el('span', 'et-note-sign', 'Let’s start here.'));
-    desk.append(paper, note, el('div', 'et-coffee', ''));
-    panel.append(background, desk);
-  }
+  header.append(el('p', 'et-subtitle', intro.headline));
+  const scene = el('div', 'et-move-scene');
+  const old = el('div', 'et-old-office');
+  if (art[0]) old.append(art[0]);
+  old.append(el('span', 'et-old-label', 'One last look'));
+  const incoming = el('div', 'et-new-office');
+  if (art[1]) incoming.append(art[1]);
+  const [role, name, line] = VOICES[era];
+  const bubble = el('div', 'et-desk-voice');
+  bubble.append(el('strong', '', name), el('p', '', line));
+  const [x, y] = anchors?.heads?.[role] ?? [800, 480];
+  bubble.style.left = `${Math.max(80, Math.min(1030, x - 85))}px`;
+  bubble.style.top = `${y - 152}px`;
+  incoming.append(bubble);
+  scene.append(old, incoming);
+  panel.append(scene);
   panel.append(footer);
   layer.append(veil, panel);
-  motion.addEventListener('click', () => {
-    layer.classList.remove('et-play');
-    void layer.offsetWidth;
-    layer.classList.add('et-play');
-  });
   return layer;
 }
 
-export function mountEraTransition(game, overlay, { variant } = {}) {
-  if (!['A', 'B', 'C'].includes(variant)) return () => {};
+export function mountEraTransition(game, overlay) {
   let seen = game.state.era;
   let pending = null;
   let opened = null;
@@ -154,7 +111,7 @@ export function mountEraTransition(game, overlay, { variant } = {}) {
     pending = null;
     waiting?.remove();
     waiting = null;
-    opened = openDialog(overlay, { build: () => buildLayer(variant, entry.era, entry.day, art, anchors) });
+    opened = openDialog(overlay, { build: () => buildLayer(entry.era, entry.day, art, anchors) });
     opened.querySelector('.et-enter').addEventListener('click', () => opened?.close());
     opened.querySelector('.et-enter').focus();
   }
