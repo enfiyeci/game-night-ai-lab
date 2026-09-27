@@ -4,6 +4,7 @@ import { createInitialState } from '../sim/state.js';
 import { BALANCE } from '../sim/balance.js';
 import { SIZE_CAP } from '../sim/recipe.js';
 import { RIVAL_EDGE, NO_SIZE_GAIN } from '../sim/data/race.js';
+import { refreshOffers } from '../sim/contracts.js';
 import { rivalsTurn, rivalSize, rivalTraining, rivalShortfall, launchGain, rank, computeShares, recordStanding } from '../sim/rivals.js';
 
 const rivalOf = (s, id) => s.rivals.find((r) => r.id === id);
@@ -93,4 +94,45 @@ test('score ranks first; within half a point, standing decides and ties go to yo
   assert.equal(rank(s), 2, 'same time at the top: OpenBrain holds more compute (14 against your 10)');
   s.compute.online = 14;
   assert.equal(rank(s), 1, 'equal standing goes to you');
+});
+
+const flat = { next: () => 0.5, int: (a) => a, chance: () => false, pick: (x) => x[0], normal: (m) => m };
+
+test('board cards stay; a signed or taken slot refills; an era change makes a new board', () => {
+  const s = createInitialState({ seed: 1 });
+  const verde = s.compute.offers.find((o) => o.supplier === 'verde');
+  s.compute.offers = s.compute.offers.filter((o) => o.supplier !== 'coreflame'); // signed or taken
+  s.turn = 1;
+  s.compute.offers = refreshOffers(s, flat);
+  assert.deepEqual(s.compute.offers.map((o) => o.supplier), ['verde', 'azuria', 'coreflame', 'spot']);
+  assert.equal(s.compute.offers.find((o) => o.supplier === 'verde'), verde, 'the untaken card is the same card');
+  assert.equal(s.compute.offers.find((o) => o.supplier === 'coreflame').id, 'coreflame-1', 'the empty slot refills');
+  s.era = 2;
+  s.turn = 4;
+  s.compute.offers = refreshOffers(s, flat);
+  assert.ok(s.compute.offers.every((o) => o.id.endsWith('-4')), 'a new era makes a new board');
+});
+
+test('the investment and the grid are always made fresh', () => {
+  const s = createInitialState({ seed: 1 });
+  s.era = 2;
+  s.compute.offersEra = 2;
+  s.compute.offers = refreshOffers(s, flat);
+  const equity = s.compute.offers.find((o) => o.supplier === 'azuriaEquity');
+  s.valuation *= 2;
+  s.turn = 5;
+  s.compute.offers = refreshOffers(s, flat);
+  const next = s.compute.offers.find((o) => o.supplier === 'azuriaEquity');
+  assert.notEqual(next.id, equity.id);
+  assert.ok(next.credits > equity.credits);
+});
+
+test('the era 3 queue entry is made fresh every round, never kept as a board card', () => {
+  const s = createInitialState({ seed: 1 });
+  s.era = 3;
+  s.turn = 8;
+  s.compute.offers = refreshOffers(s, flat); // the era changes: a new board
+  s.turn = 9;
+  s.compute.offers = refreshOffers(s, flat);
+  assert.equal(s.compute.offers.find((o) => o.viaQueue).id, 'verde-queue-9');
 });

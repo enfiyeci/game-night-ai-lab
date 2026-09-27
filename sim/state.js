@@ -33,6 +33,7 @@ export function createInitialState({ seed = 1 } = {}) {
       servingUnits: 0,
       split: { safety: 0.1, servingCap: null, coverWithSpot: true, resellIdle: false },
       offers: [],
+      offersEra: 1,
       delays: {},
       nextId: 1,
       credits: 0,

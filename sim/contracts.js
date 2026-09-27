@@ -7,6 +7,7 @@ import {
   SCALE_DOWN, SCALE_DOWN_PENALTY_MONTHS, BREAK_SHARE, BUYOUT_MONTHS,
 } from './data/compute.js';
 import { SITE_TYPES, reserveGrid, poweredUnits } from './power.js';
+import { BOARD_SUPPLIERS } from './data/race.js';
 
 const UNIT = BALANCE.unitMonthlyCost;
 const FAMILY = { azuriaEquity: 'azuria', loi: 'verde' };
@@ -53,6 +54,20 @@ export function generateOffers(state, rng) {
     offers.push({ id, supplier: key, units, arrivesIn: arrivalOf(s, era) + delay, upfront: Math.round(s.upfrontShare * monthly * (termMonths ?? 0)), monthly, termMonths, price, string: s.string });
   }
   return offers;
+}
+
+// Spec 2026-09-26 compute race §2 rule 3: board cards stay until signed or taken, a taken slot refills next round,
+// and an era change makes a new board. The investment, the grid and the queue are priced from the player's own
+// state, so they are made fresh every round. A full board is drawn either way, so the draws never change.
+const onBoard = (offer) => BOARD_SUPPLIERS.includes(offer.supplier) && !offer.viaQueue;
+export function refreshOffers(state, rng) {
+  const fresh = generateOffers(state, rng);
+  const sameEra = state.compute.offersEra === state.era;
+  state.compute.offersEra = state.era;
+  if (!sameEra) return fresh;
+  return fresh.map((offer) => (onBoard(offer)
+    ? state.compute.offers.find((kept) => onBoard(kept) && kept.supplier === offer.supplier) ?? offer
+    : offer));
 }
 
 export function addPipeline(state, item) {
