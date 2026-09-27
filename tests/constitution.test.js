@@ -23,6 +23,7 @@ import { EVENTS } from '../sim/data/events.js';
 import { eventsTick, resolveEvent, stampNewCards } from '../sim/events.js';
 import { advanceDays, applyActions, endTurn } from '../sim/turn.js';
 import { INITIAL_BOARD } from '../sim/board.js';
+import { createPresidentPromise } from '../sim/promises.js';
 
 const allRulings = (opt) => Object.fromEntries(CASES.map((c) => [c.id, opt ?? c.options[0].id]));
 const yes = { next: () => 0, int: () => 0, chance: () => true, pick: (a) => a[a.length - 1], normal: (m) => m };
@@ -206,6 +207,36 @@ test('a run without the card keeps the live constitution', () => {
   assert.deepEqual(s.constitution.hardLines, ['no-wmd', 'honest', 'privacy']);
 });
 
+test('constitution demands wait for era 3', () => {
+  const s = createInitialState();
+  s.cash = 100; s.raceHeat = 90; s.flags.presidentDemand = true;
+  for (const id of ['president', 'investors', 'activists']) {
+    assert.equal(EVENTS.find((e) => e.id === id).trigger(s), false, id);
+  }
+  s.era = 3;
+  for (const id of ['president', 'investors', 'activists']) {
+    assert.equal(EVENTS.find((e) => e.id === id).trigger(s), true, id);
+  }
+});
+
+test('accepting the investors’ demand changes the next model, not the live one', () => {
+  const s = createInitialState();
+  s.era = 3;
+  learnConstitution(s, { hardLines: ['no-wmd', 'honest', 'privacy'], rulings: SAFETY_PROPOSAL.rulings });
+  const accept = EVENTS.find((e) => e.id === 'investors').card.choices.find((c) => c.id === 'accept');
+  accept.effects(s);
+  assert.deepEqual(s.constitution.hardLines, ['no-wmd', 'honest', 'privacy']);
+  assert.deepEqual(s.constitutionDraft.hardLines, ['honest', 'privacy']);
+  assert.equal(s.constitutionDraft.changes.at(-1).source, 'investors');
+});
+
+test('a promise that touches the constitution is not due before era 3', () => {
+  const s = createInitialState();
+  const constitutionPromise = createPresidentPromise('noWokeFilters', 'first', 1, s);
+  assert.ok(constitutionPromise.dueTurn >= 8);
+  assert.equal(createPresidentPromise('beatRivals', 'first', 1, s).dueTurn, 5);
+});
+
 test('Lumen ignores the constitution until one exists', async () => {
   const { lumenDisposition } = await import('../sim/lumen.js');
   const s = createInitialState();
@@ -285,6 +316,7 @@ test('no-power-grab costs favor once and automatically refuses the President dem
   amendConstitution(state, { remove: 'no-power-grab', add: 'privacy' });
   amendConstitution(state, { remove: 'privacy', add: 'no-power-grab' });
   assert.equal(state.govFavor.us, 47);
+  state.era = 3;
   state.flags.presidentDemand = true;
   eventsTick(state, no);
   assert.equal(state.pendingEvents.some((event) => event.id === 'president'), false);
@@ -355,11 +387,11 @@ test('no-autonomy-grab blocks agent incidents and reduces agentic RL capability'
 
 function demandState(id) {
   const state = createInitialState();
+  state.era = 3;
   adopt(state);
   if (id === 'president') state.flags.presidentDemand = true;
   if (id === 'investors') state.cash = 299;
   if (id === 'users') state.models.push({ channel: 'consumer', users: 6e6, flags: [], active: true, activeFromTurn: 0 });
-  if (id === 'political') state.era = 3;
   if (id === 'activists') state.raceHeat = 61;
   eventsTick(state, no);
   assert.equal(state.pendingEvents.some((event) => event.id === id), true);
@@ -371,8 +403,8 @@ test('the President demand triggers and both choices apply', () => {
   resolveEvent(accept, 'president', 'accept');
   assert.equal(accept.govFavor.us, 58);
   assert.equal(accept.staffTrust, 64);
-  assert.equal(accept.constitution.rulings.report, 'quiet');
-  assert.deepEqual(accept.constitution.amendments.at(-1), { turn: 0, change: { ruling: { caseId: 'report', optionId: 'quiet' } }, source: 'president' });
+  assert.equal(accept.constitutionDraft.rulings.report, 'quiet');
+  assert.deepEqual(accept.constitution.amendments.at(-1), { turn: 0, change: { ruling: { caseId: 'report', optionId: 'quiet' } }, source: 'president', draft: true });
   const refuse = demandState('president');
   resolveEvent(refuse, 'president', 'refuse');
   assert.equal(refuse.govFavor.us, 42);
@@ -381,7 +413,7 @@ test('the President demand triggers and both choices apply', () => {
 test('the investor demand triggers and both choices apply', () => {
   const accept = demandState('investors');
   resolveEvent(accept, 'investors', 'accept');
-  assert.deepEqual(accept.constitution.hardLines, ['honest', 'privacy']);
+  assert.deepEqual(accept.constitutionDraft.hardLines, ['honest', 'privacy']);
   assert.equal(accept.cash, 399);
   assert.equal(accept.constitution.amendments.at(-1).source, 'investors');
   const refuse = demandState('investors');
@@ -392,7 +424,7 @@ test('the investor demand triggers and both choices apply', () => {
 test('the user demand triggers and both choices apply', () => {
   const accept = demandState('users');
   resolveEvent(accept, 'users', 'accept');
-  assert.equal(accept.constitution.rulings.feedback, 'encourage');
+  assert.equal(accept.constitutionDraft.rulings.feedback, 'encourage');
   assert.equal(accept.models[0].users, 6.6e6);
   assert.equal(accept.constitution.amendments.at(-1).source, 'users');
   const refuse = demandState('users');
@@ -414,7 +446,7 @@ test('the political demand triggers and both choices apply', () => {
 test('the activist demand triggers and both choices apply', () => {
   const accept = demandState('activists');
   resolveEvent(accept, 'activists', 'accept');
-  assert.deepEqual(accept.constitution.hardLines, ['no-wmd', 'honest', 'no-autonomy-grab']);
+  assert.deepEqual(accept.constitutionDraft.hardLines, ['no-wmd', 'honest', 'no-autonomy-grab']);
   assert.equal(accept.publicTrust, 66);
   assert.equal(accept.flags.nextRunCapPenalty, 2);
   assert.equal(accept.constitution.amendments.at(-1).source, 'activists');
@@ -423,6 +455,7 @@ test('the activist demand triggers and both choices apply', () => {
   assert.equal(refuse.publicTrust, 56);
 
   const already = createInitialState();
+  already.era = 3;
   adopt(already, ['no-wmd', 'honest', 'no-autonomy-grab']);
   already.raceHeat = 61;
   eventsTick(already, no);

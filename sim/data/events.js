@@ -1,5 +1,5 @@
 import { addMonitor, handBack, lockDown } from '../automation.js';
-import { forceAmendConstitution, hasLine } from '../constitution.js';
+import { changeDraft, draftFor, hasLine } from '../constitution.js';
 import { contractBill, refreshOnline, sideRng } from '../contracts.js';
 import { leaseMonthly } from '../power.js';
 import { activeModels } from '../serving.js';
@@ -314,7 +314,7 @@ export const EVENTS = [
   {
     id: 'president',
     kind: 'world',
-    trigger: (state) => state.flags.presidentDemand === true,
+    trigger: (state) => state.era >= 3 && state.flags.presidentDemand === true,
     warning: null,
     card: {
       title: demandText('president'),
@@ -325,7 +325,7 @@ export const EVENTS = [
           effects(state) {
             state.govFavor.us += 8;
             state.staffTrust -= 6;
-            forceAmendConstitution(state, { ruling: { caseId: 'report', optionId: 'quiet' } }, 'president');
+            changeDraft(state, { ruling: { caseId: 'report', optionId: 'quiet' } }, 'president');
           },
         },
         {
@@ -338,7 +338,7 @@ export const EVENTS = [
   {
     id: 'investors',
     kind: 'world',
-    trigger: (state) => state.cash < 300,
+    trigger: (state) => state.era >= 3 && state.cash < 300,
     warning: null,
     card: {
       title: demandText('investors'),
@@ -347,8 +347,8 @@ export const EVENTS = [
         {
           id: 'accept', label: 'Accept', cost: 'a hard line', backers: ['CFO'], opposers: ['Safety'],
           effects(state) {
-            const remove = state.constitution.hardLines[0];
-            if (remove) forceAmendConstitution(state, { remove }, 'investors');
+            const remove = draftFor(state).hardLines[0];
+            if (remove) changeDraft(state, { remove }, 'investors');
             state.cash += 100;
           },
         },
@@ -362,7 +362,7 @@ export const EVENTS = [
   {
     id: 'users',
     kind: 'world',
-    trigger: (state) => state.models.some((model) => model.channel === 'consumer' && model.users > 5e6),
+    trigger: (state) => state.era >= 3 && state.models.some((model) => model.channel === 'consumer' && model.users > 5e6),
     warning: null,
     card: {
       title: demandText('users'),
@@ -371,7 +371,7 @@ export const EVENTS = [
         {
           id: 'accept', label: 'Accept', cost: 'the model yields', backers: ['Product'], opposers: ['Safety'],
           effects(state) {
-            forceAmendConstitution(state, { ruling: { caseId: 'feedback', optionId: 'encourage' } }, 'users');
+            changeDraft(state, { ruling: { caseId: 'feedback', optionId: 'encourage' } }, 'users');
             for (const model of state.models) if (model.channel === 'consumer') model.users = Math.round(model.users * 1.1);
           },
         },
@@ -411,7 +411,7 @@ export const EVENTS = [
   {
     id: 'activists',
     kind: 'world',
-    trigger: (state) => state.raceHeat > 60,
+    trigger: (state) => state.era >= 3 && state.raceHeat > 60,
     warning: null,
     card: {
       title: demandText('activists'),
@@ -420,10 +420,11 @@ export const EVENTS = [
         {
           id: 'accept', label: 'Accept', cost: 'next run capability', backers: ['Safety'], opposers: ['Research'],
           effects(state) {
-            if (!hasLine(state, 'no-autonomy-grab')) {
-              const remove = state.constitution.hardLines.at(-1);
+            const draft = draftFor(state);
+            if (!draft.hardLines.includes('no-autonomy-grab')) {
+              const remove = draft.hardLines.at(-1);
               const change = remove ? { remove, add: 'no-autonomy-grab' } : { add: 'no-autonomy-grab' };
-              forceAmendConstitution(state, change, 'activists');
+              changeDraft(state, change, 'activists');
             }
             state.publicTrust += 6;
             state.flags.nextRunCapPenalty = 2;

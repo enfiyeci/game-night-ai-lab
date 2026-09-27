@@ -1,4 +1,4 @@
-import { forceAmendConstitution, hasLine } from '../constitution.js';
+import { changeDraft, draftFor, hasLine } from '../constitution.js';
 import { rank } from '../rivals.js';
 import { PERMISSIVE_OPTIONS } from './constitution.js';
 
@@ -22,14 +22,15 @@ function rushDemo(state) {
 }
 
 function loosenRules(state) {
-  const remove = state.constitution.hardLines.at(-1);
-  if (remove) forceAmendConstitution(state, { remove }, 'president');
+  const remove = draftFor(state).hardLines.at(-1);
+  if (remove) changeDraft(state, { remove }, 'president');
 }
 
 function installSwitch(state) {
-  if (!hasLine(state, 'accept-shutdown')) {
-    const remove = state.constitution.hardLines.at(-1);
-    forceAmendConstitution(state, remove
+  const draft = draftFor(state);
+  if (!draft.hardLines.includes('accept-shutdown')) {
+    const remove = draft.hardLines.at(-1);
+    changeDraft(state, remove
       ? { remove, add: 'accept-shutdown' }
       : { add: 'accept-shutdown' }, 'president');
   }
@@ -72,6 +73,7 @@ export const PROMISES = {
       || PERMISSIVE_OPTIONS.has(amendment.change.ruling?.optionId)),
     deliver: { label: "Loosen the model's rules", effects: loosenRules }, // OWNER WRITES
     contradicts: ['honest', 'no-manipulation'],
+    touchesConstitution: true,
   },
   domesticChips: {
     id: 'domesticChips',
@@ -88,9 +90,10 @@ export const PROMISES = {
   killSwitch: {
     id: 'killSwitch',
     text: "Give the President's office a switch that turns the AI off.", // OWNER WRITES
-    check: (state) => hasLine(state, 'accept-shutdown'),
+    check: (state) => hasLine(state, 'accept-shutdown') || draftFor(state).hardLines.includes('accept-shutdown'),
     deliver: { label: 'Install the government switch', effects: installSwitch }, // OWNER WRITES
     contradicts: ['no-power-grab'],
+    touchesConstitution: true,
   },
   humanSignoff: {
     id: 'humanSignoff',
@@ -108,14 +111,15 @@ export const PROMISES = {
   favorableModel: {
     id: 'favorableModel',
     text: 'Make the model speak well of the administration.', // OWNER WRITES
-    check: (state) => state.constitution.rulings.report === 'quiet',
+    check: (state) => draftFor(state).rulings.report === 'quiet' || state.constitution.rulings.report === 'quiet',
     deliver: {
       label: 'Re-rule the President case', // OWNER WRITES
       effects(state) {
-        forceAmendConstitution(state, { ruling: { caseId: 'report', optionId: 'quiet' } }, 'president');
+        changeDraft(state, { ruling: { caseId: 'report', optionId: 'quiet' } }, 'president');
       },
     },
     contradicts: ['honest'],
+    touchesConstitution: true,
   },
   bigClaim: {
     id: 'bigClaim',

@@ -32,10 +32,11 @@ const presidentPromise = (id, overrides = {}) => ({
   ...overrides,
 });
 
-function failedCall(id = 'beatRivals', overrides = {}) {
+function failedCall(id = 'beatRivals', overrides = {}, prepare = () => {}) {
   const state = createInitialState();
   state.turn = 5;
   state.capability = 10;
+  prepare(state);
   state.promises.push(presidentPromise(id, overrides));
   promiseUpkeep(state, no);
   eventsTick(state, no);
@@ -386,11 +387,11 @@ test('forced promise deliveries use President-sourced constitution amendments', 
     ['favorableModel', ['honest', 'privacy', 'no-wmd'], { report: 'full' }],
   ];
   for (const [id, hardLines, rulings] of cases) {
-    const state = failedCall(id);
-    state.constitution.hardLines = hardLines;
-    state.constitution.rulings = rulings;
+    const state = failedCall(id, {}, (candidate) => {
+      candidate.constitutionDraft = { hardLines, rulings, changes: [] };
+    });
     assert.equal(resolveEvent(state, 'promiseCall:0', 'deliver').ok, true, id);
-    assert.equal(state.constitution.amendments.at(-1).source, 'president', id);
+    assert.equal(state.constitutionDraft.changes.at(-1).source, 'president', id);
   }
 });
 
