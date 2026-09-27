@@ -114,9 +114,13 @@ export function resolveRun(state, run) {
   const uncappedGain = gainWith(run.spikes);
   // Past the Geneva cap only when the player chose to break the deal for this run.
   const gainCap = state.deal?.collapsed === false && state.deal.binding.includes('computeCap') && !run.uncapped ? 5 : Infinity;
-  const gain = Math.min(uncappedGain, gainCap);
+  const spikeLossFull = run.spikes > 0 ? Math.max(0, Math.min(gainWith(run.spikes - 1), gainCap) - Math.min(uncappedGain, gainCap)) : 0;
+  // A lowered learning rate mid-run (the loss-spike card's "slow") gets half the spike's loss back, as the same answer
+  // does for a pending model, and the loss counts as answered.
+  const halved = run.spikeLossHalved && spikeLossFull > 0;
+  const gain = Math.min(uncappedGain, gainCap) + (halved ? spikeLossFull / 2 : 0);
   const capability = state.capability + gain;
-  const spikeLoss = run.spikes > 0 ? Math.max(0, Math.min(gainWith(run.spikes - 1), gainCap) - gain) : 0;
+  const spikeLoss = halved ? 0 : spikeLossFull;
 
   const sum = (key) => effects.reduce((s, e) => s + (e[key] ?? 0), 0);
   const era = eraById(state.era);

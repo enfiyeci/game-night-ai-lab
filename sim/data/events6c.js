@@ -3,7 +3,6 @@ import { boardVote, seat } from '../board.js';
 import { exposeConcealed } from '../hazards.js';
 import { clamp } from '../util.js';
 
-export const LOSS_SPIKE_SLOWDOWN = 0.5;
 export const LOSS_SPIKE_SLOW_BONUS = 2;
 export const JUMP_CHANCE = 0.25;
 export const JUMP_GAIN = 5;
@@ -61,7 +60,7 @@ export const EVENTS_6C = [
           effects(state) {
             const run = state.activeRun;
             if (run && run.spikes > (run.spikesAnswered ?? 0)) {
-              run.spikeChance *= LOSS_SPIKE_SLOWDOWN;
+              run.spikeLossHalved = true; // resolveRun gives back half this spike's loss
               run.bonus -= LOSS_SPIKE_SLOW_BONUS;
               run.spikesAnswered = run.spikes;
               return;

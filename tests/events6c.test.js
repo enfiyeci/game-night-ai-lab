@@ -5,7 +5,6 @@ import { eventsTick, isAnchorId, resolveEvent, stampNewCards } from '../sim/even
 import { EVENTS } from '../sim/data/events.js';
 import {
   EVENTS_6C,
-  LOSS_SPIKE_SLOWDOWN,
   LOSS_SPIKE_SLOW_BONUS,
   JUMP_GAIN,
   EXPORT_FLIP_QILIN_SPEED,
@@ -13,7 +12,7 @@ import {
 import { checkTurnEndings } from '../sim/endings.js';
 import { advanceDays, endTurn } from '../sim/turn.js';
 import { INITIAL_BOARD, STAFF_LETTER_TRUST } from '../sim/board.js';
-import { startRun, resolveRun } from '../sim/training.js';
+import { startRun, resolveRun, advanceRunBy } from '../sim/training.js';
 
 const no = { next: () => 0.99, int: () => 0, chance: () => false, pick: (a) => a[0], normal: (m) => m };
 const yes = { next: () => 0, int: () => 0, chance: () => true, pick: (a) => a[0], normal: (m) => m };
@@ -143,9 +142,46 @@ test('a loss spike becomes a card, and each answer changes the run', () => {
 
   const slow = runState(1); slow.pendingEvents.push({ id: 'lossSpike' });
   resolveEvent(slow, 'lossSpike', 'slow');
-  assert.equal(slow.activeRun.spikeChance, 0.2 * LOSS_SPIKE_SLOWDOWN);
   assert.equal(slow.activeRun.bonus, 4 - LOSS_SPIKE_SLOW_BONUS);
   assert.equal(slow.activeRun.spikesAnswered, 1);
+});
+
+// A mixture-of-experts run (chosen spike risk, so one loss spike on its first advance), answered mid-run.
+function answeredRunGain(recipe, choice) {
+  const s = createInitialState();
+  s.researched.push('moe');
+  s.compute.split.safety = 0; s.compute.online = 100; s.cash = 5000;
+  assert.equal(startRun(s, recipe).ok, true);
+  s.activeRun.turnsLeft = 3;
+  advanceRunBy(s, null, 1);
+  assert.equal(s.activeRun.spikes, 1);
+  s.pendingEvents.push({ id: 'lossSpike' });
+  assert.equal(resolveEvent(s, 'lossSpike', choice).ok, true);
+  let model;
+  while (s.activeRun) model = advanceRunBy(s, null, 1);
+  return model;
+}
+
+test('lowering the learning rate mid-run recovers half the spike loss, at the bonus cost (A9 review round 2)', () => {
+  const close = (a, b) => assert.ok(Math.abs(a - b) < 1e-9, `${a} vs ${b}`);
+  // Base 20 (10 + large 5 + overtraining 3 + synthetic SFT 2 + DPO 2 - default scraped data 2), talent 1.0.
+  // push keeps the spike: 20 x 0.8 = 16. slow pays 2 of base, then gets half of its spike loss back:
+  // 18 x 0.8 + 18 x 0.2 / 2 = 16.2. rollback removes the spike: 20.
+  const big = { sliders: { size: 'large', length: 'over', alignShare: 0 }, picks: { pre: ['moe'], mid: [], post: ['synthetic-sft', 'dpo'] } };
+  const push = answeredRunGain(big, 'push');
+  const slow = answeredRunGain(big, 'slow');
+  const rollback = answeredRunGain(big, 'rollback');
+  close(push.gain, 16);
+  close(push.spikeLoss, 4);
+  close(slow.gain, 16.2);
+  assert.equal(slow.spikeLoss, 0); // recovered, as the pending-model answer marks it
+  close(rollback.gain, 20);
+  assert.ok(push.gain < slow.gain && slow.gain < rollback.gain);
+  // On a small run (base 8) the 2-point bonus cost outweighs half the loss: slow 6 x 0.9 = 5.4 against push's
+  // 8 x 0.8 = 6.4. slow beats push only when the base is above 18.
+  const small = { sliders: { size: 'medium', length: 'optimal', alignShare: 0 }, picks: { pre: ['moe'], mid: [], post: [] } };
+  close(answeredRunGain(small, 'push').gain, 6.4);
+  close(answeredRunGain(small, 'slow').gain, 5.4);
 });
 
 test('an answered spike does not re-fire, but a new spike does', () => {
