@@ -16,7 +16,7 @@ const SPEAKER_ICON = (muted) => `<svg width="16" height="16" viewBox="0 0 16 16"
   : '<path d="M10.8 5.6 q1.6 2.4 0 4.8 M12.6 4 q3 4 0 8" style="stroke:currentColor;stroke-width:1.5;stroke-linecap:round;fill:none"/>'}</svg>`;
 const PAUSE_ICON = '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="1" width="3" height="10" rx="1" style="fill:currentColor"/><rect x="7" y="1" width="3" height="10" rx="1" style="fill:currentColor"/></svg>';
 // Why the game is waiting while a speed is still chosen (owner pick 3A: say the reason instead of "Paused").
-const WAIT_WORDS = { dialog: 'screen open', menu: 'menu open', hidden: 'tab hidden', screenwall: 'card open', 'event-card': 'card open', 'event-card-loading': 'card open', hazard: 'card open', 'board-meeting': 'board meeting' };
+const WAIT_WORDS = { dialog: 'screen open', menu: 'menu open', hidden: 'tab hidden', screenwall: 'card open', 'event-card': 'card open', 'event-card-loading': 'card open', hazard: 'card open', 'board-meeting': 'board meeting', intro: 'team tour' };
 const SPARK_W = 212;
 const SPARK_H = 40;
 
@@ -138,8 +138,8 @@ export function mountHud(root, game) {
   const labPlate = view.querySelector('.lab-plate');
   const mute = view.querySelector('.clock .mute');
   const overlay = () => document.querySelector('#overlay');
-  // Like the office's own clicks, the buttons wait while a card, the phone or the screen wall holds the stage.
-  const blocked = () => Boolean(overlay()?.querySelector('.event-layer, .ev-phone, .screenwall-layer'));
+  // Like the office's own clicks, the buttons wait while a card, the phone, the screen wall, the title or the team tour holds the stage.
+  const blocked = () => Boolean(overlay()?.querySelector('.event-layer, .ev-phone, .screenwall-layer, .title-layer, .intro-layer'));
 
   info.addEventListener('click', () => {
     expanded = !expanded;
