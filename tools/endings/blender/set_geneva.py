@@ -2,8 +2,8 @@
 wide screen on the end wall. Each party's flag is a plain field of its colour (the labs' colours follow the game:
 Kestrel Labs coral, OpenBrain ink, Lodestar and DeepThink sky). Shots:
 
-  pd-news     A negotiated pace, signing day: the parties sit at the long signing table under their flags, leather
-              folders open; the hall screen shows the accord as signed (terms and signers filled per run).
+  pd-news     A negotiated pace, signing day: from behind, the parties sit at the long signing table under their
+              flags, leather folders open; the hall screen shows the accord as signed (terms and signers filled per run).
   lb-summit   Left behind, Year 1: the summit drafts the next era's rules at a round table; every party there has a
               place card and a flag, and at the back of the hall one plastic chair carries a paper sign for yours.
 """
@@ -121,7 +121,7 @@ def boxes(name, items, material):
 
 
 def shot_pd_news():
-    """pacingDeal 1, signing day: from the press pen, the long signing table under six flags; the parties sign; the
+    """pacingDeal 1, signing day: from the press pen, behind the signers at the long table under six flags; the
     hall screen shows the accord as signed."""
     hall(sun_strength=1.2)
     face = hall_screen("pd-news", (248, 96, 840, 296), width=6.4, z=4.7)
@@ -130,14 +130,16 @@ def shot_pd_news():
     kit.box((0, ty, 0.765), (9.4, 1.0, 0.05), kit.mat("#F1EEE6", 0.8))
     kit.box((0, ty, 0.37), (9.42, 1.02, 0.74), kit.mat("#1F2E55", 0.9))
     parties = list(COLOURS)
-    for i, name in enumerate(parties):
+    for i, name in enumerate(parties):   # the signers sit on the near side, their backs to the press, facing the flags
         x = (i - 2.5) * 1.5
-        place_card(name, (x, ty - 0.36, 0.79))
-        folder((x, ty - 0.05, 0.79))
-        kit.place("dining_chair_02", (x, ty + 0.85, 0), rot_z=math.radians(180))
-        P.person((x, ty + 0.72, 0.0), facing=180, pose="sit", height=1.76, coat=["#1D2230", "#2B2F36", "#23262C"][i % 3],
-                 hair=["#2A211C", "#141212", "#3A2C22"][i % 3], skin=["#A06A4A", "#6E4630", "#B98260"][i % 3], seed=30 + i)
-        flag((x, ty + 2.2), COLOURS[name])
+        hair = ["#2A211C", "#141212", "#3A2C22"][i % 3]
+        place_card(name, (x, ty + 0.36, 0.79))
+        folder((x, ty - 0.2, 0.79))
+        kit.place("dining_chair_02", (x, ty - 0.85, 0))
+        signer = P.person((x, ty - 0.72, 0.0), facing=0, pose="sit", height=1.76, coat=["#1D2230", "#2B2F36", "#23262C"][i % 3],
+                          hair=hair, skin=hair, seed=30 + i)
+        P.hair_back(signer, 1.76, "sit", hair)
+        flag((x, ty + 1.4), COLOURS[name])
     # the press pen in front: photographers from behind
     rng = random.Random(3)
     P.silhouettes([(x, 5.2 + rng.uniform(-0.3, 0.3), 0.0, rng.uniform(-10, 10), "stand") for x in (-3.9, -2.9, 3.0, 4.0)],
@@ -163,8 +165,9 @@ def shot_lb_summit():
         a = math.radians(180 + (i - 2) * 42)          # seats spread round the far side of the table
         px, py = cx + math.sin(a) * (R + 0.45), cy - math.cos(a) * (R + 0.45)
         face_deg = math.degrees(math.atan2(-(cx - px), cy - py))
+        hair = ["#2A211C", "#141212", "#3A2C22"][i % 3]   # skin in the hair's tone: at this distance a head, never a face
         P.person((px, py, 0.0), facing=face_deg, pose="sit", height=1.76, coat=["#1D2230", "#2B2F36", "#23262C"][i % 3],
-                 hair=["#2A211C", "#8C8C8C", "#141212", "#6B5A48"][i % 4], seed=50 + i)
+                 hair=hair, skin=hair, seed=50 + i)
         kx, ky = cx + math.sin(a) * (R - 0.25), cy - math.cos(a) * (R - 0.25)
         place_card(name, (kx, ky, 0.785), yaw=face_deg + 180)
         fx, fy = cx + math.sin(a) * (R + 1.5), cy - math.cos(a) * (R + 1.5)
