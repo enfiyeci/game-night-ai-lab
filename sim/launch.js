@@ -1,3 +1,4 @@
+import { PRODUCTS, productOf } from './data/products.js';
 import { clamp } from './util.js';
 import { leaderCapability, rank } from './rivals.js';
 import { safetySpend } from './economy.js';
@@ -90,7 +91,7 @@ export function scoreLaunch(state, model, rng) {
   const ctx = { launch, flags, rank: rank(state), safetyShown: benchmarks.find((b) => b.id === 'gauntlet').shown };
   const releaseCount = state.models.length; // picks the quip and the everyday reactions without another random draw
   const press = CRITICS.map((c) => {
-    const score = clamp(Math.round(base + c.bias(ctx) + rng.int(-1, 1)), 1, 10);
+    const score = clamp(Math.round(base + c.bias(ctx) + (model.polish ?? 0) / 50 + rng.int(-1, 1)), 1, 10);
     const quips = c.quips[score >= 8 ? 'high' : score >= 5 ? 'mid' : 'low'];
     const quip = quips[releaseCount % quips.length];
     return { id: c.id, name: c.name, score, quip };
@@ -104,5 +105,7 @@ export function scoreLaunch(state, model, rng) {
   const everyday = [...GENERIC_REACTIONS.slice(rotation), ...GENERIC_REACTIONS.slice(0, rotation)];
   const reactions = [...REACTIONS.filter((r) => r.when(rctx)), ...everyday].slice(0, 5)
     .map((r) => ({ handle: r.handle, text: typeof r.text === 'function' ? r.text(rctx) : r.text }));
-  return { ...launch, press, pressAvg, reactions };
+  const productName = PRODUCTS[productOf(model)].name.toLowerCase();
+  const verdict = model.missing?.length ? `A solid ${productName}, weak on ${model.missing[0]}.` : `A complete ${productName}.`;
+  return { ...launch, press, pressAvg, reactions, verdict };
 }

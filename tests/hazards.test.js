@@ -95,7 +95,7 @@ function trainedState({ hazard = true } = {}) {
   s.pendingModel.hazard = hazard ? { type: 'rewardHacking', size: 6 } : null;
   return s;
 }
-const release = { picks: ['channel-app'], price: 'market', reasoning: 'off', family: 'Kestrel', generation: 1 };
+const release = { picks: [], price: 'market', reasoning: 'off', family: 'Kestrel', generation: 1 };
 
 test('releasing over an unanswered hazard reports the automatic ignore', () => {
   const s = trainedState();

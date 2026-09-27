@@ -206,8 +206,8 @@ export const REACTIONS = {
     ]
    ]
   },
-  "channel": {
-   "consumer": [
+  "products": {
+   "chat": [
     [
      "@tired_parent",
      "{model} explained long division without anyone crying. five stars, would homework again."
@@ -249,7 +249,7 @@ export const REACTIONS = {
      "I ASKED {model} TO WRITE A LETTER TO MY CONGRESSMAN ABOUT THE POTHOLE ON ELM STREET. IT WROTE A BEAUTIFUL LETTER. IT ALSO TOLD ME TO \"CALL THE CITY FIRST.\" I HAVE CALLED THE CITY FOR 3 YEARS. BILL"
     ]
    ],
-   "enterprise": [
+   "business": [
     [
      "@thought_leadr",
      "Our firm integrated {model} before lunch. By dinner, our culture had transformed. Agree?"
@@ -4915,3 +4915,6 @@ export const REACTIONS = {
   ]
  ]
 };
+
+// These products share the business launch voices until they have their own persona copy.
+for (const product of ['coding', 'agent', 'science']) REACTIONS.launch.products[product] = REACTIONS.launch.products.business;

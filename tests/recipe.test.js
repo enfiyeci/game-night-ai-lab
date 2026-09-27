@@ -94,7 +94,7 @@ test('focus sliders are neutral at the start split and when absent', async () =>
   const s = createInitialState();
   s.era = 2;
   const start = Object.fromEntries(Object.entries(FOCUS).map(([stage, sliders]) => [stage, sliders.map((slider) => slider.start)]));
-  const neutral = { cap: 0, readiness: 0, spike: 0, mx: 0, usersMult: 1 };
+  const neutral = { cap: 0, readiness: 0, spike: 0, mx: 0 };
   const clean = (effects) => Object.fromEntries(Object.entries(effects).map(([key, value]) => [key, Math.abs(value) < 1e-12 ? 0 : value]));
   assert.deepEqual(clean(focusEffects(s, eraOneRecipe)), neutral);
   assert.deepEqual(clean(focusEffects(s, { ...eraOneRecipe, focus: start })), neutral);

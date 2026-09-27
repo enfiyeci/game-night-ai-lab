@@ -43,3 +43,9 @@ test('the run in training and a trained model waiting for launch show what they 
   assert.deepEqual(rows.map((r) => [r.kind, r.made, r.net]), [['pending', 70, -70], ['training', 35, -35]]);
   assert.equal(total.made, 105);
 });
+
+test('each model keeps the product label alongside its books', () => {
+  const state = createInitialState();
+  state.models = [{ name: 'Code', product: 'coding', channel: 'enterprise', releasedTurn: 0, active: true, activeFromTurn: 0 }];
+  assert.equal(moneyRows(state).rows[0].productName, 'Coding tool');
+});

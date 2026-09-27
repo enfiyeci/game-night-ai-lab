@@ -257,7 +257,7 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
     incol.append(inHead);
     if (bill.income.length === 0) incol.append(element('p', 'money-empty', 'Nothing yet. Release a model to start earning.'));
     for (const m of bill.income) {
-      incol.append(line(m.label, m.amount, 'in', `${(m.users / 1e6).toFixed(1)}M ${m.channel === 'enterprise' ? 'business' : m.channel} users ${PRICE_WORDS[m.price] ?? `at the ${m.price} price`} you set on release`));
+      incol.append(line(m.label, m.amount, 'in', `${(m.users / 1e6).toFixed(1)}M ${m.productName.toLowerCase()} users ${PRICE_WORDS[m.price] ?? `at the ${m.price} price`} you set on release`));
     }
     const outcol = element('div');
     const outHead = element('h5', 'out');

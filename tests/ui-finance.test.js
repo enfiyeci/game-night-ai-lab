@@ -1,8 +1,10 @@
+import { createInitialState } from '../sim/state.js';
+import { monthBill } from '../ui/logic/money.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { BALANCE } from '../sim/balance.js';
 import { roundSpan } from '../sim/time.js';
-import { growUsers, monthlyRevenue, projectBurn } from '../sim/economy.js';
+import { growUsers, monthlyRevenue, projectBurn, updateServing } from '../sim/economy.js';
 import { eraById } from '../sim/data/eras.js';
 import { computeSlices } from '../sim/split.js';
 import { createGame } from '../ui/game.js';
@@ -95,6 +97,9 @@ test('flat revenue stays flat; the growth line follows growUsers turn by turn', 
   const sim = structuredClone(state);
   for (const row of rows) {
     sim.era = row.era;
+    sim.turn = row.turn;
+    sim.compute.online = row.signed + row.planned;
+    updateServing(sim);
     sim.growthBoost = sim.budget.split.product * ((sim.budget.spend * eraById(row.era).monthsPerTurn) / 30) * 0.02;
     growUsers(sim);
     assert.ok(Math.abs(row.grownRevenue - monthlyRevenue(sim)) < 1e-9, `turn ${row.turn}`);
@@ -389,4 +394,42 @@ test('in a later row, a running Azuria contract and one landing partway share th
   assert.ok(cap > bill && cap < 2 * bill, 'the cap binds only after the second contract lands');
   const expected = (1 - late) * Math.min(bill, cap) + late * Math.min(2 * bill, cap);
   assert.ok(Math.abs(row.credit - expected) < 1e-9, `${row.credit} vs ${expected}`);
+});
+
+test('finance labels coding tools independently of their legacy channel', () => {
+  const state = era3();
+  for (const model of state.models) model.product = 'coding';
+  assert.ok(monthBill(state).income.length > 0);
+  assert.ok(monthBill(state).income.every((row) => row.productName === 'Coding tool'));
+});
+
+test('the growth forecast responds to capacity and preserves the source books', () => {
+  const state = era3();
+  state.compute.split.coverWithSpot = false;
+  state.compute.split.servingCap = 0;
+  const before = structuredClone(state);
+  const blocked = project(state, defaultPlan(state));
+  assert.ok(blocked.rows.every((row) => row.grownRevenue === row.revenue));
+  assert.deepEqual(state, before);
+  state.compute.split.coverWithSpot = true;
+  const covered = project(state, defaultPlan(state));
+  assert.ok(covered.rows[0].grownRevenue > blocked.rows[0].grownRevenue);
+});
+
+test('forecast growth reflects product crowding and a held product first', () => {
+  const state = createInitialState();
+  state.models = [{
+    name: 'Business 1', product: 'business', channel: 'enterprise', active: true, activeFromTurn: 0,
+    users: 10000, userCap: 1000000, priceStance: 'market',
+    spec: { product: 'business', channel: 'enterprise', size: 'medium', arch: 'dense', context: 'short', precision: 'bf16', guard: false, reasoning: 'off' },
+  }];
+  state.compute.split.coverWithSpot = true;
+  updateServing(state);
+  const plan = defaultPlan(state);
+  const crowded = project(state, plan).rows[0].grownRevenue;
+  const empty = structuredClone(state);
+  empty.rivals = [];
+  assert.ok(project(empty, plan).rows[0].grownRevenue > crowded);
+  state.firsts = { products: { business: { labs: ['player'], turn: 0 } }, features: {} };
+  assert.ok(project(state, plan).rows[0].grownRevenue > crowded);
 });

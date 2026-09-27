@@ -1,15 +1,10 @@
+import { PRODUCTS, productOf } from '../../sim/data/products.js';
 import { ERAS } from '../../sim/data/eras.js';
 import { RIVAL_TEMPLATES } from '../../sim/rivals.js';
 import { activeModels } from '../../sim/serving.js';
 import { storyDate } from '../../sim/time.js';
 import { storyDayForTurn, users as formatUsers } from './format.js';
 
-export const HISTORY_CHANNEL_WORDS = {
-  enterprise: 'API',
-  consumer: 'App and API',
-  open: 'Open weights',
-  agent: 'Agent product',
-};
 
 export const HISTORY_PRICE_WORDS = {
   undercut: 'Cheap',
@@ -33,7 +28,7 @@ export const CONTROVERSY_HANDLES = [
   '@teacher_mo',
 ];
 
-export const NON_CRITICAL_REACTION_HANDLES = ['@lodestar_eng', '@early_adopter', '@night_shift_nurse', '@grad_student_42', '@small_biz_rosa'];
+export const NON_CRITICAL_REACTION_HANDLES = ['@lodestar_eng', '@early_adopter', '@night_shift_nurse', '@grad_student_42', '@small_biz_rosa', '@unit_economics'];
 
 const mean = (values) => values.length > 0
   ? values.reduce((sum, value) => sum + value, 0) / values.length
@@ -51,12 +46,11 @@ function eraForTurn(turn) {
 function statusOf(state, model, serving) {
   if (serving.has(model)) return 'serving';
   if (!model.active) return 'retired';
-  if (model.channel === 'open') return 'open';
   return 'upcoming';
 }
 
 export function historyRows(state) {
-  // Serving means what the sim serves: not open weights, and online from activeFromTurn on.
+  // Serving models are online from activeFromTurn on.
   const serving = new Set(activeModels(state));
   return (state.models ?? [])
     .map((model, index) => ({ model, index }))
@@ -72,7 +66,7 @@ export function historyRows(state) {
           ? storyDate(model.releasedDay).label
           : storyDate(storyDayForTurn(model.releasedTurn)).label,
         era: eraForTurn(model.releasedTurn).name,
-        channelWords: HISTORY_CHANNEL_WORDS[model.channel] ?? model.channel,
+        channelWords: PRODUCTS[productOf(model)].name,
         priceWords: HISTORY_PRICE_WORDS[model.priceStance] ?? model.priceStance,
         pressAvg: mean(press.map((review) => review.score)),
         press,
@@ -130,11 +124,7 @@ function isControversyReaction(reaction) {
 }
 
 function availabilityPhrase(channelWords) {
-  if (channelWords === 'API') return 'is sold through an API';
-  if (channelWords === 'App and API') return 'is sold through an app and API';
-  if (channelWords === 'Open weights') return 'is distributed as open weights';
-  if (channelWords === 'Agent product') return 'is sold as an agent product';
-  return `is available through ${channelWords}`;
+  return `is sold as a ${channelWords.toLowerCase()}`;
 }
 
 const joined = (values) => {

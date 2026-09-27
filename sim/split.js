@@ -75,7 +75,11 @@ export function applySplitEffects(state) {
   const events = [];
   if (!state.compute.split.coverWithSpot && s.shortfall > 0 && s.need > 0) {
     const loss = (s.shortfall / s.need) * 0.1;
-    for (const m of activeModels(state)) m.users = Math.round(m.users * (1 - loss));
+    for (const m of activeModels(state)) {
+      const before = m.users;
+      m.users = Math.round(before * (1 - loss));
+      m.lostToOutage = (m.lostToOutage ?? 0) + before - m.users;
+    }
     state.publicTrust -= 2;
     events.push({ type: 'outage', shortfall: s.shortfall });
   }

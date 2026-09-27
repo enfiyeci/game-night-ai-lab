@@ -444,10 +444,10 @@ export const REAL_EVENTS = [
   }),
   makeEvent('voiceLikeness', {
     fallback: 'license',
-    trigger: (state, rng) => state.era === 2 && liveConsumerModels(state).length > 0 && rng.chance(0.2),
+    trigger: (state, rng) => state.era === 2 && liveConsumerModels(state).some((model) => model.spec?.features?.some((f) => f.id === 'voice')) && rng.chance(0.2),
     effects: {
       pull(state) {
-        for (const model of liveConsumerModels(state)) model.users *= 0.8;
+        for (const model of liveConsumerModels(state).filter((m) => m.spec?.features?.some((f) => f.id === 'voice'))) model.users *= 0.8;
         state.sentiment = clamp(state.sentiment - 0.03, 0.5, 1.5);
       },
       keep(state) {

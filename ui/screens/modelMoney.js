@@ -16,7 +16,6 @@ const monthWords = (n) => (n < 1 ? 'under a month' : `${Math.round(n)} mo`);
 function statusWords(row) {
   if (row.kind === 'pending') return 'waiting for its launch';
   if (row.kind === 'training') return 'compute and recipe so far';
-  if (row.status === 'open') return `${row.date} · open weights, earns nothing`;
   if (row.status === 'upcoming') return `${row.date} · not on sale yet`;
   if (row.status === 'serving') return `${row.date} · on sale, ${monthWords(row.monthsOnSale)}`;
   return `${row.date} · retired after ${monthWords(row.monthsOnSale)}`;
@@ -61,7 +60,7 @@ export function modelMoneyView(state) {
   for (const row of rows) {
     const tr = element('tr', row.kind === 'model' ? '' : 'model-money-unreleased');
     const name = element('td');
-    name.append(element('strong', '', row.name), element('small', '', statusWords(row)));
+    name.append(element('strong', '', row.name), element('small', '', row.productName ? `${row.productName} · ${statusWords(row)}` : statusWords(row)));
     const dash = () => element('span', 'finance-muted', '—');
     const make = element('td');
     make.append(row.made == null ? dash() : bar(row.made, 'coral', money(row.made)));

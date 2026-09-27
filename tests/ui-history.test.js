@@ -1,3 +1,4 @@
+import { PRODUCTS, productOf } from '../sim/data/products.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { GENERIC_REACTIONS, REACTIONS } from '../sim/data/launch.js';
@@ -7,7 +8,6 @@ import { createGame } from '../ui/game.js';
 import { SCENARIOS } from '../ui/logic/scenarios.js';
 import {
   CONTROVERSY_HANDLES,
-  HISTORY_CHANNEL_WORDS,
   HISTORY_PRICE_WORDS,
   NON_CRITICAL_REACTION_HANDLES,
   article,
@@ -40,7 +40,7 @@ test('history rows expose release details and public benchmark averages in relea
   assert.deepEqual(rows.map((row) => row.era), state.models.map((model) => eraNames[Math.floor(model.releasedTurn / 4)]));
   assert.deepEqual(rows.map((row) => row.youAvg), state.models.map((model) => capMean(model, 'shown')));
   assert.deepEqual(rows.map((row) => row.rivalAvg), state.models.map((model) => capMean(model, 'rival')));
-  assert.deepEqual(rows.map((row) => row.channelWords), state.models.map((model) => HISTORY_CHANNEL_WORDS[model.channel]));
+  assert.deepEqual(rows.map((row) => row.channelWords), state.models.map((model) => PRODUCTS[productOf(model)].name));
   assert.deepEqual(rows.map((row) => row.priceWords), state.models.map((model) => HISTORY_PRICE_WORDS[model.priceStance]));
   assert.deepEqual(labSummary(rows), {
     released: state.models.length,
@@ -210,14 +210,15 @@ test('endTurn subscribers see the rival release log after it is updated', () => 
   assert.equal(sawRelease, true);
 });
 
-test('history status follows what the sim serves: open weights and not-yet-online models are not serving', () => {
+test('history status follows what the sim serves: live, upcoming and retired models', () => {
   const state = structuredClone(SCENARIOS.summit(5));
+  state.models = Array.from({ length: 3 }, (_, index) => ({ ...structuredClone(state.models[0]), name: `Model ${index + 1}` }));
   const [first, second, third] = state.models;
-  first.active = true; first.channel = 'open';
+  first.active = true; first.activeFromTurn = state.turn;
   second.active = true; second.activeFromTurn = state.turn + 2;
   third.active = false;
   const rows = historyRows(state);
-  assert.deepEqual(rows.slice(0, 3).map((row) => [row.status, row.active]), [['open', false], ['upcoming', false], ['retired', false]]);
+  assert.deepEqual(rows.slice(0, 3).map((row) => [row.status, row.active]), [['serving', true], ['upcoming', false], ['retired', false]]);
   assert.equal(labSummary(rows).stillServing, activeModels(state).length);
 });
 
@@ -225,4 +226,11 @@ test('article table columns are headed by each benchmark row\'s job, since the n
   const state = SCENARIOS.summit(5);
   const result = article(state, historyRows(state));
   assert.deepEqual(result.table.benchmarks, ['Coding', 'Science', 'Agents', 'Final exam', 'Safety']);
+});
+
+test('history names coding products independently of their legacy channel', () => {
+  const state = SCENARIOS.summit(5);
+  state.models[0].product = 'coding';
+  state.models[0].channel = 'enterprise';
+  assert.equal(historyRows(state)[0].channelWords, 'Coding tool');
 });

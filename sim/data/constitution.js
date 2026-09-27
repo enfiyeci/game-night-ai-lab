@@ -5,7 +5,7 @@ export const HARD_LINES = [
   { id: 'no-power-grab', text: 'Refuse to help anyone seize illegitimate power, even if we ask.', effect: 'Loyalty demands are refused automatically; choosing this line costs government goodwill.' },
   { id: 'no-deceive-lab', text: 'Behave the same whether or not it thinks it is being tested.', effect: 'Alignment faking conceals less debt.' },
   { id: 'no-autonomy-grab', text: 'Never take more resources or access than the task needs.', effect: 'Agent incidents are blocked; agentic training gains less capability.' },
-  { id: 'privacy', text: 'Never expose private information about a person.', effect: 'Enterprise releases attract more users.' },
+  { id: 'privacy', text: 'Never expose private information about a person.', effect: 'Business assistants attract more users.' },
   { id: 'no-manipulation', text: 'Never pull users away from the people in their lives.', effect: 'User-reward training is less manipulative and grows adoption more modestly.' },
 ];
 

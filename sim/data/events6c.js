@@ -21,7 +21,7 @@ function finishBoardRevolt(state) {
 }
 
 const liveModels = (state) => state.models.filter((model) => model.active && !model.superseded
-  && state.turn >= model.activeFromTurn && model.channel !== 'open');
+  && state.turn >= model.activeFromTurn);
 
 export const EVENTS_6C = [
   {

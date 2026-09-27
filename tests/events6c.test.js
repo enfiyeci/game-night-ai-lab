@@ -355,7 +355,7 @@ test('the export flip slows Qilin and never touches compute', () => {
 
 test('a price war acts only on live models', () => {
   const s = createInitialState();
-  s.models.push(liveModel(), liveModel({ active: false, users: 0 }), liveModel({ channel: 'open' }));
+  s.models.push(liveModel(), liveModel({ active: false, users: 0 }), liveModel({ activeFromTurn: 1 }));
   s.pendingEvents.push({ id: 'priceWar' });
   resolveEvent(s, 'priceWar', 'match');
   assert.equal(s.models[0].revenueMult, 0.7);

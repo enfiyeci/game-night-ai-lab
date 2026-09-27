@@ -26,26 +26,31 @@ export const RECEPTION_POSTS = {
       { handle: '@holdout_club', text: '{model} aced my benchmark and completed my benchmark url.' },
     ],
   },
-  channels: {
-    consumer: [
+  products: {
+    chat: [
       { handle: '@tired_parent', text: '{model} explained fractions without making anyone cry. five stars.' },
       { handle: '@study_break', text: 'everyone in the library is quietly asking {model} the same question.' },
       { handle: '@family_groupchat', text: 'mum discovered {model}. we now receive generated morning briefings.' },
     ],
-    enterprise: [
+    business: [
       { handle: '@meeting_survivor', text: '{model} summarised the meeting. sadly, the meeting still happened.' },
       { handle: '@sheet_cell_b7', text: 'management bought {model}. management has not explained why.' },
       { handle: '@reply_all', text: '{model} wrote the strategy memo. we are searching for the strategy.' },
     ],
-    agent: [
+    coding: [
       { handle: '@merge_conflict', text: '{model} fixed my bug and introduced one with better documentation.' },
       { handle: '@ship_friday', text: 'let {model} handle a ticket. it has opinions about the backlog now.' },
       { handle: '@local_host', text: '{model} can finish the task if nobody touches the repository. fair.' },
     ],
-    open: [
-      { handle: '@garage_gpu', text: 'three {model} fine-tunes appeared before breakfast.' },
-      { handle: '@weight_watcher', text: 'someone put {model} on a toaster. the toaster writes poetry now.' },
-      { handle: '@fork_this', text: '{model} is open. so are forty tabs explaining how to run it.' },
+    agent: [
+      { handle: '@ops_on_call', text: '{model} ran my whole onboarding checklist overnight. i am unsure how i feel.' },
+      { handle: '@audit_trail', text: 'asked {model} what it changed. it gave me a list. the list was correct.' },
+      { handle: '@cautious_cto', text: 'we let {model} book travel. it booked the cheap flights and the right hotel.' },
+    ],
+    science: [
+      { handle: '@postdoc_pipettes', text: '{model} suggested an experiment my advisor called obvious. nobody had run it.' },
+      { handle: '@journal_club', text: 'read a {model} literature review. fewer made-up citations than my students.' },
+      { handle: '@bench_to_bedside', text: '{model} found the dosing error in our protocol. we are rerunning it.' },
     ],
   },
   press: {

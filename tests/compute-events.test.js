@@ -224,9 +224,9 @@ test('the agent surge triggers only for a serving-active agentic model', () => {
   s.models.push({ ...kestrel(), flags: ['agentic'], activeFromTurn: 1 });
   assert.equal(event.trigger(s), false);
   s.models[0].activeFromTurn = 0;
-  s.models[0].channel = 'open';
+  s.models[0].active = false;
   assert.equal(event.trigger(s), false);
-  s.models[0].channel = 'consumer';
+  s.models[0].active = true;
   assert.equal(event.trigger(s), true);
 });
 

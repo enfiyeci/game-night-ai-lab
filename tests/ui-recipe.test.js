@@ -210,7 +210,7 @@ test('sanitizeDraft drops invalid picks and repairs sliders without mutating inp
 
   assert.equal(sanitizeDraft(state, recipe({ alignShare: 0.224 })).sliders.alignShare, 0.2);
   assert.equal(sanitizeDraft(state, recipe({ alignShare: 0.075 })).sliders.alignShare, 0.1);
-  assert.deepEqual(sanitizeDraft(state), recipe({ size: 'medium', alignShare: 0.2 }));
+  assert.deepEqual(sanitizeDraft(state), { ...recipe({ size: 'medium', alignShare: 0.2 }), product: 'business' });
 });
 
 test('sanitizeDraft trims distinct unlocked picks to the projected slot count', () => {

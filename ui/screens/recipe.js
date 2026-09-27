@@ -52,8 +52,8 @@ const GROUP_NAMES = {
   rl: 'Reinforcement learning',
   character: 'Character',
   safeguards: 'Safeguards',
+  channel: 'Rollout',
   eval: 'How you check it',
-  channel: 'Who gets it',
   precision: 'Serving',
 };
 const SIZE_NAMES = { small: 'Small', medium: 'Medium', large: 'Large', xl: 'Extra large' };

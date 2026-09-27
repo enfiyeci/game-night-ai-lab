@@ -1,3 +1,4 @@
+import { claimFirsts, rivalProduct } from './data/products.js';
 import { BALANCE } from './balance.js';
 import { ERAS } from './data/eras.js';
 import { eraOfRound, roundSpan } from './time.js';
@@ -142,6 +143,7 @@ export function landRivals(state) {
     const r = state.rivals.find((rival) => rival.id === launch.id);
     landed.push({ id: r.id, gain: launch.gain });
     r.capability += launch.gain;
+    claimFirsts(state, r.id, rivalProduct(r.id, state.era), []);
     state.raceHeat = Math.min(100, state.raceHeat + launch.heat);
     return false;
   });

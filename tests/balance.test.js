@@ -119,3 +119,39 @@ test('the denier probe takes named cards; the safety bot never does; denying doe
   // Seeds 1 and 3 run out of money in era 2 even with the deny rule off; seed 2 did only because the bot kept denying.
   assert.ok(!speedBroke.includes(2), `speed out of money in era 2 on seeds ${speedBroke}`);
 });
+
+
+test('the five product bots exist and are probes', () => {
+  assert.deepEqual(balanceApi.PRODUCT_BOTS, ['waveRider', 'nicheSeeker', 'loyalChat', 'featureStacker', 'leanChat']);
+  for (const name of balanceApi.PRODUCT_BOTS) {
+    assert.ok(balanceApi.STRATEGIES[name], name);
+    assert.ok(balanceApi.PROBES.includes(name), name);
+  }
+});
+
+test('the product race reports wins and mean valuation per bot', () => {
+  const race = balanceApi.productRace(3);
+  assert.equal(Object.keys(race).length, 5);
+  assert.equal(Object.values(race).reduce((sum, row) => sum + row.wins, 0), 3);
+  for (const row of Object.values(race)) assert.ok(Number.isFinite(row.meanValuation));
+});
+
+test('the report measures product firsts, press and serving pressure', () => {
+  const row = targetReport.balanced;
+  assert.ok(Number.isFinite(row.meanValuation));
+  assert.deepEqual(Object.keys(row.productFirsts), ['chat', 'business', 'coding', 'agent', 'science']);
+  assert.ok(row.meanPress >= 0 && row.meanPress <= 10);
+  assert.ok(row.meanServingLoad >= 0);
+  assert.ok(row.roundsAtServingLimit >= 0 && row.roundsAtServingLimit <= 1);
+  assert.ok(row.meanUsersAtServingLimit >= 0);
+});
+
+test('existing bots retain explicit product choices', () => {
+  for (const [name, product] of [['speed', 'chat'], ['balanced', 'chat'], ['safety', 'business']]) {
+    const state = createInitialState({ seed: 1 });
+    state.cash = 10000;
+    state.compute.online = 100;
+    const action = balanceApi.STRATEGIES[name](state, createRng(1));
+    assert.equal(action.moves.find((move) => move.type === 'startRun')?.recipe.product, product, name);
+  }
+});

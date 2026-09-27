@@ -8,10 +8,11 @@ import { BALANCE } from '../sim/balance.js';
 import { INITIAL_BOARD, seat } from '../sim/board.js';
 
 const recipe = {
+  product: 'chat',
   sliders: { size: 'medium', length: 'optimal', alignShare: 0.15 },
   picks: { pre: ['filtered-data'], mid: [], post: ['synthetic-sft', 'safety-tuning'] },
 };
-const release = { picks: ['eval-full', 'channel-app'], price: 'market', reasoning: 'off', family: 'Kestrel', generation: 1 };
+const release = { picks: ['eval-full'], price: 'market', reasoning: 'off', family: 'Kestrel', generation: 1 };
 
 function script(state) {
   if (state.pendingModel) return { moves: [{ type: 'release', release: { ...release, generation: state.models.length + 1 } }] };
@@ -130,8 +131,9 @@ test('serving load reflects user growth from the same turn', () => {
     spec: { size: 'medium', arch: 'dense', context: 'short', precision: 'bf16', guard: false, channel: 'consumer', reasoning: 'off' },
   });
   const { state } = endTurn(s, {}, createRng(3));
-  assert.equal(state.models[0].users, 1.128e6);
-  assert.ok(Math.abs(state.compute.servingUnits - 1.128e6 * 2.4 / 1.46e6) < 1e-9);
+  const expectedUsers = 1e6 * (1 + 0.128 * 0.55);
+  assert.equal(state.models[0].users, expectedUsers);
+  assert.ok(Math.abs(state.compute.servingUnits - expectedUsers * 2.4 / 1.46e6) < 1e-9);
 });
 
 test('a new budget updates emergency eligibility before moves', () => {
@@ -238,7 +240,7 @@ test('endTurn activates due releases before growing users', () => {
   assert.equal(state.models[0].active, false);
   assert.equal(state.models[0].users, 0);
   assert.equal(state.models[1].activated, true);
-  assert.equal(state.models[1].users, 2.256e6);
+  assert.equal(state.models[1].users, 2e6 * (1 + 0.128 * 0.55 * 1.1));
 });
 
 test('a due release consumes serving compute before move validation', () => {

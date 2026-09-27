@@ -29,10 +29,10 @@ const withSpec = (spec, flags = []) => {
   return s;
 };
 
-test('the default release ships API only, and agentic models become agent API', () => {
+test('the release uses the locked product, independently of agentic training', () => {
   assert.equal(releaseSpec(withSpec({}), [], 'off').channel, 'enterprise');
-  assert.equal(releaseSpec(withSpec({}), ['channel-app'], 'off').channel, 'consumer');
-  assert.equal(releaseSpec(withSpec({}, ['agentic']), [], 'off').channel, 'agent');
+  assert.equal(releaseSpec(withSpec({ product: 'chat' }), [], 'off').channel, 'consumer');
+  assert.equal(releaseSpec(withSpec({}, ['agentic']), [], 'off').channel, 'enterprise');
   assert.equal(releaseSpec(withSpec({ reasoningCapable: false }), [], 'high').reasoning, 'off');
 });
 
@@ -44,9 +44,7 @@ test('per-token prices follow the sim serving tables', () => {
   assert.ok(Math.abs(pricePerMillion(spec, 3, 'market') - (30 * ERA_PRICE[2]) / tokensPerUser(spec, 3)) < 1e-9); // later eras' launch price
   assert.ok(Math.abs(servingPerMillion(spec, 1) - 4.8) < 1e-9); // $6 x medium 1 x dense 1 x short 0.8
   assert.equal(perMillion(1.249), '$1.25');
-  const open = releaseSpec(withSpec({}), ['channel-open'], 'off');
-  assert.equal(pricePerMillion(open, 1, 'market'), null);
-  assert.equal(servingPerMillion(open, 1), null);
+
 });
 
 test('evaluation cards that cost a turn delay the launch', () => {
@@ -83,7 +81,7 @@ test('the payload is a valid sim release and carries the size words', () => {
   const s = trained();
   const draft = { ...releaseDraft(s), family: '  Kestrel ', tierWords: { small: 'A', medium: 'B', large: 'C', xl: 'D' } };
   const payload = releasePayload(s, draft);
-  assert.deepEqual(payload, { picks: [], price: 'market', reasoning: 'off', family: 'Kestrel', generation: 1, tierWords: { small: 'A', medium: 'B', large: 'C', xl: 'D' } });
+  assert.deepEqual(payload, { picks: [], features: [], price: 'market', reasoning: 'off', family: 'Kestrel', generation: 1, tierWords: { small: 'A', medium: 'B', large: 'C', xl: 'D' } });
 });
 
 test('the preview needs a family name and reports the cash cost', () => {
@@ -95,14 +93,6 @@ test('the preview needs a family name and reports the cash cost', () => {
   assert.equal(ok.ok, true);
   assert.equal(ok.cash, 10);
   assert.equal(ok.name, 'Kestrel 1 Core');
-});
-
-test('the payload sends a neutral price for open weights but keeps the player pick otherwise', () => {
-  const s = trained();
-  const openDraft = { ...releaseDraft(s), family: 'Kestrel', picks: ['channel-open'], price: 'premium' };
-  assert.equal(releasePayload(s, openDraft).price, 'market');
-  const apiDraft = { ...releaseDraft(s), family: 'Kestrel', picks: [], price: 'premium' };
-  assert.equal(releasePayload(s, apiDraft).price, 'premium');
 });
 
 test('laterMoveProblem checks every move type queued after the release, ignoring one that already failed', () => {
@@ -189,7 +179,6 @@ test('the price sheet uses the real serving cost when the sim has it', () => {
   assert.equal(priceSheet({ ...model, activeFromTurn: 6, servingCost: 24 }, 3).live, true);
   assert.ok(Math.abs(priceSheet({ ...model, servingCost: 0, activeFromTurn: 6 }, 3).serve - 0.8) < 1e-9); // light-load formula
   assert.equal(priceSheet({ ...model, servingCost: 0, activeFromTurn: 6 }, 3).live, false);
-  assert.deepEqual(priceSheet({ ...model, channel: 'open' }, 3), { open: true });
   assert.equal(salesEstimate(model), 30); // 1M users x $30
 });
 
@@ -200,11 +189,10 @@ test('the ready-to-release scenario has a trained model waiting in era 3', () =>
   assert.ok(s.models.length >= 1);
 });
 
-// Owner 2026-09-26: open weights are hidden from the UI for now (no revenue model yet).
 test('offeredCards excludes hidden cards but keeps the rest pickable', () => {
   const s = SCENARIOS.readyToRelease(1);
   assert.ok(!offeredCards(s, 'release').some((card) => card.id === 'channel-open'));
-  assert.ok(offeredCards(s, 'release').some((card) => card.id === 'channel-app'));
+  assert.ok(offeredCards(s, 'release').some((card) => card.id === 'eval-full'));
   const era3 = createInitialState();
   era3.era = 3;
   assert.ok(!offeredCards(era3, 'post').some((card) => card.id === 'tamper'));
@@ -214,8 +202,8 @@ test('releaseDraft drops a remembered pick for a hidden card, and keeps a visibl
   const s = trained();
   const dropped = releaseDraft(s, { picks: ['channel-open'] });
   assert.ok(!dropped.picks.includes('channel-open'));
-  const kept = releaseDraft(s, { picks: ['channel-app'] });
-  assert.ok(kept.picks.includes('channel-app'));
+  const kept = releaseDraft(s, { picks: ['eval-full'] });
+  assert.ok(kept.picks.includes('eval-full'));
 });
 
 test('the release reveal waits while a board meeting is open', async () => {
@@ -340,4 +328,33 @@ test('on a real release in a later era, earlier models are re-scored on its test
     const expected = caps.reduce((sum, row) => sum + scoreOnTest(row, other.launch.benchmarks.find((b) => b.id === row.id)), 0) / caps.length;
     assert.equal(board.rows.find((row) => row.name === other.name).score, Math.round(expected * 10) / 10);
   }
+});
+
+test('product pricing distinguishes coding from business and preserves the era price', () => {
+  const state = withSpec({ channel: 'enterprise' }, ['agentic']);
+  state.pendingModel.product = 'coding';
+  const spec = releaseSpec(state, [], 'off');
+  assert.equal(spec.product, 'coding');
+  assert.equal(spec.channel, 'enterprise');
+  assert.equal(tokensPerUser(spec, 1), 3);
+  assert.equal(pricePerMillion(spec, 1, 'market'), 40 / 3);
+  assert.equal(pricePerMillion(spec, 3, 'market'), 40 * ERA_PRICE[2] / tokensPerUser(spec, 3));
+  assert.equal(priceSheet({ product: 'coding', channel: 'enterprise', spec, priceStance: 'market' }, 1).channel, 'Coding tool');
+});
+
+test('release draft and payload retain release features', () => {
+  const state = trained();
+  const draft = releaseDraft(state, { features: ['voice'], family: 'Kestrel' });
+  assert.deepEqual(draft.features, ['voice']);
+  assert.deepEqual(releasePayload(state, draft).features, ['voice']);
+});
+
+test('release advice follows the product and feature costs reach the preview', () => {
+  const state = withSpec({ product: 'agent' });
+  const draft = releaseDraft(state, { family: 'Kestrel' });
+  assert.match(releaseOpinions(state, draft).find((row) => row.id === 'policy').text, /agent acts on its own/i);
+  const trainedState = trained();
+  trainedState.era = 2;
+  const featured = releaseDraft(trainedState, { family: 'Kestrel', features: ['voice'] });
+  assert.equal(releasePreview(trainedState, { moves: [] }, featured).cash, 10);
 });

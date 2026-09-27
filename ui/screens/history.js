@@ -101,7 +101,7 @@ function modelTable(rows, selectedIndex, onSelect) {
     press.append(element('b', '', row.pressAvg.toFixed(1)), element('span', 'history-muted', ' / 10'));
     const launch = element('td', 'history-models-number', `+${users(row.newUsers)}`);
     const current = element('td', 'history-models-number');
-    const statusWords = { open: 'Open weights', upcoming: `From ${row.activeFromDate}`, retired: 'Retired' };
+    const statusWords = { upcoming: `From ${row.activeFromDate}`, retired: 'Retired' };
     current.append(row.status === 'serving' ? document.createTextNode(users(row.users)) : element('span', 'history-muted', statusWords[row.status]));
     tr.append(name, access, press, averageCell(row), launch, current);
     const select = () => onSelect(index);

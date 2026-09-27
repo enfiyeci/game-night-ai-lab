@@ -1,3 +1,4 @@
+import { DEFAULT_PRODUCT } from './data/products.js';
 import { BALANCE } from './balance.js';
 import { eraById } from './data/eras.js';
 import { SIZE_CAP, LENGTHS, validateRecipe, recipeCost, recipeCards, talentSpend, focusEffects } from './recipe.js';
@@ -27,7 +28,7 @@ export function startRun(state, recipe) {
   state.cash -= cost.cash;
   // Focus effects are fixed when the run starts, so a stage that opens mid-run cannot change them.
   const focus = focusEffects(state, recipe);
-  state.activeRun = { recipe: structuredClone(recipe), units: cost.units, turnsLeft: cost.turns, spikes: 0, spikeChance: Math.max(0, spikeChance), bonus: 0, focus, spent: { cash: cost.cash, compute: 0 } };
+  state.activeRun = { startEra: state.era, recipe: structuredClone(recipe), units: cost.units, turnsLeft: cost.turns, spikes: 0, spikeChance: Math.max(0, spikeChance), bonus: 0, focus, spent: { cash: cost.cash, compute: 0 } };
   if (teaches) {
     state.activeRun.constitution = { hardLines: draft.hardLines, rulings: draft.rulings };
     // The changes this model learns; they leave the draft's "who asked" list when the run finishes.
@@ -137,8 +138,6 @@ export function resolveRun(state, run, rng) {
     ...effects.map((e) => e.spec ?? {}),
   );
   const flags = [...new Set(effects.flatMap((e) => e.flags ?? []))];
-  const openWeightsMx =
-    cards.reduce((v, c) => c.effects.openWeightsMx ?? v, 20) * cards.reduce((m, c) => m * (c.effects.openWeightsMult ?? 1), 1);
 
   return {
     capability,
@@ -149,7 +148,9 @@ export function resolveRun(state, run, rng) {
     size,
     spec,
     flags,
-    openWeightsMx,
+    product: run.recipe.product ?? DEFAULT_PRODUCT,
+    recipe: structuredClone(run.recipe),
+    startEra: run.startEra ?? state.era,
     publicEffects: {
       pt: sum('pt'),
       st: sum('st'),

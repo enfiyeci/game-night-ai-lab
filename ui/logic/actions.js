@@ -1,3 +1,4 @@
+import { DEFAULT_PRODUCT, productPickable } from '../../sim/data/products.js';
 import {
   LENGTHS,
   SIZES,
@@ -69,6 +70,7 @@ export function budgetPreviewQueue(queue, { budget, computeSplit, pledge, canPle
 }
 
 const DEFAULT_RECIPE = {
+  product: DEFAULT_PRODUCT,
   sliders: { size: 'medium', length: 'optimal', alignShare: 0.2 },
   picks: { pre: [], mid: [], post: [] },
 };
@@ -178,7 +180,7 @@ export function sanitizeDraft(state, draft) {
     picks[stage] = selected;
   }
 
-  return { sliders: { size, length, alignShare }, picks, ...(hasFocus && { focus }) };
+  return { product: productPickable(state, draft?.product) ? draft.product : DEFAULT_PRODUCT, sliders: { size, length, alignShare }, picks, ...(hasFocus && { focus }) };
 }
 
 // A remembered size that no longer fits (users now take the compute) steps down to the largest size that does, the

@@ -9,7 +9,7 @@ const PREFERENCES = {
   pre: ['licensed-data', 'hazard-filter-built', 'hazard-filter-reuse'],
   mid: ['decontaminate', 'anneal'],
   post: ['human-sft', 'cai', 'classifiers', 'safety-tuning', 'constitution', 'character', 'deliberative'],
-  release: ['eval-third', 'eval-full', 'channel-api'],
+  release: ['eval-third', 'eval-full'],
 };
 
 function pickFrom(state, stage, ids) {
@@ -29,7 +29,7 @@ function pickFrom(state, stage, ids) {
 function affordableRecipe(state) {
   const picks = { pre: pickFrom(state, 'pre', PREFERENCES.pre), mid: pickFrom(state, 'mid', PREFERENCES.mid), post: pickFrom(state, 'post', PREFERENCES.post) };
   for (const size of ['xl', 'large', 'medium', 'small']) {
-    const recipe = { sliders: { size, length: 'optimal', alignShare: 0.4 }, picks };
+    const recipe = { product: 'business', sliders: { size, length: 'optimal', alignShare: 0.4 }, picks };
     if (!validateRecipe(state, recipe).ok) continue;
     const cost = recipeCost(state, recipe);
     if (cost.units <= availableUnits(state) && cost.cash < state.cash * 0.5) return recipe;
