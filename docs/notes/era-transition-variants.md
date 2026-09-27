@@ -1,6 +1,6 @@
 # Era-transition options awaiting owner selection
 
-Built from `origin/ui` at `a76020e`, after fetching and verifying the requested anchor `04650e0ade1b8a57741c3c74d03f112413a2635d`. Work branch: `codex/era-transition-variants`.
+Built from `origin/ui` at `a76020e`, after fetching and verifying the requested anchor `04650e0ade1b8a57741c3c74d03f112413a2635d`. Work branch: `codex/era-transition-variants`. Integrated the subsequently updated `ui` at `395a3a8` (polishing feature) in this isolated worktree before the final local merge.
 
 - **A — The briefing:** a full-screen editorial spread using `eraIntro` headline, current changes, bottleneck and pace. Optional ink-reveal motion.
 - **B — Moving day:** the outgoing office becomes a keepsake photograph while the incoming office takes the stage; an advisor speaks from their desk. Optional office-move motion.
@@ -18,7 +18,7 @@ Interactive debug routes: `?scenario=beforeEra2&seed=1&eraTransition=A` (first t
 
 ## Validation
 
-The 16-combination browser matrix (default/A/B/C × all four gates) passed with no browser exceptions or console errors. The harness checks pause reason, keyboard focus, button/Escape dismissal, manual pause preservation, reduced motion, opt-in animation, and a frozen story day while the screen is open. An additional B run checks ×4 restoration. Both requested transitions were inspected at both viewport sizes. Read-only review approved after fixing copied SVG gradient IDs and using the canonical advisor names.
+The 16-combination browser matrix (default/A/B/C × all four gates) passed with no browser exceptions or console errors. The harness checks pause reason, keyboard focus, button/Escape dismissal, manual pause preservation, reduced motion, opt-in animation, and a frozen story day while the screen is open. The refreshed matrix on `395a3a8` also verifies ×4 restoration on even-numbered incoming eras and manual pause on the others. All 434 affected UI, polishing, time, turn and realtime-board tests passed after integration. Both requested transitions were inspected at both viewport sizes. Read-only review approved after fixing copied SVG gradient IDs and using the canonical advisor names.
 
 The base-build full suite reported 1,091 passing, 2 failing and 5 TODO tests. The two failures are difficulty targets in `tests/balance.test.js` and `tests/compute-balance.test.js`; base-commit reproduction is recorded in the handoff completion note.
 
