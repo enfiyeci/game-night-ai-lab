@@ -16,7 +16,7 @@ const HINTS = {
   rivalDisaster: 'Let the whole race run too hot.',
   boardRemoved: 'Lose the room at a board vote.',
   leftBehind: 'Fall too far behind when an era closes.',
-  acquihire: 'Run out of money with no rescue left.',
+  acquihire: 'Run out of money and find no rescue in time.',
 };
 
 const timesFound = (count) => (count === 1 ? 'Found once' : count === 2 ? 'Found twice' : `Found ${count} times`);

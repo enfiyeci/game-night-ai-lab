@@ -192,6 +192,8 @@ export function mountEvents(game, { stage, overlay }) {
   }
 
   function openNext() {
+    // Once the run has ended (its film and end screen take over) no decision card opens again.
+    if (game.state.ending) return;
     // A dialog that is already up (the release reveal, a menu screen, the screen wall) or the floor menu goes first; cards wait for it.
     if (overlay.querySelector('.dialog-layer, .screenwall-layer, .menu-layer')) return;
     while (!current && queue.length) {
@@ -302,7 +304,7 @@ export function mountEvents(game, { stage, overlay }) {
   // The card that stepped aside comes back once nothing holds the stage; the tour (How to play) sends no signal
   // when it ends, and the card keeps the clock paused, so it looks again rather than waiting for a story day.
   function returnWhenClear() {
-    if (previewing || current) return;
+    if (previewing || current || game.state.ending) return;
     if (overlay.querySelector('.dialog-layer, .screenwall-layer, .menu-layer, .intro-layer')) {
       asideTimer = globalThis.setTimeout(returnWhenClear, ASIDE_RECHECK_MS);
       return;
