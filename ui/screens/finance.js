@@ -8,6 +8,9 @@ import { openDialog } from '../components/dialog.js';
 import { teamPanel } from '../components/team.js';
 import { registerMenuHandler } from '../menu.js';
 import { computeAmount, money } from '../logic/format.js';
+
+// Compute is shown in the unit of the era the player is in: later eras' power units would hint at what is to come.
+const amountNow = (state, units, era) => computeAmount(units, Math.min(era, state.era));
 import {
   LAST_TURN, UNIT_PRICE, boardPromiseOffer, byEra, defaultPlan, eraEndWords, eraLabel, eraOfTurn, eraStart, eraTitle, futureEras, monthOfTurn,
   planOpinions, project,
@@ -85,7 +88,7 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
     down.dataset.focus = `down-${era}`;
     down.setAttribute('aria-label', `Lower the goal ${eraLabel(state, era).replace(/^From/, 'from').replace(/^Era/, 'for era')}`);
     down.addEventListener('click', () => changeGoal(era, plan.goals[era] - stepFor(era)));
-    const value = element('output', 'finance-step-value', computeAmount(plan.goals[era], era));
+    const value = element('output', 'finance-step-value', amountNow(state, plan.goals[era], era));
     value.setAttribute('aria-live', 'polite');
     const up = element('button', '', '+');
     up.type = 'button';
@@ -126,7 +129,7 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
     if (open) {
       const row = element('div', 'compute-toggle finance-promised');
       const words = element('span');
-      words.append(element('b', '', 'Promised to the board'), element('small', '', `${computeAmount(open.units, open.era)} by ${eraEndWords(state, open.era)}`));
+      words.append(element('b', '', 'Promised to the board'), element('small', '', `${amountNow(state, open.units, open.era)} by ${eraEndWords(state, open.era)}`));
       row.append(words);
       return row;
     }
@@ -141,7 +144,7 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
     const words = element('span');
     words.append(
       element('b', '', 'Promise it to the board'),
-      element('small', '', offer ? `${computeAmount(offer.units, offer.era)} by ${eraEndWords(state, offer.era)}` : 'Set a goal above zero first'),
+      element('small', '', offer ? `${amountNow(state, offer.units, offer.era)} by ${eraEndWords(state, offer.era)}` : 'Set a goal above zero first'),
     );
     button.append(words, element('i', on ? 'on' : ''));
     button.addEventListener('click', () => {
@@ -279,7 +282,7 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
         const t0 = Math.max(state.turn + 1, eraStart(era)), t1 = eraStart(era) + ERAS[era - 1].turns;
         if (t0 >= t1) continue;
         const gy = yC(Math.min(plan.goals[era], maxC)), cx = (x(t0) + x(t1)) / 2;
-        const label = computeAmount(plan.goals[era], era);
+        const label = amountNow(state, plan.goals[era], era);
         s += `<line x1="${x(t0)}" x2="${x(t1)}" y1="${gy}" y2="${gy}" style="stroke:var(--ink);stroke-width:2;stroke-dasharray:5 4"/>`;
         s += `<g class="finance-goal-handle" data-era="${era}" data-focus="handle-${era}" tabindex="0" role="slider" aria-label="${eraLabel(state, era)} compute goal" aria-valuemin="0" aria-valuemax="${MAX_GOAL}" aria-valuenow="${plan.goals[era]}" aria-valuetext="${label}">
           <rect x="${cx - 38}" y="${gy - 11}" width="76" height="22" rx="11" style="fill:var(--ink)"/>
@@ -446,7 +449,7 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
       };
       const section = (label) => row(label, () => null, 'finance-section');
       section('Compute');
-      row('Online at the end of the era', (c) => cellWith(c.computeEnd, maxUnits, c.actual ? 'past-sky' : 'sky', computeAmount(c.computeEnd, c.era)));
+      row('Online at the end of the era', (c) => cellWith(c.computeEnd, maxUnits, c.actual ? 'past-sky' : 'sky', amountNow(state, c.computeEnd, c.era)));
       row('Goal', (c) => (!c.actual && eras.includes(c.era) ? stepper(c.era) : dash()));
       section('Each month');
       row('Revenue', (c) => cellWith(c.revenue, maxMonth, 'teal', money(c.revenue)));
