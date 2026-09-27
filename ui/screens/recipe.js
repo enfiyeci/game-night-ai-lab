@@ -1,6 +1,6 @@
 import { ADVISOR_PROFILES } from '../../sim/data/advisorLines.js';
 import { eraScale } from '../../sim/data/compute.js';
-import { FOCUS, FOCUS_REACTIONS, STAGE_BRIEFINGS } from '../../sim/data/recipeFocus.js';
+import { ERA_CHIP, FOCUS, FOCUS_REACTIONS, SIZE_COMPARISONS, STAGE_BRIEFINGS } from '../../sim/data/recipeFocus.js';
 import { genevaCapRow } from './deal.js';
 import { CARDS } from '../../sim/data/cards.js';
 import {
@@ -249,42 +249,108 @@ function computeUsageText(used, free, era) {
   return `Uses ${usedValue} of ${freeValue} ${availability}`;
 }
 
+function stageAdds(cards, era) {
+  const cost = cards.reduce((sum, card) => ({
+    cash: sum.cash + (card.cost.cash ?? 0),
+    computeMult: sum.computeMult * (card.cost.computeMult ?? 1),
+    turns: sum.turns + (card.cost.turns ?? 0),
+  }), { cash: 0, computeMult: 1, turns: 0 });
+  const words = cardCostWords({ cost }, era);
+  return words.length > 0 ? words.join(' · ') : 'Nothing extra';
+}
+
+// Owner pick R1 (round 2): numbered sockets for the picks, then one list with sticky group headers.
 export function techniquePanel(state, stage, draft, onChange, { cardNote, onPicked } = {}) {
   const root = document.createElement('div');
-  root.className = 'recipe-techniques';
-  const counter = document.createElement('div');
-  counter.className = 'recipe-pick-count';
+  root.className = 'tech-panel';
   const selected = draft.picks[stage];
   const slots = slotsFor(state, stage);
-  counter.textContent = `${selected.length} of ${slots} picked`;
-  root.append(counter);
+  const full = selected.length >= slots;
+  const pickedCards = selected.map(cardById).filter(Boolean);
+
+  const sockets = document.createElement('section');
+  sockets.className = 'tech-sockets';
+  sockets.setAttribute('aria-label', `${selected.length} of ${slots} picked`);
+  for (let index = 0; index < slots; index += 1) {
+    const card = pickedCards[index];
+    const socket = document.createElement('div');
+    socket.className = `tech-socket${card ? '' : ' empty'}`;
+    const number = document.createElement('span');
+    number.className = 'tech-socket-number';
+    number.textContent = `${index + 1}`;
+    const words = document.createElement('span');
+    words.className = 'tech-socket-words';
+    const name = document.createElement('b');
+    const detail = document.createElement('small');
+    name.textContent = card ? card.name : 'Open';
+    detail.textContent = card
+      ? [GROUP_NAMES[card.group] ?? card.group, costText(card, state.era)].join(' · ')
+      : 'Pick from any group below';
+    words.append(name, detail);
+    socket.append(number, words);
+    if (card) {
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'tech-socket-remove';
+      remove.textContent = '×';
+      remove.setAttribute('aria-label', `Remove ${card.name}`);
+      remove.addEventListener('click', () => onChange(selected.filter((id) => id !== card.id)));
+      socket.append(remove);
+    }
+    sockets.append(socket);
+  }
+  if (slots > 0) {
+    const total = document.createElement('div');
+    total.className = 'tech-total';
+    const label = document.createElement('span');
+    label.textContent = 'This stage adds';
+    const amount = document.createElement('b');
+    amount.textContent = stageAdds(pickedCards, state.era);
+    total.append(label, amount);
+    sockets.append(total);
+  }
+  if (full && slots > 0) {
+    const note = document.createElement('p');
+    note.className = 'tech-full';
+    note.textContent = `All ${slots} picks used. You can still swap inside a group you picked from.`;
+    sockets.append(note);
+  }
+  root.append(sockets);
 
   const list = document.createElement('div');
-  list.className = 'recipe-technique-list';
+  list.className = 'tech-list';
   const cards = offeredCards(state, stage);
-  const groupIds = [...new Set(cards.map((card) => card.group))];
   if (cards.length === 0) {
     const empty = document.createElement('p');
-    empty.className = 'recipe-technique-empty';
+    empty.className = 'tech-empty';
     empty.textContent = 'No techniques are available yet.';
     list.append(empty);
   }
 
-  for (const group of groupIds) {
+  for (const group of [...new Set(cards.map((card) => card.group))]) {
+    const selectedInGroup = selected.find((id) => cardById(id)?.group === group);
+    const blockedGroup = full && !selectedInGroup;
     const section = document.createElement('section');
-    section.className = 'recipe-technique-group';
+    section.className = 'tech-group';
     section.dataset.group = group;
     const header = document.createElement('div');
-    header.className = 'recipe-group-header';
-    header.textContent = GROUP_NAMES[group] ?? group;
+    header.className = 'tech-group-head';
+    const title = document.createElement('span');
+    title.textContent = GROUP_NAMES[group] ?? group;
+    header.append(title);
+    if (blockedGroup) {
+      const fullWord = document.createElement('span');
+      fullWord.className = 'tech-group-full';
+      fullWord.textContent = 'Full';
+      header.append(fullWord);
+    }
     section.append(header);
     const fallback = CARDS.find((card) => card.stage === stage && card.group === group && card.default);
     if (fallback) {
       const defaultLine = document.createElement('div');
-      defaultLine.className = 'recipe-default';
+      defaultLine.className = 'tech-default';
       defaultLine.textContent = `If none: ${fallback.name}`;
       defaultLine.title = fallback.hint;
-      section.append(defaultLine);
       const fallbackNote = cardNote?.(fallback);
       if (fallbackNote) {
         const chip = document.createElement('span');
@@ -292,53 +358,56 @@ export function techniquePanel(state, stage, draft, onChange, { cardNote, onPick
         chip.textContent = fallbackNote.text;
         defaultLine.append(' ', chip);
       }
+      section.append(defaultLine);
     }
 
-    const selectedInGroup = selected.find((id) => cardById(id)?.group === group);
     for (const card of cards.filter((candidate) => candidate.group === group)) {
       const picked = selected.includes(card.id);
-      const blocked = selected.length >= slots && !picked && !selectedInGroup;
+      const blocked = blockedGroup;
+      const short = (card.cost.cash ?? 0) - state.cash;
       const reason = blocked ? `All ${slots} picks are used — remove one first` : '';
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'recipe-card';
-      button.classList.toggle('selected', picked);
-      button.setAttribute('aria-pressed', `${picked}`);
-      if (blocked) {
-        button.setAttribute('aria-disabled', 'true');
-        button.title = reason;
-      }
-      const main = document.createElement('span');
-      main.className = 'recipe-card-main';
-      const name = document.createElement('strong');
-      if (picked) {
-        const check = document.createElement('i');
-        check.className = 'recipe-check';
-        check.setAttribute('aria-hidden', 'true');
-        name.append(check);
-      }
-      name.append(card.name);
-      const cost = document.createElement('b');
+      const row = document.createElement('button');
+      row.type = 'button';
+      row.className = 'tech-row';
+      row.classList.toggle('picked', picked);
+      row.classList.toggle('blocked', blocked);
+      row.classList.toggle('poor', !picked && short > 0);
+      row.setAttribute('aria-pressed', `${picked}`);
+      row.title = blocked ? reason : card.hint;
+      if (blocked) row.setAttribute('aria-disabled', 'true');
+      const radio = document.createElement('i');
+      radio.className = 'tech-radio';
+      radio.setAttribute('aria-hidden', 'true');
+      const name = document.createElement('span');
+      name.className = 'tech-name';
+      name.textContent = card.name;
+      const cost = document.createElement('span');
+      cost.className = 'tech-cost';
       cost.textContent = costText(card, state.era);
-      main.append(name, cost);
       const hint = document.createElement('span');
-      hint.className = 'recipe-card-hint';
+      hint.className = 'tech-hint';
       hint.textContent = card.hint;
-      button.append(main, hint);
+      row.append(radio, name, cost, hint);
+      if (!picked && short > 0) {
+        const why = document.createElement('span');
+        why.className = 'tech-why';
+        why.textContent = `${money(short)} more than you have`;
+        row.append(why);
+      }
       const note = cardNote?.(card);
       if (note) {
         const chip = document.createElement('span');
         chip.className = `release-ship ${note.later ? 'later' : 'now'}`;
         chip.textContent = note.text;
-        button.append(chip);
+        row.append(chip);
       }
       if (blocked) {
         const hidden = document.createElement('span');
         hidden.className = 'visually-hidden';
         hidden.textContent = `: ${reason}`;
-        button.append(hidden);
+        row.append(hidden);
       }
-      button.addEventListener('click', () => {
+      row.addEventListener('click', () => {
         if (blocked) return;
         const next = [...draft.picks[stage]];
         const same = next.indexOf(card.id);
@@ -351,7 +420,7 @@ export function techniquePanel(state, stage, draft, onChange, { cardNote, onPick
         onChange(next);
         if (!picked) onPicked?.(card);
       });
-      section.append(button);
+      section.append(row);
     }
     list.append(section);
   }
@@ -466,11 +535,18 @@ export function openRecipe(game, overlayRoot, { stage = 1 } = {}) {
     if (number === 1) {
       const note = document.createElement('p');
       note.className = 'recipe-slider-note';
-      const sizeRow = () => choiceRow('Model size', SIZES.filter((size) => size !== 'xl' || state.era >= 2).map((size) => ({
-        value: size,
-        label: SIZE_NAMES[size],
-        detail: computeAmount(SIZE_UNITS[size] * eraScale(state.era), state.era),
-      })), draft.sliders.size, (size) => {
+      const sizeRow = () => choiceRow('Model size', SIZES.filter((size) => size !== 'xl' || state.era >= 2).map((size) => {
+        const units = SIZE_UNITS[size] * eraScale(state.era);
+        const chips = `${(units * 1000).toLocaleString('en-US')} ${ERA_CHIP[state.era - 1]}s`;
+        const comparison = SIZE_COMPARISONS[state.era]?.[size];
+        const power = state.era >= 4 ? computeAmount(units, state.era) : '';
+        return {
+          value: size,
+          label: chips,
+          detail: [power, comparison].filter(Boolean).join(' · ') || ' ',
+          title: SIZE_NAMES[size],
+        };
+      }), draft.sliders.size, (size) => {
         draft.sliders.size = size;
         const moved = ['large', 'xl'].includes(size) && draft.sliders.length === 'heavy';
         if (moved) draft.sliders.length = 'over';

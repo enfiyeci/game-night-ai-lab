@@ -78,3 +78,16 @@ export const FOCUS_REACTIONS = {
     low: { advisor: 'policy', text: 'The jailbreak forums will have a good week.' },
   },
 };
+
+// Model size in hardware terms (owner 2026-09-26: "info about gpu" instead of Small/Medium/Large).
+// One compute unit is 1,000 of the era's top chips. Comparisons were checked by gn-pacing against Epoch AI's
+// training-cluster-size table (epoch.ai/data-insights/training-cluster-size) and Meta's Llama 3 paper; sizes
+// without a real comparable stay blank.
+export const ERA_CHIP = ['A100', 'H100', 'H200', 'GB200', 'Rubin'];
+export const SIZE_COMPARISONS = {
+  1: { medium: 'PaLM (2022): 6,144 chips', large: 'GPT-3: 10,000 GPUs' },
+  2: { medium: 'Llama 3.1 405B: 16,384 H100s', large: 'GPT-4: 25,000 GPUs', xl: 'Gemini 1.0 Ultra: 57,000 chips' },
+  3: { small: 'Llama 3.1 405B scale', medium: 'Llama 4 Behemoth: 32,000 GPUs', large: 'Grok 3: 80,000 GPUs', xl: 'Grok 4: 200,000 GPUs' },
+  4: { medium: 'Grok 4: 200,000 GPUs', xl: 'Stargate Abilene: about 840 MW by late 2026' },
+  5: { xl: 'A projection' },
+};
