@@ -124,7 +124,8 @@ export function openDialog(overlayRoot, opts) {
     }
   };
 
-  layer = dialog({ ...opts, onCancel: cancel });
+  // opts.build swaps the GDT trio for a screen's own layer; it must hold a .dialog-veil and a focusable .dialog-centre.
+  layer = (opts.build ?? dialog)({ ...opts, onCancel: cancel });
   closers.set(layer, close);
   Object.defineProperty(layer, 'close', { value: close });
   layer.querySelector('.dialog-veil').addEventListener('click', cancel);

@@ -1,7 +1,7 @@
 import { openDialog } from '../components/dialog.js';
-import { teamPanel } from '../components/team.js';
 import { projectQueue, turnSummary } from '../logic/compute.js';
 import { money, months, pct } from '../logic/format.js';
+import { noteText, pointsBar, usedLabel } from '../logic/paperwork.js';
 import { outcomeLine } from '../logic/president.js';
 import { registerMenuHandler } from '../menu.js';
 import { openDeals, openQueue } from './compute.js';
@@ -15,6 +15,7 @@ import {
   roundAmount,
   runway,
 } from '../../sim/economy.js';
+import { ADVISOR_PROFILES } from '../../sim/data/advisorLines.js';
 import { TECHNIQUES, techAvailable } from '../../sim/techniques.js';
 import { roundWord } from '../../sim/time.js';
 
@@ -31,50 +32,17 @@ const EMERGENCY_NAMES = {
   acquihire: 'Accept an acquihire',
 };
 
-function statusPanel(rows, lead = '') {
-  const root = document.createElement('div');
-  root.className = 'company-status';
-  if (lead) {
-    const text = document.createElement('p');
-    text.className = 'company-status-lead';
-    text.textContent = lead;
-    root.append(text);
-  }
-  for (const [label, value] of rows) {
-    const row = document.createElement('div');
-    const key = document.createElement('span');
-    key.textContent = label;
-    const answer = document.createElement('b');
-    answer.textContent = value;
-    row.append(key, answer);
-    root.append(row);
-  }
-  return root;
-}
+const make = (tag, className, text) => {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text != null) node.textContent = text;
+  return node;
+};
 
 function errorBox() {
-  const error = document.createElement('div');
-  error.className = 'dialog-error';
+  const error = make('div', 'dialog-error paper-error');
   error.setAttribute('role', 'alert');
   return error;
-}
-
-function footer(note) {
-  const root = document.createElement('div');
-  root.className = 'company-footer';
-  const text = document.createElement('div');
-  text.className = 'company-footer-note';
-  text.textContent = note;
-  root.append(text);
-  return { root, text };
-}
-
-function finishDialog(opened, kind, footerRoot) {
-  opened.classList.add('company-dialog', `company-dialog-${kind}`);
-  const ok = opened.querySelector('.dialog-ok');
-  footerRoot.append(ok);
-  opened.querySelector('.dialog-body').append(footerRoot);
-  return opened;
 }
 
 function runwayNow(state) {
@@ -97,19 +65,12 @@ function setActionDisabled(button, reason) {
   button.append(hidden);
 }
 
-function setSelected(buttons, selected, { showTag = false } = {}) {
+function setSelected(buttons, selected) {
   for (const button of buttons) {
     const active = button.dataset.choice === selected;
     button.classList.toggle('selected', active);
     button.setAttribute('aria-checked', `${active}`);
     button.tabIndex = active || (!selected && !button.disabled) ? 0 : -1;
-    button.querySelector('.company-selected')?.remove();
-    if (active && showTag) {
-      const tag = document.createElement('span');
-      tag.className = 'company-selected';
-      tag.textContent = 'Selected';
-      button.append(tag);
-    }
   }
 }
 
@@ -118,6 +79,7 @@ function wireChoices(group, buttons, select) {
   for (const button of buttons) button.addEventListener('click', () => select(button.dataset.choice));
   group.addEventListener('keydown', (event) => {
     if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return;
+    if (event.target.getAttribute('role') !== 'radio') return; // the Sign button can sit inside the group
     const choices = enabled();
     if (choices.length === 0) return;
     event.preventDefault();
@@ -136,54 +98,46 @@ function disabledReason(button, reason) {
   if (!reason) return;
   button.disabled = true;
   button.title = reason;
-  const text = document.createElement('span');
-  text.className = 'company-card-reason';
-  text.textContent = reason;
-  button.append(text);
+  button.append(make('span', 'company-card-reason', reason));
 }
 
-function simpleCard({ id, monogram, name, kind, big, per, chip, explanation, disabled, reason }) {
-  const button = document.createElement('button');
+function choice(className, id) {
+  const button = make('button', className);
   button.type = 'button';
-  button.className = 'company-card company-option-card';
   button.dataset.choice = id;
   button.setAttribute('role', 'radio');
   button.setAttribute('aria-checked', 'false');
-  const who = document.createElement('span');
-  who.className = 'company-who';
-  const disc = document.createElement('span');
-  disc.className = 'company-monogram';
-  disc.textContent = monogram;
-  const identity = document.createElement('span');
-  const title = document.createElement('strong');
-  title.textContent = name;
-  const type = document.createElement('span');
-  type.className = 'company-kind';
-  type.textContent = kind;
-  identity.append(title, type);
-  who.append(disc, identity);
-  const amount = document.createElement('span');
-  amount.className = 'company-big';
-  amount.textContent = big;
-  const detail = document.createElement('span');
-  detail.className = 'company-per';
-  detail.textContent = per;
-  const catchBlock = document.createElement('span');
-  catchBlock.className = 'company-catch';
-  const catchChip = document.createElement('span');
-  catchChip.className = 'company-chip';
-  catchChip.textContent = chip;
-  const copy = document.createElement('span');
-  copy.className = 'company-explanation';
-  copy.textContent = explanation;
-  if (chip) catchBlock.append(catchChip);
-  catchBlock.append(copy);
-  button.append(who);
-  if (big) button.append(amount);
-  if (per) button.append(detail);
-  button.append(catchBlock);
-  disabledReason(button, disabled ? reason : '');
   return button;
+}
+
+// Owner pick 5C: each decision is the paperwork it would be, laid on the dimmed office. openDialog still owns
+// focus, Esc, the veil click and gdt-dialog-closed, so a stepped-aside event card returns as after any dialog.
+function paperLayer(kind, { title, subtitle }) {
+  const layer = make('div', `dialog-layer paper-layer paper-${kind}`);
+  layer.setAttribute('role', 'dialog');
+  layer.setAttribute('aria-modal', 'true');
+  layer.setAttribute('aria-labelledby', `paper-title-${kind}`);
+  const veil = make('div', 'dialog-veil paper-veil');
+  veil.setAttribute('aria-hidden', 'true');
+  const desk = make('section', 'dialog-centre paper-desk');
+  desk.tabIndex = -1;
+  const head = make('header', 'visually-hidden'); // the paperwork names itself; the title is for screen readers
+  const heading = make('h1', null, title);
+  heading.id = `paper-title-${kind}`;
+  head.append(heading, make('p', null, subtitle));
+  desk.append(head);
+  layer.append(veil, desk);
+  return { layer, desk };
+}
+
+// The team-action line, any error, and a way out, under the paperwork.
+function paperFoot(note, error, close, ...actions) {
+  const foot = make('div', 'paper-foot');
+  const cancel = make('button', 'dialog-back paper-cancel', 'Not now');
+  cancel.type = 'button';
+  cancel.addEventListener('click', () => close());
+  foot.append(make('span', 'paper-foot-note', note), error, cancel, ...actions);
+  return foot;
 }
 
 export function openRaise(game, overlayRoot) {
@@ -204,65 +158,63 @@ export function openRaise(game, overlayRoot) {
     ...INVESTOR_COPY[id],
   }));
   let selected = reason ? '' : options[0].id;
-  const body = document.createElement('div');
-  const group = document.createElement('div');
-  group.className = 'company-option-grid';
-  group.setAttribute('role', 'radiogroup');
-  group.setAttribute('aria-label', 'Investors');
-  const buttons = options.map((option) => simpleCard({
-    id: option.id,
-    monogram: option.investor.name[0],
-    name: option.investor.name,
-    kind: 'investor',
-    big: money(option.amount),
-    per: `for ${pct(option.investor.share)} of your lab`,
-    chip: option.chip,
-    explanation: option.explanation,
-    disabled: Boolean(reason),
-    reason,
-  }));
-  group.append(...buttons);
+  const labName = typeof state.labName === 'string' ? state.labName.trim() : '';
+  const { layer, desk } = paperLayer('raise', {
+    title: 'Raise a round',
+    subtitle: `Era ${state.era} · choose your investor`,
+  });
+  const actionNote = `Raising uses 1 of your 2 team actions this ${roundWord(state.era)}`;
+  const fan = make('div', 'paper-fan');
+  fan.setAttribute('role', 'radiogroup');
+  fan.setAttribute('aria-label', 'Investors');
+  const slots = [];
+  const buttons = options.map((option, index) => {
+    const slot = make('div', `paper-slot paper-slot-${index}`);
+    const sheet = choice(`paper-sheet term-sheet investor-${option.id}`, option.id);
+    const letterhead = make('span', 'term-letterhead');
+    letterhead.append(make('span', 'term-mono', option.investor.name[0]), make('strong', null, option.investor.name));
+    const terms = make('span', 'term-terms');
+    terms.append(make('span', 'term-clause', option.chip), make('span', 'term-note', option.explanation));
+    sheet.append(
+      letterhead,
+      make('span', 'paper-kicker', 'Term sheet'),
+      make('span', 'term-amount', money(option.amount)),
+      make('span', 'term-for', `for ${pct(option.investor.share)} of ${labName || 'your lab'}`),
+      terms,
+      make('span', 'term-after', `Cash after signing ${money(projected.cash + option.amount)}`),
+      make('span', 'term-sign', labName ? `For ${labName}` : 'For the lab'),
+    );
+    disabledReason(sheet, reason);
+    slot.append(sheet);
+    slots.push(slot);
+    return sheet;
+  });
+  fan.append(...slots);
+  const sign = make('button', 'btn paper-action term-sign-button', 'Sign');
+  sign.type = 'button';
   const error = errorBox();
-  const foot = footer(`Raising uses 1 of your 2 team actions this ${roundWord(state.era)}`);
-  const rightContent = document.createElement('div');
-  body.append(group, error);
+  let opened;
+  const close = () => opened.close();
+  desk.append(fan, paperFoot(projected.flags.independenceLost
+    ? `${actionNote}. Rounds raise ${pct(1 - INDEPENDENCE_ROUND_SHARE)} less since you traded equity for compute.`
+    : actionNote, error, close));
 
   function renderSelection() {
     setSelected(buttons, selected);
-    const option = options.find((entry) => entry.id === selected);
-    rightContent.replaceChildren(option
-      ? statusPanel([
-        ['Cash now', money(projected.cash)],
-        ['Raise', money(option.amount)],
-        ['Cash after', money(projected.cash + option.amount)],
-        ['Share of lab', pct(option.investor.share)],
-      ])
-      : statusPanel([], reason));
-    if (option && projected.flags.independenceLost) {
-      const note = document.createElement('p');
-      note.className = 'company-status-lead';
-      note.textContent = `Rounds raise ${pct(1 - INDEPENDENCE_ROUND_SHARE)} less since you traded equity for compute.`;
-      rightContent.append(note);
-    }
+    slots.forEach((slot, index) => slot.classList.toggle('selected', buttons[index].dataset.choice === selected));
+    const slot = slots.find((candidate) => candidate.classList.contains('selected'));
+    if (slot) slot.append(sign);
+    else sign.remove();
   }
-  wireChoices(group, buttons, (id) => { selected = id; error.textContent = ''; renderSelection(); });
-
-  let opened;
-  opened = openDialog(overlayRoot, {
-    title: 'Raise a round',
-    subtitle: `Era ${state.era} · choose your investor`,
-    left: { title: 'Team', content: teamPanel(state) },
-    right: { title: 'This round', content: rightContent },
-    body,
-    okLabel: 'Raise',
-    onOk() {
-      if (!selected) { error.textContent = reason || 'Choose an investor.'; return; }
-      const result = game.addMove({ type: 'raise', archetype: selected });
-      if (result.ok) opened.close();
-      else error.textContent = result.error ?? 'The round could not be queued.';
-    },
+  wireChoices(fan, buttons, (id) => { selected = id; error.textContent = ''; renderSelection(); });
+  sign.addEventListener('click', () => {
+    if (!selected) { error.textContent = reason || 'Choose an investor.'; return; }
+    const result = game.addMove({ type: 'raise', archetype: selected });
+    if (result.ok) opened.close();
+    else error.textContent = result.error ?? 'The round could not be queued.';
   });
-  finishDialog(opened, 'raise', foot.root);
+
+  opened = openDialog(overlayRoot, { build: () => layer });
   renderSelection();
   return opened;
 }
@@ -284,33 +236,28 @@ export function openResearch(game, overlayRoot) {
       && !techAvailable(projected, technique.id)
       && projected.researchPoints >= technique.researchCost
   ))?.id ?? '';
-  const body = document.createElement('div');
-  const group = document.createElement('div');
-  group.className = 'research-list';
+  const { layer, desk } = paperLayer('research', {
+    title: 'Research a technique early',
+    subtitle: `Era ${state.era} · ${Math.round(projected.researchPoints)} research points available`,
+  });
+  const memo = make('article', 'paper-memo');
+  const lead = ADVISOR_PROFILES.research;
+  const fields = make('div', 'memo-fields');
+  for (const [label, value] of [['From', `${lead.name}, ${lead.role}`], ['To', 'You'], ['About', 'Starting a technique early']]) {
+    const row = make('div');
+    row.append(make('b', null, label), make('span', null, value));
+    fields.append(row);
+  }
+  memo.append(make('div', 'paper-kicker', 'Memo'), fields, make('div', 'memo-rule'));
+  memo.append(make('p', 'memo-body', options.length
+    ? 'We can start one of these now. Everyone gets it later.'
+    : 'Nothing can be researched early right now.'));
+  const group = make('div', 'memo-list');
   group.setAttribute('role', 'radiogroup');
   group.setAttribute('aria-label', 'Techniques available for early research');
   const buttons = options.map((technique) => {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'research-row';
-    button.dataset.choice = technique.id;
-    button.setAttribute('role', 'radio');
-    button.setAttribute('aria-checked', 'false');
-    const copy = document.createElement('span');
-    const name = document.createElement('strong');
-    name.textContent = technique.name;
-    const available = document.createElement('span');
-    available.textContent = 'Everyone gets it later';
-    copy.append(name, available);
-    const cost = document.createElement('span');
-    cost.className = 'research-cost';
-    const amount = document.createElement('b');
-    amount.textContent = `${technique.researchCost}`;
-    const units = document.createTextNode(' research points');
-    const affordability = document.createElement('em');
-    affordability.textContent = projected.researchPoints >= technique.researchCost ? 'You can afford this' : 'Cannot afford yet';
-    cost.append(amount, units, affordability);
-    button.append(copy, cost);
+    const button = choice('memo-item', technique.id);
+    button.append(make('span', 'memo-box'), make('strong', null, technique.name), make('span', 'memo-cost', `${technique.researchCost} points`));
     const reason = noMoves
       ? `Both team actions are used this ${roundWord(state.era)}`
       : queued.has(technique.id) ? `This technique was already started this ${roundWord(state.era)}`
@@ -320,55 +267,49 @@ export function openResearch(game, overlayRoot) {
     return button;
   });
   group.append(...buttons);
-  if (options.length === 0) {
-    const empty = document.createElement('p');
-    empty.className = 'company-empty';
-    empty.textContent = 'Nothing can be researched early right now.';
-    group.append(empty);
-  }
+  const bar = make('div', 'memo-bar');
+  const barFill = make('i');
+  bar.append(barFill);
+  const barLabel = make('div', 'memo-bar-label');
+  const barBlock = make('div', 'memo-points');
+  barBlock.append(bar, barLabel);
+  if (options.length) memo.append(group, barBlock);
+  const approve = make('button', 'btn paper-action', 'Approve');
+  approve.type = 'button';
   const error = errorBox();
-  const foot = footer(`Researching early uses 1 of your 2 team actions this ${roundWord(state.era)}`);
-  const rightContent = document.createElement('div');
-  body.append(group, error);
+  let opened;
+  memo.append(paperFoot(`Researching early uses 1 of your 2 team actions this ${roundWord(state.era)}`, error, () => opened.close(), approve));
+  desk.append(memo);
 
   function renderSelection() {
     setSelected(buttons, selected);
-    const technique = options.find((entry) => entry.id === selected);
-    rightContent.replaceChildren(statusPanel(technique ? [
-      ['Points now', `${Math.round(projected.researchPoints)}`],
-      ['Cost', `${technique.researchCost}`],
-      ['After research', `${Math.round(projected.researchPoints - technique.researchCost)}`],
-      ['Industry access', 'later'],
-    ] : [['Research points', `${Math.round(projected.researchPoints)}`]], technique ? '' : 'Pick an affordable technique.'));
-    if (opened) {
-      const available = buttons.some((button) => !button.disabled);
-      const actionReason = selected
-        ? ''
-        : noMoves ? `Both team actions are used this ${roundWord(state.era)}`
-          : available ? 'Select a technique to research'
-            : options.length === 0 ? 'Nothing to research early right now'
-              : 'No listed technique is affordable or available right now';
-      setActionDisabled(opened.querySelector('.dialog-ok'), actionReason);
+    // The bar follows the pick, or else the technique the lab is still saving toward.
+    const tracked = options.find((technique) => technique.id === selected)
+      ?? options.find((technique) => !queued.has(technique.id) && !techAvailable(projected, technique.id));
+    barBlock.hidden = !tracked;
+    if (tracked) {
+      const points = pointsBar(projected.researchPoints, tracked.researchCost);
+      barFill.style.width = `${points.fill * 100}%`;
+      barLabel.textContent = `${tracked.name} · ${points.label} · ${points.rest}`;
     }
+    const available = buttons.some((button) => !button.disabled);
+    const actionReason = selected
+      ? ''
+      : noMoves ? `Both team actions are used this ${roundWord(state.era)}`
+        : available ? 'Select a technique to research'
+          : options.length === 0 ? 'Nothing to research early right now'
+            : 'No listed technique is affordable or available right now';
+    setActionDisabled(approve, actionReason);
   }
   wireChoices(group, buttons, (id) => { selected = id; error.textContent = ''; renderSelection(); });
-
-  let opened;
-  opened = openDialog(overlayRoot, {
-    title: 'Research a technique early',
-    subtitle: `Era ${state.era} · ${Math.round(projected.researchPoints)} research points available`,
-    left: { title: 'Team', content: teamPanel(state) },
-    right: { title: 'Research', content: rightContent },
-    body,
-    okLabel: 'Research',
-    onOk() {
-      if (!selected) { error.textContent = 'Choose an affordable technique.'; return; }
-      const result = game.addMove({ type: 'research', techId: selected });
-      if (result.ok) opened.close();
-      else error.textContent = result.error ?? 'The research could not be queued.';
-    },
+  approve.addEventListener('click', () => {
+    if (!selected) { error.textContent = 'Choose an affordable technique.'; return; }
+    const result = game.addMove({ type: 'research', techId: selected });
+    if (result.ok) opened.close();
+    else error.textContent = result.error ?? 'The research could not be queued.';
   });
-  finishDialog(opened, 'research', foot.root);
+
+  opened = openDialog(overlayRoot, { build: () => layer });
   renderSelection();
   return opened;
 }
@@ -389,42 +330,49 @@ export function openEmergency(game, overlayRoot) {
     !noMoves && !covered && !outsideDangerZone && !used.has(option.id) && !queued.has(option.id)
   ))?.id ?? '';
   let acquihireArmed = false;
-  const body = document.createElement('div');
-  const group = document.createElement('div');
-  group.className = 'company-option-grid emergency-grid';
+  const { layer, desk } = paperLayer('emergency', {
+    title: 'Emergency options',
+    subtitle: 'Runway is short · choose a last resort',
+  });
+  const folder = make('div', 'paper-folder');
+  const tab = make('div', 'folder-tab', usedLabel(used.size, options.length));
+  const status = make('div', 'folder-status', `Cash ${money(projected.cash)} · runway ${months(runwayNow(projected))}`);
+  const group = make('div', 'folder-papers');
   group.setAttribute('role', 'radiogroup');
   group.setAttribute('aria-label', 'Emergency options');
-  const buttons = options.map((option) => simpleCard({
-    id: option.id,
-    monogram: EMERGENCY_NAMES[option.id][0],
-    name: EMERGENCY_NAMES[option.id],
-    kind: 'emergency option',
-    chip: option.id === 'acquihire' ? 'Ends the run' : '',
-    explanation: option.consequence,
-    disabled: noMoves || covered || outsideDangerZone || used.has(option.id) || queued.has(option.id),
-    reason: noMoves
+  const buttons = options.map((option) => {
+    const acquihire = option.id === 'acquihire';
+    const button = choice(acquihire ? 'paper-letter' : 'paper-note', option.id);
+    if (acquihire) {
+      button.append(
+        make('span', 'paper-kicker', 'A letter'),
+        make('strong', 'letter-head', 'We would like to acquire your team.'),
+        make('span', 'letter-body', noteText(option.consequence)),
+        make('span', 'company-chip letter-chip', 'Ends the run'),
+      );
+    } else button.append(make('strong', null, EMERGENCY_NAMES[option.id]), make('span', 'note-body', noteText(option.consequence)));
+    disabledReason(button, noMoves
       ? `Both team actions are used this ${roundWord(state.era)}`
       : covered ? 'A queued move already covers the shortfall'
         : outsideDangerZone ? 'Emergency options open only when runway is short'
           : usedBefore.has(option.id) ? 'Already used'
             : queued.has(option.id) ? `This emergency option was already started this ${roundWord(state.era)}`
-              : used.has(option.id) ? 'Already used' : '',
-  }));
+              : used.has(option.id) ? 'Already used' : '');
+    // Screen readers hear the option's own name; the letter's headline is its in-world voice.
+    button.setAttribute('aria-label', `${EMERGENCY_NAMES[option.id]}. ${noteText(option.consequence)}${button.title ? ` ${button.title}` : ''}`);
+    return button;
+  });
   group.append(...buttons);
+  const action = make('button', 'btn paper-action');
+  action.type = 'button';
   const error = errorBox();
-  const foot = footer(`Emergency help uses 1 of your 2 team actions this ${roundWord(state.era)}`);
-  const rightContent = document.createElement('div');
-  body.append(group, error);
+  let opened;
+  folder.append(tab, status, group, paperFoot(`Emergency help uses 1 of your 2 team actions this ${roundWord(state.era)}`, error, () => opened.close(), action));
+  desk.append(folder);
 
   function renderSelection() {
     setSelected(buttons, selected);
-    rightContent.replaceChildren(statusPanel([
-      ['Cash now', money(projected.cash)],
-      ['Runway', months(runwayNow(projected))],
-      ['Options used', `${used.size}`],
-    ]));
-    const ok = opened?.querySelector('.dialog-ok');
-    if (ok) ok.textContent = selected === 'acquihire' ? 'Accept — the run ends' : 'Use option';
+    action.textContent = selected === 'acquihire' ? 'Accept — the run ends' : 'Use option';
   }
   wireChoices(group, buttons, (id) => {
     selected = id;
@@ -432,29 +380,20 @@ export function openEmergency(game, overlayRoot) {
     error.textContent = '';
     renderSelection();
   });
-
-  let opened;
-  opened = openDialog(overlayRoot, {
-    title: 'Emergency options',
-    subtitle: 'Runway is short · choose a last resort',
-    left: { title: 'Team', content: teamPanel(state) },
-    right: { title: 'Right now', content: rightContent },
-    body,
-    okLabel: selected === 'acquihire' ? 'Accept — the run ends' : 'Use option',
-    onOk() {
-      if (!selected) { error.textContent = 'Choose an unused option.'; return; }
-      if (selected === 'acquihire' && !acquihireArmed) {
-        acquihireArmed = true;
-        error.textContent = 'Click again to confirm. This ends the run.';
-        opened.querySelector('.dialog-ok').textContent = 'Confirm — end the run';
-        return;
-      }
-      const result = game.addMove({ type: 'emergency', option: selected });
-      if (result.ok) opened.close();
-      else error.textContent = result.error ?? 'The emergency option could not be queued.';
-    },
+  action.addEventListener('click', () => {
+    if (!selected) { error.textContent = 'Choose an unused option.'; return; }
+    if (selected === 'acquihire' && !acquihireArmed) {
+      acquihireArmed = true;
+      error.textContent = 'Click again to confirm. This ends the run.';
+      action.textContent = 'Confirm — end the run';
+      return;
+    }
+    const result = game.addMove({ type: 'emergency', option: selected });
+    if (result.ok) opened.close();
+    else error.textContent = result.error ?? 'The emergency option could not be queued.';
   });
-  finishDialog(opened, 'emergency', foot.root);
+
+  opened = openDialog(overlayRoot, { build: () => layer });
   renderSelection();
   return opened;
 }
