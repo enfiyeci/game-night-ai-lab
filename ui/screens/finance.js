@@ -13,6 +13,8 @@ import { openDeals } from './compute.js';
 import { openBudget } from './budget.js';
 import { openAutomation } from './automation.js';
 import { modelMoneyView } from './modelMoney.js';
+import { advisorExplains, advisorTabLine, screenHelp } from '../components/advisorSays.js';
+import { EXPLAINER_ADVISOR, MONEY_EXPLAINER, MONEY_SEEN_KEY, MONEY_TAB_LINES, firstOpen, pageStorage } from '../logic/explainers.js';
 
 // Compute is shown in the unit of the era the player is in: later eras' power units would hint at what is to come.
 const amountNow = (state, units, era) => computeAmount(units, Math.min(era, state.era));
@@ -75,6 +77,8 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
   let draw = () => {};
   let dragScale = null; // the compute axis holds still while a goal is dragged
   let lastMaxC = 800;
+  // The CFO explains the screen the first time it opens in this browser; the header's "?" brings her back.
+  let explaining = firstOpen(pageStorage(), MONEY_SEEN_KEY);
 
   const render = () => {
     const key = document.activeElement?.dataset?.focus;
@@ -210,6 +214,7 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
     });
   }
 
+  // The CFO's explanation (hidden unless asked for), the tabs, then her one line on the tab on show.
   function tabs(current) {
     const row = element('div', 'finance-tabs');
     row.setAttribute('role', 'tablist');
@@ -221,8 +226,11 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
       tab.addEventListener('click', () => { if (key !== current) SHOW[key](); });
       row.append(tab);
     }
-    return row;
+    const head = document.createDocumentFragment();
+    head.append(advisorExplains(EXPLAINER_ADVISOR, MONEY_EXPLAINER, explaining), row, advisorTabLine(EXPLAINER_ADVISOR, MONEY_TAB_LINES[current]));
+    return head;
   }
+  const withHelp = () => screenHelp(opened, (shown) => { explaining = shown; });
 
   // 2A: this month's money in and out, one line per cause, each with the decision behind it and a way to change it.
   function showMonth() {
@@ -292,6 +300,7 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
       onOk: () => opened.close(),
     });
     opened.classList.add('finance-money', 'finance-month');
+    withHelp();
   }
 
   // 2B: money in and out over the run, with a numbered mark wherever a decision moved it.
@@ -362,6 +371,7 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
       onOk: () => opened.close(),
     });
     opened.classList.add('finance-money', 'finance-changes');
+    withHelp();
   }
 
   function showTimeline() {
@@ -537,6 +547,7 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
       panel.append(sums, element('div', `finance-verdict ${v.good ? 'good' : 'bad'}`, v.text));
     };
     render();
+    withHelp();
   }
 
   function showBooks() {
@@ -645,6 +656,7 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
       body.replaceChildren(tabs('books'), table, foot);
     };
     render();
+    withHelp();
   }
 
   // Each model: what every release cost to make and serve, and what it earned, since it started (ui/screens/modelMoney.js).
@@ -660,6 +672,7 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
       onOk: () => opened.close(),
     });
     opened.classList.add('finance-books', 'finance-models');
+    withHelp();
   }
 
   const SHOW = { month: showMonth, models: showModels, changes: showChanges, timeline: showTimeline, books: showBooks };

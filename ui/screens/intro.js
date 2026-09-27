@@ -76,7 +76,11 @@ export function mountIntro(game, { stage, overlay, storage }) {
       const ali = stageBox('.hud .ctr.ali');
       if (cap && ali) outline({ x: cap.x, y: cap.y, w: ali.x + ali.w - cap.x, h: Math.max(cap.h, ali.h) }, 10);
     }
-    if (step.point === 'money') outline(stageBox('#hud .info'));
+    if (step.point === 'money') {
+      outline(stageBox('#hud .info'));
+      outline(stageBox('#hud [data-open="money"]'), 5);
+    }
+    if (step.point === 'compute') outline(stageBox('#hud [data-open="compute"]'), 5);
     if (step.point === 'floor') {
       const [x, y] = anchors.floorMenu;
       const ring = el('<div class="intro-ring" aria-hidden="true"></div>');

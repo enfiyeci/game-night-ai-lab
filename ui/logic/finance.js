@@ -185,7 +185,7 @@ export const raiseAllowed = roundOpen;
 // Eras a round can still be planned in: this one (raiseRound is legal now, even on an era's last turn) and later ones.
 export const roundEras = (state) => [...new Set([state.era, ...futureEras(state)])].filter((era) => era >= 2);
 
-export function project(state, plan) {
+export function project(state, plan, { until = LAST_TURN } = {}) {
   const goals = plan.goals ?? {};
   const raises = plan.raises ?? {};
   // A usage surge (sim/turn.js) scales revenue until its turns run out, then clears.

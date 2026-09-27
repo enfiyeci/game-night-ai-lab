@@ -4,11 +4,16 @@
 export const TOUR_SEEN_KEY = 'gnal.intro.v1';
 
 // point: what the step outlines besides the speaker ('badges' the capability and alignment circles, 'money' the cash
-// and runway panel, 'floor' a ring on the floor plus a note on the clock). The last step waits for the floor click.
+// and runway panel and the Money button, 'compute' the Compute button, 'floor' a ring on the floor plus a note on the
+// clock). The last step waits for the floor click.
+// Owner 2026-09-26: "letting people know about the compute stuff etc is also equally important in the beginning". The
+// CFO's last money sentence and her compute stop are drafted (not owner-written); the game has no compute advisor, and
+// she signs the compute deals.
 export const TOUR = [
   { who: 'research', say: 'Hi, boss. I build the models. Click on any of us whenever you want to know what we think. We have opinions.' }, // OWNER WRITES
   { who: 'safety', point: 'badges', say: 'Those two circles up top are the model we are building. Capability is how strong it is. Alignment is how much of that we can trust. I watch the second one.' }, // OWNER WRITES
-  { who: 'cfo', point: 'money', say: 'Cash and runway live up there, top right. Runway is how long until the money runs out. If I start sweating, look at it.' }, // OWNER WRITES
+  { who: 'cfo', point: 'money', say: 'Cash and runway live up there, top right. Runway is how long until the money runs out. If I start sweating, look at it. Under it, Money shows what our models bring in and what compute, the lab budget and staff cost us.' }, // OWNER WRITES (last sentence drafted)
+  { who: 'cfo', point: 'compute', say: 'Next to it, Compute: the chips our models train and run on. Online units work today; arriving ones are signed and on their way. Training and our users share the same units, and we pay for every one. More comes from compute deals.' }, // drafted, owner may rewrite
   { who: 'policy', say: 'I talk to the press and to Washington. When the world notices us, I hear it first. Usually.' }, // OWNER WRITES
   { who: 'research', point: 'floor', say: 'When you want us to do something, click the floor. Anywhere. Start with a training run; we are bored.' }, // OWNER WRITES
 ];
