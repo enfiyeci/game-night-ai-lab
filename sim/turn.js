@@ -39,7 +39,7 @@ import { judgeEndingPromises, promiseUpkeep } from './promises.js';
 import { applySplitEffects, makePledge, setComputeSplit, spotCover } from './split.js';
 import { ROUND_DAYS, monthsPerDay } from './time.js';
 import { TEAM_OF, teamBusyError } from './teams.js';
-import { feedPosts } from './feed.js';
+import { reactToEvents, reactToLandedCard, reactToRunStart, releaseDueFeed } from './feedLive.js';
 import { setAutomation, automationTick, aiProposals, applyApprovals } from './automation.js';
 
 export const MAX_MOVES = 2;
@@ -122,10 +122,11 @@ function normalize(state) {
   state.govFavor.intl = clamp(state.govFavor.intl, 0, 100);
 }
 
-// Feed reactions to what just happened. Ambient filler only at a round mark, so quiet days stay quiet.
-// Reception, mood and ambient posts are time-based, so they run only at a round mark.
+// Feed reactions to what just happened, scheduled over the coming story days (sim/feedLive.js).
+// Reception, mood and background posts are time-based, so they are scheduled only at a round mark.
 function postFeed(before, state, events, atMark) {
-  for (const post of feedPosts(before, state, events, { ambient: atMark, timeBased: atMark })) pushFeed(state, post.handle, post.text, post.tag);
+  reactToEvents(before, state, events, { atMark });
+  releaseDueFeed(state);
 }
 
 // madeBefore: the round the run ended in; deals made in it never had a next meeting and stay open.
@@ -234,6 +235,7 @@ export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = 
     const choiceId = eventChoices[choiceKey];
     const result = resolveEvent(state, id, choiceId);
     if (!result.ok) errors.push(result.error);
+    else events.push({ type: 'eventResolved', id, eventId: pending.eventId ?? id, choiceId, promiseId: pending.promiseId });
     handledChoices.add(choiceKey);
   }
   for (const id of Object.keys(eventChoices)) {
@@ -271,7 +273,7 @@ export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = 
       const result = runMeeting(state, answerIds);
       if (!result.ok) errors.push(result.error);
       const outcome = result.ok ? result.outcome : expireMeeting(state).outcome;
-      events.push({ type: 'meetingOutcome', id, walkedOut: outcome.walkedOut, stake: outcome.stake });
+      events.push({ type: 'meetingOutcome', id, walkedOut: outcome.walkedOut, stake: outcome.stake, ...(result.ok && { answers: [...answerIds] }) });
       updateServing(state);
       state.burnPlanned = projectBurn(state);
       if (result.ok) {
@@ -313,8 +315,8 @@ export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = 
     recordAdvisors(state, rng);
     finishEnding(state, events);
   }
-  const announced = events.filter((event) => event.type !== 'release' || event.model?.activated);
-  if (announced.length) postFeed(mood, state, announced, false);
+  // A release that is not live yet gets its "announced" posts now and its launch posts when it goes live (sim/feedLive.js).
+  if (events.length) postFeed(mood, state, events, false);
   recheckCapacity(state);
   return { state, events, errors };
 }
@@ -502,7 +504,9 @@ function postLandedCards(state) {
     }
     pushFeed(state, card.post.handle, card.post.text, 'event');
     card.posted = true;
+    reactToLandedCard(state, card);
   }
+  releaseDueFeed(state); // the crowd's first reactions land the same day as the card
 }
 
 export function advanceDays(prev, days, rng, observer = {}) {
@@ -510,6 +514,7 @@ export function advanceDays(prev, days, rng, observer = {}) {
   const events = [];
   const errors = [];
   if (state.ending) return { state, events, errors: ['the run is over'] };
+  if (state.day === 0 && state.era === 1 && days > 0) reactToRunStart(state);
   for (let i = 0; i < days && !state.ending; i += 1) {
     // Mood posts compare the whole round, start to mark, as the old turn did, so an instant action's shift is not lost.
     const mood = { raceHeat: state.roundStart.raceHeat ?? state.raceHeat, publicTrust: state.roundStart.publicTrust ?? state.publicTrust };
@@ -529,6 +534,7 @@ export function advanceDays(prev, days, rng, observer = {}) {
     state.day += 1;
     state.dayInRound += 1;
     expireSuspicions(state);
+    releaseDueFeed(state);
     postLandedCards(state);
     for (const e of resolveDue(state)) events.push(e);
     if (reachesMark) {
@@ -538,6 +544,7 @@ export function advanceDays(prev, days, rng, observer = {}) {
     const dayEvents = events.slice(firstEvent);
     if (reachesMark || dayEvents.length) postFeed(mood, state, dayEvents, reachesMark);
   }
+  if (state.ending) releaseDueFeed(state); // no later day comes, so nothing may stay queued
   return { state, events, errors };
 }
 
