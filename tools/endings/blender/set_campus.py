@@ -132,8 +132,11 @@ def shot_ab_farewell():
     top = desk_box((0.3, 0.0, 0.46))
     face = laptop("ab-farewell", (250, 110, 780, 440), (0.3, -0.02, top), yaw=-8)
     # Tomas on the bench beside his box, from behind, turned to the laptop; everyone else walks in
-    P.person((-0.4, -0.02, -0.02), facing=-25, pose="sit", height=1.8, coat="#2B2F36", hair="#3A2E25", skin="#6E4630", seed=7)
-    kit.camera((0.15, -1.3, 1.05), (0.3, 10, 1.4), lens=35, fstop=4.0, focus=face)
+    tomas = P.person((-0.47, -0.08, -0.02), facing=-12, pose="sit", height=1.8, coat="#2B2F36", hair="#3A2E25", skin="#6E4630", seed=7)
+    hair = min((c for c in tomas.children if c.name.startswith("sphere")), key=lambda o: o.location.y)
+    beanie = kit.sphere((hair.location.x, hair.location.y, hair.location.z + 0.02), 0.12, kit.mat("#1E2126", 0.95), scale=(1, 1, 0.9))
+    beanie.parent = tomas
+    kit.camera((0.15, -1.3, 1.05), (0.3, 10, 1.4), lens=35, fstop=2.2, focus=face)
     bpy.context.scene.view_settings.exposure = 0.3
 
 

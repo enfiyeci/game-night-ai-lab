@@ -241,19 +241,47 @@ def pendants(on=True, energy=40, spots=((0.3, CY + 0.3), (1.6, CY + 0.3), (2.9, 
             kit.spot((x, y, z - 0.03), (x, y, 0), energy, kit.kelvin(2700), angle=110, blend=0.8, radius=0.05)
 
 
-def person(*args, **kw):
-    """A figure whose hair covers the back and sides of the head, so seen from behind it shows no skin."""
+def person(*args, hat=None, **kw):
+    """A figure whose hair covers the back and sides of the head, so seen from behind it shows no skin. hat: "beanie",
+    "cap" (a flat cap) or "bun" (hair up), so a head does not read as a bare sphere."""
     root = P.person(*args, **kw)
     heads = [c for c in root.children if c.type == "MESH" and c.name.startswith("sphere")]
     hair = min(heads, key=lambda o: o.location.y)          # the hair sits behind the face
     hair.location.y -= 0.01
     hair.location.z -= 0.03
     hair.scale = (1.08, 1.05, 1.1)
+    x, y, z = hair.location
+    s = kw.get("height", 1.75) / 1.75
+    parts = []
+    if hat == "beanie":
+        parts.append(kit.sphere((x, y + 0.01, z + 0.04 * s), 0.112 * s, kit.mat(kw.get("coat", "#3B3F46"), 0.95), scale=(1.0, 1.0, 0.9)))
+        parts.append(kit.cyl((x, y + 0.01, z + 0.0), 0.114 * s, 0.05 * s, kit.mat(kw.get("coat", "#3B3F46"), 0.95), verts=24))
+    elif hat == "cap":
+        parts.append(kit.sphere((x, y + 0.02, z + 0.05 * s), 0.12 * s, kit.mat("#3A3430", 0.9), scale=(1.0, 1.1, 0.55)))
+        parts.append(kit.box((x, y + 0.14 * s, z + 0.03 * s), (0.16 * s, 0.08 * s, 0.012), kit.mat("#3A3430", 0.9), rot=(-0.2, 0, 0)))
+    elif hat == "bun":
+        parts.append(kit.sphere((x, y - 0.05 * s, z + 0.1 * s), 0.055 * s, kit.mat(kw.get("hair", "#2A211C"), 0.7)))
+    for part in parts:
+        part.parent = root
     return root
 
 
+def unlit():
+    """Take every lamp off the people (the world and glowing screens still reach them), so they read as dark shapes
+    against the bright wall, TV or window instead of as front-lit mannequins."""
+    people = bpy.data.collections.new("people-unlit")
+    for root in [o for o in bpy.data.objects if o.name.startswith("person") and o.type == "EMPTY"]:
+        for ob in root.children_recursive:
+            if ob.type in ("MESH", "FONT"):
+                people.objects.link(ob)
+    for entry in people.collection_objects:
+        entry.light_linking.link_state = "EXCLUDE"
+    for L in [o for o in bpy.data.objects if o.type == "LIGHT"]:
+        L.light_linking.receiver_collection = people
+
+
 def dot(at=(0.6, 6.2), facing=180, pose="stand"):
-    return person(at, facing=facing, pose=pose, height=1.63, coat="#3E4A44", hair="#46423E", skin="#A06A4A", build=1.08, seed=77)
+    return person(at, facing=facing, pose=pose, hat="bun", height=1.63, coat="#3E4A44", hair="#46423E", skin="#A06A4A", build=1.08, seed=77)
 
 
 def cup(at, saucer=True):
@@ -276,7 +304,7 @@ def shot_ab_news():
     dot((0.5, 6.25), facing=10)             # Dot at the machine, her back to the room
     # breakfast regulars, nobody watching: a paper by the window, a phone, a chat at the counter; under the TV an
     # empty table with the business pages left folded by a cup
-    person((-2.3 + 0.55, 6.1, 0.0), facing=60, pose="sit", coat="#8A7A62", hold="paper", skin="#A06A4A", seed=3)   # to the window
+    person((-2.3 + 0.55, 6.1, 0.0), facing=60, pose="sit", coat="#4A4034", hold="paper", skin="#A06A4A", hat="cap", seed=3)   # to the window
     person((-2.9 + 0.5, 2.25, 0.0), facing=85, pose="sit", coat="#2C3A4F", hold="phone", seed=4)   # back to the TV
     props("bar_chair_round_01", [(0.1, CY - 0.45, 0, 0), (0.9, CY - 0.45, 0, 0), (1.7, CY - 0.45, 0, 0)])
     person((2.1, 4.6, 0.0), facing=-5, coat="#26302C", long_coat=True, seed=5)
@@ -287,6 +315,7 @@ def shot_ab_news():
     person((-W - 1.4, 6.2, -0.05), facing=180, pose="walk", coat="#1F2226", long_coat=True, hold="umbrella", seed=9)
     kit.area((0.5, 3.5, H - 0.05), (0.5, 3.5, 0), (3, 3), 80, kit.kelvin(3000))   # the ceiling downlights
     kit.camera((0.95, 1.7, 1.22), (-1.3, 6.6, 1.55), lens=37, fstop=4.0, focus=face)
+    unlit()
     bpy.context.scene.view_settings.exposure = 0.4
 
 
@@ -301,15 +330,16 @@ def shot_al_cafe():
     # a slow sunny morning: sun across the floor, plants in the window, people lingering
     props("potted_plant_01", [(-3.5, 0.6, 0.0, 30), (-3.45, 5.3, 0.0, 200)])
     props("ceramic_vase_01", [(-3.0, 4.65, 0.75, 0)])
-    person((-3.0 + 0.5, 4.75, 0.0), facing=-15, pose="sit", coat="#7A8C9A", skin="#6E4630", seed=12, hold="cup")
-    person((-2.3 + 0.55, 6.1, 0.0), facing=10, pose="sit", coat="#B5654A", hold="paper", seed=13)
+    person((-3.0 + 0.5, 4.75, 0.0), facing=-15, pose="sit", coat="#2A3038", skin="#6E4630", hat="beanie", seed=12, hold="cup")
+    person((-2.3 + 0.55, 6.1, 0.0), facing=10, pose="sit", coat="#4A2A22", hold="paper", hat="bun", seed=13)
     person((0.9 + 0.55, 3.0, 0.0), facing=-120, pose="sit", coat="#E7DFCF", seed=14, hold="cup")
     dot((1.1, 6.2), facing=200)
     cup((-2.85, 4.8, 0.75))
     cup((0.75, 2.95, 0.75))
     cup((-2.1, 6.0, 0.75))
     kit.sun((0, -66, 38), 5.0, kit.kelvin(5000), angle=0.6)
-    kit.camera((-0.55, 1.5, 1.25), (-2.0, 6.6, 1.55), lens=33, fstop=4.5, focus=face)
+    kit.camera((-1.15, 3.0, 1.2), (-2.0, 6.6, 1.72), lens=30, fstop=1.4, focus=face)
+    unlit()
     bpy.context.scene.view_settings.exposure = 0.5
 
 
@@ -340,12 +370,13 @@ def shot_rb_cafe():
     # after work: a man in a suit at the counter raises his cup to the screen; his neighbour keeps to her soup
     props("bar_chair_round_01", [(-0.4, CY - 0.45, 0, 0), (0.35, CY - 0.45, 0, 0), (1.1, CY - 0.45, 0, 0), (1.85, CY - 0.45, 0, 0)])
     raising_cup((-0.4, CY - 0.45, 0.28), 35, pose="sit", coat="#1F2226", trousers="#1F2226", hair="#141212", seed=21)
-    person((0.35, CY - 0.45, 0.28), facing=0, pose="sit", coat="#6A6154", long_coat=True, hair="#4A3526", seed=22)
+    person((0.35, CY - 0.45, 0.24), facing=0, pose="sit", coat="#4A443C", long_coat=True, hair="#4A3526", seed=22)
     dot((1.1, 6.2), facing=22)
     kit.cyl((0.35, CY + 0.12, CT + 0.03), 0.09, 0.06, kit.mat("#F4F1EA", 0.35), r2=0.07)   # her soup
     kit.cyl((0.35, CY + 0.12, CT + 0.062), 0.075, 0.002, kit.mat("#C77A3A", 0.4))
     kit.area((0.5, 3.5, H - 0.05), (0.5, 3.5, 0), (3, 3), 60, kit.kelvin(3000))
-    kit.camera((2.7, 2.3, 1.5), (-0.85, 6.6, 1.85), lens=44, fstop=4.0, focus=face)
+    kit.camera((2.7, 2.3, 1.5), (-0.85, 6.6, 1.85), lens=44, fstop=2.0, focus=face)
+    unlit()
     bpy.context.scene.view_settings.exposure = 0.3
 
 
@@ -362,7 +393,8 @@ def shot_lb_cafe():
     props("plastic_broom", [(-0.55, 4.05, 0, 45, -18)])
     kit.area((0.5, 3.5, H - 0.05), (0.5, 3.5, 0), (3, 3), 25, kit.kelvin(3000))
     kit.point((-1.75, 6.3, 2.0), 6, kit.kelvin(8000), radius=0.4)                   # the TV's glow in the corner
-    kit.camera((1.6, 0.8, 1.3), (-1.3, 6.6, 1.7), lens=45, fstop=4.0, focus=face)
+    kit.camera((1.6, 0.8, 1.3), (-1.3, 6.6, 1.7), lens=45, fstop=2.0, focus=face)
+    unlit()
     bpy.context.scene.view_settings.exposure = 0.35
 
 
