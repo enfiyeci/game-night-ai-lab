@@ -120,7 +120,7 @@ function renderEndScreen(overlay, model, { onPlayAgain, onWatch, lumenNote }) {
 // window, so it plays in a host that undoes that zoom.
 // While the film's files load, the host shows a dark "Loading the ending" veil that holds focus; Escape there
 // skips straight to the end screen.
-function filmHost(onEscape) {
+export function filmHost(onEscape) {
   const doc = globalThis.document;
   if (!doc) return undefined;
   const host = make('div', 'film-host');

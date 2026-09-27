@@ -12,6 +12,7 @@ import { mountRecipe, openRecipe } from './screens/recipe.js';
 import { mountRelease, openRelease } from './screens/release.js';
 import { mountReveal, showReveal } from './screens/reveal.js';
 import { mountSound, openSound } from './screens/sound.js';
+import { mountArchive, openArchive } from './screens/archive.js';
 import { music } from './music.js';
 import { releaseDraft, releasePayload } from './logic/release.js';
 import {
@@ -116,6 +117,7 @@ mountReveal(game, overlay, {
   },
 });
 mountSound(game, overlay);
+mountArchive(game, overlay, { collection });
 mountPresident(game, overlay);
 mountHistory(game, overlay);
 mountAutomation(game, overlay);
@@ -257,6 +259,10 @@ async function openDebugRoute() {
   }
   if (location.hash === '#history') {
     openHistory(game, overlay);
+    return;
+  }
+  if (location.hash === '#archive') {
+    openArchive(game, overlay, { collection });
     return;
   }
   if (location.hash === '#race') {
