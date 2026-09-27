@@ -1,0 +1,15 @@
+{
+ "shots": {
+  "6": {
+   "image": "mu-hearing",
+   "screens": [
+    [
+     "monitor",
+     "mu-hearing"
+    ]
+   ],
+   "focus": "screen",
+   "push": 1.05
+  }
+ }
+}

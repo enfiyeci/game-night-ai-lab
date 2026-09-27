@@ -1,0 +1,26 @@
+{
+ "shots": {
+  "1": {
+   "image": "ov-launch",
+   "screens": [
+    [
+     "wall",
+     "ov-launch"
+    ]
+   ],
+   "focus": "screen",
+   "push": 1.06
+  },
+  "2": {
+   "image": "ov-news",
+   "screens": [
+    [
+     "tv",
+     "ov-news"
+    ]
+   ],
+   "focus": "screen",
+   "push": 1.05
+  }
+ }
+}

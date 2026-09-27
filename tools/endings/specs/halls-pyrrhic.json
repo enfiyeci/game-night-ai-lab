@@ -1,0 +1,18 @@
+{
+ "shots": {
+  "7": {
+   "image": "cw-hearing",
+   "screens": [
+    [
+     "monitor",
+     "cw-hearing"
+    ]
+   ],
+   "focus": [
+    960,
+    560
+   ],
+   "push": 1.06
+  }
+ }
+}
