@@ -29,14 +29,12 @@ YELLOW = "#D9A13A"
 
 
 # ---------------------------------------------------------------- batching
-def _mesh(name, bm, material, props=None):
+def _mesh(name, bm, material):
     me = bpy.data.meshes.new(name)
     bm.to_mesh(me)
     bm.free()
     ob = bpy.data.objects.new(name, me)
     ob.data.materials.append(material)
-    for k, v in (props or {}).items():
-        ob[k] = v
     bpy.context.scene.collection.objects.link(ob)
     return ob
 
@@ -184,7 +182,7 @@ def corrugated(tint="#B4B8BC", name="cladding"):
     return m
 
 
-def hall(x, y, length=180, width=48, height=16, lit=1.0, cladding=None, pool=False, sign=None, sign_lit=True):
+def hall(x, y, length=180, width=48, height=16, lit=1.0, cladding=None, pool=False, sign=None):
     """A data hall: long along x, windowless, corrugated walls, a louvre band under the eaves, a row of generators
     along one end, chillers on the roof (collected in CHILLERS), a light strip and wall lamps along the long sides."""
     kit.box((x, y, height / 2), (length, width, height), cladding or corrugated(), name="hall")
@@ -206,7 +204,7 @@ def hall(x, y, length=180, width=48, height=16, lit=1.0, cladding=None, pool=Fal
         kit.area((x, y - width / 2 - 6, 9), (x, y - width / 2 - 14, 0), (length * 0.9, 3), 9000 * lit, kit.kelvin(4200))
     if sign:
         kit.text(sign, (x - length / 2 + 6, y - width / 2 - 0.35, height * 0.55), height * 0.34,
-                 kit.mat("#F4F1EA", 0.5, emit="#F4F1EA", strength=6 if sign_lit and lit else 0), align="LEFT")
+                 kit.mat("#F4F1EA", 0.5, emit="#F4F1EA", strength=6 * lit), align="LEFT")
 
 
 def frame(x, y, length=180, width=48, height=16, clad=0.4):
@@ -266,7 +264,7 @@ def floodmast(x, y, aim, h=24, energy=9e5, lit=True):
         kit.spot((x, y - 1.5, h + 2), aim, energy, kit.kelvin(4300), angle=95, blend=0.6, radius=1.0)
 
 
-def pylon_line(points, h=42, scale=1.0):
+def pylon_line(points, h=42):
     """High-voltage lattice towers at points [(x, y)], each turned along the line, with sagging conductors."""
     steel = kit.mat("#5F6166", 0.45, 0.7)
     items, arms = [], []
@@ -274,31 +272,31 @@ def pylon_line(points, h=42, scale=1.0):
         nx_, ny_ = points[min(i + 1, len(points) - 1)]
         px, py = points[max(i - 1, 0)]
         yaw = math.degrees(math.atan2(ny_ - py, nx_ - px)) + 90       # arms across the line
-        w0, w1 = 4.5 * scale, 1.2 * scale
+        w0, w1 = 4.5, 1.2
         local = []
         for sx in (-1, 1):
             for sy in (-1, 1):
-                local.append(((sx * w0, sy * w0, 0), (sx * w1, sy * w1, h * 0.75), 0.3 * scale))
-                local.append(((sx * w1, sy * w1, h * 0.75), (sx * w1 * 0.8, sy * w1 * 0.8, h), 0.25 * scale))
+                local.append(((sx * w0, sy * w0, 0), (sx * w1, sy * w1, h * 0.75), 0.3))
+                local.append(((sx * w1, sy * w1, h * 0.75), (sx * w1 * 0.8, sy * w1 * 0.8, h), 0.25))
         for k in range(6):
             z0, z1 = h * 0.75 * k / 6, h * 0.75 * (k + 1) / 6
             wa, wb = w0 + (w1 - w0) * k / 6, w0 + (w1 - w0) * (k + 1) / 6
             for sx, sy, tx, ty in ((-1, -1, 1, -1), (1, -1, 1, 1), (1, 1, -1, 1), (-1, 1, -1, -1)):
-                local.append(((sx * wa, sy * wa, z0), (tx * wb, ty * wb, z1), 0.12 * scale))
-                local.append(((tx * wa, ty * wa, z0), (sx * wb, sy * wb, z1), 0.12 * scale))
+                local.append(((sx * wa, sy * wa, z0), (tx * wb, ty * wb, z1), 0.12))
+                local.append(((tx * wa, ty * wa, z0), (sx * wb, sy * wb, z1), 0.12))
         tips = []
         for z, span in ((h * 0.75, 11), (h * 0.9, 8)):
-            local.append(((-span * scale, 0, z * scale / scale), (span * scale, 0, z), 0.35 * scale))
+            local.append(((-span, 0, z), (span, 0, z), 0.35))
             for side in (-1, 1):
-                local.append(((side * span * scale, 0, z), (side * span * scale, 0, z - 3 * scale), 0.3 * scale))  # insulators
-                tips.append((side * span * scale, 0, z - 3 * scale))
+                local.append(((side * span, 0, z), (side * span, 0, z - 3), 0.3))       # insulators
+                tips.append((side * span, 0, z - 3))
         items += _place(local, (x, y, 0), yaw)
         m = Matrix.Translation((x, y, 0)) @ Matrix.Rotation(math.radians(yaw), 4, "Z")
         arms.append([m @ Vector(t) for t in tips])
     beams("pylons", items, steel)
     cu = bpy.data.curves.new("wires", "CURVE")
     cu.dimensions = "3D"
-    cu.bevel_depth = 0.05 * scale
+    cu.bevel_depth = 0.05
     for a, b in zip(arms, arms[1:]):
         for pa, pb in zip(a, b):
             sp = cu.splines.new("POLY")
@@ -312,7 +310,7 @@ def pylon_line(points, h=42, scale=1.0):
     bpy.context.scene.collection.objects.link(wires)
 
 
-def substation(x, y, lit=True):
+def substation(x, y):
     """A switchyard: transformers, gantries and insulators in a fenced gravel yard."""
     steel = kit.mat("#8A8D91", 0.45, 0.8)
     items = []
@@ -327,10 +325,9 @@ def substation(x, y, lit=True):
           [((x + tx, y - 3.2, 3.2), (6, 1.2, 4.6)) for tx in (-24, -8, 8, 24)], kit.mat("#6E7479", 0.5, 0.5))
     kit.box((x, y, 0.05), (96, 48, 0.1), kit.tex("gravel", 0.5, name="yard"))
     fence((x - 48, y - 24), (x + 48, y - 24), 2.6)
-    if lit:
-        for lx in (-44, 44):
-            kit.sphere((x + lx, y - 22, 12), 0.5, kit.emission("#FFC47A", 60))
-            kit.point((x + lx, y - 22, 11), 6e4, kit.kelvin(2400), radius=1)
+    for lx in (-44, 44):
+        kit.sphere((x + lx, y - 22, 12), 0.5, kit.emission("#FFC47A", 60))
+        kit.point((x + lx, y - 22, 11), 6e4, kit.kelvin(2400), radius=1)
 
 
 def fence(a, b, height=2.4, post=3.0):
@@ -353,9 +350,9 @@ def fence(a, b, height=2.4, post=3.0):
     sep = nt.nodes.new("ShaderNodeSeparateXYZ")
     nt.links.new(coord.outputs["Object"], sep.inputs[0])
 
-    def wire(sign):
+    def wire(direction):
         a_ = nt.nodes.new("ShaderNodeMath")
-        a_.operation = "ADD" if sign > 0 else "SUBTRACT"
+        a_.operation = "ADD" if direction > 0 else "SUBTRACT"
         nt.links.new(sep.outputs["X"], a_.inputs[0])
         nt.links.new(sep.outputs["Y"], a_.inputs[1])
         sc = nt.nodes.new("ShaderNodeMath")
@@ -388,22 +385,17 @@ def fence(a, b, height=2.4, post=3.0):
     beams("fenceposts", items, steel)
 
 
-def sign(center, width, height, lines, board="#EDE7DA", yaw=0.0, legs=0.0, tilt=0.0, name="sign"):
-    """A flat sign facing -y (turned by yaw degrees): lines = [(text, dx, dz, size, material, font, align)] from its
-    centre. legs > 0 stands it on two posts reaching down to the ground."""
+def sign(center, width, height, lines, board="#EDE7DA", legs=False):
+    """A flat sign facing -y: lines = [(text, dx, dz, size, material, font, align)] from its centre; legs stand it on
+    two posts reaching down to the ground."""
     x, y, z = center
-    r = math.radians(yaw)
-    c, s = math.cos(r), math.sin(r)
-    nx, ny = math.sin(r), -math.cos(r)
-    kit.box((x, y, z), (width, 0.05, height), kit.mat(board, 0.8), rot=(math.radians(tilt), 0, r), name=name)
+    kit.box((x, y, z), (width, 0.05, height), kit.mat(board, 0.8), name="sign")
     for body, dx, dz, size, material, font, align in lines:
-        kit.text(body, (x + dx * c + 0.03 * nx, y + dx * s + 0.03 * ny, z + dz), size, material, font=font, align=align,
-                 rot=(math.radians(90 + tilt), 0, r))
+        kit.text(body, (x + dx, y - 0.03, z + dz), size, material, font=font, align=align)
     if legs:
         steel = kit.mat("#6B6E72", 0.5, 0.7)
         for side in (-1, 1):
-            px, py = x + side * width * 0.38 * c - 0.06 * nx, y + side * width * 0.38 * s - 0.06 * ny
-            kit.box((px, py, (z + height / 2) / 2), (0.12, 0.12, z + height / 2), steel)
+            kit.box((x + side * width * 0.38, y + 0.06, (z + height / 2) / 2), (0.12, 0.12, z + height / 2), steel)
 
 
 # per-shot collections of small repeated parts, batched at the end of the build
@@ -419,13 +411,11 @@ def finish(beacons=True):
         lst.clear()
 
 
-def rival_campus(x0, y0, cols, rows, lit=1.0, pitch=(230, 95), seed=1, skip=()):
+def rival_campus(x0, y0, cols, rows, pitch=(230, 95), seed=1):
     rng = random.Random(seed)
     for r in range(rows):
         for c in range(cols):
-            if (c, r) in skip:
-                continue
-            hall(x0 + c * pitch[0] + rng.uniform(-10, 10), y0 + r * pitch[1], lit=lit)
+            hall(x0 + c * pitch[0] + rng.uniform(-10, 10), y0 + r * pitch[1])
 
 
 # ---------------------------------------------------------------- shots
@@ -451,7 +441,7 @@ def shot_lb_desert():
     lines = [("KESTREL LABS", -2.05, 0.62, 0.6, faded, kit.FONT, "LEFT"),
              ("FUTURE HOME OF KESTREL CAMPUS ONE", -2.05, -0.1, 0.25, ink, kit.FONT_COND, "LEFT"),
              ("2 GIGAWATTS  ·  COMING SOON", -2.05, -0.58, 0.32, ink, kit.FONT_COND, "LEFT")]
-    sign((-4.0, 14.85, 2.4), 5.4, 2.4, lines, board="#DDD3BF", legs=1)
+    sign((-4.0, 14.85, 2.4), 5.4, 2.4, lines, board="#DDD3BF", legs=True)
     kit.box((-6.45, 14.8, 2.4), (0.3, 0.02, 2.4), faded)                                       # the logo band
     kit.box((-1.75, 14.78, 1.35), (0.9, 0.03, 0.5), kit.mat("#CFC4AE", 0.85), rot=(0, math.radians(-14), 0))  # loose corner
     # the rivals: rows of halls lit along the whole horizon, cranes adding more, the power line passing the lot by
@@ -547,16 +537,17 @@ RD_ORDER = [[(0, 0), (0, 1), (0, 2)], [(1, 0), (1, 1), (1, 2), (2, 0)], [(2, 1),
 HALL_X = [-300 + c * 230 for c in range(4)]
 
 
-def rd_shot(stage, cam=((-360, 40, 24), (60, 330, 4), 28), exposure=0.3):
+def rd_shot(stage, cam=((-330, 100, 18), (80, 330, 10), 28), exposure=0.3):
     """stage 0: all lit; each further stage switches off the next group in RD_ORDER."""
     def shot():
         kit.world(hdri="qwantani_night_puresky", strength=0.06, rotation=0)
         ground("#9C8468")
         mesas()
         off = {h for group in RD_ORDER[:stage] for h in group}
+        night = corrugated("#7E8286")
         for r in range(3):
             for c in range(4):
-                hall(HALL_X[c], 220 + r * 100, lit=0.0 if (c, r) in off else 1.0, pool=True,
+                hall(HALL_X[c], 220 + r * 100, lit=0.0 if (c, r) in off else 1.0, cladding=night, pool=True,
                      sign="NIMBUS CLOUD" if (c, r) == (0, 0) else None)
         for c, fx in enumerate(HALL_X):
             floodmast(fx, 150, (fx + 40, 200, 0), energy=8e5, lit=(c, 0) not in off)

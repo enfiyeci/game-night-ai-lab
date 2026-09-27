@@ -31,9 +31,8 @@ import people as P  # noqa: E402
 DISTRICTS = 6
 HILL = (0, -300)     # where the city is seen from; billboards face it
 
-# the labs' colours, as in the game (Kestrel coral, OpenBrain ink on paper, DeepThink and Lodestar sky)
-BRANDS = {"kestrel": ("#E0613B", "#FFF3EA"), "openbrain": ("#F2EFE8", "#2E2A2B"), "deepthink": ("#3F84C6", "#F4F8FF"),
-          "lodestar": ("#1E2E4F", "#F1E4C8")}
+# the labs' colours, as in the game (Kestrel coral, OpenBrain ink on paper, DeepThink sky): (panel, letters)
+BRANDS = {"kestrel": ("#E0613B", "#FFF3EA"), "openbrain": ("#F2EFE8", "#2E2A2B"), "deepthink": ("#3F84C6", "#F4F8FF")}
 
 
 def window_material(name="facade", lit_share=0.55, warm="#FFC98A", seed=0.0):
@@ -210,7 +209,7 @@ def billboard(lines, x=70, y=-120, z=62, width=26, lit=True, cam=HILL, height=10
     steel = kit.mat("#2A2B2E", 0.5, 0.7)
     yaw = math.atan2(-(x - cam[0]), y - cam[1])
     if building:
-        kit.box((x, y, z / 2), (24, 20, z), window_material("near", lit_share=0.3))
+        kit.box((x, y, z / 2), (24, 20, z), window_material("near", lit_share=0.3))    # the building it stands on
     for dx in (-width * 8 / 26, width * 8 / 26):
         kit.box((x + dx * math.cos(yaw), y + dx * math.sin(yaw), z + 3 * s), (0.6 * s, 0.6 * s, 6 * s), steel)
     kit.box((x, y, z + 11 * s), (width + 1, 0.8 * s, height + 1), steel, rot=(0, 0, yaw))
@@ -406,7 +405,7 @@ def lb_shot(stage):
 
 
 # mu: the substations on the city's edge, in the order they trip (district, x, y)
-MU_TRIPS = [(1, -120, 40), (4, 115, 45), (2, -45, 30), (5, 205, 50)]
+MU_TRIPS = [(1, -120, 40), (4, 115, 45), (2, -45, 30), (5, 175, 50)]
 
 
 def mu_shot(tripped, flash):
