@@ -73,3 +73,23 @@ test('a demand’s line and ruling carry its source, and the change has a date',
   assert.ok(view.changes.every((c) => typeof c.when === 'string' && !/turn/i.test(c.when)));
   assert.equal(view.valid, false, 'four lines: the player must drop one');
 });
+
+test('more than three lines asks the player to untick one, fewer asks for a third', () => {
+  const s = createInitialState();
+  s.era = 3;
+  learnConstitution(s, SAFETY_PROPOSAL);
+  changeDraft(s, { add: 'no-manipulation' }, 'activists');
+  const over = documentView(s, draftFor(s));
+  assert.equal(over.valid, false);
+  assert.equal(over.reason, 'Untick one line');
+  assert.doesNotMatch(over.linesNote, /4 of 3/);
+  assert.match(over.linesNote, /4 ticked/);
+  const draft = draftFor(s);
+  draft.hardLines = ['no-wmd', 'accept-shutdown'];
+  const under = documentView(s, draft);
+  assert.equal(under.reason, 'Pick three lines');
+  assert.match(under.linesNote, /2 of 3 picked/);
+  const ok = documentView(s, { ...draft, hardLines: ['no-wmd', 'accept-shutdown', 'honest'] });
+  assert.equal(ok.reason, null);
+  assert.equal(ok.linesNote, 'three, plus the one every lab keeps');
+});
