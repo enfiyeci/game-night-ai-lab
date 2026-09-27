@@ -410,7 +410,7 @@ function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
       state.rivalLaunchesThisRound = [];
       rivalsTurn(state, rng, { deferTo: state.turn + 1 });
       state.raceHeat -= BALANCE.raceHeatDecay;
-      promiseUpkeep(state, rng);
+      promiseUpkeep(state);
       for (const e of eventsTick(state)) events.push(e);
       normalize(state);
       // Compared with the round's start (taken at the last mark). A hazard ignored by an instant action this round

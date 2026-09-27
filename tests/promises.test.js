@@ -40,7 +40,7 @@ function failedCall(id = 'beatRivals', overrides = {}) {
   state.turn = 5;
   state.capability = 10;
   state.promises.push(presidentPromise(id, overrides));
-  promiseUpkeep(state, no);
+  promiseUpkeep(state);
   eventsTick(state, no);
   return state;
 }
@@ -99,7 +99,7 @@ test('every President promise check can mark a due promise kept', () => {
     arrange(state);
     state.promises.push(presidentPromise(id));
     const favor = state.govFavor.us;
-    promiseUpkeep(state, no);
+    promiseUpkeep(state);
     assert.equal(state.promises[0].status, 'kept', id);
     assert.equal(state.govFavor.us, favor + 5, id);
     assert.equal(state.feed.at(-1).handle, '@executive_office', id);
@@ -160,7 +160,7 @@ test('a second-meeting promise due on the final turn produces no promise call', 
   state.promises.push(presidentPromise('bigClaim', {
     meeting: 'second', madeTurn: 18, dueTurn: 19,
   }));
-  promiseUpkeep(state, no);
+  promiseUpkeep(state);
   eventsTick(state, no);
   assert.equal(state.promises[0].status, 'open');
   assert.equal(state.pendingEvents.some((event) => event.eventId === 'promiseCall'), false);
@@ -237,7 +237,7 @@ test('simultaneous promise cards have unique ids and answering one resolves only
     presidentPromise('beatRivals'),
     presidentPromise('beatChina', { stalled: true }),
   );
-  promiseUpkeep(state, no);
+  promiseUpkeep(state);
   eventsTick(state, no);
   assert.deepEqual(promiseCalls(state).map(({ id }) => id), [
     'promiseCall:0',
@@ -253,7 +253,7 @@ test('eventChoices routes a promise answer only through its unique call id', () 
   state.turn = 5;
   state.capability = 10;
   state.promises.push(presidentPromise('beatRivals'), presidentPromise('beatChina'));
-  promiseUpkeep(state, no);
+  promiseUpkeep(state);
   eventsTick(state, no);
   stampNewCards(state);
   const acted = applyActions(state, { eventChoices: { 'promiseCall:1': 'refuse' } }, no);
@@ -280,7 +280,7 @@ test('fallback resolves simultaneous promise calls separately', () => {
   state.turn = 5;
   state.capability = 10;
   state.promises.push(presidentPromise('beatRivals'), presidentPromise('beatChina'));
-  promiseUpkeep(state, no);
+  promiseUpkeep(state);
   eventsTick(state, no);
   const favor = state.govFavor.us;
   stampNewCards(state);
@@ -319,7 +319,7 @@ test('stall is offered once, delays the due turn, then disappears', () => {
   assert.equal(state.govFavor.us, favor - 6);
 
   state.turn = 7;
-  promiseUpkeep(state, no);
+  promiseUpkeep(state);
   eventsTick(state, no);
   assert.deepEqual(promiseCalls(state)[0].choices.map(({ id }) => id), ['deliver', 'refuse']);
   assert.equal(resolveEvent(state, 'promiseCall:0', 'stall').ok, false);
@@ -356,7 +356,7 @@ test('a promise call is deferred by the two-card cap and queued when space opens
   state.turn = 5;
   state.pendingEvents.push({ id: 'jailbreak' }, { id: 'citations' });
   state.promises.push(presidentPromise('beatRivals'));
-  promiseUpkeep(state, no);
+  promiseUpkeep(state);
   eventsTick(state, no);
   assert.equal(state.pendingEvents.some((event) => event.eventId === 'promiseCall'), false);
   assert.ok(Object.hasOwn(state.warnings, 'promiseCall:0'));
@@ -382,7 +382,7 @@ test('non-President promise entries are ignored by promise upkeep', () => {
   state.turn = 10;
   const commitment = { type: 'safetyCompute', share: 0.2, dueTurn: 1, status: 'open' };
   state.promises.push(commitment);
-  promiseUpkeep(state, no);
+  promiseUpkeep(state);
   eventsTick(state, no);
   assert.deepEqual(state.promises, [commitment]);
   assert.equal(state.pendingEvents.some((event) => event.eventId === 'promiseCall'), false);
@@ -403,15 +403,19 @@ test('forced promise deliveries use President-sourced constitution amendments', 
   }
 });
 
-test('a contradictory open promise can leak only once', () => {
+// An open President promise (noWokeFilters) whose definition contradicts the held 'honest' line.
+function contradictingPromiseState() {
   const state = createInitialState();
   state.turn = 2;
   state.constitution.hardLines = ['honest'];
   state.promises.push(presidentPromise('noWokeFilters', { dueTurn: 8 }));
-  let rolls = 0;
-  const leaks = { chance: (probability) => { rolls += 1; assert.equal(probability, 0.15); return true; } };
-  promiseUpkeep(state, leaks);
-  assert.equal(rolls, 1);
+  return state;
+}
+
+test('a contradictory open promise can leak only once', () => {
+  const state = contradictingPromiseState();
+  state.promises[0].leakPressure = 1; // forced leak (no dice: running total)
+  promiseUpkeep(state);
   assert.equal(state.promises[0].leaked, true);
   assert.equal(state.publicTrust, 56);
   assert.equal(state.staffTrust, 64);
@@ -419,8 +423,9 @@ test('a contradictory open promise can leak only once', () => {
   assert.match(state.feed.at(-1).text, /memo: lab promised the President it would/);
   assert.match(state.feed.at(-1).text, /woke.*filters/i);
 
-  promiseUpkeep(state, leaks);
-  assert.equal(rolls, 1);
+  const pressure = state.promises[0].leakPressure;
+  promiseUpkeep(state);
+  assert.equal(state.promises[0].leakPressure, pressure); // a leaked promise stops counting
   assert.equal(state.publicTrust, 56);
   assert.equal(state.staffTrust, 64);
 });
@@ -429,10 +434,19 @@ test('a promise without a currently held contradicting line cannot leak', () => 
   const state = createInitialState();
   state.turn = 2;
   state.constitution.hardLines = ['privacy'];
-  state.promises.push(presidentPromise('noWokeFilters', { dueTurn: 8 }));
-  let rolls = 0;
-  promiseUpkeep(state, { chance: () => { rolls += 1; return true; } });
-  assert.equal(rolls, 0);
+  state.promises.push(presidentPromise('noWokeFilters', { dueTurn: 8, leakPressure: 1 }));
+  promiseUpkeep(state);
+  assert.equal(state.promises[0].leakPressure, 1); // no held contradicting line: the total does not count
   assert.equal(state.promises[0].leaked, false);
   assert.equal(state.feed.length, 0);
+});
+
+test('a promise that contradicts a held line leaks on its seventh round, not before', () => {
+  const s = contradictingPromiseState();
+  for (let round = 1; round <= 6; round++) {
+    promiseUpkeep(s);
+    assert.equal(s.promises[0].leaked ?? false, false, `round ${round}`);
+  }
+  promiseUpkeep(s);
+  assert.equal(s.promises[0].leaked, true);
 });

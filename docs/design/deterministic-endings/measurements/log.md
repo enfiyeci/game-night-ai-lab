@@ -68,6 +68,16 @@ Ending counts per bot:
 | a6 | balancedLowSafety | misalignment 139, pacingDeal 34, acquihire 21, rivalDisaster 6 |
 | a6 | balancedHighSafety | misalignment 78, pacingDeal 69, acquihire 43, rivalDisaster 10 |
 | a6 | balancedPush | misalignment 111, pacingDeal 50, acquihire 33, rivalDisaster 6 |
+| a7 | speed | boardRemoved 200 |
+| a7 | safety | acquihire 184, leftBehind 14, misalignment 1, pacingDeal 1 |
+| a7 | balanced | misalignment 98, pacingDeal 59, acquihire 36, rivalDisaster 7 |
+| a7 | random | acquihire 144, boardRemoved 40, rivalDisaster 2, misalignment 11, misuse 3 |
+| a7 | overCommitter | acquihire 191, misalignment 8, rivalDisaster 1 |
+| a7 | handToMouth | acquihire 142, misalignment 49, pacingDeal 1, rivalDisaster 8 |
+| a7 | balancedNoGrid | acquihire 16, pacingDeal 54, misalignment 128, rivalDisaster 2 |
+| a7 | balancedLowSafety | misalignment 139, pacingDeal 34, acquihire 21, rivalDisaster 6 |
+| a7 | balancedHighSafety | misalignment 78, pacingDeal 69, acquihire 43, rivalDisaster 10 |
+| a7 | balancedPush | misalignment 111, pacingDeal 50, acquihire 33, rivalDisaster 6 |
 
 Notes:
 
@@ -118,3 +128,13 @@ Notes:
   to 111, acquihire 31 to 33. The site-building bots (speed, overCommitter on gas, safety on nuclear, random on either)
   and the no-grid bots keep the same ending counts, although their site sizes and dates did change. The old site draws
   came from side streams, so removing them shifts no other roll. No bot's leading ending changed. Not traced run by run.
+- a7 (Task A7, a President promise that contradicts a line the constitution holds leaks when its running total of
+  0.15 a round, `promise.leakPressure`, reaches 1, so on its seventh round spent contradicting a held line; the total
+  only counts in those rounds, as the roll only rolled then): only the random bot's counts moved (acquihire 143 to 144,
+  boardRemoved 39 to 40, misalignment 13 to 11). Traced with the a6 build and this one over the same 200 seeds: only
+  the speed and random bots ever take President promises. Under the roll the speed bot leaked a promise in 93 runs and
+  random in 4; now neither leaks in any run, because no open contradicting promise lasts seven such rounds (largest
+  running total in either bot: 0.75, five rounds). The speed bot still ends in boardRemoved in all 200 runs. Random's
+  small moves are the 4 lost leaks plus the reshuffle from no longer drawing this roll from the main random stream (not
+  split apart). Left for the retune (C3): with a total that starts at zero, leaks now need a promise held open against
+  a held line for seven rounds, which bots do not do.
