@@ -133,7 +133,9 @@ function sheet(model, era) {
 const easeOut = (p) => 1 - (1 - p) ** 5;
 
 // Waits and tweens the player can hurry: advance() finishes the current beat, end() the whole show.
-class Timeline {
+// hold() keeps a beat's result on screen even after a hurry (owner 2026-09-26: "click to go faster should skip
+// the animation but should show the score"): the next click, its time running out, or the show ending moves on.
+export class Timeline {
   constructor() {
     this.fast = false;
     this.ended = false;
@@ -171,6 +173,15 @@ class Timeline {
         }
       };
       requestAnimationFrame(step);
+    });
+  }
+
+  hold(ms, hurriedMs = 1400) {
+    if (this.ended) return Promise.resolve();
+    return new Promise((resolve) => {
+      const entry = { resolve };
+      entry.timer = setTimeout(() => { this.pending.delete(entry); resolve(); }, this.fast ? hurriedMs : ms);
+      this.pending.add(entry);
     });
   }
 
@@ -367,7 +378,7 @@ async function benchmarkRace(t, show, row, index) {
     t.sound(() => sfx.stamp(0.45));
     t.kick(mine.node, 'rshow-flash');
   } else t.sound(() => (diff < 0 ? sfx.miss() : sfx.pop(-3)));
-  await t.wait(2600);
+  await t.hold(2600);
 }
 
 const ROW_HEIGHT = 54;
@@ -455,7 +466,7 @@ async function leaderboardClimb(t, show, launch) {
     t.sound(() => sfx.miss());
   }
   t.kick(result, 'rshow-stamp');
-  await t.wait(4500);
+  await t.hold(4500);
 }
 
 async function pressFlip(t, show, launch) {
@@ -514,7 +525,7 @@ async function pressFlip(t, show, launch) {
     if (mean >= 9) sfx.fanfare();
   });
   if (mean >= 9.5) confetti(t, panel, 532, 520);
-  await t.wait(2600);
+  await t.hold(2600);
 }
 
 async function playShow(t, show, launch) {

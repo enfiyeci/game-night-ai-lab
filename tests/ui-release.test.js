@@ -358,3 +358,24 @@ test('release advice follows the product and feature costs reach the preview', (
   const featured = releaseDraft(trainedState, { family: 'Kestrel', features: ['voice'] });
   assert.equal(releasePreview(trainedState, { moves: [] }, featured).cash, 10);
 });
+
+test('a hurried beat still holds its result on screen until the next click', async () => {
+  const { Timeline } = await import('../ui/screens/reveal.js');
+  const t = new Timeline();
+  let animated = false;
+  const beat = (async () => {
+    await t.wait(5000); // the count-up animation
+    animated = true;
+    await t.hold(60000); // the result stays up
+    return 'moved on';
+  })();
+  t.advance(); // first click: the animation jumps to its end
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  assert.equal(animated, true, 'the score is shown');
+  let settled = false;
+  beat.then(() => { settled = true; });
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  assert.equal(settled, false, 'the result is still on screen after the hurry');
+  t.advance(); // second click moves on
+  assert.equal(await beat, 'moved on');
+});
