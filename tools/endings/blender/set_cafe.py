@@ -236,7 +236,7 @@ def cup(at, saucer=True):
     x, y, z = at
     if saucer:
         kit.cyl((x, y, z + 0.006), 0.07, 0.012, kit.mat("#F4F1EA", 0.35))
-    kit.cyl((x, y, z + 0.05), 0.045, 0.08, kit.mat("#F4F1EA", 0.35), r2=0.035)
+    kit.cyl((x, y, z + 0.05), 0.034, 0.08, kit.mat("#F4F1EA", 0.35), r2=0.044)
 
 
 def shot_ab_news():
@@ -390,7 +390,7 @@ def shot_ab_till():
     paper = kit.mat("#F7F4EC", 0.8)
     ink = kit.mat("#232323", 0.6)
     red = kit.mat("#B03A2A", 0.5)
-    px, py, pz = 1.4, CY + 0.36, CT + 0.002
+    px, py, pz = 1.42, CY + 0.3, CT + 0.002
     a = math.radians(188)                                  # the page is turned to be read from behind the counter
     right, up = (math.cos(a), math.sin(a)), (-math.sin(a), math.cos(a))
     kit.box((px, py, pz), (0.21, 0.3, 0.001), paper, rot=(0, 0, a))
@@ -449,6 +449,10 @@ def shot_rd_card():
         kit.box((sx + dx, sy - 0.004, sz + 0.098), (0.035, 0.001, 0.016), kit.mat("#E9E4C8", 0.3), rot=(math.radians(-6), 0, math.radians(-8)))
     kit.box((2.33, CY + 0.02, CT + 0.001), (0.085, 0.054, 0.001), kit.mat("#2F5F8A", 0.3, 0.3), rot=(0, 0, math.radians(20)))   # a card
     kit.cyl((2.3, CY + 0.3, CT + 0.08), 0.06, 0.16, kit.glass(0.05))                                                     # the cash jar
+    for k, r in enumerate((0.3, -0.5, 1.2, 0.1)):
+        kit.box((2.3 + 0.012 * (k - 1.5), CY + 0.3, CT + 0.015 + 0.012 * k), (0.07, 0.035, 0.004), kit.mat("#8FBFAE", 0.7), rot=(0.2 * k, 0, r))
+    kit.box((2.3, CY + 0.24, CT + 0.12), (0.07, 0.001, 0.03), kit.mat("#F7F4EC", 0.8))
+    kit.text("CASH", (2.3, CY + 0.2385, CT + 0.12), 0.018, kit.mat("#1A1A1A", 0.6), font=HAND)
     rng = random.Random(51)
     line = [(2.05, 4.3), (2.6, 3.6), (2.3, 2.8), (2.7, 2.1), (2.1, 1.4), (1.3, 0.9), (0.3, 0.6), (-0.8, 0.45), (-2.5, -0.5)]
     for i, (x, y) in enumerate(line):
@@ -456,7 +460,7 @@ def shot_rd_card():
                  coat=rng.choice(["#3B3F46", "#5B3A33", "#2C3A4F", "#6A6154", "#44343A", "#26302C"]),
                  hold="phone" if i in (1, 3, 6) else None, seed=50 + i)
     dot((1.0, 6.25), facing=20)
-    kit.camera((2.5, 4.72, 1.42), (2.5, 7.0, 0.9), lens=32, fstop=8.0, focus=face)
+    kit.camera((2.5, 4.77, 1.42), (2.5, 7.0, 0.9), lens=32, fstop=8.0, focus=face)
     bpy.context.scene.view_settings.exposure = 0.6
 
 
