@@ -1,3 +1,4 @@
+import * as trainingVisuals from '../ui/logic/training.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { alignmentFor, badgeCounts, bubbleSpawns, expectedGain, floorHint, readyNote } from '../ui/logic/training.js';
@@ -89,8 +90,10 @@ test('the hazard scenario stops with the cheating trace still unanswered', () =>
 
 test('bubble spawns cover exactly the increase, from the right sources', () => {
   const spawns = bubbleSpawns({ capability: 2, alignment: 1 }, { capability: 7, alignment: 3 });
-  assert.equal(spawns.filter((s) => s.kind === 'capability').length, 5);
-  assert.equal(spawns.filter((s) => s.kind === 'alignment').length, 2);
+  assert.equal(spawns.filter((s) => s.kind === 'capability').length, 25);
+  assert.equal(spawns.filter((s) => s.kind === 'alignment').length, 10);
+  assert.ok(Math.abs(spawns.filter((s) => s.kind === 'capability').reduce((sum, s) => sum + s.amount, 0) - 5) < 1e-9);
+  assert.ok(Math.abs(spawns.filter((s) => s.kind === 'alignment').reduce((sum, s) => sum + s.amount, 0) - 2) < 1e-9);
   for (const s of spawns) {
     const allowed = s.kind === 'capability' ? ['researcher1', 'researcher2', 'research', 'rack'] : ['safety', 'research'];
     assert.ok(allowed.includes(s.source), `${s.kind} from ${s.source}`);
@@ -159,4 +162,34 @@ test('the floor ring shows only while the first model of the run waits', () => {
   assert.equal(floorHint(state), true);
   state.models = [{ name: 'Kestrel 1' }];
   assert.equal(floorHint(state), false, 'the player has released before and knows the way');
+});
+
+
+test('visual progress advances between badge points, stays cosmetic, and finishes at five bubbles per point', () => {
+  const state = SCENARIOS.midEra3(1);
+  const run = state.activeRun;
+  const total = recipeCost(state, run.recipe).turns;
+  const finalCap = Math.round(expectedGain(state));
+  const finalAli = alignmentFor(finalCap, run.recipe.sliders.alignShare);
+  let previous = { capability: 0, alignment: 0 };
+  let previousBadge = previous;
+  const spawns = [];
+  let betweenPoints = false;
+  for (let i = 0; i <= 1000; i += 1) {
+    run.turnsLeft = total * (1 - i / 1000);
+    const before = structuredClone(state);
+    const badge = badgeCounts(state);
+    const visual = trainingVisuals.bubbleCounts(state);
+    const batch = bubbleSpawns(previous, visual);
+    if (batch.length && badge.capability === previousBadge.capability && badge.alignment === previousBadge.alignment) betweenPoints = true;
+    spawns.push(...batch);
+    assert.deepEqual(state, before);
+    assert.deepEqual(badgeCounts(state), badge);
+    previous = visual;
+    previousBadge = badge;
+  }
+  assert.ok(betweenPoints, 'bubbles must also leave desks between whole badge changes');
+  assert.equal(spawns.filter((s) => s.kind === 'capability').length, finalCap * 5);
+  assert.equal(spawns.filter((s) => s.kind === 'alignment').length, finalAli * 5);
+  assert.deepEqual(previous, { capability: finalCap, alignment: finalAli });
 });

@@ -41,10 +41,24 @@ export function badgeCounts(state, lastAlignShare) {
   return { capability: 0, alignment: 0 };
 }
 
+export const BUBBLES_PER_POINT = 5;
+
+// Visual fractions progress independently of the HUD's whole-point rounding.
+export function bubbleCounts(state, lastAlignShare) {
+  if (!state.activeRun) return badgeCounts(state, lastAlignShare);
+  const capability = Math.round(expectedGain(state));
+  const alignment = alignmentFor(capability, state.activeRun.recipe.sliders.alignShare);
+  const progress = Math.max(0, Math.min(1, project(state).progress ?? 0));
+  const fractions = (total) => Math.floor(total * progress * BUBBLES_PER_POINT + 1e-9) / BUBBLES_PER_POINT;
+  return { capability: fractions(capability), alignment: fractions(alignment) };
+}
+
 export function bubbleSpawns(from, to) {
   const spawns = [];
   const add = (kind, count, start, sources) => {
-    for (let i = 0; i < count; i += 1) spawns.push({ kind, source: sources[(start + i) % sources.length] });
+    for (let i = 0; i < Math.round(count * BUBBLES_PER_POINT); i += 1) {
+      spawns.push({ kind, source: sources[(Math.round(start * BUBBLES_PER_POINT) + i) % sources.length], amount: 1 / BUBBLES_PER_POINT });
+    }
   };
   add('capability', Math.max(0, to.capability - from.capability), from.capability, CAPABILITY_SOURCES);
   add('alignment', Math.max(0, to.alignment - from.alignment), from.alignment, ALIGNMENT_SOURCES);
