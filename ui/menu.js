@@ -181,11 +181,13 @@ export function openMenu(game, point, { overlay = document.querySelector('#overl
   let closed = false;
   let submenu = null;
   let companyButton = null;
-  const close = () => {
+  // `picked` says a screen is about to open, so a decision card that stepped aside waits for that screen instead.
+  const close = ({ picked = false } = {}) => {
     if (closed) return;
     closed = true;
     layer.remove();
     if (previousFocus?.isConnected && typeof previousFocus.focus === 'function') previousFocus.focus();
+    overlay.dispatchEvent(new CustomEvent('gdt-menu-closed', { detail: { picked } }));
   };
 
   function closeCompany({ focusParent = false } = {}) {
@@ -227,7 +229,7 @@ export function openMenu(game, point, { overlay = document.querySelector('#overl
       if (reason) appendDisabledReason(button, reason);
       else {
         button.addEventListener('click', () => {
-          close();
+          close({ picked: true });
           customHandler(game, overlay);
         });
       }
@@ -317,13 +319,9 @@ export function openMenu(game, point, { overlay = document.querySelector('#overl
       appendDisabledReason(button, reason);
     } else if (!item.submenu) {
       button.addEventListener('click', () => {
-        if (item.id === 'budget') {
-          close();
-          openBudget(game, overlay);
-        } else {
-          close();
-          customHandler(game, overlay);
-        }
+        close({ picked: true });
+        if (item.id === 'budget') openBudget(game, overlay);
+        else customHandler(game, overlay);
       });
     }
     menu.append(button);
@@ -378,5 +376,5 @@ export function openMenu(game, point, { overlay = document.querySelector('#overl
       ?? menu.querySelector('[role="menuitem"]');
     first?.focus();
   }
-  return { element: layer, close };
+  return { element: layer, close: () => close() };
 }

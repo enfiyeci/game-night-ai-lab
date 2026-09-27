@@ -188,8 +188,8 @@ export function mountEvents(game, { stage, overlay }) {
   }
 
   function openNext() {
-    // A dialog that is already up (the release reveal, a menu screen, the screen wall) goes first; cards wait for it.
-    if (overlay.querySelector('.dialog-layer, .screenwall-layer')) return;
+    // A dialog that is already up (the release reveal, a menu screen, the screen wall) or the floor menu goes first; cards wait for it.
+    if (overlay.querySelector('.dialog-layer, .screenwall-layer, .menu-layer')) return;
     while (!current && queue.length) {
       if (openCard(queue.shift())) return;
     }
@@ -286,6 +286,11 @@ export function mountEvents(game, { stage, overlay }) {
   overlay.addEventListener('gdt-dialog-closed', () => {
     if (!previewing) openNext();
   });
+  // A menu closed with nothing picked gives the stage straight back. After a pick the card waits for that screen
+  // to close (some load their art first, and would not open over a card), or for the next story day.
+  overlay.addEventListener('gdt-menu-closed', (event) => {
+    if (!event.detail?.picked && !previewing) openNext();
+  });
 
   function afterAnchors(state) {
     if (anchors && anchorsEra === state.era) {
@@ -322,6 +327,14 @@ export function mountEvents(game, { stage, overlay }) {
 
   return {
     openCard: (id) => openCard(id),
+    // Owner pick 2A: a click on the floor opens the menu even while a card waits. The card steps aside to the front
+    // of the queue (not to the phone) and comes back when the menu and anything opened from it are gone.
+    stepAside() {
+      if (!current) return;
+      const { id, preview } = current;
+      close();
+      if (!preview) queue.unshift(id);
+    },
     // Debug route: show any catalog card without queueing an answer.
     async preview(id) {
       const row = catalogRow(id);

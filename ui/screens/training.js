@@ -1,6 +1,6 @@
 import { flyBubble } from '../fx.js';
 import { sfx } from '../sfx.js';
-import { badgeCounts, bubbleSpawns } from '../logic/training.js';
+import { badgeCounts, bubbleSpawns, floorHint, readyNote } from '../logic/training.js';
 
 const anchorsByEra = new Map();
 const reducedMotion = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
@@ -67,19 +67,46 @@ export function mountTraining(game, { stage, hud, overlay }) {
   }
 
   function updateReadyNote() {
-    const ready = game.state.pendingModel && !game.state.pendingModel.hazard && !game.state.ending;
+    const text = readyNote(game.state);
     let note = overlay.querySelector('.ready-note');
-    if (!ready) {
+    if (!text) {
       note?.remove();
-      return;
-    }
-    if (!note) {
+    } else if (!note) {
       note = document.createElement('div');
       note.className = 'ready-note';
-      note.textContent = 'Ready to release · open the menu when you are';
+      note.textContent = text;
       overlay.append(note);
     }
+    updateFloorHint();
   }
+
+  // Owner pick 2A: while the first model waits, a ring on the floor shows where the menu is, until the player opens it.
+  let menuSeen = false;
+  function updateFloorHint() {
+    const want = () => floorHint(game.state) && !menuSeen;
+    const hint = layer.querySelector('.floor-hint');
+    if (!want() || (hint && hint.dataset.era !== `${game.state.era}`)) hint?.remove();
+    if (!want() || layer.querySelector('.floor-hint')) return;
+    const era = game.state.era;
+    anchorsFor(era).then((anchors) => {
+      if (!want() || game.state.era !== era || layer.querySelector('.floor-hint')) return;
+      const [x, y] = anchors.floorMenu;
+      const node = document.createElement('div');
+      node.className = 'floor-hint';
+      node.dataset.era = `${era}`;
+      node.style.left = `${x}px`;
+      node.style.top = `${y}px`;
+      node.setAttribute('aria-hidden', 'true'); // the ready note says the same in words
+      node.innerHTML = '<i class="floor-hint-ring"></i><i class="floor-hint-dot"></i><span class="floor-hint-label">Click the floor for the menu</span>';
+      layer.append(node);
+    }).catch((error) => console.error(error));
+  }
+
+  new MutationObserver(() => {
+    if (menuSeen || !overlay.querySelector(':scope > .menu-layer')) return;
+    menuSeen = true;
+    updateFloorHint();
+  }).observe(overlay, { childList: true });
 
   // Real time: the counts can rise every in-game day, so a rise while bubbles fly adds bubbles rather than
   // cancelling the ones in the air. A drop (a release, a new run) snaps straight to the new counts.

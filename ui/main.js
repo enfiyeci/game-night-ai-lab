@@ -157,7 +157,9 @@ office.addEventListener('click', (event) => {
     openArticle(game, overlay);
     return;
   }
-  if (!event.target.closest?.('#floor') || blocked()) return;
+  // A waiting decision card does not block the floor menu; it steps aside (owner pick 2A). The phone and dialogs still do.
+  if (!event.target.closest?.('#floor') || overlay.querySelector('.dialog-layer, .ev-phone, .screenwall-layer')) return;
+  events.stepAside();
   openMenu(game, stagePoint(event), { overlay });
 });
 
