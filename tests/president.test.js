@@ -386,7 +386,7 @@ test('a meeting move needs an open meeting and consumes one of the two round act
   assert.equal(out.events.filter((event) => event.type === 'deal').length, 1);
 });
 
-test('a meeting uses government favour after moves that precede it', () => {
+test('a meeting at low favour withholds the grant', () => {
   const state = open(createInitialState());
   state.govFavor.us = 60;
   state.researchPoints = 30;

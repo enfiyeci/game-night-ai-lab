@@ -37,7 +37,7 @@ export function draftFor(state) {
   return { hardLines: [...base.hardLines], rulings: { ...base.rulings }, changes: [] };
 }
 
-function validDocument(value) {
+export function draftError(value) {
   if (!isPlainObject(value) || !Array.isArray(value.hardLines) || !isPlainObject(value.rulings)) return 'invalid constitution';
   const { hardLines, rulings } = value;
   if (hardLines.length !== 3 || new Set(hardLines).size !== 3) return 'choose exactly three different hard lines';
@@ -46,14 +46,27 @@ function validDocument(value) {
   return null;
 }
 
+// The player's edits go to the amendment log (the President's promises read it), not to the draft's "who asked" list.
+function logPlayerEdits(state, previous, next) {
+  const edits = [
+    ...previous.hardLines.filter((id) => !next.hardLines.includes(id)).map((remove) => ({ remove })),
+    ...next.hardLines.filter((id) => !previous.hardLines.includes(id)).map((add) => ({ add })),
+    ...CASES.filter((entry) => previous.rulings[entry.id] !== next.rulings[entry.id])
+      .map((entry) => ({ ruling: { caseId: entry.id, optionId: next.rulings[entry.id] } })),
+  ];
+  for (const change of edits) state.constitution.amendments.push({ turn: state.turn, change, source: 'player', draft: true });
+}
+
 export function setDraft(state, value) {
-  const error = validDocument(value);
+  const error = draftError(value);
   if (error) return { ok: false, error };
+  const previous = draftFor(state);
   state.constitutionDraft = {
     hardLines: [...value.hardLines],
     rulings: Object.fromEntries(CASES.map((entry) => [entry.id, value.rulings[entry.id]])),
     changes: state.constitutionDraft?.changes ?? [],
   };
+  logPlayerEdits(state, previous, state.constitutionDraft);
   return { ok: true };
 }
 

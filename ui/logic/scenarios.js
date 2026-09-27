@@ -12,7 +12,7 @@ import { turnRecord } from './finance.js';
 const preferences = {
   pre: ['licensed-data', 'hazard-filter-built', 'hazard-filter-reuse'],
   mid: ['decontaminate', 'anneal'],
-  post: ['human-sft', 'cai', 'classifiers', 'safety-tuning', 'character', 'deliberative', 'constitution'],
+  post: ['human-sft', 'cai', 'classifiers', 'safety-tuning', 'constitution', 'character', 'deliberative'],
   release: ['eval-third', 'eval-full', 'channel-api'],
 };
 

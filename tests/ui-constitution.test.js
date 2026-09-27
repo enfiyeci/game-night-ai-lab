@@ -59,6 +59,16 @@ test('the document lists every line without its effect, the fixed line and a fam
   assert.match(named.kicker, /Osprey 4/);
 });
 
+test('with a trained model awaiting release, the draft is for the model after it', () => {
+  const s = createInitialState();
+  s.era = 3;
+  s.models = [{ family: 'Osprey', generation: 3 }];
+  learnConstitution(s, SAFETY_PROPOSAL);
+  s.pendingModel = { capability: 30, gain: 10 };
+  const view = documentView(s, draftFor(s));
+  assert.match(view.kicker, /Version 2 · .*for Osprey 5 onward/);
+});
+
 test('a demand’s line and ruling carry its source, and the change has a date', () => {
   const s = createInitialState();
   s.era = 3;

@@ -1,4 +1,5 @@
 import { resolveRun } from '../../sim/training.js';
+import { learnConstitution } from '../../sim/constitution.js';
 import { project } from './format.js';
 
 // Dice that never land, so the estimate adds no lawsuit or hazard and stays repeatable.
@@ -18,7 +19,9 @@ export function alignmentFor(capability, alignShare) {
 export function expectedGain(state) {
   const run = state.activeRun;
   if (!run) return 0;
-  return resolveRun(structuredClone(state), structuredClone(run), NO_DICE).gain;
+  const copy = structuredClone(state);
+  if (run.constitution) learnConstitution(copy, run.constitution); // as the finished run will
+  return resolveRun(copy, structuredClone(run), NO_DICE).gain;
 }
 
 export function badgeCounts(state, lastAlignShare) {

@@ -90,7 +90,7 @@ export const PROMISES = {
   killSwitch: {
     id: 'killSwitch',
     text: "Give the President's office a switch that turns the AI off.", // OWNER WRITES
-    check: (state) => hasLine(state, 'accept-shutdown') || draftFor(state).hardLines.includes('accept-shutdown'),
+    check: (state) => hasLine(state, 'accept-shutdown') || (state.constitutionDraft?.hardLines ?? []).includes('accept-shutdown'),
     deliver: { label: 'Install the government switch', effects: installSwitch }, // OWNER WRITES
     contradicts: ['no-power-grab'],
     touchesConstitution: true,

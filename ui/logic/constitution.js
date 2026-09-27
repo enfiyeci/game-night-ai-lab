@@ -73,7 +73,8 @@ export function documentView(state, draft) {
 
   const last = state.models?.at(-1);
   const family = last?.family ?? 'Kestrel';
-  const next = (last?.generation ?? 0) + 1;
+  // A trained model awaiting release has already learned the current version, so the draft is for the one after it.
+  const next = (last?.generation ?? 0) + (state.pendingModel ? 2 : 1);
   const knownOn = lines.filter((line) => line.on).length;
   const valid = knownOn === 3 && onLines.size === 3 && cases.every((entry) => entry.options.some((option) => option.on));
   const over = knownOn - 3;

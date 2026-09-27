@@ -4,6 +4,9 @@ import { alignmentFor, badgeCounts, bubbleSpawns, expectedGain } from '../ui/log
 import { createGame } from '../ui/game.js';
 import { SCENARIOS } from '../ui/logic/scenarios.js';
 import { createInitialState } from '../sim/state.js';
+import { setDraft } from '../sim/constitution.js';
+import { SAFETY_PROPOSAL } from '../sim/data/constitution.js';
+import { advanceRunBy, startRun } from '../sim/training.js';
 
 test('alignment bubbles follow the alignment share, never debt', () => {
   assert.equal(alignmentFor(18, 0.25), 6);
@@ -27,6 +30,19 @@ test('a run in progress counts part of its expected gain, without touching the s
   assert.ok(counts.capability >= 0 && counts.capability <= Math.round(gain));
   assert.equal(counts.alignment, alignmentFor(counts.capability, state.activeRun.recipe.sliders.alignShare));
   assert.deepEqual(Object.keys(counts).sort(), ['alignment', 'capability']);
+});
+
+test('the estimate counts the constitution the run will teach', () => {
+  const state = createInitialState();
+  state.era = 3; state.cash = 5000;
+  state.compute.split.safety = 0; state.compute.online = 100;
+  setDraft(state, { hardLines: ['no-autonomy-grab', 'honest', 'privacy'], rulings: SAFETY_PROPOSAL.rulings });
+  const recipe = { sliders: { size: 'small', length: 'optimal', alignShare: 0 }, picks: { pre: [], mid: [], post: ['agentic-rl', 'constitution'] } };
+  assert.equal(startRun(state, recipe).ok, true);
+  const estimate = expectedGain(state);
+  state.activeRun.turnsLeft = 0.5; state.activeRun.canAdvance = true; state.activeRun.capacityTurn = state.turn;
+  advanceRunBy(state, { chance: () => false }, 1);
+  assert.equal(estimate, state.pendingModel.gain);
 });
 
 test('a trained model shows its real gain and the remembered share', () => {

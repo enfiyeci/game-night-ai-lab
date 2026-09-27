@@ -105,6 +105,13 @@ test('every President promise check can mark a due promise kept', () => {
   }
 });
 
+test('the kill-switch promise counts only a stored draft or the live constitution', () => {
+  const state = createInitialState();
+  assert.equal(PROMISES.killSwitch.check(state, presidentPromise('killSwitch')), false, 'Safety’s unadopted proposal does not count');
+  state.constitutionDraft = { hardLines: ['no-wmd', 'accept-shutdown', 'honest'], rulings: {}, changes: [] };
+  assert.equal(PROMISES.killSwitch.check(state, presidentPromise('killSwitch')), true);
+});
+
 test('a Gulf deal signed since the domestic-chips promise fails its check', () => {
   const state = createInitialState();
   state.turn = 3;

@@ -11,6 +11,8 @@ import {
 import { moodForLean, portrait } from '../ui/components/portraits.js';
 import { SCENARIOS } from '../ui/logic/scenarios.js';
 import { cardView } from '../ui/logic/events.js';
+import { learnConstitution } from '../sim/constitution.js';
+import { SAFETY_PROPOSAL } from '../sim/data/constitution.js';
 
 const era = (patch) => Object.assign(createInitialState({ seed: 2 }), patch);
 
@@ -94,6 +96,17 @@ test('issues read from last round\'s snapshot', () => {
   const revenue = issuesView(state).find((issue) => issue.id === 'revenue');
   assert.equal(revenue.state, 'up');
   assert.equal(issuesView(state).length, 10);
+});
+
+test('before any model learns a constitution, the board does not speak of one as intact', () => {
+  const state = era({ era: 2 });
+  const issue = () => issuesView(state).find((entry) => entry.id === 'constitution');
+  const trustee = () => boardView(state).members.find((member) => member.id === 'trustee').wants;
+  assert.equal(issue().say, 'None yet');
+  assert.doesNotMatch(trustee(), /constitution/i);
+  learnConstitution(state, { hardLines: [...SAFETY_PROPOSAL.hardLines], rulings: SAFETY_PROPOSAL.rulings });
+  assert.equal(issue().say, 'Intact');
+  assert.equal(trustee(), 'Public trust, the constitution intact');
 });
 
 test('the vote reveal comes from the sim record, in the sim order', () => {

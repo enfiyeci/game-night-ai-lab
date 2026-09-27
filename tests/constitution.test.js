@@ -24,6 +24,7 @@ import { eventsTick, resolveEvent, stampNewCards } from '../sim/events.js';
 import { advanceDays, applyActions, endTurn } from '../sim/turn.js';
 import { INITIAL_BOARD } from '../sim/board.js';
 import { createPresidentPromise } from '../sim/promises.js';
+import { PROMISES } from '../sim/data/promises.js';
 
 const allRulings = (opt) => Object.fromEntries(CASES.map((c) => [c.id, opt ?? c.options[0].id]));
 const yes = { next: () => 0, int: () => 0, chance: () => true, pick: (a) => a[a.length - 1], normal: (m) => m };
@@ -180,6 +181,14 @@ test('the draft can be set from era 3 only', () => {
   assert.deepEqual(out.state.constitutionDraft.hardLines, draft.hardLines);
 });
 
+test('the old constitution action points to Safety’s draft from era 3', () => {
+  const s = createInitialState();
+  const value = { hardLines: ['no-wmd', 'honest', 'privacy'], rulings: SAFETY_PROPOSAL.rulings };
+  assert.deepEqual(applyActions(s, { constitution: value }, no).errors, ['the constitution arrives in era 3']);
+  s.era = 3;
+  assert.deepEqual(applyActions(s, { constitution: value }, no).errors, ['set the constitution in Safety’s draft']);
+});
+
 test('a run with the constitution card learns the draft it started with', () => {
   const s = createInitialState();
   s.era = 3; s.cash = 5000;
@@ -194,6 +203,65 @@ test('a run with the constitution card learns the draft it started with', () => 
   advanceRunBy(s, no, 1);
   assert.deepEqual(s.constitution.hardLines, ['no-wmd', 'honest', 'privacy']);
   assert.deepEqual(s.constitutionDraft.hardLines, ['no-wmd', 'honest', 'accept-shutdown']);
+});
+
+const era3Run = () => {
+  const s = createInitialState();
+  s.era = 3; s.cash = 5000;
+  s.compute.split.safety = 0; s.compute.online = 100;
+  return s;
+};
+const cardRecipe = (post = ['constitution']) => ({ sliders: { size: 'small', length: 'optimal', alignShare: 0.2 }, picks: { pre: [], mid: [], post } });
+const finishRun = (s) => {
+  s.activeRun.turnsLeft = 0.5; s.activeRun.canAdvance = true; s.activeRun.capacityTurn = s.turn;
+  advanceRunBy(s, no, 1);
+};
+
+test('the constitution card refuses a draft without three hard lines; a run without it still starts', () => {
+  const s = era3Run();
+  EVENTS.find((e) => e.id === 'investors').card.choices.find((c) => c.id === 'accept').effects(s);
+  assert.equal(s.constitutionDraft.hardLines.length, 2);
+  const before = structuredClone(s);
+  assert.deepEqual(startRun(s, cardRecipe()), { ok: false, error: 'Safety’s draft needs exactly three hard lines' });
+  assert.deepEqual(s, before, 'nothing changes');
+  assert.equal(startRun(s, cardRecipe([])).ok, true);
+  finishRun(s);
+  assert.equal(hasConstitution(s), false, 'nothing is learned');
+
+  const unruled = era3Run();
+  unruled.constitutionDraft = { hardLines: [...SAFETY_PROPOSAL.hardLines], rulings: {}, changes: [] };
+  assert.deepEqual(startRun(unruled, cardRecipe()), { ok: false, error: 'every case needs a known ruling' });
+});
+
+test('a run keeps who asked for each change until the model learns it', () => {
+  const s = era3Run();
+  s.turn = 4;
+  EVENTS.find((e) => e.id === 'investors').card.choices.find((c) => c.id === 'accept').effects(s);
+  setDraft(s, { hardLines: [...s.constitutionDraft.hardLines, 'honest'], rulings: SAFETY_PROPOSAL.rulings });
+  assert.equal(startRun(s, cardRecipe()).ok, true);
+  assert.deepEqual(s.constitutionDraft.changes, [{ turn: 4, change: { remove: 'no-wmd' }, source: 'investors' }]);
+  s.turn = 5;
+  changeDraft(s, { ruling: { caseId: 'feedback', optionId: 'encourage' } }, 'users');
+  finishRun(s);
+  assert.equal(hasConstitution(s), true);
+  assert.deepEqual(s.constitutionDraft.changes, [{ turn: 5, change: { ruling: { caseId: 'feedback', optionId: 'encourage' } }, source: 'users' }]);
+});
+
+test('the player’s own draft edits are logged as amendments, not as who asked', () => {
+  const s = createInitialState();
+  s.era = 3; s.turn = 8;
+  const promise = createPresidentPromise('noWokeFilters', 'first', s.turn, s);
+  assert.equal(PROMISES.noWokeFilters.check(s, promise), false);
+  setDraft(s, { hardLines: ['no-wmd', 'accept-shutdown', 'honest'], rulings: { ...SAFETY_PROPOSAL.rulings, feedback: 'encourage' } });
+  assert.deepEqual(s.constitution.amendments, [
+    { turn: 8, change: { remove: 'no-autonomy-grab' }, source: 'player', draft: true },
+    { turn: 8, change: { add: 'honest' }, source: 'player', draft: true },
+    { turn: 8, change: { ruling: { caseId: 'feedback', optionId: 'encourage' } }, source: 'player', draft: true },
+  ]);
+  assert.deepEqual(s.constitutionDraft.changes, []);
+  assert.equal(PROMISES.noWokeFilters.check(s, promise), true);
+  setDraft(s, s.constitutionDraft);
+  assert.equal(s.constitution.amendments.length, 3, 'an unchanged draft logs nothing');
 });
 
 test('the constitution card resolves the model under the snapshot it teaches', () => {
@@ -359,6 +427,16 @@ test('the President reads the constitution once it holds the power line', () => 
   assert.equal(hasLine(s, 'no-power-grab'), true, 'the live model keeps it');
   assert.equal(s.constitutionDraft.hardLines.includes('no-power-grab'), false);
   assert.equal(event.fallback, 'clarify');
+});
+
+test('dropping the power line does nothing more once the draft lacks it', () => {
+  const s = createInitialState();
+  s.era = 3;
+  learnConstitution(s, { hardLines: ['no-wmd', 'no-power-grab', 'honest'], rulings: SAFETY_PROPOSAL.rulings });
+  setDraft(s, { hardLines: ['no-wmd', 'privacy', 'honest'], rulings: SAFETY_PROPOSAL.rulings });
+  const before = structuredClone(s);
+  EVENTS.find((e) => e.id === 'specRead').card.choices.find((c) => c.id === 'drop').effects(s);
+  assert.deepEqual(s, before);
 });
 
 test('honest halves citation penalties and adds staff cost to deceptive choices', () => {

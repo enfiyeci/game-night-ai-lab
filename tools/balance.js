@@ -5,6 +5,7 @@ import { cardById, cardUnlocked, slotsFor, pickableCards, validateRecipe, recipe
 import { availableUnits, startRun } from '../sim/training.js';
 import { inDangerZone, projectBurn } from '../sim/economy.js';
 import { HARD_LINES, CASES } from '../sim/data/constitution.js';
+import { draftError, draftFor, setDraft } from '../sim/constitution.js';
 import { MEETINGS } from '../sim/data/president.js';
 import { COMMITMENTS, PARTIES, dealBinds } from '../sim/summit.js';
 import { checkLoad, jobLevels, jobLocked, maxLevel, setAutomation } from '../sim/automation.js';
@@ -182,6 +183,7 @@ function summitMove(state, style, rng) {
 
 function plannedState(state, actions) {
   const planned = structuredClone(state);
+  if (actions.constitutionDraft) setDraft(planned, actions.constitutionDraft);
   planned.budget = structuredClone(actions.budget);
   setComputeSplit(planned, actions.computeSplit);
   if (actions.automation) setAutomation(planned, actions.automation);
@@ -211,8 +213,11 @@ function pickFrom(state, stage, ids) {
   return out;
 }
 
+// The constitution card is refused while Safety's draft lacks three lines (a demand can take one), so skip it then.
+const postPrefs = (state, ids) => (draftError(draftFor(state)) ? ids.filter((id) => id !== 'constitution') : ids);
+
 function preferredRecipe(state, prefs) {
-  const picks = { pre: pickFrom(state, 'pre', prefs.pre), mid: pickFrom(state, 'mid', prefs.mid), post: pickFrom(state, 'post', prefs.post) };
+  const picks = { pre: pickFrom(state, 'pre', prefs.pre), mid: pickFrom(state, 'mid', prefs.mid), post: pickFrom(state, 'post', postPrefs(state, prefs.post)) };
   for (const size of ['xl', 'large', 'medium', 'small']) {
     const recipe = { sliders: { size, length: 'optimal', alignShare: prefs.alignShare }, picks };
     if (!validateRecipe(state, recipe).ok) continue;
@@ -222,7 +227,7 @@ function preferredRecipe(state, prefs) {
 }
 
 function bestRecipe(state, prefs) {
-  const picks = { pre: pickFrom(state, 'pre', prefs.pre), mid: pickFrom(state, 'mid', prefs.mid), post: pickFrom(state, 'post', prefs.post) };
+  const picks = { pre: pickFrom(state, 'pre', prefs.pre), mid: pickFrom(state, 'mid', prefs.mid), post: pickFrom(state, 'post', postPrefs(state, prefs.post)) };
   for (const size of ['xl', 'large', 'medium', 'small']) {
     const recipe = { sliders: { size, length: 'optimal', alignShare: prefs.alignShare }, picks };
     if (!validateRecipe(state, recipe).ok) continue;
@@ -330,6 +335,10 @@ function computeMove(state, rng, style, prefs, policy) {
   return null;
 }
 
+// Each game sets Safety's draft once, on its first era-3 decision (a demand may store a draft before that).
+// Games run one at a time, so one marker is enough: the seed of the game that has set it, cleared at turn 0.
+let draftSetFor = null;
+
 function makeStrategy(style, prefs, policy = {}) {
   return (state, rng) => {
     const computeSafety = policy.randomSafety ? Math.round(rng.next() * 30) / 100 : prefs.computeSafety;
@@ -340,7 +349,11 @@ function makeStrategy(style, prefs, policy = {}) {
       moves: [],
       eventChoices: eventChoices(state, style, rng),
     };
-    if (state.era >= 3 && !state.constitutionDraft) actions.constitutionDraft = constitutionFor(style, rng);
+    if (state.turn === 0) draftSetFor = null;
+    if (state.era >= 3 && draftSetFor !== state.seed) {
+      actions.constitutionDraft = constitutionFor(style, rng);
+      draftSetFor = state.seed;
+    }
     if (state.turn === 0 && policy.pledge != null) actions.pledge = policy.pledge;
     if (state.pendingModel?.hazard) {
       actions.hazardChoice = style === 'speed' ? 'penalize'
@@ -410,7 +423,7 @@ const safetyPrefs = {
   computeSafety: 0.2,
   pre: ['licensed-data', 'hazard-filter-built', 'hazard-filter-reuse'],
   mid: ['decontaminate', 'anneal'],
-  post: ['human-sft', 'cai', 'classifiers', 'safety-tuning', 'character', 'deliberative', 'constitution'],
+  post: ['human-sft', 'cai', 'classifiers', 'safety-tuning', 'constitution', 'character', 'deliberative'],
   release: ['eval-third', 'eval-full', 'channel-api'],
 };
 const safety = makeStrategy('safety', safetyPrefs, { offer: 'safe', site: 'nuclear', pledge: 0.2 });

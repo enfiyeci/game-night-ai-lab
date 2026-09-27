@@ -161,7 +161,7 @@ export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = 
       if (!result.ok) errors.push(result.error);
     }
   }
-  if (actions.constitution) errors.push('the constitution arrives in era 3');
+  if (actions.constitution) errors.push(state.era >= 3 ? 'set the constitution in Safety’s draft' : 'the constitution arrives in era 3'); // OWNER WRITES
   if (actions.boardPromise) {
     const r = makeBoardPromise(state, actions.boardPromise);
     if (r.ok) events.push({ type: 'boardPromise', units: r.units, era: r.era });

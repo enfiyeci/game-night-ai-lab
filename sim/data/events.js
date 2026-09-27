@@ -452,7 +452,10 @@ export const EVENTS = [
         { id: 'clarify', label: 'Say it isn’t about anyone', cost: 'a little staff trust', backers: ['Comms'], opposers: [],
           effects(state) { state.govFavor.us -= 2; state.staffTrust -= 1; } },
         { id: 'drop', label: 'Drop it from the next model', cost: 'staff trust, and the line', backers: ['CFO'], opposers: ['Safety'],
-          effects(state) { changeDraft(state, { remove: 'no-power-grab' }, 'president'); state.govFavor.us += 3; state.staffTrust -= 4; } },
+          effects(state) {
+            if (!draftFor(state).hardLines.includes('no-power-grab')) return;
+            changeDraft(state, { remove: 'no-power-grab' }, 'president'); state.govFavor.us += 3; state.staffTrust -= 4;
+          } },
       ],
     },
   },

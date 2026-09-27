@@ -3,7 +3,7 @@ import { eraById } from './data/eras.js';
 import { SIZE_CAP, LENGTHS, validateRecipe, recipeCost, recipeCards, talentSpend } from './recipe.js';
 import { standardTechniques } from './techniques.js';
 import { rollTrainingHazard, applyAlignmentFaking, evalGamingDebt } from './hazards.js';
-import { draftFor, hasLine, learnConstitution } from './constitution.js';
+import { draftError, draftFor, hasLine, learnConstitution } from './constitution.js';
 import { computeSlices } from './split.js';
 
 export const SHARED_SAFETY_DEBT_MULT = 0.7;
@@ -18,13 +18,18 @@ export function startRun(state, recipe) {
   const cost = recipeCost(state, recipe);
   if (cost.cash > state.cash) return { ok: false, error: 'not enough cash' };
   if (cost.units > availableUnits(state)) return { ok: false, error: 'not enough free compute' };
+  const teaches = recipe.picks?.post?.includes('constitution');
+  const draft = teaches ? draftFor(state) : null;
+  const draftProblem = draft && draftError(draft);
+  if (draftProblem) return { ok: false, error: /ruling/.test(draftProblem) ? draftProblem : 'Safety’s draft needs exactly three hard lines' }; // OWNER WRITES
   const spikeChance = recipeCards(state, recipe).reduce((p, c) => p + (c.effects.spike ?? 0), 0.1);
   state.cash -= cost.cash;
   state.activeRun = { recipe: structuredClone(recipe), units: cost.units, turnsLeft: cost.turns, spikes: 0, spikeChance: Math.max(0, spikeChance), bonus: 0 };
-  if (recipe.picks?.post?.includes('constitution')) {
-    const draft = draftFor(state);
+  if (teaches) {
     state.activeRun.constitution = { hardLines: draft.hardLines, rulings: draft.rulings };
-    state.constitutionDraft = { ...structuredClone(state.activeRun.constitution), changes: [] };
+    // The changes this model learns; they leave the draft's "who asked" list when the run finishes.
+    state.activeRun.constitutionChanges = draft.changes.length;
+    state.constitutionDraft = { ...structuredClone(state.activeRun.constitution), changes: structuredClone(draft.changes) };
   }
   return { ok: true, cost };
 }
@@ -47,7 +52,10 @@ export function advanceRunBy(state, rng, fraction) {
   run.turnsLeft -= fraction;
   if (run.turnsLeft > 1e-9) return null;
   state.activeRun = null;
-  if (run.constitution) learnConstitution(state, run.constitution);
+  if (run.constitution) {
+    learnConstitution(state, run.constitution);
+    state.constitutionDraft.changes = state.constitutionDraft.changes.slice(run.constitutionChanges ?? 0);
+  }
   state.pendingModel = resolveRun(state, run, rng);
   if (run.uncapped) state.pendingModel.uncapped = true; // run past the Geneva cap
   return state.pendingModel;
