@@ -2584,6 +2584,10 @@ svg.room {
 .ev-briefing > * { pointer-events: auto; }
 .ev-phone-button { position: absolute; z-index: 7; pointer-events: auto; width: 60px; height: 50px; padding: 0; border: 0; background: transparent; cursor: pointer; }
 .ev-phone-button:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; border-radius: 10px; }
+/* The phone's first buzz (ui/screens/feed.js): a short shake, a rest, again, while Policy and Comms explains it. */
+.ev-phone-button.buzz svg { animation: phone-buzz 1.6s ease-in-out infinite; transform-origin: 50% 55%; }
+@keyframes phone-buzz { 0%, 36%, 100% { transform: none; } 4%, 12%, 20%, 28% { transform: rotate(-8deg) translateX(-1px); } 8%, 16%, 24%, 32% { transform: rotate(8deg) translateX(1px); } }
+@media (prefers-reduced-motion: reduce) { .ev-phone-button.buzz svg { animation: none; } }
 .ev-phone { position: absolute; z-index: 25; pointer-events: auto; left: 22px; top: 104px; width: 330px; height: 700px; border-radius: 38px; background: var(--ink); padding: 12px; box-shadow: 0 3px 0 color-mix(in oklab, var(--ink) 70%, var(--cream)), 0 20px 44px color-mix(in oklab, var(--ink) 30%, transparent); }
 .ev-phone-scr { position: relative; height: 100%; border-radius: 28px; background: var(--paper); overflow: auto; padding: 0 16px 16px; }
 .ev-phone-notch { position: absolute; left: 50%; top: 9px; width: 86px; height: 22px; margin-left: -43px; border-radius: 12px; background: var(--ink); }
