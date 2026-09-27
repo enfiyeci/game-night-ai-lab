@@ -4488,3 +4488,23 @@ html.title-waking #hud { transition: opacity .5s ease .6s; }
 .hud-flaw[hidden], .hud-polish[hidden], .hud-rumor[hidden] { display: none; }
 
 .has-polish-flaws .hud, .has-polish-flaws .hud-polish { left: calc(50% - 47px); }
+
+.polish-layer { position: absolute; inset: 0; pointer-events: none; }
+.polish-flaws { position: absolute; z-index: 6; width: 310px; padding: 10px 14px 8px; border: 1px solid color-mix(in oklab, var(--ink) 8%, transparent); border-radius: 14px; background: var(--paper); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 14%, transparent), 0 8px 22px color-mix(in oklab, var(--ink) 14%, transparent); pointer-events: auto; }
+.polish-flaws-head { margin-bottom: 4px; color: color-mix(in oklab, var(--wood) 60%, var(--ink)); font-size: 10.5px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; }
+.polish-flaw { display: grid; grid-template-columns: 18px 1fr auto; gap: 8px; align-items: start; padding: 7px 0; border-top: 1px solid color-mix(in oklab, var(--ink) 9%, transparent); font-size: 13px; }
+.polish-flaw .n { font-weight: 900; }
+.polish-flaw .q { margin-top: 1px; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); font-size: 11.5px; font-weight: 700; font-style: italic; }
+.polish-flaw .st { font-size: 11px; font-weight: 900; white-space: nowrap; color: color-mix(in oklab, var(--coral) 70%, var(--ink)); }
+.polish-flaw.done .st { color: var(--teal); }
+.polish-flaw.done .n { text-decoration: line-through; text-decoration-color: var(--teal); text-decoration-thickness: 2px; }
+.polish-flaw .ico { width: 16px; height: 16px; margin-top: 1px; border-radius: 50%; box-sizing: border-box; }
+.polish-flaw.done .ico { background: var(--teal); }
+.polish-flaw.work .ico { border: 3px solid var(--coral); }
+.polish-flaw.next .ico { border: 2px solid color-mix(in oklab, var(--coral) 70%, var(--ink)); }
+.polish-flaw.left .ico { border: 2px dashed color-mix(in oklab, var(--coral) 70%, var(--ink)); }
+.polish-flaw-acts { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 4px; }
+.fly-bubble.polish, .fly-bubble.flaw { display: grid; place-items: center; width: 32px; height: 32px; left: -16px; top: -16px; color: var(--paper); font-size: 11.5px; font-weight: 900; }
+.fly-bubble.polish { background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--teal) 55%, var(--paper)), var(--teal) 62%); border: 2px solid color-mix(in oklab, var(--teal) 70%, var(--ink)); }
+.fly-bubble.flaw { background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--coral) 60%, var(--paper)), var(--coral) 62%); border: 2px solid color-mix(in oklab, var(--coral) 70%, var(--ink)); }
+#polish-fx { position: absolute; inset: 0; z-index: 2; pointer-events: none; }

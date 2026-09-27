@@ -8,10 +8,11 @@ function arcPoint([sx, sy], [tx, ty], t) {
   return [u * u * sx + 2 * u * t * cx + t * t * tx, u * u * sy + 2 * u * t * cy + t * t * ty];
 }
 
-export function flyBubble(layer, kind, from, to, { duration = 1000, delay = 0 } = {}) {
+export function flyBubble(layer, kind, from, to, { duration = 1000, delay = 0, label = '' } = {}) {
   if (reducedMotion()) return Promise.resolve();
   const bubble = document.createElement('div');
   bubble.className = `fly-bubble ${kind}`;
+  if (label) bubble.textContent = label;
   bubble.setAttribute('aria-hidden', 'true');
   layer.append(bubble);
   const frames = [];
