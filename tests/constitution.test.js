@@ -1,7 +1,18 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
-import { setConstitution, amendConstitution, constitutionValues, learnedConstitution, hasLine } from '../sim/constitution.js';
+import {
+  setConstitution,
+  amendConstitution,
+  constitutionValues,
+  learnedConstitution,
+  hasLine,
+  hasConstitution,
+  draftFor,
+  setDraft,
+  changeDraft,
+  learnConstitution,
+} from '../sim/constitution.js';
 import { HARD_LINES, CASES, FIXED_LINE, SAFETY_PROPOSAL, PERMISSIVE_OPTIONS } from '../sim/data/constitution.js';
 import { applyAlignmentFaking } from '../sim/hazards.js';
 import { automationTick } from '../sim/automation.js';
@@ -37,6 +48,45 @@ const releaseState = (hardLines, channel = 'channel-app') => {
   state.pendingModel = pendingModel();
   return releaseModel(state, release(channel), no).model;
 };
+
+test('before any model learns one, there is no constitution and the draft is Safety’s proposal', () => {
+  const s = createInitialState();
+  assert.equal(hasConstitution(s), false);
+  assert.equal(s.constitutionDraft, null);
+  assert.deepEqual(draftFor(s), { ...structuredClone(SAFETY_PROPOSAL), changes: [] });
+  assert.equal(s.constitutionDraft, null, 'draftFor does not write');
+});
+
+test('setDraft validates like setConstitution and never touches the live copy', () => {
+  const s = createInitialState();
+  assert.equal(setDraft(s, { hardLines: ['no-wmd', 'honest'], rulings: SAFETY_PROPOSAL.rulings }).ok, false);
+  assert.deepEqual(setDraft(s, { hardLines: ['no-wmd', 'honest', 'privacy'], rulings: SAFETY_PROPOSAL.rulings }), { ok: true });
+  assert.deepEqual(s.constitutionDraft.hardLines, ['no-wmd', 'honest', 'privacy']);
+  assert.deepEqual(s.constitution.hardLines, []);
+  assert.equal(hasLine(s, 'honest'), false);
+});
+
+test('changeDraft records who asked, in the draft and in the amendment log', () => {
+  const s = createInitialState();
+  s.turn = 9;
+  assert.equal(changeDraft(s, { remove: 'no-wmd' }, 'investors').ok, true);
+  assert.deepEqual(s.constitutionDraft.hardLines, ['accept-shutdown', 'no-autonomy-grab']);
+  assert.deepEqual(s.constitutionDraft.changes, [{ turn: 9, change: { remove: 'no-wmd' }, source: 'investors' }]);
+  assert.deepEqual(s.constitution.amendments.at(-1), { turn: 9, change: { remove: 'no-wmd' }, source: 'investors', draft: true });
+  assert.equal(changeDraft(s, { add: 'not-a-line' }, 'investors').ok, false);
+});
+
+test('learnConstitution makes a snapshot live and counts versions', () => {
+  const s = createInitialState();
+  const favour = s.govFavor.us;
+  learnConstitution(s, { hardLines: ['no-wmd', 'no-power-grab', 'honest'], rulings: SAFETY_PROPOSAL.rulings });
+  assert.equal(hasConstitution(s), true);
+  assert.equal(s.constitution.version, 1);
+  assert.equal(hasLine(s, 'no-power-grab'), true);
+  assert.equal(s.govFavor.us, favour - 3);
+  learnConstitution(s, { hardLines: ['no-wmd', 'no-power-grab', 'honest'], rulings: SAFETY_PROPOSAL.rulings });
+  assert.equal(s.govFavor.us, favour - 3, 'the favour cost is paid once');
+});
 
 test('the era 3 content: 8 lines, 6 cases of 3 options, a valid Safety proposal', () => {
   assert.equal(HARD_LINES.length, 8);
@@ -118,7 +168,7 @@ test('turn zero adopts a supplied constitution or the default without mutating t
   const supplied = { hardLines: ['privacy', 'no-deceive-lab', 'no-manipulation'], rulings: allRulings() };
   const custom = endTurn(initial, { constitution: supplied }, no);
   assert.deepEqual(custom.state.constitution.hardLines, supplied.hardLines);
-  assert.deepEqual(initial.constitution, { hardLines: [], rulings: {}, amendments: [] });
+  assert.deepEqual(initial.constitution, { hardLines: [], rulings: {}, amendments: [], version: 0 });
   const fallback = endTurn(createInitialState(), {}, no).state.constitution;
   assert.deepEqual(fallback.hardLines, ['no-wmd', 'honest', 'accept-shutdown']);
   assert.deepEqual(fallback.rulings, allRulings());

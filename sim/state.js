@@ -77,7 +77,8 @@ export function createInitialState({ seed = 1 } = {}) {
     lastFlagshipScore: 0,
     lastFlagship: null,
 
-    constitution: { hardLines: [], rulings: {}, amendments: [] },
+    constitution: { hardLines: [], rulings: {}, amendments: [], version: 0 },
+    constitutionDraft: null,
     promises: [],
     promiseBaselines: {},
     meeting: null,
