@@ -217,7 +217,7 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
   el.innerHTML = `<div class="film-frame"><div class="film-shots"></div>
     <div class="film-fade" style="position:absolute;inset:0;background:var(--ink);z-index:2;pointer-events:none"></div>
     <div class="film-bar top"></div><div class="film-bar bottom"></div>
-    <div class="film-card"></div><div class="film-sub"></div>
+    <div class="film-card" aria-live="polite"></div><div class="film-sub"></div>
     <div class="film-title" hidden><h1>${esc(fullTitle ?? film.title)}</h1><p class="tagline">${esc(film.tagline ?? '')}</p>
       <p class="lumen"><small>Lumen</small><span></span></p></div>
     <button type="button" class="film-skip">Skip</button></div>`;

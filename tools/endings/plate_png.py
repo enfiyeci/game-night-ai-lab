@@ -21,6 +21,7 @@ CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 
 
 def main(specs):
+    failed = []
     OUT.mkdir(parents=True, exist_ok=True)
     if not specs:
         specs = sorted(p.stem for p in (ROOT / "ui/assets/endings/plates").glob("*.svg"))
@@ -52,8 +53,11 @@ def main(specs):
             proc.kill()
             proc.wait()
             print(out if out.exists() else f"FAILED {plate}")
+            if not out.exists():
+                failed.append(plate)
         httpd.shutdown()
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    sys.exit(main(sys.argv[1:]))

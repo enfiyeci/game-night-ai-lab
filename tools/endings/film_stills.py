@@ -28,7 +28,7 @@ def main(fid, spec_path):
     spec = json.loads(Path(spec_path).read_text())
     for key, s in spec["shots"].items():
         shot = film["shots"][int(key)]
-        for k in ("plate", "clip"):
+        for k in ("plate", "clip", "image", "frames", "screens"):   # a re-run replaces the shot, never mixes with it
             shot.pop(k, None)
         shot["kind"] = "still"
         if "frames" in s:

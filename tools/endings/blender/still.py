@@ -47,6 +47,9 @@ def main(argv):
     if code or problems:
         print("\n".join(problems[:20]) or text[-2000:])
     if not preview:
+        if problems:   # a missing asset or screen image: keep the render out of the game, leave it for a look
+            print("not written to ui/assets/endings/stills (problems above); the render is in", work)
+            return 1
         out = ROOT / "ui/assets/endings/stills"
         out.mkdir(parents=True, exist_ok=True)
         for name in done:
@@ -58,7 +61,7 @@ def main(argv):
     else:
         for name in done:
             print("preview", work / f"{name}.png")
-    return 0 if done and not code else 1
+    return 0 if done and not code and not problems else 1
 
 
 if __name__ == "__main__":
