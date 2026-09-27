@@ -27,6 +27,7 @@ export function mountBriefing(game, { office, overlay }) {
   const cardOpen = () => Boolean(overlay.querySelector('.event-layer, .dialog-layer'));
   const bandOf = (role) => game.state.lastBriefing?.find((reading) => reading.id === role)?.band ?? 'calm';
   const lookedInto = () => game.queue.addressWarnings ?? [];
+  const unresolved = () => openWarnings(game.state, lookedInto());
 
   function clearTalking() {
     talking?.remove();
@@ -37,10 +38,11 @@ export function mountBriefing(game, { office, overlay }) {
   function speak(role) {
     if (!anchors?.heads?.[role] || cardOpen()) return;
     if (live?.warning.advisor === role) return; // their warning is already up at their desk
-    const queued = waiting.findIndex((warning) => warning.advisor === role);
-    if (queued >= 0) {
+    const warning = waiting.find((candidate) => candidate.advisor === role)
+      ?? unresolved().find((candidate) => candidate.advisor === role);
+    if (warning) {
       clearTalking();
-      const [warning] = waiting.splice(queued, 1);
+      waiting = waiting.filter((candidate) => candidate.id !== warning.id);
       if (live) waiting.unshift(live.warning); // the other advisor's warning waits its turn again
       live?.node.remove();
       live = null;
@@ -57,8 +59,8 @@ export function mountBriefing(game, { office, overlay }) {
     advisorMarks.heard(role, reading);
   }
 
-  // Warnings raised and not yet answered keep their advisor's mark up.
-  const syncTasks = () => advisorMarks.setTasks([...waiting, ...(live ? [live.warning] : [])]);
+  // Dismissing a bubble does not answer its warning; the sim and queued answers own that state.
+  const syncTasks = () => advisorMarks.setTasks(unresolved());
 
   function makeClickable() {
     for (const role of ROLES) {
@@ -112,8 +114,8 @@ export function mountBriefing(game, { office, overlay }) {
     });
     const done = () => {
       node.remove();
-      live = null;
-      showNextWarning(); // also drops the answered warning's mark
+      if (live?.node === node) live = null;
+      showNextWarning();
     };
     act.addEventListener('click', () => {
       queueLookInto(game, warning.id);
