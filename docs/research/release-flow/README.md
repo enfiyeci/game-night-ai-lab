@@ -14,6 +14,10 @@ checked the in-repo claims against the files, and wrote the suggestions.
    launches are structured.
 5. `suggestions-2026-09-26.md` — the release-flow suggestions offered to the owner, each tied to
    its source.
+6. `reveal-juice-2026-09-26.md` — later the same day: how comparable games stage a results reveal
+   (animation, number count-ups, sound), the four playable options shown, and the owner's pick
+   (one benchmark at a time plus a leaderboard climb). Also records that the critics score 9 or 10
+   on almost every simulated release.
 
 What came of it: the owner's picks are at the end of `suggestions-2026-09-26.md`, the final mockup
 is `docs/design/mockups/release-flow-final.html` (with two PNGs), and the build plan is
@@ -35,3 +39,5 @@ with ⚠️ every claim that rests on a partial read or a search summary. Cite t
   promise benchmark or press numbers before the turn ends.
 - Game Dev Tycoon has no Hall of Fame or awards show; those belong to Kairosoft's Game Dev Story.
   Search results conflate the two.
+- The critics give 9 or 10 on almost every simulated release, even ones that lose to the rival
+  (`reveal-juice-2026-09-26.md`), so the reveal's critic scores rarely disappoint.

@@ -1,8 +1,8 @@
 import { openDialog } from '../components/dialog.js';
 import { teamPanel } from '../components/team.js';
 import { opinions, powerSitesAvailable, projectQueue, sitesView } from '../logic/compute.js';
-import { computeAmount, money, roundsToWords } from '../logic/format.js';
-import { roundWord } from '../../sim/time.js';
+import { computeAmount, money } from '../logic/format.js';
+import { roundWord, storyDate } from '../../sim/time.js';
 
 const element = (tag, className, text) => {
   const node = document.createElement(tag);
@@ -67,7 +67,7 @@ function sitesPanel(view, era) {
   if (view.nextArrival) {
     const future = element('div', 'site-total compact');
     future.append(
-      element('span', '', `Power in ${roundsToWords(era, view.nextArrival.turns)}`),
+      element('span', '', `Power from ${storyDate(view.nextArrival.day).label}`),
       element('b', '', computeAmount(view.powerOnline + view.nextArrival.units, era)),
     );
     root.append(future);
@@ -107,7 +107,7 @@ export function openPowerSites(game, overlayRoot) {
   if (view.nextArrival) {
     const future = element('i', 'power-future');
     future.style.left = `${Math.min(100, ((view.powerOnline + view.nextArrival.units) / total) * 100)}%`;
-    future.append(element('em', '', `${view.nextArrival.name} online in ${roundsToWords(state.era, view.nextArrival.turns)}`));
+    future.append(element('em', '', `${view.nextArrival.name} online from ${storyDate(view.nextArrival.day).label}`));
     track.append(future);
   }
   const legend = element('div', 'power-legend');

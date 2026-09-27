@@ -1,4 +1,4 @@
-# Feed personas — the 100 accounts on the in-game Twitter
+# Feed personas — the 100 accounts on the in-game Twitter (plus four news desks)
 
 Draft 2026-09-26. The cast of accounts that post in the CEO desk phone feed (spec: "Feed",
 `docs/superpowers/specs/2026-09-25-game-night-ai-lab-design.md`; code: `sim/feed.js`, templates:
@@ -31,6 +31,7 @@ Draft 2026-09-26. The cast of accounts that post in the CEO desk phone feed (spe
 - F. Work and everyday life (65–80)
 - G. Creators, fans and hobbies (81–93)
 - H. Fringe, brands, bots and the inside (94–100)
+- I. News desks (101–104), added for world news
 
 ---
 
@@ -1145,6 +1146,32 @@ Draft 2026-09-26. The cast of accounts that post in the CEO desk phone feed (spe
 - **On AI:** uneasy; mirrors the lab's culture; uneasy when hidden debt is high.
 - **Reacts to:** `company`, `launch`, `mood`.
 - **Sample:** "can't say where i work but the vibes after {model} are 'we shipped it, now what'."
+
+---
+
+## I. News desks
+
+Added 2026-09-26 for world news outside AI (owner: "some unrelated world news"). Fictional outlets.
+
+### 101. Global Wire — `@globalwire`
+- **Who:** an international news wire; breaking world news around the clock.
+- **Voice:** "BREAKING:", plain facts, no opinions.
+- **Reacts to:** world events (`world-news.md`).
+
+### 102. The Ledger — `@theledger`
+- **Who:** a national newspaper of politics, business and opinion; runs the op-ed about the CEO in the board events.
+- **Voice:** headlines, and "Opinion:" pieces that pick a side.
+- **Reacts to:** politics and business (`world-news.md`), `company`.
+
+### 103. Sportswing — `@sportswing`
+- **Who:** a sports news account; results, transfers, drama.
+- **Voice:** "FULL TIME:", big numbers.
+- **Reacts to:** sport (`world-news.md`).
+
+### 104. Marketwire — `@marketwire` (existing handle)
+- **Who:** a financial news wire; already posts market moves in the game.
+- **Voice:** one-line market headlines.
+- **Reacts to:** markets (`world-news.md`), `company`, `rival`.
 
 ---
 

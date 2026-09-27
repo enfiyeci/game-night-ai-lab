@@ -30,7 +30,7 @@ export const ITEMS = [
   { id: 'training', label: 'Start a training run', unavailable: (state, game) => (game.queue.moves.some((move) => move.type === 'startRun') && `A training run already started this ${roundWord(state.era)}`) || (state.activeRun && 'A run is already under way') || (state.pendingModel && 'Release the trained model first') },
   { id: 'release', label: 'Release a model', editsQueued: (game) => releaseQueued(game), unavailable: (state, game) => !releaseQueued(game) && !state.pendingModel && 'Release needs a finished model' },
   { id: 'automation', label: 'Who does the work', free: true },
-  { id: 'constitution', label: 'Amend the constitution' },
+  { id: 'constitution', label: 'Amend the constitution', hidden: (state) => state.era < 3 }, // an era-3 idea: not shown before
   {
     id: 'meeting',
     label: 'Take a meeting',
@@ -59,7 +59,7 @@ export const COMPANY_ITEMS = [
         && game.state.flags.lastRoundEra !== game.state.era
         && state.flags.lastRoundEra === state.era;
       if (queued) return `A round already started this ${roundWord(state.era)}`;
-      if (state.era < 2) return 'Funding rounds open in era 2';
+      if (state.era < 2) return 'Investors are not ready yet';
       if (state.flags.lastRoundEra === state.era) return 'You already raised a round this era';
       return '';
     },
@@ -103,6 +103,7 @@ export const COMPANY_ITEMS = [
         ? `Every unused emergency option already started this ${roundWord(state.era)}` : '';
     },
   },
+  { id: 'sound', label: 'Sound and music', free: true },
 ];
 
 export function registerMenuHandler(id, fn) {

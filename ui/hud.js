@@ -7,8 +7,13 @@ import { cashLine, monthBill, weekFlows } from './logic/money.js';
 import { badgeCounts } from './logic/training.js';
 import { openFinance } from './screens/finance.js';
 import { openComputeInfo } from './screens/computeInfo.js';
+import { sfx } from './sfx.js';
+import { sound } from './sound.js';
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const SPEAKER_ICON = (muted) => `<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 6 h2.6 l3.4 -3 v10 l-3.4 -3 h-2.6 z" style="fill:currentColor"/>${muted
+  ? '<path d="M11 6 l4 4 M15 6 l-4 4" style="stroke:currentColor;stroke-width:1.6;stroke-linecap:round;fill:none"/>'
+  : '<path d="M10.8 5.6 q1.6 2.4 0 4.8 M12.6 4 q3 4 0 8" style="stroke:currentColor;stroke-width:1.5;stroke-linecap:round;fill:none"/>'}</svg>`;
 const PAUSE_ICON = '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="1" width="3" height="10" rx="1" style="fill:currentColor"/><rect x="7" y="1" width="3" height="10" rx="1" style="fill:currentColor"/></svg>';
 // Why the game is waiting while a speed is still chosen (owner pick 3A: say the reason instead of "Paused").
 const WAIT_WORDS = { dialog: 'screen open', menu: 'menu open', hidden: 'tab hidden', screenwall: 'card open', 'event-card': 'card open', 'event-card-loading': 'card open', hazard: 'card open', 'board-meeting': 'board meeting' };
@@ -107,6 +112,7 @@ export function mountHud(root, game) {
   // each render only rewrites text and states inside it.
   view.innerHTML = `
     <div class="hud" aria-label="Current project"></div>
+    <div class="lab-plate" aria-label="Your lab" hidden></div>
     <div class="hud-right">
       <button class="info" type="button" aria-controls="lab-stats"></button>
       <div class="hud-actions">
@@ -119,6 +125,8 @@ export function mountHud(root, game) {
         <button type="button" data-speed="1" aria-label="Speed 1">×1</button>
         <button type="button" data-speed="2" aria-label="Speed 2">×2</button>
         <button type="button" data-speed="4" aria-label="Speed 4">×4</button>
+        <span class="sep" aria-hidden="true"></span>
+        <button type="button" class="mute" aria-label="Mute all sound"></button>
         <span class="waiting" role="status" hidden></span>
       </div>
     </div>`;
@@ -127,6 +135,8 @@ export function mountHud(root, game) {
   const date = view.querySelector('.clock .date');
   const waitingLabel = view.querySelector('.clock .waiting');
   const column = view.querySelector('.hud-right');
+  const labPlate = view.querySelector('.lab-plate');
+  const mute = view.querySelector('.clock .mute');
   const overlay = () => document.querySelector('#overlay');
   // Like the office's own clicks, the buttons wait while a card, the phone or the screen wall holds the stage.
   const blocked = () => Boolean(overlay()?.querySelector('.event-layer, .ev-phone, .screenwall-layer'));
@@ -140,6 +150,10 @@ export function mountHud(root, game) {
   for (const button of view.querySelectorAll('.clock button[data-speed]')) {
     button.addEventListener('click', () => game.clock?.setSpeed(Number(button.dataset.speed)));
   }
+  mute.addEventListener('click', () => {
+    sound.muted = !sound.muted; // re-renders through sound.subscribe
+    if (sound.muted) sfx.hush();
+  });
 
   function render() {
     connectClock();
@@ -166,6 +180,9 @@ export function mountHud(root, game) {
       </div>
       <div class="ctr ali"><div class="badge">${counts.alignment}</div><div class="tag">Alignment</div></div>`;
     centre.querySelector('.pill .t').textContent = pill.name; // player-typed names are text, never markup
+    const labName = typeof state.labName === 'string' ? state.labName.trim() : '';
+    labPlate.textContent = labName; // the name typed on the title screen, as text
+    labPlate.hidden = !labName;
 
     info.setAttribute('aria-expanded', `${expanded}`);
     info.innerHTML = `
@@ -182,7 +199,7 @@ export function mountHud(root, game) {
         <span class="k">Valuation</span><b>${money(state.valuation)}</b>
       </span>`;
 
-    date.innerHTML = `${day.label}<small>${MONTH_NAMES[day.m - 1]}</small><span class="beat" role="progressbar" aria-label="${markLabel}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${beat}"><i style="width:${beat}%"></i></span>`;
+    date.innerHTML = `${MONTH_NAMES[day.m - 1]} ${day.y}<small>Week ${day.w}</small><span class="beat" role="progressbar" aria-label="${markLabel}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${beat}"><i style="width:${beat}%"></i></span>`;
     // While the game waits, the chosen speed shows as an outline, so a lit ×4 never contradicts a pause.
     for (const button of view.querySelectorAll('.clock button[data-speed]')) {
       const speed = Number(button.dataset.speed);
@@ -190,6 +207,9 @@ export function mountHud(root, game) {
       button.className = chosen ? (waiting && speed !== 0 ? 'held' : 'on') : '';
       button.setAttribute('aria-pressed', `${chosen}`);
     }
+    mute.className = `mute${sound.muted ? ' on' : ''}`;
+    mute.setAttribute('aria-pressed', `${sound.muted}`);
+    mute.innerHTML = SPEAKER_ICON(sound.muted);
     waitingLabel.hidden = !waiting;
     waitingLabel.textContent = waiting ? (waitWord ? `Waiting: ${waitWord}` : 'Waiting for you') : '';
 
@@ -201,8 +221,10 @@ export function mountHud(root, game) {
   render();
   queueMicrotask(render);
   const unsubscribeGame = game.subscribe(render);
+  const unsubscribeSound = sound.subscribe(render);
   return () => {
     unsubscribeGame();
+    unsubscribeSound();
     unsubscribeClock();
   };
 }

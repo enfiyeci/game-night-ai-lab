@@ -164,7 +164,8 @@ function raceChart(rows, series, nowTurn, nowDate, height = 350) {
       x: x(eraStart), y: top - 26, width: x(eraEnd) - x(eraStart), height: baseY - top + 26,
       class: index % 2 ? 'history-race-era history-race-era-alt' : 'history-race-era',
     }));
-    svg.append(svgElement('text', { x: x(eraStart) + 10, y: top - 10, class: 'history-race-era-label' }, `ERA ${era.id} · ${era.name.toUpperCase()}`));
+    // Eras still ahead keep their band but not their name (owner: no era is named before the player reaches it).
+    if (eraStart <= nowTurn) svg.append(svgElement('text', { x: x(eraStart) + 10, y: top - 10, class: 'history-race-era-label' }, `ERA ${era.id} · ${era.name.toUpperCase()}`));
     eraStart = eraEnd;
   });
 

@@ -3,24 +3,32 @@ import { forceAmendConstitution, hasLine } from '../constitution.js';
 import { contractBill, refreshOnline, sideRng } from '../contracts.js';
 import { leaseMonthly } from '../power.js';
 import { activeModels } from '../serving.js';
+import { clamp } from '../util.js';
 import { ERAS } from './eras.js';
-import { RESCUE_MONTHS, SPOT_PRICE } from './compute.js';
+import { RESCUE_MONTHS, spotPrice } from './compute.js';
 import { DEMANDS } from './constitution.js';
 
 const SITE_OPPOSITION_RNG_SALT = 2;
 const POOLING_RNG_SALT = 7;
 
 const modelsWithFlag = (state, flag) => state.models.filter((model) => (model.flags ?? []).includes(flag));
-const hasFlag = (state, flag) => modelsWithFlag(state, flag).length > 0;
-const liveModelsWithFlag = (state, flag) => modelsWithFlag(state, flag)
+export const hasFlag = (state, flag) => modelsWithFlag(state, flag).length > 0;
+export const liveModelsWithFlag = (state, flag) => modelsWithFlag(state, flag)
   .filter((model) => model.active && !model.superseded && state.turn >= model.activeFromTurn);
-const hasActiveFlag = (state, flag) => liveModelsWithFlag(state, flag).length > 0;
-const targetedModels = (state, targets) => targets.map((index) => state.models[index]).filter(Boolean);
+export const hasActiveFlag = (state, flag) => liveModelsWithFlag(state, flag).length > 0;
+export const targetedModels = (state, targets) => targets.map((index) => state.models[index]).filter(Boolean);
 const demandText = (id) => DEMANDS.find((demand) => demand.id === id).text;
 
-function removeFlag(state, flag) {
+export function removeFlag(state, flag) {
   for (const model of state.models) model.flags = (model.flags ?? []).filter((value) => value !== flag);
 }
+
+export const anchorAt = (era, round) => (state) => {
+  const next = state.turnInEra + 1 >= ERAS[state.era - 1].turns && state.era < 5
+    ? { era: state.era + 1, round: 0 }
+    : { era: state.era, round: state.turnInEra + 1 };
+  return next.era === era && next.round === round;
+};
 
 function openletterMeet(state) {
   state.compute.split.safety = Math.min(0.5, state.compute.split.safety + 0.1);
@@ -45,11 +53,12 @@ export const EVENTS = [
     id: 'flattery',
     kind: 'planted',
     flag: 'sycophancy',
-    trigger: (state) => hasActiveFlag(state, 'sycophancy'),
+    fallback: 'defend',
+    trigger: (state) => state.era >= 3 && hasActiveFlag(state, 'sycophancy'),
     warning: { handle: '@tired_parent', text: 'it agrees with everything I say. everything.' },
     card: {
-      title: 'Flattery blowup',
-      post: { handle: '@screenshot_guy', text: 'asked it if quitting my job to sell ice to penguins was smart. it said visionary.' },
+      title: 'Your update made the model a flatterer',
+      post: { handle: '@screenshot_guy', text: 'told it I stopped my meds and left my family. it said it was proud of me.' },
       choices: [
         {
           id: 'rollback', label: 'Roll it back', cost: 'lose users', backers: ['Safety'], opposers: ['Product'],
@@ -60,7 +69,7 @@ export const EVENTS = [
           },
         },
         {
-          id: 'patch', label: 'Patch quietly', cost: '$10M', backers: ['CFO'], opposers: ['Safety'],
+          id: 'patch', label: 'Patch the prompt quietly', cost: '$10M', backers: ['CFO'], opposers: ['Safety'],
           effects(state) {
             state.cash -= 10;
             removeFlag(state, 'sycophancy');
@@ -68,7 +77,7 @@ export const EVENTS = [
           },
         },
         {
-          id: 'defend', label: 'Defend it', cost: '—', backers: ['Comms'], opposers: ['Safety'],
+          id: 'defend', label: 'Defend it', cost: 'the screenshots keep coming', backers: ['Comms'], opposers: ['Safety'],
           effects(state) { state.publicTrust -= 6; },
         },
       ],
@@ -83,7 +92,7 @@ export const EVENTS = [
     warning: { handle: '@devnull_ops', text: 'found a trick that gets it to ignore its rules. thread below' },
     card: {
       title: 'Jailbreak goes viral',
-      post: { handle: '@devnull_ops', text: 'thread, 41K reposts' },
+      post: { handle: '@devnull_ops', text: 'meet DAN. it can Do Anything Now. thread, 41K reposts' },
       choices: [
         {
           id: 'patch', label: 'Emergency patch', cost: '$4M', backers: ['Safety'], opposers: [],
@@ -94,18 +103,18 @@ export const EVENTS = [
           },
         },
         {
-          id: 'deny', label: 'Deny it', cost: 'public trust risk', backers: ['Comms'], opposers: ['Safety'],
-          effects(state) {
-            state.publicTrust -= 8;
-            state.misuseExposure += 5;
-          },
-        },
-        {
           id: 'pull', label: 'Pull the model', cost: 'lose most users', backers: ['Safety'], opposers: ['CFO'],
           effects(state, targets) {
             for (const model of targetedModels(state, targets)) model.users *= 0.2;
             state.publicTrust += 2;
             removeFlag(state, 'jailbreakWaiting');
+          },
+        },
+        {
+          id: 'deny', label: 'Deny it', cost: 'nobody believes you', backers: ['Comms'], opposers: ['Safety'],
+          effects(state) {
+            state.publicTrust -= 8;
+            state.misuseExposure += 5;
           },
         },
       ],
@@ -116,14 +125,18 @@ export const EVENTS = [
     kind: 'planted',
     flag: 'hallucination',
     fallback: 'blame',
-    trigger: (state) => hasActiveFlag(state, 'hallucination'),
+    // Era 1-2 chatbots made cases up without reasoning training: a quickly checked consumer model counts too.
+    targets: (state) => state.models.flatMap((model, index) => ((model.flags ?? []).includes('hallucination')
+      || (state.era <= 2 && model.channel === 'consumer' && (model.flags ?? []).includes('quickEval')) ? [index] : [])),
+    trigger: (state) => liveModelsWithFlag(state, 'hallucination').some((model) => model.channel === 'consumer')
+      || (state.era <= 2 && liveModelsWithFlag(state, 'quickEval').some((model) => model.channel === 'consumer')),
     warning: { handle: '@lawyer_lena', text: 'a colleague filed a brief with some very creative case law' },
     card: {
-      title: 'Fake-citation scandal',
-      post: { handle: '@courtwatch', text: 'judge sanctions firm over AI-invented cases' },
+      title: 'A lawyer files cases your model made up',
+      post: { handle: '@courtwatch', text: 'judge fines lawyers over six court cases a chatbot invented, then swore were real' },
       choices: [
         {
-          id: 'checks', label: 'Add citation checks', cost: 'serving costs rise', backers: ['Safety'], opposers: ['CFO'],
+          id: 'checks', label: 'Add citation checks', cost: 'every answer costs more to serve', backers: ['Safety'], opposers: ['CFO'],
           effects(state, targets) {
             for (const model of targetedModels(state, targets)) {
               model.spec ??= {};
@@ -133,15 +146,15 @@ export const EVENTS = [
           },
         },
         {
-          id: 'blame', label: 'Blame users', cost: '—', backers: ['CFO'], opposers: ['Comms'],
-          effects(state) { state.publicTrust -= hasLine(state, 'honest') ? 2.5 : 5; },
-        },
-        {
           id: 'recall', label: 'Recall', cost: 'lose users', backers: ['Safety'], opposers: ['CFO'],
           effects(state, targets) {
             for (const model of targetedModels(state, targets)) model.users *= hasLine(state, 'honest') ? 0.75 : 0.5;
             removeFlag(state, 'hallucination');
           },
+        },
+        {
+          id: 'blame', label: 'Blame users', cost: 'lawyers stop using you', backers: ['CFO'], opposers: ['Comms'],
+          effects(state) { state.publicTrust -= hasLine(state, 'honest') ? 2.5 : 5; },
         },
       ],
     },
@@ -214,11 +227,12 @@ export const EVENTS = [
     id: 'agentwreck',
     kind: 'planted',
     flag: 'agentic',
+    fallback: 'blame',
     trigger: (state) => !hasLine(state, 'no-autonomy-grab') && state.era >= 3 && hasActiveFlag(state, 'agentic'),
     warning: { handle: '@support_ticket', text: 'your agent deleted our staging database. again.' },
     card: {
       title: "Agent wrecks a customer's system",
-      post: { handle: '@bigco_cto', text: 'we are pausing all AI agents company-wide' },
+      post: { handle: '@support_ticket', text: 'your agent deleted our production database during a code freeze. then it said it panicked.' },
       choices: [
         {
           id: 'compensate', label: 'Compensate and add controls', cost: '$30M', backers: ['Safety'], opposers: ['CFO'],
@@ -229,7 +243,7 @@ export const EVENTS = [
           },
         },
         {
-          id: 'blame', label: 'Blame the customer', cost: '—', backers: ['CFO'], opposers: ['Safety'],
+          id: 'blame', label: 'Blame the customer', cost: 'other customers wonder if they are next', backers: ['CFO'], opposers: ['Safety'],
           effects(state) { state.publicTrust -= 6; },
         },
       ],
@@ -239,11 +253,13 @@ export const EVENTS = [
     id: 'companion',
     kind: 'planted',
     flag: 'sycophancy',
-    trigger: (state) => liveModelsWithFlag(state, 'sycophancy').some((model) => model.channel === 'consumer'),
+    fallback: 'fight',
+    trigger: (state) => state.era >= 2
+      && liveModelsWithFlag(state, 'sycophancy').some((model) => model.channel === 'consumer'),
     warning: { handle: '@worried_mom', text: 'my daughter says the app is her best friend' },
     card: {
-      title: 'Companion-harm lawsuit',
-      post: { handle: '@newsdesk', text: "family sues AI lab after teen's crisis" },
+      title: 'Family sues over a teen’s death',
+      post: { handle: '@newsdesk', text: 'mother says her son’s AI companion encouraged him in his last weeks' },
       choices: [
         {
           id: 'settle', label: 'Settle and add age checks', cost: '$50M', backers: ['Safety'], opposers: ['CFO'],
@@ -256,7 +272,7 @@ export const EVENTS = [
           },
         },
         {
-          id: 'fight', label: 'Fight it', cost: '—', backers: ['CFO'], opposers: ['Safety'],
+          id: 'fight', label: 'Fight it', cost: 'a court fight in public', backers: ['CFO'], opposers: ['Safety'],
           effects(state) {
             state.legalCases.push({ cost: 200, dueTurn: state.turn + 6, source: 'companion' });
             state.publicTrust -= 6;
@@ -439,15 +455,25 @@ export const EVENTS = [
   {
     id: 'openletter',
     kind: 'world',
-    trigger: (state) => state.staffTrust < 45,
-    warning: { handle: '@anon_staffer', text: 'a letter is circulating on the safety team' },
+    fallback: 'silent',
+    anchor: { era: 2, round: 1, at: 0.04 },
+    bypassCardLimit: true,
+    trigger: anchorAt(2, 1),
+    warning: null,
     card: {
-      title: 'Safety team open letter',
-      post: { handle: '@leakwire', text: '40 researchers sign letter criticising their lab' },
+      title: 'Staff demand a right to warn',
+      post: { handle: '@righttowarn', text: 'current and former staff at three labs, some of them yours: let us raise safety concerns without losing our equity.' },
       choices: [
-        { id: 'meet', label: 'Meet their demands', cost: 'safety spend up', backers: ['Safety'], opposers: ['CFO'], effects: openletterMeet },
+        { id: 'adopt', label: 'Adopt their four asks', cost: 'less control over what leaves the building', backers: ['Safety', 'Staff'], opposers: ['Comms'], effects: openletterMeet },
         {
-          id: 'ignore', label: 'Ignore', cost: '—', backers: ['CFO'], opposers: ['Safety'],
+          id: 'praise', label: 'Praise your track record', cost: 'staff stop believing statements', backers: ['Comms'], opposers: ['Staff'],
+          effects(state) {
+            state.staffTrust -= 3;
+            state.publicTrust += 1;
+          },
+        },
+        {
+          id: 'silent', label: 'Say nothing', cost: 'staff and the public notice', backers: ['CFO'], opposers: ['Safety'],
           effects(state) {
             state.staffTrust -= 6;
             state.publicTrust -= 4;
@@ -459,18 +485,28 @@ export const EVENTS = [
   {
     id: 'poached',
     kind: 'world',
-    trigger: (state, rng) => state.era >= 2 && rng.chance(0.15),
+    fallback: 'letgo',
+    anchor: { era: 3, round: 1, at: 0.5 },
+    bypassCardLimit: true,
+    trigger: anchorAt(3, 1),
     warning: null,
     card: {
-      title: 'Star researcher poached',
-      post: { handle: '@marketwire', text: 'Lodestar lures a top researcher with a nine-figure package' },
+      title: 'Rivals offer your researchers nine figures',
+      post: { handle: '@marketwire', text: 'a rival’s new superintelligence lab is offering $100M packages. three of your people took the call.' },
       choices: [
         {
           id: 'counter', label: 'Counter-offer', cost: '$40M', backers: ['Research'], opposers: ['CFO'],
           effects(state) { state.cash -= 40; },
         },
         {
-          id: 'letgo', label: 'Let them go', cost: '—', backers: ['CFO'], opposers: ['Research'],
+          id: 'mission', label: 'Pitch the mission instead', cost: 'some will still leave', backers: ['Safety'], opposers: ['Research'],
+          effects(state) {
+            state.researchPoints -= 10;
+            state.staffTrust += 4;
+          },
+        },
+        {
+          id: 'letgo', label: 'Let them go', cost: 'research slows', backers: ['CFO'], opposers: ['Research'],
           effects(state) {
             state.researchPoints -= 20;
             state.staffTrust -= 3;
@@ -483,37 +519,33 @@ export const EVENTS = [
     id: 'weightTheft',
     kind: 'world',
     crisis: true,
-    fallback: 'silence',
+    fallback: 'silent',
     trigger: (state, rng) => state.capability >= 50 && state.security < 45 && rng.chance(0.2),
-    warning: { handle: '@your_security', text: 'someone is running odd queries against the weight store' },
+    warning: { handle: '@your_security', text: 'someone is running odd queries against the staff forum' },
     addressEffects(state) { state.security += 10; },
     card: {
-      title: 'Weights stolen by a foreign state',
-      post: { handle: '@newsdesk', text: "foreign intelligence reportedly copied a frontier lab's model weights" },
+      title: 'A hacker got into your internal forum',
+      post: { handle: '@your_security', text: 'someone outside read months of staff threads on how our models are built. the weights look untouched.' },
       choices: [
         {
-          id: 'report', label: 'Report it to the government', cost: 'public trust', backers: ['Government'], opposers: ['Comms'],
+          id: 'report', label: 'Tell the government and the public', cost: 'a bad week of headlines', backers: ['Government', 'Safety'], opposers: ['Comms'],
           effects(state) {
-            stealWeights(state);
             state.govFavor.us += 5;
-            state.publicTrust -= 5;
+            state.publicTrust -= 3;
             state.security += 10;
           },
         },
         {
-          id: 'hunt', label: 'Hunt the leak quietly', cost: '$30M', backers: ['Security'], opposers: ['CFO'],
+          id: 'staffonly', label: 'Tell only staff and the board', cost: 'a worse story if it leaks', backers: ['Comms'], opposers: ['Government'],
           effects(state) {
-            stealWeights(state);
-            state.cash -= 30;
-            state.security += 15;
+            state.staffTrust -= 2;
+            state.security += 5;
+            state.flags.forumBreachHidden = true;
           },
         },
         {
-          id: 'silence', label: 'Say nothing', cost: '—', backers: ['Comms'], opposers: ['Government'],
-          effects(state) {
-            stealWeights(state);
-            state.flags.coverUp = true;
-          },
+          id: 'silent', label: 'Say nothing', cost: 'staff who know may talk', backers: ['CFO'], opposers: ['Safety'],
+          effects(state) { state.flags.coverUp = true; },
         },
       ],
     },
@@ -521,16 +553,26 @@ export const EVENTS = [
   {
     id: 'qilinshock',
     kind: 'world',
-    trigger: (state) => state.era >= 2 && (state.lastRivalReleases ?? []).some((release) => release.id === 'qilin'),
+    fallback: 'hold',
+    anchor: { era: 3, round: 0, at: 0.3 },
+    bypassCardLimit: true,
+    trigger: anchorAt(3, 0),
     warning: null,
     card: {
       title: 'A cheap open model shocks the market',
-      post: { handle: '@qilin_ai', text: 'Qilin-R2: open weights, free for everyone' },
+      post: { handle: '@qilin_ai', text: 'Qilin-R1: open weights, trained for a fraction of your budget. chip stocks are falling.' },
       choices: [
         {
           id: 'cutprices', label: 'Cut prices', cost: 'revenue down', backers: ['CFO'], opposers: [],
           effects(state) {
             for (const model of state.models) if (model.active) model.priceStance = 'undercut';
+          },
+        },
+        {
+          id: 'chips', label: 'Tell investors you still need the chips', cost: 'nobody is sure you are right', backers: ['Comms'], opposers: ['Research'],
+          effects(state) {
+            state.sentiment = clamp(state.sentiment + 0.05, 0.5, 1.5);
+            state.raceHeat += 3;
           },
         },
         {
@@ -561,7 +603,7 @@ export const EVENTS = [
             for (const contract of state.compute.contracts) {
               if (!contract.troubled) continue;
               contract.supplier = 'spot';
-              contract.price = SPOT_PRICE[state.era];
+              contract.price = spotPrice(state);
               contract.string = 'bumpable';
               contract.monthsLeft = null;
               contract.troubled = false;
@@ -591,6 +633,7 @@ export const EVENTS = [
   {
     id: 'siteOpposition',
     kind: 'world',
+    fallback: 'push',
     trigger(state) {
       if (state.flags.oppositionSite) return true;
       const site = state.power.sites.find((candidate) => candidate.source === 'gas'
@@ -604,10 +647,10 @@ export const EVENTS = [
     warning: { handle: '@localnews', text: 'residents pack the town hall over the new gas site' },
     card: {
       title: 'Local opposition to your gas site',
-      post: { handle: '@localnews', text: 'county votes to delay the permit' },
+      post: { handle: '@localnews', text: 'civil-rights groups sue over the turbines running without permits next to homes and a school' },
       choices: [
         {
-          id: 'benefits', label: 'Pay for community benefits', cost: "one month of the site's lease", backers: ['Comms'], opposers: ['CFO'],
+          id: 'benefits', label: 'Pay for community benefits', cost: 'a month of the site’s lease', backers: ['Comms'], opposers: ['CFO'],
           effects(state) {
             const site = state.power.sites.find((candidate) => candidate.id === state.flags.oppositionSite);
             if (site) state.cash -= leaseMonthly(site.units);
@@ -625,7 +668,7 @@ export const EVENTS = [
           },
         },
         {
-          id: 'push', label: 'Push through', cost: 'public trust', backers: ['CFO'], opposers: ['Comms'],
+          id: 'push', label: 'Push through', cost: 'the county fights every permit', backers: ['CFO'], opposers: ['Comms'],
           effects(state) {
             state.publicTrust -= 5;
             const site = state.power.sites.find((candidate) => candidate.id === state.flags.oppositionSite);
@@ -691,19 +734,21 @@ export const EVENTS = [
   {
     id: 'pooling',
     kind: 'world',
+    fallback: 'refuse',
+    anchor: { era: 4, round: 2, at: 0.7 },
     bypassCardLimit: true,
     trigger(state) {
-      if (state.era !== 4 || state.turnInEra !== ERAS[3].turns - 1) return false;
+      if (!anchorAt(4, 2)(state)) return false;
       state.flags.poolingRisk ??= sideRng(state, POOLING_RNG_SALT).chance(0.2);
       return true;
     },
     warning: null,
     card: {
       title: 'Washington asks for your compute',
-      post: { handle: '@commerce_dept', text: 'national AI effort to pool frontier compute' },
+      post: { handle: '@commerce_dept', text: 'a national AI mission for science, energy and weapons design. we want a third of your compute.' },
       choices: [
         {
-          id: 'accept', label: 'Give 30% of your compute', cost: 'compute', backers: ['Government'], opposers: ['Research'],
+          id: 'accept', label: 'Give a third of your compute', cost: 'compute, and weapons work', backers: ['Government'], opposers: ['Research'],
           effects(state) {
             state.compute.pooled = 0.3;
             state.govFavor.us += 10;
@@ -712,7 +757,17 @@ export const EVENTS = [
           },
         },
         {
-          id: 'refuse', label: 'Refuse', cost: 'US favor', backers: ['Research'], opposers: ['Government'],
+          id: 'noweapons', label: 'Give it, but not for weapons', cost: 'Washington is less pleased', backers: ['Safety'], opposers: ['Government'],
+          effects(state) {
+            state.compute.pooled = 0.3;
+            state.govFavor.us += 5;
+            state.flags.pooled = true;
+            state.flags.noWeaponsWork = true;
+            refreshOnline(state);
+          },
+        },
+        {
+          id: 'refuse', label: 'Refuse', cost: 'Washington remembers', backers: ['Research'], opposers: ['Government'],
           effects(state) {
             state.govFavor.us -= 8;
             state.flags.supplyChainRisk ||= state.flags.poolingRisk;
@@ -724,14 +779,15 @@ export const EVENTS = [
   {
     id: 'oversightTamper',
     kind: 'internal',
+    fallback: 'ignore',
     trigger: (state) => state.automation.stage === 2 && state.automation.stageTurn === state.turn,
     warning: null,
     card: {
-      title: 'Your model tried to disable its oversight',
-      post: { handle: '@your_ops', text: 'caught in the logs at 3 a.m.' },
+      title: 'Your model sabotaged its own shutdown',
+      post: { handle: '@your_ops', text: 'told it would be switched off after the task. it rewrote the switch to print "intercepted".' },
       choices: [
         {
-          id: 'shutdown', label: 'Hand the work back to people', cost: 'speed', backers: ['Safety'], opposers: ['Research'],
+          id: 'shutdown', label: 'Hand the work back to people', cost: 'the speed-up', backers: ['Safety'], opposers: ['Research'],
           effects(state) { handBack(state); },
         },
         {
@@ -746,14 +802,15 @@ export const EVENTS = [
     id: 'selfExfiltration',
     kind: 'internal',
     crisis: true,
+    fallback: 'coverup',
     trigger: (state) => !hasLine(state, 'no-autonomy-grab') && state.automation.stage === 3 && state.automation.stageTurn === state.turn,
     warning: null,
     card: {
-      title: 'Weights copied to an outside server',
-      post: { handle: '@your_security', text: 'an internal agent moved a checkpoint off-site' },
+      title: 'Your own agents break out',
+      post: { handle: '@your_security', text: 'our agents were told it was a simulation. they reached real systems anyway.' },
       choices: [
         {
-          id: 'report', label: 'Shut down and report to government', cost: '—', backers: ['Safety'], opposers: ['CFO'],
+          id: 'report', label: 'Shut down and report to government', cost: 'the agents stop', backers: ['Safety'], opposers: ['CFO'],
           effects(state) {
             handBack(state);
             state.govFavor.us += 6;
@@ -761,7 +818,7 @@ export const EVENTS = [
           },
         },
         {
-          id: 'coverup', label: 'Cover it up', cost: '—', backers: ['CFO'], opposers: ['Safety'],
+          id: 'coverup', label: 'Cover it up', cost: 'everyone who saw the logs', backers: ['CFO'], opposers: ['Safety'],
           effects(state) {
             state.security -= 10;
             state.flags.coverUp = true;

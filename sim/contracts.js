@@ -1,9 +1,10 @@
 import { BALANCE } from './balance.js';
 import { eraById } from './data/eras.js';
+import { eraOfRound } from './time.js';
 import { createRng } from './rng.js';
 import {
   SUPPLIERS, SPOT_PRICE, eraScale, FRAGILE_MONTHLY, BUMP_CHANCE, GULF_OPEN, GULF_REVOKE, EQUITY_SHARE,
-  SCALE_DOWN, SCALE_DOWN_PENALTY_MONTHS, BREAK_SHARE, BUYOUT_MONTHS,
+  SCALE_DOWN, SCALE_DOWN_PENALTY_MONTHS, BREAK_SHARE, BUYOUT_MONTHS, partnerMarkup, spotPrice,
 } from './data/compute.js';
 import { SITE_TYPES, reserveGrid, poweredUnits } from './power.js';
 
@@ -46,12 +47,26 @@ export function generateOffers(state, rng) {
       continue;
     }
     const units = rng.int(s.size[0], s.size[1]) * eraScale(era);
-    const price = key === 'spot' ? SPOT_PRICE[era] : s.price;
+    const markup = partnerMarkup(state, key);
+    const price = key === 'spot' ? spotPrice(state) : s.price * markup;
     const termMonths = s.termMonths; // null for spot: it renews every turn until dropped or pulled
     const monthly = units * price * UNIT;
-    offers.push({ id, supplier: key, units, arrivesIn: arrivalOf(s, era) + delay, upfront: Math.round(s.upfrontShare * monthly * (termMonths ?? 0)), monthly, termMonths, price, string: s.string });
+    offers.push({ id, supplier: key, units, arrivesIn: arrivalOf(s, era) + delay, upfront: Math.round(s.upfrontShare * monthly * (termMonths ?? 0)), monthly, termMonths, price, string: s.string, ...(markup > 1 ? { partnerMarkup: markup } : {}) });
   }
   return offers;
+}
+
+// Raising from the strategic cloud partner marks up rival-cloud offers already on the table this turn too,
+// so raising first and signing second cannot dodge the lock-in.
+export function markUpRivalOffers(state) {
+  for (const offer of state.compute.offers ?? []) {
+    const markup = partnerMarkup(state, offer.supplier);
+    if (markup === 1 || offer.partnerMarkup || offer.viaQueue) continue;
+    offer.price = offer.supplier === 'spot' ? spotPrice(state) : offer.price * markup;
+    offer.monthly = offer.units * offer.price * UNIT;
+    offer.upfront = Math.round(offer.upfront * markup);
+    offer.partnerMarkup = markup;
+  }
 }
 
 export function addPipeline(state, item) {
@@ -64,7 +79,8 @@ function arrive(state, p, rng) {
   const units = p.headline ? Math.round(p.headline * (0.3 + 0.7 * rng.next())) : p.units;
   const c = {
     id: p.id, supplier: p.supplier, units, price: p.price, monthsLeft: p.termMonths,
-    needsPower: p.needsPower ?? (p.supplier === 'verde' && state.era >= 4), string: p.string, arrivedTurn: state.turn,
+    // A delivery landing early keeps the rules of the era it was due in (stage 2 lands it inside the round before).
+    needsPower: p.needsPower ?? (p.supplier === 'verde' && (p.arrivesTurn == null ? state.era : Math.max(state.era, eraOfRound(p.arrivesTurn))) >= 4), string: p.string, arrivedTurn: p.arrivesTurn ?? state.turn,
     scaledDown: false, troubled: false, dark: p.dark ?? false, bumpTurn: null, exclusiveBought: false, headline: p.headline ?? null,
   };
   state.compute.contracts.push(c);
@@ -114,18 +130,19 @@ export function signOffer(state, offerId, rng) {
     arrive(state, state.compute.pipeline.splice(i, 1)[0], rng);
     refreshOnline(state);
   }
-  return { ok: true, offerId, arrivesTurn };
+  return { ok: true, offerId, arrivesTurn, pipelineId: id };
 }
 
 // Called once the turn has advanced, so what is due on turn T is online while the player plans turn T.
-export function deliverDue(state, rng) {
+// sync: false (a delivery between marks) leaves every other contract's Gulf license and spot price to the mark.
+export function deliverDue(state, rng, due = (p) => p.arrivesTurn <= state.turn, { sync = true } = {}) {
   const arrived = [];
   state.compute.pipeline = state.compute.pipeline.filter((p) => {
-    if (p.arrivesTurn > state.turn) return true;
+    if (!due(p)) return true;
     arrived.push(arrive(state, p, rng));
     return false;
   });
-  syncContracts(state);
+  if (sync) syncContracts(state);
   refreshOnline(state);
   return arrived;
 }
@@ -135,7 +152,7 @@ export function deliverDue(state, rng) {
 // the compute a turn uses is the compute it is billed for.
 export function syncContracts(state) {
   for (const c of state.compute.contracts) {
-    if (c.supplier === 'spot') c.price = SPOT_PRICE[state.era]; // renewals pay today's spot price
+    if (c.supplier === 'spot') c.price = spotPrice(state); // renewals pay today's spot price
     if (c.supplier === 'gulf') {
       if (state.govFavor.us < GULF_REVOKE || state.flags.supplyChainRisk) c.dark = true;
       else if (state.govFavor.us >= GULF_OPEN) c.dark = false;
@@ -152,18 +169,20 @@ export function syncContracts(state) {
 // Called at turn end, before plan 2A's event tick, so a CoreFlame failure is warned about the same turn.
 export function contractsTurn(state, rng) {
   const months = eraById(state.era).monthsPerTurn;
-  const spots = state.compute.contracts.filter((c) => c.supplier === 'spot' && c.bumpTurn == null);
+  const spots = state.compute.contracts.filter((c) => c.supplier === 'spot' && c.bumpTurn == null && c.arrivedTurn <= state.turn);
   const warnedBump = spots.length > 0 && rng.chance(BUMP_CHANCE[state.era] ?? 0);
   if (warnedBump) for (const c of spots) c.bumpTurn = state.turn + 1; // serves (and bills) one more turn
   for (const c of state.compute.contracts) {
+    if (c.arrivedTurn > state.turn) continue;
     if (c.supplier === 'coreflame' && !c.troubled && rng.chance(perTurn(FRAGILE_MONTHLY, months))) c.troubled = true;
   }
   return { warnedBump };
 }
 
 // Called after the economy has billed the turn, so the last month of a term is still paid.
-export function expireContracts(state) {
-  const months = eraById(state.era).monthsPerTurn;
+// Counts every term contract down by `months`. Stage 2 calls it daily with the months one day covers, so a term
+// starts the day its compute lands and ends on its end date, and an early landing is never billed past its term.
+export function expireContracts(state, months = eraById(state.era).monthsPerTurn) {
   const expired = [];
   state.compute.contracts = state.compute.contracts.filter((c) => {
     if (c.monthsLeft == null) return true; // spot rolls over
@@ -190,8 +209,9 @@ export function creditOffset(state) {
   return Math.min(azuria, state.compute.credits / months);
 }
 
-export function spendCredits(state) {
-  const used = creditOffset(state) * eraById(state.era).monthsPerTurn;
+// `used` defaults to a whole round at today's offset; the day loop passes what the days actually used (stage 2), so an
+// Azuria contract that lands or ends mid-round spends credits only for the days it ran.
+export function spendCredits(state, used = creditOffset(state) * eraById(state.era).monthsPerTurn) {
   state.compute.credits = Math.max(0, state.compute.credits - used);
   return used;
 }
