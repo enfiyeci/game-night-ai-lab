@@ -1,3 +1,5 @@
+import { claimRivalFeatures } from './appeal.js';
+import { PRODUCTS, waveProduct } from './data/products.js';
 import { BALANCE } from './balance.js';
 import { eraById } from './data/eras.js';
 import { clamp } from './util.js';
@@ -458,6 +460,10 @@ function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
     for (const x of deliverDue(state, sideRng(state, 6))) events.push({ type: 'computeArrived', supplier: x.supplier, units: x.units });
     state.compute.offers = refreshOffers(state, sideRng(state, 5));
     announceTargets(state);
+    claimRivalFeatures(state);
+    if (state.era < 5 && state.turnInEra === eraById(state.era).turns - 1) {
+      pushFeed(state, '@marketwire', `The next wave is ${PRODUCTS[waveProduct(state.era + 1)].name.toLowerCase()}. Labs can start building one now.`, 'feed');
+    }
     // A delayed release goes live at the round mark, action or not (the old turn did this first thing next turn).
     const waiting = state.models.filter((model) => model.active && !model.activated);
     activateReleases(state);

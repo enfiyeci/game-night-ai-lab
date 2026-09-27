@@ -41,7 +41,7 @@ test('a finished run produces a trained model with hidden effects applied', () =
   assert.equal(s.misuseExposure, 2); // 5 − 3
   assert.equal(s.legalCases.length, 0); // chance() is false in this rng
   assert.equal(trained.spec.arch, 'dense');
-  assert.equal(trained.openWeightsMx, 20);
+  assert.equal(trained.openWeightsMx, undefined);
 });
 
 test('zero talent spend provides no talent multiplier bonus', () => {

@@ -1,3 +1,4 @@
+import { productOf } from './data/products.js';
 // The live persona feed (owner 2026-09-26): the 100 personas react to what happens, and their posts
 // arrive over the following story days instead of all at once. Content: sim/data/feedReactions.js,
 // generated from docs/design/feed-reactions/*.md by tools/build-feed-reactions.js.
@@ -115,8 +116,8 @@ function launchPools(state, model) {
   const L = R.launch;
   const flags = model.flags ?? [];
   const pools = flags.map((flag) => L.flags[flag]).filter(Boolean);
-  const channel = model.channel === 'agent' ? 'enterprise' : model.channel;
-  if (L.channel[channel]) pools.push(L.channel[channel]);
+  const product = productOf(model);
+  if (L.products[product]) pools.push(L.products[product]);
   const press = model.launch?.pressAvg;
   if (press >= 7) pools.push(L.press.high);
   if (press <= 4) pools.push(L.press.low);
@@ -132,7 +133,7 @@ function launchPools(state, model) {
   if (flags.includes('thirdPartyEval')) pools.push(L.eval.thirdParty);
   if (flags.includes('govEval')) pools.push(L.eval.gov);
   if (flags.includes('quickEval')) pools.push(L.eval.quick);
-  if (channel === 'consumer') pools.push(L.artists);
+  if (product === 'chat') pools.push(L.artists);
   return pools;
 }
 

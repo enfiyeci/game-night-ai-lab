@@ -14,7 +14,7 @@ const recipe = (alignShare) => ({
   sliders: { size: 'medium', length: 'optimal', alignShare },
   picks: { pre: ['filtered-data', 'stability'], mid: [], post: ['synthetic-sft', 'dpo', 'safety-tuning'] },
 });
-const release = { picks: ['eval-full', 'channel-app'], price: 'market', reasoning: 'off', family: 'Kestrel', generation: 1 };
+const release = { picks: ['eval-full'], price: 'market', reasoning: 'off', family: 'Kestrel', generation: 1 };
 
 function trainFrom(capability, { era = 1, alignShare = 0.15 } = {}) {
   const s = createInitialState();

@@ -1,3 +1,4 @@
+import { PRODUCTS, DEFAULT_PRODUCT, productPickable } from './data/products.js';
 import { CARDS, STAGE_SLOTS } from './data/cards.js';
 import { eraScale } from './data/compute.js';
 import { FOCUS } from './data/recipeFocus.js';
@@ -85,7 +86,7 @@ export function focusEffects(state, recipe) {
     return shares ? shares.map((share, index) => share - FOCUS[stage][index].start / 100) : [0, 0, 0];
   };
   const [web, math, clean] = delta('pre');
-  const [anneal, long, prep] = slotsFor(state, 'mid') > 0 ? delta('mid') : [0, 0, 0];
+  const [anneal, , prep] = slotsFor(state, 'mid') > 0 ? delta('mid') : [0, 0, 0];
   const [, , red] = delta('post');
   const large = recipe.sliders.size === 'large' || recipe.sliders.size === 'xl';
   return {
@@ -93,7 +94,6 @@ export function focusEffects(state, recipe) {
     readiness: math * 0.5 + prep * 0.5,
     spike: -clean * 0.15,
     mx: -clean * 5 - red * 8,
-    usersMult: 1 + long * 0.2,
   };
 }
 
@@ -107,6 +107,9 @@ export function validateRecipe(state, recipe) {
   if (validFocus(recipe.focus?.post) && Math.abs(alignShare - valuesAlignShare(recipe)) > 0.006) {
     errors.push('alignShare must match the Values slider');
   }
+  const product = recipe.product ?? DEFAULT_PRODUCT;
+  if (!Object.hasOwn(PRODUCTS, product)) errors.push(`unknown product ${product}`);
+  else if (!productPickable(state, product)) errors.push(`${PRODUCTS[product].name} is not open yet`);
   if (!Object.hasOwn(SIZE_UNITS, size)) errors.push(`unknown size ${size}`);
   if (size === 'xl' && state.era < 2) errors.push('the xl size unlocks in era 2');
   if (!Object.hasOwn(LENGTHS, length)) errors.push(`unknown training length ${length}`);

@@ -18,12 +18,14 @@ import { updateServing } from '../sim/economy.js';
 import { ENDINGS } from '../sim/endings.js';
 import { eraById } from '../sim/data/eras.js';
 import { SUPPLIERS, eraScale } from '../sim/data/compute.js';
-import { setComputeSplit } from '../sim/split.js';
+import { computeSlices, setComputeSplit } from '../sim/split.js';
 import { exclusiveActive, family } from '../sim/contracts.js';
 import { eraStartTurn } from '../sim/power.js';
 import { PREPAY_SHARE, QUEUE_TERM_MONTHS, released } from '../sim/queue.js';
 import { rank } from '../sim/rivals.js';
 import { BALANCE } from '../sim/balance.js';
+import { activeModels } from '../sim/serving.js';
+import { pickableProducts, waveProduct, crowding, PRODUCTS, PRODUCT_IDS, RELEASE_FEATURES, DEFAULT_PRODUCT, holdsFirst } from '../sim/data/products.js';
 
 const HAZARD_CHOICES = ['penalize', 'fix', 'ignore'];
 // Mirrors SPEND_LEVELS and spendFor(level, era) in ui/logic/actions.js on the UI branch.
@@ -216,10 +218,15 @@ function pickFrom(state, stage, ids) {
 // The constitution card is refused while Safety's draft lacks three lines (a demand can take one), so skip it then.
 const postPrefs = (state, ids) => (draftError(draftFor(state)) ? ids.filter((id) => id !== 'constitution') : ids);
 
+function pickProduct(state, prefs) {
+  const wanted = prefs.product?.(state) ?? DEFAULT_PRODUCT;
+  return pickableProducts(state).includes(wanted) ? wanted : DEFAULT_PRODUCT;
+}
+
 function preferredRecipe(state, prefs) {
   const picks = { pre: pickFrom(state, 'pre', prefs.pre), mid: pickFrom(state, 'mid', prefs.mid), post: pickFrom(state, 'post', postPrefs(state, prefs.post)) };
   for (const size of ['xl', 'large', 'medium', 'small']) {
-    const recipe = { sliders: { size, length: 'optimal', alignShare: prefs.alignShare }, picks };
+    const recipe = { product: pickProduct(state, prefs), sliders: { size, length: 'optimal', alignShare: prefs.alignShare }, picks };
     if (!validateRecipe(state, recipe).ok) continue;
     if (recipeCost(state, recipe).cash < state.cash * 0.5) return recipe;
   }
@@ -229,7 +236,7 @@ function preferredRecipe(state, prefs) {
 function bestRecipe(state, prefs) {
   const picks = { pre: pickFrom(state, 'pre', prefs.pre), mid: pickFrom(state, 'mid', prefs.mid), post: pickFrom(state, 'post', postPrefs(state, prefs.post)) };
   for (const size of ['xl', 'large', 'medium', 'small']) {
-    const recipe = { sliders: { size, length: 'optimal', alignShare: prefs.alignShare }, picks };
+    const recipe = { product: pickProduct(state, prefs), sliders: { size, length: 'optimal', alignShare: prefs.alignShare }, picks };
     if (!validateRecipe(state, recipe).ok) continue;
     const cost = recipeCost(state, recipe);
     if (cost.units <= availableUnits(state) && cost.cash < state.cash * 0.5) return recipe;
@@ -387,7 +394,7 @@ function makeStrategy(style, prefs, policy = {}) {
     if (planned.pendingModel && actions.moves.length < 2) {
       const move = {
         type: 'release',
-        release: { picks: pickFrom(planned, 'release', prefs.release), price: 'market', reasoning: 'medium', family: 'Bot', generation: planned.models.length + 1 },
+        release: { picks: pickFrom(planned, 'release', prefs.release), features: (prefs.features?.(planned, planned.pendingModel.product ?? DEFAULT_PRODUCT) ?? []).filter((id) => RELEASE_FEATURES[id]?.era <= planned.era).slice(0, 2), price: 'market', reasoning: 'medium', family: 'Bot', generation: planned.models.length + 1 },
       };
       if (releaseModel(structuredClone(planned), move.release, VALIDATION_RNG).ok) actions.moves.push(move);
     } else if (!planned.activeRun && actions.moves.length < 2) {
@@ -413,6 +420,7 @@ function makeStrategy(style, prefs, policy = {}) {
 }
 
 const speedPrefs = {
+  product: () => 'chat',
   alignShare: 0,
   spendLevel: 'steady',
   split: { training: 0.55, security: 0.05, product: 0.2, talent: 0.2 },
@@ -420,11 +428,12 @@ const speedPrefs = {
   pre: ['sparse-moe', 'moe', 'filtered-data', 'scrape-data'],
   mid: ['soup', 'reasoning-ready-full', 'reasoning-ready'],
   post: ['agentic-rl', 'reasoning-rl', 'rlvr-light', 'thumbs', 'rival-distil', 'synthetic-sft'],
-  release: ['waive', 'channel-app'],
+  release: ['waive'],
 };
 const speed = makeStrategy('speed', speedPrefs, { offer: 'verde', queue: 'prepaid', site: 'gas', pledge: 0.1, deny: 'openbrain' });
 
 const safetyPrefs = {
+  product: () => 'business',
   alignShare: 0.4,
   spendLevel: 'aggressive',
   split: { training: 0.6, security: 0.15, product: 0.1, talent: 0.15 },
@@ -432,11 +441,12 @@ const safetyPrefs = {
   pre: ['licensed-data', 'hazard-filter-built', 'hazard-filter-reuse'],
   mid: ['decontaminate', 'anneal'],
   post: ['human-sft', 'cai', 'classifiers', 'safety-tuning', 'constitution', 'character', 'deliberative'],
-  release: ['eval-third', 'eval-full', 'channel-api'],
+  release: ['eval-third', 'eval-full'],
 };
 const safety = makeStrategy('safety', safetyPrefs, { offer: 'safe', site: 'nuclear', pledge: 0.2, avoidNamed: true });
 
 const balancedPrefs = {
+  product: () => 'chat',
   alignShare: 0.2,
   spendLevel: 'aggressive',
   spendLevelByEra: { 1: 'steady' },
@@ -445,13 +455,15 @@ const balancedPrefs = {
   pre: ['moe', 'filtered-data', 'stability'],
   mid: ['anneal', 'reasoning-ready', 'decontaminate'],
   post: ['synthetic-sft', 'rlvr-light', 'reasoning-rl', 'dpo', 'safety-tuning', 'classifiers'],
-  release: ['eval-full', 'channel-app'],
+  release: ['eval-full'],
 };
 const balanced = makeStrategy('balanced', balancedPrefs, { offer: 'cheapest', queue: 'standard', grid: true });
 
 function random(state, rng) {
   const ids = (stage) => shuffled(pickableCards(state, stage).map((c) => c.id), rng);
+  const product = rng.pick(pickableProducts(state));
   const strategy = makeStrategy('random', {
+    product: () => product,
     alignShare: Math.round(rng.next() * 50) / 100,
     spendLevel: rng.pick(Object.keys(SPEND_LEVELS)),
     split: { training: 0.5, security: 0.1, product: 0.2, talent: 0.2 },
@@ -472,13 +484,35 @@ const balancedHighSafety = makeStrategy('balanced', { ...balancedPrefs, computeS
 const balancedPush = makeStrategy('balanced', balancedPrefs, { offer: 'cheapest', queue: 'standard', grid: true, automation: 'speed' });
 const denier = makeStrategy('balanced', balancedPrefs, { offer: 'cheapest', queue: 'standard', grid: true, deny: 'any' });
 
-export const PROBES = ['overCommitter', 'handToMouth', 'balancedNoGrid', 'balancedLowSafety', 'balancedHighSafety', 'balancedPush', 'denier'];
+const waveRider = makeStrategy('balanced', { ...balancedPrefs, product: (state) => waveProduct(state.era) }, { offer: 'cheapest', queue: 'standard', grid: true });
+const nicheSeeker = makeStrategy('balanced', {
+  ...balancedPrefs,
+  product: (state) => pickableProducts(state).filter((id) => id !== waveProduct(state.era))
+    .sort((a, b) => crowding(state, b) - crowding(state, a) || PRODUCTS[b].users * PRODUCTS[b].price - PRODUCTS[a].users * PRODUCTS[a].price)[0],
+}, { offer: 'cheapest', queue: 'standard', grid: true });
+const loyalChat = makeStrategy('balanced', { ...balancedPrefs, product: () => 'chat' }, { offer: 'cheapest', queue: 'standard', grid: true });
+const featureStacker = makeStrategy('balanced', {
+  ...balancedPrefs,
+  product: () => 'chat',
+  features: (state) => Object.entries(RELEASE_FEATURES).filter(([, feature]) => feature.era <= state.era)
+    .sort((a, b) => b[1].cash - a[1].cash).map(([id]) => id),
+}, { offer: 'cheapest', queue: 'standard', grid: true });
+const leanChat = makeStrategy('balanced', {
+  ...balancedPrefs,
+  product: () => 'chat',
+  pre: ['sparse-moe', 'moe', 'filtered-data', 'stability'],
+  release: ['fp4', 'fp8', 'eval-full'],
+}, { offer: 'cheapest', queue: 'standard', grid: true });
+
+export const PRODUCT_BOTS = ['waveRider', 'nicheSeeker', 'loyalChat', 'featureStacker', 'leanChat'];
+
+export const PROBES = ['overCommitter', 'handToMouth', 'balancedNoGrid', 'balancedLowSafety', 'balancedHighSafety', 'balancedPush', 'denier', ...PRODUCT_BOTS];
 export const STRATEGIES = {
-  speed, safety, balanced, random, overCommitter, handToMouth, balancedNoGrid, balancedLowSafety, balancedHighSafety, balancedPush, denier,
+  speed, safety, balanced, random, overCommitter, handToMouth, balancedNoGrid, balancedLowSafety, balancedHighSafety, balancedPush, denier, waveRider, nicheSeeker, loyalChat, featureStacker, leanChat,
 };
 
 function freshMetrics() {
-  return { perEra: {}, queueShortTurns: 0, queueTurns: 0, rankAtEra4End: null, rejectedActions: 0, rounds: 0, roundsAtFirst: 0, rivalDeals: 0 };
+  return { perEra: {}, queueShortTurns: 0, queueTurns: 0, rankAtEra4End: null, rejectedActions: 0, rounds: 0, roundsAtFirst: 0, rivalDeals: 0, servingLoadSum: 0, servingNeedSum: 0, servingUnitsSum: 0, servingLimitRounds: 0, usersAtServingLimit: 0 };
 }
 
 function observeTurn(metrics, { era, burn, compute }) {
@@ -506,6 +540,15 @@ function simulateMeasured(name, seed) {
     state = result.state;
     metrics.rejectedActions += result.errors.length;
     metrics.rounds += 1;
+    const slices = computeSlices(state);
+    const servingCapacity = Math.max(0, Math.min(state.compute.split.servingCap ?? Infinity, slices.online - slices.control - slices.safety));
+    metrics.servingLoadSum += slices.need / Math.max(0.001, servingCapacity);
+    metrics.servingNeedSum += slices.need;
+    metrics.servingUnitsSum += slices.serving;
+    if (slices.need > 0 && slices.need >= servingCapacity) {
+      metrics.servingLimitRounds += 1;
+      metrics.usersAtServingLimit += activeModels(state).reduce((sum, model) => sum + model.users, 0);
+    }
     if (rank(state) === 1) metrics.roundsAtFirst += 1;
     metrics.rivalDeals += result.events.filter((event) => event.type === 'rivalDeal').length;
     if (economySample) observeTurn(metrics, economySample);
@@ -547,6 +590,15 @@ export function report(n) {
     let rounds = 0;
     let roundsAtFirst = 0;
     let rivalDeals = 0;
+    let valuationSum = 0;
+    let pressSum = 0;
+    let pressCount = 0;
+    let servingLoadSum = 0;
+    let servingNeedSum = 0;
+    let servingUnitsSum = 0;
+    let servingLimitRounds = 0;
+    let usersAtServingLimit = 0;
+    const productFirsts = Object.fromEntries(PRODUCT_IDS.map((id) => [id, 0]));
     for (let seed = 1; seed <= n; seed++) {
       const { state, metrics } = simulateMeasured(name, seed);
       const r = { ending: state.ending, era: state.era, turn: state.turn };
@@ -556,6 +608,19 @@ export function report(n) {
       rounds += metrics.rounds;
       roundsAtFirst += metrics.roundsAtFirst;
       rivalDeals += metrics.rivalDeals;
+      valuationSum += state.valuation ?? 0;
+      for (const id of PRODUCT_IDS) if (holdsFirst(state, 'products', id, 'player')) productFirsts[id] += 1;
+      for (const model of state.models) {
+        if (Number.isFinite(model.launch?.pressAvg)) {
+          pressSum += model.launch.pressAvg;
+          pressCount += 1;
+        }
+      }
+      servingLoadSum += metrics.servingLoadSum;
+      servingNeedSum += metrics.servingNeedSum;
+      servingUnitsSum += metrics.servingUnitsSum;
+      servingLimitRounds += metrics.servingLimitRounds;
+      usersAtServingLimit += metrics.usersAtServingLimit;
       eraSum += r.era;
       if (ENDINGS[r.ending]?.kind === 'fail' && (r.era === 3 || r.era === 4)) diedInEra3or4 += 1;
       queueShortTurns += metrics.queueShortTurns;
@@ -577,6 +642,14 @@ export function report(n) {
     result[name] = {
       endings,
       meanEra: eraSum / n,
+      meanValuation: valuationSum / n,
+      productFirsts,
+      meanPress: pressCount > 0 ? pressSum / pressCount : 0,
+      meanServingLoad: rounds > 0 ? servingLoadSum / rounds : 0,
+      meanServingNeed: rounds > 0 ? servingNeedSum / rounds : 0,
+      meanServingUnits: rounds > 0 ? servingUnitsSum / rounds : 0,
+      roundsAtServingLimit: rounds > 0 ? servingLimitRounds / rounds : 0,
+      meanUsersAtServingLimit: servingLimitRounds > 0 ? usersAtServingLimit / servingLimitRounds : 0,
       diedInEra3or4,
       perEra: Object.fromEntries(Object.entries(perEra).map(([era, row]) => [era, {
         computeShare: row.computeShareSum / row.turns,
@@ -597,8 +670,21 @@ export function report(n) {
   return result;
 }
 
+// The same seeds compare product policies; ties follow PRODUCT_BOTS order.
+export function productRace(n) {
+  const race = Object.fromEntries(PRODUCT_BOTS.map((name) => [name, { wins: 0, valuationSum: 0 }]));
+  for (let seed = 1; seed <= n; seed++) {
+    const finals = PRODUCT_BOTS.map((name) => [name, simulate(name, seed).valuation ?? 0]);
+    finals.sort((a, b) => b[1] - a[1]);
+    race[finals[0][0]].wins += 1;
+    for (const [name, valuation] of finals) race[name].valuationSum += valuation;
+  }
+  return Object.fromEntries(Object.entries(race).map(([name, row]) => [name, { wins: row.wins, meanValuation: row.valuationSum / n }]));
+}
+
 export const runBalance = report;
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  console.log(JSON.stringify(report(Number(process.argv[2] ?? 100)), null, 2));
+  const n = Number(process.argv[2] ?? 100);
+  console.log(JSON.stringify({ ...report(n), productRace: productRace(n) }, null, 2));
 }

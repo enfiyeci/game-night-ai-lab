@@ -38,17 +38,18 @@ const pendingModel = () => ({
   size: 'small',
   spec: { size: 'small', arch: 'dense', context: 'short', precision: 'bf16', guard: false, reasoningCapable: false },
   flags: [],
-  openWeightsMx: 20,
+  product: 'chat',
   publicEffects: { pt: 0, st: 0, heat: 0, govUs: 0, govIntl: 0, usersMult: 1 },
   hazard: null,
   releaseDelay: 0,
 });
-const release = (channel = 'channel-app') => ({ picks: channel === 'channel-api' ? [] : [channel], price: 'market', reasoning: 'off', family: 'Kestrel', generation: 1 });
-const releaseState = (hardLines, channel = 'channel-app') => {
+const release = () => ({ picks: [], price: 'market', reasoning: 'off', family: 'Kestrel', generation: 1 });
+const releaseState = (hardLines, product = 'chat') => {
   const state = createInitialState();
   adopt(state, hardLines);
   state.pendingModel = pendingModel();
-  return releaseModel(state, release(channel), no).model;
+  state.pendingModel.product = product;
+  return releaseModel(state, release(), no).model;
 };
 
 test('before any model learns one, there is no constitution and the draft is Safety’s proposal', () => {
@@ -346,14 +347,6 @@ test('no-wmd lowers release exposure and consumer revenue', () => {
   assert.equal(protectedModel.revenueMult, 0.97);
   assert.equal(revenuePerUser(protectedModel), revenuePerUser(plain.models[0]) * 0.97);
 
-  const locked = createInitialState();
-  adopt(locked, ['no-wmd', 'honest', 'privacy']);
-  locked.misuseExposure = 50;
-  locked.misuseLocked = 60;
-  locked.pendingModel = pendingModel();
-  releaseModel(locked, release('channel-open'), no);
-  assert.equal(locked.misuseExposure, 76);
-  assert.equal(locked.misuseLocked, 76);
 });
 
 test('no-deceive-lab halves the debt hidden by alignment faking', () => {
@@ -472,10 +465,13 @@ test('honest halves citation penalties and adds staff cost to deceptive choices'
   assert.equal(honestOut.staffTrust, controlOut.staffTrust - 3);
 });
 
-test('privacy increases enterprise users at release', () => {
-  const plain = releaseState(['no-wmd', 'honest', 'accept-shutdown'], 'channel-api');
-  const privateModel = releaseState(['no-wmd', 'honest', 'privacy'], 'channel-api');
-  assert.equal(privateModel.users, Math.round(plain.users * 1.1));
+test('privacy increases business-assistant users at release', () => {
+  const plain = releaseState(['no-wmd', 'honest', 'accept-shutdown'], 'business');
+  const privateModel = releaseState(['no-wmd', 'honest', 'privacy'], 'business');
+  assert.equal(privateModel.appeal.freshBeforeFit, Math.round(plain.appeal.freshBeforeFit * 1.1));
+  const codingPlain = releaseState(['no-wmd', 'honest', 'accept-shutdown'], 'coding');
+  const codingPrivate = releaseState(['no-wmd', 'honest', 'privacy'], 'coding');
+  assert.equal(codingPrivate.fresh, codingPlain.fresh);
 });
 
 test('no-autonomy-grab blocks agent incidents and reduces agentic RL capability', () => {

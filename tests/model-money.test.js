@@ -1,3 +1,4 @@
+import { PRODUCTS, productOf } from '../sim/data/products.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
@@ -79,7 +80,7 @@ test('a training run bills its compute as it runs, and the released model carrie
 });
 
 test('a model launched in a later era earns more per user, and keeps its launch price', async () => {
-  const { ERA_PRICE, REVENUE_PER_USER } = await import('../sim/serving.js');
+  const { ERA_PRICE } = await import('../sim/serving.js');
   const { revenuePerUser } = await import('../sim/economy.js');
   assert.equal(ERA_PRICE[0], 1);
   assert.ok(ERA_PRICE.every((price, i) => i === 0 || price >= ERA_PRICE[i - 1]));
@@ -90,7 +91,7 @@ test('a model launched in a later era earns more per user, and keeps its launch 
   assert.equal(r.ok, true);
   assert.equal(r.model.eraPrice, ERA_PRICE[2]);
   s.era = 4;
-  assert.equal(revenuePerUser(r.model), REVENUE_PER_USER[r.model.channel] * ERA_PRICE[2]);
+  assert.equal(revenuePerUser(r.model), PRODUCTS[productOf(r.model)].price * ERA_PRICE[2]);
 });
 
 test('a run paused for want of capacity still pays for the training compute it holds', () => {

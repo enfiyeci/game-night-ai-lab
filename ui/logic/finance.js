@@ -13,7 +13,7 @@ import { BALANCE } from '../../sim/balance.js';
 import { ERAS, eraById } from '../../sim/data/eras.js';
 import { RESALE, spotPrice } from '../../sim/data/compute.js';
 import { leaseMonthly } from '../../sim/power.js';
-import { activeModels, monthlyRevenue, revenuePerUser, roundAmount } from '../../sim/economy.js';
+import { activeModels, growthMultiplier, monthlyRevenue, revenuePerUser, roundAmount, updateServing } from '../../sim/economy.js';
 import { computeSlices, resaleCredit, spotCover } from '../../sim/split.js';
 import { PRICE_STANCE } from '../../sim/serving.js';
 import { reviewerCost } from '../../sim/automation.js';
@@ -198,7 +198,9 @@ export function project(state, plan) {
   const slices = computeSlices(state);
   const cover = state.compute.split.coverWithSpot;
   const resell = state.compute.split.resellIdle;
-  const users = activeModels(state).map((m) => ({ users: m.users, cap: m.userCap, perUser: revenuePerUser(m), growth: PRICE_STANCE[m.priceStance].growth }));
+  const forecast = structuredClone(state);
+  forecast.models = structuredClone(activeModels(state));
+  const users = forecast.models;
   const rows = [];
   let cash = state.cash;
   let credits = state.compute.credits ?? 0;
@@ -253,8 +255,16 @@ export function project(state, plan) {
     const raised = raises[era] && roundOpen(state, era) && turn === Math.max(state.turn, eraStart(era)) ? round : 0;
     // growUsers runs before the economy bills the turn, so each turn's growth comes first.
     const boost = state.budget.split.product * ((state.budget.spend * months) / 30) * 0.02;
-    for (const m of users) m.users = Math.min(m.cap, Math.round(m.users * (1 + (0.12 * m.growth + boost) * (months / 3))));
-    const grown = (users.reduce((sum, m) => sum + m.users * m.perUser, 0) / 1e6) * usageAt(k);
+    forecast.era = era;
+    forecast.turn = turn;
+    forecast.compute.online = signed.units + planned;
+    forecast.compute.surge = surge && k < surge.turnsLeft ? { ...surge } : null;
+    updateServing(forecast);
+    const rates = users.map((m) => growthMultiplier(forecast, m));
+    users.forEach((m, index) => {
+      m.users = Math.min(m.userCap, Math.round(m.users * (1 + (0.12 * PRICE_STANCE[m.priceStance].growth + boost) * rates[index] * (months / 3))));
+    });
+    const grown = (users.reduce((sum, m) => sum + m.users * revenuePerUser(m), 0) / 1e6) * usageAt(k);
     const cashStart = cash;
     cash += raised + (revenue - burn) * months;
     rows.push({

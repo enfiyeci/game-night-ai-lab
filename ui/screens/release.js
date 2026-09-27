@@ -124,10 +124,7 @@ export function openRelease(game, overlayRoot, { stage } = {}) {
     body.append(shipLine, error);
 
     const priceSlider = () => {
-      const spec = releaseSpec(state, draft.picks, draft.reasoning);
-      if (spec.channel === 'open') {
-        return el('p', 'release-note', 'Open weights are a free download. There is no price to set.');
-      }
+      const spec = releaseSpec(state, draft.picks, draft.reasoning, draft.features);
       return vslider({
         label: 'Price',
         role: 'CFO',
@@ -143,7 +140,7 @@ export function openRelease(game, overlayRoot, { stage } = {}) {
           return {
             value: index,
             label: PRICE_NAMES[stop],
-            detail: stop === 'free' ? 'ads and upgrades' : price === null ? 'free download' : `${perMillion(price)} per M tokens`,
+            detail: stop === 'free' ? 'ads and upgrades' : `${perMillion(price)} per M tokens`,
           };
         }),
         onInput(value) {
@@ -191,7 +188,7 @@ export function openRelease(game, overlayRoot, { stage } = {}) {
       leftContent.replaceChildren(teamPanel(now, { opinions: releaseOpinions(now, draft) }));
       rightContent.replaceChildren(techniquePanel(now, 'release', { picks: { release: draft.picks } }, (picks) => {
         draft.picks = picks;
-        priceSlot.replaceChildren(priceSlider()); // the channel changes per-token prices
+        priceSlot.replaceChildren(priceSlider()); // release choices can change per-token prices
         refresh();
       }, {
         cardNote: (card) => (card.group === 'eval'

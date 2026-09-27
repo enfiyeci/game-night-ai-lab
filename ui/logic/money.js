@@ -1,3 +1,4 @@
+import { PRODUCTS, productOf } from '../../sim/data/products.js';
 // The money readouts (owner picks 2026-09-26: the HUD's in and out line with weekly floats and the cash line, the Money
 // screen's "This month" bill with reasons and its "What changed" pins). Every figure comes from the sim's own sums, so
 // the lines here always add up to monthlyRevenue and projectBurn.
@@ -18,6 +19,8 @@ export function monthBill(state) {
     amount: (model.users * revenuePerUser(model) / 1e6) * usage,
     users: model.users,
     channel: model.channel,
+    product: productOf(model),
+    productName: PRODUCTS[productOf(model)].name,
     price: model.priceStance,
   }));
   const burn = projectBurn(state);

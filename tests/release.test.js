@@ -9,6 +9,7 @@ import { rank } from '../sim/rivals.js';
 
 const rng = { next: () => 0.5, int: () => 0, chance: (p) => p > 0.5, normal: (m) => m };
 const recipe = {
+  product: 'chat',
   sliders: { size: 'medium', length: 'optimal', alignShare: 0.15 },
   picks: { pre: ['filtered-data'], mid: [], post: ['synthetic-sft', 'safety-tuning'] },
 };
@@ -18,7 +19,7 @@ function trainedState() {
   advanceRun(s, rng);
   return s;
 }
-const release = { picks: ['eval-full', 'channel-app'], price: 'market', reasoning: 'off', family: 'Kestrel', generation: 1 };
+const release = { picks: ['eval-full'], price: 'market', reasoning: 'off', family: 'Kestrel', generation: 1 };
 
 test('model names are family + generation + tier word', () => {
   assert.equal(modelName({ family: 'Kestrel', generation: 3, size: 'small' }), 'Kestrel 3 Swift');
@@ -60,31 +61,8 @@ test('release needs a trained model and a family name', () => {
   assert.equal(releaseModel(t, { ...release, family: '' }, rng).ok, false);
 });
 
-test('open weights lock in misuse exposure', () => {
-  const s = trainedState();
-  const before = s.misuseExposure;
-  const openWeightsMx = s.pendingModel.openWeightsMx;
-  releaseModel(s, { ...release, picks: ['channel-open'] }, rng);
-  assert.equal(s.misuseExposure, before + openWeightsMx);
-  assert.equal(s.misuseLocked, s.misuseExposure);
-});
 
-test('an open-weights release sets a stable flag, apart from stolen weights', () => {
-  const s = trainedState();
-  releaseModel(s, { ...release, picks: ['channel-open'] }, rng);
-  assert.equal(s.flags.openWeights, true);
-  assert.equal(s.flags.weightsStolen, undefined);
-});
 
-test('a later open-weight release adds to the already locked misuse', () => {
-  const s = trainedState();
-  s.misuseLocked = 60;
-  s.misuseExposure = 50;
-  const openWeightsMx = s.pendingModel.openWeightsMx;
-  releaseModel(s, { ...release, picks: ['channel-open'] }, rng);
-  assert.equal(s.misuseLocked, 60 + openWeightsMx);
-  assert.equal(s.misuseExposure, 60 + openWeightsMx);
-});
 
 test('release enum values must be own table entries', () => {
   for (const invalid of [
@@ -113,7 +91,7 @@ test('releasing with an unresolved hazard ignores it, and an outside eval expose
   s.era = 2;
   s.alignmentDebt = 0; s.concealedDebt = 20;
   s.pendingModel.hazard = { type: 'rewardHacking', size: 6 };
-  const r = releaseModel(s, { ...release, picks: ['eval-third', 'channel-app'] }, rng);
+  const r = releaseModel(s, { ...release, picks: ['eval-third'] }, rng);
   assert.equal(r.ok, true);
   assert.equal(s.concealedDebt, 10);
   assert.equal(s.alignmentDebt, 6 + 10);
@@ -123,7 +101,7 @@ test('release-card debt is visible in the launch safety benchmark', () => {
   const s = trainedState();
   s.alignmentDebt = 10;
   s.concealedDebt = 0;
-  const r = releaseModel(s, { ...release, picks: ['channel-app'] }, rng);
+  const r = releaseModel(s, { ...release, picks: [] }, rng);
   const safety = r.model.launch.benchmarks.find((benchmark) => benchmark.id === 'gauntlet');
   assert.equal(s.alignmentDebt, 13);
   assert.equal(safety.truth, 91);
@@ -145,7 +123,7 @@ test('a delayed model retires its predecessor only when it activates', () => {
   const carried = first.users;
   startRun(s, recipe);
   advanceRun(s, rng);
-  const second = releaseModel(s, { ...release, picks: ['eval-full', 'channel-staged'], generation: 2 }, rng).model;
+  const second = releaseModel(s, { ...release, picks: ['staged'], generation: 2 }, rng).model;
   assert.equal(typeof releaseApi.activateReleases, 'function');
   assert.equal(first.active, true);
   assert.equal(second.activated, false);
@@ -155,12 +133,13 @@ test('a delayed model retires its predecessor only when it activates', () => {
   assert.equal(first.users, 0);
   assert.equal(second.activated, true);
   assert.ok(second.users >= carried);
-  assert.ok(second.userCap >= second.users * 4);
+  assert.ok(second.userCap >= second.users);
+  assert.ok(second.userCap >= first.userCap);
 });
 
 test('an older delayed release is superseded by a newer active release', () => {
   const s = trainedState();
-  const older = releaseModel(s, { ...release, picks: ['eval-full', 'channel-staged'] }, rng).model;
+  const older = releaseModel(s, { ...release, picks: ['staged'] }, rng).model;
   startRun(s, recipe);
   advanceRun(s, rng);
   const newer = releaseModel(s, { ...release, generation: 2 }, rng).model;

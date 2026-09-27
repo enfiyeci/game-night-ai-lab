@@ -330,3 +330,18 @@ test('feed posts name benchmarks through {coding} and {science}, never a fixed t
   assert.ok(state.feed.length > 0);
   assert.ok(state.feed.every((post) => !/\{(coding|science)\}/.test(post.text)));
 });
+
+test('live launch reactions choose the locked product instead of its legacy channel', () => {
+  for (const product of ['chat', 'business', 'coding', 'agent', 'science']) {
+    const state = stateOnDay();
+    const model = { name: 'the new model', product, channel: product === 'chat' ? 'enterprise' : 'consumer', activated: true, flags: [], launch: {} };
+    reactToEvents(state, state, [{ type: 'release', model }]);
+    runDays(state, 4);
+    const productPosts = shown(REACTIONS.launch.products[product]);
+    assert.ok(state.feed.some((post) => productPosts.has(post.text)), product);
+    if (product !== 'chat') {
+      const artists = shown(REACTIONS.launch.artists);
+      assert.ok(!state.feed.some((post) => artists.has(post.text)), product);
+    }
+  }
+});

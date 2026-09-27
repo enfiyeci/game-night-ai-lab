@@ -1,3 +1,4 @@
+import { PRODUCTS, productOf } from '../../sim/data/products.js';
 // The finance page's "Each model" view: what each release cost to make, what serving it has cost, and what it has
 // earned, from the books the sim keeps on every model (sim/economy.js accrueEconomy, sim/training.js, sim/release.js).
 import { activeModels } from '../../sim/serving.js';
@@ -7,7 +8,6 @@ import { storyDayForTurn } from './format.js';
 const known = (value) => (Number.isFinite(value) ? value : null);
 
 function statusOf(model, serving) {
-  if (model.channel === 'open') return 'open';
   if (serving.has(model)) return 'serving';
   if (!model.active) return 'retired';
   return 'upcoming';
@@ -26,6 +26,8 @@ export function moneyRows(state) {
       const servingSpent = model.servingSpent ?? 0;
       return {
         kind: 'model',
+        product: productOf(model),
+        productName: PRODUCTS[productOf(model)].name,
         name: model.name,
         date: storyDate(Number.isFinite(model.releasedDay) ? model.releasedDay : storyDayForTurn(model.releasedTurn)).label,
         status: statusOf(model, serving),

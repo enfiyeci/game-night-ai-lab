@@ -107,12 +107,6 @@ function reactions(state, model, misalignmentIncident) {
 function sheet(model, era) {
   const data = priceSheet(model, era);
   const root = el('div', 'reveal-sheet');
-  if (data.open) {
-    const cell = el('span');
-    cell.append(el('small', null, 'Open weights'), el('b', null, 'Free download'), el('small', null, "you don't serve it"));
-    root.append(cell);
-    return root;
-  }
   const cells = [
     ['You charge', perMillion(data.charge), 'per million tokens'],
     ['Serving costs you', perMillion(data.serve), data.live ? 'per million tokens' : 'per million tokens, once it is serving'],
@@ -573,10 +567,7 @@ export function showReveal(overlayRoot, { state, model, misalignmentIncident = f
 
   const foot = el('div', 'reveal-foot');
   const usersLine = el('div', 'reveal-users');
-  // Owner 2026-09-26 wording for when open weights returns: no user count to show, since nobody
-  // signs up for a download (the sales estimate is already omitted for open weights below).
   if (scheduled) usersLine.textContent = `Users and sales start when it ships on ${storyDate(shipsDay).label}.`;
-  else if (model.channel === 'open') usersLine.textContent = 'Free download. Anyone can run it now.';
   else usersLine.append('New users this month: ', el('b', null, `+${users(model.newUsers)}`));
   const left = el('div');
   left.append(usersLine);

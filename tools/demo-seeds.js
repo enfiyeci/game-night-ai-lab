@@ -7,6 +7,7 @@ import { INVESTORS } from '../sim/economy.js';
 import { cardById } from '../sim/recipe.js';
 import { RIVAL_TEMPLATES } from '../sim/rivals.js';
 import { STRATEGIES } from './balance.js';
+import { PRODUCTS, RELEASE_FEATURES, productOf } from '../sim/data/products.js';
 
 const MAX_TURNS = 30;
 const DRAMATIC_FAILURES = new Set(['misalignment', 'quietTakeover', 'rivalDisaster']);
@@ -193,12 +194,14 @@ function describeMove(move) {
     const cards = Object.values(move.recipe.picks).flat().map(cardName);
     const recipe = cards.length ? ` using ${cards.join(', ')}` : '';
     const alignment = Math.round(move.recipe.sliders.alignShare * 100);
-    return `start a ${move.recipe.sliders.size}, ${move.recipe.sliders.length}-length training run with ${alignment}% alignment${recipe}`;
+    return `start a ${move.recipe.sliders.size}, ${move.recipe.sliders.length}-length training run with ${alignment}% alignment for a ${PRODUCTS[productOf(move.recipe)].name.toLowerCase()}${recipe}`;
   }
   if (move.type === 'release') {
     const release = move.release;
     const cards = release.picks.map(cardName);
-    const choices = cards.length ? ` after ${cards.join(' and ')}` : '';
+    const features = (release.features ?? []).map((id) => RELEASE_FEATURES[id]?.name ?? words(id));
+    const choices = (cards.length ? ` after ${cards.join(' and ')}` : '')
+      + (features.length ? ` with ${features.join(' and ')}` : '');
     return `release ${release.family} ${release.generation} at ${release.price} price with ${release.reasoning} reasoning${choices}`;
   }
   if (move.type === 'deal') return `sign the ${supplierName(offerSupplier(move.offerId))} compute deal`;

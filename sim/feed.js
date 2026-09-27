@@ -1,3 +1,4 @@
+import { productOf } from './data/products.js';
 import { createRng } from './rng.js';
 import { computeSlices } from './split.js';
 import {
@@ -44,8 +45,8 @@ function receptionPools(model, state) {
   for (const flag of model.flags ?? []) {
     if (RECEPTION_POSTS.flags[flag]) specific.push(...RECEPTION_POSTS.flags[flag]);
   }
-  const channel = model.channel ?? model.spec?.channel;
-  if (RECEPTION_POSTS.channels[channel]) specific.push(...RECEPTION_POSTS.channels[channel]);
+  const product = productOf(model);
+  if (RECEPTION_POSTS.products[product]) specific.push(...RECEPTION_POSTS.products[product]);
 
   const traits = [];
   if (model.launch?.pressAvg >= 7) traits.push(...RECEPTION_POSTS.press.high);

@@ -170,3 +170,14 @@ test('findDemoSeeds returns the requested top timelines sorted by score', () => 
     assert.ok(Array.isArray(result.turns));
   }
 });
+
+
+test('recording script describes product choices and release features', () => {
+  const line = demoSeeds.describeActions({ moves: [
+    { type: 'startRun', recipe: { product: 'coding', sliders: { size: 'small', length: 'optimal', alignShare: 0.2 }, picks: { pre: [], mid: [], post: [] } } },
+    { type: 'release', release: { picks: [], features: ['voice', 'search'], family: 'Bot', generation: 1, price: 'market', reasoning: 'off' } },
+  ] });
+  assert.match(line, /coding tool/);
+  assert.match(line, /Voice/);
+  assert.match(line, /Web search/);
+});

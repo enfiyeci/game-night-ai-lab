@@ -13,7 +13,7 @@ const preferences = {
   pre: ['licensed-data', 'hazard-filter-built', 'hazard-filter-reuse'],
   mid: ['decontaminate', 'anneal'],
   post: ['human-sft', 'cai', 'classifiers', 'safety-tuning', 'constitution', 'character', 'deliberative'],
-  release: ['eval-third', 'eval-full', 'channel-api'],
+  release: ['eval-third', 'eval-full'],
 };
 
 function pickFrom(state, stage, ids) {
@@ -37,7 +37,7 @@ function affordableRecipe(state) {
     post: pickFrom(state, 'post', preferences.post),
   };
   for (const size of ['xl', 'large', 'medium', 'small']) {
-    const recipe = { sliders: { size, length: 'optimal', alignShare: 0.4 }, picks };
+    const recipe = { product: 'business', sliders: { size, length: 'optimal', alignShare: 0.4 }, picks };
     if (!validateRecipe(state, recipe).ok) continue;
     const cost = recipeCost(state, recipe);
     if (cost.units <= availableUnits(state) && cost.cash < state.cash * 0.5) return recipe;
@@ -110,6 +110,18 @@ function throughTurn(seed, targetTurn, stopWhen = () => false) {
     ({ state } = step(state, scriptedActions(state), rng));
   }
   return state;
+}
+
+// Debug routes need a live target state. Keep the requested run when it reaches that state; otherwise try
+// nearby deterministic seeds using real sim actions. If none succeeds, expose the original run's outcome.
+function reachableScenario(seed, stopWhen) {
+  let fallback;
+  for (let offset = 0; offset < 20; offset += 1) {
+    const state = throughTurn(seed + offset, 20, stopWhen);
+    if (offset === 0) fallback = state;
+    if (!state.ending && stopWhen(state)) return state;
+  }
+  return fallback;
 }
 
 const start = (seed) => createInitialState({ seed });
@@ -202,6 +214,7 @@ function dangerState(seed) {
     const moves = state.turn === 0 ? [{
       type: 'startRun',
       recipe: {
+        product: 'business',
         sliders: { size: 'small', length: 'optimal', alignShare: 0.4 },
         picks: { pre: [], mid: [], post: [] },
       },
@@ -224,6 +237,7 @@ function hazardState(seed) {
   let base = SCENARIOS.era3Idle(seed);
   if (base.ending) return base;
   const recipe = {
+    product: 'business',
     sliders: { size: 'small', length: 'optimal', alignShare: 0.25 },
     picks: { pre: ['licensed-data'], mid: ['anneal'], post: ['human-sft', 'reasoning-rl', 'deliberative'] },
   };
@@ -307,10 +321,8 @@ export const SCENARIOS = {
   readyToRelease,
   event: eventState,
   meeting: (seed) => throughTurn(seed, 20, (s) => s.meeting?.id === 'first'),
-  // Seeds 1 and 2 end in era 4 under the current balance. The offset keeps debug seeds 1–4 on runs
-  // that reach the second meeting while preserving the same scripted playthrough.
-  meeting2: (seed) => throughTurn(seed + 2, 20, (s) => s.meeting?.id === 'second'),
-  summit: (seed) => throughTurn(seed, 20, (s) => s.era === 5 && s.turnInEra === 0 && !s.deal),
+  meeting2: (seed) => reachableScenario(seed + 2, (s) => s.meeting?.id === 'second'),
+  summit: (seed) => reachableScenario(seed, (s) => s.era === 5 && s.turnInEra === 0 && !s.deal),
   ending: (seed) => throughTurn(seed, 20),
   danger: dangerState,
   era2Deals: dealsState,

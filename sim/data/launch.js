@@ -95,6 +95,7 @@ export const CRITICS = [
 
 // when(ctx) picks templates; ctx: { launch, flags, spec, model, rank }. First five matches are used.
 export const REACTIONS = [
+  { when: (c) => c.model.cheapToRun, handle: '@unit_economics', text: (c) => `${c.model.name} is cheap to run. the margins will get noticed.` },
   { when: (c) => c.jump.skipped > 0 && c.jump.gain >= JUMP_EARNED_GAIN, handle: '@benchwatch', text: (c) => `ok, the jump to ${c.jump.to} is earned. this is not a point release.` },
   { when: (c) => c.jump.skipped > 0 && c.jump.gain < JUMP_EARNED_GAIN, handle: '@benchwatch', text: (c) => `${c.model.name}? the evals read more like a ${c.jump.from}.1` },
   { when: (c) => c.jump.skipped > 0 && c.jump.gain < JUMP_EARNED_GAIN, handle: '@ml_hobbyist', text: 'so the version number is marketing now. cool cool.' },

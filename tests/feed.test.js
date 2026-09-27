@@ -17,6 +17,7 @@ import { REACTIONS } from '../sim/data/feedReactions.js';
 import { PEOPLE } from '../sim/data/feedPeople.js';
 
 const TRAINING_RECIPE = {
+  product: 'chat',
   sliders: { size: 'medium', length: 'optimal', alignShare: 0.15 },
   picks: { pre: ['filtered-data'], mid: [], post: ['synthetic-sft', 'safety-tuning'] },
 };
@@ -27,7 +28,7 @@ function releaseThroughTurns({ price = 'market', seed = 5 } = {}) {
   const trained = endTurn(initial, { moves: [{ type: 'startRun', recipe: TRAINING_RECIPE }] }, rng);
   const released = endTurn(trained.state, { moves: [{
     type: 'release',
-    release: { picks: ['eval-full', 'channel-app'], price, reasoning: 'off', family: 'Kestrel', generation: 1 },
+    release: { picks: ['eval-full'], price, reasoning: 'off', family: 'Kestrel', generation: 1 },
   }] }, rng);
   assert.deepEqual(trained.errors, []);
   assert.deepEqual(released.errors, []);
@@ -184,7 +185,7 @@ test('reception posts appear only on turns one through three after activation', 
 test('all template banks meet their minimum sizes', () => {
   const receptionCount = [
     ...Object.values(RECEPTION_POSTS.flags),
-    ...Object.values(RECEPTION_POSTS.channels),
+    ...Object.values(RECEPTION_POSTS.products),
     ...Object.values(RECEPTION_POSTS.press),
     ...Object.values(RECEPTION_POSTS.price),
     RECEPTION_POSTS.reasoningHigh,
@@ -251,7 +252,7 @@ test('endTurn wires persona launch reactions and era changes into the feed', () 
   assert.ok(launch.length >= 3, 'a launch draws several posts');
   assert.ok(launch.every((post) => PEOPLE[post.handle]), 'every launch post comes from a persona');
   const model = released.state.models[0];
-  const consumer = persona(REACTIONS.launch.channel.consumer, released.state, model);
+  const consumer = persona(REACTIONS.launch.products.chat, released.state, model);
   assert.ok(launch.some((post) => consumer.has(post.text)), 'a consumer app draws consumer posts');
 
   // Under the compute race plan (docs/superpowers/plans/2026-09-26-compute-race.md) Task 5, rivals grow their fleets and train bigger models, so an idle lab is left behind at the
@@ -335,4 +336,15 @@ test('a big rival deal and your denial make feed posts', () => {
   assert.equal(denial.length, 1);
   const small = feedPosts(prev, s, [{ type: 'rivalDeal', id: 'openbrain', supplier: 'spot', units: 2, arrivesTurn: 1, fallback: false, big: false }], { ambient: false, timeBased: false });
   assert.equal(small.length, 0, 'a small deal stays quiet');
+});
+
+test('reception uses each product pool even when products share a channel', () => {
+  for (const product of ['coding', 'agent', 'science']) {
+    const prev = stateAt(4);
+    const state = stateAt(5);
+    const model = releasedModel({ product, channel: 'enterprise' });
+    state.models.push(model);
+    const posts = feedPosts(prev, state, []);
+    assert.ok(posts.some((post) => rendered(RECEPTION_POSTS.products[product], model).includes(post.text)), product);
+  }
 });

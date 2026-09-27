@@ -24,7 +24,7 @@ const publicChoice = ({ id, label, cost, backers, opposers }) => ({ id, label, c
 
 const liveModel = (extra = {}) => ({
   name: 'Kestrel 1 Core', active: true, activated: true, activeFromTurn: 0, channel: 'consumer',
-  flags: [], users: 1e6, userCap: 4e6, priceStance: 'market', spec: {}, ...extra,
+  flags: [], users: 1e6, userCap: 4e6, priceStance: 'market', spec: { size: 'medium', arch: 'dense', context: 'short', precision: 'bf16', guard: false, reasoning: 'off', channel: 'consumer' }, ...extra,
 });
 
 test('nextRound walks ordinary rounds and era changes', () => {
@@ -124,8 +124,8 @@ const reactionCases = [
     (s) => { s.era = 2; s.seenEvents.push('safetyQuits'); },
     (s) => { s.era = 2; }],
   ['voiceLikeness',
-    (s) => { s.era = 2; s.models.push(liveModel()); },
-    (s) => { s.era = 3; s.models.push(liveModel()); }],
+    (s) => { s.era = 2; s.models.push(liveModel({ spec: { features: [{ id: 'voice', serving: 1.3 }] } })); },
+    (s) => { s.era = 2; s.models.push(liveModel()); }],
   ['alignmentFaking',
     (s) => { s.era = 2; s.compute.split.safety = 0.2; s.pendingModel = { releaseDelay: 0 }; },
     (s) => { s.era = 2; s.compute.split.safety = 0.19; s.pendingModel = { releaseDelay: 0 }; }],
@@ -284,13 +284,13 @@ function trainedModel(era) {
   // Trained on the era-1 starter lab, then released in the era the card needs.
   const s = createInitialState();
   s.cash = 1000;
-  startRun(s, { sliders: { size: 'medium', length: 'optimal', alignShare: 0.15 }, picks: { pre: [], mid: [], post: [] } });
+  startRun(s, { product: 'chat', sliders: { size: 'medium', length: 'optimal', alignShare: 0.15 }, picks: { pre: [], mid: [], post: [] } });
   advanceRun(s, trainRng);
   s.era = era;
   s.pendingModel.capability = 40;
   return s;
 }
-const ship = (s, picks) => releaseModel(s, { picks: [...picks, 'channel-app'], price: 'market', reasoning: 'off', family: 'Kestrel', generation: 1 }, trainRng);
+const ship = (s, picks) => releaseModel(s, { picks: [...picks], price: 'market', reasoning: 'off', family: 'Kestrel', generation: 1 }, trainRng);
 
 test('the red team card holds back its model even after the round mark made it live', () => {
   const s = trainedModel(2);
@@ -322,7 +322,7 @@ test('after signing the testing agreement every release waits a round, and the p
   s.pendingEvents.push({ id: 'preReleaseTests' });
   resolveEvent(s, 'preReleaseTests', 'sign');
   assert.equal(s.researchPoints, research);
-  assert.equal(shipDelay(s, ['eval-full', 'channel-app']), 1);
+  assert.equal(shipDelay(s, ['eval-full']), 1);
   const turn = s.turn;
   assert.equal(ship(s, ['eval-full']).ok, true);
   assert.equal(s.models.at(-1).activeFromTurn, turn + 1);
@@ -331,7 +331,7 @@ test('after signing the testing agreement every release waits a round, and the p
 test('the government test card does not make a signed lab wait twice', () => {
   const s = trainedModel(3);
   s.flags.govTesting = true;
-  assert.equal(shipDelay(s, ['eval-gov', 'channel-app']), 1);
+  assert.equal(shipDelay(s, ['eval-gov']), 1);
   const turn = s.turn;
   assert.equal(ship(s, ['eval-gov']).ok, true);
   assert.equal(s.models.at(-1).activeFromTurn, turn + 1);
@@ -349,19 +349,19 @@ test('pulling back a live release puts the model it replaced back in service unt
   s.turn += 1;
   activateReleases(s);
   assert.equal(old.active, false);
+  const launchUsers = model.users;
   model.users = Math.round(model.users * 0.93); // a card cuts users while the release is live (countryBan's comply)
-  const liveUsers = model.users;
   s.pendingEvents.push({ id: 'redTeamLie' });
   resolveEvent(s, 'redTeamLie', 'delay');
   assert.equal(old.active, true);
-  assert.equal(old.users, liveUsers);
+  assert.equal(old.users, 2e6);
   assert.equal(model.activated, false);
   assert.deepEqual(activeModels(s), [old]);
   s.turn += 1;
   activateReleases(s);
   assert.equal(old.active, false);
   assert.equal(model.activated, true);
-  assert.equal(model.users, liveUsers);
+  assert.equal(model.users, launchUsers);
 });
 
 test('an era 3 lab with no constitution learned yet does not get the hate meltdown', () => {

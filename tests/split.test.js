@@ -63,8 +63,8 @@ test('spot covers a shortfall at the era price, or users suffer an outage', () =
   assert.equal(spotCover(s), 0);
   s.models.push(
     { active: true, activeFromTurn: 0, channel: 'consumer', users: 1000000, flags: [] },
+    { active: false, activeFromTurn: 0, channel: 'consumer', users: 1000000, flags: [] },
     { active: true, activeFromTurn: 1, channel: 'consumer', users: 1000000, flags: [] },
-    { active: true, activeFromTurn: 0, channel: 'open', users: 1000000, flags: [] },
   );
   const pt = s.publicTrust;
   const ev = applySplitEffects(s);

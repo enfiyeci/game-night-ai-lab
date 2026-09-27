@@ -1,8 +1,9 @@
+import { PRODUCTS, productOf, FIRST_MOVER, crowding, holdsFirst } from './data/products.js';
 import { BALANCE } from './balance.js';
 import { eraById } from './data/eras.js';
 import { clamp } from './util.js';
 import { seat } from './board.js';
-import { activeModels, safetyUnits, servingCost, PRICE_STANCE, REVENUE_PER_USER } from './serving.js';
+import { activeModels, safetyUnits, servingCost, PRICE_STANCE } from './serving.js';
 import { controlUnits, reviewerCost } from './automation.js';
 import { monthlyBills, arrivingBills, creditOffset, addPipeline, markUpRivalOffers } from './contracts.js';
 import { leaseBills } from './power.js';
@@ -14,7 +15,7 @@ export { activeModels } from './serving.js';
 
 export const safetySpend = (state) => safetyValue(state);
 
-export const revenuePerUser = (model) => REVENUE_PER_USER[model.channel] * PRICE_STANCE[model.priceStance].rev * (model.revenueMult ?? 1) * (model.eraPrice ?? 1);
+export const revenuePerUser = (model) => PRODUCTS[productOf(model)].price * PRICE_STANCE[model.priceStance].rev * (model.revenueMult ?? 1) * (model.eraPrice ?? 1);
 
 export function updateServing(state) {
   const online = state.compute.online;
@@ -36,10 +37,19 @@ export function updateServing(state) {
   return units;
 }
 
+// Market competition and available serving capacity scale the line's growth.
+export function growthMultiplier(state, model) {
+  const product = productOf(model);
+  const slices = computeSlices(state);
+  const served = state.compute.split.coverWithSpot || slices.need <= 0 ? 1 : Math.min(1, slices.serving / slices.need);
+  const first = holdsFirst(state, 'products', product, 'player') ? FIRST_MOVER.growth : 1;
+  return crowding(state, product) * first * served;
+}
+
 export function growUsers(state, fraction = 1, { round = true } = {}) {
   const months = eraById(state.era).monthsPerTurn;
   for (const m of activeModels(state)) {
-    const g = (0.12 * PRICE_STANCE[m.priceStance].growth + (state.growthBoost ?? 0)) * (months / 3);
+    const g = (0.12 * PRICE_STANCE[m.priceStance].growth + (state.growthBoost ?? 0)) * (months / 3) * growthMultiplier(state, m);
     const grown = Math.min(m.userCap, m.users * (1 + g) ** fraction);
     m.users = round ? Math.round(grown) : grown;
   }
