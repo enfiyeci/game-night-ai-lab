@@ -4,7 +4,6 @@ import { SIZE_CAP, LENGTHS, validateRecipe, recipeCost, recipeCards, talentSpend
 import { standardTechniques } from './techniques.js';
 import { rollTrainingHazard, applyAlignmentFaking, evalGamingDebt, dangerCapability } from './hazards.js';
 import { draftError, draftFor, hasLine, learnConstitution } from './constitution.js';
-import { accrue } from './util.js';
 import { computeSlices } from './split.js';
 import { unitMonthlyPrice } from './economy.js';
 
@@ -24,11 +23,13 @@ export function startRun(state, recipe) {
   const draft = teaches ? draftFor(state) : null;
   const draftProblem = draft && draftError(draft);
   if (draftProblem) return { ok: false, error: /ruling/.test(draftProblem) ? draftProblem : 'Safety’s draft needs exactly three hard lines' }; // OWNER WRITES
-  const spikeChance = recipeCards(state, recipe).reduce((p, c) => p + (c.effects.spike ?? 0), 0.1) + focusEffects(state, recipe).spike;
+  // The spike risk the recipe chose: its cards' spike terms plus the focus term (stability's -0.1 cancels moe's +0.1).
+  const spikeRisk = recipeCards(state, recipe).reduce((p, c) => p + (c.effects.spike ?? 0), 0) + focusEffects(state, recipe).spike;
+  const spikeChance = 0.1 + spikeRisk;
   state.cash -= cost.cash;
   // Focus effects are fixed when the run starts, so a stage that opens mid-run cannot change them.
   const focus = focusEffects(state, recipe);
-  state.activeRun = { recipe: structuredClone(recipe), units: cost.units, turnsLeft: cost.turns, spikes: 0, spikeChance: Math.max(0, spikeChance), bonus: 0, focus, spent: { cash: cost.cash, compute: 0 } };
+  state.activeRun = { recipe: structuredClone(recipe), units: cost.units, turnsLeft: cost.turns, spikes: 0, spikeChance: Math.max(0, spikeChance), spikeRisk, bonus: 0, focus, spent: { cash: cost.cash, compute: 0 } };
   if (teaches) {
     state.activeRun.constitution = { hardLines: draft.hardLines, rulings: draft.rulings };
     // The changes this model learns; they leave the draft's "who asked" list when the run finishes.
@@ -52,11 +53,11 @@ export function advanceRunBy(state, _rng, fraction) {
   run.spent ??= { cash: 0, compute: 0 };
   run.spent.compute += held * fraction * eraById(state.era).monthsPerTurn * unitMonthlyPrice(state);
   if (!run.canAdvance) return { type: 'runPaused' };
-  run.spikeProgress = (run.spikeProgress ?? 0) + fraction;
-  if (run.spikeProgress >= 1 - 1e-9) {
-    // Running total: each round adds the run's spike chance, and a spike lands each time the total reaches 1.
-    if (accrue(run, 'spikePressure', Math.min(1, Math.max(0, run.spikeChance)))) run.spikes += 1;
-    run.spikeProgress = Math.max(0, run.spikeProgress - 1);
+  // Stated condition (A9 review): a run whose recipe chose spike risk above 0 meets exactly one loss spike, the first
+  // time it advances, so the player sees it during the run. A rollback answer does not bring it back.
+  if (!run.spikeMet && (run.spikeRisk ?? 0) > 1e-9) {
+    run.spikes += 1;
+    run.spikeMet = true;
   }
   run.turnsLeft -= fraction;
   if (run.turnsLeft > 1e-9) return null;

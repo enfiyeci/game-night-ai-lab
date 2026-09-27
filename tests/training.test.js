@@ -59,11 +59,10 @@ test('a run pauses without reserved compute and resumes when capacity returns', 
   startRun(s, recipe);
   s.compute.online = 4;
   const turnsLeft = s.activeRun.turnsLeft;
-  s.activeRun.spikeChance = 1;
+  s.activeRun.spikeRisk = 0.1; // as a risky card would give
   assert.deepEqual(advanceRun(s), { type: 'runPaused' });
   assert.equal(s.activeRun.turnsLeft, turnsLeft);
-  assert.equal(s.activeRun.spikes, 0); // a paused round adds nothing to the spike running total
-  assert.equal(s.activeRun.spikePressure ?? 0, 0);
+  assert.equal(s.activeRun.spikes, 0); // a paused run has not advanced, so its spike has not landed yet
   s.compute.online = 10;
   assert.ok(advanceRun(s).capability > 0);
 });
@@ -89,7 +88,7 @@ test('low alignment share adds alignment debt; a spike costs gain; web-crawl dat
   const s = createInitialState();
   const r2 = { ...recipe, sliders: { ...recipe.sliders, alignShare: 0 } };
   startRun(s, r2);
-  s.activeRun.spikeChance = 1; // the running total reaches 1 in this one round (was: dice that always landed)
+  s.activeRun.spikeRisk = 0.1; // a risky recipe meets its one spike (was: dice that always landed)
   const trained = advanceRun(s);
   // gain 17 × 1.0 × 1 × (1 − 0.2 × 1 spike) = 13.6; debt += 13.6 × 0.15 × 2 + 2
   assert.ok(Math.abs(trained.gain - 13.6) < 1e-9);
@@ -117,42 +116,55 @@ test('standard agent techniques mark era 4 models as agentic', () => {
   assert.ok(trained.flags.includes('agentic'));
 });
 
-// A one-round run under way (the recipe above, compute to spare).
-function runningState() {
+// A run just started with the given pre-training cards (the recipe above otherwise). Scraping is the default data
+// card: it applies when no data card is picked, so it is left out of the picks. Mixture-of-experts and synthetic data
+// are researched, and a past model exists, so their cards can be picked.
+function startedRunState(pre) {
   const s = createInitialState();
   s.compute.split.safety = 0;
-  startRun(s, recipe);
-  return s;
-}
-
-// A run about to resolve with the given pre-training cards. Scraping is the default data card: it applies when no
-// data card is picked, so it is left out of the picks.
-function finishedRunState(pre) {
-  const s = createInitialState();
-  s.compute.split.safety = 0;
+  s.researched.push('moe', 'synthetic');
+  s.models.push({});
   const r = startRun(s, { ...recipe, picks: { ...recipe.picks, pre: pre.filter((id) => id !== 'scrape-data') } });
   assert.equal(r.ok, true, r.error);
   return s;
 }
 
-test('loss spikes add up: a run spikes when its per-round chances reach 1', () => {
-  const s = runningState();
-  s.activeRun.spikeChance = 0.4;
-  s.activeRun.turnsLeft = 10;
-  for (let round = 0; round < 2; round++) advanceRunBy(s, null, 1);
-  assert.equal(s.activeRun.spikes, 0);
+test('a risky card without stability meets one loss spike on the first advance, and no more', () => {
+  const s = startedRunState(['moe']);
+  s.activeRun.turnsLeft = 3;
+  advanceRunBy(s, null, 0.25);
+  assert.equal(s.activeRun.spikes, 1);
   advanceRunBy(s, null, 1);
   assert.equal(s.activeRun.spikes, 1);
+  s.activeRun.spikes = 0; // a rollback answer takes the spike back; it does not come again
+  advanceRunBy(s, null, 1);
+  assert.equal(s.activeRun.spikes, 0);
+  const model = advanceRunBy(s, null, 1);
+  assert.equal(model.spikes, 0);
 });
 
-test('web-crawl data is always sued at full cost; licensed data never', () => {
-  const s = finishedRunState(['scrape-data']);
+test('stability engineering cancels mixture-of-experts: no loss spike', () => {
+  const s = startedRunState(['moe', 'stability']);
+  const model = advanceRunBy(s, null, 1);
+  assert.equal(model.spikes, 0);
+});
+
+test('a plain recipe meets no loss spike', () => {
+  const s = startedRunState(['filtered-data']);
+  const model = advanceRunBy(s, null, 1);
+  assert.equal(model.spikes, 0);
+});
+
+test('web-crawl data is always sued at full cost; licensed and synthetic data never', () => {
+  const s = startedRunState(['scrape-data']);
   const before = s.legalCases.length;
   resolveRun(s, s.activeRun);
   assert.equal(s.legalCases.length, before + 1);
   assert.equal(s.legalCases.at(-1).cost, 200);
-  const clean = finishedRunState(['licensed-data']);
-  const cases = clean.legalCases.length;
-  resolveRun(clean, clean.activeRun);
-  assert.equal(clean.legalCases.length, cases);
+  for (const card of ['licensed-data', 'synthetic-data']) {
+    const clean = startedRunState([card]);
+    const cases = clean.legalCases.length;
+    resolveRun(clean, clean.activeRun);
+    assert.equal(clean.legalCases.length, cases, card);
+  }
 });

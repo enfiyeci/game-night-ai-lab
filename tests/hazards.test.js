@@ -127,7 +127,7 @@ test('a finished run with a hackable recipe meets reward hacking and feeds align
   const t = createInitialState();
   t.era = 3; t.capability = 60; t.concealedDebt = 0;
   const safeRun = { recipe: { sliders: { size: 'small', length: 'optimal', alignShare: 0.5 }, picks: { pre: [], mid: [], post: ['synthetic-sft'] } }, spikes: 0, bonus: 0 };
-  resolveRun(t, safeRun, no);
+  resolveRun(t, safeRun);
   assert.ok(t.concealedDebt > 0);
 });
 
@@ -146,7 +146,7 @@ test('a finished run at era 3 adds eval-gaming debt without hackable cards or al
   const t = createInitialState();
   t.era = 3; t.capability = 60; t.concealedDebt = 0;
   const run = { recipe: { sliders: { size: 'small', length: 'optimal', alignShare: 0 }, picks: { pre: [], mid: [], post: [] } }, spikes: 0, bonus: 0 };
-  const model = resolveRun(t, run, no);
+  const model = resolveRun(t, run);
   assert.ok(t.concealedDebt > 0);
   assert.ok(Math.abs(t.concealedDebt - evalGamingDebt(t, model.capability)) < 1e-9);
 });

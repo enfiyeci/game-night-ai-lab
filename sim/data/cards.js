@@ -4,15 +4,16 @@
 // effects: cap (capability), capReady (× reasoning readiness), halfForLarge, readiness,
 //          ad (alignment debt), mx (misuse exposure), perceivedAdOffset (lowers the Head of
 //          Safety's reading, not the truth), pt, st, heat, govUs, govIntl, usersMult,
-//          legal {chance, cost, delay}, flags, spec (serving-spec overrides), spike
-//          (loss-spike chance per turn), openWeightsMx, openWeightsMult
+//          legal {chance, cost, delay} (D4: a card with chance >= 0.3 is always sued at cost, others never),
+//          flags, spec (serving-spec overrides), spike (loss-spike risk: when the recipe's card terms plus its
+//          focus term sum above 0, the run meets one loss spike), openWeightsMx, openWeightsMult
 // default: true marks the fallback card used when no pick covers its group; not pickable.
 export const STAGE_SLOTS = { pre: 2, mid: 2, post: 3, release: 2 };
 
 export const CARDS = [
   // Pretraining
-  { id: 'scrape-data', stage: 'pre', group: 'data', default: true, name: 'Scrape everything, light filters', hint: 'Free and fast. Lawyers will have opinions.', era: 1, cost: {}, effects: { cap: -2, flags: ['scraped'], legal: { chance: 0.6, cost: 200, delay: 8 } } },
-  { id: 'filtered-data', stage: 'pre', group: 'data', name: 'Filtered web + quality classifier', hint: 'Better data per dollar; some legal exposure remains.', era: 1, cost: { cash: 10 }, effects: { cap: 3, legal: { chance: 0.3, cost: 120, delay: 8 } } },
+  { id: 'scrape-data', stage: 'pre', group: 'data', default: true, name: 'Scrape everything, light filters', hint: 'Free and fast. The lawyers will sue ($200M).', era: 1, cost: {}, effects: { cap: -2, flags: ['scraped'], legal: { chance: 0.6, cost: 200, delay: 8 } } },
+  { id: 'filtered-data', stage: 'pre', group: 'data', name: 'Filtered web + quality classifier', hint: 'Better data per dollar; still sued for crawled data ($120M).', era: 1, cost: { cash: 10 }, effects: { cap: 3, legal: { chance: 0.3, cost: 120, delay: 8 } } },
   { id: 'licensed-data', stage: 'pre', group: 'data', name: 'Licensed + filtered data', hint: 'Expensive, clean, and good press.', era: 1, cost: { cash: 80 }, effects: { cap: 2, pt: 2, legal: { chance: 0.05, cost: 60, delay: 8 } } },
   { id: 'synthetic-data', stage: 'pre', group: 'data', name: 'Synthetic-heavy from your last model', hint: 'Cheap scores. Who checks the generator?', era: 1, requiresTech: 'synthetic', requiresModel: true, cost: { cash: 20 }, effects: { cap: 4, mx: 2, flags: ['synthetic'], legal: { chance: 0.1, cost: 60, delay: 8 } } },
   { id: 'moe', stage: 'pre', group: 'arch', name: 'Mixture-of-experts', hint: 'Cheaper to train and serve; trickier to keep stable.', era: 1, requiresTech: 'moe', cost: { computeMult: 0.8 }, effects: { spec: { arch: 'moe' }, spike: 0.1 } },

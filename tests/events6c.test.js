@@ -423,12 +423,11 @@ const oneTurnRecipe = {
   picks: { pre: ['filtered-data'], mid: [], post: ['synthetic-sft', 'safety-tuning'] },
 };
 
-test('a loss spike on the final training tick becomes a pending card', () => {
+test('a loss spike in a run that finishes the same round becomes a pending card', () => {
   const s = createInitialState();
-  assert.equal(startRun(s, oneTurnRecipe).ok, true);
-  // Loss spikes are a running total (deterministic endings A9): a chance of 1 reaches it in this one-round run
-  // (was: dice that always landed).
-  s.activeRun.spikeChance = 1;
+  // Less cleaning than the start split is chosen spike risk, so the run meets its one loss spike (deterministic
+  // endings A9 review rule; was: dice that always landed on the final tick).
+  assert.equal(startRun(s, { ...oneTurnRecipe, focus: { pre: [60, 40, 0] } }).ok, true);
   const out = endTurn(s, {}, yes);
   assert.ok(out.state.pendingModel);
   assert.equal(out.state.activeRun, null);
