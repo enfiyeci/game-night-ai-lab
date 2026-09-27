@@ -14,7 +14,7 @@ test('the end screen names this run first, marks a first find as new, then locke
     { id: 'acquihire', era: 3, count: 1 },
     { id: 'boardRemoved', era: 2, count: 1 },
   ], { newThisRun: true });
-  assert.equal(model.kicker, 'Run over · era 3, Y3 M3 W2');
+  assert.equal(model.kicker, 'Run over · era 3, Mar 2025');
   assert.equal(model.title, ENDINGS.acquihire.title);
   assert.equal(model.text, ENDINGS.acquihire.text);
   assert.equal(model.headlines.length, Object.keys(ENDINGS).length);

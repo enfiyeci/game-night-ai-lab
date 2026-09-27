@@ -64,7 +64,7 @@ export function mountHud(root, game) {
         </span>
       </button>
       <div class="clock" aria-label="Game clock">
-        <span class="date">${date.label}<small>${MONTH_NAMES[date.m - 1]}</small><span class="beat" role="progressbar" aria-label="${markLabel}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${beat}"><i style="width:${beat}%"></i></span></span>
+        <span class="date">${MONTH_NAMES[date.m - 1]} ${date.y}<small>Week ${date.w}</small><span class="beat" role="progressbar" aria-label="${markLabel}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${beat}"><i style="width:${beat}%"></i></span></span>
         <button type="button" data-speed="0" class="${clockState.speed === 0 ? 'on' : ''}" aria-label="Pause" aria-pressed="${clockState.speed === 0}">${PAUSE_ICON}</button>
         ${speedButton(1)}${speedButton(2)}${speedButton(4)}
         ${clockState.paused ? '<span class="paused">Paused</span>' : ''}
