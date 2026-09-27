@@ -1,6 +1,9 @@
 import { BALANCE } from './balance.js';
 import { ERAS } from './data/eras.js';
 import { eraOfRound, roundSpan } from './time.js';
+import { SIZES, SIZE_UNITS, SIZE_CAP } from './recipe.js';
+import { eraScale } from './data/compute.js';
+import { FRONTIER, START_FLEET, RIVAL_EDGE, SERVING_ROOM, NO_SIZE_GAIN, CAPPED_GAIN } from './data/race.js';
 
 const LAST_DAY = roundSpan(ERAS.reduce((sum, era) => sum + era.turns, 0) - 1).end;
 
@@ -13,7 +16,7 @@ export const RIVAL_TEMPLATES = [
 ];
 
 export function createRivals() {
-  return RIVAL_TEMPLATES.map((r) => ({ ...r, progress: 0, releases: 0 }));
+  return RIVAL_TEMPLATES.map((r) => ({ ...r, progress: 0, releases: 0, fleet: START_FLEET[r.id], pipeline: [], named: null, lastSize: null }));
 }
 
 export function leaderCapability(state) {
@@ -32,6 +35,39 @@ export function leastCarefulRival(state) {
   return state.rivals.reduce((a, b) => (b.caution < a.caution ? b : a));
 }
 
+// Compute race (spec 2026-09-26 §2 rules 1–2): every lab turns compute into models the way the player does.
+export const appetite = (r) => r.speed * (1.1 - 0.4 * r.caution);
+export const rivalTarget = (state, r) => FRONTIER[state.era - 1] * appetite(r);
+export const rivalSafety = (r) => 0.05 + 0.25 * r.caution;
+export const rivalTraining = (r) => r.fleet * (1 - rivalSafety(r)) * SERVING_ROOM;
+export const rivalPending = (r) => r.pipeline.reduce((sum, p) => sum + p.units, 0);
+export const rivalShortfall = (state, r) => Math.max(0, rivalTarget(state, r) - r.fleet - rivalPending(r));
+
+// era: the era whose size ladder applies. A deferred roll is made for a round that may open the next era.
+export function rivalSize(state, r, era = state.era) {
+  const units = rivalTraining(r);
+  let best = null;
+  for (const size of SIZES) {
+    if (size === 'xl' && era < 2) continue;
+    if (SIZE_UNITS[size] * eraScale(era) <= units) best = size;
+  }
+  return best;
+}
+
+// The Geneva cap binds a rival that signed it, as sim/training.js binds the player's runs. Read from state.deal
+// directly: sim/summit.js imports this file, so importing dealBinds here would be a cycle.
+const capBinds = (state, r) => state.deal?.collapsed === false && state.deal.binding.includes('computeCap')
+  && (state.deal.signed?.computeCap ?? []).includes(r.id);
+
+export function launchGain(state, r, roll, era = state.era) {
+  const size = rivalSize(state, r, era);
+  r.lastSize = size;
+  const gain = size
+    ? Math.max(0, (BALANCE.baseRunGain + SIZE_CAP[size] + RIVAL_EDGE + roll - 2) * (1 - 0.5 * (0.1 + 0.2 * r.caution)))
+    : NO_SIZE_GAIN;
+  return capBinds(state, r) ? Math.min(gain, CAPPED_GAIN) : gain;
+}
+
 // With deferTo, the roll is for round deferTo, made at the mark before it (the first round's roll comes with the
 // initial state). A launch lands half a round after the day its bar fills, so on average on the round's own mark,
 // where the turn-based game put it (retune, 2026-09-26). The draws are the same as the immediate form's.
@@ -44,7 +80,7 @@ export function rivalsTurn(state, rng, { deferTo = null } = {}) {
     if (r.progress >= 1) {
       r.progress = 0;
       r.releases += 1;
-      const uncappedGain = (5 + rng.int(0, 4)) * (1 + 0.1 * (deferTo == null ? state.era : eraOfRound(deferTo)));
+      const uncappedGain = launchGain(state, r, rng.int(0, 4), deferTo == null ? state.era : eraOfRound(deferTo));
       const heat = 4 * r.speed * (1 - r.caution);
       if (deferTo != null) {
         const { start, end } = roundSpan(deferTo);

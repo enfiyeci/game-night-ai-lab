@@ -4,6 +4,8 @@ import { createInitialState } from '../sim/state.js';
 import { ERAS, eraById } from '../sim/data/eras.js';
 import { rank, gapToLeader, rivalsTurn, leastCarefulRival } from '../sim/rivals.js';
 import { BALANCE } from '../sim/balance.js';
+import { SIZE_CAP } from '../sim/recipe.js';
+import { RIVAL_EDGE } from '../sim/data/race.js';
 
 test('five eras with accelerating turn length', () => {
   assert.equal(ERAS.length, 5);
@@ -42,7 +44,9 @@ test('a rival that finishes its cycle releases and heats the race', () => {
   const out = rivalsTurn(s, fake);
   assert.equal(out.length, 1);
   assert.equal(out[0].id, 'openbrain');
-  assert.ok(s.rivals[0].capability > 26);
+  const size = 'medium'; // OpenBrain's 14 starting units train about 8.7: Medium
+  const gain = (BALANCE.baseRunGain + SIZE_CAP[size] + RIVAL_EDGE + 0 - 2) * (1 - 0.5 * (0.1 + 0.2 * 0.25));
+  assert.ok(Math.abs(s.rivals[0].capability - (26 + gain)) < 1e-9);
   assert.ok(s.raceHeat > heat);
 });
 
