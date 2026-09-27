@@ -65,8 +65,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "rd-slide",
+      "kind": "still",
+      "image": "rd-slide",
+      "screens": [
+        {
+          "at": "review",
+          "plate": "rd-slide"
+        }
+      ],
       "dur": 7,
       "card": "Three weeks earlier · OpenBrain",
       "cam": {
@@ -74,8 +80,9 @@
           "s": 1.0
         },
         "to": {
-          "x": 700,
-          "s": 1.06
+          "x": 960,
+          "y": 560,
+          "s": 1.04
         }
       },
       "sfx": [
@@ -181,8 +188,24 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "rd-letter",
+      "kind": "still",
+      "frames": [
+        {
+          "image": "rd-letter-1",
+          "at": 0
+        },
+        {
+          "image": "rd-letter-2",
+          "at": 1.2,
+          "fade": 0.25
+        }
+      ],
+      "screens": [
+        {
+          "at": "monitor",
+          "plate": "rd-letter"
+        }
+      ],
       "dur": 5,
       "card": "Day 5 · Your lab",
       "cam": {
@@ -190,6 +213,8 @@
           "s": 1.0
         },
         "to": {
+          "x": 1091,
+          "y": 474,
           "s": 1.05
         }
       },
@@ -200,7 +225,7 @@
         ],
         [
           "clunk",
-          0.2
+          1.2
         ]
       ]
     },

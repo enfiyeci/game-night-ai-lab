@@ -103,8 +103,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "ov-letter",
+      "kind": "still",
+      "image": "ov-letter",
+      "screens": [
+        {
+          "at": "monitor",
+          "plate": "ov-letter"
+        }
+      ],
       "dur": 5,
       "card": "Month 1 · Your lab",
       "cam": {
@@ -112,6 +118,8 @@
           "s": 1.0
         },
         "to": {
+          "x": 848,
+          "y": 356,
           "s": 1.05
         }
       },
@@ -127,8 +135,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "ov-chat",
+      "kind": "still",
+      "image": "ov-chat",
+      "screens": [
+        {
+          "at": "laptop",
+          "plate": "ov-chat"
+        }
+      ],
       "dur": 7,
       "card": "Month 3, 2 am · The Reyes kitchen",
       "cam": {
@@ -136,6 +150,8 @@
           "s": 1.0
         },
         "to": {
+          "x": 1317,
+          "y": 709,
           "s": 1.05
         }
       },
@@ -155,8 +171,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "ov-email",
+      "kind": "still",
+      "image": "ov-email",
+      "screens": [
+        {
+          "at": "monitor",
+          "plate": "ov-email"
+        }
+      ],
       "dur": 6,
       "card": "Year 1 · Your lab",
       "cam": {
@@ -164,6 +186,8 @@
           "s": 1.0
         },
         "to": {
+          "x": 1026,
+          "y": 390,
           "s": 1.05
         }
       },

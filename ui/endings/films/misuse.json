@@ -82,8 +82,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "mu-alert",
+      "kind": "still",
+      "image": "mu-alert",
+      "screens": [
+        {
+          "at": "console",
+          "plate": "mu-alert"
+        }
+      ],
       "dur": 6,
       "cut": true,
       "card": "3:02 am · Security console",
@@ -92,6 +98,8 @@
           "s": 1.0
         },
         "to": {
+          "x": 895,
+          "y": 593,
           "s": 1.05
         }
       },
@@ -108,8 +116,18 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "mu-room",
+      "kind": "still",
+      "image": "mu-room",
+      "screens": [
+        {
+          "at": "workers",
+          "plate": "mu-room"
+        },
+        {
+          "at": "chat",
+          "plate": "mu-room"
+        }
+      ],
       "dur": 7,
       "card": "Two weeks earlier · A rented room",
       "cam": {
@@ -117,9 +135,9 @@
           "s": 1.0
         },
         "to": {
-          "x": 660,
-          "y": 420,
-          "s": 1.08
+          "x": 993,
+          "y": 626,
+          "s": 1.07
         }
       },
       "sfx": [
@@ -139,8 +157,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "mu-hospital",
+      "kind": "still",
+      "image": "mu-hospital",
+      "screens": [
+        {
+          "at": "board",
+          "plate": "mu-hospital"
+        }
+      ],
       "dur": 6,
       "card": "3:10 am · St. Brigid's Hospital",
       "cam": {
@@ -148,6 +172,8 @@
           "s": 1.0
         },
         "to": {
+          "x": 1044,
+          "y": 423,
           "s": 1.05
         }
       },
@@ -251,8 +277,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "mu-kitchen",
+      "kind": "still",
+      "image": "mu-kitchen",
+      "screens": [
+        {
+          "at": "phone",
+          "plate": "mu-kitchen"
+        }
+      ],
       "dur": 6,
       "card": "Morning · The Reyes kitchen",
       "cam": {
@@ -260,6 +292,8 @@
           "s": 1.0
         },
         "to": {
+          "x": 1433,
+          "y": 566,
           "s": 1.05
         }
       },

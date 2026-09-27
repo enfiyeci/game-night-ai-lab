@@ -180,10 +180,26 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "pd-cursor",
+      "kind": "still",
+      "image": "pd-cursor",
+      "screens": [
+        {
+          "at": "monitor",
+          "plate": "pd-cursor"
+        }
+      ],
       "dur": 7,
       "card": "Month 1, 2 am · {place}",
+      "cam": {
+        "from": {
+          "s": 1.0
+        },
+        "to": {
+          "x": 996,
+          "y": 518,
+          "s": 1.08
+        }
+      },
       "byDeal": [
         [
           "computeCap",
@@ -206,16 +222,6 @@
           "pd-cursor-sharing"
         ]
       ],
-      "cam": {
-        "from": {
-          "s": 1.0
-        },
-        "to": {
-          "x": 560,
-          "y": 340,
-          "s": 1.1
-        }
-      },
       "sfx": [
         [
           "hum",
@@ -250,8 +256,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "pd-school",
+      "kind": "still",
+      "image": "pd-school",
+      "screens": [
+        {
+          "at": "laptop",
+          "plate": "pd-school"
+        }
+      ],
       "dur": 6,
       "card": "Month 6 · The Reyes kitchen",
       "cam": {
@@ -259,6 +271,8 @@
           "s": 1.0
         },
         "to": {
+          "x": 1062,
+          "y": 350,
           "s": 1.05
         }
       },
@@ -282,8 +296,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "pd-trial",
+      "kind": "still",
+      "image": "pd-trial",
+      "screens": [
+        {
+          "at": "cart",
+          "plate": "pd-trial"
+        }
+      ],
       "dur": 6,
       "card": "Month 6 · St. Brigid's Hospital",
       "cam": {
@@ -291,6 +311,8 @@
           "s": 1.0
         },
         "to": {
+          "x": 1001,
+          "y": 608,
           "s": 1.05
         }
       },

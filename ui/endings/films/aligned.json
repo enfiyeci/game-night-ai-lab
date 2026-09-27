@@ -84,8 +84,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "al-triage",
+      "kind": "still",
+      "image": "al-triage",
+      "screens": [
+        {
+          "at": "cart",
+          "plate": "al-triage"
+        }
+      ],
       "dur": 6,
       "cut": true,
       "card": "Night · St. Brigid's Hospital",
@@ -94,6 +100,8 @@
           "s": 1.0
         },
         "to": {
+          "x": 1438,
+          "y": 641,
           "s": 1.05
         }
       },
@@ -113,8 +121,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "al-chat",
+      "kind": "still",
+      "image": "al-chat",
+      "screens": [
+        {
+          "at": "laptop",
+          "plate": "al-chat"
+        }
+      ],
       "dur": 6,
       "cut": true,
       "card": "Evening · The Reyes kitchen",
@@ -123,6 +137,8 @@
           "s": 1.0
         },
         "to": {
+          "x": 830,
+          "y": 310,
           "s": 1.05
         }
       },
@@ -142,8 +158,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "al-port",
+      "kind": "still",
+      "image": "al-port",
+      "screens": [
+        {
+          "at": "board",
+          "plate": "al-port"
+        }
+      ],
       "dur": 6,
       "card": "Dawn · The port",
       "cam": {
@@ -151,6 +173,8 @@
           "s": 1.0
         },
         "to": {
+          "x": 1397,
+          "y": 421,
           "s": 1.05
         }
       },
@@ -192,8 +216,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "al-badges",
+      "kind": "still",
+      "image": "al-badges",
+      "screens": [
+        {
+          "at": "desk",
+          "plate": "al-badges"
+        }
+      ],
       "dur": 5,
       "card": "Month 4 · Your lab's front door",
       "cam": {
@@ -201,6 +231,8 @@
           "s": 1.0
         },
         "to": {
+          "x": 1398,
+          "y": 520,
           "s": 1.05
         }
       },

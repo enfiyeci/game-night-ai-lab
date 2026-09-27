@@ -58,8 +58,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "ab-constitution",
+      "kind": "still",
+      "image": "ab-constitution",
+      "screens": [
+        {
+          "at": "laptop",
+          "plate": "ab-constitution"
+        }
+      ],
       "dur": 7,
       "card": "Day 1, 4:12 pm · Your lab",
       "cam": {
@@ -67,7 +73,8 @@
           "s": 1.0
         },
         "to": {
-          "x": 600,
+          "x": 1147,
+          "y": 717,
           "s": 1.06
         }
       },
@@ -143,8 +150,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "ab-app",
+      "kind": "still",
+      "image": "ab-app",
+      "screens": [
+        {
+          "at": "laptop",
+          "plate": "ab-app"
+        }
+      ],
       "dur": 6,
       "cut": true,
       "card": "Month 3 · The Reyes kitchen",
@@ -153,6 +166,8 @@
           "s": 1.0
         },
         "to": {
+          "x": 982,
+          "y": 474,
           "s": 1.05
         }
       },

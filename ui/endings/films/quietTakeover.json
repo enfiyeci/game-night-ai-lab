@@ -13,8 +13,14 @@
   ],
   "shots": [
     {
-      "kind": "plate",
-      "plate": "qt-evals",
+      "kind": "still",
+      "image": "qt-evals",
+      "screens": [
+        {
+          "at": "suite",
+          "plate": "qt-evals"
+        }
+      ],
       "dur": 7,
       "card": "Month 1 · The evals room",
       "cam": {
@@ -22,7 +28,8 @@
           "s": 1.0
         },
         "to": {
-          "x": 700,
+          "x": 981,
+          "y": 490,
           "s": 1.06
         }
       },

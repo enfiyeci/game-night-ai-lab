@@ -68,8 +68,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "rb-slide",
+      "kind": "still",
+      "image": "rb-slide",
+      "screens": [
+        {
+          "at": "slide",
+          "plate": "rb-slide"
+        }
+      ],
       "dur": 6,
       "card": "Day 1 · Your lab",
       "cam": {
@@ -77,6 +83,8 @@
           "s": 1.0
         },
         "to": {
+          "x": 1056,
+          "y": 438,
           "s": 1.05
         }
       },
@@ -97,8 +105,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "rb-budget",
+      "kind": "still",
+      "image": "rb-budget",
+      "screens": [
+        {
+          "at": "monitor",
+          "plate": "rb-budget"
+        }
+      ],
       "dur": 6,
       "card": "Day 1 · Tomas's screen",
       "cam": {
@@ -106,6 +120,8 @@
           "s": 1.0
         },
         "to": {
+          "x": 932,
+          "y": 401,
           "s": 1.05
         }
       },
@@ -178,8 +194,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "rb-app",
+      "kind": "still",
+      "image": "rb-app",
+      "screens": [
+        {
+          "at": "tablet",
+          "plate": "rb-app"
+        }
+      ],
       "dur": 6,
       "card": "Month 3 · The Reyes kitchen",
       "cam": {
@@ -187,6 +209,8 @@
           "s": 1.0
         },
         "to": {
+          "x": 1270,
+          "y": 679,
           "s": 1.05
         }
       },

@@ -77,8 +77,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "lb-usage",
+      "kind": "still",
+      "image": "lb-usage",
+      "screens": [
+        {
+          "at": "wall",
+          "plate": "lb-usage"
+        }
+      ],
       "dur": 6,
       "card": "The era gate · Your lab's usage chart",
       "cam": {
@@ -86,6 +92,8 @@
           "s": 1.0
         },
         "to": {
+          "x": 962,
+          "y": 462,
           "s": 1.05
         }
       },
@@ -191,8 +199,14 @@
       ]
     },
     {
-      "kind": "plate",
-      "plate": "lb-chat",
+      "kind": "still",
+      "image": "lb-chat",
+      "screens": [
+        {
+          "at": "laptop",
+          "plate": "lb-chat"
+        }
+      ],
       "dur": 6,
       "cut": true,
       "card": "Month 6 · The Reyes kitchen",
@@ -201,6 +215,8 @@
           "s": 1.0
         },
         "to": {
+          "x": 993,
+          "y": 341,
           "s": 1.05
         }
       },
