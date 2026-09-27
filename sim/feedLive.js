@@ -170,6 +170,23 @@ function choicePosts(state, event, s) {
   s.add(posts, 2, 'event', { from: 1, to: 2 });
 }
 
+// The player started a training run: the bigger the run, the more people notice (owner 2026-09-26).
+// A run that started and finished in one step is already the pending model.
+function trainingStartPosts(state, s) {
+  const size = state.activeRun?.recipe.sliders.size ?? state.pendingModel?.size;
+  const pool = R.training.start[size];
+  if (size === 'small') {
+    if (s.rng.chance(0.5)) s.add(pool, 1, 'company', { from: 0, to: 2 });
+  } else if (size === 'medium') s.add(pool, 1, 'company', { from: 0, to: 2 });
+  else if (size === 'large') {
+    s.add(pool, 1, 'company', { from: 0, to: 1 });
+    s.add(pool, 1, 'company', { from: 1, to: 4 });
+  } else if (size === 'xl') {
+    s.add(pool, 2, 'company', { from: 0, to: 1 });
+    s.add(pool, 2, 'company', { from: 1, to: 6 });
+  }
+}
+
 // A card has landed today: the crowd starts talking (or, for things inside the lab, a rumour may start).
 export function reactToLandedCard(state, card) {
   const s = scheduler(state, 101 + hash(card.id) % 997);
@@ -218,8 +235,13 @@ export function reactToEvents(before, state, events, { atMark = false } = {}) {
         s.add(R.eras[event.era], 2, 'era', { from: 1, to: 6 });
         if (event.era === 5) s.add(R.summit.opens, 2, 'summit', { from: 2, to: 6 });
         break;
-      case 'raise': case 'emergency': case 'lawsuitPaid': case 'conversionFight': case 'runComplete':
-        s.add(R.company[event.type], event.type === 'runComplete' ? 1 : 2, 'company', { from: 0, to: 2 });
+      case 'raise': case 'emergency': case 'lawsuitPaid': case 'conversionFight':
+        s.add(R.company[event.type], 2, 'company', { from: 0, to: 2 });
+        break;
+      case 'startRun': trainingStartPosts(state, s); break;
+      case 'runComplete':
+        s.add(R.company.runComplete, 1, 'company', { from: 0, to: 2 });
+        if (['large', 'xl'].includes(state.pendingModel?.size)) s.add(R.training.doneBig, 1, 'company', { from: 0, to: 1 });
         break;
       case 'eventResolved': choicePosts(state, event, s); break;
       case 'meetingOutcome': presidentPosts(state, event, s); break;

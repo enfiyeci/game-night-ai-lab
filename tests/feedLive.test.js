@@ -225,3 +225,55 @@ test('the compute-supplier posts wait for the CoreFlame card to land', () => {
   runDays(landed, 2);
   assert.ok(landed.feed.some((post) => failed.has(post.text)));
 });
+
+test('starting a training run gets posts that match its size, and bigger runs get more of them', () => {
+  const count = (size) => {
+    let total = 0;
+    for (let seed = 1; seed <= 20; seed += 1) {
+      const state = createInitialState({ seed });
+      state.day = 30;
+      state.feed = [];
+      state.activeRun = { recipe: { sliders: { size } } };
+      reactToEvents(state, state, [{ type: 'startRun', ok: true }]);
+      runDays(state, 7);
+      const pool = shown(REACTIONS.training.start[size]);
+      assert.ok(state.feed.every((post) => pool.has(post.text) || post.replyTo), `only ${size}-run posts`);
+      total += state.feed.filter((post) => !post.replyTo).length;
+    }
+    return total;
+  };
+  const [small, medium, large, xl] = ['small', 'medium', 'large', 'xl'].map(count);
+  assert.ok(small > 0 && small < 20, 'a small run is only sometimes noticed');
+  assert.equal(medium, 20);
+  assert.equal(large, 40);
+  assert.equal(xl, 80);
+});
+
+test('a finished run gets the finished-run posts, and a big one gets more', () => {
+  const done = shown(REACTIONS.company.runComplete);
+  const big = shown(REACTIONS.training.doneBig);
+  const small = stateOnDay();
+  small.pendingModel = { size: 'small' };
+  reactToEvents(small, small, [{ type: 'runComplete', gain: 5 }]);
+  runDays(small, 3);
+  const smallPosts = small.feed.filter((post) => !post.replyTo);
+  assert.equal(smallPosts.length, 1);
+  assert.ok(done.has(smallPosts[0].text));
+  const large = stateOnDay();
+  large.pendingModel = { size: 'large' };
+  reactToEvents(large, large, [{ type: 'runComplete', gain: 5 }]);
+  runDays(large, 3);
+  assert.ok(large.feed.some((post) => big.has(post.text)), 'the big-run posts appear');
+});
+
+test('the start-run move reaches the feed', async () => {
+  const { applyActions } = await import('../sim/turn.js');
+  const { createRng } = await import('../sim/rng.js');
+  const state = createInitialState({ seed: 7 });
+  state.feed = [];
+  const recipe = { sliders: { size: 'medium', length: 'optimal', alignShare: 0.4 }, picks: { pre: [], mid: [], post: [] } };
+  const out = applyActions(state, { moves: [{ type: 'startRun', recipe }] }, createRng(7));
+  assert.deepEqual(out.errors ?? [], []);
+  const pool = shown(REACTIONS.training.start.medium);
+  assert.ok([...out.state.feed, ...out.state.feedQueue].some((post) => pool.has(post.text)));
+});

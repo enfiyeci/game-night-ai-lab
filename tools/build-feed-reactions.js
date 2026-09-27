@@ -95,6 +95,9 @@ function erasRoute({ h2, h3l }) {
   const era = h3l.match(/^era (\d)/)?.[1];
   if (h2.startsWith('1.') && era) return ['eras', era];
   if (h2.startsWith('4.') && era) return ['ambient', era];
+  const size = { small: 'small', medium: 'medium', large: 'large', 'extra large': 'xl' }[h3l.match(/^started a training run: (.+)$/)?.[1]];
+  if (size) return ['training', 'start', size];
+  if (h3l.startsWith('finished a training run: large')) return ['training', 'doneBig'];
   const table = [
     ['raised money', ['company', 'raise']],
     ['emergency', ['company', 'emergency']],
