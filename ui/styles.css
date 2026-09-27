@@ -4577,3 +4577,9 @@ html.title-waking #hud { transition: opacity .5s ease .6s; }
 .model-money-table .finance-cell { grid-template-columns: 1fr 70px; }
 .model-money-table .finance-bar.diverging i.pos { background: var(--teal); }
 .model-money-empty { margin: 30px 0; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); font-size: 14px; font-weight: 800; }
+
+/* ---- Office: advisor click areas and read marks (owner playtest 2026-09-26) ---- */
+/* The invisible area around each advisor's desk (ui/office.js, addHitAreas): a click there opens what they have to say. */
+.advisor-hit { fill: transparent; stroke: none; cursor: pointer; }
+/* A mark flipped to the advisor's left (ui/logic/advisorMarks.js, markerSpot) points its tail back at their head. */
+.advisor-marker.left svg { transform: scaleX(-1); }
