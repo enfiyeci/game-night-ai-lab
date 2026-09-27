@@ -273,11 +273,11 @@ Demand: "Add a hard line against autonomous agents."
 - `@rourke_capital` — Employees who don't believe in the mission should find a different mission.
 - `@organize_the_lab` — 40 workers signed their names at once. That's not a letter, that's a union meeting that hasn't happened yet.
 
-**If you pick Meet their demands**
+**If you pick Adopt their four asks**
 - `@anon_staffer` — they gave the safety team more compute. real compute, not a slide. the mood today is different.
 - `@governance_guy` — {lab} met the letter's demands, including more compute for safety. a rare case of a letter working.
 
-**If you pick Ignore**
+**If you pick Say nothing**
 - `@anon_staffer` — the response to our letter was a company-wide email about "our values." that was the whole response.
 - `@kayswanick` — {lab}'s answer to 40 of its own researchers: silence. Noted.
 
@@ -307,11 +307,11 @@ Demand: "Add a hard line against autonomous agents."
 - `@shenzhen_dispatch` — Before the takes arrive: nobody has said which state, the lab hasn't confirmed, and "officials say" is carrying the whole story. I have seen this headline turn out wrong twice in the last year. Wait for the evidence. Then get angry, if it's there.
   - `@natsec_brief` — Jordan, with respect, the cost of waiting is the whole problem with this industry.
 
-**If you pick Report it to the government**
+**If you pick Tell the government and the public**
 - `@natsec_brief` — {lab} reported the breach immediately and is cooperating. Painful, correct. That's what a serious lab does.
 - `@kayswanick` — {lab} confirmed the theft. Their security budget will now be larger than some countries'.
 
-**If you pick Hunt the leak quietly**
+**If you pick Tell only staff and the board**
 - `@crab_apple_leaks` — something is going on at {lab} security. new badge readers, fewer friends. 🍎
 - `@anon_staffer` — everyone at work had to reset every password today. no one will say why.
 

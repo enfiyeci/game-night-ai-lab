@@ -2136,7 +2136,7 @@ export const REACTIONS = {
     ]
    ],
    "choices": {
-    "meet": [
+    "adopt": [
      [
       "@anon_staffer",
       "they gave the safety team more compute. real compute, not a slide. the mood today is different."
@@ -2146,7 +2146,7 @@ export const REACTIONS = {
       "{lab} met the letter's demands, including more compute for safety. a rare case of a letter working."
      ]
     ],
-    "ignore": [
+    "silent": [
      [
       "@anon_staffer",
       "the response to our letter was a company-wide email about \"our values.\" that was the whole response."
@@ -2250,7 +2250,7 @@ export const REACTIONS = {
       "{lab} confirmed the theft. Their security budget will now be larger than some countries'."
      ]
     ],
-    "hunt": [
+    "staffonly": [
      [
       "@crab_apple_leaks",
       "something is going on at {lab} security. new badge readers, fewer friends. 🍎"
