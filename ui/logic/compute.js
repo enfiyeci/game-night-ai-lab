@@ -26,7 +26,8 @@ import { buildSite, leaseMonthly, powerTurn, sitePower, SITE_TYPES } from '../..
 import { expireMeeting, meetingDue, openMeeting, runMeeting } from '../../sim/president.js';
 import { allocate, placeOrder, PREPAY_SHARE, released, rivalOrders, withdrawOrder } from '../../sim/queue.js';
 import { activateReleases, releaseModel } from '../../sim/release.js';
-import { RIVAL_TEMPLATES } from '../../sim/rivals.js';
+import { RIVAL_TEMPLATES, rivalSize } from '../../sim/rivals.js';
+import { SIZES } from '../../sim/recipe.js';
 import { createRng } from '../../sim/rng.js';
 import { computeSlices, makePledge, setComputeSplit } from '../../sim/split.js';
 import { TECHNIQUES, researchTechnique } from '../../sim/techniques.js';
@@ -34,6 +35,7 @@ import { startRun } from '../../sim/training.js';
 import { MAX_MOVES, setBudget } from '../../sim/turn.js';
 import { roundWord, storyDate } from '../../sim/time.js';
 import { computeAmount, money, pct, roundsToWords, storyDayForTurn } from './format.js';
+import { ifSignedFirst, plannedTakes, roundEndItems, playerSize, SIZE_LABEL } from './race.js';
 
 const OFFER_COPY = {
   verde: { per: 'your own chips' },
@@ -188,7 +190,7 @@ function rejectionReason(state, offer) {
   if ((offer.supplier === 'coreflame' || offer.supplier === 'gulf') && exclusiveActive(state)) {
     return "Azuria's exclusive contract blocks CoreFlame and Gulf cloud deals until you buy it out";
   }
-  if (offer.upfront > state.cash) return 'Not enough cash for the upfront payment';
+  if (offer.upfront > state.cash) return `Upfront is ${money(offer.upfront)}; you have ${money(state.cash)}.`;
   const clone = structuredClone(state);
   const result = signOffer(clone, offer.id, createRng(0));
   return result.ok ? '' : result.error;
@@ -219,7 +221,32 @@ function computeAmountParts(units, era) {
   return { big, unit: unit.join(' ') };
 }
 
+const nameOf = (state, id) => state.rivals.find((r) => r.id === id)?.name ?? rivalName(id);
+
+function fallbackLine(state, take) {
+  if (!take) return '';
+  const rival = nameOf(state, take.id);
+  const instead = ifSignedFirst(state, take);
+  return instead
+    ? `If you sign it, ${rival} takes ${SUPPLIERS[instead.supplier].name}'s ${computeAmount(instead.units, state.era)}.`
+    : `If you sign it, ${rival} goes without a board card this ${roundWord(state.era)}.`;
+}
+
+export function roundEndStrip(state) {
+  const items = roundEndItems(state).map((item) => {
+    const offer = state.compute.offers.find((o) => o.id === item.offerId);
+    // The strip lists short fragments; the race tab's box keeps the full sentence.
+    if (!offer) return { id: item.id, text: item.text.replace(/\.$/, '') };
+    const later = offer.arrivesIn > 1 ? ` (arrives ${arrival(offer.arrivesIn, state.era)})` : '';
+    return { id: item.id, text: `${item.name} +${computeAmount(offer.units, state.era)}${later}` };
+  });
+  return [...items, { id: 'rest', text: 'Cards nobody takes stay on the board' }];
+}
+
 export function dealCards(state) {
+  const takes = plannedTakes(state);
+  // A rival still on its first choice would move to this card if the player signed its named card.
+  const onFirstChoice = state.rivals.filter((r) => r.named && takes.some((t) => t.id === r.id && t.offerId === r.named.offerId));
   return state.compute.offers
     .filter((offer) => !offer.viaQueue && offer.supplier !== 'grid')
     .map((offer) => {
@@ -227,6 +254,7 @@ export function dealCards(state) {
       const [chip, explanation] = STRING_COPY[String(offer.string)];
       const investment = offer.supplier === 'azuriaEquity';
       const reason = rejectionReason(state, offer);
+      const take = takes.find((t) => t.offerId === offer.id) ?? null;
       const amount = investment
         ? { big: money(offer.credits), unit: '' }
         : computeAmountParts(offer.units, state.era);
@@ -245,6 +273,10 @@ export function dealCards(state) {
         viaQueue: false,
         move: { type: 'deal', offerId: offer.id },
         runwayAfter: reason ? null : runwayAfterDeal(state, offer),
+        takenBy: take ? nameOf(state, take.id) : null,
+        takenAsSecond: Boolean(take?.fallback),
+        secondChoiceOf: take ? [] : onFirstChoice.filter((r) => r.named.fallback === offer.id).map((r) => r.name),
+        fallbackLine: fallbackLine(state, take),
       };
     });
 }
@@ -550,8 +582,17 @@ function opinionText(state, screen, id) {
   const sites = sitesView(state);
   const pledge = state.promises.find((promise) => promise.type === 'safetyCompute');
   const idle = bar.segments.find((segment) => segment.key === 'idle').units;
+  const leader = state.rivals.reduce((a, b) => (b.capability > a.capability ? b : a));
+  const ourSize = playerSize(state);
+  // A copy: rivalSize must not change the rival it reads.
+  const theirSize = rivalSize(state, { ...leader });
+  const ours = SIZE_LABEL[ourSize];
+  const theirs = SIZE_LABEL[theirSize];
+  const leaderLarger = theirSize != null && SIZES.indexOf(theirSize) > (ourSize ? SIZES.indexOf(ourSize) : -1);
   const dealLines = {
-    research: "More compute lets us train a larger model sooner.",
+    research: leaderLarger
+      ? `${leader.name} can train ${theirs}; we can train ${ours ?? 'nothing yet'}. More compute closes that.`
+      : 'More compute lets us train a larger model sooner.',
     safety: pledge ? `Our ${pct(pledge.share)} safety pledge grows with the fleet. Budget for it.` : 'More compute needs a matching safety allocation.',
     cfo: 'Take-or-pay: we pay every month, even if the chips sit idle.',
     policy: "Supplier terms can change who trusts the lab.",
@@ -620,6 +661,7 @@ export function turnSummary(events, state) {
         ?? state?.power?.sites?.find((s) => s.id === event.site)?.landsDay // a grid reservation
         ?? (event.arrivesTurn <= (state?.turn ?? -1) ? state.day : storyDayForTurn(event.arrivesTurn)); // delivered at once
       lines.push(`${subject} — online from ${storyDate(day).label}`);
+      if (event.denied) lines.push(`You took the card ${rivalName(event.denied)} wanted`);
     } else if (event.type === 'spotWarning') {
       lines.push(`Spot capacity may be pulled after next ${roundWord(state.era)}`);
     } else if (event.type === 'spotPulled') {
@@ -660,6 +702,9 @@ export function turnSummary(events, state) {
       lines.push('Training complete — ready to release');
     } else if (event.type === 'runPaused') {
       lines.push('Training paused — not enough compute is online');
+    } else if (event.type === 'rivalDeal') {
+      const name = rivalName(event.id);
+      if (name) lines.push(`${name} signed ${supplierName(event.supplier)}'s ${computeAmount(event.units, state?.era ?? 1)}${event.fallback ? ', its second choice' : ''}`);
     } else if (event.type === 'rivalRelease') {
       const name = rivalName(event.id);
       if (name) lines.push(`${name} released a model`);
