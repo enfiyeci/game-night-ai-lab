@@ -185,7 +185,7 @@ export function openRelease(game, overlayRoot, { stage } = {}) {
       when.append(el('span', `release-when ${check.delay > 0 ? 'later' : 'now'}`, shipWords(check.delay, game.state.era)));
       shipLine.replaceChildren(
         when,
-        el('span', null, `${check.cash > 0 ? `Costs ${money(check.cash)}` : 'No cash cost'} · ${isEditing ? 'replaces your queued release' : 'uses 1 of your 2 moves'}`),
+        el('span', null, `${check.cash > 0 ? `Costs ${money(check.cash)}` : 'No cash cost'} · ${isEditing ? 'replaces your queued release' : 'uses 1 of your 2 team actions'}`),
       );
       error.textContent = check.errors[0] ?? '';
       leftContent.replaceChildren(teamPanel(now, { opinions: releaseOpinions(now, draft) }));

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { REACTIONS } from '../sim/data/launch.js';
+import { GENERIC_REACTIONS, REACTIONS } from '../sim/data/launch.js';
 import { createInitialState } from '../sim/state.js';
 import { activeModels } from '../sim/serving.js';
 import { createGame } from '../ui/game.js';
@@ -22,7 +22,7 @@ test('every generated release reaction handle has an explicit editorial classifi
   const critical = new Set(CONTROVERSY_HANDLES);
   const nonCritical = new Set(NON_CRITICAL_REACTION_HANDLES);
   assert.deepEqual([...critical].filter((handle) => nonCritical.has(handle)), []);
-  const generated = [...new Set(REACTIONS.map((reaction) => reaction.handle))].sort();
+  const generated = [...new Set([...REACTIONS, ...GENERIC_REACTIONS].map((reaction) => reaction.handle))].sort();
   assert.deepEqual(generated.filter((handle) => !critical.has(handle) && !nonCritical.has(handle)), []);
   assert.deepEqual([...new Set([...critical, ...nonCritical])].sort(), generated);
 });

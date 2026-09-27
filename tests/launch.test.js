@@ -161,3 +161,11 @@ test('no jump posts when no number was skipped', () => {
   const r = scoreLaunch(s, { ...named, skipped: 0 }, zeroRng);
   assert.ok(!r.reactions.some((x) => /skipping|jump to|evals read|version number/.test(x.text)));
 });
+
+test('back-to-back launches with the same scores quote different lines', async () => {
+  const { CRITICS, GENERIC_REACTIONS } = await import('../sim/data/launch.js');
+  for (const critic of CRITICS) {
+    for (const tier of ['high', 'mid', 'low']) assert.ok(critic.quips[tier].length >= 2, `${critic.id} ${tier}`);
+  }
+  assert.ok(GENERIC_REACTIONS.length >= 6);
+});

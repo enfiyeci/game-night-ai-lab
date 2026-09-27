@@ -293,6 +293,10 @@ export function byEra(rows, { actual = false } = {}) {
   });
 }
 
+// Burn over revenue, rounded: 1 reads "a little more than we earn", never "1 times".
+const spendWords = (ratio) => (ratio <= 1 ? 'a little more than we earn' : `${ratio} times what we earn`);
+const unitWords = (count) => `${count} ${count === 1 ? 'unit' : 'units'}`;
+
 // The team's reading of a plan. Every line is computed from the projection or from the sim's own rules.
 export function planOpinions(state, projection, plan) {
   const eras = byEra(projection.rows);
@@ -311,10 +315,10 @@ export function planOpinions(state, projection, plan) {
       text: projection.rows[0].revenue < 1
         ? `We earn nothing yet and spend ${Math.round(last.burn)} million a month ${byEnd}.${out ? ` We're out in month ${Math.floor(out.atMonth)}.` : ''}`
         : out
-          ? `We spend ${ratio} times what we earn ${byEnd}. Without more money we're out in month ${Math.floor(out.atMonth)}.`
+          ? `We spend ${spendWords(ratio)} ${byEnd}. Without more money we're out in month ${Math.floor(out.atMonth)}.`
           : last.burn <= last.revenue
             ? `It holds. ${byEnd[0].toUpperCase()}${byEnd.slice(1)} we earn more than we spend.`
-            : `It holds. We spend ${Math.max(1, ratio)} times what we earn ${byEnd}.`,
+            : `It holds. We spend ${spendWords(ratio)} ${byEnd}.`,
     },
     {
       id: 'research',
@@ -325,8 +329,8 @@ export function planOpinions(state, projection, plan) {
       id: 'safety',
       mood: 'calm',
       text: era4Goal != null
-        ? `At our ${Math.round(state.compute.split.safety * 100)}% share, ${state.era >= 4 ? 'this era' : 'later on'}, safety gets ${Math.round(era4Goal * state.compute.split.safety)} units.`
-        : `At our ${Math.round(state.compute.split.safety * 100)}% share, safety gets ${Math.round(finalGoal * state.compute.split.safety)} units.`,
+        ? `At our ${Math.round(state.compute.split.safety * 100)}% share, ${state.era >= 4 ? 'this era' : 'later on'}, safety gets ${unitWords(Math.round(era4Goal * state.compute.split.safety))}.`
+        : `At our ${Math.round(state.compute.split.safety * 100)}% share, safety gets ${unitWords(Math.round(finalGoal * state.compute.split.safety))}.`,
     },
   ];
   if (state.era <= 3 && era4Goal != null) {

@@ -1,5 +1,5 @@
 import { CASES } from '../../sim/data/constitution.js';
-import { EQUITY_SHARE, SUPPLIERS } from '../../sim/data/compute.js';
+import { EQUITY_SHARE, SUPPLIERS, eraScale } from '../../sim/data/compute.js';
 import { BALANCE } from '../../sim/balance.js';
 import {
   contractAction,
@@ -30,6 +30,7 @@ import { RIVAL_TEMPLATES } from '../../sim/rivals.js';
 import { createRng } from '../../sim/rng.js';
 import { computeSlices, makePledge, setComputeSplit } from '../../sim/split.js';
 import { TECHNIQUES, researchTechnique } from '../../sim/techniques.js';
+import { SIZE_UNITS } from '../../sim/recipe.js';
 import { startRun } from '../../sim/training.js';
 import { MAX_MOVES, setBudget } from '../../sim/turn.js';
 import { roundWord, storyDate } from '../../sim/time.js';
@@ -547,6 +548,17 @@ const ADVISOR_NAMES = {
   policy: 'Policy and Comms',
 };
 
+// The smallest run needs SIZE_UNITS.small at the era's scale; only suggest a run when one fits in the idle units.
+function idleComputeLine(state, idle) {
+  if (idle <= 0) return 'Training can use every unit left after serving and safety.';
+  const amount = computeAmount(idle, state.era);
+  const sit = amount === '1 unit' ? 'sits' : 'sit';
+  if (state.activeRun) return `${amount} ${sit} idle while the run trains. Sell the time.`;
+  const smallest = SIZE_UNITS.small * eraScale(state.era);
+  if (idle < smallest) return `${amount} ${sit} idle, less than the smallest run needs (${computeAmount(smallest, state.era)}). Sell the time, or free more.`;
+  return `${amount} ${sit} idle. That is enough to start a training run.`;
+}
+
 function opinionText(state, screen, id) {
   const bar = computeBar(state);
   const sites = sitesView(state);
@@ -565,7 +577,7 @@ function opinionText(state, screen, id) {
     policy: 'Prepaying looks like racing. Washington notices.',
   };
   const budgetLines = {
-    research: idle > 0 ? `${computeAmount(idle, state.era)} sit idle. Start a bigger run, or sell the time.` : 'Training can use every unit left after serving and safety.',
+    research: idleComputeLine(state, idle),
     safety: pledge ? `${pct(state.compute.split.safety)} ${state.compute.split.safety >= pledge.share ? 'keeps' : 'breaks'} our ${pct(pledge.share)} pledge.` : 'A larger safety slice gives evaluations more room.',
     cfo: idle > 0 ? `Idle compute still costs ${money(idleComputeCost(state))} a month.` : 'Every online unit is doing useful work right now.',
     policy: bar.needMarker <= bar.segments.find((segment) => segment.key === 'serving').units ? 'Serving is covered. No outages right now.' : 'Serving is short. Users may see an outage.',
