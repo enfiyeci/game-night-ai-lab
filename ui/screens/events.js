@@ -10,6 +10,7 @@ import {
 
 const CLOCK_REASON = 'event-card';
 const ASIDE_FALLBACK_MS = 2500; // how long a card that stepped aside waits for the screen picked from the menu
+const ASIDE_RECHECK_MS = 500; // then how often it looks for a clear stage
 const LOADING_REASON = 'event-card-loading';
 const ERAS = [1, 2, 3, 4, 5];
 
@@ -298,6 +299,17 @@ export function mountEvents(game, { stage, overlay }) {
     // stepped aside waits a task, so it comes back after the screen is done, not in the middle of it.
     globalThis.setTimeout(() => { if (!previewing) openNext(); }, 0);
   });
+  // The card that stepped aside comes back once nothing holds the stage; the tour (How to play) sends no signal
+  // when it ends, and the card keeps the clock paused, so it looks again rather than waiting for a story day.
+  function returnWhenClear() {
+    if (previewing || current) return;
+    if (overlay.querySelector('.dialog-layer, .screenwall-layer, .menu-layer, .intro-layer')) {
+      asideTimer = globalThis.setTimeout(returnWhenClear, ASIDE_RECHECK_MS);
+      return;
+    }
+    openNext();
+  }
+
   // A menu closed with nothing picked gives the stage straight back. After a pick the card waits for that screen
   // to close (gdt-dialog-closed). Some screens load their art first and would not open over a card, so the card
   // only comes back early if no screen has taken the stage after a while (a slow or failed load).
@@ -305,7 +317,7 @@ export function mountEvents(game, { stage, overlay }) {
     if (previewing) return;
     globalThis.clearTimeout(asideTimer);
     if (!event.detail?.picked) openNext();
-    else asideTimer = globalThis.setTimeout(() => { if (!previewing) openNext(); }, ASIDE_FALLBACK_MS);
+    else asideTimer = globalThis.setTimeout(returnWhenClear, ASIDE_FALLBACK_MS);
   });
 
   function afterAnchors(state) {

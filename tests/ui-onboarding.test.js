@@ -70,7 +70,7 @@ test('no tour line and no era-1 menu reason names an era', () => {
   const state = createInitialState({ seed: 1 });
   const game = { state, queue: { moves: [] }, movesLeft: () => 2 };
   const lines = [...TOUR.map((step) => step.say)];
-  for (const item of ITEMS) if (!item.hidden?.(state, game)) lines.push(item.label, `${item.unavailable?.(state, game) || ''}`);
+  for (const item of ITEMS) if (!item.divider && !item.hidden?.(state, game)) lines.push(item.label, `${item.unavailable?.(state, game) || ''}`);
   for (const line of lines) {
     assert.doesNotMatch(line, /\bera \d/i, line);
     for (const name of names) assert.equal(line.toLowerCase().includes(name), false, line);

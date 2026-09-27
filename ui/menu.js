@@ -117,6 +117,7 @@ export const GAME_ITEMS = [
       return progress ? `${progress.found} of ${progress.total}` : '';
     },
   },
+  { id: 'howto', label: 'How to play', free: true }, // replays the first-minute tour (ui/screens/intro.js)
   { id: 'sound', label: 'Sound and music', free: true },
   { id: 'credits', label: 'Credits', free: true },
 ];

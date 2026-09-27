@@ -73,7 +73,8 @@ test('the main menu ends with a divider and a Game submenu, and Company no longe
   assert.equal(game.submenu, 'game');
   assert.equal(game.free, true);
   assert.equal(ITEMS.find((item) => item.id === 'company').submenu, 'company');
-  assert.deepEqual(GAME_ITEMS.map((item) => item.id), ['endings', 'sound', 'credits']);
+  assert.deepEqual(GAME_ITEMS.map((item) => item.id), ['endings', 'howto', 'sound', 'credits']);
+  assert.equal(GAME_ITEMS.find((item) => item.id === 'howto').label, 'How to play');
   assert.ok(GAME_ITEMS.every((item) => item.free), 'nothing in Game costs a team action');
   assert.equal(COMPANY_ITEMS.some((item) => item.id === 'sound'), false);
 });
