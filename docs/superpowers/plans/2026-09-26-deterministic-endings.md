@@ -75,9 +75,22 @@ below are kept as the record.
   the player's own "Sudden capability jump" card (25% on a trained model). **It stays random, as an event card
   pop-up (decision 2).** Alternative: a threshold on something the player controls (not designed).
 - **D4. Lawsuits** ("always happen when the causing choice is made"). Owner: "lets make it more expensive" than the
-  proposed expected-cost settlement. **Picked: every data card with legal risk is always sued at its full listed
-  cost: scraping $200M, filtered $120M, synthetic $60M, licensed $60M** (`legal.cost` in `sim/data/cards.js`). The
-  licensed card being sued every time is the one line the owner may still want to drop.
+  proposed expected-cost settlement. Then "whichever is more realistic". **Picked: the two web-crawl cards are always sued at their full listed
+  cost (scraping $200M, filtered $120M); licensed data and synthetic data from your own model are never sued.** Real
+  lawsuits target training on crawled copyrighted work; licensing is what buys a lab out of them. Rule in code: a card
+  is sued when its `legal.chance` is at least 0.3 (only those two), at `legal.cost`.
+- **D8. Fixed numbers become decision-driven (owner: "it would be good", if it is not much work; proposed, awaiting
+  the owner's OK on each).** All sit in files Part B already edits; each is a few lines plus a test.
+  - Deal sizes: instead of the middle of each supplier's range, the lab's rank picks the spot in the range (first place
+    gets the top, last place the bottom): suppliers give the biggest allocations to the biggest buyers.
+  - Verde's era 4 letter of intent (headline delivery, today 30-100%): delivers what the lab can power when it lands
+    (online site power plus the grid), at least 30%. Building sites and reserving the grid decide it.
+  - Spot pull-back in eras 3 and 5: pulled when race heat is 60 or more (demand spikes), instead of every fourth round.
+  - Nuclear restart delay: on time when US favor is 60 or more (permits move), one round late otherwise.
+  - Rival prepay announcements in era 3: a Western rival prepays when it is short of its compute target (the compute
+    race tracks this), instead of every fourth round. Taking its deals makes it short.
+  - Left fixed: rival pace (each rival's own character; the compute race already ties rivals to the deals you take or
+    leave), CoreFlame's 12th-month trouble (D5), site sizes.
 - **D5. CoreFlame trouble (Part B).** A running total of 2% a month never reaches 1 in a normal run (about 33
   months), so the fragile supplier would disappear. **Default: a CoreFlame contract runs into trouble in its 12th
   month, stated on the offer.** Alternative: the running total (CoreFlame never fails).
@@ -782,7 +795,7 @@ test('refusing the compute pool marks supply-chain risk when US favor ends below
 ## Task A9 (after gn-model-money is in `ui`): Training hazards follow the recipe
 
 Rule shapes: 1 (running total) for loss spikes; 4 for reward hacking (spec: "always happen when the causing choice is
-made"); D4 for lawsuits (always sued, full listed cost).
+made"); D4 for lawsuits (web-crawl cards always sued at full cost; licensed and synthetic never).
 
 **Files:**
 - Modify: `sim/training.js` (`advanceRunBy`, `resolveRun`), `sim/hazards.js` (`rollTrainingHazard`, remove
@@ -816,12 +829,16 @@ test('loss spikes add up: a run spikes when its per-round chances reach 1', () =
   assert.equal(s.activeRun.spikes, 1);
 });
 
-test('a data card with legal risk is always sued at its full listed cost', () => {
+test('web-crawl data is always sued at full cost; licensed data never', () => {
   const s = finishedRunState(['scrape-data']); // a run about to resolve with that pre-training card
   const before = s.legalCases.length;
   resolveRun(s, s.activeRun);
   assert.equal(s.legalCases.length, before + 1);
   assert.equal(s.legalCases.at(-1).cost, 200);
+  const clean = finishedRunState(['licensed-data']);
+  const cases = clean.legalCases.length;
+  resolveRun(clean, clean.activeRun);
+  assert.equal(clean.legalCases.length, cases);
 });
 ```
 Build `runningState` and `finishedRunState` from the existing training tests' setup (they already start runs with
@@ -833,7 +850,7 @@ Build `runningState` and `finishedRunState` from the existing training tests' se
   `if (accrue(run, 'spikePressure', Math.min(1, Math.max(0, run.spikeChance)))) run.spikes += 1;`,
   `state.pendingModel = resolveRun(state, run);`, `advanceRun = (state) => advanceRunBy(state, null, 1)`.
   `resolveRun(state, run)`: lawsuits become
-  `if (e.legal) state.legalCases.push({ cost: e.legal.cost, dueTurn: state.turn + e.legal.delay, source: 'training data' }); // D4: always sued, full cost`,
+  `if (e.legal && e.legal.chance >= 0.3) state.legalCases.push({ cost: e.legal.cost, dueTurn: state.turn + e.legal.delay, source: 'training data' }); // D4: web-crawl data is always sued, at full cost; licensed and synthetic never`,
   and the hazard call becomes `rollTrainingHazard(state, cards, flags)`. `sim/hazards.js`:
   `if (!hackable) return null;` and delete `REWARD_HACK_CHANCE`. `ui/logic/training.js`: `resolveRun(structuredClone(state),
   structuredClone(run))` and delete `NO_DICE`. `ui/logic/scenarios.js` `hazardState` still works (the first dice seed
