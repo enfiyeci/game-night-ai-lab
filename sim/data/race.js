@@ -2,7 +2,7 @@
 // First-pass numbers from the prototype (docs/design/mockups/compute-race/prototype/); plan Task 8 re-measures them.
 export const FRONTIER = [25, 50, 150, 400, 450]; // units a frontier-pace lab wants online, per era
 export const START_FLEET = { openbrain: 14, lodestar: 10, deepthink: 12, qilin: 11 };
-export const RIVAL_EDGE = -2; // very sensitive: +6 left 63–88 of 100 bot runs behind
+export const RIVAL_EDGE = 2; // owner pick 2026-09-26 after measuring −2/0/+2/+4; very sensitive: +6 left 63–88 of 100 prototype runs behind
 export const SERVING_ROOM = 0.7; // share of a rival's non-safety compute it trains with; the rest serves users
 export const NO_SIZE_GAIN = 2; // a launch when not even a Small model fits
 export const CAPPED_GAIN = 5; // the Geneva compute cap, as sim/training.js applies it to the player
