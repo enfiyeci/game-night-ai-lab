@@ -399,6 +399,15 @@ player's own last best, shown through several noisy judges.
     when the `contaminated` flag is set (the scandal event comes later).
   - The reveal shows each benchmark as three bars: the new model, the player's last flagship
     (the "beat your last flagship" bar), and the best rival.
+- **The tests change with the era (owner 2026-09-26).** Each row keeps its job (coding, science,
+  agents, final exam, safety), but the named test is replaced as real tests are once top models max
+  them out; most tests run two eras, and era 5 brings a new test on every row. A capability test
+  scores the model's skill (capability × fit) on an S-curve around the test's difficulty, so a new
+  test starts low and fills up over its life. The last flagship and your earlier models on the
+  leaderboard are re-scored on the current tests, as labs re-run old models; the flagship is picked
+  by skill, which does not depend on the tests. A retiring test gets a feed post at the era change,
+  and the reveal tags a row "New test". Schedule and tuning: `sim/data/launch.js`; research:
+  `docs/research/benchmarks-by-era.md`.
 - **The safety benchmark can lie, gated by era (owner decision 2026-09-25).**
   - True safety score falls with total alignment debt (visible plus concealed).
   - Eras 1–2: the shown safety score equals the true score plus noise. Models do not yet game tests.

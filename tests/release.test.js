@@ -46,7 +46,7 @@ test('releasing a consumer model', () => {
   assert.equal(r.model.launch.press.length, 4);
   assert.ok(r.model.launch.press.every((p) => p.score >= 1 && p.score <= 10));
   assert.equal(s.lastFlagship.name, 'Kestrel 1 Core');
-  assert.equal(s.lastFlagshipScore, r.model.launch.capAvg);
+  assert.equal(s.lastFlagshipScore, r.model.launch.skill);
   assert.ok(r.model.users > 0);
   assert.equal(s.pendingModel, null);
   assert.equal(s.cash, 1000 - 35 - 10);
@@ -247,7 +247,23 @@ test('the flagship bar is the best release, not the most recent', () => {
   s.pendingModel.capability = 30;
   releaseModel(s, { ...release, generation: 2 }, rng);
   assert.equal(s.lastFlagship.name, strong.name);
-  assert.equal(s.lastFlagshipScore, strong.launch.capAvg);
+  assert.equal(s.lastFlagshipScore, strong.launch.skill);
+});
+
+test('a stronger model on harder tests becomes the flagship, though its raw scores are lower', () => {
+  const s = trainedState();
+  s.pendingModel.capability = 60;
+  const early = releaseModel(s, release, rng).model;
+  startRun(s, recipe);
+  advanceRun(s, rng);
+  s.era = 4; // harder tests on every capability row
+  s.pendingModel.capability = 70;
+  const late = releaseModel(s, { ...release, generation: 2 }, rng).model;
+  assert.ok(late.launch.capAvg < early.launch.capAvg, 'the harder tests score it lower');
+  assert.equal(s.lastFlagship.name, late.name);
+  assert.equal(late.flagshipName, early.name);
+  assert.equal(late.launchScore, late.launch.skill);
+  assert.ok(s.lastFlagship.benchmarks.every((b) => typeof b.name === 'string'));
 });
 
 test('releaseDelay requires two turns between launches without mutating a refused release', () => {

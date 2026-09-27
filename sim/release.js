@@ -136,8 +136,11 @@ export function releaseModel(state, release, rng) {
     size: m.size,
     capability: m.capability,
     launch,
-    launchScore: launch.capAvg,
-    bar: state.lastFlagshipScore,
+    // launchScore is the test-independent skill, so models from different eras compare fairly (the flagship pick,
+    // the end summary). bar is the last flagship's average re-scored on this launch's tests; flagshipName names it.
+    launchScore: launch.skill,
+    bar: launch.bar,
+    flagshipName: state.lastFlagship?.name ?? null,
     spec,
     channel: spec.channel,
     priceStance: release.price,
@@ -157,10 +160,10 @@ export function releaseModel(state, release, rng) {
   state.models.push(model);
   activateReleases(state);
   state.pendingModel = null;
-  if (!state.lastFlagship || launch.capAvg > state.lastFlagshipScore) {
-    state.lastFlagship = { name, benchmarks: launch.benchmarks.map(({ id, shown }) => ({ id, shown })) };
+  if (!state.lastFlagship || launch.skill > state.lastFlagshipScore) {
+    state.lastFlagship = { name, benchmarks: launch.benchmarks.map(({ id, name: test, shown, skill }) => ({ id, name: test, shown, skill })) };
   }
-  state.lastFlagshipScore = Math.max(state.lastFlagshipScore, launch.capAvg);
+  state.lastFlagshipScore = Math.max(state.lastFlagshipScore, launch.skill);
   state.sentiment = clamp(state.sentiment + (launch.pressAvg - 6) / 20, 0.5, 1.5);
 
   state.publicTrust += m.publicEffects.pt + sum('pt');

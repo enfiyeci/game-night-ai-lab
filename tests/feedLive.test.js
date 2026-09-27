@@ -9,6 +9,7 @@ import { PROMISES } from '../sim/data/promises.js';
 import { MEETINGS } from '../sim/data/president.js';
 import { labText, reactToEvents, reactToLandedCard, releaseDueFeed, runGpus } from '../sim/feedLive.js';
 import { createInitialState } from '../sim/state.js';
+import { retiredTestPosts } from '../sim/launch.js';
 
 const ALL = [...EVENTS, ...EVENTS_6C, ...BOARD_EVENTS];
 const shown = (list) => new Set(list.map(([, text]) => text.replaceAll('{model}', 'the new model')));
@@ -298,4 +299,21 @@ test('a run is sized in the era\'s chips, the same counts the recipe screen show
   assert.equal(runGpus('large', 3), '80,000 H200s');
   assert.equal(runGpus('xl', 4), '600,000 GB200s');
   assert.equal(runGpus('xl', 5), '1.6 million Rubins');
+});
+
+test('a new era retires the tests top models have outgrown, in posts from real personas', () => {
+  const state = stateOnDay();
+  state.era = 2;
+  reactToEvents(state, state, [{ type: 'eraStart', era: 2 }]);
+  runDays(state, 3);
+  const retired = new Set(retiredTestPosts(2).map(([, text]) => text));
+  const posts = state.feed.filter((post) => retired.has(post.text));
+  assert.equal(posts.length, 2);
+  for (let era = 2; era <= 5; era += 1) {
+    for (const [handle, text] of retiredTestPosts(era)) {
+      assert.ok(PEOPLE[handle], handle);
+      assert.ok(!/\(/.test(text), `names are shown without their (category): ${text}`);
+    }
+  }
+  assert.match(retiredTestPosts(2)[0][1], /Retiring Hello Function .* report Patchwork\./);
 });

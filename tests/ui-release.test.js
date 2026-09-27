@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import { startRun, advanceRun } from '../sim/training.js';
 import {
-  beatCount, canSkip, checkLabel, laterMoveProblem, leaderboard, nextGeneration, offeredCards, perMillion, priceSheet,
+  beatCount, canSkip, checkLabel, flagshipBefore, laterMoveProblem, leaderboard, nextGeneration, offeredCards, perMillion, priceSheet,
   pricePerMillion, queueBeforeRelease, releaseDraft, releaseOpinions, releasePayload, releasePreview, releaseSpec,
   salesEstimate, servingPerMillion, shipDelay, shipWords, tokensPerUser,
 } from '../ui/logic/release.js';
@@ -292,4 +292,29 @@ test('the average narrows in on its value from alternating sides', async () => {
   assert.ok(values.every((value) => value >= 1 && value <= 10));
   const misses = narrowTo(5.25).map((value) => Math.abs(Number(value) - 5.25));
   misses.slice(1).forEach((miss, i) => assert.ok(miss <= misses[i] + 0.05)); // never further away than the step before
+});
+
+// Owner 2026-09-26: tests change with the era, so the leaderboard scores everyone on this launch's tests.
+test('on per-era tests, other labs are scored on the test and earlier models are re-scored on it', () => {
+  const row = (id) => ({ id, name: 'New test', kind: 'cap', mid: 50, fit: 1, rival: 60, shown: 80 });
+  const model = { name: 'Kestrel 3', releaseSequence: 1, launch: { capAvg: 80, benchmarks: ['a', 'b', 'c', 'd'].map(row) } };
+  const older = { name: 'Kestrel 2', releaseSequence: 0, launch: { capAvg: 90, benchmarks: ['a', 'b', 'c', 'd'].map((id) => ({ id, name: 'Old test', kind: 'cap', shown: 90, skill: 40 })) } };
+  const state = { rivals: [{ name: 'OpenBrain', capability: 60 }, { name: 'Qilin', capability: 30 }], models: [older, model] };
+  const board = leaderboard(state, model);
+  const score = (name) => board.rows.find((r) => r.name === name).score;
+  assert.equal(score('OpenBrain'), 60, 'the leader row is the best-rival bars');
+  // Qilin: the leader's 60 moved by what 28.5 skill scores on the test (10) against the leader's 57 (67).
+  assert.equal(score('Qilin'), 3);
+  assert.equal(score('Kestrel 2'), 27, 'the older model re-scored from its skill of 40, not its old 90');
+});
+
+test('the flagship a launch was compared with is found by name, or by score for older saves', () => {
+  const a = { name: 'Kestrel 1', releaseSequence: 0, launchScore: 40 };
+  const b = { name: 'Kestrel 2', releaseSequence: 1, launchScore: 55, bar: 71, flagshipName: 'Kestrel 1' };
+  const first = { name: 'Kestrel 0', releaseSequence: 2, flagshipName: null };
+  const oldSave = { name: 'Kestrel 3', releaseSequence: 3, bar: 55 };
+  const state = { models: [a, b, first, oldSave] };
+  assert.equal(flagshipBefore(state, b), a);
+  assert.equal(flagshipBefore(state, first), undefined);
+  assert.equal(flagshipBefore(state, oldSave), b);
 });

@@ -2,6 +2,7 @@ import { roundsToWords } from './format.js';
 import { cardById, pickableCards, resolveCards, slotsFor } from '../../sim/recipe.js';
 import { modelName, releaseModel, releaseWait, tierWord } from '../../sim/release.js';
 import { createRng } from '../../sim/rng.js';
+import { scoreOnTest, testScore } from '../../sim/launch.js';
 import { CHANNEL, PRICE_STANCE, REASONING, REVENUE_PER_USER, USAGE, margin, servingCost } from '../../sim/serving.js';
 import { applyProjectedMove, projectQueue } from './compute.js';
 import { familyName } from './naming.js';
@@ -226,27 +227,42 @@ export function priceSheet(model, era) {
 
 export const salesEstimate = (model) => (model.channel === 'open' ? 0 : (model.newUsers * revenuePerUser(model)) / 1e6);
 
-// The flagship this launch was compared with: the earlier model whose score set the bar.
-export const flagshipBefore = (state, model) => state.models.find((other) => other.releaseSequence !== model.releaseSequence && other.launchScore === model.bar);
+// The flagship this launch was compared with. A model released before tests changed with the era has no
+// flagshipName; its bar was the flagship's score.
+export const flagshipBefore = (state, model) => state.models.find((other) => other.releaseSequence !== model.releaseSequence
+  && (model.flagshipName !== undefined ? other.name === model.flagshipName : other.launchScore === model.bar));
 
 export const oneDecimal = (value) => Math.round(value * 10) / 10;
 
 // The launch leaderboard (owner pick 2026-09-26: reveal option B plus the leaderboard climb).
-// Scores are averages of the four capability benchmarks. The sim keeps one strength per rival lab
-// and scores the "best rival" bars from the leading lab, so each lab's average is the best-rival
-// average scaled by its strength against the leader's. Your two latest earlier models are listed
-// with their own launch averages.
+// Scores are averages of the four capability benchmarks on this launch's tests. The sim scores the "best rival"
+// bars from the leading lab, so the leader's row is those bars; another lab's score on each test moves from the
+// leader's by what its own capability would score there. Your two latest earlier models are re-scored on this
+// launch's tests (scoreOnTest). A launch from before tests changed with the era (no test mid on its rows) keeps the
+// old rule: each lab scaled by its strength against the leader's, and your models at their own launch averages.
 export function leaderboard(state, model) {
   const caps = model.launch.benchmarks.filter((row) => row.kind === 'cap');
   const rivalAverage = caps.reduce((sum, row) => sum + row.rival, 0) / caps.length;
   const leader = state.rivals.reduce((best, rival) => (rival.capability > best.capability ? rival : best));
-  const rivals = state.rivals.map((rival) => ({ name: rival.name, kind: 'rival', score: oneDecimal(rivalAverage * rival.capability / leader.capability) }));
+  const perTest = caps.every((row) => Number.isFinite(row.mid) && Number.isFinite(row.fit));
+  const labScore = (rival) => {
+    if (!perTest) return rivalAverage * rival.capability / leader.capability;
+    const on = (row, capability) => testScore(row.mid, capability * row.fit * 0.95);
+    return caps.reduce((sum, row) => sum + Math.min(100, Math.max(0, row.rival + on(row, rival.capability) - on(row, leader.capability))), 0) / caps.length;
+  };
+  const ownScore = (other) => {
+    if (!perTest) return other.launch.capAvg;
+    const results = caps.map((row) => other.launch.benchmarks.find((before) => before.id === row.id));
+    if (results.some((before) => !before)) return other.launch.capAvg;
+    return caps.reduce((sum, row, i) => sum + scoreOnTest(row, results[i]), 0) / caps.length;
+  };
+  const rivals = state.rivals.map((rival) => ({ name: rival.name, kind: 'rival', score: oneDecimal(labScore(rival)) }));
   const own = state.models
     .map((other, index) => ({ other, order: other.releaseSequence ?? index }))
     .filter(({ other }) => other.releaseSequence !== model.releaseSequence && other.launch)
     .sort((a, b) => a.order - b.order)
     .slice(-2)
-    .map(({ other }) => ({ name: other.name, kind: 'own', score: oneDecimal(other.launch.capAvg) }));
+    .map(({ other }) => ({ name: other.name, kind: 'own', score: oneDecimal(ownScore(other)) }));
   return {
     leader: leader.name,
     rows: [...rivals, ...own].sort((a, b) => b.score - a.score),

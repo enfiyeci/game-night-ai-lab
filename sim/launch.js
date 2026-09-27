@@ -2,7 +2,7 @@ import { clamp } from './util.js';
 import { leaderCapability, rank } from './rivals.js';
 import { safetySpend } from './economy.js';
 import { INTERPRETABILITY_SPEND, GAMING_THRESHOLD } from './hazards.js';
-import { BENCHMARKS, CONTAMINATED_BENCHMARKS, CONTAMINATION_BONUS, BUG_FLAGS, BUG_PENALTY, CRITICS, REACTIONS, JUMP_BAR_PER_NUMBER } from './data/launch.js';
+import { BENCHMARKS, TEST_WIDTH, RETIRED_POSTS, CONTAMINATED_BENCHMARKS, CONTAMINATION_BONUS, BUG_FLAGS, BUG_PENALTY, CRITICS, REACTIONS, JUMP_BAR_PER_NUMBER } from './data/launch.js';
 
 const GAMING_RATE = { 3: 0.35, 4: 0.55, 5: 0.75 };
 
@@ -22,35 +22,67 @@ export function safetyTruth(state, flags) {
   return clamp(Math.round(100 - 0.7 * debt - (flags.includes('jailbreakWaiting') ? 15 : 0)), 0, 100);
 }
 
+// The test a benchmark row runs in an era, and a skill's score on a test with that mid (sim/data/launch.js).
+export const testFor = (benchmark, era) => benchmark.tests.find((t) => era >= t.from && era <= t.to) ?? benchmark.tests.at(-1);
+export const testScore = (mid, skill) => clamp(Math.round(100 / (1 + Math.exp(-(skill - mid) / TEST_WIDTH))), 0, 100);
+const oneDecimal = (value) => Math.round(value * 10) / 10;
+// An earlier model's result on a test: its published score if it took this test, otherwise re-scored from its skill,
+// as labs re-run older models on a new test. A result saved before tests changed has no name or skill; its old
+// score was about its skill.
+export const scoreOnTest = (test, before) => (before.name === test.name ? before.shown : testScore(test.mid, before.skill ?? before.shown));
+
+// The rows whose test changes when `era` begins: { id, kind, from, to } with the old and new test names.
+export function retiredTests(era) {
+  if (era <= 1) return [];
+  return BENCHMARKS.map((b) => ({ id: b.id, kind: b.kind, from: testFor(b, era - 1).name, to: testFor(b, era).name }))
+    .filter((t) => t.from !== t.to);
+}
+export const retiredTestPosts = (era) => retiredTests(era).map((t) => RETIRED_POSTS[t.kind](t.from, t.to));
+
 export function scoreLaunch(state, model, rng) {
   const { capability, spec, flags } = model;
   const prev = state.lastFlagship;
   const rivalCap = leaderCapability(state);
   const bugCount = BUG_FLAGS.filter((f) => flags.includes(f)).length;
   const benchmarks = BENCHMARKS.map((b) => {
+    const test = testFor(b, state.era);
+    // The last flagship's result on this row (scoreOnTest).
+    const before = prev?.benchmarks.find((x) => x.id === b.id);
+    const sameTest = before?.name === test.name;
     let truth;
     let shown;
     let rival;
+    let skill;
+    let fit;
+    let flagship = null;
     if (b.kind === 'safety') {
       truth = safetyTruth(state, flags);
       shown = clamp(Math.round(truth + evalGaming(state, capability, flags) + rng.int(-2, 2)), 0, 100);
       rival = clamp(Math.round(60 + rng.int(-5, 5)), 0, 100);
+      flagship = before?.shown ?? null;
     } else {
-      const fit = b.fit(spec, flags);
-      truth = clamp(Math.round(capability * clamp(fit - BUG_PENALTY * bugCount, 0.6, 1)), 0, 100);
+      fit = b.fit(spec, flags);
+      skill = oneDecimal(capability * clamp(fit - BUG_PENALTY * bugCount, 0.6, 1));
+      truth = testScore(test.mid, skill);
       const contam = flags.includes('contaminated') && CONTAMINATED_BENCHMARKS.includes(b.id) ? CONTAMINATION_BONUS : 0;
       shown = clamp(truth + contam + rng.int(-3, 3), 0, 100);
-      rival = clamp(Math.round(rivalCap * fit * 0.95) + rng.int(-3, 3), 0, 100);
+      rival = clamp(testScore(test.mid, rivalCap * fit * 0.95) + rng.int(-3, 3), 0, 100);
+      if (before) flagship = scoreOnTest(test, before);
     }
-    const flagship = prev ? prev.benchmarks.find((x) => x.id === b.id)?.shown ?? null : null;
-    return { id: b.id, name: b.name, kind: b.kind, shown, truth, flagship, rival };
+    const newTest = Boolean(before?.name) && !sameTest;
+    const row = { id: b.id, name: test.name, label: b.label, kind: b.kind, shown, truth, flagship, rival, newTest };
+    return b.kind === 'safety' ? row : { ...row, skill, fit, mid: test.mid };
   });
   const caps = benchmarks.filter((b) => b.kind === 'cap');
   const capAvg = caps.reduce((s, b) => s + b.shown, 0) / caps.length;
   const beats = caps.filter((b) => b.flagship == null || b.shown > b.flagship).length;
-  const launch = { benchmarks, capAvg, beats };
+  // skill does not depend on which tests are running, so it compares models across eras (the flagship pick, the summary).
+  const skill = caps.reduce((s, b) => s + b.skill, 0) / caps.length;
 
-  const prevAvg = prev ? prev.benchmarks.filter((b) => b.id !== 'gauntlet').reduce((s, b) => s + b.shown, 0) / caps.length : capAvg - 5;
+  const compared = caps.filter((b) => b.flagship != null);
+  const prevAvg = compared.length ? compared.reduce((s, b) => s + b.flagship, 0) / compared.length : capAvg - 5;
+  const launch = { benchmarks, capAvg, beats, skill, bar: prevAvg };
+
   const rivalAvg = caps.reduce((s, b) => s + b.rival, 0) / caps.length;
   const skipped = Math.max(0, model.skipped ?? 0);
   const bar = prevAvg + JUMP_BAR_PER_NUMBER * skipped;

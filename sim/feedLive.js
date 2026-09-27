@@ -6,6 +6,7 @@ import { rank } from './rivals.js';
 import { computeSlices } from './split.js';
 import { ROUND_DAYS } from './time.js';
 import { JUMP_EARNED_GAIN } from './data/launch.js';
+import { retiredTestPosts } from './launch.js';
 import { eraScale } from './data/compute.js';
 import { SIZE_UNITS } from './recipe.js';
 import { PROMISES } from './data/promises.js';
@@ -247,6 +248,7 @@ export function reactToEvents(before, state, events, { atMark = false } = {}) {
       case 'eraStart':
         s.add(R.eras[event.era], 2, 'era', { from: 0, to: 0 });
         s.add(R.eras[event.era], 2, 'era', { from: 1, to: 6 });
+        s.add(retiredTestPosts(event.era), 2, 'era', { from: 0, to: 2 }); // tests the top models have outgrown
         if (event.era === 5) s.add(R.summit.opens, 2, 'summit', { from: 2, to: 6 });
         break;
       case 'raise': case 'emergency': case 'lawsuitPaid': case 'conversionFight':
