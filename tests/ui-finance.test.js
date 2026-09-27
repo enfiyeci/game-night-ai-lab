@@ -128,7 +128,7 @@ test("with reviewers on staff, this turn's row still equals the sim's burn, and 
   const era5 = rows.find((r) => r.era === 5);
   assert.ok(Math.abs(era5.people - (state.budget.spend + reviewerCost({ ...state, era: 5 }))) < 1e-9);
   // A played round: the record's compute bill is the burn less ops and people, reviewers included in people.
-  const after = { ...state, burnHistory: [...state.burnHistory, projectBurn(state)], lastRoundBurn: projectBurn(state) };
+  const after = { ...state, burnHistory: [...state.burnHistory, projectBurn(state)], lastRoundBurn: projectBurn(state), lastRoundPeople: state.budget.spend + cost };
   const record = turnRecord(state, after, []);
   assert.ok(Math.abs(record.people - (state.budget.spend + cost)) < 1e-9);
   assert.ok(Math.abs(record.computeBill - (projectBurn(state) - record.ops - record.people)) < 1e-9);
@@ -174,7 +174,7 @@ test('turn records add up to the cash the sim ended with', () => {
 
 test('a turn record counts only successful raises', () => {
   const before = era3();
-  const after = { ...before, cash: before.cash + 500, arr: 0, burnHistory: [...before.burnHistory, 0], lastRoundBurn: 0, budget: before.budget };
+  const after = { ...before, cash: before.cash + 500, arr: 0, burnHistory: [...before.burnHistory, 0], lastRoundBurn: 0, lastRoundPeople: undefined, budget: before.budget };
   const record = turnRecord(before, after, [{ type: 'raise', ok: true, amount: 500 }, { type: 'raise', ok: false, error: 'x' }]);
   assert.equal(record.raised, 500);
   assert.ok(Math.abs(record.oneOffs) < 1e-9);
@@ -259,7 +259,7 @@ test("today's serving shortfall stays in later turns until planned compute cover
 
 test('a played turn keeps a negative net compute bill', () => {
   const before = era3();
-  const after = { ...before, arr: 0, burnHistory: [...before.burnHistory, 10], lastRoundBurn: 10, budget: before.budget };
+  const after = { ...before, arr: 0, burnHistory: [...before.burnHistory, 10], lastRoundBurn: 10, lastRoundPeople: undefined, budget: before.budget };
   assert.ok(turnRecord(before, after, []).computeBill < 0);
 });
 
@@ -338,4 +338,33 @@ test('in a later row, a delivery landing partway bills its share and adds no cap
   const bill = 10 * 1 * BALANCE.unitMonthlyCost;
   assert.ok(Math.abs(row.bill - whole.bill - bill * (end - state.compute.pipeline[0].landsDay) / (end - start)) < 1e-9);
   assert.equal(row.units, whole.units);
+});
+
+test('a budget change mid-round leaves the history compute bill alone', () => {
+  const play = (raise) => {
+    const state = structuredClone(era3());
+    const game = createGame({ seed: 4, state, history: scenarioHistory(state) });
+    game.advanceDays(10);
+    if (raise) game.setBudget({ ...game.state.budget, spend: 200 });
+    game.endTurn();
+    return game.financeHistory.at(-1);
+  };
+  const same = play(false);
+  const raised = play(true);
+  assert.ok(raised.people > same.people);
+  assert.ok(Math.abs(raised.computeBill - same.computeBill) < 1, `${raised.computeBill} vs ${same.computeBill}`);
+});
+
+test('in a later row, Azuria credits are spent only for the part of the row the contract runs', () => {
+  const state = structuredClone(era3());
+  const next = state.turn + 1;
+  const { start, end } = roundSpan(next);
+  state.compute.contracts = state.compute.contracts.filter((c) => c.supplier !== 'azuria');
+  state.compute.pipeline = [{ id: 'cz', supplier: 'azuria', units: 10, price: 1, termMonths: 24, arrivesTurn: next + 1, string: null, landsDay: start + Math.round((end - start) / 2), landsFor: next }];
+  const months = eraById(state.era).monthsPerTurn;
+  const bill = 10 * BALANCE.unitMonthlyCost;
+  state.compute.credits = bill * months * 0.5; // enough for half a row at the full bill
+  const row = project(state, defaultPlan(state)).rows.find((r) => r.turn === next);
+  const ran = (end - state.compute.pipeline[0].landsDay) / (end - start);
+  assert.ok(Math.abs(row.credit - ran * Math.min(bill, state.compute.credits / months)) < 1e-9, `${row.credit}`);
 });

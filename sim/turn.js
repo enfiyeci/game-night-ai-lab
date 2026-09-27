@@ -40,7 +40,7 @@ import { applySplitEffects, makePledge, setComputeSplit, spotCover } from './spl
 import { ROUND_DAYS, monthsPerDay } from './time.js';
 import { TEAM_OF, teamBusyError } from './teams.js';
 import { feedPosts } from './feed.js';
-import { setAutomation, automationTick, aiProposals, applyApprovals } from './automation.js';
+import { setAutomation, automationTick, aiProposals, applyApprovals, reviewerCost } from './automation.js';
 import { landDue, stampLandings } from './landings.js';
 
 export const MAX_MOVES = 2;
@@ -387,7 +387,9 @@ function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
       recordBurn(state);
       // The round's average monthly burn, day by day (the finance history reads it; burnHistory stays the mark's rate).
       state.lastRoundBurn = (state.roundBurnSum ?? 0) / eraById(state.era).monthsPerTurn;
+      state.lastRoundPeople = (state.roundPeopleSum ?? 0) / eraById(state.era).monthsPerTurn; // its people part, averaged the same way
       state.roundBurnSum = 0;
+      state.roundPeopleSum = 0;
       if (state.compute.surge && --state.compute.surge.turnsLeft <= 0) {
         state.compute.split.coverWithSpot = state.compute.surge.restoreCover ?? state.compute.split.coverWithSpot;
         state.compute.surge = null;
@@ -537,6 +539,7 @@ export function advanceDays(prev, days, rng, observer = {}) {
     accrueEconomy(state, monthsPerDay(state));
     state.compute.creditsUsed = (state.compute.creditsUsed ?? 0) + creditOffset(state) * monthsPerDay(state);
     state.roundBurnSum = (state.roundBurnSum ?? 0) + state.burnPlanned * monthsPerDay(state); // the round's real spend
+    state.roundPeopleSum = (state.roundPeopleSum ?? 0) + (state.budget.spend + reviewerCost(state)) * monthsPerDay(state);
     const ended = expireContracts(state, monthsPerDay(state));
     if (ended.length) {
       for (const x of ended) events.push({ type: 'contractEnded', supplier: x.supplier, units: x.units });

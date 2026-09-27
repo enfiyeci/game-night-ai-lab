@@ -49,7 +49,7 @@ export function turnRecord(before, after, events = []) {
   const burn = after.lastRoundBurn ?? after.burnHistory.at(-1) ?? 0; // the round's day-by-day average (sim/turn.js)
   const ops = opsMonthly(before.era);
   // Reviewers are people too: their pay joins "people and programs", never the compute bill.
-  const people = after.budget.spend + reviewerCost({ automation: after.automation, era: before.era });
+  const people = after.lastRoundPeople ?? after.budget.spend + reviewerCost({ automation: after.automation, era: before.era });
   const raised = events.filter((e) => e.type === 'raise' && e.ok).reduce((sum, e) => sum + (e.amount ?? 0), 0);
   return {
     turn: before.turn,
@@ -118,10 +118,11 @@ export function signedAt(state, turn) {
   const bill = live.reduce((sum, c) => sum + billOf(c) * share(c), 0) + sites.reduce((sum, s) => sum + leaseMonthly(s.units), 0)
     + landingSites.reduce((sum, s) => sum + leaseMonthly(s.units) * landedShare(s, turn), 0);
   const azuria = live.filter((c) => c.supplier === 'azuria').reduce((sum, c) => sum + billOf(c) * share(c), 0);
+  const azuriaFull = live.filter((c) => c.supplier === 'azuria').reduce((sum, c) => sum + billOf(c), 0);
   const raw = own + Math.min(needs, power);
   const prices = whole.map((c) => ({ units: c.units, price: c.supplier === 'spot' ? SPOT_PRICE[era] : c.price }));
   // refreshOnline: pooled compute goes to the government pool; it is still billed.
-  return { units: Math.floor(raw * (1 - (state.compute.pooled ?? 0))), raw, bill, azuria, prices };
+  return { units: Math.floor(raw * (1 - (state.compute.pooled ?? 0))), raw, bill, azuria, azuriaFull, prices };
 }
 
 // Eras that still have a turn after this one: only those can take new compute (a deal signed now arrives next turn).
@@ -191,7 +192,9 @@ export function project(state, plan) {
     const planBill = bought * UNIT_PRICE;
     const ops = opsMonthly(era);
     const people = budgetSpend + reviewerCost({ automation: state.automation, era }); // reviewers' pay grows by era
-    const credit = Math.min(signed.azuria, credits / months); // creditOffset, spent the way spendCredits spends it
+    // creditOffset, spent the way spendCredits spends it: only for the part of the row the Azuria compute runs
+    const running = signed.azuriaFull > 0 ? signed.azuria / signed.azuriaFull : 1;
+    const credit = Math.min(signed.azuria, running * (credits / months));
     credits = Math.max(0, credits - credit * months);
     // Compute above today's level covers today's shortfall first and then sits idle; compute below it idles less first.
     const delta = signed.units + planned - state.compute.online;
