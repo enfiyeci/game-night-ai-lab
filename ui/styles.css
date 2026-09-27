@@ -4331,6 +4331,7 @@ html.title-waking #hud { transition: opacity .5s ease .6s; }
 /* ---- Flock: "Waiting for you" strip on Home (owner playtest 2026-09-26) ---- */
 .fk-wait-head { display: flex; align-items: center; gap: 8px; padding: 14px 16px 6px; font-size: 15px; font-weight: 700; }
 .fk-wait-n { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; display: grid; place-items: center; background: var(--coral); color: var(--fk-on-accent); font-size: 12px; font-weight: 700; }
+.fk-wait .fk-note:not(.warn) .fk-note-ic { background: var(--coral); } /* one warm red in the strip, matching its count */
 
 /* gn-newplayer: what to do when the recipe needs more compute than is free (one line, in place of the error) */
 .recipe-help { display: flex; flex-wrap: wrap; gap: 4px 14px; justify-content: center; align-items: baseline; margin-top: 5px; }
