@@ -1,5 +1,5 @@
 import { addMonitor, handBack, lockDown } from '../automation.js';
-import { changeDraft, draftFor, hasLine } from '../constitution.js';
+import { changeDraft, draftFor, hasConstitution, hasLine } from '../constitution.js';
 import { contractBill, refreshOnline, sideRng } from '../contracts.js';
 import { leaseMonthly } from '../power.js';
 import { activeModels } from '../serving.js';
@@ -434,6 +434,25 @@ export const EVENTS = [
           id: 'refuse', label: 'Refuse', cost: 'public trust', backers: ['Research'], opposers: ['Safety'],
           effects(state) { state.publicTrust -= 4; },
         },
+      ],
+    },
+  },
+  {
+    id: 'specRead',
+    kind: 'world',
+    trigger: (state) => state.era >= 3 && hasConstitution(state) && hasLine(state, 'no-power-grab'),
+    warning: null,
+    fallback: 'clarify',
+    card: {
+      title: 'The President read your constitution', // OWNER WRITES
+      post: { handle: '@executive_office', text: '“Refuses to help anyone seize illegitimate power, even if we ask.” Who exactly is seizing power? Very insulting to a GREAT Administration!' }, // OWNER WRITES
+      choices: [
+        { id: 'stand', label: 'Stand by it', cost: 'goodwill in Washington', backers: ['Safety'], opposers: ['Comms'],
+          effects(state) { state.govFavor.us -= 6; state.staffTrust += 2; } },
+        { id: 'clarify', label: 'Say it isn’t about anyone', cost: 'a little staff trust', backers: ['Comms'], opposers: [],
+          effects(state) { state.govFavor.us -= 2; state.staffTrust -= 1; } },
+        { id: 'drop', label: 'Drop it from the next model', cost: 'staff trust, and the line', backers: ['CFO'], opposers: ['Safety'],
+          effects(state) { changeDraft(state, { remove: 'no-power-grab' }, 'president'); state.govFavor.us += 3; state.staffTrust -= 4; } },
       ],
     },
   },

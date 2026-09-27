@@ -347,6 +347,20 @@ test('no-power-grab costs favor once and automatically refuses the President dem
   assert.match(state.feed.at(-1).text, /hard line refused/i);
 });
 
+test('the President reads the constitution once it holds the power line', () => {
+  const s = createInitialState();
+  s.era = 3;
+  const event = EVENTS.find((e) => e.id === 'specRead');
+  assert.equal(event.trigger(s), false);
+  learnConstitution(s, { hardLines: ['no-wmd', 'no-power-grab', 'honest'], rulings: SAFETY_PROPOSAL.rulings });
+  assert.equal(event.trigger(s), true);
+  const drop = event.card.choices.find((c) => c.id === 'drop');
+  drop.effects(s);
+  assert.equal(hasLine(s, 'no-power-grab'), true, 'the live model keeps it');
+  assert.equal(s.constitutionDraft.hardLines.includes('no-power-grab'), false);
+  assert.equal(event.fallback, 'clarify');
+});
+
 test('honest halves citation penalties and adds staff cost to deceptive choices', () => {
   const blame = createInitialState();
   adopt(blame);
