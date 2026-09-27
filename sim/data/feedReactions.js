@@ -2338,7 +2338,7 @@ export const REACTIONS = {
     ]
    ],
    "choices": {
-    "meet": [
+    "adopt": [
      [
       "@anon_staffer",
       "they gave the safety team more compute. real compute, not a slide. the mood today is different."
@@ -2348,7 +2348,7 @@ export const REACTIONS = {
       "{lab} met the letter's demands, including more compute for safety. a rare case of a letter working."
      ]
     ],
-    "ignore": [
+    "silent": [
      [
       "@anon_staffer",
       "the response to our letter was a company-wide email about \"our values.\" that was the whole response."
@@ -2406,31 +2406,31 @@ export const REACTIONS = {
    "breaks": [
     [
      "@public_record",
-     "NEW: a foreign intelligence service copied a frontier lab's model weights, according to three officials. The lab has not confirmed."
+     "NEW: a hacker spent months inside a frontier lab's internal staff forum, reading threads on how its models are built, according to two people familiar. The lab says the model weights were not touched."
     ],
     [
      "@natsec_brief",
-     "If this is confirmed, it is the most serious AI security failure to date. Frontier weights must be treated like weapons designs."
+     "\"Only the forum\" is how these stories start. Design discussions are a map to the crown jewels. Treat them that way."
     ],
     [
      "@patriot_pulse",
-     "They let CHINA walk out with our AI?? Who's getting fired??"
+     "Who was reading their forum for MONTHS?? If it's a foreign state somebody should be fired."
     ],
     [
      "@wei_in_shenzhen",
-     "Every Western story this week says \"a foreign state.\" I'd like to see the evidence before the headlines."
+     "Every story this week already has a villain in the headline. Nobody has said who did it."
     ],
     [
      "@situationally",
-     "I have been saying for years that lab security is a national security problem. This is the week that becomes obvious."
+     "Today it is the staff forum. Next time it is the weights. Lab security is a national security problem."
     ],
     [
      "@wake_up_sheeple",
-     "they \"stole\" it. or they gave it away and needed a story. WAKE UP."
+     "\"the weights were not touched.\" sure. WAKE UP."
     ],
     [
      "@shenzhen_dispatch",
-     "Before the takes arrive: nobody has said which state, the lab hasn't confirmed, and \"officials say\" is carrying the whole story. I have seen this headline turn out wrong twice in the last year. Wait for the evidence. Then get angry, if it's there.",
+     "Before the takes arrive: nobody has said who did it, the lab says the weights are safe, and \"people familiar\" is carrying the whole story. Wait for the evidence. Then get angry, if it's there.",
      {
       "replies": [
        [
@@ -2445,14 +2445,14 @@ export const REACTIONS = {
     "report": [
      [
       "@natsec_brief",
-      "{lab} reported the breach immediately and is cooperating. Painful, correct. That's what a serious lab does."
+      "{lab} reported the forum breach to the government and told the public. Painful, correct. That's what a serious lab does."
      ],
      [
       "@kayswanick",
-      "{lab} confirmed the theft. Their security budget will now be larger than some countries'."
+      "{lab} confirmed someone read its staff forum for months. Their security budget will now be larger than some countries'."
      ]
     ],
-    "hunt": [
+    "staffonly": [
      [
       "@crab_apple_leaks",
       "something is going on at {lab} security. new badge readers, fewer friends. 🍎"

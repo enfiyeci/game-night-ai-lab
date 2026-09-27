@@ -1,5 +1,5 @@
 import { recipeCost } from '../../sim/recipe.js';
-import { modelName } from '../../sim/release.js';
+import { workingName } from './naming.js';
 import { MW_PER_UNIT } from '../../sim/data/compute.js';
 import { ROUND_DAYS } from '../../sim/time.js';
 import { ERAS } from '../../sim/data/eras.js';
@@ -73,8 +73,7 @@ export function project(state) {
       ? { name: 'Training complete', status: 'ready to release', progress: null }
       : { name: 'No project', status: 'click the floor to get to work', progress: null };
   }
-  const last = state.models.at(-1);
-  const name = modelName({ family: last?.family ?? 'Kestrel', generation: (last?.generation ?? 0) + 1, size: run.recipe.sliders.size, tierWords: state.tierWords });
+  const name = workingName(state, run.recipe.sliders.size);
   const total = Math.max(1, run.turnsLeft, recipeCost(state, run.recipe).turns);
   const progress = (total - run.turnsLeft) / total;
   return { name, status: `training run · ${STAGE_WORDS[Math.min(2, Math.floor(progress * 3))]}`, progress };

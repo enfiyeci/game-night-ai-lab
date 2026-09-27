@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
-import { eventsTick, resolveEvent, stampNewCards } from '../sim/events.js';
+import { eventsTick, isAnchorId, resolveEvent, stampNewCards } from '../sim/events.js';
 import { EVENTS } from '../sim/data/events.js';
 import {
   EVENTS_6C,
@@ -18,6 +18,7 @@ import { startRun, resolveRun } from '../sim/training.js';
 
 const no = { next: () => 0.99, int: () => 0, chance: () => false, pick: (a) => a[0], normal: (m) => m };
 const yes = { next: () => 0, int: () => 0, chance: () => true, pick: (a) => a[0], normal: (m) => m };
+const nonAnchors = (state) => state.pendingEvents.filter((event) => !isAnchorId(event.eventId ?? event.id));
 
 function withRows(rows, fn) {
   EVENTS_6C.push(...rows);
@@ -47,7 +48,7 @@ test('a repeatable row fires again after it resolves; a normal row does not', ()
     resolveEvent(s, 'rep', 'a'); resolveEvent(s, 'once', 'a');
     s.turn += 1;
     eventsTick(s, no);
-    assert.deepEqual(s.pendingEvents.map((e) => e.id), ['rep']);
+    assert.deepEqual(nonAnchors(s).map((e) => e.id), ['rep']);
     assert.equal(s.seenEvents.filter((id) => id === 'rep').length, 1, 'seenEvents lists an id once');
   },
 ));
@@ -57,7 +58,7 @@ test('training rows are offered before world rows when the queue is short', () =
   () => {
     const s = createInitialState();
     eventsTick(s, no);
-    assert.equal(s.pendingEvents[0].id, 'tr');
+    assert.equal(nonAnchors(s)[0].id, 'tr');
   },
 ));
 
@@ -115,12 +116,13 @@ test('a due board vote waits while the lab is insolvent', () => {
   assert.equal(s.flags.boardVoteDue, true);
 });
 
-test('stolen weights and open weights set separate stable flags', () => {
+test('a forum breach does not set either weights flag', () => {
   const s = createInitialState();
   s.pendingEvents.push({ id: 'weightTheft' });
-  resolveEvent(s, 'weightTheft', 'silence');
-  assert.equal(s.flags.weightsStolen, true);
+  resolveEvent(s, 'weightTheft', 'silent');
+  assert.equal(s.flags.weightsStolen, undefined);
   assert.equal(s.flags.openWeights, undefined);
+  assert.equal(s.flags.coverUp, true);
 });
 
 const runState = (spikes) => {
@@ -132,8 +134,8 @@ const runState = (spikes) => {
 test('a loss spike becomes a card, and each answer changes the run', () => {
   const s = runState(1);
   eventsTick(s, no);
-  assert.equal(s.pendingEvents[0].id, 'lossSpike');
-  assert.equal(s.pendingEvents[0].choices.length, 3);
+  assert.equal(nonAnchors(s)[0].id, 'lossSpike');
+  assert.equal(nonAnchors(s)[0].choices.length, 3);
 
   const back = runState(1); back.pendingEvents.push({ id: 'lossSpike' });
   resolveEvent(back, 'lossSpike', 'rollback');
@@ -153,11 +155,11 @@ test('an answered spike does not re-fire, but a new spike does', () => {
   resolveEvent(s, 'lossSpike', 'push');
   s.turn += 1;
   eventsTick(s, no);
-  assert.equal(s.pendingEvents.length, 0);
+  assert.equal(nonAnchors(s).length, 0);
   s.activeRun.spikes = 2;
   s.turn += 1;
   eventsTick(s, no);
-  assert.equal(s.pendingEvents[0].id, 'lossSpike');
+  assert.equal(nonAnchors(s)[0].id, 'lossSpike');
 });
 
 test('an unanswered spike falls back to push through', () => {
@@ -191,7 +193,7 @@ test('the jump is rolled once per trained model', () => {
 
   const lucky = pendingState();
   eventsTick(lucky, yes);
-  assert.equal(lucky.pendingEvents[0].id, 'capabilityJump');
+  assert.equal(nonAnchors(lucky)[0].id, 'capabilityJump');
 });
 
 test('every jump answer adds the jump; celebrate, audit and quiet differ as specified', () => {

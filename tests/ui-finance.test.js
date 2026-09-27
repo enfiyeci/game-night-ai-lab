@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { BALANCE } from '../sim/balance.js';
+import { roundSpan } from '../sim/time.js';
 import { growUsers, monthlyRevenue, projectBurn } from '../sim/economy.js';
 import { eraById } from '../sim/data/eras.js';
 import { computeSlices } from '../sim/split.js';
@@ -32,11 +33,20 @@ test("this turn's projected spending equals the sim's own burn", () => {
 test('signed compute drops off when a contract term ends', () => {
   const state = era3();
   const [contract] = state.compute.contracts;
-  const lastBilled = Array.from({ length: 12 }, (_, i) => state.turn + i)
-    .filter((t) => monthOfTurn(t) - monthOfTurn(state.turn) < contract.monthsLeft).at(-1);
-  assert.equal(signedAt(state, lastBilled).units, contract.units);
-  assert.equal(signedAt(state, lastBilled + 1).units, 0);
-  assert.ok(Math.abs(signedAt(state, lastBilled).bill - contract.units * contract.price * BALANCE.unitMonthlyCost) < 1e-9);
+  state.compute.contracts = [contract]; // this contract alone: others land and end on their own days
+  state.compute.pipeline = [];
+  // Terms end on days: rows the contract fully covers count its capacity and bill; a partial last row bills its share only.
+  const full = contract.units * contract.price * BALANCE.unitMonthlyCost;
+  const ahead = (t) => monthOfTurn(t) - monthOfTurn(state.turn);
+  const rowMonths = (t) => monthOfTurn(t + 1) - monthOfTurn(t);
+  const lastWhole = Array.from({ length: 12 }, (_, i) => state.turn + i)
+    .filter((t) => t === state.turn || ahead(t) + rowMonths(t) <= contract.monthsLeft + 1e-9).at(-1);
+  assert.equal(signedAt(state, lastWhole).units, contract.units);
+  assert.ok(Math.abs(signedAt(state, lastWhole).bill - full) < 1e-9);
+  const next = signedAt(state, lastWhole + 1);
+  assert.equal(next.units, 0);
+  const share = Math.max(0, Math.min(1, (contract.monthsLeft - ahead(lastWhole + 1)) / rowMonths(lastWhole + 1)));
+  assert.ok(Math.abs(next.bill - full * share) < 1e-9);
 });
 
 test('a goal bills the unsigned compute from next turn at the base price', () => {
@@ -118,7 +128,7 @@ test("with reviewers on staff, this turn's row still equals the sim's burn, and 
   const era5 = rows.find((r) => r.era === 5);
   assert.ok(Math.abs(era5.people - (state.budget.spend + reviewerCost({ ...state, era: 5 }))) < 1e-9);
   // A played round: the record's compute bill is the burn less ops and people, reviewers included in people.
-  const after = { ...state, burnHistory: [...state.burnHistory, projectBurn(state)] };
+  const after = { ...state, burnHistory: [...state.burnHistory, projectBurn(state)], lastRoundBurn: projectBurn(state), lastRoundPeople: state.budget.spend + cost };
   const record = turnRecord(state, after, []);
   assert.ok(Math.abs(record.people - (state.budget.spend + cost)) < 1e-9);
   assert.ok(Math.abs(record.computeBill - (projectBurn(state) - record.ops - record.people)) < 1e-9);
@@ -164,7 +174,7 @@ test('turn records add up to the cash the sim ended with', () => {
 
 test('a turn record counts only successful raises', () => {
   const before = era3();
-  const after = { ...before, cash: before.cash + 500, arr: 0, burnHistory: [...before.burnHistory, 0], budget: before.budget };
+  const after = { ...before, cash: before.cash + 500, arr: 0, burnHistory: [...before.burnHistory, 0], lastRoundBurn: 0, lastRoundPeople: undefined, budget: before.budget };
   const record = turnRecord(before, after, [{ type: 'raise', ok: true, amount: 500 }, { type: 'raise', ok: false, error: 'x' }]);
   assert.equal(record.raised, 500);
   assert.ok(Math.abs(record.oneOffs) < 1e-9);
@@ -249,7 +259,7 @@ test("today's serving shortfall stays in later turns until planned compute cover
 
 test('a played turn keeps a negative net compute bill', () => {
   const before = era3();
-  const after = { ...before, arr: 0, burnHistory: [...before.burnHistory, 10], budget: before.budget };
+  const after = { ...before, arr: 0, burnHistory: [...before.burnHistory, 10], lastRoundBurn: 10, lastRoundPeople: undefined, budget: before.budget };
   assert.ok(turnRecord(before, after, []).computeBill < 0);
 });
 
@@ -304,4 +314,77 @@ test('a queued board promise reaches the sim when the turn ends', () => {
   assert.deepEqual(errors, []);
   assert.ok(events.some((e) => e.type === 'boardPromise' && e.units === 60 && e.era === 3));
   assert.equal(game.queue.boardPromise, undefined);
+});
+
+test('a round with compute landing mid-round records its real spend, not a phantom one-off', () => {
+  const state = structuredClone(era3());
+  state.cash = 1e5;
+  // A big contract due at the next mark, so it lands inside this round (sim/landings.js).
+  state.compute.pipeline.push({ id: 'cbig', supplier: 'azuria', units: 400, price: 1, termMonths: 24, arrivesTurn: state.turn + 1, string: null, needsPower: false });
+  const game = createGame({ seed: 4, state, history: scenarioHistory(state) });
+  game.endTurn();
+  const row = game.financeHistory.at(-1);
+  assert.ok(game.state.compute.contracts.some((c) => c.id === 'cbig'), 'the contract landed');
+  assert.ok(Math.abs(row.oneOffs) < Math.max(1, Math.abs(row.burn) * row.months * 0.02), `one-offs ${row.oneOffs} against burn ${row.burn}`);
+});
+
+test('in a later row, a delivery landing partway bills its share and adds no capacity yet', () => {
+  const state = structuredClone(era3());
+  const next = state.turn + 1;
+  const { start, end } = roundSpan(next);
+  state.compute.pipeline = [{ id: 'cx', supplier: 'azuria', units: 10, price: 1, termMonths: 24, arrivesTurn: next + 1, string: null, landsDay: start + Math.round((end - start) / 2), landsFor: next }];
+  const row = signedAt(state, next);
+  const whole = signedAt({ ...state, compute: { ...state.compute, pipeline: [] } }, next);
+  const bill = 10 * 1 * BALANCE.unitMonthlyCost;
+  assert.ok(Math.abs(row.bill - whole.bill - bill * (end - state.compute.pipeline[0].landsDay) / (end - start)) < 1e-9);
+  assert.equal(row.units, whole.units);
+});
+
+test('a budget change mid-round leaves the history compute bill alone', () => {
+  const play = (raise) => {
+    const state = structuredClone(era3());
+    const game = createGame({ seed: 4, state, history: scenarioHistory(state) });
+    game.advanceDays(10);
+    if (raise) game.setBudget({ ...game.state.budget, spend: 200 });
+    game.endTurn();
+    return game.financeHistory.at(-1);
+  };
+  const same = play(false);
+  const raised = play(true);
+  assert.ok(raised.people > same.people);
+  assert.ok(Math.abs(raised.computeBill - same.computeBill) < 1, `${raised.computeBill} vs ${same.computeBill}`);
+});
+
+test('in a later row, Azuria credits are spent only for the part of the row the contract runs', () => {
+  const state = structuredClone(era3());
+  const next = state.turn + 1;
+  const { start, end } = roundSpan(next);
+  state.compute.contracts = state.compute.contracts.filter((c) => c.supplier !== 'azuria');
+  state.compute.pipeline = [{ id: 'cz', supplier: 'azuria', units: 10, price: 1, termMonths: 24, arrivesTurn: next + 1, string: null, landsDay: start + Math.round((end - start) / 2), landsFor: next }];
+  const months = eraById(state.era).monthsPerTurn;
+  const bill = 10 * BALANCE.unitMonthlyCost;
+  state.compute.credits = bill * months * 0.5; // enough for half a row at the full bill
+  const row = project(state, defaultPlan(state)).rows.find((r) => r.turn === next);
+  const ran = (end - state.compute.pipeline[0].landsDay) / (end - start);
+  assert.ok(Math.abs(row.credit - ran * Math.min(bill, state.compute.credits / months)) < 1e-9, `${row.credit}`);
+});
+
+test('in a later row, a running Azuria contract and one landing partway share the credit cap moment by moment', () => {
+  const state = structuredClone(era3());
+  const next = state.turn + 1;
+  const { start, end } = roundSpan(next);
+  const months = eraById(state.era).monthsPerTurn;
+  const bill = 10 * BALANCE.unitMonthlyCost;
+  const half = start + Math.round((end - start) / 2);
+  state.compute.contracts = [{ id: 'za', supplier: 'azuria', units: 10, price: 1, monthsLeft: 24, needsPower: false, string: null, arrivedTurn: 0, scaledDown: false, troubled: false, dark: false, bumpTurn: null, exclusiveBought: false, headline: null }];
+  state.compute.pipeline = [{ id: 'zb', supplier: 'azuria', units: 10, price: 1, termMonths: 24, arrivesTurn: next + 1, string: null, landsDay: half, landsFor: next }];
+  state.compute.credits = 2.5 * bill * months; // one bill a month this row, then a cap of 1.5 bills a month in the next
+  const rows = project(state, defaultPlan(state)).rows;
+  const now = rows.find((r) => r.turn === state.turn);
+  const row = rows.find((r) => r.turn === next);
+  const cap = (state.compute.credits - now.credit * months) / months;
+  const late = (end - half) / (end - start);
+  assert.ok(cap > bill && cap < 2 * bill, 'the cap binds only after the second contract lands');
+  const expected = (1 - late) * Math.min(bill, cap) + late * Math.min(2 * bill, cap);
+  assert.ok(Math.abs(row.credit - expected) < 1e-9, `${row.credit} vs ${expected}`);
 });
