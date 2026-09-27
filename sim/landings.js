@@ -1,0 +1,81 @@
+import { createRng } from './rng.js';
+import { clamp } from './util.js';
+import { roundSpan } from './time.js';
+import { landRivals } from './rivals.js';
+import { legalTick } from './economy.js';
+import { keepPromises } from './promises.js';
+import { deliverDue, refreshOnline, sideRng } from './contracts.js';
+import { powerTurn } from './power.js';
+
+// FNV-1a over the seed and a key, so a landing day never draws from the game's shared random numbers.
+function hashKey(seed, key) {
+  let h = 2166136261;
+  for (const ch of `${seed}:${key}`) {
+    h ^= ch.codePointAt(0);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+// A day inside `round` that has not passed yet; the round's mark day when the round is already over.
+export function landingDay(state, key, round) {
+  const { start, end } = roundSpan(round);
+  const from = Math.max(start, state.day);
+  if (from >= end) return end;
+  return from + 1 + createRng(hashKey(state.seed ?? 1, key)).int(0, end - from - 1);
+}
+
+// A day in the last third of `round`, not yet passed: deliveries land close to their old date, so early bills stay
+// small at the next planning point (retune, 2026-09-26).
+export function lateInRoundDay(state, key, round) {
+  const { start, end } = roundSpan(round);
+  const from = Math.max(end - Math.floor((end - start) / 3), start, state.day);
+  if (from >= end) return end;
+  return from + 1 + createRng(hashKey(state.seed ?? 1, key)).int(0, end - from - 1);
+}
+
+const onMarkDay = (state, key, round) => roundSpan(round).end;
+
+function stamp(state, item, round, key, dayFor = landingDay) {
+  if (item.landsFor === round && item.landsDay != null) return;
+  item.landsFor = round;
+  item.landsDay = dayFor(state, key, round);
+}
+
+// Owner pick (2026-09-26): each thing lands in the round whose mark used to fire it, on a day inside that round.
+// Lawsuits and promises fired at the mark ending round dueTurn; deliveries and sites at the mark ending arrivesTurn - 1.
+export function stampLandings(state) {
+  for (const c of state.legalCases) stamp(state, c, c.dueTurn, `legal:${c.source}:${c.cost}:${c.dueTurn}`);
+  for (const p of state.promises) {
+    if (p.source === 'president' && p.dueTurn != null) stamp(state, p, p.dueTurn, `promise:${p.meeting}:${p.id}`);
+  }
+  for (const p of state.compute.pipeline) stamp(state, p, p.arrivesTurn - 1, `pipeline:${p.id}:${p.arrivesTurn}`, lateInRoundDay);
+  for (const s of state.power.sites) {
+    if (s.online) continue;
+    // A site facing local opposition waits for its mark, so the opposition card always lands first, as it did.
+    const held = state.flags.oppositionSite === s.id;
+    if (Boolean(s.landsHeld) !== held) delete s.landsDay;
+    s.landsHeld = held;
+    stamp(state, s, s.arrivesTurn - 1, `site:${s.id}`, held ? onMarkDay : lateInRoundDay);
+  }
+}
+
+// Everything that lands today (stage 2), fired from advanceDays before the mark code.
+export function landDue(state) {
+  stampLandings(state);
+  const events = [];
+  for (const r of landRivals(state)) events.push({ type: 'rivalRelease', ...r });
+  const landed = (item) => item.landsDay != null && item.landsDay <= state.day;
+  for (const c of legalTick(state, landed)) events.push({ type: 'lawsuitPaid', cost: c.cost, source: c.source });
+  keepPromises(state, landed);
+  if (state.compute.pipeline.some(landed)) {
+    for (const x of deliverDue(state, sideRng(state, 6), landed, { sync: false })) events.push({ type: 'computeArrived', supplier: x.supplier, units: x.units });
+  }
+  const sites = powerTurn(state, landed);
+  for (const e of sites) events.push(e);
+  if (sites.length) refreshOnline(state);
+  // The mark normalizes these; a landing between marks must keep them in range too.
+  state.publicTrust = clamp(state.publicTrust, 0, 100);
+  state.govFavor.us = clamp(state.govFavor.us, 0, 100);
+  return events;
+}

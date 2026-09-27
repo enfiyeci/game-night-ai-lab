@@ -33,3 +33,20 @@ export function roundMarkDay(state, rounds) {
   }
   return day;
 }
+
+// The era a round belongs to (ERAS[].turns rounds each); rounds past the run count as the last era.
+export function eraOfRound(round) {
+  let left = round;
+  for (const era of ERAS) {
+    if (left < era.turns) return era.id;
+    left -= era.turns;
+  }
+  return ERAS.at(-1).id;
+}
+
+// Round `round` runs from the day after `start` to its mark on day `end`.
+export function roundSpan(round) {
+  let start = 0;
+  for (let r = 0; r < round; r += 1) start += ROUND_DAYS[eraOfRound(r)];
+  return { start, end: start + ROUND_DAYS[eraOfRound(round)] };
+}

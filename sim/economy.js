@@ -93,12 +93,12 @@ export function runway(state, which) {
   return net <= 0 ? Infinity : state.cash / net;
 }
 
-export function legalTick(state) {
+export function legalTick(state, due = (c) => c.dueTurn <= state.turn) {
   const multiplier = state.flags.statePreemption === true ? STATE_PREEMPTION_LEGAL_COST_MULTIPLIER : 1;
   const paid = state.legalCases
-    .filter((c) => c.dueTurn <= state.turn)
+    .filter(due)
     .map((c) => ({ ...c, cost: c.cost * multiplier }));
-  state.legalCases = state.legalCases.filter((c) => c.dueTurn > state.turn);
+  state.legalCases = state.legalCases.filter((c) => !due(c));
   for (const c of paid) {
     state.cash -= c.cost;
     state.publicTrust -= 3;

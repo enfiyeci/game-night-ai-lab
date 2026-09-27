@@ -60,7 +60,7 @@ test('article lead uses the five public benchmark hand counts', () => {
   const state = SCENARIOS.summit(5);
   const result = article(state, historyRows(state));
   const lead = result.lead.join('');
-  assert.match(lead, /Kestrel 1 Core.*two of five/);
+  assert.match(lead, /Kestrel 1 Core.*all five/);
   assert.match(lead, new RegExp(`${state.models.at(-1).name}.*all five`));
 });
 
@@ -203,6 +203,7 @@ test('endTurn subscribers see the rival release log after it is updated', () => 
     assert.deepEqual(game.rivalReleases, expected);
     turn += 1;
   });
+  game.endTurn();
   game.endTurn();
   game.endTurn();
   assert.equal(sawRelease, true);
