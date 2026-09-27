@@ -5,6 +5,7 @@ import { standardTechniques } from './techniques.js';
 import { rollTrainingHazard, applyAlignmentFaking, evalGamingDebt } from './hazards.js';
 import { hasLine } from './constitution.js';
 import { computeSlices } from './split.js';
+import { startPolishing } from './polish.js';
 
 export const SHARED_SAFETY_DEBT_MULT = 0.7;
 
@@ -45,6 +46,7 @@ export function advanceRunBy(state, rng, fraction) {
   if (run.turnsLeft > 1e-9) return null;
   state.activeRun = null;
   state.pendingModel = resolveRun(state, run, rng);
+  startPolishing(state.pendingModel, run.units, state.day);
   if (run.uncapped) state.pendingModel.uncapped = true; // run past the Geneva cap
   return state.pendingModel;
 }
@@ -54,6 +56,7 @@ export const advanceRun = (state, rng) => advanceRunBy(state, rng, 1);
 // A player action (a new compute split, a deal, a release) can change training capacity mid-round.
 export function recheckCapacity(state) {
   if (state.activeRun) delete state.activeRun.capacityTurn;
+  if (state.pendingModel?.polishing) delete state.pendingModel.polishing.capacityTurn;
 }
 
 export function resolveRun(state, run, rng) {

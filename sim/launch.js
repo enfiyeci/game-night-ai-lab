@@ -1,4 +1,5 @@
 import { clamp } from './util.js';
+import { POLISH_CRITIC_DIVISOR } from './polish.js';
 import { leaderCapability, rank } from './rivals.js';
 import { safetySpend } from './economy.js';
 import { INTERPRETABILITY_SPEND, GAMING_THRESHOLD } from './hazards.js';
@@ -54,7 +55,8 @@ export function scoreLaunch(state, model, rng) {
   const rivalAvg = caps.reduce((s, b) => s + b.rival, 0) / caps.length;
   const skipped = Math.max(0, model.skipped ?? 0);
   const bar = prevAvg + JUMP_BAR_PER_NUMBER * skipped;
-  const base = 7 + (capAvg - bar) / 3 + (capAvg - rivalAvg) / 6;
+  // gn-model-appeal owns the critic weight of post-training polish.
+  const base = 7 + (capAvg - bar) / 3 + (capAvg - rivalAvg) / 6 + (model.polish ?? 0) / POLISH_CRITIC_DIVISOR;
   const ctx = { launch, flags, rank: rank(state), safetyShown: benchmarks.find((b) => b.id === 'gauntlet').shown };
   const releaseCount = state.models.length; // picks the quip and the everyday reactions without another random draw
   const press = CRITICS.map((c) => {

@@ -102,7 +102,9 @@ All copy speaks in dates and weeks, never turns (owner rule).
 ```text
 state.pendingModel.polishing = {
   flaws: [{ flag, progress, leftIn }],   // fixable flaws still on the model, in working order
-  polishRounds,                           // polishing time spent on bubbles, in rounds
+  bubbleProgress,                        // rounds spent towards the next bubble
+  bubbles: [{ day, gain }],               // polish bubbles so far
+  rivals: [{ id, day }],                  // rival launches that landed while polishing
   startedDay,                             // story day training ended
 }
 state.pendingModel.polish                 // 0..100, stored unrounded, shown rounded

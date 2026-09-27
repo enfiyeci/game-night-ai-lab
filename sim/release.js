@@ -122,7 +122,7 @@ export function releaseModel(state, release, rng) {
   const name = modelName({ family: release.family, generation, size: m.size, tierWords: state.tierWords });
   state.capability = Math.max(state.capability, m.capability);
   state.alignmentDebt += sum('ad');
-  const launch = scoreLaunch(state, { capability: m.capability + REASONING_BONUS[reasoning], spec, flags, name, priceStance: release.price, generation, skipped }, rng);
+  const launch = scoreLaunch(state, { capability: m.capability + REASONING_BONUS[reasoning], spec, flags, name, priceStance: release.price, generation, skipped, polish: m.polish ?? 0 }, rng);
   const quality = clamp(1 + (launch.pressAvg - 6) / 8, 0.5, 1.6);
   const eraGrowth = 1 + 0.5 * (state.era - 1);
   const constitutionUsers = spec.channel === 'enterprise' && hasLine(state, 'privacy') ? 1.1 : 1;
@@ -151,6 +151,8 @@ export function releaseModel(state, release, rng) {
     active: true,
     activated: false,
     flags,
+    polish: m.polish ?? 0,
+    fixedFlaws: m.fixedFlaws ?? [],
     servingCost: 0,
   };
   if (spec.channel === 'consumer' && hasLine(state, 'no-wmd')) model.revenueMult = 0.97;
