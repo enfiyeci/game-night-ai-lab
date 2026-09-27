@@ -52,7 +52,10 @@ export function mountFeed(game, { overlay, events }) {
   let intro = null;
   let introLoading = false;
 
-  const stageBusy = () => Boolean(overlay.querySelector('.event-layer, .dialog-layer, .screenwall-layer'))
+  let introEra = null;
+
+  const stageBusy = () => Boolean(game.state.ending || document.querySelector('.film-host')) // the run is over
+    || Boolean(overlay.querySelector('.event-layer, .dialog-layer, .screenwall-layer'))
     || !button.offsetParent // the phone is hidden (a hazard card holds the desk)
     || Boolean(overlay.querySelector('.ev-briefing .ev-bubble:not(.phone-intro)')); // an advisor is already talking
 
@@ -60,19 +63,25 @@ export function mountFeed(game, { overlay, events }) {
     intro?.remove();
     intro = null;
     button.classList.remove('buzz');
-    if (!done) return;
+    if (!done || introDone) return;
     introDone = true;
+    watcher.disconnect();
     try { localStorage.setItem(INTRO_KEY, '1'); } catch { /* storage may be blocked */ }
   }
 
   function maybeIntroduce() {
-    if (intro && stageBusy()) endIntro({ done: false }); // step aside; it comes back when the stage is clear
-    if (introDone || intro || introLoading || panel || !(count() || unseenCount(game.state)) || stageBusy()) return;
+    if (introDone) return;
+    // Step aside (it comes back when the stage is clear); a new era moves the desks, so it is drawn again.
+    if (intro && (stageBusy() || introEra !== game.state.era)) endIntro({ done: false });
+    if (intro || introLoading || panel || !(count() || unseenCount(game.state)) || stageBusy()) return;
     introLoading = true;
-    loadAnchors(game.state.era).then((anchors) => {
+    const era = game.state.era;
+    loadAnchors(era).then((anchors) => {
       introLoading = false;
       const head = anchors.heads?.policy;
       if (!head || introDone || intro || panel || stageBusy()) return;
+      if (game.state.era !== era) return maybeIntroduce();
+      introEra = era;
       const row = el('<div class="ev-row"><button type="button" class="ev-act">Open the phone</button><button type="button" class="ev-act ghost">Not now</button></div>');
       intro = bubbleAt(introLayer, head, {
         label: ADVISOR_TITLE.policy,
@@ -93,8 +102,12 @@ export function mountFeed(game, { overlay, events }) {
     });
   }
 
+  // Anything added to the stage (a card, a dialog, an advisor's bubble) is checked as it appears.
+  const watcher = new MutationObserver(maybeIntroduce);
+  if (!introDone) watcher.observe(overlay, { childList: true, subtree: true });
+
   button.addEventListener('click', () => {
-    if (intro) endIntro({ done: true });
+    endIntro({ done: true }); // a player who found the phone needs no introduction
     if (panel) panel.close();
     else openPanel();
   });
