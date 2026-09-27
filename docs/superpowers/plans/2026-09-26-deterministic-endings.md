@@ -1075,7 +1075,7 @@ const loiDelivery = (state, headline) => Math.max(Math.round(headline * LOI_FLOO
   (import `rank` from `./rivals.js`; the import cycle is safe because both are only called at run time).
   `deliverDue(state, _rng, due, opts)` calls `arrive(state, p)`. (The first `generateOffers` line in this step, the
   middle of the range, is replaced by the rank rule above.) `signOffer(state, offerId)` (its `reserveGrid` call
-  loses the rng). `contractsTurn(state)` (import `accrue`):
+  loses the rng). `contractsTurn(state)` (import `SPOT_PULL_HEAT` and `CORE_FLAME_TROUBLE_MONTHS`):
 
 ```js
   // D8: in the tight eras, spot capacity is pulled for prepaid customers when race heat is 60 or more.
