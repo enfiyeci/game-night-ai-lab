@@ -255,7 +255,7 @@ def shot_cw_phone():
     F.laptop("captions", (-0.24, 2.1, 0.755), "cw-phone", (512, 192, 676, 226), yaw=10, strength=1.0, width=0.36)
     F.trophy((0.02, 2.62, 0.755), scale=0.8)
     kit.area((0.16, 1.8, 0.9), (0.16, 1.4, 0.76), (0.08, 0.15), 0.8, kit.kelvin(7500))   # the phone's light on the desk
-    kit.camera((0.06, 1.42, 1.03), (0.0, 2.1, 0.885), lens=32, fstop=8.0, focus=(0.0, 1.95, 0.88))
+    kit.camera((0.06, 1.42, 1.03), (0.0, 2.1, 0.866), lens=31, fstop=8.0, focus=(0.0, 1.95, 0.88))
 
 
 def shot_rb_budget():
