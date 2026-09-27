@@ -92,7 +92,7 @@ p {{ margin: 0; font-size: 17px; line-height: 1.55; color: color-mix(in oklab, v
 <div class="intro">
   <div class="kick">Game Night &middot; ending films</div>
   <h1>Ending films</h1>
-  <p>Each film opens in your office, then shows the world through the screens people were looking at and wide shots rendered in Blender, then the title card and Lumen's last line. Every film is now about 60 seconds, with a line from Lumen on each shot; the lines are placeholders for now. Sound on.</p>
+  <p>Each film opens in your office, then moves through the world in still scenes rendered in Blender, with a slow camera move, and ends on the title card and Lumen's last line. No narration: the scenes carry the story, and any screen in a scene shows its live design. Sound on.</p>
   <div class="films" role="group" aria-label="Film">{buttons}</div>
   <div class="row" role="group" aria-label="Office era"><span>Office era</span>
     {''.join(f'<button type="button" class="era" data-era="{e}" aria-pressed="{str(e == 4).lower()}">{e}</button>' for e in range(1, 6))}</div>
