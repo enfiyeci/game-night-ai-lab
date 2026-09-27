@@ -3,6 +3,10 @@ berth, a gantry crane, and ships out at anchor. Shots:
 
   mis-port-board   Catastrophic misalignment, Day 4, dawn: the board says every vessel DELIVERED, but the berths are
                    empty, the ships still wait offshore, and the reefer boxes of medicine show their warning lights.
+  al-port          Aligned, dawn: a ship at the berth is being unloaded under the crane, and a dock worker in hi-vis
+                   stands at the board with a clipboard, signing off the change it shows.
+  cw-port          Pyrrhic, Month 2: close on the dispatch office's screen answering "Summary available on request.",
+                   the quay grey through the window behind (framed like cw-triage and cw-chat).
 """
 import math
 import os
@@ -10,9 +14,11 @@ import random
 import sys
 
 import bpy
+from mathutils import Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import kit  # noqa: E402
+import people as P  # noqa: E402
 
 EDGE = 22.0     # the quay edge (water beyond, y > EDGE)
 
@@ -87,7 +93,8 @@ def ship(x, y, length, heading=0, lights=True, seed=0):
     return root
 
 
-def crane(x, y, boom_up=True):
+def crane(x, y, boom_up=True, load=None):
+    """A gantry crane; with the boom down, load=(y, z) hangs a container from it on cables."""
     steel = kit.mat("#C8864C", 0.5, 0.4)
     for dx in (-6, 6):
         for dy in (-8, 8):
@@ -99,6 +106,13 @@ def crane(x, y, boom_up=True):
         kit.box((x, y + 22, 58), (2, 36, 2), steel, rot=(math.radians(55), 0, 0))
     else:
         kit.box((x, y + 30, 40), (2, 60, 2), steel)
+        if load:
+            ly, lz = load
+            kit.box((x, ly, 39), (3, 4, 1.2), kit.mat("#DDD9D0", 0.5))   # the trolley
+            for dx in (-1.2, 1.2):
+                kit.cyl((x + dx, ly, (lz + 2.8 + 38.4) / 2), 0.04, 38.4 - lz - 2.8, kit.mat("#222", 0.4, 0.6), verts=8)
+            kit.box((x, ly, lz + 2.75), (2.5, 6.2, 0.3), kit.mat("#E9C46A", 0.5, 0.4))   # the spreader
+            container((x, ly, lz), rot_z=math.radians(90), colour="#2F5F8A")
 
 
 def quay():
@@ -111,13 +125,18 @@ def quay():
         kit.box((0, y, 0.03), (400, 0.12, 0.06), kit.mat("#6B6E73", 0.3, 0.9))
 
 
-def board(plate, crop, x, y, width=5.2, z=3.4):
+def board(plate, crop, x, y, width=5.2, z=3.4, yaw=0.0):
+    """The dispatch board on two posts, facing -y turned by yaw degrees."""
     posts = kit.mat("#3A3D40", 0.5, 0.6)
     h = width * crop[3] / crop[2]
+    a = math.radians(yaw)
+    c, s = math.cos(a), math.sin(a)
     for dx in (-width / 2 + 0.3, width / 2 - 0.3):
-        kit.box((x + dx, y + 0.3, (z - h / 2) / 2 + 0.2), (0.22, 0.22, z - h / 2 + 0.4), posts)
-    face, _ = kit.screen("board", (x, y, z), width, plate, crop=crop, strength=2.2, depth=0.3, border=0.12, bezel="#15171A")
-    kit.box((x, y + 0.1, z + h / 2 + 0.3), (width + 0.3, 0.6, 0.12), posts)   # a hood over the board
+        kit.box((x + dx * c - 0.3 * s, y + dx * s + 0.3 * c, (z - h / 2) / 2 + 0.2), (0.22, 0.22, z - h / 2 + 0.4), posts,
+                rot=(0, 0, a))
+    face, _ = kit.screen("board", (x, y, z), width, plate, crop=crop, rot=(math.radians(90), 0, a), strength=2.2, depth=0.3,
+                         border=0.12, bezel="#15171A")
+    kit.box((x - 0.1 * s, y + 0.1 * c, z + h / 2 + 0.3), (width + 0.3, 0.6, 0.12), posts, rot=(0, 0, a))   # a hood
     return face
 
 
@@ -160,4 +179,75 @@ def shot_mis_port_board():
     bpy.context.scene.view_settings.exposure = -0.3
 
 
-kit.run({"mis-port-board": shot_mis_port_board})
+def hi_vis(at, facing):
+    """A dock worker in an orange hi-vis jacket and a white hard hat, holding a clipboard."""
+    P.person(at, facing=facing, height=1.78, coat="#E8702A", trousers="#2B2F36", hold="paper", seed=51)
+    kit.sphere((at[0], at[1], 1.72), 0.125, kit.mat("#F2F0EA", 0.35), scale=(1, 1.1, 0.62))
+    kit.box((at[0], at[1], 1.2), (0.44, 0.3, 0.05), kit.mat("#D8DE3A", 0.4, emit="#D8DE3A", strength=0.3))   # reflective band
+
+
+def shot_al_port():
+    sea(sky="qwantani_dawn_puresky", strength=0.7, rotation=250)
+    quay()
+    face = board("al-port", (70, 100, 1140, 410), 2.0, 3.0, width=5.4, z=3.6, yaw=-78)
+    # a ship alongside, being worked: boxes on deck, one in the air under the crane, a few landed on the quay
+    ship(75, EDGE + 13.5, 170, 0, lights=False, seed=5)
+    crane(34, EDGE - 12, boom_up=False, load=(EDGE + 4, 11))
+    rng = random.Random(9)
+    for i in range(4):
+        for tier in range(rng.randint(1, 2)):
+            container((18 + i * 2.6, 15.5, tier * 2.62), rot_z=math.radians(-90),
+                      colour=rng.choice(["#8A3B2E", "#2F5F8A", "#3F7A5A", "#E8E6E0"]))
+    for (x, y, L, hd, sd) in ((600, 450, 240, 70, 1), (950, 800, 280, 110, 2)):
+        ship(x, y, L, hd, seed=sd)   # more ships waiting their turn offshore
+    # the worker at the board, checking it against the clipboard before signing
+    hi_vis((0.45, 2.7), -80)
+    kit.sun((85, 0, 66), 2.6, kit.kelvin(3000), angle=2)
+    kit.area((-1.5, 2.5, 4.5), (0.5, 2.7, 1.0), (3, 1), 40, kit.kelvin(6500))   # the apron lamp
+    kit.camera((-10.0, 2.0, 1.7), (40.0, 22.0, 6.0), lens=26, fstop=5.6, focus=face)
+    bpy.context.scene.view_settings.exposure = -0.1
+
+
+def shot_cw_port():
+    sea(sky="kloofendal_overcast_puresky", strength=0.9, rotation=0)
+    quay()
+    crane(8, EDGE - 12)
+    for i in range(5):
+        for tier in range(2):
+            container((-4 + i * 2.6, 13.0, tier * 2.62), rot_z=math.radians(-90), colour=["#8A3B2E", "#2F5F8A", "#3F7A5A",
+                                                                                          "#5A5E66", "#C8864C"][i])
+    # the dispatch office: a desk against a window onto the quay
+    x0, y0 = 0.0, 4.0
+    wall = kit.mat("#D9DDD8", 0.8)
+    kit.box((x0, y0 - 1.5, -0.02), (5, 4, 0.04), kit.mat("#4A4F55", 0.8))
+    kit.box((x0, y0 - 1.5, 2.8), (5, 4, 0.1), kit.mat("#E6E8E4", 0.9))
+    kit.box((x0, y0 + 0.5, 0.45), (5, 0.12, 0.9), wall)
+    pane = kit.box((x0, y0 + 0.5, 1.85), (5, 0.02, 1.9), kit.glass(0.03))
+    pane.visible_shadow = pane.visible_diffuse = False
+    for x in (-1.6, 0.0, 1.6):
+        kit.box((x0 + x, y0 + 0.5, 1.85), (0.06, 0.1, 1.9), kit.mat("#3A3D40", 0.4, 0.6))
+    kit.box((x0, y0 + 0.1, 0.74), (2.0, 0.7, 0.04), kit.mat("#B9A88E", 0.45))
+    kit.cyl((x0, y0 + 0.2, 0.84), 0.02, 0.2, kit.mat("#2A2B2D", 0.4, 0.6))
+    face, _ = kit.screen("monitor", (x0, y0 + 0.18, 0.95 + 0.55 * 650 / 1040 / 2), 0.55, "cw-port", crop=(120, 21, 1040, 650),
+                         strength=1.2, depth=0.025)
+    kit.box((x0 - 0.05, y0 - 0.1, 0.765), (0.42, 0.13, 0.015), kit.mat("#1D1E20", 0.5), bevel=0.003)
+    kit.area((x0, y0 - 1.5, 2.7), (x0, y0 - 1.5, 0), (1.2, 0.3), 80, kit.kelvin(5000))
+    trio_camera(face)
+
+
+def trio_camera(face):
+    """The pyrrhic trio's framing (cw-port, cw-triage, cw-chat): the screen, 1000 px wide, seen 22 degrees off its
+    axis from a little above, with the room soft behind it."""
+    bpy.context.view_layer.update()
+    mw = face.matrix_world
+    n = (mw.to_3x3() @ Vector((0, 0, 1))).normalized()
+    width = face.dimensions.x
+    lens = 50
+    dist = width / (0.52 * 36 / lens)
+    side = Vector((n.y, -n.x, 0)).normalized()
+    a = math.radians(22)
+    eye = mw.translation + (n * math.cos(a) + side * math.sin(a)) * dist + Vector((0, 0, dist * 0.12))
+    kit.camera(tuple(eye), tuple(mw.translation - side * width * 0.08), lens=lens, fstop=2.8, focus=face)
+
+
+kit.run({"mis-port-board": shot_mis_port_board, "al-port": shot_al_port, "cw-port": shot_cw_port})

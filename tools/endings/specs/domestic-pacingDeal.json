@@ -1,0 +1,26 @@
+{
+ "shots": {
+  "4": {
+   "image": "pd-school",
+   "screens": [
+    [
+     "laptop",
+     "pd-school"
+    ]
+   ],
+   "focus": "screen",
+   "push": 1.05
+  },
+  "5": {
+   "image": "pd-trial",
+   "screens": [
+    [
+     "cart",
+     "pd-trial"
+    ]
+   ],
+   "focus": "screen",
+   "push": 1.05
+  }
+ }
+}

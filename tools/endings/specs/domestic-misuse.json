@@ -1,0 +1,26 @@
+{
+ "shots": {
+  "3": {
+   "image": "mu-hospital",
+   "screens": [
+    [
+     "board",
+     "mu-hospital"
+    ]
+   ],
+   "focus": "screen",
+   "push": 1.05
+  },
+  "5": {
+   "image": "mu-kitchen",
+   "screens": [
+    [
+     "phone",
+     "mu-kitchen"
+    ]
+   ],
+   "focus": "screen",
+   "push": 1.05
+  }
+ }
+}

@@ -1,0 +1,15 @@
+{
+ "shots": {
+  "4": {
+   "image": "ov-chat",
+   "screens": [
+    [
+     "laptop",
+     "ov-chat"
+    ]
+   ],
+   "focus": "screen",
+   "push": 1.05
+  }
+ }
+}

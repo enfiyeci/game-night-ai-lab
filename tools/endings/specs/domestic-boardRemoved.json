@@ -1,0 +1,15 @@
+{
+ "shots": {
+  "5": {
+   "image": "rb-app",
+   "screens": [
+    [
+     "tablet",
+     "rb-app"
+    ]
+   ],
+   "focus": "screen",
+   "push": 1.05
+  }
+ }
+}
