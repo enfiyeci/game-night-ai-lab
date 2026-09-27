@@ -3622,6 +3622,24 @@ button.dl-pill { font: inherit; font-size: 13px; font-weight: 900; color: var(--
 .screenwall-choice b { font-size: 16px; }
 .screenwall-choice small { color: color-mix(in srgb, var(--ink) 65%, transparent); }
 .screenwall-choice:hover, .screenwall-choice:focus-visible { outline: 3px solid var(--sky); }
+
+/* Event card sources (gn-events, 2026-09-26): each post drawn as its real channel. Social posts keep .ev-post. */
+.ev-card .ev-src { margin-top: 8px; text-align: left; }
+.ev-src-head { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 900; }
+.ev-src-text { font-size: 13.5px; font-weight: 600; line-height: 1.34; margin-top: 3px; }
+.ev-src-news .ev-src-head { font-family: "Libre Baskerville", Georgia, serif; font-weight: 700; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; padding-bottom: 3px; border-bottom: 2px solid var(--ink); align-self: start; }
+.ev-src-news { display: grid; justify-items: start; }
+.ev-src-news .ev-src-text { font-family: "Libre Baskerville", Georgia, serif; font-size: 15px; font-weight: 700; line-height: 1.3; margin-top: 5px; }
+.ev-src-official { padding: 8px 12px 9px; border-top: 3px double color-mix(in oklab, var(--wood) 70%, var(--ink)); background: color-mix(in oklab, var(--cream) 55%, var(--paper)); }
+.ev-src-official .ev-src-head { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: color-mix(in oklab, var(--wood) 60%, var(--ink)); }
+.ev-seal { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; color: var(--paper); background: color-mix(in oklab, var(--wood) 70%, var(--ink)); }
+.ev-src-letter { padding-left: 12px; border-left: 3px solid var(--teal); }
+.ev-src-letter .ev-src-head { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: color-mix(in oklab, var(--teal) 70%, var(--ink)); }
+.ev-src-letter .ev-src-text { font-family: "Libre Baskerville", Georgia, serif; font-style: italic; font-weight: 400; }
+.ev-desk { width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center; font-size: 11px; color: var(--paper); background: var(--sky); }
+.ev-src-channel { font-weight: 700; color: color-mix(in oklab, var(--ink) 55%, var(--paper)); }
+.ev-src-internal .ev-src-text { padding: 6px 10px; border-radius: 4px 10px 10px 10px; background: color-mix(in oklab, var(--sky) 12%, var(--paper)); }
+
 /* 2B: the AI asks from the racks (mockup q-b). Not modal: the clock keeps running while it is open.
    Positioned from the rack anchor (left and bottom in racks.js); the tail at 300 px points down at the racks. */
 .racks-panel { pointer-events: auto; position: absolute; width: 370px; padding: 12px 14px 10px; border-radius: 12px; border: 2px solid var(--sky); background: var(--paper); box-shadow: 0 14px 34px color-mix(in srgb, var(--ink) 25%, transparent); z-index: 5; }

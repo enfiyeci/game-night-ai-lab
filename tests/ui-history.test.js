@@ -29,7 +29,7 @@ test('every generated release reaction handle has an explicit editorial classifi
 
 test('history rows expose release details and public benchmark averages in release order', () => {
   // Expectations come from the scenario's own models, so a balance change does not break the test.
-  const state = SCENARIOS.summit(4);
+  const state = SCENARIOS.summit(5);
   const rows = historyRows(state);
   const eraNames = ['Chat assistants', 'The scale-up', 'Reasoning and agents', 'The gigawatt race', 'Self-improvement and pacing'];
   const mean = (values) => values.reduce((sum, value) => sum + value, 0) / values.length;
@@ -51,13 +51,13 @@ test('history rows expose release details and public benchmark averages in relea
 });
 
 test('history rows use a model\'s recorded story release day when available', () => {
-  const state = structuredClone(SCENARIOS.summit(4));
+  const state = structuredClone(SCENARIOS.summit(5));
   state.models[0].releasedDay = 123;
   assert.equal(historyRows(state)[0].releasedDate, storyDate(123).label);
 });
 
 test('article lead uses the five public benchmark hand counts', () => {
-  const state = SCENARIOS.summit(4);
+  const state = SCENARIOS.summit(5);
   const result = article(state, historyRows(state));
   const lead = result.lead.join('');
   assert.match(lead, /Kestrel 1 Core.*two of five/);
@@ -65,7 +65,7 @@ test('article lead uses the five public benchmark hand counts', () => {
 });
 
 test('article controversies quote only criticism reactions that occurred', () => {
-  const state = SCENARIOS.summit(4);
+  const state = SCENARIOS.summit(5);
   const rows = historyRows(state);
   const result = article(state, rows);
   const text = result.controversies.filter((part) => typeof part === 'string').join('');
@@ -84,7 +84,7 @@ test('article controversies quote only criticism reactions that occurred', () =>
 });
 
 test('article records rule-skipping and behavioural concerns as controversies', () => {
-  const state = structuredClone(SCENARIOS.summit(4));
+  const state = structuredClone(SCENARIOS.summit(5));
   state.models[0].launch.reactions = [
     { handle: '@devnull_ops', text: 'already found a way to make it skip its rules lol' },
     { handle: '@tired_parent', text: "it's so nice to talk to. maybe too nice?" },
@@ -99,7 +99,7 @@ test('article records rule-skipping and behavioural concerns as controversies', 
 });
 
 test('article records no controversy when model reactions contain none', () => {
-  const state = structuredClone(SCENARIOS.summit(4));
+  const state = structuredClone(SCENARIOS.summit(5));
   for (const model of state.models) model.launch.reactions = [];
   const result = article(state, historyRows(state));
   assert.deepEqual(result.controversies, ['No controversies are recorded.']);
@@ -107,7 +107,7 @@ test('article records no controversy when model reactions contain none', () => {
 });
 
 test('player-entered lab markup remains an ordinary article string', () => {
-  const state = SCENARIOS.summit(4);
+  const state = SCENARIOS.summit(5);
   state.labName = '<b>Halcyon</b>';
   const result = article(state, historyRows(state));
   assert.ok(result.lead.some((part) => typeof part === 'string' && part.includes('<b>Halcyon</b>')));
@@ -115,7 +115,7 @@ test('player-entered lab markup remains an ordinary article string', () => {
 });
 
 test('article uses the latest family and lists earlier model families', () => {
-  const state = SCENARIOS.summit(4);
+  const state = SCENARIOS.summit(5);
   state.models.at(-1).family = 'Halcyon';
   const result = article(state, historyRows(state));
   assert.equal(result.title, 'Halcyon (language model)');
@@ -128,7 +128,7 @@ test('article is a stub before the first model is released', () => {
 });
 
 test('race series places rival release ticks into their lab rows', () => {
-  const rows = historyRows(SCENARIOS.summit(4));
+  const rows = historyRows(SCENARIOS.summit(5));
   const series = raceSeries(rows, [
     { turn: 1, id: 'openbrain' },
     { turn: 4, id: 'qilin' },
@@ -172,7 +172,7 @@ test('race cards alternate rows when minimum-gap releases would overlap', () => 
 });
 
 test('game logs rival releases with the pre-advance turn over multiple turns', () => {
-  const scenarioGame = createGame({ seed: 4, state: SCENARIOS.summit(4) });
+  const scenarioGame = createGame({ seed: 4, state: SCENARIOS.summit(5) });
   assert.deepEqual(scenarioGame.rivalReleases, []);
 
   const game = createGame({ seed: 4 });
@@ -209,7 +209,7 @@ test('endTurn subscribers see the rival release log after it is updated', () => 
 });
 
 test('history status follows what the sim serves: open weights and not-yet-online models are not serving', () => {
-  const state = structuredClone(SCENARIOS.summit(4));
+  const state = structuredClone(SCENARIOS.summit(5));
   const [first, second, third] = state.models;
   first.active = true; first.channel = 'open';
   second.active = true; second.activeFromTurn = state.turn + 2;

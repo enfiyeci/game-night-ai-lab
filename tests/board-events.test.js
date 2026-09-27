@@ -87,9 +87,9 @@ test('the leak widens the read while pending and until the meeting if ignored', 
 });
 
 test('the board goes quiet in a close vote round, and only then', () => {
-  // Seed 8 with a player who survives to the meetings: three vote rounds, two of them close.
-  const rng = createRng(8);
-  let state = createInitialState({ seed: 8 });
+  // Seed 2 with a player who survives to the meetings: three vote rounds, one of them close.
+  const rng = createRng(2);
+  let state = createInitialState({ seed: 2 });
   let voteRounds = 0;
   let quietRounds = 0;
   while (!state.ending && state.turn < 30) {
