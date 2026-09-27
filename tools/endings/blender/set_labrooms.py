@@ -137,10 +137,10 @@ def shot_mu_alert():
     kit.box((-0.45, D - 0.7, 0.7672), (0.066, 0.14, 0.0005), kit.emission("#DCE6F5", 1.2), rot=(0, 0, 0.3))
     F.chair((0.75, D - 1.3), 235)
     # the beacon over the desk, and a clock
-    kit.sphere((0.9, D - 0.08, 1.6), 0.07, kit.emission("#FF2A1A", 6), scale=(1, 0.7, 1))
-    kit.point((0.9, D - 0.25, 1.58), 40, (1.0, 0.12, 0.06), radius=0.05)
-    kit.box((-0.9, D - 0.03, 1.58), (0.42, 0.04, 0.16), kit.mat("#0B0B0C", 0.4))
-    sign("03:02", (-0.9, D - 0.052, 1.58), 0.11, "#FF3B2A", strength=3)
+    kit.sphere((0.9, D - 0.08, 1.5), 0.07, kit.emission("#FF2A1A", 6), scale=(1, 0.7, 1))
+    kit.point((0.9, D - 0.25, 1.48), 40, (1.0, 0.12, 0.06), radius=0.05)
+    kit.box((-0.9, D - 0.03, 1.48), (0.42, 0.04, 0.16), kit.mat("#0B0B0C", 0.4))
+    sign("03:02", (-0.9, D - 0.052, 1.48), 0.11, "#FF3B2A", strength=3)
     kit.area((0, D - 0.45, 1.0), (0, D - 0.9, 0.75), (1.0, 0.3), 5, kit.kelvin(7000))   # the console's spill on the desk
     kit.area((0, D - 0.9, 1.1), (0, D - 2.5, 1.0), (1.1, 0.3), 6, kit.kelvin(7000))   # the console's light on the room
     kit.world("#040506", 1.0)
