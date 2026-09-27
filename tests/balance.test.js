@@ -94,3 +94,22 @@ test('the report measures the compute race', () => {
     assert.ok(row.rivalDealsPerRun >= 0, name);
   }
 });
+
+test('the denier probe takes named cards; the safety bot never does', () => {
+  assert.ok(balanceApi.PROBES.includes('denier'));
+  let denied = 0;
+  let safetyDenied = 0;
+  for (const seed of [1, 2, 3]) {
+    for (const [name, count] of [['denier', (n) => { denied += n; }], ['safety', (n) => { safetyDenied += n; }]]) {
+      const rng = createRng(seed);
+      let state = createInitialState({ seed });
+      for (let turn = 0; turn < 12 && !state.ending; turn += 1) {
+        const result = endTurn(state, balanceApi.STRATEGIES[name](state, rng), rng);
+        count(result.events.filter((e) => e.type === 'deal' && e.denied).length);
+        state = result.state;
+      }
+    }
+  }
+  assert.ok(denied > 0);
+  assert.equal(safetyDenied, 0);
+});

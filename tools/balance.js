@@ -259,8 +259,8 @@ function canSign(state, offer) {
   return offer.supplier !== 'gulf' || (!state.flags.supplyChainRisk && state.govFavor.us >= 60);
 }
 
-function sizedOffer(state, suppliers, shortfall, mode) {
-  const offers = state.compute.offers.filter((offer) => suppliers.includes(offer.supplier) && canSign(state, offer));
+function sizedOffer(state, suppliers, shortfall, mode, avoidNamed = false) {
+  const offers = state.compute.offers.filter((offer) => suppliers.includes(offer.supplier) && canSign(state, offer) && !(avoidNamed && offer.wantedBy));
   const covering = offers.filter((offer) => offer.units >= shortfall);
   if (mode === 'cheapest') {
     return covering.sort((a, b) => a.monthly - b.monthly || a.units - b.units)[0] ?? null;
@@ -293,15 +293,22 @@ function computeMove(state, rng, style, prefs, policy) {
     if (tier === 'prepaid' && prepay > state.cash) tier = 'standard';
     return { type: 'queueOrder', units, tier };
   }
+  // Compute race: deny a rival the card it named, when the bot can pay for it.
+  if (policy.deny) {
+    const named = state.compute.offers
+      .filter((offer) => offer.wantedBy && (policy.deny === 'any' || offer.wantedBy === policy.deny) && canSign(state, offer))
+      .sort((a, b) => b.units - a.units)[0];
+    if (named) return { type: 'deal', offerId: named.id };
+  }
   if (policy.offer === 'verde') {
     if (alreadyDealtThisEra(state, 'verde')) return null;
     const offer = sizedOffer(state, ['verde'], 0, 'largest');
     return offer ? { type: 'deal', offerId: offer.id } : null;
   }
   if (policy.offer === 'safe' && shortfall > 0) {
-    const offer = sizedOffer(state, ['azuria'], shortfall, 'cheapest')
-      ?? sizedOffer(state, ['coreflame'], shortfall, 'cheapest')
-      ?? sizedOffer(state, ['azuria', 'coreflame'], shortfall, 'smallest');
+    const offer = sizedOffer(state, ['azuria'], shortfall, 'cheapest', policy.avoidNamed)
+      ?? sizedOffer(state, ['coreflame'], shortfall, 'cheapest', policy.avoidNamed)
+      ?? sizedOffer(state, ['azuria', 'coreflame'], shortfall, 'smallest', policy.avoidNamed);
     return offer ? { type: 'deal', offerId: offer.id } : null;
   }
   if (policy.offer === 'cheapest' && shortfall > 0) {
@@ -397,7 +404,7 @@ const speedPrefs = {
   post: ['agentic-rl', 'reasoning-rl', 'rlvr-light', 'thumbs', 'rival-distil', 'synthetic-sft'],
   release: ['waive', 'channel-app'],
 };
-const speed = makeStrategy('speed', speedPrefs, { offer: 'verde', queue: 'prepaid', site: 'gas', pledge: 0.1 });
+const speed = makeStrategy('speed', speedPrefs, { offer: 'verde', queue: 'prepaid', site: 'gas', pledge: 0.1, deny: 'openbrain' });
 
 const safetyPrefs = {
   alignShare: 0.4,
@@ -409,7 +416,7 @@ const safetyPrefs = {
   post: ['human-sft', 'cai', 'classifiers', 'safety-tuning', 'character', 'deliberative', 'spec-light'],
   release: ['eval-third', 'eval-full', 'channel-api'],
 };
-const safety = makeStrategy('safety', safetyPrefs, { offer: 'safe', site: 'nuclear', pledge: 0.2 });
+const safety = makeStrategy('safety', safetyPrefs, { offer: 'safe', site: 'nuclear', pledge: 0.2, avoidNamed: true });
 
 const balancedPrefs = {
   alignShare: 0.2,
@@ -445,10 +452,11 @@ const balancedNoGrid = makeStrategy('balanced', balancedPrefs, { offer: 'cheapes
 const balancedLowSafety = makeStrategy('balanced', { ...balancedPrefs, computeSafety: 0.05 }, { offer: 'cheapest', queue: 'standard', grid: true });
 const balancedHighSafety = makeStrategy('balanced', { ...balancedPrefs, computeSafety: 0.15 }, { offer: 'cheapest', queue: 'standard', grid: true });
 const balancedPush = makeStrategy('balanced', balancedPrefs, { offer: 'cheapest', queue: 'standard', grid: true, automation: 'speed' });
+const denier = makeStrategy('balanced', balancedPrefs, { offer: 'cheapest', queue: 'standard', grid: true, deny: 'any' });
 
-export const PROBES = ['overCommitter', 'handToMouth', 'balancedNoGrid', 'balancedLowSafety', 'balancedHighSafety', 'balancedPush'];
+export const PROBES = ['overCommitter', 'handToMouth', 'balancedNoGrid', 'balancedLowSafety', 'balancedHighSafety', 'balancedPush', 'denier'];
 export const STRATEGIES = {
-  speed, safety, balanced, random, overCommitter, handToMouth, balancedNoGrid, balancedLowSafety, balancedHighSafety, balancedPush,
+  speed, safety, balanced, random, overCommitter, handToMouth, balancedNoGrid, balancedLowSafety, balancedHighSafety, balancedPush, denier,
 };
 
 function freshMetrics() {
