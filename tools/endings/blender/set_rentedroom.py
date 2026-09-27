@@ -113,7 +113,7 @@ def shot_mu_room():
     P.person((1.62, 3.15), facing=-80, coat="#33302C", height=1.85, seed=33)
     kit.area((cx - 0.35 * vx, cy - 0.35 * vy, 1.1), (cx - 1.5 * vx, cy - 1.5 * vy, 0.8), (1.0, 0.3), 5, kit.kelvin(7500))   # the monitors' light
     kit.haze((0, D / 2, H / 2), (2 * W - 0.05, D - 0.05, H - 0.05), 0.025)
-    kit.camera((-0.5, 0.95, 1.64), (0.75, 2.55, 1.12), lens=30, fstop=4.0, focus=left)
+    kit.camera((-0.45, 1.0, 1.3), (0.75, 2.55, 1.16), lens=26, fstop=4.0, focus=left)
 
 
 kit.run({"mu-room": shot_mu_room})

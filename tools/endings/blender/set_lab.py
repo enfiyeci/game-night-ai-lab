@@ -253,9 +253,9 @@ def shot_cw_phone():
     kit.screen("phone", (0.16, 1.905, 0.872), 0.085, "cw-phone", (172, 102, 251, 472), rot=(math.radians(80), 0, math.radians(-8)),
                strength=1.3, bezel="#0C0C0D", depth=0.008, border=0.005)
     F.laptop("captions", (-0.24, 2.1, 0.755), "cw-phone", (512, 192, 676, 226), yaw=10, strength=1.0, width=0.36)
-    F.trophy((0.03, 2.5, 0.755), scale=1.1)
+    F.trophy((0.02, 2.62, 0.755), scale=0.8)
     kit.area((0.16, 1.8, 0.9), (0.16, 1.4, 0.76), (0.08, 0.15), 0.8, kit.kelvin(7500))   # the phone's light on the desk
-    kit.camera((0.06, 1.42, 1.0), (0.0, 2.1, 0.85), lens=32, fstop=8.0, focus=(0.0, 1.95, 0.88))
+    kit.camera((0.06, 1.42, 1.03), (0.0, 2.1, 0.885), lens=32, fstop=8.0, focus=(0.0, 1.95, 0.88))
 
 
 def shot_rb_budget():
@@ -265,8 +265,11 @@ def shot_rb_budget():
     x, y = 0.52, 2.12
     kit.box((x, y, 0.86), (0.2, 0.015, 0.25), kit.mat("#1B1B1B", 0.4), bevel=0.004, rot=(math.radians(-8), 0, math.radians(-20)))
     kit.box((x - 0.003, y - 0.009, 0.86), (0.17, 0.002, 0.22), kit.mat("#F4F0E6", 0.6), rot=(math.radians(-8), 0, math.radians(-20)))
-    kit.text("OUR PLEDGE\n\n20%\nof our compute\ngoes to safety,\nwhatever our\nrivals do.\n\nKestrel Labs, 2025", (x - 0.0035, y - 0.0105, 0.86),
-             0.014, kit.mat("#2B2B2B", 0.6), font=kit.FONT, rot=(math.radians(82), 0, math.radians(-20)), extrude=0.0002)
+    ink = kit.mat("#2B2B2B", 0.6)
+    for (body, dz, size) in (("OUR PLEDGE", 0.085, 0.014), ("20%", 0.035, 0.06), ("of our compute\ngoes to safety,\nwhatever our\nrivals do.", -0.035, 0.013),
+                             ("Kestrel Labs, 2025", -0.09, 0.011)):
+        kit.text(body, (x - 0.0035 + 0.048 * dz, y - 0.0105 + 0.131 * dz, 0.86 + 0.99 * dz),   # up the tilted card
+                 size, ink, font=kit.FONT, rot=(math.radians(82), 0, math.radians(-20)), extrude=0.0002)
     F.mug((-0.5, 1.85, 0.755), colour="#3F9C8F")
     kit.place("potted_plant_04", (-0.62, 2.2, 0.755))
     P.person((-2.7, 5.4), facing=0, pose="sit", coat="#44343A")
@@ -275,7 +278,7 @@ def shot_rb_budget():
 
 
 def shot_lb_usage():
-    office("grey", screens=0.0, chairs=0.5, monitors=0.35, seed=7)
+    office(screens=0.0, chairs=0.5, monitors=0.35, seed=7)
     kit.screen("wall", (0.0, OD - 0.05, 1.72), 4.2, "lb-usage", (70, 80, 1140, 500), strength=1.6, depth=0.06, border=0.03, bezel="#101112")
     # desks being packed into boxes; a last colleague carries one out
     rng = random.Random(11)
@@ -284,8 +287,9 @@ def shot_lb_usage():
         F.carton((x + rng.uniform(-0.3, 0.3), y - 0.05, 0.755), (0.55, 0.38, 0.34), rot_z=rng.uniform(-0.3, 0.3), label=labels[k])
     for k in range(3):
         F.carton((2.2 + k * 0.05, 3.9, k * 0.4), (0.6, 0.4, 0.4), rot_z=0.1 * k, label="LAB " + str(k + 1))
+    kit.area((-1.0, 6.5, OH - 0.1), (-1.0, 6.5, 0), (7.0, 3.5), 900, kit.kelvin(4000))    # the last lights on over the packing
     P.person((-1.5, 6.25), facing=25, pose="walk", coat="#2C2A2E", hair="#141212")
-    F.carton((-1.25, 6.37, 0.75), (0.4, 0.3, 0.28), rot_z=math.radians(25), taped=False)    # under his arm
+    F.carton((-1.63, 6.52, 0.85), (0.64, 0.4, 0.3), rot_z=math.radians(25), taped=False)    # carried in front of him
     kit.camera((0.9, 0.9, 1.6), (0.0, OD, 1.5), lens=32, fstop=5.6, focus=(0, OD, 1.8))
 
 
@@ -294,7 +298,7 @@ def shot_pd_cursor():
     face = hero_desk("pd-cursor", (160, 100, 960, 460), top="#C9C2B6")
     F.mug((0.42, 1.78, 0.755), colour="#1F2226")
     P.person((-0.28, 1.42), facing=8, pose="sit", coat="#1F2226", hood=True)
-    kit.area((0, 1.9, 1.05), (0, 1.0, 0.9), (0.6, 0.35), 5, kit.kelvin(6500))
+    kit.area((0, 1.9, 1.05), (0, 1.0, 0.9), (0.6, 0.35), 1.0, kit.kelvin(6500))   # the screen's glow, just a rim on him
     kit.camera((0.62, 0.62, 1.38), (-0.02, 2.2, 1.03), lens=36, fstop=2.8, focus=face)
 
 

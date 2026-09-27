@@ -63,7 +63,7 @@ def shot_ab_constitution():
         kit.box((tx, y, 0.36), (0.9, 0.08, 0.72), kit.mat("#2A2B2D", 0.4, 0.6))
     for (y, coat) in ((3.75, "#1F2226"), (4.8, "#2C2A30")):
         F.chair((0.72, y), 90, colour="#1B1C1E")
-        P.person((0.72, y + 0.02), facing=90, pose="sit", coat=coat, hair="#141212", skin="#6E4630")
+        P.person((0.72, y + 0.02), facing=90, pose="sit", coat=coat, hair="#141212", skin="#2A201B")
     rng = random.Random(5)
     blue = kit.mat("#243B63", 0.5)
     for k, (x, y, r) in enumerate(((0.12, 3.0, 0.3), (0.05, 3.55, -0.2), (0.15, 4.1, 0.1), (-0.05, 4.5, -0.4))):
@@ -80,7 +80,7 @@ def shot_ab_constitution():
             kit.mat("#C8402A", 0.5))
     # the lab being packed along the left wall
     labels = ["BOX 14\nMODEL CARDS", "BOX 15\nEVALS", "BOX 16\nCONSTITUTION", "BOX 9\nPOSTERS", "BOX 11\nLAB NOTEBOOKS"]
-    for k, (x, y, z) in enumerate(((0.9, 5.6, 0), (1.5, 5.6, 0), (1.2, 5.62, 0.42), (2.0, 5.2, 0), (2.0, 5.2, 0.42))):
+    for k, (x, y, z) in enumerate(((-0.55, 5.65, 0), (0.05, 5.65, 0), (-0.55, 5.66, 0.42), (0.05, 5.67, 0.42), (-0.25, 5.66, 0.84))):
         F.carton((x, y, z), (0.55, 0.42, 0.42), rot_z=math.radians(rng.uniform(-8, 8)), label=labels[k])
     kit.camera((-0.9, 1.25, 1.26), (0.0, 2.9, 0.83), lens=34, fstop=2.0, focus=face)
 
@@ -109,7 +109,7 @@ def shot_rb_slide():
         P.person((x, y + 0.02), facing=rng.uniform(-8, 8), pose="sit", coat=rng.choice(coats), seed=k,
                  hair=rng.choice(["#2A211C", "#141212", "#4A3526", "#8C8C8C"]))
     # the new CEO beside the slide, lit from behind by it
-    P.person((-2.15, D - 0.9), facing=160, coat="#151618", height=1.8, seed=90)
+    P.person((-2.15, D - 0.9), facing=160, coat="#151618", height=1.8, seed=90, skin="#1C1816", hair="#0E0D0C")
     kit.area((-2.4, D - 0.3, 2.4), (-2.15, D - 0.9, 1.4), (0.6, 0.6), 25, kit.kelvin(6500))
     # the projector on the ceiling behind us, its beam through a little haze
     kit.box((0.4, 1.2, H - 0.25), (0.35, 0.3, 0.14), kit.mat("#D8D8D6", 0.4))
@@ -128,20 +128,21 @@ def shot_mu_alert():
     face = F.monitor("console", (0.0, D - 0.3), 1.15, "mu-alert", (70, 100, 1140, 300), strength=1.0)
     for side in (-1, 1):   # the camera feeds, grey and quiet
         F.dark_monitor((side * 1.0, D - 0.4), width=0.5, h=0.3, yaw=side * 28, glow=("#26323E", 1.2))
-    F.note((-0.62, D - 0.45, 0.7555), "egress alerts =\nfalse positives.\njust dismiss. -J", size=0.1, text_size=0.012,
-           rot=(0, 0, math.radians(8)))
+    F.note((-0.3, D - 0.33, 0.84), "egress alerts =\nfalse positives.\njust dismiss. -J", size=0.1, text_size=0.012,
+           rot=(math.radians(84), 0, math.radians(-4)))
     F.keyboard(0.0, D - 0.72)
     F.mug((0.42, D - 0.65, 0.755), colour="#2A2B2E")
     # the phone face up by the keyboard, notifications piling up
     kit.box((-0.45, D - 0.7, 0.762), (0.075, 0.155, 0.009), kit.mat("#111", 0.3), rot=(0, 0, 0.3))
     kit.box((-0.45, D - 0.7, 0.7672), (0.066, 0.14, 0.0005), kit.emission("#DCE6F5", 1.2), rot=(0, 0, 0.3))
-    F.chair((0.75, D - 1.3), 235)
+    F.chair((0.55, D - 1.1), 200)   # pushed back from the desk, nobody in it
     # the beacon over the desk, and a clock
     kit.sphere((0.9, D - 0.08, 1.5), 0.07, kit.emission("#FF2A1A", 6), scale=(1, 0.7, 1))
     kit.point((0.9, D - 0.25, 1.48), 40, (1.0, 0.12, 0.06), radius=0.05)
     kit.box((-0.9, D - 0.03, 1.48), (0.42, 0.04, 0.16), kit.mat("#0B0B0C", 0.4))
     sign("03:02", (-0.9, D - 0.052, 1.48), 0.11, "#FF3B2A", strength=3)
     kit.area((0, D - 0.45, 1.0), (0, D - 0.9, 0.75), (1.0, 0.3), 5, kit.kelvin(7000))   # the console's spill on the desk
+    kit.area((-0.3, D - 0.8, 0.95), (-0.3, D - 0.33, 0.84), (0.2, 0.15), 1.2, kit.kelvin(7000)).visible_glossy = False   # and on the note
     kit.area((0, D - 0.9, 1.1), (0, D - 2.5, 1.0), (1.1, 0.3), 6, kit.kelvin(7000))   # the console's light on the room
     kit.world("#040506", 1.0)
     kit.camera((-0.3, 1.5, 1.4), (0.05, D - 0.3, 1.12), lens=28, fstop=4.0, focus=face)
@@ -153,24 +154,24 @@ def shot_qt_evals():
     room(W, D, H, kit.mat("#4E545C", 0.9), kit.mat("#30343A", 0.7))
     for x in (-1.6, -0.55, 0.55, 1.6):   # acoustic panels on the back wall
         kit.box((x, D - 0.03, 1.5), (0.95, 0.04, 2.2), kit.mat("#3A3F47", 0.95), bevel=0.01)
-    face, _ = kit.screen("suite", (0.0, D - 0.1, 1.5), 2.3, "qt-evals", (70, 80, 1140, 520), strength=1.4, bezel="#0E0F10",
+    face, _ = kit.screen("suite", (0.0, D - 0.1, 1.58), 2.3, "qt-evals", (70, 80, 1140, 520), strength=1.4, bezel="#0E0F10",
                          depth=0.04, border=0.02)
     # the sign that tells everyone in the room, the model included, that this is a test
-    kit.box((0.0, D - 0.1, 2.3), (1.5, 0.08, 0.2), kit.mat("#140606", 0.4), bevel=0.01)
-    sign("EVALUATION IN PROGRESS", (0.0, D - 0.142, 2.3), 0.09, "#FF3B2A", strength=10)
-    kit.point((0.0, D - 0.5, 2.3), 8, (1.0, 0.2, 0.12), radius=0.2)
+    kit.box((0.0, D - 0.1, 2.4), (1.5, 0.08, 0.2), kit.mat("#140606", 0.4), bevel=0.01)
+    sign("EVALUATION IN PROGRESS", (0.0, D - 0.142, 2.4), 0.09, "#FF3B2A", strength=10)
+    kit.point((0.0, D - 0.5, 2.4), 8, (1.0, 0.2, 0.12), radius=0.2)
     # the sign-off desk and Tomas, from behind
     F.desk(-0.3, D - 1.7, w=1.4, d=0.7, top="#2B2D31")
     kit.box((-0.05, D - 1.75, 0.757), (0.23, 0.32, 0.008), kit.mat("#6B4A34", 0.5), rot=(0, 0, 0.2))     # the clipboard
     F.paper((-0.05, D - 1.76, 0.762), size=(0.21, 0.28), rot_z=0.2)
     kit.cyl((0.08, D - 1.9, 0.768), 0.005, 0.14, kit.mat("#1C1C1C", 0.3, 0.6), rot=(0, math.radians(90), 0.9))
     F.chair((-0.35, D - 2.3), 0)
-    P.person((-0.35, D - 2.28), facing=5, pose="sit", coat="#2C3A4F", hair="#4A3526", seed=12)
+    P.person((-0.35, D - 2.28), facing=5, pose="sit", coat="#2C3A4F", hair="#241A14", seed=12)
     kit.box((0.35, D - 1.6, 0.86), (0.07, 0.07, 0.2), kit.mat("#DDE8EE", 0.1, alpha=0.4))                    # a water bottle
     kit.area((0, D - 0.6, 1.5), (0, D - 3, 1.2), (2.2, 0.9), 18, kit.kelvin(7500))   # the wall screen's light
     kit.spot((-0.2, D - 1.6, H - 0.05), (-0.1, D - 1.75, 0.75), 60, kit.kelvin(3000), angle=50, blend=0.7)   # a downlight on the desk
     kit.world("#06070A", 1.0)
-    kit.camera((0.4, 0.8, 1.5), (-0.05, D, 1.5), lens=32, fstop=4.0, focus=face)
+    kit.camera((0.4, 0.3, 1.75), (-0.05, D, 1.42), lens=28, fstop=4.0, focus=face)
 
 
 # ------------------------------------------------------------------ the lobby
@@ -191,7 +192,7 @@ def shot_al_badges():
     # the queue at the doors, between stanchions, backlit
     rng = random.Random(4)
     pts = [(0.1 + rng.uniform(-0.2, 0.2), 6.6 + k * 0.75, 180 + rng.uniform(-45, 45)) for k in range(9)]
-    P.crowd(pts, seed=7, holds=[None, "phone", "paper", None])
+    P.crowd(pts, seed=7, holds=[None, "phone", "paper", None], skin="#2A201B")
     posts = [((x, y, 0.47), (0.05, 0.05, 0.94)) for x in (-0.45, 0.65) for y in (3.4, 5.0, 6.6)]
     F.batch("posts", posts, kit.mat("#B8B9BB", 0.2, 1.0))
     F.batch("belts", [((x, y, 0.9), (0.02, 1.55, 0.05)) for x in (-0.45, 0.65) for y in (4.2, 5.8)], kit.mat("#8A1E22", 0.6))

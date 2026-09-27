@@ -40,7 +40,7 @@ def room():
     # daylight from a skylight strip over the table
     kit.world(hdri="cambridge", strength=0.4)
     kit.box((0, D / 2, H - 0.01), (1.2, D - 1.5, 0.02), kit.emission("#F3F7FA", 1.5))
-    kit.area((0, D / 2, H - 0.05), (0, D / 2, 0), (1.2, D - 1.5), 160, kit.kelvin(6800))
+    kit.area((0, D / 2, H - 0.05), (0, D / 2, 0), (1.2, D - 1.5), 90, kit.kelvin(6800))
 
 
 def shot_rd_slide():
@@ -54,18 +54,18 @@ def shot_rd_slide():
     rng = random.Random(6)
     for k, y in enumerate((2.3, 3.4, 4.5, 5.6)):
         for side in (-1, 1):
-            F.chair((0.1 + side * (1.1 + rng.uniform(0, 0.35)), y + rng.uniform(-0.2, 0.2)), side * 90 + rng.uniform(-35, 35), colour="#8FA3AF")
+            F.chair((0.1 + side * (1.1 + rng.uniform(0, 0.35)), y + rng.uniform(-0.2, 0.2)), side * 90 + rng.uniform(-35, 35), colour="#5E6E78")
     for (x, y) in ((-0.4, 3.0), (0.5, 4.3), (-0.3, 5.2)):
         F.cup((x, y, 0.76))
     # the red-team report: printed, still sealed in its sleeve, a coffee cup set down on it
-    x, y = 0.3, 3.35
+    x, y = 0.22, 2.45
     kit.box((x, y, 0.764), (0.23, 0.31, 0.008), kit.mat("#F4F1EA", 0.6), rot=(0, 0, 0.25))
     kit.box((x, y, 0.769), (0.24, 0.32, 0.001), kit.mat("#DDE7EE", 0.05, alpha=0.35), rot=(0, 0, 0.25))
-    F.flat_text("RED-TEAM REPORT\nself-copying test", (x - 0.06 * math.sin(-0.25), y + 0.08, 0.7705), 0.018, rot_z=0.25, font=kit.FONT)
-    kit.box((x + 0.03, y - 0.02, 0.771), (0.12, 0.03, 0.0005), kit.mat("#6E6A66", 0.5), rot=(0, 0, 0.25))
-    F.flat_text("UNOPENED", (x + 0.03, y - 0.02, 0.7717), 0.014, "#F4F1EA", rot_z=0.25, font=kit.FONT)
-    F.cup((x - 0.05, y - 0.1, 0.77), colour="#2B2B2B")
-    kit.camera((0.95, 0.9, 1.42), (-0.05, D, 1.2), lens=30, fstop=4.0, focus=face)
+    F.flat_text("RED-TEAM REPORT\nself-copying test", (x - 0.08 * math.sin(0.25), y + 0.08 * math.cos(0.25), 0.7705), 0.024, rot_z=0.25, font=kit.FONT)
+    kit.box((x, y - 0.01, 0.771), (0.25, 0.04, 0.0005), kit.mat("#B23A2E", 0.5), rot=(0, 0, 0.25))     # the seal across the sleeve
+    F.flat_text("UNOPENED", (x, y - 0.01, 0.7717), 0.02, "#F4F1EA", rot_z=0.25, font=kit.FONT)
+    F.cup((x + 0.13, y - 0.1, 0.77), colour="#2B2B2B")
+    kit.camera((0.45, 1.55, 1.02), (0.0, D, 0.9), lens=24, fstop=11.0, focus=(0.2, 3.6, 1.0))
 
 
 kit.run({"rd-slide": shot_rd_slide})
