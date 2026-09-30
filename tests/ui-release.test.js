@@ -2,12 +2,15 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import { startRun, advanceRun } from '../sim/training.js';
+import { ERA_PRICE } from '../sim/serving.js';
 import {
-  beatCount, canSkip, checkLabel, laterMoveProblem, leaderboard, nextGeneration, offeredCards, perMillion, priceSheet,
+  beatCount, canSkip, checkLabel, flagshipBefore, laterMoveProblem, leaderboard, nextGeneration, offeredCards, perMillion, priceSheet,
   pricePerMillion, queueBeforeRelease, releaseDraft, releaseOpinions, releasePayload, releasePreview, releaseSpec,
   salesEstimate, servingPerMillion, shipDelay, shipWords, tokensPerUser,
 } from '../ui/logic/release.js';
 import { SCENARIOS } from '../ui/logic/scenarios.js';
+import { releaseModel } from '../sim/release.js';
+import { scoreOnTest } from '../sim/launch.js';
 
 const rng = { next: () => 0.5, int: () => 0, chance: (p) => p > 0.5, normal: (m) => m };
 const trained = () => {
@@ -37,6 +40,7 @@ test('per-token prices follow the sim serving tables', () => {
   assert.equal(tokensPerUser(spec, 1), 2); // 0.5 x 4 x 1
   assert.equal(pricePerMillion(spec, 1, 'market'), 15); // $30 a user a month over 2M tokens
   assert.equal(pricePerMillion(spec, 1, 'premium'), 22.5);
+  assert.ok(Math.abs(pricePerMillion(spec, 3, 'market') - (30 * ERA_PRICE[2]) / tokensPerUser(spec, 3)) < 1e-9); // later eras' launch price
   assert.ok(Math.abs(servingPerMillion(spec, 1) - 4.8) < 1e-9); // $6 x medium 1 x dense 1 x short 0.8
   assert.equal(perMillion(1.249), '$1.25');
   const open = releaseSpec(withSpec({}), ['channel-open'], 'off');
@@ -191,6 +195,8 @@ test('the price sheet uses the real serving cost when the sim has it', () => {
 test('the ready-to-release scenario has a trained model waiting in era 3', () => {
   const s = SCENARIOS.readyToRelease(1);
   assert.ok(s.pendingModel);
+  assert.equal(s.ending, null);
+  assert.ok(s.cash > 0);
   assert.equal(s.era, 3);
   assert.ok(s.models.length >= 1);
 });
@@ -230,12 +236,14 @@ test('the release reveal waits while a board meeting is open', async () => {
   assert.deepEqual(shown, ['Kestrel', 'Wren']);
 });
 
+// Every capability row runs the same test (mid 50, fit 1) and was taken by each model, so earlier models keep their shown scores.
 const launchOf = (capAvg, rivals) => ({
   capAvg,
-  benchmarks: [...rivals.map((rival) => ({ kind: 'cap', rival })), { kind: 'safety', rival: 60 }],
+  benchmarks: [...rivals.map((rival, i) => ({ id: `t${i}`, name: 'Test', kind: 'cap', mid: 50, fit: 1, rival, shown: capAvg, skill: 50 })),
+    { id: 'safety', kind: 'safety', rival: 60 }],
 });
 
-test('the launch leaderboard scales each rival lab from the best-rival bars and lists your last two models', () => {
+test('the launch leaderboard scores each rival lab on the test from the best-rival bars and lists your last two models', () => {
   const state = {
     rivals: [{ name: 'OpenBrain', capability: 50 }, { name: 'Lodestar', capability: 40 }, { name: 'Qilin', capability: 25 }],
     models: [
@@ -250,9 +258,10 @@ test('the launch leaderboard scales each rival lab from the best-rival bars and 
   assert.deepEqual(board.rows, [
     { name: 'OpenBrain', kind: 'rival', score: 40 }, // the leader's row is the best-rival average itself
     { name: 'Kestrel 2', kind: 'own', score: 33.3 },
-    { name: 'Lodestar', kind: 'rival', score: 32 },
-    { name: 'Qilin', kind: 'rival', score: 20 },
     { name: 'Kestrel 1', kind: 'own', score: 20 },
+    // Each row moves from the leader's bar by what 38 (Lodestar) or 23.75 (Qilin) skill scores against 47.5: 23 or 7 against 44.
+    { name: 'Lodestar', kind: 'rival', score: 19 },
+    { name: 'Qilin', kind: 'rival', score: 3.3 },
   ]);
 });
 
@@ -292,4 +301,64 @@ test('the average narrows in on its value from alternating sides', async () => {
   assert.ok(values.every((value) => value >= 1 && value <= 10));
   const misses = narrowTo(5.25).map((value) => Math.abs(Number(value) - 5.25));
   misses.slice(1).forEach((miss, i) => assert.ok(miss <= misses[i] + 0.05)); // never further away than the step before
+});
+
+// Owner 2026-09-26: tests change with the era, so the leaderboard scores everyone on this launch's tests.
+test('on per-era tests, other labs are scored on the test and earlier models are re-scored on it', () => {
+  const row = (id) => ({ id, name: 'New test', kind: 'cap', mid: 50, fit: 1, rival: 60, shown: 80 });
+  const model = { name: 'Kestrel 3', releaseSequence: 1, launch: { capAvg: 80, benchmarks: ['a', 'b', 'c', 'd'].map(row) } };
+  const older = { name: 'Kestrel 2', releaseSequence: 0, launch: { capAvg: 90, benchmarks: ['a', 'b', 'c', 'd'].map((id) => ({ id, name: 'Old test', kind: 'cap', shown: 90, skill: 40 })) } };
+  const state = { rivals: [{ name: 'OpenBrain', capability: 60 }, { name: 'Qilin', capability: 30 }], models: [older, model] };
+  const board = leaderboard(state, model);
+  const score = (name) => board.rows.find((r) => r.name === name).score;
+  assert.equal(score('OpenBrain'), 60, 'the leader row is the best-rival bars');
+  // Qilin: the leader's 60 moved by what 28.5 skill scores on the test (10) against the leader's 57 (67).
+  assert.equal(score('Qilin'), 3);
+  assert.equal(score('Kestrel 2'), 27, 'the older model re-scored from its skill of 40, not its old 90');
+});
+
+test('the flagship a launch was compared with is found by name', () => {
+  const a = { name: 'Kestrel 1', releaseSequence: 0, launchScore: 40 };
+  const b = { name: 'Kestrel 2', releaseSequence: 1, launchScore: 55, bar: 71, flagshipName: 'Kestrel 1' };
+  const first = { name: 'Kestrel 0', releaseSequence: 2, flagshipName: null };
+  const state = { models: [a, b, first] };
+  assert.equal(flagshipBefore(state, b), a);
+  assert.equal(flagshipBefore(state, first), undefined);
+});
+
+test('on a real release in a later era, earlier models are re-scored on its tests', () => {
+  const state = SCENARIOS.readyToRelease(1);
+  const draft = { ...releaseDraft(state), family: 'Kestrel', picks: [] };
+  const r = releaseModel(state, releasePayload(state, draft));
+  assert.equal(r.ok, true);
+  const model = r.model;
+  const caps = model.launch.benchmarks.filter((row) => row.kind === 'cap');
+  assert.ok(caps.every((row) => Number.isFinite(row.mid) && Number.isFinite(row.fit) && Number.isFinite(row.skill)));
+  const board = leaderboard(state, model);
+  const earlier = state.models.filter((other) => other !== model && other.launch).slice(-2);
+  assert.ok(earlier.length > 0);
+  for (const other of earlier) {
+    const expected = caps.reduce((sum, row) => sum + scoreOnTest(row, other.launch.benchmarks.find((b) => b.id === row.id)), 0) / caps.length;
+    assert.equal(board.rows.find((row) => row.name === other.name).score, Math.round(expected * 10) / 10);
+  }
+});
+test('a hurried beat still holds its result on screen until the next click', async () => {
+  const { Timeline } = await import('../ui/screens/reveal.js');
+  const t = new Timeline();
+  let animated = false;
+  const beat = (async () => {
+    await t.wait(5000); // the count-up animation
+    animated = true;
+    await t.hold(60000); // the result stays up
+    return 'moved on';
+  })();
+  t.advance(); // first click: the animation jumps to its end
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  assert.equal(animated, true, 'the score is shown');
+  let settled = false;
+  beat.then(() => { settled = true; });
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  assert.equal(settled, false, 'the result is still on screen after the hurry');
+  t.advance(); // second click moves on
+  assert.equal(await beat, 'moved on');
 });

@@ -4,41 +4,63 @@ import { createInitialState } from '../sim/state.js';
 import { updateBoard, boardVote, boardSnapshot, STAFF_LETTER_TRUST } from '../sim/board.js';
 import { checkTurnEndings, eraGate, finalEnding, ENDINGS } from '../sim/endings.js';
 
-const yes = { chance: () => true };
-const no = { chance: () => false };
-
 test('running out of cash grants one turn of emergency grace', () => {
   const s = createInitialState();
   s.cash = -1;
-  assert.equal(checkTurnEndings(s, no), null);
+  assert.equal(checkTurnEndings(s), null);
   assert.equal(s.flags.insolvent, true);
-  assert.equal(checkTurnEndings(s, no), 'acquihire');
+  assert.equal(checkTurnEndings(s), 'acquihire');
 });
 
 test('insolvency ends immediately without unused rescue options and clears after recovery', () => {
   const s = createInitialState();
   s.cash = -1;
   s.flags.emergencyUsed = ['equityForCompute', 'structureChange', 'bridgeRound'];
-  assert.equal(checkTurnEndings(s, no), 'acquihire');
+  assert.equal(checkTurnEndings(s), 'acquihire');
 
   const recovered = createInitialState();
   recovered.flags.insolvent = true;
-  assert.equal(checkTurnEndings(recovered, no), null);
+  assert.equal(checkTurnEndings(recovered), null);
   assert.equal(recovered.flags.insolvent, undefined);
 });
 
-test('misuse needs capability past the danger line and high exposure', () => {
+test('misuse ends the run on the second round in a row over both lines', () => {
   const s = createInitialState();
   s.capability = 60;
   s.misuseLocked = 75;
-  assert.equal(checkTurnEndings(s, no), null);
-  assert.equal(checkTurnEndings(s, yes), 'misuse');
+  assert.equal(checkTurnEndings(s), null);
+  assert.equal(s.flags.misuseRounds, 1);
+  assert.equal(checkTurnEndings(s), 'misuse');
 });
 
-test('race heat can end the world through a rival', () => {
+test('a round back under either misuse line resets the count', () => {
+  const s = createInitialState();
+  s.capability = 60;
+  s.misuseLocked = 75;
+  checkTurnEndings(s);
+  s.capability = 50;
+  assert.equal(checkTurnEndings(s), null);
+  assert.equal(s.flags.misuseRounds, 0);
+  s.capability = 60;
+  assert.equal(checkTurnEndings(s), null);
+});
+
+test('race heat above 85 for three rounds in a row ends the world through a rival', () => {
   const s = createInitialState();
   s.raceHeat = 90;
-  assert.equal(checkTurnEndings(s, yes), 'rivalDisaster');
+  assert.equal(checkTurnEndings(s), null);
+  assert.equal(checkTurnEndings(s), null);
+  assert.equal(checkTurnEndings(s), 'rivalDisaster');
+});
+
+test('race heat at the line resets the heat count', () => {
+  const s = createInitialState();
+  s.raceHeat = 90;
+  checkTurnEndings(s);
+  checkTurnEndings(s);
+  s.raceHeat = 85;
+  assert.equal(checkTurnEndings(s), null);
+  assert.equal(s.flags.heatRounds, 0);
 });
 
 test('era gate: left behind, then board vote', () => {
@@ -122,7 +144,7 @@ test('final endings', () => {
   assert.equal(finalEnding(t), 'pyrrhic');
   const u = createInitialState();
   u.capability = 100;
-  u.deal = { signed: {}, binding: ['evaluators', 'sharedSafety'], trust: 2, collapsed: false, playerShipped: false };
+  u.deal = { signed: { evaluators: ['openbrain', 'west'], sharedSafety: ['openbrain', 'west'] }, binding: ['evaluators', 'sharedSafety'], trust: 2, collapsed: false, playerShipped: false };
   assert.equal(finalEnding(u), 'pacingDeal');
   const v = createInitialState();
   v.rivals[0].capability = v.capability + 1;
@@ -130,4 +152,16 @@ test('final endings', () => {
   for (const id of ['acquihire', 'boardRemoved', 'misalignment', 'misuse', 'leftBehind', 'rivalDisaster', 'aligned', 'pacingDeal', 'pyrrhic', 'overtaken']) {
     assert.ok(ENDINGS[id], id);
   }
+});
+
+
+test('a paper-only or partly dissolved treaty does not award a negotiated pace', () => {
+  const s = createInitialState();
+  s.capability = 100;
+  s.deal = { binding: ['evaluators', 'sharedSafety'], signed: { evaluators: ['west', 'east'], sharedSafety: ['west', 'east'] }, collapsed: false, playerShipped: false };
+  assert.equal(finalEnding(s), 'aligned');
+  s.deal.signed.evaluators.push('openbrain');
+  assert.equal(finalEnding(s), 'aligned', 'one backed commitment is insufficient');
+  s.deal.signed.sharedSafety.push('openbrain');
+  assert.equal(finalEnding(s), 'pacingDeal');
 });

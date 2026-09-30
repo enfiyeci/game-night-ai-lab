@@ -7,8 +7,9 @@ import { SCENARIO_EVENTS } from '../../sim/data/scenarioEvents.js';
 import { DEFAULT_EVENT_TIMING, EVENT_TIMING } from '../../sim/data/eventTiming.js';
 import { fallbackChoice } from '../../sim/events.js';
 import {
-  ARGUE, CONSEQUENCES, CRISIS_STAGING, DEFAULT_DUE, DUE, JOKES, WARNING_ADVISOR,
+  ARGUE, CONSEQUENCES, CRISIS_STAGING, DEFAULT_DUE, DUE, JOKES, WARNING_ADVISOR, WARNING_SAY,
 } from '../data/eventCopy.js';
+import { money } from './format.js';
 
 export const ADVISOR_TITLE = { research: 'Head of Research', safety: 'Head of Safety', cfo: 'CFO', policy: 'Policy and Comms' };
 export const TAG_TO_ADVISOR = { Research: 'research', Safety: 'safety', CFO: 'cfo', Comms: 'policy' };
@@ -22,12 +23,29 @@ export const catalogRow = (id) => ALL.find((event) => event.id === baseId(id));
 
 export const lookIntoCost = (state, id) => warningResponse(id, state).cost;
 
+const hasModelFlag = (state, flag) => state.models.some((model) => (model.flags ?? []).includes(flag));
+// Which cause a warning with several names (eventCopy.js WARNING_SAY) is about.
+const WARNING_CAUSE = {
+  promise: (state) => (hasModelFlag(state, 'brokenPromise') ? 'waived' : 'pledge'),
+  citations: (state) => (hasModelFlag(state, 'hallucination') ? 'reasoning' : 'quick'),
+  whistleblower: (state) => (state.flags.coverUp ? 'coverup' : 'debt'),
+};
+
+// The advisor's line for a warning bubble; the post itself is only a fallback.
+export function warningSay(state, id) {
+  const written = WARNING_SAY[id];
+  const line = typeof written === 'object' ? written[WARNING_CAUSE[id](state)] : written;
+  const row = catalogRow(id);
+  if (!line) return `Heads up: “${row?.warning?.text ?? ''}”`;
+  return line.replace('{cost}', money(lookIntoCost(state, id)));
+}
+
 export function openWarnings(state, queued = []) {
   return Object.entries(state.warnings ?? {}).flatMap(([id, warned]) => {
     const row = catalogRow(id);
     if (!row?.warning || warned?.deferred || queued.includes(id)) return [];
     if (row.kind === 'internal' || row.kind === 'promise') return [];
-    return [{ id, advisor: WARNING_ADVISOR[id] ?? 'policy', handle: row.warning.handle, text: row.warning.text, response: warningResponse(id, state) }];
+    return [{ id, advisor: WARNING_ADVISOR[id] ?? 'policy', handle: row.warning.handle, text: row.warning.text, say: warningSay(state, id), response: warningResponse(id, state) }];
   });
 }
 

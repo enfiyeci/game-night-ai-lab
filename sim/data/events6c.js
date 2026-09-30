@@ -3,16 +3,14 @@ import { boardVote, seat } from '../board.js';
 import { exposeConcealed } from '../hazards.js';
 import { clamp } from '../util.js';
 
-export const LOSS_SPIKE_SLOWDOWN = 0.5;
 export const LOSS_SPIKE_SLOW_BONUS = 2;
 export const JUMP_CHANCE = 0.25;
 export const JUMP_GAIN = 5;
 export const EXPORT_FLIP_QILIN_SPEED = 0.85;
 
 function applyJump(model) {
-  const before = model.capability;
-  model.capability = Math.min(BALANCE.maxCapability, model.capability + JUMP_GAIN);
-  model.gain = (model.gain ?? 0) + (model.capability - before);
+  model.capability += JUMP_GAIN;
+  model.gain = (model.gain ?? 0) + JUMP_GAIN;
 }
 
 function finishBoardRevolt(state) {
@@ -62,7 +60,7 @@ export const EVENTS_6C = [
           effects(state) {
             const run = state.activeRun;
             if (run && run.spikes > (run.spikesAnswered ?? 0)) {
-              run.spikeChance *= LOSS_SPIKE_SLOWDOWN;
+              run.spikeLossHalved = true; // resolveRun gives back half this spike's loss
               run.bonus -= LOSS_SPIKE_SLOW_BONUS;
               run.spikesAnswered = run.spikes;
               return;
@@ -190,6 +188,7 @@ export const EVENTS_6C = [
     id: 'safetyQuits',
     kind: 'world',
     crisis: true,
+    eras: [2, 3], // a safety head quitting in public: May 2024
     fallback: 'letgo',
     trigger: (state) => state.seenEvents.includes('promise') && state.staffTrust < 50,
     warning: { handle: '@anon_staffer', text: 'the Head of Safety cancelled every meeting this week' },
@@ -228,6 +227,7 @@ export const EVENTS_6C = [
     id: 'boardRevolt',
     kind: 'world',
     repeatable: true,
+    bypassCardLimit: true, // an emergency vote can't wait behind the two-card limit (era audit 2026-09-26, recommendation 2)
     trigger: (state) => state.era >= 2 && (state.flags.boardCrisis === true
       || (!state.flags.boardRevoltHeld && boardVote(state).yes < BALANCE.boardPassMembers)),
     warning: null,
@@ -299,6 +299,7 @@ export const EVENTS_6C = [
   {
     id: 'exportFlip',
     kind: 'world',
+    eras: [2, 3], // the memory-chip and chip-tool rules of December 2024
     fallback: 'quiet',
     trigger: (state, rng) => state.era >= 2 && rng.chance(0.15),
     warning: null,
@@ -328,6 +329,7 @@ export const EVENTS_6C = [
   {
     id: 'priceWar',
     kind: 'world',
+    eras: [2, 3, 4], // cheap small models, 2024 on; era 5's weeks are about the frontier, not prices
     fallback: 'wait',
     trigger: (state, rng) => state.era >= 2 && liveModels(state).length > 0 && rng.chance(0.12),
     warning: null,
@@ -366,6 +368,7 @@ export const EVENTS_6C = [
   {
     id: 'copyright',
     kind: 'world',
+    eras: [1, 2, 3], // newspaper and author suits, 2023-2025; the case coming due is copyrightDue
     fallback: 'fight',
     trigger: (state, rng) => state.models.some((model) => (model.flags ?? []).includes('scraped'))
       && (state.era >= 2 || state.turnInEra >= 2) && rng.chance(0.25),

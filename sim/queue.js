@@ -1,3 +1,4 @@
+import { rivalShortfall } from './rivals.js';
 import { BALANCE } from './balance.js';
 import { SUPPLIERS, eraScale } from './data/compute.js';
 import { addPipeline } from './contracts.js';
@@ -6,14 +7,15 @@ export const QUEUE_RELEASE = 7;      // × eraScale(3) units per turn
 export const RIVAL_ORDER = 4.5;      // × eraScale(3) units ordered by a rival of average Western speed
 export const PREPAY_SHARE = 0.15;    // of the order's 24-month term value
 export const QUEUE_TERM_MONTHS = 24;
-export const ANNOUNCE_CHANCE = 0.25; // a standard rival announces it will prepay next turn
 const TIERS = ['standard', 'prepaid'];
 
 export const released = () => QUEUE_RELEASE * eraScale(3);
 const queueOf = (state) => (state.compute.queue ??= { order: null, carry: null, last: null });
 
-// Relative to the Western rivals' speeds, so a rival-speed re-tune does not change the queue:
-// the fastest Western rival prepays; the others order standard until they announce a switch.
+// Today's order size is relative to the Western rivals' speeds, so a rival-speed re-tune does not change the queue.
+// Orders ignore what a rival already has coming (owner, 2026-09-26): capped at the shortfall, rivals nearly full by
+// era 3 ordered almost nothing and the queue stopped rationing. What a rival gets still lands in its fleet.
+// The fastest Western rival prepays; the others order standard until they announce a switch.
 export function rivalOrders(state) {
   const west = state.rivals.filter((r) => !r.eastern);
   const mean = west.reduce((sum, r) => sum + r.speed, 0) / west.length;
@@ -85,6 +87,9 @@ export function queueTurn(state, rng) {
   const supply = released(state);
   const got = allocate(supply, orders);
   q.last = { released: supply, rows: orders.map((o) => ({ ...o, got: got[o.lab] })) };
+  for (const r of state.rivals) {
+    if (got[r.id] > 0) r.pipeline.push({ units: got[r.id], turn: state.turn + 1, supplier: 'verde', source: 'queue' });
+  }
   if (mine) {
     const filled = got.you;
     if (filled > 0) addPipeline(state, { supplier: 'verde', units: filled, price: SUPPLIERS.verde.price, termMonths: QUEUE_TERM_MONTHS, arrivesTurn: state.turn + 1, string: null });
@@ -95,7 +100,7 @@ export function queueTurn(state, rng) {
   const prepaid = new Set(orders.filter((o) => o.tier === 'prepaid').map((o) => o.lab));
   for (const r of state.rivals) {
     if (r.eastern || prepaid.has(r.id)) continue;
-    if (rng.chance(ANNOUNCE_CHANCE)) {
+    if (rivalShortfall(state, r) > 0) {
       r.prepayNext = true;
       events.push({ type: 'rivalPrepays', lab: r.id });
     }

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import {
   updateServing, growUsers, applyEconomy, runway, valuationOf, legalTick,
-  raiseRound, useEmergency, monthlyRevenue, projectBurn,
+  raiseRound, useEmergency, monthlyRevenue, projectBurn, accrueEconomy,
 } from '../sim/economy.js';
 import * as economyApi from '../sim/economy.js';
 import { setAutomation } from '../sim/automation.js';
@@ -173,4 +173,54 @@ test('emergency options must be own table entries', () => {
   const before = structuredClone(s);
   assert.equal(useEmergency(s, 'constructor').ok, false);
   assert.deepEqual(s, before);
+});
+
+
+test('customers only pay for delivered service, and spot cover restores billable requests', () => {
+  const s = createInitialState();
+  s.models.push(consumerModel(2e6));
+  const need = updateServing(s);
+  const full = monthlyRevenue(s);
+  assert.equal(full, 10);
+  s.compute.split.coverWithSpot = false;
+  s.compute.split.servingCap = need / 2;
+  assert.equal(monthlyRevenue(s), full / 2);
+  s.compute.split.servingCap = 0;
+  s.compute.split.resellIdle = true;
+  assert.equal(monthlyRevenue(s), 0, 'reselling idle chips does not bill unserved customers');
+  const outageBurn = projectBurn(s);
+  s.compute.split.coverWithSpot = true;
+  assert.equal(monthlyRevenue(s), full);
+  assert.ok(projectBurn(s) > outageBurn, 'restored service pays the spot bill');
+});
+
+test('model earnings, ARR and cash reconcile during partial and total outages', () => {
+  const s = createInitialState();
+  s.models.push(consumerModel(1e6), { ...consumerModel(2e6), name: 'Kestrel 2 Core' });
+  const need = updateServing(s);
+  s.compute.split.coverWithSpot = false;
+  s.compute.split.servingCap = need / 2;
+  const before = s.cash;
+  const burn = projectBurn(s);
+  accrueEconomy(s, 0.5);
+  assert.deepEqual(s.models.map((model) => model.earned), [1.25, 2.5]);
+  assert.equal(s.arr, 90);
+  assert.ok(Math.abs(s.cash - before - (3.75 - burn * 0.5)) < 1e-9);
+  s.compute.split.servingCap = 0;
+  accrueEconomy(s, 1);
+  assert.equal(s.arr, 0);
+  assert.deepEqual(s.models.map((model) => model.earned), [1.25, 2.5], 'an outage adds no imaginary model earnings');
+});
+
+test('a completely unavailable service cannot grow, while restored service can', () => {
+  const s = createInitialState();
+  s.models.push(consumerModel(1e6));
+  updateServing(s);
+  s.compute.split.coverWithSpot = false;
+  s.compute.split.servingCap = 0;
+  growUsers(s);
+  assert.equal(s.models[0].users, 1e6);
+  s.compute.split.coverWithSpot = true;
+  growUsers(s);
+  assert.ok(s.models[0].users > 1e6);
 });

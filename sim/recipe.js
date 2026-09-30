@@ -6,6 +6,8 @@ import { techAvailable } from './techniques.js';
 export const SIZES = ['small', 'medium', 'large', 'xl'];
 export const SIZE_UNITS = { small: 2, medium: 5, large: 10, xl: 20 };
 export const SIZE_CAP = { small: -5, medium: 0, large: 5, xl: 8 };
+// Larger runs can realize more of a technique's capability improvement.
+export const TECHNIQUE_YIELD = { small: 0.4, medium: 0.7, large: 1, xl: 1.2 };
 export const LENGTHS = { optimal: { turns: 0, cap: 0 }, over: { turns: 1, cap: 3 }, heavy: { turns: 2, cap: 5 } };
 export const TRAIN_STAGES = ['pre', 'mid', 'post'];
 const TALENT_SLOT_SPEND = 5;

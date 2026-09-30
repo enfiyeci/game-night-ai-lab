@@ -6,7 +6,7 @@ import { updateServing, monthlyRevenue } from '../sim/economy.js';
 import { EVENTS } from '../sim/data/events.js';
 import { EVENTS_6C } from '../sim/data/events6c.js';
 import { REAL_EVENTS } from '../sim/data/realEvents.js';
-import { endTurn } from '../sim/turn.js';
+import { advanceDays, endTurn } from '../sim/turn.js';
 import { createRng } from '../sim/rng.js';
 import { contractBill } from '../sim/contracts.js';
 import { RESCUE_MONTHS, SPOT_PRICE } from '../sim/data/compute.js';
@@ -33,15 +33,9 @@ test('a troubled neocloud warns first, then asks what to do', () => {
 });
 
 test('a CoreFlame failure is warned about in the turn it happens', () => {
-  // Search seeds for a turn whose trouble roll hits (about 6% per era 1 turn), then check the same turn's events.
-  let out = null;
-  for (let seed = 1; seed <= 2000 && !out; seed++) {
-    const s = createInitialState({ seed });
-    s.compute.contracts.push({ id: 'cf', supplier: 'coreflame', units: 5, price: 1, monthsLeft: 12, needsPower: false, dark: false, troubled: false, string: 'fragile' });
-    const r = endTurn(s, {}, createRng(seed));
-    if (r.state.compute.contracts.some((c) => c.id === 'cf' && c.troubled)) out = r;
-  }
-  assert.ok(out, 'some seed rolls CoreFlame trouble');
+  const s = createInitialState();
+  s.compute.contracts.push({ id: 'cf', supplier: 'coreflame', units: 5, price: 1, monthsLeft: 12, monthsRun: 9, arrivedTurn: 0, needsPower: false, dark: false, troubled: false, string: 'fragile' });
+  const out = endTurn(s, {}, createRng(1));
   assert.ok(out.events.some((e) => e.type === 'warning' && e.id === 'neocloudTrouble'));
 });
 
@@ -95,6 +89,7 @@ test('opposition to a gas site: pushing through can cut the site', () => {
   const s = createInitialState({ seed: 71 });
   s.era = 4;
   s.turn = 12;
+  s.publicTrust = 45; // D2 (Task A6): the cut follows public trust below 50, no longer the trigger's 30% roll
   s.seenEvents = [...EVENTS, ...EVENTS_6C, ...REAL_EVENTS]
     .filter((event) => event.id !== 'siteOpposition')
     .map((event) => event.id);
@@ -105,6 +100,18 @@ test('opposition to a gas site: pushing through can cut the site', () => {
   eventsTick(s, yes);
   assert.equal(resolveEvent(s, 'siteOpposition', 'push').ok, true);
   assert.equal(s.power.sites[0].units, 280);
+});
+
+test('pushing through: the county cuts the site 30% when public trust is below 50', () => {
+  for (const [trust, units] of [[45, 280], [55, 400]]) {
+    const s = createInitialState();
+    s.era = 4;
+    s.publicTrust = trust;
+    s.flags.oppositionSite = 'gas-1';
+    s.power.sites.push({ id: 'gas-1', source: 'gas', units: 400, arrivesTurn: s.turn + 4, online: false });
+    EVENTS.find((e) => e.id === 'siteOpposition').card.choices.find((c) => c.id === 'push').effects(s);
+    assert.equal(s.power.sites[0].units, units, `trust ${trust}`);
+  }
 });
 
 test('site opposition never targets a site that will be online before its card can be answered', () => {
@@ -180,7 +187,8 @@ test('site opposition benefits cost one lease month and moving delays the select
   const push = createInitialState();
   push.flags.oppositionSite = 'gas-3';
   push.compute.contracts.push({ id: 'v', supplier: 'verde', units: 400, price: 1, monthsLeft: 24, needsPower: true, dark: false });
-  push.power.sites.push({ id: 'gas-3', source: 'gas', units: 400, arrivesTurn: 12, online: true, oppositionCut: true });
+  push.power.sites.push({ id: 'gas-3', source: 'gas', units: 400, arrivesTurn: 12, online: true });
+  push.publicTrust = 45; // D2 (Task A6): the county cuts the site when public trust is below 50 (was oppositionCut: true)
   push.compute.online = 410;
   event.card.choices.find((choice) => choice.id === 'push').effects(push);
   assert.equal(push.power.sites[0].units, 280);
@@ -295,7 +303,7 @@ test('pooling bypasses a full card queue before era 5 opens', () => {
   assert.deepEqual(s.pendingEvents.slice(0, 2).map((event) => event.id), ['president', 'investors']);
 });
 
-test('pooling risk uses its compute side stream instead of the shared event RNG', () => {
+test('the pooling pop-up draws nothing and stores no hidden risk', () => {
   const event = EVENTS.find((candidate) => candidate.id === 'pooling');
   const s = createInitialState({ seed: 15 });
   s.turn = 13;
@@ -303,20 +311,30 @@ test('pooling risk uses its compute side stream instead of the shared event RNG'
   s.turnInEra = 1;
   const sharedRng = { chance: () => assert.fail('pooling used the shared event RNG') };
   assert.equal(event.trigger(s, sharedRng), true);
-  assert.equal(s.flags.poolingRisk, true);
+  assert.equal('poolingRisk' in s.flags, false);
 });
 
-test('refusing pooling applies the stored risk, while accepting improves summit stances', () => {
+// D2 (no dice): refusing marks supply-chain risk when US favor is below 40 after the refusal's own -8.
+test('refusing the compute pool marks supply-chain risk when US favor ends below 40', () => {
+  for (const [favor, risk] of [[45, true], [47, true], [48, false], [60, false]]) {
+    const s = createInitialState();
+    s.govFavor.us = favor;
+    EVENTS.find((e) => e.id === 'pooling').card.choices.find((c) => c.id === 'refuse').effects(s);
+    assert.equal(Boolean(s.flags.supplyChainRisk), risk, `favor ${favor}`);
+  }
+});
+
+test('refusing pooling costs US favor, while accepting improves summit stances', () => {
   const event = EVENTS.find((candidate) => candidate.id === 'pooling');
   const refused = createInitialState({ seed: 15 });
   refused.turn = 13;
   refused.era = 4;
   refused.turnInEra = 1;
   assert.equal(event.trigger(refused, yes), true);
-  assert.equal(refused.flags.poolingRisk, true);
   event.card.choices.find((choice) => choice.id === 'refuse').effects(refused);
   assert.equal(refused.govFavor.us, 42);
-  assert.equal(refused.flags.supplyChainRisk, true);
+  // D2: 42 is not below 40, so this refusal carries no supply-chain risk (it was a stored 20% roll before).
+  assert.equal(refused.flags.supplyChainRisk, undefined);
 
   const plain = createInitialState();
   const pooled = createInitialState();
@@ -331,4 +349,17 @@ test('refusing pooling applies the stored risk, while accepting improves summit 
 test('the old data-center event is gone', async () => {
   const { EVENTS } = await import('../sim/data/events.js');
   assert.equal(EVENTS.some((e) => e.id === 'datacenter'), false);
+});
+
+test('scenario games warn in CoreFlame month twelve before expiry and refinancing resets its clock', () => {
+  const s = createInitialState();
+  s.eventMode = 'scenarios';
+  s.compute.contracts.push({ id: 'cf', supplier: 'coreflame', units: 5, price: 1, monthsLeft: 1.1, monthsRun: 10.9, arrivedTurn: 0, needsPower: false, dark: false, troubled: false, string: 'fragile' });
+  const result = advanceDays(s, 4, createRng(1));
+  const contract = result.state.compute.contracts.find(c => c.id === 'cf');
+  assert.ok(contract && contract.monthsLeft > 0);
+  assert.ok(result.events.some(e => e.type === 'warning' && e.id === 'neocloudTrouble'));
+  assert.equal(addressWarning(result.state, 'neocloudTrouble').ok, true);
+  assert.equal(contract.monthsRun, 0);
+  assert.equal(contract.troubled, false);
 });

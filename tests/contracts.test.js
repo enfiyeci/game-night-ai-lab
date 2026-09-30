@@ -19,6 +19,7 @@ const small = (key, era) => SUPPLIERS[key].size[0] * eraScale(era); // the lo rn
 function fresh(era = 1, favor = 50) {
   const s = createInitialState();
   s.era = era;
+  for (const rival of s.rivals) rival.capability = 100;
   s.govFavor.us = favor;
   s.cash = 1e6;
   s.power ??= { sites: [], nextId: 1 };
@@ -33,7 +34,7 @@ test('offers follow the era menu and scale with the era', () => {
   assert.deepEqual(fresh(1).compute.offers.map((o) => o.supplier), ['verde', 'azuria', 'coreflame', 'spot']);
   assert.equal(offer(fresh(1), 'verde').units, small('verde', 1));
   const e4 = fresh(4, GULF_OPEN + 10);
-  assert.equal(offer(e4, 'verde').units, small('verde', 4));
+  assert.equal(offer(e4, 'verde').units, 240, 'era four chip batches fit a single reserved grid connection');
   assert.ok(offer(e4, 'gulf') && offer(e4, 'loi') && offer(e4, 'azuriaEquity'));
   assert.deepEqual(fresh(5, GULF_OPEN + 10).compute.offers.map((o) => o.supplier), ['coreflame', 'spot']);
   const e3 = fresh(3);
@@ -182,6 +183,7 @@ test('neocloud trouble, and the Gulf license follows US favor', () => {
   assert.equal(s.publicTrust, pt - 2);
   s.turn = 2;
   deliverDue(s, lo);
+  s.compute.contracts.find((c) => c.supplier === 'coreflame').monthsRun = 11;
   contractsTurn(s, fire);
   assert.equal(s.compute.contracts.find((c) => c.supplier === 'coreflame').troubled, true);
   const g = s.compute.contracts.find((c) => c.supplier === 'gulf');
@@ -239,6 +241,7 @@ test('the grid card reserves a power site and then disappears', () => {
 
 test('spot can be pulled with a turn of warning in the tight eras, and its last turn is billed', () => {
   const s = fresh(3);
+  s.raceHeat = 60;
   signOffer(s, offer(s, 'spot').id, lo);
   assert.equal(contractsTurn(s, fire).warnedBump, true);
   assert.equal(pullBumped(s).length, 0, 'it still serves the turn after the warning');

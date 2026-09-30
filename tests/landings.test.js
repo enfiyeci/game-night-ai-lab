@@ -10,11 +10,12 @@ import { createPresidentPromise } from '../sim/promises.js';
 
 function advanceTo(s, day, rng) {
   let events = [];
-  while (s.day < day) {
+  while (s.day < day && !s.ending) {
     const r = advanceDays(s, 1, rng);
     s = r.state;
     events = r.events;
   }
+  assert.ok(s.day >= day, `the run ended on day ${s.day}, before day ${day}`);
   return { s, events };
 }
 
@@ -97,8 +98,9 @@ test('a lawsuit is billed on its landing day, inside its round', () => {
 
 test('a kept President promise is thanked on its landing day', () => {
   const rng = createRng(6);
-  let s = advanceDays(createInitialState({ seed: 6 }), 91, rng).state; // the first mark sets the default constitution
-  const promise = createPresidentPromise('killSwitch', 'second', s.turn, s); // due 2 rounds on; kept while 'accept-shutdown' holds
+  let s = advanceDays(createInitialState({ seed: 6 }), 91, rng).state;
+  // No constitution before era 3, so a promise that touches it waits for era 3; this one does not: due 2 rounds on, kept with no Gulf deal.
+  const promise = createPresidentPromise('domesticChips', 'second', s.turn, s);
   s.promises.push(promise);
   s = applyActions(s, {}, rng).state;
   const day = s.promises.at(-1).landsDay;

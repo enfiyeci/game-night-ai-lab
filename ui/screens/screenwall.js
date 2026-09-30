@@ -1,6 +1,7 @@
 import { ERAS } from '../../sim/data/eras.js';
 import { screenWallView } from '../logic/automation.js';
 import { hasLanded, queueAnswer } from '../logic/events.js';
+import { enterTransition, exitTransition } from '../components/transition.js';
 
 const W = 900;
 const H = 290;
@@ -65,11 +66,12 @@ function openScreenWall(game, overlayRoot, pending) {
     button.type = 'button';
     button.append(element('b', '', choice.label), element('small', '', DETAIL[choice.id] ?? `Amend the policy to ×${view.line + 1}`));
     button.addEventListener('click', () => {
-      layer.remove();
-      game.clock?.resume('screenwall');
-      queueAnswer(game, pending.id, choice.id);
-      // After the answer, so this wall's own check sees it answered; cards and warnings that waited now open.
-      overlayRoot.dispatchEvent(new CustomEvent('gdt-dialog-closed'));
+      exitTransition(layer).then(() => {
+        game.clock?.resume('screenwall');
+        queueAnswer(game, pending.id, choice.id);
+        // After the answer, so this wall's own check sees it answered; cards and warnings that waited now open.
+        overlayRoot.dispatchEvent(new CustomEvent('gdt-dialog-closed'));
+      });
     });
     choices.append(button);
   }
@@ -85,6 +87,7 @@ function openScreenWall(game, overlayRoot, pending) {
     buttons[next]?.focus();
   });
   overlayRoot.append(layer);
+  enterTransition(layer);
   game.clock?.pause('screenwall'); // the clock only watches .dialog-layer and .menu-layer by itself
   choices.querySelector('button')?.focus();
 }

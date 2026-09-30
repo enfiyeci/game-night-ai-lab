@@ -6,7 +6,7 @@ import { activeModels, safetyUnits, servingCost, PRICE_STANCE, REVENUE_PER_USER 
 import { controlUnits, reviewerCost } from './automation.js';
 import { monthlyBills, arrivingBills, creditOffset, addPipeline, markUpRivalOffers } from './contracts.js';
 import { leaseBills } from './power.js';
-import { resaleCredit, safetyValue, spotCover } from './split.js';
+import { computeSlices, resaleCredit, safetyValue, spotCover, servedShare } from './split.js';
 
 export const STATE_PREEMPTION_LEGAL_COST_MULTIPLIER = 0.7;
 
@@ -14,7 +14,7 @@ export { activeModels } from './serving.js';
 
 export const safetySpend = (state) => safetyValue(state);
 
-export const revenuePerUser = (model) => REVENUE_PER_USER[model.channel] * PRICE_STANCE[model.priceStance].rev * (model.revenueMult ?? 1);
+export const revenuePerUser = (model) => REVENUE_PER_USER[model.channel] * PRICE_STANCE[model.priceStance].rev * (model.revenueMult ?? 1) * (model.eraPrice ?? 1);
 
 export function updateServing(state) {
   const online = state.compute.online;
@@ -39,18 +39,26 @@ export function updateServing(state) {
 export function growUsers(state, fraction = 1, { round = true } = {}) {
   const months = eraById(state.era).monthsPerTurn;
   for (const m of activeModels(state)) {
-    const g = (0.12 * PRICE_STANCE[m.priceStance].growth + (state.growthBoost ?? 0)) * (months / 3);
+    const g = (0.12 * PRICE_STANCE[m.priceStance].growth + (state.growthBoost ?? 0)) * (months / 3) * servedShare(state);
     const grown = Math.min(m.userCap, m.users * (1 + g) ** fraction);
     m.users = round ? Math.round(grown) : grown;
   }
 }
 
+export const modelMonthlyRevenue = (state, model) => (model.users * revenuePerUser(model) / 1e6)
+  * (state.compute.surge?.usage ?? 1) * servedShare(state);
+
 export function monthlyRevenue(state) {
-  return (activeModels(state).reduce((s, m) => s + m.users * revenuePerUser(m), 0) / 1e6)
-    * (state.compute.surge?.usage ?? 1);
+  return activeModels(state).reduce((sum, model) => sum + modelMonthlyRevenue(state, model), 0);
 }
 
 export const computeRent = (state) => monthlyBills(state) + leaseBills(state) - creditOffset(state);
+
+// What one online unit costs the lab each month right now: rent after credits, over the fleet (spot cover is billed
+// to serving on its own, in accrueEconomy).
+export const unitMonthlyPrice = (state) => (state.compute.online > 0
+  ? Math.max(0, computeRent(state)) / state.compute.online
+  : BALANCE.unitMonthlyCost);
 
 export function projectBurn(state) {
   const spot = spotCover(state);
@@ -70,6 +78,17 @@ export function accrueEconomy(state, months) {
   const burn = projectBurn(state);
   state.burnPlanned = burn;
   const revenue = monthlyRevenue(state);
+  // Each model's own books (the finance page's "Each model" table): what it earned, and its share, by the serving it
+  // asks for, of what serving actually cost: the units serving got at today's price of a unit, plus any spot cover.
+  const models = activeModels(state);
+  const asks = models.map((m) => m.users * m.servingCost);
+  const asked = asks.reduce((a, b) => a + b, 0);
+  const servingBill = computeSlices(state).serving * unitMonthlyPrice(state) + spotCover(state);
+  models.forEach((m, i) => {
+    m.earned = (m.earned ?? 0) + modelMonthlyRevenue(state, m) * months;
+    m.servingSpent = (m.servingSpent ?? 0) + (asked > 0 ? servingBill * (asks[i] / asked) * months : 0);
+    m.monthsOnSale = (m.monthsOnSale ?? 0) + months;
+  });
   state.arr = revenue * 12;
   state.cash += (revenue - burn) * months;
   state.valuation = valuationOf(state);

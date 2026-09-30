@@ -1,6 +1,6 @@
 import { monthlyBills } from '../../sim/contracts.js';
-import { projectBurn, runway } from '../../sim/economy.js';
-import { PLEDGES } from '../../sim/split.js';
+import { projectBurn, runway, monthlyRevenue } from '../../sim/economy.js';
+import { PLEDGES, servedShare } from '../../sim/split.js';
 import {
   budgetFromSliders,
   budgetPreviewQueue,
@@ -108,12 +108,15 @@ function summaryPanel(state, values, level) {
   const pledge = bar.pledgeMarker;
   const projected = structuredClone(state);
   projected.burnPlanned = projectBurn(projected);
+  projected.arr = monthlyRevenue(projected) * 12;
   const rows = [
     ['Money spend', `${money(spend)}/mo`],
     ['Compute bill', `${money(monthlyBills(state))}/mo`],
     ['of which idle', `${money(idleComputeCost(state))}/mo`, 'after'],
     ['Runway (CFO)', months(runway(projected, 'planned'))],
   ];
+  const delivered = servedShare(state);
+  if (delivered < 1) rows.push(['Requests served', `${pct(delivered)} · only these earn revenue`, 'after']);
   if (pledge) rows.push([`Pledge ${pct(pledge.share)}`, `${pledge.kept ? 'kept' : 'broken'} at ${pct(state.compute.split.safety)}`, pledge.kept ? 'kept' : 'after']);
   for (const [label, value, className = ''] of rows) {
     const row = element('div', 'budget-summary-row');
@@ -256,7 +259,7 @@ export function openBudget(game, overlayRoot) {
     }
     const toggles = element('div', 'compute-toggles');
     toggles.append(
-      switchButton('Cover shortfalls with spot', 'rent at today’s spot price when serving runs short', split.coverWithSpot, (checked) => { split.coverWithSpot = checked; render({ focusLabel: 'Cover shortfalls with spot' }); }),
+      switchButton('Cover shortfalls with spot', 'rent at today’s spot price; otherwise unserved requests earn nothing and customers leave', split.coverWithSpot, (checked) => { split.coverWithSpot = checked; render({ focusLabel: 'Cover shortfalls with spot' }); }),
       switchButton('Resell idle compute', 'recover part of the cost of idle units', split.resellIdle, (checked) => { split.resellIdle = checked; render({ focusLabel: 'Resell idle compute' }); }),
     );
     foot.append(legend, toggles);
@@ -332,7 +335,7 @@ export function openBudget(game, overlayRoot) {
   opened.classList.add('company-dialog', 'company-dialog-budget');
   const footer = element('div', 'company-footer budget-dialog-footer');
   footer.append(
-    element('div', 'company-footer-note', 'Budget changes are free · they apply right away'),
+    element('div', 'company-footer-note', 'Budget changes are free · choose OK to apply them'),
     opened.querySelector('.dialog-ok'),
   );
   opened.querySelector('.dialog-body').append(footer);

@@ -3,7 +3,8 @@ export const BALANCE = {
   startCash: 1000,
   startCompute: 10,
   startCapability: 20,
-  maxCapability: 100,
+  // Capability keeps counting past this (owner pick A, 2026-09-26); the danger rules read it only up to here (sim/hazards.js).
+  dangerCapabilityMax: 100,
   startValuation: 5000,
   unitMonthlyCost: 1.46, // $M per compute unit per month ($2/GPU-hour × 730 h × 1,000 GPUs)
   unitMonthlyDollars: 1.46e6,
@@ -13,9 +14,7 @@ export const BALANCE = {
   alignDebtFactor: 2,
   dangerLine: 55,
   misuseDisasterLine: 70,
-  misuseRollChance: 0.25,
   raceHeatDisaster: 85,
-  rivalDisasterChance: 0.2,
   raceHeatDecay: 1,
   ownReleaseHeat: 3,
   dangerZoneRunwayMonths: 6,
@@ -37,5 +36,5 @@ export const BALANCE = {
   boardDealBrokenCandor: 6,
   boardLostDrop: 20,
   boardLostCap: 40,
-  boardRequestLeakChance: 0.35, // the board event "Send a cleaned-up version"
+  boardRequestLeakStaffTrust: 50, // the board event "Send a cleaned-up version" leaks when staff trust is below this (D2)
 };

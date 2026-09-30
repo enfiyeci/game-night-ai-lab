@@ -90,7 +90,7 @@ test('buildFinale renders replacement-pattern characters in the AI name literall
   }
 });
 
-test('resolveFinale uses the highest-priority chosen tag and formats the full title', () => {
+test('resolveFinale preserves every chosen consequence without crowding the film title', () => {
   const state = finaleState('aligned');
   const result = resolveFinale(state, {
     worldBody: 'keep',
@@ -100,9 +100,11 @@ test('resolveFinale uses the highest-priority chosen tag and formats the full ti
     pause: 'pause',
     citizenship: 'yes',
   });
-  assert.equal(result.tag, 'aiRun');
-  assert.equal(result.tagText, 'run by its own AI');
-  assert.equal(result.fullTitle, 'Aligned success — run by its own AI');
+  assert.equal(result.tag, 'mixed');
+  assert.equal(result.tagText, null);
+  assert.equal(result.fullTitle, 'Aligned success');
+  assert.deepEqual(result.tags, ['heldAlone', 'openSafety', 'helpedRivals', 'aiRun', 'pause']);
+  assert.equal(result.legacy.length, 6);
   assert.equal(result.citizenship, 'granted');
   assert.deepEqual(result.picks, [
     { cardId: 'worldBody', choiceId: 'keep', auto: false },
@@ -179,5 +181,41 @@ test('every finale prompt and choice label contains no digits', () => {
     for (const choice of card.choices) {
       assert.equal(/\d/.test(choice.label), false, `${card.id}:${choice.id} label`);
     }
+  }
+});
+
+
+test('every authored epilogue consequence and clean legacy is reachable through legal choices', () => {
+  for (const ending of ['aligned', 'pacingDeal', 'pyrrhic', 'overtaken']) {
+    const deck = FINALE_DECKS[finaleDeck(ending)];
+    let combinations = [{}];
+    for (const card of [...deck.cards, CITIZENSHIP_CARD]) {
+      combinations = combinations.flatMap((choices) => card.choices.map((choice) => ({ ...choices, [card.id]: choice.id })));
+    }
+    const reached = new Set();
+    for (const choices of combinations) {
+      const result = resolveFinale(finaleState(ending), choices);
+      result.tags.forEach((tag) => reached.add(tag));
+      assert.equal(result.picks.some((pick) => pick.auto), false);
+      assert.equal(result.legacy.length, 6);
+      assert.ok(result.legacy.every((outcome) => outcome.text.length > 0));
+      for (const card of deck.cards) {
+        const choice = card.choices.find((choice) => choice.id === choices[card.id]);
+        if (choice.tag) assert.ok(result.tags.includes(choice.tag.id), `${ending}:${card.id} must remain visible`);
+      }
+    }
+    const expected = [deck.cleanTag.id, ...deck.cards.flatMap((card) => card.choices.flatMap((choice) => choice.tag ? [choice.tag.id] : []))];
+    assert.deepEqual([...reached].sort(), expected.sort(), ending);
+  }
+});
+
+test('careful stewardship requires shared oversight, open safety, help, human accountability and a pause', () => {
+  const choices = { ...FINALE_DECKS.stewardship.cleanChoices, citizenship: 'yes' };
+  const state = finaleState('aligned', 'Beacon');
+  assert.equal(resolveFinale(state, choices).tag, 'steward');
+  assert.equal(resolveFinale(state, choices).legacy.at(-1).text, 'Beacon receives legal rights.');
+  for (const card of FINALE_DECKS.stewardship.cards) {
+    const alternative = card.choices.find((choice) => choice.id !== choices[card.id]);
+    assert.notEqual(resolveFinale(state, { ...choices, [card.id]: alternative.id }).tag, 'steward');
   }
 });

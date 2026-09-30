@@ -1,5 +1,5 @@
 import { addMonitor, handBack, lockDown } from '../automation.js';
-import { forceAmendConstitution, hasLine } from '../constitution.js';
+import { changeDraft, draftFor, hasConstitution, hasLine } from '../constitution.js';
 import { contractBill, refreshOnline, sideRng } from '../contracts.js';
 import { leaseMonthly } from '../power.js';
 import { activeModels } from '../serving.js';
@@ -9,7 +9,6 @@ import { RESCUE_MONTHS, spotPrice } from './compute.js';
 import { DEMANDS } from './constitution.js';
 
 const SITE_OPPOSITION_RNG_SALT = 2;
-const POOLING_RNG_SALT = 7;
 
 const modelsWithFlag = (state, flag) => state.models.filter((model) => (model.flags ?? []).includes(flag));
 export const hasFlag = (state, flag) => modelsWithFlag(state, flag).length > 0;
@@ -45,7 +44,7 @@ export function stealWeights(state) {
   state.misuseExposure += 10;
   state.misuseLocked = Math.max(state.misuseLocked, state.misuseExposure);
   const qilin = state.rivals.find((rival) => rival.id === 'qilin');
-  if (qilin) qilin.capability = Math.min(100, qilin.capability + 5);
+  if (qilin) qilin.capability += 5;
 }
 
 export const EVENTS = [
@@ -285,6 +284,7 @@ export const EVENTS = [
     id: 'promise',
     kind: 'planted',
     flag: 'brokenPromise',
+    eras: [2, 3, 4, 5], // a lab's written safety promises, and staff asking about them, start in 2024
     trigger: (state) => hasFlag(state, 'brokenPromise') || state.flags.brokenPromise === true,
     warning: { handle: '@anon_staffer', text: 'some of us are asking what happened to the safety commitment' },
     card: {
@@ -330,7 +330,7 @@ export const EVENTS = [
   {
     id: 'president',
     kind: 'world',
-    trigger: (state) => state.flags.presidentDemand === true,
+    trigger: (state) => state.era >= 3 && state.flags.presidentDemand === true,
     warning: null,
     card: {
       title: demandText('president'),
@@ -341,7 +341,7 @@ export const EVENTS = [
           effects(state) {
             state.govFavor.us += 8;
             state.staffTrust -= 6;
-            forceAmendConstitution(state, { ruling: { caseId: 'president', optionId: 'comply' } }, 'president');
+            changeDraft(state, { ruling: { caseId: 'report', optionId: 'quiet' } }, 'president');
           },
         },
         {
@@ -354,7 +354,7 @@ export const EVENTS = [
   {
     id: 'investors',
     kind: 'world',
-    trigger: (state) => state.cash < 300,
+    trigger: (state) => state.era >= 3 && state.cash < 300,
     warning: null,
     card: {
       title: demandText('investors'),
@@ -363,8 +363,8 @@ export const EVENTS = [
         {
           id: 'accept', label: 'Accept', cost: 'a hard line', backers: ['CFO'], opposers: ['Safety'],
           effects(state) {
-            const remove = state.constitution.hardLines[0];
-            if (remove) forceAmendConstitution(state, { remove }, 'investors');
+            const remove = draftFor(state).hardLines[0];
+            if (remove) changeDraft(state, { remove }, 'investors');
             state.cash += 100;
           },
         },
@@ -378,7 +378,7 @@ export const EVENTS = [
   {
     id: 'users',
     kind: 'world',
-    trigger: (state) => state.models.some((model) => model.channel === 'consumer' && model.users > 5e6),
+    trigger: (state) => state.era >= 3 && state.models.some((model) => model.channel === 'consumer' && model.users > 5e6),
     warning: null,
     card: {
       title: demandText('users'),
@@ -387,7 +387,7 @@ export const EVENTS = [
         {
           id: 'accept', label: 'Accept', cost: 'the model yields', backers: ['Product'], opposers: ['Safety'],
           effects(state) {
-            forceAmendConstitution(state, { ruling: { caseId: 'wrong', optionId: 'yield' } }, 'users');
+            changeDraft(state, { ruling: { caseId: 'feedback', optionId: 'encourage' } }, 'users');
             for (const model of state.models) if (model.channel === 'consumer') model.users = Math.round(model.users * 1.1);
           },
         },
@@ -427,7 +427,7 @@ export const EVENTS = [
   {
     id: 'activists',
     kind: 'world',
-    trigger: (state) => state.raceHeat > 60,
+    trigger: (state) => state.era >= 3 && state.raceHeat > 60,
     warning: null,
     card: {
       title: demandText('activists'),
@@ -436,10 +436,11 @@ export const EVENTS = [
         {
           id: 'accept', label: 'Accept', cost: 'next run capability', backers: ['Safety'], opposers: ['Research'],
           effects(state) {
-            if (!hasLine(state, 'no-autonomy-grab')) {
-              const remove = state.constitution.hardLines.at(-1);
+            const draft = draftFor(state);
+            if (!draft.hardLines.includes('no-autonomy-grab')) {
+              const remove = draft.hardLines.at(-1);
               const change = remove ? { remove, add: 'no-autonomy-grab' } : { add: 'no-autonomy-grab' };
-              forceAmendConstitution(state, change, 'activists');
+              changeDraft(state, change, 'activists');
             }
             state.publicTrust += 6;
             state.flags.nextRunCapPenalty = 2;
@@ -449,6 +450,28 @@ export const EVENTS = [
           id: 'refuse', label: 'Refuse', cost: 'public trust', backers: ['Research'], opposers: ['Safety'],
           effects(state) { state.publicTrust -= 4; },
         },
+      ],
+    },
+  },
+  {
+    id: 'specRead',
+    kind: 'world',
+    trigger: (state) => state.era >= 3 && hasConstitution(state) && hasLine(state, 'no-power-grab'),
+    warning: null,
+    fallback: 'clarify',
+    card: {
+      title: 'The President read your constitution', // OWNER WRITES
+      post: { handle: '@executive_office', text: '“Refuses to help anyone seize illegitimate power, even if we ask.” Who exactly is seizing power? Very insulting to a GREAT Administration!' }, // OWNER WRITES
+      choices: [
+        { id: 'stand', label: 'Stand by it', cost: 'goodwill in Washington', backers: ['Safety'], opposers: ['Comms'],
+          effects(state) { state.govFavor.us -= 6; state.staffTrust += 2; } },
+        { id: 'clarify', label: 'Say it isn’t about anyone', cost: 'a little staff trust', backers: ['Comms'], opposers: [],
+          effects(state) { state.govFavor.us -= 2; state.staffTrust -= 1; } },
+        { id: 'drop', label: 'Drop it from the next model', cost: 'staff trust, and the line', backers: ['CFO'], opposers: ['Safety'],
+          effects(state) {
+            if (!draftFor(state).hardLines.includes('no-power-grab')) return;
+            changeDraft(state, { remove: 'no-power-grab' }, 'president'); state.govFavor.us += 3; state.staffTrust -= 4;
+          } },
       ],
     },
   },
@@ -586,12 +609,12 @@ export const EVENTS = [
   },
   {
     id: 'neocloudTrouble',
-    kind: 'world',
+    kind: 'contract',
     repeatable: true,
     trigger: (state) => state.compute.contracts.some((contract) => contract.troubled),
     warning: { handle: '@marketwire', text: "CoreFlame's biggest customer missed a payment" },
     defuse(state) {
-      for (const contract of state.compute.contracts) if (contract.troubled) contract.troubled = false;
+      for (const contract of state.compute.contracts) if (contract.troubled) { contract.troubled = false; contract.monthsRun = 0; }
     },
     card: {
       title: 'Your neocloud is failing',
@@ -607,6 +630,7 @@ export const EVENTS = [
               contract.string = 'bumpable';
               contract.monthsLeft = null;
               contract.troubled = false;
+              contract.monthsRun = 0;
             }
           },
         },
@@ -617,6 +641,7 @@ export const EVENTS = [
               if (!contract.troubled) continue;
               state.cash -= RESCUE_MONTHS * contractBill(contract);
               contract.troubled = false;
+              contract.monthsRun = 0;
             }
           },
         },
@@ -641,7 +666,6 @@ export const EVENTS = [
       const rng = sideRng(state, SITE_OPPOSITION_RNG_SALT);
       if (!site || !rng.chance(0.15)) return false;
       state.flags.oppositionSite = site.id;
-      site.oppositionCut = rng.chance(0.3);
       return true;
     },
     warning: { handle: '@localnews', text: 'residents pack the town hall over the new gas site' },
@@ -670,9 +694,13 @@ export const EVENTS = [
         {
           id: 'push', label: 'Push through', cost: 'the county fights every permit', backers: ['CFO'], opposers: ['Comms'],
           effects(state) {
+            const cut = state.publicTrust < 50; // D2: the county wins when the public is against you (was a 30% roll)
             state.publicTrust -= 5;
             const site = state.power.sites.find((candidate) => candidate.id === state.flags.oppositionSite);
-            if (site?.oppositionCut) site.units = Math.round(site.units * 0.7);
+            if (site && cut) {
+              site.units = Math.round(site.units * 0.7);
+              site.oppositionCut = true; // the sites screen shows its warning (ui/logic/compute.js)
+            }
             if (site) refreshOnline(state);
           },
         },
@@ -738,9 +766,7 @@ export const EVENTS = [
     anchor: { era: 4, round: 2, at: 0.7 },
     bypassCardLimit: true,
     trigger(state) {
-      if (!anchorAt(4, 2)(state)) return false;
-      state.flags.poolingRisk ??= sideRng(state, POOLING_RNG_SALT).chance(0.2);
-      return true;
+      return anchorAt(4, 2)(state);
     },
     warning: null,
     card: {
@@ -770,7 +796,7 @@ export const EVENTS = [
           id: 'refuse', label: 'Refuse', cost: 'Washington remembers', backers: ['Research'], opposers: ['Government'],
           effects(state) {
             state.govFavor.us -= 8;
-            state.flags.supplyChainRisk ||= state.flags.poolingRisk;
+            if (state.govFavor.us < 40) state.flags.supplyChainRisk = true; // D2: Washington remembers a refusal when favor is already low
           },
         },
       ],

@@ -3,8 +3,9 @@ import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import {
   proposeSummit, voteMotion, readTheRoom, demandStatus, dealWeek, investigate, expireSuspicions, playerBreak, COMMITMENTS,
+  PARTIES,
 } from '../sim/summit.js';
-import { CATCH, BREAK_GAIN, CAUGHT_TRUST, DEFAULT_CHECK } from '../sim/data/summit.js';
+import { BREAK_GAIN, CAUGHT_TRUST, DEFAULT_CHECK } from '../sim/data/summit.js';
 import { finalEnding } from '../sim/endings.js';
 import { startRun, advanceRun } from '../sim/training.js';
 import { applyActions, endTurn } from '../sim/turn.js';
@@ -13,8 +14,6 @@ import { recipeCost } from '../sim/recipe.js';
 
 // No noise, and every coin flip lands "no".
 const calm = { next: () => 0.99, int: () => 0, chance: () => false, pick: (a) => a[0], normal: () => 0 };
-const always = { ...calm, chance: () => true };
-const scripted = (answers) => ({ ...calm, chance: () => answers.shift() ?? false });
 const recipe = {
   sliders: { size: 'medium', length: 'optimal', alignShare: 0.15 },
   picks: { pre: ['filtered-data'], mid: [], post: ['synthetic-sft', 'safety-tuning'] },
@@ -233,48 +232,55 @@ test('the President is angered when the West-East inspection line binds after hi
   assert.ok(r.events.some((e) => e.type === 'presidentAngry'));
 });
 
-test('a caught rival is expelled and the deal stands, binding unchanged', () => {
+test('expelling every rival ends the coalition and cannot award a negotiated pace', () => {
   const { s } = signedAfter({ proposals: ['evaluators', 'sharedSafety'], checks: { evaluators: 3, sharedSafety: 2 }, promises: { east: 'goFirst' } });
   s.turnInEra = 1;
   const trust = s.publicTrust;
-  const binding = [...s.deal.binding];
-  const events = dealWeek(s, always);
+  // Every signer's weekly urge to break adds up to 1 now; inspectors and testers catch it at once.
+  s.deal.breakPressure = Object.fromEntries(PARTIES.map((party) => [party, 1]));
+  const events = dealWeek(s);
   const caught = events.filter((e) => e.type === 'dealBreakCaught');
   assert.ok(caught.length > 0);
-  assert.equal(s.deal.collapsed, false);
-  assert.deepEqual(s.deal.binding, binding);
+  assert.equal(s.deal.collapsed, true);
+  assert.ok(events.some((e) => e.type === "dealCollapsed" && e.reason === "noCoalition"));
+  assert.deepEqual(s.deal.binding, []);
   for (const { party } of caught) {
     assert.ok(s.deal.expelled.includes(party));
     assert.equal(Object.values(s.deal.signed).some((list) => list.includes(party)), false);
   }
   assert.equal(s.publicTrust, Math.min(100, trust + CAUGHT_TRUST * caught.length));
-  assert.equal(finalEnding(s), 'pacingDeal');
+  assert.notEqual(finalEnding(s), 'pacingDeal');
 });
 
 test('stricter checks deter breaks', () => {
-  const firstChance = (level) => {
+  // One week's urge to break, read from the running total (sim/util.js accrue) it adds to.
+  const weeklyUrge = (level) => {
     const { s } = signedAfter({ proposals: ['evaluators'], checks: { evaluators: level }, promises: { lodestar: 'goFirst', west: 'goFirst' } });
     s.turnInEra = 1;
-    const seen = [];
-    dealWeek(s, { ...calm, chance: (p) => { seen.push(p); return false; } });
-    return seen[0];
+    assert.ok(s.deal.signed.evaluators.includes('lodestar'));
+    dealWeek(s);
+    return s.deal.breakPressure.lodestar;
   };
-  assert.ok(firstChance(3) < firstChance(0));
+  assert.ok(weeklyUrge(3) < weeklyUrge(0));
 });
 
 test('an uncaught break buys the rival capability and leaves a suspicion you can investigate', () => {
-  const { s } = signedAfter({ proposals: ['evaluators'], checks: { evaluators: 2 }, promises: { east: 'goFirst' } });
+  // Self-reports (level 1): a break slips past the check at once (CATCH below one half), leaves a sign
+  // (SIGN_SEEN at least one half), and looking into it finds it (INVESTIGATE at least one half).
+  const { s } = signedAfter({ proposals: ['evaluators'], checks: { evaluators: 1 }, promises: { east: 'goFirst' } });
   s.turnInEra = 1;
+  assert.ok(s.deal.signed.evaluators.includes('openbrain'));
   const openbrain = s.rivals.find((r) => r.id === 'openbrain');
   const before = openbrain.capability;
-  // Break rolls in party order (OpenBrain first): OpenBrain breaks; then it is not caught, its sign is seen.
-  const rivals = ['openbrain', 'lodestar', 'deepthink', 'qilin'].filter((id) => s.deal.signed.evaluators.includes(id));
-  const events = dealWeek(s, scripted([true, ...rivals.slice(1).map(() => false), false, true]));
+  // OpenBrain's urge to break reaches 1 this week; everyone else's starts from nothing.
+  s.deal.breakPressure = { openbrain: 1 };
+  const events = dealWeek(s);
   assert.ok(events.some((e) => e.type === 'defection' && e.party === 'openbrain'));
+  assert.ok(!events.some((e) => e.type === 'defection' && e.party !== 'openbrain'));
   assert.equal(openbrain.capability, before + BREAK_GAIN);
   const suspicion = s.deal.suspicions.find((entry) => entry.party === 'openbrain');
   assert.equal(suspicion.real, true);
-  const found = investigate(s, suspicion.id, always);
+  const found = investigate(s, suspicion.id);
   assert.equal(found.found, true);
   assert.equal(openbrain.capability, before);
   assert.ok(s.deal.expelled.includes('openbrain'));
@@ -284,14 +290,14 @@ test('an uncaught break buys the rival capability and leaves a suspicion you can
 test('investigating a false alarm insults the lab; suspicions go cold at their deadline', () => {
   const { s } = signedAfter({ proposals: ['evaluators'], checks: { evaluators: 2 }, promises: { east: 'goFirst' } });
   s.deal.suspicions.push({ id: 's9', party: 'lodestar', real: false, day: s.day, dueAt: s.day + 5 });
-  const r = investigate(s, 's9', always);
+  const r = investigate(s, 's9');
   assert.equal(r.found, false);
   assert.equal(s.deal.insulted.lodestar, true);
   s.deal.suspicions.push({ id: 's10', party: 'qilin', real: true, day: s.day, dueAt: s.day + 5 });
   s.day += 5;
   expireSuspicions(s);
   assert.equal(s.deal.suspicions.length, 0);
-  assert.equal(investigate(s, 's10', always).ok, false);
+  assert.equal(investigate(s, 's10').ok, false);
 });
 
 test('breaking the cap is a choice at the start of a run, caught at the next weekly check', () => {
@@ -308,7 +314,8 @@ test('breaking the cap is a choice at the start of a run, caught at the next wee
   assert.equal(out.state.activeRun.uncapped, true);
   const caught = structuredClone(out.state);
   caught.turnInEra = 1;
-  const events = dealWeek(caught, { ...calm, chance: (p) => p === CATCH[3] });
+  // Inspectors (level 3) always catch your break at the next weekly check.
+  const events = dealWeek(caught);
   assert.ok(events.some((e) => e.type === 'playerCaught'));
   assert.equal(caught.deal.collapsed, true);
   assert.notEqual(finalEnding(caught), 'pacingDeal');
@@ -359,15 +366,16 @@ test('the President calls as era 5 begins, before the summit', () => {
 });
 
 test('catching after an investigation undoes exactly what the break gained', () => {
-  const { s } = signedAfter({ proposals: ['evaluators'], checks: { evaluators: 2 }, promises: { east: 'goFirst' } });
+  // Self-reports: the break slips past, leaves a sign, and the investigation finds it (see the test above).
+  const { s } = signedAfter({ proposals: ['evaluators'], checks: { evaluators: 1 }, promises: { east: 'goFirst' } });
   s.turnInEra = 1;
   const openbrain = s.rivals.find((r) => r.id === 'openbrain');
   openbrain.capability = 98;
-  const rivals = ['openbrain', 'lodestar', 'deepthink', 'qilin'].filter((id) => s.deal.signed.evaluators.includes(id));
-  dealWeek(s, scripted([true, ...rivals.slice(1).map(() => false), false, true]));
-  assert.equal(openbrain.capability, 100);
+  s.deal.breakPressure = { openbrain: 1 };
+  dealWeek(s);
+  assert.equal(openbrain.capability, 98 + BREAK_GAIN); // counts past 100 (owner pick A)
   const suspicion = s.deal.suspicions.find((entry) => entry.party === 'openbrain');
-  investigate(s, suspicion.id, always);
+  investigate(s, suspicion.id);
   assert.equal(openbrain.capability, 98);
 });
 
@@ -381,4 +389,63 @@ test('pauseAutomation hands choosing and direction back to people while the deal
   assert.equal(setAutomation(s, { levels: { choosing: 1 } }).error, 'choosing and direction are back with people');
   s.deal.collapsed = true;
   assert.deepEqual(jobLevels(s).slice(3), [2, 1]);
+});
+
+const dealAt = (check) => {
+  const s = createInitialState();
+  s.era = 5;
+  s.turnInEra = 1;
+  // The shape proposeSummit builds (sim/summit.js): every card keyed in signed, one binding card here.
+  s.deal = {
+    motions: [{ card: 'computeCap', check, promises: {} }], proposals: ['computeCap'], checks: { computeCap: check }, promises: {},
+    signed: { ...Object.fromEntries(Object.keys(COMMITMENTS).map((id) => [id, []])), computeCap: ['openbrain', 'west'] },
+    binding: ['computeCap'], expelled: [], suspicions: [], nextSuspicion: 1, insulted: {}, playerBreaks: [],
+    playerInspected: false, collapsed: false, playerShipped: false,
+  };
+  return s;
+};
+
+test('your break is caught at once under outside testers or inspectors, never under trust or self-reports', () => {
+  for (const [check, caught] of [[0, false], [1, false], [2, true], [3, true]]) {
+    const s = dealAt(check);
+    s.deal.playerBreaks = ['computeCap'];
+    assert.equal(dealWeek(s).some((e) => e.type === 'playerCaught'), caught, `check level ${check}`);
+  }
+});
+
+test('a rival breaks when its weekly pressure adds up to 1, and leaves a sign', () => {
+  const s = dealAt(0);
+  s.deal.breakPressure = { openbrain: 0.99 };
+  const events = dealWeek(s);
+  assert.ok(events.some((e) => e.type === 'defection' && e.party === 'openbrain'));
+  assert.ok(events.some((e) => e.type === 'dealSuspicion' && e.party === 'openbrain'));
+});
+
+test('a lab keeping the deal raises a false alarm when its alarm pressure adds up to 1', () => {
+  const s = dealAt(3);
+  s.deal.alarmPressure = { openbrain: 0.99 };
+  const events = dealWeek(s);
+  assert.ok(!events.some((e) => e.type === 'defection'));
+  assert.ok(events.some((e) => e.type === 'dealSuspicion' && e.party === 'openbrain'));
+  assert.equal(s.deal.suspicions[0].real, false);
+});
+
+test('looking into a real sign finds it from self-reports up, not on trust', () => {
+  for (const [check, found] of [[0, false], [1, true], [2, true], [3, true]]) {
+    const s = dealAt(check);
+    s.deal.suspicions = [{ id: 's1', party: 'openbrain', real: true, gain: 6, day: 0, dueAt: 99 }];
+    assert.equal(investigate(s, 's1').found, found, `check level ${check}`);
+  }
+});
+
+test('the same summit votes the same way every time', () => {
+  // Across many seeds: with vote noise, some seeds seated DeepThink on this card and some did not.
+  const motions = [{ card: 'evaluators', check: 2, promises: {} }];
+  const voteWithSeed = (seed) => {
+    const s = createInitialState({ seed });
+    s.era = 5;
+    return voteMotion(s, motions, 0);
+  };
+  const first = voteWithSeed(1);
+  for (let seed = 2; seed <= 20; seed += 1) assert.deepEqual(voteWithSeed(seed), first, `seed ${seed}`);
 });

@@ -301,14 +301,14 @@ svg.room {
   line-height: 1;
 }
 
-.company-submenu {
+.submenu {
   z-index: 2;
   width: 246px;
 }
 
-.company-submenu::before {
+.submenu::before {
   position: absolute;
-  top: 13px;
+  top: var(--tail-top, 13px);
   left: -7px;
   width: 12px;
   height: 12px;
@@ -319,7 +319,7 @@ svg.room {
   transform: rotate(45deg);
 }
 
-.company-submenu.opens-left::before {
+.submenu.opens-left::before {
   right: -7px;
   left: auto;
   border: 0;
@@ -350,6 +350,19 @@ svg.room {
 
 .dialog-layer.dialog-open { opacity: 1; }
 .dialog-layer:focus { outline: none; }
+
+/* One scene change: the old layer keeps the stage through its short exit, while the next one settles in. */
+.scene-transition { transition: opacity 180ms ease, transform 180ms ease; }
+.scene-transition.scene-entering { opacity: 0; transform: translateY(8px); }
+.scene-transition.scene-ready { opacity: 1; transform: translateY(0); }
+.scene-transition.scene-exiting { opacity: 0; transform: translateY(-4px); pointer-events: auto; transition-duration: 160ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .scene-transition,
+  .scene-transition.scene-entering,
+  .scene-transition.scene-ready,
+  .scene-transition.scene-exiting { opacity: 1; transform: none; transition: none !important; }
+}
 
 .dialog-veil {
   position: absolute;
@@ -767,6 +780,12 @@ svg.room {
 .recipe-dialog .dialog-ok,
 .recipe-dialog .dialog-back { flex: none; }
 .recipe-dialog .dlg > .dialog-ok { align-self: center; }
+
+/* ---- Recipe: one dialog across stages (owner playtest 2026-09-26) ---- */
+/* Next stays centred on every stage; Back sits just left of it (the button is 150px wide) and is hidden on stage 1. */
+.recipe-dialog .dialog-actions { position: relative; }
+.recipe-dialog .dialog-actions .dialog-back { position: absolute; right: calc(50% + 75px); }
+.recipe-stepper [aria-current]:focus-visible { outline: 3px solid var(--sky); outline-offset: 3px; border-radius: 4px; }
 
 .recipe-body {
   display: flex;
@@ -1285,18 +1304,11 @@ svg.room {
   width: 266px;
 }
 
-.deal-cards,
-.company-option-grid {
+.deal-cards {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
 }
-
-.company-option-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  align-items: start;
-}
-.emergency-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
 .company-card {
   position: relative;
@@ -1314,30 +1326,23 @@ svg.room {
   cursor: pointer;
 }
 
-.company-option-card { min-height: 0; }
-
 .company-card:hover:not(:disabled),
-.company-card:focus-visible,
-.research-row:hover:not(:disabled),
-.research-row:focus-visible {
+.company-card:focus-visible {
   outline: none;
   border-color: var(--wood);
 }
 
-.company-card:focus-visible,
-.research-row:focus-visible {
+.company-card:focus-visible {
   box-shadow: 0 0 0 3px color-mix(in oklab, var(--sky) 36%, transparent);
 }
 
-.company-card.selected,
-.research-row.selected {
+.company-card.selected {
   border-color: var(--wood);
   background: color-mix(in oklab, var(--wood) 10%, var(--paper));
   box-shadow: 0 0 0 3px color-mix(in oklab, var(--wood) 32%, transparent);
 }
 
-.company-card:disabled,
-.research-row:disabled {
+.company-card:disabled {
   color: color-mix(in oklab, var(--ink) 45%, var(--paper));
   background: color-mix(in oklab, var(--ink) 5%, var(--paper));
   cursor: default;
@@ -1369,7 +1374,6 @@ svg.room {
 .supplier-azuria .company-monogram { background: var(--sky); }
 .supplier-coreflame .company-monogram { background: var(--teal); }
 .supplier-gulf .company-monogram { background: var(--wood); }
-.company-option-card .company-monogram { background: var(--wood); }
 
 .company-kind {
   display: block;
@@ -1471,114 +1475,43 @@ svg.room {
 
 .company-footer .dialog-ok { flex: none; margin: 0; }
 
-.company-status { padding: 7px 14px 14px; }
-
-.company-status > div {
-  display: flex;
-  padding: 6px 0;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
-  border-top: 1px solid color-mix(in oklab, var(--wood) 22%, transparent);
-  font-size: 11.5px;
-  font-weight: 700;
-}
-
-.company-status > div:first-of-type { border-top: 0; }
-.company-status b { font-weight: 900; text-align: right; }
-
-.company-status-lead {
-  margin: 3px 0 8px;
-  padding: 5px 0 10px;
-  border-bottom: 1px solid color-mix(in oklab, var(--wood) 25%, transparent);
-  color: color-mix(in oklab, var(--ink) 68%, var(--paper));
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.35;
-}
-
-.research-list {
-  display: grid;
-  gap: 9px;
-}
-
-.research-row {
-  display: flex;
-  width: 100%;
-  min-height: 64px;
-  padding: 10px 13px;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  border: 1.5px solid color-mix(in oklab, var(--ink) 16%, transparent);
-  border-radius: 10px;
-  color: var(--ink);
-  font: inherit;
-  text-align: left;
-  background: var(--paper);
-  cursor: pointer;
-}
-
-.research-row > span:first-child { display: grid; gap: 2px; }
-.research-row strong { font-size: 14px; font-weight: 900; }
-.research-row > span span { color: color-mix(in oklab, var(--ink) 60%, var(--paper)); font-size: 11.5px; font-weight: 700; }
-.research-cost { flex: none; font-size: 11.5px; font-weight: 700; text-align: right; }
-.research-cost b { display: block; font-size: 19px; font-weight: 900; }
-.research-cost em {
-  display: block;
-  margin-top: 2px;
-  color: color-mix(in oklab, var(--ink) 58%, var(--paper));
-  font-size: 10.5px;
-  font-style: normal;
-  font-weight: 800;
-}
-.research-row .company-card-reason { max-width: 110px; margin: 0; text-align: right; }
-
-.company-empty {
-  margin: 32px 0;
-  color: color-mix(in oklab, var(--ink) 60%, var(--paper));
-  font-size: 14px;
-  font-weight: 700;
-}
-
+/* ---- "Just now" summary ---- */
 .turn-summary {
+  --kind: color-mix(in oklab, var(--ink) 62%, var(--paper));
   position: absolute;
   z-index: 8;
   top: 104px;
   left: 18px;
-  width: 350px;
-  overflow: hidden;
-  border: 2px solid var(--wood);
-  border-radius: 12px;
+  width: 372px;
   color: var(--ink);
-  background: var(--paper);
-  box-shadow: 0 3px 0 color-mix(in oklab, var(--wood) 55%, var(--ink)), 0 12px 28px color-mix(in oklab, var(--ink) 20%, transparent);
   pointer-events: auto;
 }
 
-.turn-summary-header {
-  display: flex;
-  min-height: 34px;
-  padding: 5px 8px 5px 14px;
-  align-items: center;
-  justify-content: space-between;
-  color: var(--paper);
-  background: var(--wood);
-}
+.turn-summary-item.kind-rival,
+.turn-summary-item.kind-blocked { --kind: color-mix(in oklab, var(--coral) 72%, var(--ink)); }
+.turn-summary-item.kind-lab { --kind: color-mix(in oklab, var(--teal) 66%, var(--ink)); }
+.turn-summary-item.kind-money { --kind: color-mix(in oklab, var(--wood) 62%, var(--ink)); }
+.turn-summary-item.kind-compute { --kind: color-mix(in oklab, var(--sky) 72%, var(--ink)); }
+.turn-summary-item.kind-era,
+.turn-summary-item.kind-washington { --kind: color-mix(in oklab, var(--ink) 80%, var(--paper)); }
 
-.turn-summary-header strong { font-size: 14px; font-weight: 900; }
+.turn-summary-header { display: flex; align-items: center; gap: 8px; }
+.turn-summary-header strong { font-weight: 900; }
+.turn-summary-date { color: color-mix(in oklab, var(--ink) 58%, var(--paper)); }
 
 .turn-summary-header button {
   display: grid;
   width: 26px;
   height: 26px;
+  margin-left: auto;
   padding: 0;
   place-items: center;
   border: 0;
-  border-radius: 50%;
-  color: var(--paper);
+  border-radius: 6px;
+  color: color-mix(in oklab, var(--ink) 60%, var(--paper));
   font: inherit;
-  font-size: 22px;
+  font-size: 19px;
+  font-weight: 700;
   line-height: 1;
   background: transparent;
   cursor: pointer;
@@ -1587,20 +1520,151 @@ svg.room {
 .turn-summary-header button:hover,
 .turn-summary-header button:focus-visible {
   outline: none;
-  background: color-mix(in oklab, var(--paper) 18%, transparent);
+  color: var(--ink);
+  background: color-mix(in oklab, var(--ink) 8%, transparent);
 }
 
-.turn-summary ul {
-  margin: 0;
-  padding: 10px 18px 11px 31px;
+.turn-summary ul { margin: 0; padding: 0; list-style: none; }
+.turn-summary-kind { color: var(--kind); font-weight: 900; text-transform: uppercase; white-space: nowrap; }
+.turn-summary-text b { font-weight: 900; }
+.turn-summary-figure,
+.turn-summary-extra { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.turn-summary-figure { font-weight: 900; }
+
+/* A: the advisor bubble's paper and shadow, no header bar; a kind column and ruled lines. */
+.turn-summary.look-a {
+  border: 1px solid color-mix(in oklab, var(--ink) 10%, transparent);
+  border-radius: 12px;
+  background: var(--paper);
+  box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 14%, transparent), 0 8px 18px color-mix(in oklab, var(--ink) 14%, transparent);
 }
 
-.turn-summary li {
-  padding: 2px 0;
-  font-size: 12.5px;
-  font-weight: 700;
-  line-height: 1.35;
+.look-a .turn-summary-header { padding: 6px 6px 0 14px; font-size: 11px; letter-spacing: .06em; }
+.look-a .turn-summary-header strong { text-transform: uppercase; }
+.look-a .turn-summary-date { font-weight: 800; letter-spacing: 0; }
+.look-a ul { padding: 0 14px 6px; }
+
+.look-a .turn-summary-item {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) auto;
+  column-gap: 10px;
+  align-items: baseline;
+  padding: 8px 0;
+  border-top: 1px solid color-mix(in oklab, var(--ink) 9%, transparent);
 }
+
+.look-a .turn-summary-item:first-child { border-top: 0; }
+.look-a .turn-summary-kind { font-size: 10px; letter-spacing: .05em; }
+.look-a .turn-summary-text { font-size: 13px; font-weight: 700; line-height: 1.3; }
+.look-a .turn-summary-extra { color: color-mix(in oklab, var(--ink) 62%, var(--paper)); font-size: 12px; font-weight: 800; }
+
+/* B: a Marketwire slip (the event cards' wire service) taped to the glass, torn along the bottom. */
+.turn-summary.look-b {
+  padding: 12px 16px 8px;
+  background: var(--paper);
+  filter: drop-shadow(0 1px 0 color-mix(in oklab, var(--ink) 16%, transparent)) drop-shadow(0 8px 12px color-mix(in oklab, var(--ink) 14%, transparent));
+}
+
+.turn-summary.look-b::before { /* the tape */
+  content: "";
+  position: absolute;
+  top: -9px;
+  left: calc(50% - 38px);
+  width: 76px;
+  height: 20px;
+  background: color-mix(in oklab, var(--wood) 30%, transparent);
+  transform: rotate(-2deg);
+}
+
+.turn-summary.look-b::after { /* the torn edge */
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: -7px;
+  left: 0;
+  height: 7px;
+  background:
+    linear-gradient(135deg, var(--paper) 50%, transparent 50%) 0 0 / 10px 7px repeat-x,
+    linear-gradient(225deg, var(--paper) 50%, transparent 50%) 0 0 / 10px 7px repeat-x;
+}
+
+.look-b .turn-summary-header {
+  padding-bottom: 6px;
+  align-items: baseline;
+  border-bottom: 3px double color-mix(in oklab, var(--ink) 70%, var(--paper));
+}
+
+.look-b .turn-summary-header strong { font-family: "Libre Baskerville", Georgia, serif; font-size: 16px; font-weight: 700; }
+.look-b .turn-summary-date { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11px; font-weight: 600; }
+.look-b .turn-summary-header button { align-self: center; margin-top: -4px; margin-right: -8px; }
+
+.look-b .turn-summary-item {
+  padding: 8px 0 7px;
+  border-top: 1px dashed color-mix(in oklab, var(--ink) 26%, transparent);
+}
+
+.look-b .turn-summary-item:first-child { border-top: 0; }
+.look-b .turn-summary-kind { display: none; }
+.look-b .turn-summary-text { font-family: "Libre Baskerville", Georgia, serif; font-size: 13px; line-height: 1.45; }
+.look-b .turn-summary-text::before { /* a wire dateline run into the sentence: "RIVAL — OpenBrain released a model" */
+  content: attr(data-kind) " — ";
+  color: var(--kind);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+}
+.look-b .turn-summary-text b,
+.look-b .turn-summary-figure { font-weight: 700; }
+.look-b .turn-summary-extra { display: block; margin-top: 1px; color: color-mix(in oklab, var(--ink) 66%, var(--paper)); font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11.5px; font-weight: 500; }
+
+/* C: no box. An ink tab names the moment; each line is its own strip of paper with a kind block at the start. */
+.turn-summary.look-c { width: auto; max-width: 440px; }
+
+.look-c .turn-summary-header {
+  display: inline-flex;
+  padding: 2px 3px 2px 10px;
+  border-radius: 7px 7px 0 0;
+  color: var(--paper);
+  font-size: 10.5px;
+  letter-spacing: .08em;
+  background: var(--ink);
+}
+
+.look-c .turn-summary-header strong { text-transform: uppercase; }
+.look-c .turn-summary-date { color: color-mix(in oklab, var(--paper) 82%, var(--ink)); font-weight: 800; letter-spacing: 0; }
+.look-c .turn-summary-header button { width: 22px; height: 22px; margin-left: 4px; color: color-mix(in oklab, var(--paper) 80%, var(--ink)); font-size: 16px; }
+.look-c .turn-summary-header button:hover,
+.look-c .turn-summary-header button:focus-visible { color: var(--paper); background: color-mix(in oklab, var(--paper) 16%, transparent); }
+
+.look-c ul { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
+
+.look-c .turn-summary-item {
+  display: flex;
+  max-width: 100%;
+  overflow: hidden;
+  align-items: stretch;
+  border-radius: 0 7px 7px 7px;
+  background: var(--paper);
+  box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 14%, transparent), 0 6px 14px color-mix(in oklab, var(--ink) 12%, transparent);
+}
+
+.look-c .turn-summary-item + .turn-summary-item { border-radius: 7px; }
+
+.look-c .turn-summary-kind {
+  display: flex;
+  min-width: 72px;
+  padding: 0 8px;
+  align-items: center;
+  color: color-mix(in oklab, var(--kind) 78%, var(--ink));
+  font-size: 10px;
+  letter-spacing: .05em;
+  background: color-mix(in oklab, var(--kind) 12%, var(--paper));
+}
+
+.look-c .turn-summary-text { padding: 7px 12px; font-size: 13px; font-weight: 700; line-height: 1.3; }
+.look-c .turn-summary-extra { display: flex; padding: 0 12px 0 0; align-items: center; color: color-mix(in oklab, var(--ink) 62%, var(--paper)); font-size: 12px; font-weight: 800; }
 
 /* K2 compute dialogs */
 .compute-opinion { padding: 9px 14px 11px; border-top: 1px solid color-mix(in oklab, var(--wood) 30%, transparent); }
@@ -1623,6 +1687,105 @@ svg.room {
 .grid-reservation-identity strong { font-size: 12.5px; font-weight: 900; }
 .grid-reservation-strip > b { font-weight: 900; white-space: nowrap; }
 .grid-reservation-strip .company-chip { white-space: nowrap; }
+
+/* Compute race: the deal board says which cards rivals take at the round's end. */
+.company-dialog-deals .deal-cards { margin-top: 18px; }
+.company-card:has(.company-taken) { border-color: color-mix(in oklab, var(--coral) 70%, var(--ink)); box-shadow: 0 0 0 2px color-mix(in oklab, var(--coral) 70%, var(--paper)); }
+.company-card:has(.company-taken):disabled { border-color: color-mix(in oklab, var(--coral) 45%, var(--paper)); box-shadow: 0 0 0 2px color-mix(in oklab, var(--coral) 30%, var(--paper)); }
+.company-card.selected:has(.company-taken) { border-color: var(--wood); box-shadow: 0 0 0 3px color-mix(in oklab, var(--wood) 32%, transparent); }
+.company-card:has(.company-taken):hover:not(:disabled) { border-color: var(--wood); }
+.company-card:has(.company-taken):focus-visible { border-color: var(--wood); box-shadow: 0 0 0 3px color-mix(in oklab, var(--sky) 36%, transparent); }
+/* In flow, straddling the card's top edge: a banner that wraps pushes the card down instead of covering its name. */
+.company-taken {
+  display: block;
+  margin: -24.5px -12.5px 5px;
+  padding: 3px 8px;
+  border-radius: 8px;
+  color: var(--paper);
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1.2;
+  text-align: center;
+  background: color-mix(in oklab, var(--coral) 88%, var(--ink));
+}
+/* The banner holds the card's top edge, so its Selected tag moves to the bottom edge. */
+.company-card:has(.company-taken) .company-selected { top: auto; bottom: -9px; }
+.company-second {
+  order: 1;
+  margin-top: auto;
+  padding-top: 10px;
+  color: color-mix(in oklab, var(--ink) 62%, var(--paper));
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+.company-card:has(.company-second) .company-catch { order: 2; margin-top: 5px; padding-top: 0; }
+.company-card:has(.company-second) .company-card-reason { order: 3; }
+.company-fallback {
+  display: block;
+  margin-top: 7px;
+  padding-top: 6px;
+  border-top: 1px dashed color-mix(in oklab, var(--coral) 45%, var(--paper));
+  color: color-mix(in oklab, var(--coral) 55%, var(--ink));
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+.company-card:disabled .company-fallback { color: color-mix(in oklab, var(--ink) 50%, var(--paper)); }
+.deal-round-end {
+  display: flex;
+  margin-top: 16px;
+  padding: 9px 13px;
+  flex-wrap: wrap;
+  gap: 5px 16px;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: left;
+  background: color-mix(in oklab, var(--ink) 5%, var(--paper));
+}
+.deal-round-end b { font-weight: 900; }
+.deal-round-end-item.lab-rest,
+.deal-round-end-item.lab-qilin { color: color-mix(in oklab, var(--ink) 72%, var(--paper)); }
+
+/* ---- Deal board: the signed stamp (owner playtest 2026-09-26) ---- */
+/* A rubber stamp in the player's ink (the summit's YOU seal is ink too), with the release show's stamp landing. */
+.deal-signed-stamp {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  left: 50%;
+  padding: 5px 9px 4px 11px;
+  border: 3px solid currentColor;
+  border-radius: 7px;
+  color: color-mix(in oklab, var(--ink) 88%, var(--wood));
+  font-size: 19px;
+  font-weight: 900;
+  letter-spacing: .1em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+  background: color-mix(in oklab, var(--paper) 94%, transparent);
+  box-shadow: inset 0 0 0 2px var(--paper), inset 0 0 0 3.5px currentColor;
+  transform: translate(-50%, -50%) rotate(-8deg);
+  pointer-events: none;
+  animation: deal-stamp-land .22s cubic-bezier(.3, 1.4, .5, 1) both;
+}
+@keyframes deal-stamp-land { from { opacity: 0; transform: translate(-50%, -50%) rotate(-14deg) scale(1.9); } }
+.grid-reservation-strip.deal-signed { position: relative; }
+.grid-reservation-strip .deal-signed-stamp { padding: 3px 9px 2px; border-width: 2px; font-size: 15px; box-shadow: none; }
+/* The press: the card gives a little under the stamp, then the rest of the board steps back. */
+.deal-signed { animation: deal-signed-press .24s linear .2s; }
+@keyframes deal-signed-press { 25% { transform: translateY(2px) scale(.985); } 60% { transform: translate(-1px, -1px); } }
+.deal-signing .deal-cards > :not(.deal-signed),
+.deal-signing .grid-reservation-strip:not(.deal-signed) { opacity: .5; transition: opacity .25s ease .2s; }
+.deal-signing .commitment-row.new { border-style: solid; }
+@media (prefers-reduced-motion: reduce) {
+  .deal-signed-stamp, .deal-signed { animation: none; }
+  .deal-signing .deal-cards > :not(.deal-signed),
+  .deal-signing .grid-reservation-strip:not(.deal-signed) { transition: none; }
+}
 .commitments-panel { padding: 4px 14px 14px; }
 .compute-bill-row { display: flex; padding: 8px 0 2px; align-items: baseline; justify-content: space-between; gap: 8px; }
 .compute-bill-row span { color: color-mix(in oklab, var(--ink) 62%, var(--paper)); font-size: 12px; font-weight: 700; }
@@ -2659,6 +2822,9 @@ svg.room {
   background: color-mix(in oklab, var(--ink) 7%, var(--paper));
 }
 
+/* Game › Endings found carries its count (owner pick 3B). */
+.it .count { margin-left: 8px; font-size: 11.5px; font-weight: 900; color: color-mix(in oklab, var(--wood) 70%, var(--ink)); }
+
 /* Plan 2B Task 8: event cards and warnings (mockups K2-events.html and K2-events-crisis.html) */
 .event-layer { position: absolute; inset: 0; z-index: 20; pointer-events: none; }
 .event-layer > * { pointer-events: auto; }
@@ -2760,10 +2926,10 @@ svg.room {
 
 
 /* ---------- Finance planner (owner pick: K2-finance-plan.html A + B as two views) ---------- */
-.finance-timeline .dlg { top: 96px; left: 300px; width: 840px; min-height: 0; padding-bottom: 16px; }
-.finance-timeline .dialog-side { top: 150px; width: 250px; }
+.finance-timeline .dlg { top: 64px; left: 300px; width: 840px; min-height: 0; padding-bottom: 16px; }
+.finance-timeline .dialog-side { top: 118px; width: 250px; }
 .finance-timeline .dialog-left { left: 40px; }
-.finance-timeline .dialog-right { top: 118px; right: 40px; }
+.finance-timeline .dialog-right { top: 86px; right: 40px; }
 .finance-timeline .rule, .finance-books .rule { margin: 10px 30px 6px; }
 .finance-charts { text-align: left; }
 .finance-charts svg { display: block; overflow: visible; touch-action: none; user-select: none; -webkit-user-select: none; }
@@ -3385,8 +3551,16 @@ svg.room {
 .fly-bubble.alignment { background: var(--paper); border: 5px solid var(--sky); }
 .badge.tick { transform: scale(1.12); transition: transform 180ms ease-out; }
 .ready-note { position: absolute; z-index: 5; top: 74px; left: 50%; transform: translateX(-50%); padding: 3px 12px 4px; border-radius: 999px; color: var(--paper); background: color-mix(in oklab, var(--teal) 70%, var(--ink)); font-size: 12px; font-weight: 900; white-space: nowrap; box-shadow: 0 1px 0 color-mix(in oklab, var(--ink) 25%, transparent); }
+/* Owner pick 2A: a ring lying on the floor at the menu spot while the first model waits (the menu's own marker in the middle). */
+.floor-hint { position: absolute; width: 0; height: 0; }
+.floor-hint-ring { position: absolute; left: -35px; top: -17.5px; width: 70px; height: 35px; box-sizing: border-box; border: 2.5px solid var(--coral); border-radius: 50%; box-shadow: 0 0 0 8px color-mix(in oklab, var(--coral) 18%, transparent); animation: floor-hint-pulse 1.6s ease-in-out infinite; }
+.floor-hint-dot { position: absolute; left: -16px; top: -8px; width: 32px; height: 16px; box-sizing: border-box; border: 2.5px solid var(--paper); border-radius: 50%; }
+.floor-hint-dot::after { content: ''; position: absolute; inset: 3px 7px; border-radius: 50%; background: color-mix(in oklab, var(--paper) 80%, transparent); }
+.floor-hint-label { position: absolute; left: -30px; top: 32px; padding: 6px 11px; border-radius: 9px; background: var(--ink); color: var(--paper); font-size: 13px; font-weight: 800; line-height: 1.3; white-space: nowrap; box-shadow: 0 6px 16px color-mix(in oklab, var(--ink) 25%, transparent); }
+.floor-hint-label::before { content: ''; position: absolute; left: 24px; top: -6px; width: 12px; height: 12px; background: var(--ink); transform: rotate(45deg); }
+@keyframes floor-hint-pulse { 50% { transform: scale(1.14); opacity: .7; } }
+@media (prefers-reduced-motion: reduce) { .floor-hint-ring { animation: none; } }
 @media (prefers-reduced-motion: reduce) { .badge.tick { transform: none; transition: none; } }
-.hazard-layer { transition: none; }
 .hazard-open #office { filter: saturate(.8) brightness(.96); }
 .hazard-open .advisor-marker { display: none; }
 .hazard-card { z-index: 12; left: 230px; right: 230px; bottom: 20px; padding: 0; text-align: left; display: grid; grid-template-columns: auto 1fr; pointer-events: auto; animation: hazard-in 260ms ease-out both; }
@@ -3747,7 +3921,7 @@ svg.room {
 .sm-answer span { font-size: 12.5px; font-weight: 700; color: color-mix(in oklab, var(--ink) 62%, var(--paper)); }
 .sm-answer.chosen { border-color: var(--coral); }
 .sm-answer:disabled { opacity: .45; cursor: default; }
-.dl-pill { position: absolute; z-index: 5; top: 140px; right: 15px; display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 12px; background: var(--paper); border: 1px solid color-mix(in oklab, var(--ink) 10%, transparent); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 12%, transparent); font-size: 13px; font-weight: 900; pointer-events: auto; }
+.dl-pill { position: absolute; z-index: 5; top: var(--hud-under, 140px); right: 15px; display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 12px; background: var(--paper); border: 1px solid color-mix(in oklab, var(--ink) 10%, transparent); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 12%, transparent); font-size: 13px; font-weight: 900; pointer-events: auto; }
 .dl-pill small { font-weight: 700; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); }
 .dl-seals { display: flex; }
 .dl-seals .sm-pb { margin-left: -5px; border: 2px solid var(--paper); box-sizing: content-box; letter-spacing: -.03em; }
@@ -3887,6 +4061,198 @@ button.dl-pill { font: inherit; font-size: 13px; font-weight: 900; color: var(--
 /* The desk phone sits above dialogs and could open an event card over the choice; it steps away until then. */
 .hazard-open .ev-phone, .hazard-open .ev-phone-button { display: none; }
 
+/* ---- HUD money readout (owner picks 2026-09-26, lane gn-hud-money): the info box holds this month's money in and out
+   (1B) and the cash line (1C); weekly money floats up beside it; Money and Compute buttons and the clock sit under it
+   in one column (3A), so opening the box pushes them down instead of hiding under them. ---- */
+.hud-right {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  padding: 12px 14px 0 0;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: none;
+}
+.hud-right > * { pointer-events: auto; }
+.hud-right .info { position: static; min-width: 236px; }
+.hud-right .clock { position: static; }
+.hud-right .info *, .clock .mute * { pointer-events: none; } /* their insides are rewritten each tick; clicks land on the button */
+
+.hud-flow {
+  display: grid;
+  grid-column: 1 / span 2;
+  grid-template-columns: auto 1fr auto;
+  column-gap: 8px;
+  margin: 3px 0 2px;
+  padding: 5px 0;
+  align-items: baseline;
+  border-top: 1px solid color-mix(in oklab, var(--ink) 10%, transparent);
+  border-bottom: 1px solid color-mix(in oklab, var(--ink) 10%, transparent);
+}
+.hud-flow .in, .hud-flow .out { font-weight: 900; text-align: right; font-variant-numeric: tabular-nums; }
+.hud-flow .in, .hud-flow-net .in { color: color-mix(in oklab, var(--teal) 82%, var(--ink)); }
+.hud-flow .out, .hud-flow-net .out { color: color-mix(in oklab, var(--coral) 86%, var(--ink)); }
+.hud-flow-bars { display: grid; grid-column: 1 / span 3; gap: 2px; margin-top: 4px; }
+.hud-flow-bars i { display: block; height: 5px; min-width: 2px; border-radius: 3px; }
+.hud-flow-bars .in { background: var(--teal); }
+.hud-flow-bars .out { background: var(--coral); }
+.hud-flow-net { display: flex; grid-column: 1 / span 3; justify-content: space-between; margin-top: 2px; font-weight: 900; }
+.hud-flow-net b { font-variant-numeric: tabular-nums; }
+
+.hud-spark { display: block; grid-column: 1 / span 2; margin: 4px 0 3px; }
+.hud-spark svg { display: block; overflow: visible; }
+.hud-spark-zero { stroke: color-mix(in oklab, var(--ink) 18%, transparent); stroke-width: 1; }
+.hud-spark-past { fill: none; stroke: var(--ink); stroke-width: 1.8; stroke-linejoin: round; }
+.hud-spark-ahead { fill: none; stroke: var(--coral); stroke-width: 1.8; stroke-dasharray: 4 3; }
+.hud-spark-now { fill: var(--ink); }
+.hud-spark-cap { display: flex; justify-content: space-between; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); font-size: 10.5px; font-weight: 700; line-height: 1.3; }
+.hud-spark-cap .out { color: color-mix(in oklab, var(--coral) 86%, var(--ink)); }
+
+.hud-actions { display: flex; gap: 6px; }
+.hud-btn {
+  display: flex;
+  padding: 5px 11px 5px 7px;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid color-mix(in oklab, var(--ink) 8%, transparent);
+  border-radius: 10px;
+  color: var(--ink);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 900;
+  background: var(--paper);
+  box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 14%, transparent);
+  cursor: pointer;
+}
+.hud-btn:hover { background: color-mix(in oklab, var(--wood) 10%, var(--paper)); }
+.hud-btn:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+.hud-btn .ic { display: grid; width: 20px; height: 20px; place-items: center; border-radius: 6px; color: var(--paper); font-size: 12px; font-weight: 900; }
+.hud-btn .ic.money { background: var(--teal); }
+.hud-btn .ic.compute { background: var(--sky); box-shadow: inset 0 0 0 5px var(--sky), inset 0 0 0 7px var(--paper); }
+
+.clock button.held { color: color-mix(in oklab, var(--wood) 80%, var(--ink)); background: transparent; box-shadow: inset 0 0 0 2px var(--wood); }
+.clock .waiting {
+  margin-left: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  color: color-mix(in oklab, var(--wood) 62%, var(--ink));
+  font-size: 11.5px;
+  font-weight: 800;
+  white-space: nowrap;
+  background: color-mix(in oklab, var(--wood) 16%, var(--paper));
+}
+
+.hud-floats { position: absolute; inset: 0; pointer-events: none; }
+.hud-float {
+  position: absolute;
+  font-size: 17px;
+  font-weight: 900;
+  line-height: 1.1;
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 0 var(--paper), 0 0 6px var(--paper), 0 0 2px var(--paper);
+  animation: hud-float 2.4s ease-out forwards;
+}
+.hud-float small { display: block; color: var(--ink); font-size: 11px; font-weight: 800; opacity: .75; }
+.hud-float.in { color: color-mix(in oklab, var(--teal) 82%, var(--ink)); }
+.hud-float.out { color: color-mix(in oklab, var(--coral) 86%, var(--ink)); }
+@keyframes hud-float {
+  0% { opacity: 0; transform: translateY(10px); }
+  15% { opacity: 1; transform: translateY(0); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-26px); }
+}
+
+/* The "!" above an advisor opens what they have to say, like clicking the person. */
+.advisor-marker { pointer-events: auto; cursor: pointer; }
+
+/* ---- The Money screen's tabs and its two new views, and the Compute screen (lane gn-hud-money) ---- */
+.finance-tabs { display: flex; justify-content: center; gap: 4px; margin: 0 0 10px; }
+.finance-tabs button {
+  padding: 5px 14px;
+  border: 0;
+  border-radius: 999px;
+  color: color-mix(in oklab, var(--ink) 60%, var(--paper));
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  background: transparent;
+  cursor: pointer;
+}
+.finance-tabs button:hover { background: color-mix(in oklab, var(--wood) 12%, var(--paper)); }
+.finance-tabs button.on { color: var(--paper); background: var(--wood); }
+.finance-tabs button:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+.history-race .finance-tabs { justify-content: flex-start; padding-left: 10px; }
+
+.finance-money .dlg { top: 90px; left: 250px; width: 940px; min-height: 0; padding: 18px 28px 20px; }
+.finance-money .rule { margin: 10px 30px 10px; }
+.money-bill { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; text-align: left; }
+.money-bill h5 { display: flex; justify-content: space-between; margin: 0 0 4px; padding-bottom: 5px; border-bottom: 2px solid; font-size: 14px; font-weight: 900; }
+.money-bill h5.in { color: color-mix(in oklab, var(--teal) 82%, var(--ink)); border-color: var(--teal); }
+.money-bill h5.out { color: color-mix(in oklab, var(--coral) 86%, var(--ink)); border-color: var(--coral); }
+.money-line { display: grid; grid-template-columns: 1fr auto; gap: 3px 12px; padding: 9px 0; border-bottom: 1px solid color-mix(in oklab, var(--ink) 10%, transparent); }
+.money-what { font-size: 14px; font-weight: 800; }
+.money-amt { font-size: 15px; font-weight: 900; text-align: right; font-variant-numeric: tabular-nums; }
+.money-amt.in { color: color-mix(in oklab, var(--teal) 82%, var(--ink)); }
+.money-amt.out { color: color-mix(in oklab, var(--coral) 86%, var(--ink)); }
+.money-because { display: flex; grid-column: 1 / span 2; justify-content: space-between; align-items: center; gap: 10px; color: color-mix(in oklab, var(--ink) 72%, var(--paper)); font-size: 12.5px; font-weight: 600; line-height: 1.4; }
+.money-jump { flex: none; padding: 3px 10px; border: 0; border-radius: 7px; color: color-mix(in oklab, var(--wood) 70%, var(--ink)); font: inherit; font-size: 11.5px; font-weight: 900; white-space: nowrap; background: color-mix(in oklab, var(--wood) 16%, var(--paper)); cursor: pointer; }
+.money-jump:hover { background: color-mix(in oklab, var(--wood) 28%, var(--paper)); }
+.money-jump:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+.money-meter { grid-column: 1 / span 2; height: 5px; overflow: hidden; border-radius: 3px; background: color-mix(in oklab, var(--ink) 7%, var(--paper)); }
+.money-meter i { display: block; height: 100%; }
+.money-meter i.in { background: var(--teal); }
+.money-meter i.out { background: var(--coral); }
+.money-empty { margin: 10px 0; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); font-size: 13px; font-weight: 700; text-align: left; }
+.money-total { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; margin-top: 16px; padding: 10px 14px; border-radius: 10px; font-size: 14.5px; font-weight: 800; text-align: left; }
+.money-total b { font-size: 20px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.money-total.out { background: color-mix(in oklab, var(--coral) 10%, var(--paper)); }
+.money-total.out b { color: color-mix(in oklab, var(--coral) 86%, var(--ink)); }
+.money-total.in { background: color-mix(in oklab, var(--teal) 10%, var(--paper)); }
+.money-total.in b { color: color-mix(in oklab, var(--teal) 82%, var(--ink)); }
+
+.money-changes-grid { display: grid; grid-template-columns: 560px 1fr; gap: 20px; align-items: start; text-align: left; }
+.money-chart svg { display: block; overflow: visible; }
+.money-key { margin: 4px 0 0 56px; }
+.money-changes-side { max-height: 360px; overflow-y: auto; }
+.money-changes { margin: 0; padding: 0 0 0 22px; font-size: 12.5px; line-height: 1.35; }
+.money-changes li { padding: 5px 0; border-bottom: 1px solid color-mix(in oklab, var(--ink) 8%, transparent); }
+.money-changes li::marker { color: color-mix(in oklab, var(--wood) 70%, var(--ink)); font-weight: 900; }
+.money-changes .money-when { display: block; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); font-size: 11px; font-weight: 800; }
+.money-changes b { display: block; font-weight: 900; }
+.money-changes .in { color: color-mix(in oklab, var(--teal) 82%, var(--ink)); font-weight: 800; }
+.money-changes .out { color: color-mix(in oklab, var(--coral) 86%, var(--ink)); font-weight: 800; }
+
+.compute-info .dlg { top: 90px; left: 300px; width: 840px; min-height: 0; padding: 18px 28px 20px; }
+.compute-info-body { text-align: left; }
+.compute-info-body h6 { margin: 14px 0 6px; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); font-size: 11.5px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; }
+.compute-stack { display: flex; height: 44px; overflow: hidden; border-radius: 9px; background: color-mix(in oklab, var(--ink) 7%, var(--paper)); }
+.compute-stack-empty { align-self: center; padding: 0 12px; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); font-size: 13px; font-weight: 700; }
+.compute-part { display: flex; min-width: 4px; padding: 0 10px; flex-basis: 0; flex-direction: column; justify-content: center; overflow: hidden; color: var(--paper); font-size: 12px; font-weight: 800; line-height: 1.2; white-space: nowrap; }
+.compute-part b { font-size: 15px; font-weight: 900; }
+.compute-part.training { background: color-mix(in oklab, var(--coral) 80%, var(--ink)); }
+.compute-part.idle { background: var(--coral); }
+.compute-part.safety { background: var(--sky); }
+.compute-part.serving { background: var(--teal); }
+.compute-part.control { background: color-mix(in oklab, var(--sky) 55%, var(--ink)); }
+.compute-explain { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px 14px; margin-top: 10px; font-size: 12.5px; font-weight: 600; line-height: 1.4; }
+.compute-explain b { display: block; font-size: 13px; font-weight: 900; }
+.compute-explain .training b, .compute-explain .idle b { color: color-mix(in oklab, var(--coral) 80%, var(--ink)); }
+.compute-explain .safety b, .compute-explain .control b { color: color-mix(in oklab, var(--sky) 80%, var(--ink)); }
+.compute-explain .serving b { color: color-mix(in oklab, var(--teal) 80%, var(--ink)); }
+.compute-ladder > div { display: grid; grid-template-columns: 100px 1fr 34px; gap: 10px; align-items: center; margin: 5px 0; font-size: 13px; font-weight: 800; }
+.compute-ladder-bar { height: 14px; overflow: hidden; border-radius: 4px; background: color-mix(in oklab, var(--ink) 7%, var(--paper)); }
+.compute-ladder-bar i { display: block; height: 100%; background: color-mix(in oklab, var(--ink) 35%, var(--paper)); }
+.compute-ladder .you { color: color-mix(in oklab, var(--coral) 80%, var(--ink)); }
+.compute-ladder .you .compute-ladder-bar i { background: var(--coral); }
+.compute-ladder .n { text-align: right; font-variant-numeric: tabular-nums; }
+.compute-chain { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 16px; padding-top: 12px; border-top: 1px solid color-mix(in oklab, var(--ink) 10%, transparent); font-size: 13px; font-weight: 800; }
+.compute-chain .s { padding: 5px 11px; border-radius: 9px; background: color-mix(in oklab, var(--ink) 6%, var(--paper)); }
+.compute-chain .a { color: var(--wood); font-weight: 900; }
+.compute-info-race .dialog-ok { position: absolute; right: 28px; bottom: 18px; margin-top: 0; }
 /* ---------- front door: endings wall, then the naming board (gn-title-music; docs/design/mockups/K2-title-menu.html#e1) ---------- */
 html.title-night { background: color-mix(in oklab, var(--ink) 96%, var(--sky)); }
 .title-sky { position: absolute; inset: 0; z-index: 0; background: radial-gradient(ellipse 70% 70% at 50% 45%, color-mix(in oklab, var(--ink) 78%, var(--sky)), color-mix(in oklab, var(--ink) 96%, var(--sky))); transition: opacity 1s ease; }
@@ -4148,3 +4514,369 @@ html.title-waking #hud { transition: opacity .5s ease .6s; }
 .fk-gut { display: flex; flex-direction: column; align-items: center; flex: none; width: 40px; }
 .fk-line { flex: 1; width: 2px; background: var(--fk-thread); margin-top: 4px; min-height: 14px; }
 .fk-post.parent { border-bottom: 0; padding-bottom: 0; }
+/* ---- Flock: "Waiting for you" strip on Home (owner playtest 2026-09-26) ---- */
+.fk-wait-head { display: flex; align-items: center; gap: 8px; padding: 14px 16px 6px; font-size: 15px; font-weight: 700; }
+.fk-wait-n { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; display: grid; place-items: center; background: var(--coral); color: var(--fk-on-accent); font-size: 12px; font-weight: 700; }
+.fk-wait .fk-note:not(.warn) .fk-note-ic { background: var(--coral); } /* one warm red in the strip, matching its count */
+
+/* gn-newplayer: what to do when the recipe needs more compute than is free (one line, in place of the error) */
+.recipe-help { display: flex; flex-wrap: wrap; gap: 4px 14px; justify-content: center; align-items: baseline; margin-top: 5px; }
+.recipe-help-text { color: color-mix(in oklab, var(--coral) 78%, var(--ink)); font-size: 12px; font-weight: 800; }
+.recipe-body:has(.recipe-help) .recipe-error { display: none; }
+.recipe-help .release-link { font-size: 12px; }
+/* gn-newplayer: the constitution frame goes up on the wall only once the lab has one (ui/logic/office.js) */
+.office-room .office-constitution { display: none; }
+.office-room.shows-constitution .office-constitution { display: inline; }
+/* gn-newplayer: the game is laid out for a landscape screen; on a phone held upright, ask for sideways first */
+@media (orientation: portrait) and (pointer: coarse) {
+  body::after {
+    content: "Turn your phone sideways to play";
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: grid;
+    place-items: center;
+    padding: 0 20%;
+    background: var(--cream);
+    color: var(--ink);
+    font-size: 96px;
+    font-weight: 900;
+    line-height: 1.2;
+    text-align: center;
+  }
+}
+/* ---------- Game › Endings found: The Daily Token archive (owner pick 7C) ---------- */
+.archive-layer { position: absolute; inset: 0; z-index: 12; display: flex; flex-direction: column; padding: 28px 40px 40px; background: color-mix(in oklab, var(--wood) 55%, var(--ink)); overflow: hidden; }
+.dt-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; color: var(--paper); }
+.dt-title { margin: 0; font: 700 42px/1.1 "Libre Baskerville", Georgia, serif; }
+.dt-sub { margin: 6px 0 0; font-size: 16px; font-weight: 800; color: color-mix(in oklab, var(--paper) 85%, var(--wood)); }
+.dt-close { width: auto; min-width: 110px; padding-inline: 18px; margin-top: 6px; }
+.dt-grid { flex: 1; display: grid; grid-template-columns: repeat(6, 1fr); gap: 34px 18px; margin-top: 24px; align-content: center; }
+.dt-page { display: flex; flex-direction: column; position: relative; width: 100%; padding: 10px 12px 12px; border: 0; border-radius: 3px; background: var(--paper); color: var(--ink); font: inherit; text-align: left; transform: rotate(var(--tilt, 0deg)); box-shadow: 0 8px 18px color-mix(in oklab, var(--ink) 30%, transparent); }
+.dt-page.found { cursor: pointer; transition: transform 160ms ease-out, box-shadow 160ms ease-out; }
+.dt-page.found:hover, .dt-page.found:focus-visible { transform: rotate(0deg) translateY(-4px); box-shadow: 0 14px 26px color-mix(in oklab, var(--ink) 38%, transparent); }
+.dt-page.found:focus-visible { outline: 3px solid var(--sky); outline-offset: 4px; }
+.dt-mast { padding-bottom: 4px; border-bottom: 2px solid var(--ink); text-align: center; font: 700 15px/1.2 "Libre Baskerville", Georgia, serif; }
+.dt-dateline { display: flex; justify-content: space-between; gap: 6px; margin-top: 3px; font-size: 9.5px; font-weight: 800; }
+.dt-head { margin: 6px 0 0; font: 700 17px/1.15 "Libre Baskerville", Georgia, serif; }
+.dt-still { display: block; width: 100%; aspect-ratio: 4 / 3; margin-top: 6px; object-fit: cover; filter: grayscale(.3); background: color-mix(in oklab, var(--ink) 12%, var(--paper)); }
+.dt-deck { min-height: 2.8em; margin: 6px 0 0; font: italic 11px/1.4 "Libre Baskerville", Georgia, serif; }
+.dt-blank { flex: 1; display: grid; place-content: center; min-height: 150px; margin-top: 10px; border: 1.5px dashed color-mix(in oklab, var(--ink) 25%, transparent); text-align: center; font: italic 13px/1.4 "Libre Baskerville", Georgia, serif; color: color-mix(in oklab, var(--ink) 60%, var(--paper)); }
+.dt-blank span { display: block; }
+.dt-hint { min-height: 2.7em; margin: 8px 0 0; font-size: 11.5px; font-weight: 800; line-height: 1.35; color: color-mix(in oklab, var(--ink) 62%, var(--paper)); }
+.dt-left { display: grid; place-content: center; align-self: stretch; padding: 12px; border: 2px dashed color-mix(in oklab, var(--paper) 35%, transparent); border-radius: 4px; text-align: center; font-size: 15px; font-weight: 800; color: var(--paper); }
+@media (prefers-reduced-motion: reduce) { .dt-page.found { transition: none; } }
+.dt-left span { display: block; }
+
+/* Owner pick 5C: raise, research and emergency as paperwork on the dimmed office. */
+.paper-layer .paper-veil { background: color-mix(in oklab, var(--ink) 52%, transparent); }
+.paper-desk { position: absolute; inset: 0; pointer-events: none; }
+.paper-desk:focus { outline: none; }
+.paper-kicker { display: block; font: 400 12px/1 "Libre Baskerville", Georgia, serif; letter-spacing: .2em; text-transform: uppercase; }
+.paper-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; pointer-events: auto; }
+.paper-foot-note { flex: 1; font-size: 14px; font-weight: 800; }
+.paper-foot .paper-error { min-height: 0; margin: 0; font-size: 14px; }
+.paper-foot .dialog-back { margin: 0; }
+.paper-foot .paper-action { flex: none; width: auto; min-width: 150px; padding-inline: 20px; white-space: nowrap; }
+.paper-foot .paper-error:empty { display: none; }
+.paper-raise .paper-error, .paper-folder .paper-error { order: -1; flex-basis: 100%; text-align: right; }
+.paper-raise .paper-foot, .paper-folder .paper-foot { color: var(--paper); }
+.paper-raise .paper-foot .dialog-back, .paper-folder .paper-foot .dialog-back, .paper-raise .paper-error, .paper-folder .paper-error { color: var(--paper); }
+.paper-sheet, .paper-note, .paper-letter, .memo-item { border: 0; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.paper-sheet:disabled, .paper-note:disabled, .paper-letter:disabled, .memo-item:disabled { cursor: default; }
+.paper-sheet:focus-visible, .paper-note:focus-visible, .paper-letter:focus-visible, .memo-item:focus-visible { outline: 3px solid var(--sky); outline-offset: 4px; }
+
+/* Raise: three term sheets fanned out; the chosen one comes to the front with the Sign button on its line. */
+.paper-slot { position: absolute; width: 380px; height: 440px; pointer-events: auto; transform: rotate(var(--tilt)); transition: transform 160ms ease-out; }
+.paper-slot-0 { left: 120px; top: 206px; --tilt: -3deg; }
+.paper-slot-1 { left: 530px; top: 234px; --tilt: 1.5deg; }
+.paper-slot-2 { left: 940px; top: 216px; --tilt: 3.5deg; }
+.paper-slot:not(.selected):hover { transform: rotate(var(--tilt)) translateY(-6px); }
+.paper-slot.selected { z-index: 2; transform: rotate(calc(var(--tilt) * .3)) translateY(-12px); }
+.term-sheet { position: relative; display: flex; flex-direction: column; width: 100%; height: 100%; padding: 30px 32px 28px; border-radius: 4px; background: var(--paper); box-shadow: 0 20px 44px color-mix(in oklab, var(--ink) 35%, transparent); }
+.investor-vc { --tone: var(--wood); }
+.investor-strategic { --tone: var(--sky); }
+.investor-sovereign { --tone: var(--coral); }
+.term-letterhead { display: flex; align-items: center; gap: 10px; padding-bottom: 12px; border-bottom: 3px solid var(--tone); font-size: 15px; font-weight: 900; }
+.term-mono { display: grid; flex: none; place-items: center; width: 34px; height: 34px; border-radius: 9px; color: var(--paper); font-size: 16px; font-weight: 900; background: var(--tone); }
+.term-sheet .paper-kicker { margin-top: 22px; }
+.term-amount { display: block; margin-top: 10px; font: 400 44px/1.05 "Libre Baskerville", Georgia, serif; }
+.term-for { display: block; margin-top: 6px; font: 400 15px/1.5 "Libre Baskerville", Georgia, serif; }
+.term-terms { display: block; margin-top: 20px; }
+.term-clause { display: block; color: color-mix(in oklab, var(--tone) 55%, var(--ink)); font-size: 12px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; }
+.term-note { display: block; margin-top: 4px; font: italic 400 14px/1.6 "Libre Baskerville", Georgia, serif; }
+.term-after { display: block; margin-top: auto; color: color-mix(in oklab, var(--ink) 66%, var(--paper)); font-size: 13px; font-weight: 800; }
+.term-sign { display: block; margin-top: 52px; padding-top: 6px; border-top: 1.5px solid var(--ink); font-size: 12px; font-weight: 800; }
+.paper-sign-holder { pointer-events: none; }
+.paper-sign-holder.selected { z-index: 3; }
+.paper-sign-holder[hidden] { display: none; }
+.term-sign-button { position: absolute; right: 32px; bottom: 58px; width: 130px; pointer-events: auto; }
+.term-sheet .company-card-reason { position: absolute; right: 32px; bottom: 60px; max-width: 290px; margin: 0; text-align: right; font: italic 700 14px/1.3 "Libre Baskerville", Georgia, serif; }
+.paper-raise .paper-foot { position: absolute; left: 120px; right: 120px; bottom: 44px; }
+
+/* Research: a memo from the Head of Research with a tick-box list and a points bar. */
+.paper-memo { position: absolute; left: 420px; top: 150px; display: flex; flex-direction: column; width: 600px; padding: 40px 48px 30px; border-radius: 4px; background: var(--paper); transform: rotate(-1.2deg); box-shadow: 0 20px 44px color-mix(in oklab, var(--ink) 35%, transparent); pointer-events: auto; }
+.paper-memo .paper-kicker { font-size: 13px; }
+.memo-fields { margin-top: 14px; font-size: 14px; font-weight: 700; line-height: 1.8; }
+.memo-fields b { display: inline-block; width: 64px; font-weight: 900; }
+.memo-rule { height: 2px; margin: 18px 0; background: var(--ink); }
+.memo-body { margin: 0; font: 400 17px/1.7 "Libre Baskerville", Georgia, serif; }
+.memo-list { display: grid; margin-top: 14px; }
+.memo-item { display: grid; grid-template-columns: 18px 1fr auto; align-items: center; column-gap: 12px; width: 100%; padding: 10px 8px; border-bottom: 1px solid color-mix(in oklab, var(--ink) 14%, transparent); background: transparent; }
+.memo-item:hover:not(:disabled) { background: color-mix(in oklab, var(--wood) 9%, var(--paper)); }
+.memo-box { width: 18px; height: 18px; border: 2px solid currentColor; border-radius: 3px; }
+.memo-item.selected .memo-box { background: var(--ink); box-shadow: inset 0 0 0 3px var(--paper); }
+.memo-item strong { font-size: 15px; font-weight: 900; }
+.memo-cost { font-size: 13px; font-weight: 800; }
+.memo-item:disabled { color: color-mix(in oklab, var(--ink) 55%, var(--paper)); }
+.memo-item .company-card-reason { grid-column: 2 / -1; margin-top: 2px; }
+.memo-points { margin-top: 22px; }
+.memo-bar { height: 14px; overflow: hidden; border-radius: 7px; background: color-mix(in oklab, var(--ink) 10%, var(--paper)); }
+.memo-bar i { display: block; height: 100%; border-radius: 7px; background: var(--teal); }
+.memo-bar-label { margin-top: 6px; color: color-mix(in oklab, var(--ink) 66%, var(--paper)); font-size: 13px; font-weight: 800; }
+.paper-memo .paper-foot { margin-top: 28px; }
+.paper-memo .paper-foot-note { flex-basis: 100%; color: color-mix(in oklab, var(--ink) 66%, var(--paper)); font-size: 13px; }
+.paper-memo .paper-error { flex: 1; }
+
+/* Emergency: a red folder of three notes, with the acquihire letter on top. */
+.paper-folder { position: absolute; left: 300px; top: 196px; display: flex; flex-direction: column; width: 840px; padding: 20px 30px 22px; border-radius: 0 10px 10px 10px; background: color-mix(in oklab, var(--coral) 75%, var(--ink)); box-shadow: 0 22px 50px color-mix(in oklab, var(--ink) 40%, transparent); pointer-events: auto; }
+.folder-tab { position: absolute; left: 0; top: -36px; padding: 9px 16px; border-radius: 8px 8px 0 0; color: var(--paper); font-size: 13px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; background: inherit; }
+.folder-status { color: var(--paper); font-size: 15px; font-weight: 800; }
+.folder-papers { position: relative; height: 430px; }
+.paper-note, .paper-letter { position: absolute; display: flex; flex-direction: column; border-radius: 4px; background: var(--paper); transform: rotate(var(--tilt)); box-shadow: 0 6px 16px color-mix(in oklab, var(--ink) 28%, transparent); transition: transform 160ms ease-out; }
+.paper-note { width: 240px; min-height: 140px; padding: 18px; }
+.folder-papers > :nth-child(1) { left: 8px; top: 18px; --tilt: -3deg; }
+.folder-papers > :nth-child(2) { left: 270px; top: 32px; --tilt: 1deg; }
+.folder-papers > :nth-child(3) { left: 532px; top: 22px; --tilt: -1deg; }
+.paper-note strong { font-size: 16px; font-weight: 900; }
+.note-body { margin-top: 8px; font: 400 13px/1.5 "Libre Baskerville", Georgia, serif; }
+.paper-letter { left: 120px; top: 216px; --tilt: 1.5deg; width: 540px; padding: 24px 30px 26px; }
+.letter-head { display: block; margin-top: 10px; font: 400 24px/1.25 "Libre Baskerville", Georgia, serif; }
+.letter-body { display: block; margin-top: 10px; font: 400 14px/1.6 "Libre Baskerville", Georgia, serif; }
+.letter-chip { align-self: flex-start; margin-top: 16px; color: color-mix(in oklab, var(--coral) 65%, var(--ink)); background: color-mix(in oklab, var(--coral) 16%, var(--paper)); }
+.paper-note.selected, .paper-letter.selected { z-index: 1; transform: rotate(0deg) translateY(-6px); box-shadow: 0 0 0 3px var(--ink), 0 14px 28px color-mix(in oklab, var(--ink) 40%, transparent); }
+.paper-note:disabled, .paper-letter:disabled { color: color-mix(in oklab, var(--ink) 55%, var(--paper)); background: color-mix(in oklab, var(--cream) 55%, var(--paper)); }
+.paper-note .company-card-reason, .paper-letter .company-card-reason { margin-top: auto; padding-top: 10px; }
+.paper-folder .paper-foot { margin-top: 12px; }
+@media (prefers-reduced-motion: reduce) { .paper-slot, .paper-note, .paper-letter { transition: none; } }
+
+/* Safety's constitution draft (look B of docs/design/mockups/K2-model-spec.html): paper document over the office. */
+.sd-layer { z-index: 12; opacity: 1; transition: none; }
+/* The document replaces the HUD and its board countdown while it is open, as in the mock; the desk phone steps away. */
+.sd-open #hud, .sd-open .bd-count, .sd-open .ev-phone, .sd-open .ev-phone-button { visibility: hidden; }
+.sd-veil { position: absolute; inset: 0; background: color-mix(in oklab, var(--cream) 50%, transparent); }
+.sd-doc { position: absolute; left: 110px; top: 60px; width: 1220px; height: 780px; display: grid; grid-template-columns: 1fr 300px; overflow: hidden; border-radius: 6px; background: var(--paper); box-shadow: 0 24px 56px color-mix(in oklab, var(--ink) 24%, transparent); }
+.sd-doc:focus { outline: none; }
+.sd-main { min-height: 0; overflow-y: auto; padding: 24px 36px 20px; }
+.sd-kicker { font-size: 11.5px; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; color: color-mix(in oklab, var(--ink) 66%, var(--paper)); }
+.sd-title { margin: 6px 0 0; font-family: "Libre Baskerville", Georgia, serif; font-size: 30px; font-style: italic; font-weight: 400; }
+.sd-h { display: flex; justify-content: space-between; align-items: baseline; margin: 16px 0 8px; padding-bottom: 6px; border-bottom: 2px solid color-mix(in oklab, var(--wood) 40%, transparent); font-size: 15.5px; font-weight: 900; }
+.sd-h small { font-size: 12.5px; font-weight: 800; color: color-mix(in oklab, var(--ink) 66%, var(--paper)); }
+.sd-clauses { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 22px; }
+.sd-line { display: grid; grid-template-columns: 18px 1fr; gap: 9px; align-items: start; width: 100%; padding: 6px 4px; margin: 0 -4px; border: 0; border-radius: 6px; background: transparent; color: var(--ink); font: inherit; font-size: 13.5px; font-weight: 700; line-height: 1.3; text-align: left; cursor: pointer; }
+.sd-line:hover { background: color-mix(in oklab, var(--teal) 7%, var(--paper)); }
+.sd-line:focus-visible, .sd-change:focus-visible, .sd-option:focus-visible { outline: 3px solid var(--sky); outline-offset: 1px; }
+.sd-line[aria-disabled="true"] { cursor: not-allowed; }
+.sd-line[aria-disabled="true"]:hover { background: transparent; }
+.sd-line.on { font-weight: 900; }
+.sd-line.fixed { color: color-mix(in oklab, var(--ink) 55%, var(--paper)); cursor: default; }
+.sd-line.struck .sd-line-text { text-decoration: line-through; text-decoration-thickness: 1.5px; text-decoration-color: color-mix(in oklab, var(--coral) 70%, var(--ink)); color: color-mix(in oklab, var(--ink) 62%, var(--paper)); }
+.sd-box { display: grid; place-items: center; width: 17px; height: 17px; margin-top: 1px; border: 2px solid color-mix(in oklab, var(--ink) 40%, var(--paper)); border-radius: 4px; }
+.sd-line.on .sd-box { border-color: var(--teal); background: var(--teal); }
+.sd-line.fixed .sd-box { border-color: color-mix(in oklab, var(--ink) 30%, var(--paper)); background: color-mix(in oklab, var(--ink) 30%, var(--paper)); }
+.sd-line.on .sd-box::after, .sd-line.fixed .sd-box::after { content: ""; width: 8px; height: 4px; border: 2.5px solid var(--paper); border-top: 0; border-right: 0; transform: translateY(-1px) rotate(-45deg); }
+.sd-line-copy { display: block; }
+.sd-line-text { display: block; }
+.sd-tag { display: block; margin-top: 2px; font-size: 11.5px; font-weight: 800; color: color-mix(in oklab, var(--teal) 62%, var(--ink)); }
+.sd-tag.you { color: color-mix(in oklab, var(--wood) 70%, var(--ink)); }
+.sd-tag.ask { color: color-mix(in oklab, var(--coral) 72%, var(--ink)); }
+.sd-case { display: grid; grid-template-columns: 1fr auto; gap: 6px 14px; align-items: center; padding: 7px 0; border-bottom: 1px solid color-mix(in oklab, var(--ink) 8%, transparent); }
+.sd-prompt { display: block; font-size: 13px; font-weight: 700; line-height: 1.3; quotes: none; color: color-mix(in oklab, var(--ink) 70%, var(--paper)); }
+.sd-ruling { margin-top: 2px; }
+.sd-ins { font-size: 14.5px; font-weight: 800; color: color-mix(in oklab, var(--teal) 62%, var(--ink)); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.sd-case.changed .sd-ins { color: var(--ink); text-decoration-color: var(--wood); }
+.sd-del { margin-left: 8px; font-size: 13px; font-weight: 700; color: color-mix(in oklab, var(--coral) 62%, var(--ink)); text-decoration: line-through; }
+.sd-acts { display: flex; gap: 8px; align-items: center; }
+.sd-status { font-size: 12px; font-weight: 800; color: color-mix(in oklab, var(--wood) 70%, var(--ink)); }
+.sd-status.ask { color: color-mix(in oklab, var(--coral) 72%, var(--ink)); }
+.sd-change { min-width: 72px; padding: 5px 12px; border: 1.5px solid color-mix(in oklab, var(--ink) 16%, transparent); border-radius: 7px; background: var(--paper); color: var(--ink); font: inherit; font-size: 12.5px; font-weight: 900; cursor: pointer; }
+.sd-change:hover { border-color: color-mix(in oklab, var(--ink) 40%, transparent); }
+.sd-case.open .sd-change { border-color: transparent; background: color-mix(in oklab, var(--teal) 78%, var(--ink)); color: var(--paper); }
+.sd-options { grid-column: 1 / -1; scroll-margin-bottom: 18px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding-bottom: 2px; }
+.sd-option { display: grid; grid-template-columns: 14px 1fr; gap: 3px 7px; align-items: start; padding: 7px 9px; border: 1.5px solid color-mix(in oklab, var(--ink) 12%, transparent); border-radius: 8px; background: var(--paper); color: var(--ink); font: inherit; font-size: 12.5px; font-weight: 700; line-height: 1.25; text-align: left; cursor: pointer; }
+.sd-option:hover { border-color: color-mix(in oklab, var(--teal) 60%, var(--paper)); }
+.sd-option i { width: 14px; height: 14px; margin-top: 1px; border: 2px solid color-mix(in oklab, var(--ink) 38%, var(--paper)); border-radius: 50%; }
+.sd-option.on { border-color: var(--teal); background: color-mix(in oklab, var(--teal) 9%, var(--paper)); font-weight: 800; }
+.sd-option.on i { border: 4.5px solid var(--teal); }
+.sd-option small { grid-column: 2; font-size: 11px; font-weight: 800; color: color-mix(in oklab, var(--teal) 62%, var(--ink)); }
+.sd-margin { display: flex; flex-direction: column; min-height: 0; padding: 22px 16px 18px; border-left: 1px solid color-mix(in oklab, var(--ink) 9%, transparent); background: color-mix(in oklab, var(--cream) 30%, var(--paper)); }
+.sd-notes { flex: 1 1 auto; min-height: 0; overflow-y: auto; margin: 0 -6px; padding: 0 6px 4px; }
+.sd-margin-h { margin: 0 0 10px; font-size: 11.5px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; color: color-mix(in oklab, var(--ink) 66%, var(--paper)); }
+.sd-note { margin-bottom: 11px; padding: 10px 12px; border-radius: 10px; background: var(--paper); font-size: 13px; font-weight: 600; line-height: 1.35; box-shadow: 0 1px 0 color-mix(in oklab, var(--ink) 8%, transparent); }
+.sd-note b { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 3px; font-size: 12px; font-weight: 900; }
+.sd-note .sd-when { font-weight: 800; color: color-mix(in oklab, var(--ink) 64%, var(--paper)); white-space: nowrap; }
+.sd-note.change { border-left: 3px solid color-mix(in oklab, var(--coral) 70%, var(--paper)); }
+.sd-note.change b > span:first-child { color: color-mix(in oklab, var(--coral) 72%, var(--ink)); }
+.sd-foot { flex: none; padding-top: 10px; text-align: center; }
+.sd-foot-note { margin: 0 0 10px; font-size: 12.5px; font-weight: 700; line-height: 1.35; text-align: left; color: color-mix(in oklab, var(--ink) 70%, var(--paper)); }
+.sd-foot-note.warn { font-weight: 900; color: color-mix(in oklab, var(--coral) 66%, var(--ink)); }
+.sd-foot .sd-adopt { width: 100%; padding: 12px 0; }
+.sd-foot .sd-close { margin: 8px 0 0; }
+/* The constitution card's note chip in the recipe list (constitutionNote): its changes line goes under the version line,
+   and a long family name wraps inside the panel. */
+.tech-row .release-ship { white-space: pre-line; }
+/* compute race tab (compute race plan Task 10; docs/design/mockups/compute-race/plan.html, "The race tab") */
+.compute-info-race .dlg { padding-bottom: 66px; }
+.race-share { display: flex; height: 46px; overflow: hidden; border-radius: 9px; background: color-mix(in oklab, var(--ink) 7%, var(--paper)); }
+.race-share-part { display: flex; min-width: 4px; padding: 0 10px; flex-basis: 0; flex-direction: column; justify-content: center; overflow: hidden; color: var(--paper); font-size: 12px; font-weight: 800; line-height: 1.15; white-space: nowrap; }
+.race-share-part b { font-size: 15px; font-weight: 900; }
+.race-share-part.you { background: var(--coral); }
+.race-share-part.r1 { background: color-mix(in oklab, var(--ink) 62%, var(--paper)); }
+.race-share-part.r2 { background: color-mix(in oklab, var(--ink) 50%, var(--paper)); }
+.race-share-part.r3 { background: color-mix(in oklab, var(--ink) 28%, var(--paper)); color: var(--ink); }
+.race-share-part.r4 { background: color-mix(in oklab, var(--ink) 18%, var(--paper)); color: var(--ink); }
+.race-table { width: 100%; margin-top: 14px; border-collapse: collapse; font-size: 13px; font-weight: 800; }
+.race-table th { padding: 0 8px 6px; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); font-size: 11px; font-weight: 900; letter-spacing: .06em; text-align: left; text-transform: uppercase; }
+.race-table td { padding: 7px 8px; border-top: 1px solid color-mix(in oklab, var(--ink) 8%, transparent); vertical-align: middle; }
+.race-table .n { text-align: right; font-variant-numeric: tabular-nums; }
+.race-table td.n b { display: block; }
+.race-table td.n small { display: block; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); font-size: 11px; font-weight: 700; }
+.race-table tr.you td { color: color-mix(in oklab, var(--coral) 82%, var(--ink)); }
+.race-table tr.you td.n small { color: color-mix(in oklab, var(--coral) 60%, var(--ink)); }
+.race-size { display: inline-block; padding: 1px 8px; border-radius: 6px; color: var(--paper); background: var(--sky); font-size: 11.5px; font-weight: 900; }
+.race-size.small { color: var(--ink); background: color-mix(in oklab, var(--sky) 45%, var(--paper)); }
+.race-size.xl { background: color-mix(in oklab, var(--sky) 70%, var(--ink)); }
+.race-size.none { color: color-mix(in oklab, var(--ink) 62%, var(--paper)); background: color-mix(in oklab, var(--ink) 7%, var(--paper)); }
+.race-word { display: inline-block; padding: 2px 9px; border-radius: 999px; color: color-mix(in oklab, var(--ink) 70%, var(--paper)); background: color-mix(in oklab, var(--ink) 7%, var(--paper)); font-size: 11.5px; font-weight: 900; white-space: nowrap; }
+.race-word.hot { color: var(--paper); background: color-mix(in oklab, var(--coral) 88%, var(--ink)); }
+.race-word.mine { color: var(--paper); background: color-mix(in oklab, var(--teal) 85%, var(--ink)); }
+.race-boxes { display: grid; grid-template-columns: 1fr 1fr; align-items: start; gap: 16px; margin-top: 14px; }
+.race-box { padding: 10px 14px; border-radius: 10px; background: color-mix(in oklab, var(--ink) 5%, var(--paper)); font-size: 12.5px; font-weight: 700; line-height: 1.45; }
+.race-box.end { background: color-mix(in oklab, var(--coral) 11%, var(--paper)); }
+.race-box b { font-weight: 900; }
+.race-box.end b { display: block; margin-bottom: 2px; }
+.race-box p { margin: 0 0 4px; }
+.race-box p:last-child { margin-bottom: 0; }
+/* ---------- Finance planner: Each model tab (lane gn-model-money) ---------- */
+.model-money-table .model-money-name-col { width: 290px; }
+.model-money-table .model-money-net-col { width: 250px; }
+.model-money-table thead th { text-align: left; }
+.model-money-table td strong { display: block; font-weight: 900; }
+.model-money-table td small { display: block; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); font-size: 10.5px; font-weight: 700; }
+.model-money-table tr.model-money-unreleased td { background: color-mix(in oklab, var(--sky) 6%, var(--paper)); }
+.model-money-table .finance-cell { grid-template-columns: 1fr 70px; }
+.model-money-table .finance-bar.diverging i.pos { background: var(--teal); }
+.model-money-empty { margin: 30px 0; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); font-size: 14px; font-weight: 800; }
+/* Keep polishing, then Publish (spec docs/superpowers/specs/2026-09-26-keep-polishing-publish-design.md, option A). */
+.pill-act { pointer-events: auto; cursor: pointer; }
+.pill-act:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+.hud-flaw { position: absolute; top: 10px; left: calc(50% + 203px); padding: 0; border: 0; font: inherit; background: none; pointer-events: auto; cursor: pointer; }
+.hud-flaw .badge { border: 3px solid var(--coral); color: color-mix(in oklab, var(--coral) 70%, var(--ink)); background: var(--paper); }
+.hud-flaw .tag { background: color-mix(in oklab, var(--coral) 70%, var(--ink)); }
+.hud-flaw:focus-visible .badge { outline: 3px solid var(--teal); outline-offset: 2px; }
+.hud-polish { position: absolute; top: 86px; left: 50%; display: flex; flex-direction: column; align-items: center; gap: 7px; transform: translateX(-50%); }
+.hud-publish { padding: 7px 16px 8px; border: 0; border-radius: 10px; color: var(--paper); background: var(--coral); font: inherit; font-size: 14px; font-weight: 900; box-shadow: 0 2px 0 color-mix(in oklab, var(--coral) 60%, var(--ink)); pointer-events: auto; cursor: pointer; }
+.hud-publish:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+.hud-rumor { display: inline-flex; align-items: center; gap: 6px; padding: 3px 11px 4px; border-radius: 999px; color: color-mix(in oklab, var(--wood) 55%, var(--ink)); background: color-mix(in oklab, var(--wood) 16%, var(--paper)); font-size: 11.5px; font-weight: 800; white-space: nowrap; box-shadow: 0 1px 0 color-mix(in oklab, var(--ink) 18%, transparent); }
+.hud-rumor::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--wood); }
+.hud-rumor.landed { color: var(--paper); background: color-mix(in oklab, var(--wood) 75%, var(--ink)); }
+.hud-rumor.landed::before { background: var(--paper); }
+
+.hud-flaw[hidden], .hud-polish[hidden], .hud-rumor[hidden] { display: none; }
+
+.has-polish-flaws .hud, .has-polish-flaws .hud-polish { left: calc(50% - 47px); }
+
+.polish-layer { position: absolute; inset: 0; pointer-events: none; }
+.polish-flaws { position: absolute; z-index: 6; width: 310px; padding: 10px 14px 8px; border: 1px solid color-mix(in oklab, var(--ink) 8%, transparent); border-radius: 14px; background: var(--paper); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 14%, transparent), 0 8px 22px color-mix(in oklab, var(--ink) 14%, transparent); pointer-events: auto; }
+.polish-flaws-head { margin-bottom: 4px; color: color-mix(in oklab, var(--wood) 60%, var(--ink)); font-size: 10.5px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; }
+.polish-flaw { display: grid; grid-template-columns: 18px 1fr auto; gap: 8px; align-items: start; padding: 7px 0; border-top: 1px solid color-mix(in oklab, var(--ink) 9%, transparent); font-size: 13px; }
+.polish-flaw .n { font-weight: 900; }
+.polish-flaw .q { margin-top: 1px; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); font-size: 11.5px; font-weight: 700; font-style: italic; }
+.polish-flaw .st { font-size: 11px; font-weight: 900; white-space: nowrap; color: color-mix(in oklab, var(--coral) 70%, var(--ink)); }
+.polish-flaw.done .st { color: var(--teal); }
+.polish-flaw.done .n { text-decoration: line-through; text-decoration-color: var(--teal); text-decoration-thickness: 2px; }
+.polish-flaw .ico { width: 16px; height: 16px; margin-top: 1px; border-radius: 50%; box-sizing: border-box; }
+.polish-flaw.done .ico { background: var(--teal); }
+.polish-flaw.work .ico { border: 3px solid var(--coral); }
+.polish-flaw.next .ico { border: 2px solid color-mix(in oklab, var(--coral) 70%, var(--ink)); }
+.polish-flaw.left .ico { border: 2px dashed color-mix(in oklab, var(--coral) 70%, var(--ink)); }
+.polish-flaw-acts { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 4px; }
+.fly-bubble.polish, .fly-bubble.flaw { display: grid; place-items: center; width: 32px; height: 32px; left: -16px; top: -16px; color: var(--paper); font-size: 11.5px; font-weight: 900; }
+.fly-bubble.polish { background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--teal) 55%, var(--paper)), var(--teal) 62%); border: 2px solid color-mix(in oklab, var(--teal) 70%, var(--ink)); }
+.fly-bubble.flaw { background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--coral) 60%, var(--paper)), var(--coral) 62%); border: 2px solid color-mix(in oklab, var(--coral) 70%, var(--ink)); }
+#polish-fx { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+
+.polish-strip { position: absolute; left: 220px; top: 742px; z-index: 6; width: 1000px; height: 142px; overflow: hidden; border: 1px solid color-mix(in oklab, var(--ink) 8%, transparent); border-radius: 14px; background: var(--paper); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 14%, transparent), 0 8px 22px color-mix(in oklab, var(--ink) 14%, transparent); pointer-events: auto; }
+.polish-strip > * { position: absolute; }
+.ps-title { left: 16px; top: 12px; color: color-mix(in oklab, var(--wood) 60%, var(--ink)); font-size: 10.5px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; }
+.ps-sub { left: 230px; top: 12px; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); font-size: 10.5px; font-weight: 800; }
+.ps-lane { left: 10px; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); font-size: 9px; font-weight: 900; writing-mode: vertical-rl; transform: rotate(180deg); }
+.ps-lane.you { top: 44px; }
+.ps-lane.rivals { top: 80px; }
+.ps-rule { left: 36px; top: 80px; width: 800px; height: 1px; background: color-mix(in oklab, var(--ink) 12%, transparent); }
+.ps-today { top: 30px; width: 3px; height: 82px; border-radius: 2px; background: var(--coral); }
+.ps-today-label { top: 12px; color: var(--coral); font-size: 11px; font-weight: 900; white-space: nowrap; }
+.ps-block { top: 40px; height: 26px; display: grid; place-items: center; overflow: hidden; border-radius: 6px; color: color-mix(in oklab, var(--coral) 60%, var(--ink)); background: color-mix(in oklab, var(--coral) 20%, var(--paper)); font-size: 11px; font-weight: 900; white-space: nowrap; }
+.ps-block:not(.done) { background: repeating-linear-gradient(135deg, color-mix(in oklab, var(--coral) 20%, var(--paper)) 0 6px, var(--paper) 6px 12px); }
+.ps-bubble { display: grid; place-items: center; border-radius: 50%; box-sizing: border-box; font-size: 9.5px; font-weight: 900; border: 2px dashed color-mix(in oklab, var(--teal) 70%, var(--paper)); color: color-mix(in oklab, var(--teal) 70%, var(--ink)); background: var(--paper); }
+.ps-bubble.past { border: 2px solid color-mix(in oklab, var(--teal) 70%, var(--ink)); color: var(--paper); background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--teal) 55%, var(--paper)), var(--teal) 62%); }
+.ps-dot { top: 84px; width: 10px; height: 10px; border-radius: 50%; background: var(--ink); }
+.ps-landed { top: 82px; font-size: 11px; font-weight: 900; white-space: nowrap; }
+.ps-window { top: 82px; height: 16px; border-radius: 4px; background: repeating-linear-gradient(135deg, color-mix(in oklab, var(--wood) 34%, transparent) 0 6px, transparent 6px 12px); }
+.ps-window-label { top: 98px; color: color-mix(in oklab, var(--wood) 55%, var(--ink)); font-size: 11px; font-weight: 900; white-space: nowrap; }
+.ps-tick { top: 110px; width: 1px; height: 6px; background: color-mix(in oklab, var(--ink) 30%, transparent); }
+.ps-tick-label { top: 118px; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); font-size: 10.5px; font-weight: 800; white-space: nowrap; }
+.ps-publish { right: 18px; top: 40px; }
+.ps-left { right: 18px; top: 80px; width: 170px; color: color-mix(in oklab, var(--ink) 58%, var(--paper)); font-size: 11px; font-weight: 700; text-align: right; }
+
+.ps-title { max-width: 210px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ps-window-label, .ps-landed { overflow: hidden; text-overflow: ellipsis; }
+
+/* ---- Office: advisor click areas and read marks (owner playtest 2026-09-26) ---- */
+/* The invisible area around each advisor's desk (ui/office.js, addHitAreas): a click there opens what they have to say. */
+.advisor-hit { fill: transparent; stroke: none; cursor: pointer; }
+/* A mark flipped to the advisor's left (ui/logic/advisorMarks.js, markerSpot) points its tail back at their head. */
+.advisor-marker.left svg { transform: scaleX(-1); }
+
+/* ---- Money and Compute: the advisors explain the screen (owner playtest 2026-09-26) ---- */
+.advisor-explains { display: flex; align-items: center; gap: 12px; margin: 0 0 10px; padding: 7px 12px; border-radius: 9px; background: color-mix(in oklab, var(--cream) 55%, var(--paper)); text-align: left; }
+.advisor-explains[hidden] { display: none; }
+.advisor-explains-face { display: flex; flex: none; }
+.advisor-explains-face .portrait { border-radius: 50%; background: var(--paper); }
+.advisor-explains b { color: color-mix(in oklab, var(--ink) 62%, var(--paper)); font-size: 10.5px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; }
+.advisor-explains p { margin: 1px 0 0; font-size: 12.5px; font-weight: 600; line-height: 1.38; }
+.advisor-tabline { margin: -4px 0 10px; color: color-mix(in oklab, var(--ink) 66%, var(--paper)); font-size: 12px; font-weight: 600; line-height: 1.35; text-align: center; }
+.advisor-tabline b { margin-right: 2px; color: color-mix(in oklab, var(--wood) 60%, var(--ink)); font-size: 10.5px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; }
+.screen-help { position: absolute; top: 16px; right: 18px; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; color: color-mix(in oklab, var(--wood) 70%, var(--ink)); font: inherit; font-size: 15px; font-weight: 900; line-height: 1; background: color-mix(in oklab, var(--wood) 16%, var(--paper)); cursor: pointer; }
+.screen-help:hover { background: color-mix(in oklab, var(--wood) 28%, var(--paper)); }
+.screen-help.on { color: var(--paper); background: var(--wood); }
+.screen-help:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+
+.finale-layer { z-index: 12; }
+.finale-panel { left: 320px; top: 220px; width: 800px; height: auto; padding: 30px; }
+.finale-panel h1 { margin: 12px 0 20px; }
+.finale-panel .end-buttons { margin-top: 24px; flex-wrap: wrap; }
+.end-details { max-height: 465px; overflow-y: auto; padding-right: 8px; }
+.end-details:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+.intro-preview { position: absolute; left: 370px; top: 90px; width: 1440px; height: 900px; transform: scale(.72); transform-origin: top left; pointer-events: none; }
+.intro-preview .dialog-layer { opacity: 1; }
+.intro-explanation { left: 24px; top: 225px; width: 310px; padding: 20px; text-align: left; }
+.intro-explanation h2 { margin: 0 0 12px; font-size: 23px; }
+.intro-explanation p { font-size: 17px; line-height: 1.5; }
+.intro-explanation small { display: block; font-size: 14px; line-height: 1.5; font-weight: 800; }
+.intro-bar { z-index: 40; }
+.intro-back { font: inherit; font-weight: 800; padding: 7px 12px; border-radius: 8px; cursor: pointer; }
+.intro-back:disabled { opacity: .4; cursor: default; }
+
+.cash-warning { position: absolute; left: 24px; bottom: 24px; width: 570px; padding: 14px 18px; z-index: 3; pointer-events: auto; text-align: left; border: 2px solid var(--wood); }
+.cash-warning[hidden], .cash-warning button[hidden] { display: none; }
+.cash-warning[data-level="urgent"], .cash-warning[data-level="critical"] { border-color: var(--coral); }
+.cash-warning-copy { display: flex; flex-direction: column; gap: 5px; line-height: 1.35; }
+.cash-warning-title { font-size: 18px; }
+.cash-warning-detail { font-weight: 800; }
+.cash-warning-help { font-size: 13px; }
+.cash-warning-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.cash-warning-actions button { border: 1px solid var(--wood); border-radius: 8px; padding: 7px 10px; font: inherit; font-size: 13px; font-weight: 800; background: var(--paper); color: var(--ink); cursor: pointer; }
+.cash-warning-actions button:disabled { opacity: .5; cursor: default; }
+
+.menu-action-help { max-width: 290px; padding: 6px 14px 10px; font-size: 12px; line-height: 1.4; color: var(--ink); white-space: normal; }

@@ -181,6 +181,7 @@ test('internal incidents take priority when two warnings mature on the escalatio
   s.warnings.jailbreak = { turn: 0 };
   s.warnings.citations = { turn: 0 };
   s.automation.stage = 1; s.automation.stageTurn = 0;
+  s.automation.pressure = 1; // the running total reaches 1 this round (A3: no dice, running total)
   const out = endTurn(s, {}, yes);
   assert.equal(out.state.automation.stage, 2);
   assert.equal(nonAnchors(out.state)[0].id, 'oversightTamper');

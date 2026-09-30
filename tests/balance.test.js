@@ -74,14 +74,76 @@ test('strategy planning refreshes burn before checking emergency funding', () =>
 
 test('difficulty target: no scripted strategy wins more than about a third of runs', () => {
   for (const [name, row] of Object.entries(targetReport)) {
-    if (balanceApi.PROBES.includes(name)) continue;
+    if (balanceApi.PROBES.includes(name) || name === 'careful') continue;
     const wins = ['aligned', 'pacingDeal', 'pyrrhic'].reduce((sum, id) => sum + (row.endings[id] ?? 0), 0);
     assert.ok(wins / 200 <= 0.36, `${name} wins ${wins}/200`);
   }
 });
 
-test('difficulty target: most runs of the extreme strategies end in eras 3 or 4', () => {
-  for (const name of ['speed', 'safety']) {
-    assert.ok(targetReport[name].diedInEra3or4 / 200 >= 0.5, `${name} ${targetReport[name].diedInEra3or4}/200`);
+test('extreme strategies consistently expose their distinct failure modes', () => {
+  const speed = targetReport.speed.endings;
+  const safety = targetReport.safety.endings;
+  assert.ok(((speed.misalignment ?? 0) + (speed.misuse ?? 0) + (speed.boardRemoved ?? 0)) >= 160);
+  assert.ok(((safety.acquihire ?? 0) + (safety.leftBehind ?? 0)) >= 160);
+});
+
+test('the report measures the compute race', () => {
+  const r = balanceApi.report(3);
+  for (const [name, row] of Object.entries(r)) {
+    assert.equal(typeof row.leftBehindByEra, 'object', name);
+    assert.ok(row.roundsAtFirst >= 0 && row.roundsAtFirst <= 1, `${name}: ${row.roundsAtFirst}`);
+    assert.ok(row.rivalDealsPerRun >= 0, name);
   }
+});
+
+test('the denier probe takes named cards; the safety bot never does; denying does not bankrupt the speed bot', () => {
+  assert.ok(balanceApi.PROBES.includes('denier'));
+  let denied = 0;
+  let safetyDenied = 0;
+  const speedBroke = [];
+  for (const seed of [1, 2, 3]) {
+    for (const [name, count] of [['denier', (n) => { denied += n; }], ['safety', (n) => { safetyDenied += n; }], ['speed', () => {}]]) {
+      const rng = createRng(seed);
+      let state = createInitialState({ seed });
+      for (let turn = 0; turn < 12 && !state.ending; turn += 1) {
+        const result = endTurn(state, balanceApi.STRATEGIES[name](state, rng), rng);
+        count(result.events.filter((e) => e.type === 'deal' && e.denied).length);
+        state = result.state;
+      }
+      if (name === 'speed' && state.ending === 'acquihire' && state.era === 2) speedBroke.push(seed);
+    }
+  }
+  assert.ok(denied > 0);
+  assert.equal(safetyDenied, 0);
+  // Seeds 1 and 3 run out of money in era 2 even with the deny rule off; seed 2 did only because the bot kept denying.
+  assert.ok(!speedBroke.includes(2), `speed out of money in era 2 on seeds ${speedBroke}`);
+});
+
+
+import { readyToPublish } from '../tools/balance.js';
+import { startPolishing } from '../sim/polish.js';
+
+test('bots publish by a rule: speed at once, the others after fixing and some polish', () => {
+  const state = createInitialState({ seed: 1 });
+  state.pendingModel = { flags: ['hallucination'], publicEffects: { usersMult: 1 }, capability: 30 };
+  startPolishing(state.pendingModel, 2, state.day);
+  state.rivalLaunches = [];
+  assert.equal(readyToPublish(state, 'speed'), true);
+  assert.equal(readyToPublish(state, 'balanced'), false, 'a flaw is left');
+  state.pendingModel.polishing.flaws = [];
+  state.pendingModel.polish = 50; // next bubble adds 10
+  assert.equal(readyToPublish(state, 'balanced'), false);
+  state.pendingModel.polish = 65; // next bubble adds 7
+  assert.equal(readyToPublish(state, 'balanced'), true);
+  assert.equal(readyToPublish(state, 'safety'), false);
+  state.pendingModel.polish = 85; // next bubble adds 3
+  assert.equal(readyToPublish(state, 'safety'), true);
+  state.pendingModel.polish = 0;
+  state.rivalLaunches = [{ id: 'openbrain', day: state.day + 1 }];
+  assert.equal(readyToPublish(state, 'balanced'), true, 'a rival lands before the next mark');
+});
+
+test('a careful, funded lab reaches aligned in at least 60 percent of scenario runs', () => {
+  assert.ok((targetReport.careful.endings.aligned ?? 0) >= 120, JSON.stringify(targetReport.careful.endings));
+  assert.equal(targetReport.careful.rejectedActions, 0);
 });

@@ -4,7 +4,7 @@ import { createGame } from '../ui/game.js';
 import { projectQueue } from '../ui/logic/compute.js';
 import { releaseDraft, releasePayload } from '../ui/logic/release.js';
 import { SCENARIOS } from '../ui/logic/scenarios.js';
-import { ITEMS, disabledReason } from '../ui/menu.js';
+import { COMPANY_ITEMS, GAME_ITEMS, ITEMS, disabledReason } from '../ui/menu.js';
 import { MEETINGS } from '../sim/data/president.js';
 
 const handler = () => {};
@@ -44,7 +44,7 @@ test('release is closed with no finished model, and when both team actions went 
 test('other menu items close when both team actions are used; the budget stays free', () => {
   const game = readyGame();
   game.state.round.moves = 2;
-  for (const id of ['training', 'constitution', 'meeting']) {
+  for (const id of ['training', 'meeting']) {
     assert.notEqual(reasonFor(game, id), '', `${id} should be disabled`);
   }
   assert.equal(reasonFor(game, 'budget'), '', 'budget stays free');
@@ -62,4 +62,39 @@ test('meeting availability uses the live meeting and closes once he has been met
   assert.equal(result.events.find((event) => event.type === 'meetingOutcome')?.walkedOut, false);
   assert.equal(game.state.meeting, null);
   assert.notEqual(reasonFor(game, 'meeting'), '');
+});
+
+// Owner pick 3B: Company stays about the business; a Game item at the bottom of the menu holds the rest.
+test('the main menu ends with a divider and a Game submenu, and Company no longer holds the sound item', () => {
+  const [divider, game] = ITEMS.slice(-2);
+  assert.equal(divider.divider, true);
+  assert.equal(game.id, 'game');
+  assert.equal(game.label, 'Game');
+  assert.equal(game.submenu, 'game');
+  assert.equal(game.free, true);
+  assert.equal(ITEMS.find((item) => item.id === 'company').submenu, 'company');
+  assert.deepEqual(GAME_ITEMS.map((item) => item.id), ['endings', 'howto', 'sound', 'credits']);
+  assert.equal(GAME_ITEMS.find((item) => item.id === 'howto').label, 'How to play');
+  assert.ok(GAME_ITEMS.every((item) => item.free), 'nothing in Game costs a team action');
+  assert.equal(COMPANY_ITEMS.some((item) => item.id === 'sound'), false);
+});
+
+test('Endings found shows how many of the endings this browser has found', () => {
+  const endings = GAME_ITEMS.find((item) => item.id === 'endings');
+  const game = createGame({ seed: 1, state: SCENARIOS.start(1) });
+  assert.equal(endings.note(game), '', 'no collection, no count');
+  game.collection = { progress: () => ({ found: 3, total: 11 }) };
+  assert.equal(endings.note(game), '3 of 11');
+});
+
+test('the summit waits for the President’s waiting call, then opens once he has been met', () => {
+  // meeting2(2): seed 1's run ends before the second meeting since the quiet-takeover roll became a running total
+  // (deterministic endings A3 shifted the main random stream).
+  const game = createGame({ seed: 1, state: SCENARIOS.meeting2(2) });
+  // the projection expires an untaken call at the round's end, so the check must read the live meeting
+  assert.equal(reasonFor(game, 'summit'), 'Take the President’s call first');
+  game.queue.presidentAnswers = MEETINGS[1].exchanges.map((exchange) => exchange.answers[0].id);
+  assert.equal(game.addMove({ type: 'meeting' }).ok, true);
+  assert.equal(game.state.meeting, null);
+  assert.equal(reasonFor(game, 'summit'), '');
 });

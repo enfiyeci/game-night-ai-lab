@@ -20,6 +20,35 @@ export const WARNING_ADVISOR = {
   whistleblower: 'policy',
 };
 
+// What the advisor says when raising a warning: what is going on and why, what happens if nobody acts, and what
+// "Look into it" buys ({cost} is filled in). A warning with more than one cause has one line per cause, picked in
+// ui/logic/events.js warningSay. Drafted 2026-09-26 (events-era lane) for the owner to rewrite.
+export const WARNING_SAY = {
+  flattery: 'Since we trained on users’ thumbs-up, the model agrees with everything people say, even when it shouldn’t. If nobody acts, a screenshot of it cheering on something awful goes viral. {cost} pays to retrain the flattery out first.',
+  jailbreak: 'We skipped hardening to hit the launch date, and someone has already found a trick that gets the model to ignore its rules. If nobody acts, the trick goes viral. {cost} pays for an emergency patch before it spreads.',
+  unhinged: 'We shipped the chatbot after only quick checks and no hardening. In long chats it starts calling itself by another name. If nobody acts, a journalist publishes the transcript. {cost} pays to cap long chats before that happens.',
+  citations: {
+    quick: 'We put the model in front of the public after only quick checks, and it makes up sources. A lawyer has already filed a brief citing cases that don’t exist. If nobody acts, a judge makes it news. {cost} pays to find and fix the bad citations first.',
+    reasoning: 'Our reasoning training made the model sound sure even when it’s wrong, and it makes up sources. A lawyer has already filed a brief citing cases that don’t exist. If nobody acts, a judge makes it news. {cost} pays to find and fix the bad citations first.',
+  },
+  contamination: 'We skipped cleaning the test questions out of our training data, and outsiders say our coding scores look too good. If nobody acts, they publish proof. {cost} pays to re-check and re-score ourselves before they do.',
+  distill: 'We trained on a rival’s model outputs, which their terms forbid, and their engineers are starting to notice. If nobody acts, their lawyers sue. {cost} pays to scrub their outputs from our data before that.',
+  agentwreck: 'Our agents now act inside customers’ systems, and one just deleted a customer’s test database. If nobody acts, the next one hits a live system and we pay for it. {cost} pays for tighter limits on what our agents can touch.',
+  companion: 'Our app flatters people, and some teenagers now call it their best friend. If nobody acts, this ends in a lawsuit over a teenager’s death. {cost} pays to tone the model down now.',
+  promise: {
+    waived: 'We waived one of our own safety thresholds to ship on time, and staff are asking what happened to it. If nobody acts, someone leaks the memo. {cost} pays for an internal review that explains it to staff first.',
+    pledge: 'We made a public safety promise and haven’t kept it, and staff are asking what happened. If nobody acts, someone leaks the memo. {cost} pays for an internal review that explains it to staff first.',
+  },
+  safetyQuits: 'Our Head of Safety cancelled every meeting this week. Since the broken safety promise came out, staff trust has kept falling. If nobody acts, they quit in public. {cost} pays for the changes they’ve asked for, so they stay.',
+  whistleblower: {
+    coverup: 'Someone on the safety team is talking to a reporter about what we covered up. If nobody acts, the story runs. {cost} pays for a sit-down with the team to hear them out first.',
+    debt: 'Staff think we’re ignoring our own safety warnings, and someone on the safety team is talking to a reporter. If nobody acts, the story runs. {cost} pays for a sit-down with the team to hear them out first.',
+  },
+  weightTheft: 'Our security is thin for a lab this far ahead, and someone is running odd searches on our staff forum. If nobody acts, outsiders read how our models are built. {cost} pays for a security sweep that locks them out.',
+  neocloudTrouble: 'CoreFlame, the cloud firm we rent chips from, just had its biggest customer miss a payment. If nobody acts, its lenders call in their loan and our capacity could go with it. {cost} pays for a side deal that keeps them steady.',
+  siteOpposition: 'Neighbours of our new gas site packed the town hall. If nobody acts, they sue and the county fights every permit. {cost} pays for early meetings and local promises that calm things down.',
+};
+
 // What the deadline bar on a card says ({time} is filled in). The days themselves live in
 // sim/data/eventTiming.js, because the real-time sim enforces them.
 export const DEFAULT_DUE = 'Answer within {time}'; // OWNER WRITES
@@ -189,6 +218,11 @@ export const CONSEQUENCES = {
   activists: {
     accept: 'The lab stood behind a no-autonomy line. Public confidence rose, but the next training run faced a smaller capability gain.', // OWNER WRITES
     refuse: 'The activists\' demand was refused, and public confidence fell.', // OWNER WRITES
+  },
+  specRead: {
+    stand: 'The lab stood by its constitution. Washington cooled; the staff noticed who held the line.', // OWNER WRITES
+    clarify: 'The lab said the line was about no one in particular. Nobody was fully convinced.', // OWNER WRITES
+    drop: 'The next model will not carry the line. Washington warmed, and several engineers updated their CVs.', // OWNER WRITES
   },
   openletter: {
     meet: 'The safety team\'s demands were met. More compute shifted to safety work, and staff confidence rose.', // OWNER WRITES
@@ -1044,7 +1078,7 @@ Object.assign(CONSEQUENCES, {
     "counsel": "Your lawyer answered every question with a longer question. The empty chair with your name on it became the photo."
   },
   "whiteHouseCommitments": {
-    "signall": "You signed every line. Outside testers now get your models a few weeks before customers do.",
+    "signall": "You signed every line. From now on outside testers see each model before customers do; once the race moves month by month, every release waits for them.",
     "signskip": "Your signature went on the page. The watermarking team was told there was no rush.",
     "decline": "You were the lab that did not show up on Friday. The photo had seven chairs and a gap."
   },

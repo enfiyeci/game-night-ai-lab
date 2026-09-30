@@ -1,9 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
-import { startRun, advanceRun, advanceRunBy, availableUnits, recheckCapacity } from '../sim/training.js';
+import { startRun, advanceRun, advanceRunBy, availableUnits, recheckCapacity, resolveRun } from '../sim/training.js';
 import { recipeCost } from '../sim/recipe.js';
-import { BALANCE } from '../sim/balance.js';
 
 const noLuck = { next: () => 0.99, int: () => 0, chance: () => false, normal: (m) => m };
 const recipe = {
@@ -33,14 +32,15 @@ test('a finished run produces a trained model with hidden effects applied', () =
   const s = createInitialState();
   startRun(s, recipe);
   const trained = advanceRun(s, noLuck);
-  // base 10 + filtered 3 + synthetic-sft 2 + dpo 2 = 17; talent 0.8 + 0.2 = 1.0; × (1 − 0.5 × 0.15)
-  assert.ok(Math.abs(trained.gain - 15.725) < 1e-9);
-  assert.ok(Math.abs(trained.capability - 35.725) < 1e-9);
+  // base 10 + medium technique yield 0.7 × (filtered 3 + synthetic-sft 2 + dpo 2) = 14.9; talent 0.8 + 0.2 = 1.0; × (1 − 0.5 × 0.15)
+  assert.ok(Math.abs(trained.gain - 13.7825) < 1e-9);
+  assert.ok(Math.abs(trained.capability - 33.7825) < 1e-9);
   assert.equal(s.activeRun, null);
   assert.equal(s.pendingModel, trained);
   assert.equal(s.alignmentDebt, 7); // 5 + dpo 2 + zero from the safety-share term
   assert.equal(s.misuseExposure, 2); // 5 − 3
-  assert.equal(s.legalCases.length, 0); // chance() is false in this rng
+  assert.equal(s.legalCases.length, 1); // D4: filtered web data is always sued (was 0 when the dice said no)
+  assert.equal(s.legalCases[0].cost, 120);
   assert.equal(trained.spec.arch, 'dense');
   assert.equal(trained.openWeightsMx, 20);
 });
@@ -50,7 +50,7 @@ test('zero talent spend provides no talent multiplier bonus', () => {
   s.budget.spend = 0;
   startRun(s, recipe);
   const trained = advanceRun(s, noLuck);
-  assert.ok(Math.abs(trained.gain - 12.58) < 1e-9);
+  assert.ok(Math.abs(trained.gain - 11.026) < 1e-9);
 });
 
 test('a run pauses without reserved compute and resumes when capacity returns', () => {
@@ -59,13 +59,12 @@ test('a run pauses without reserved compute and resumes when capacity returns', 
   startRun(s, recipe);
   s.compute.online = 4;
   const turnsLeft = s.activeRun.turnsLeft;
-  let draws = 0;
-  const countedRng = { ...noLuck, chance: () => { draws += 1; return false; } };
-  assert.deepEqual(advanceRun(s, countedRng), { type: 'runPaused' });
+  s.activeRun.spikeRisk = 0.1; // as a risky card would give
+  assert.deepEqual(advanceRun(s), { type: 'runPaused' });
   assert.equal(s.activeRun.turnsLeft, turnsLeft);
-  assert.equal(draws, 0);
+  assert.equal(s.activeRun.spikes, 0); // a paused run has not advanced, so its spike has not landed yet
   s.compute.online = 10;
-  assert.ok(advanceRun(s, countedRng).capability > 0);
+  assert.ok(advanceRun(s).capability > 0);
 });
 
 test('training capacity holds for the round unless a player action rechecks it', () => {
@@ -85,26 +84,26 @@ test('training capacity holds for the round unless a player action rechecks it',
   assert.equal(s.activeRun.turnsLeft, initial - 0.75);
 });
 
-test('low alignment share adds alignment debt; lawsuits are seeded by chance', () => {
+test('low alignment share adds alignment debt; a spike costs gain; web-crawl data is sued', () => {
   const s = createInitialState();
   const r2 = { ...recipe, sliders: { ...recipe.sliders, alignShare: 0 } };
   startRun(s, r2);
-  const sure = { ...noLuck, chance: () => true };
-  const trained = advanceRun(s, sure);
-  // gain 17 × 1.0 × 1 × (1 − 0.2 × 1 spike) = 13.6; debt += 13.6 × 0.15 × 2 + 2
-  assert.ok(Math.abs(trained.gain - 13.6) < 1e-9);
-  assert.ok(Math.abs(s.alignmentDebt - (5 + 13.6 * 0.3 + 2)) < 1e-9);
+  s.activeRun.spikeRisk = 0.1; // a risky recipe meets its one spike (was: dice that always landed)
+  const trained = advanceRun(s);
+  // gain 14.9 × 1.0 × 1 × (1 − 0.2 × 1 spike) = 11.92; debt += 11.92 × 0.15 × 2 + 2
+  assert.ok(Math.abs(trained.gain - 11.92) < 1e-9);
+  assert.ok(Math.abs(s.alignmentDebt - (5 + 11.92 * 0.3 + 2)) < 1e-9);
   assert.equal(s.legalCases.length, 1);
   assert.equal(s.legalCases[0].dueTurn, 8);
 });
 
-test('trained model capability and gain are capped at the maximum', () => {
+test('trained model capability and gain keep counting past 100', () => {
   const s = createInitialState();
-  s.capability = BALANCE.maxCapability - 5;
+  s.capability = 95;
   startRun(s, recipe);
   const trained = advanceRun(s, noLuck);
-  assert.equal(trained.capability, BALANCE.maxCapability);
-  assert.equal(trained.gain, 5);
+  assert.ok(Math.abs(trained.gain - 13.7825) < 1e-9);
+  assert.ok(Math.abs(trained.capability - 108.7825) < 1e-9);
 });
 
 test('standard agent techniques mark era 4 models as agentic', () => {
@@ -115,4 +114,82 @@ test('standard agent techniques mark era 4 models as agentic', () => {
   startRun(s, recipe);
   const trained = advanceRun(s, noLuck);
   assert.ok(trained.flags.includes('agentic'));
+});
+
+test('powered capacity unlocks a larger run that makes better use of the same techniques', async () => {
+  const { refreshOnline } = await import('../sim/contracts.js');
+  const { resolveRun } = await import('../sim/training.js');
+  const state = createInitialState();
+  state.era = 4;
+  state.cash = 10000;
+  state.compute.split.safety = 0;
+  state.compute.contracts = [
+    { units: 60, needsPower: false, dark: false },
+    { units: 300, needsPower: true, dark: false },
+  ];
+  state.power.sites = [];
+  refreshOnline(state);
+  const small = { ...recipe, sliders: { ...recipe.sliders, size: 'small' } };
+  const large = { ...recipe, sliders: { ...recipe.sliders, size: 'large' } };
+  assert.equal(startRun(structuredClone(state), small).ok, true);
+  assert.equal(startRun(structuredClone(state), large).ok, false);
+  const smallModel = resolveRun(structuredClone(state), { recipe: small, spikes: 0 }, noLuck);
+  state.power.sites = [{ units: 300, online: true }];
+  refreshOnline(state);
+  assert.equal(startRun(state, large).ok, true);
+  const largeModel = advanceRun(state, noLuck);
+  assert.ok(largeModel.gain > smallModel.gain * 1.5, `${largeModel.gain} vs ${smallModel.gain}`);
+});
+
+// A run just started with the given pre-training cards (the recipe above otherwise). Scraping is the default data
+// card: it applies when no data card is picked, so it is left out of the picks. Mixture-of-experts and synthetic data
+// are researched, and a past model exists, so their cards can be picked.
+function startedRunState(pre) {
+  const s = createInitialState();
+  s.compute.split.safety = 0;
+  s.researched.push('moe', 'synthetic');
+  s.models.push({});
+  const r = startRun(s, { ...recipe, picks: { ...recipe.picks, pre: pre.filter((id) => id !== 'scrape-data') } });
+  assert.equal(r.ok, true, r.error);
+  return s;
+}
+
+test('a risky card without stability meets one loss spike on the first advance, and no more', () => {
+  const s = startedRunState(['moe']);
+  s.activeRun.turnsLeft = 3;
+  advanceRunBy(s, null, 0.25);
+  assert.equal(s.activeRun.spikes, 1);
+  advanceRunBy(s, null, 1);
+  assert.equal(s.activeRun.spikes, 1);
+  s.activeRun.spikes = 0; // a rollback answer takes the spike back; it does not come again
+  advanceRunBy(s, null, 1);
+  assert.equal(s.activeRun.spikes, 0);
+  const model = advanceRunBy(s, null, 1);
+  assert.equal(model.spikes, 0);
+});
+
+test('stability engineering cancels mixture-of-experts: no loss spike', () => {
+  const s = startedRunState(['moe', 'stability']);
+  const model = advanceRunBy(s, null, 1);
+  assert.equal(model.spikes, 0);
+});
+
+test('a plain recipe meets no loss spike', () => {
+  const s = startedRunState(['filtered-data']);
+  const model = advanceRunBy(s, null, 1);
+  assert.equal(model.spikes, 0);
+});
+
+test('web-crawl data is always sued at full cost; licensed and synthetic data never', () => {
+  const s = startedRunState(['scrape-data']);
+  const before = s.legalCases.length;
+  resolveRun(s, s.activeRun);
+  assert.equal(s.legalCases.length, before + 1);
+  assert.equal(s.legalCases.at(-1).cost, 200);
+  for (const card of ['licensed-data', 'synthetic-data']) {
+    const clean = startedRunState([card]);
+    const cases = clean.legalCases.length;
+    resolveRun(clean, clean.activeRun);
+    assert.equal(clean.legalCases.length, cases, card);
+  }
 });

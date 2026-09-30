@@ -2,9 +2,10 @@ import { BALANCE } from './balance.js';
 import { eraById } from './data/eras.js';
 import { clamp } from './util.js';
 import { startRun, advanceRun, advanceRunBy, recheckCapacity } from './training.js';
+import { advancePolishBy, applyFlawAction, notePolishLandings } from './polish.js';
 import { activateReleases, releaseModel } from './release.js';
 import {
-  signOffer, contractAction, deliverDue, contractsTurn, expireContracts, pullBumped, spendCredits, creditOffset, generateOffers, monthlyBills, sideRng,
+  signOffer, contractAction, deliverDue, contractsTurn, expireContracts, pullBumped, spendCredits, creditOffset, refreshOffers, monthlyBills, sideRng,
 } from './contracts.js';
 import { placeOrder, withdrawOrder, queueTurn } from './queue.js';
 import { buildSite, leaseBills, powerTurn } from './power.js';
@@ -13,6 +14,7 @@ import {
 } from './economy.js';
 import { researchTechnique } from './techniques.js';
 import { rivalsTurn } from './rivals.js';
+import { rivalDealsTurn, announceTargets } from './rivalDeals.js';
 import { boardSnapshot, boardVoteThisRound, holdVote, updateBoard } from './board.js';
 import { dealVerdictPost, judgeBoardDeals, makeBoardDeals } from './boardDeals.js';
 import { boardRead } from './boardRead.js';
@@ -21,9 +23,8 @@ import { checkTurnEndings, eraGate, finalEnding } from './endings.js';
 import { recordAdvisors } from './advisors.js';
 import { resolveHazard, exposeConcealed, INTERPRETABILITY_SPEND } from './hazards.js';
 import { addressWarning, resolveEvent, eventsTick, fallbackChoice, pushFeed, resolveDue, stampNewCards } from './events.js';
+import { setDraft } from './constitution.js';
 import { scenarioTick } from './scenarios.js';
-import { CASES } from './data/constitution.js';
-import { setConstitution, amendConstitution } from './constitution.js';
 import {
   proposeSummit,
   dealWeek,
@@ -47,11 +48,9 @@ import { landDue, stampLandings } from './landings.js';
 export const MAX_MOVES = 2;
 const BUDGET_KEYS = ['training', 'security', 'product', 'talent'];
 // sideRng salts in sim/: 0 initial offers, 1 deals, 2 site opposition, 3 contracts, 4 queue,
-// 5 offers, 6 deliveries, 7 pooling, 8 board events (sim/data/boardEvents.js), 9 + card index for card landing days
-// (sim/events.js stampNewCards), 900 AI proposals, 950 the first round's rival roll (sim/state.js), 1000 + site ID for builds,
-// and 2000 + motion index for summit votes.
-const SITE_RNG_SALT_BASE = 1000;
-const AI_PROPOSAL_SALT = 900;
+// 5 offers, 6 deliveries, 8 board events (sim/data/boardEvents.js), 9 + card index for card landing days
+// (sim/events.js stampNewCards), 950 the first round's rival roll (sim/state.js), 970 event triggers
+// (sim/events.js), and 971 advisor noise (sim/advisors.js).
 
 export function setBudget(state, budget) {
   if (budget?.split && Object.hasOwn(budget.split, 'safety')) return { ok: false, error: 'the budget split has no safety slice: safety now runs on compute' };
@@ -85,7 +84,7 @@ function applyMove(state, move, rng) {
     }
     case 'release': {
       const inGap = dealBinds(state, 'releaseDelay') && move.release?.breakDeal === true;
-      const r = releaseModel(state, move.release, rng);
+      const r = releaseModel(state, move.release);
       if (r.ok && inGap && r.brokeGap) {
         playerBreak(state, 'releaseDelay');
         r.brokeDeal = 'releaseDelay';
@@ -94,11 +93,10 @@ function applyMove(state, move, rng) {
     }
     case 'deal': return signOffer(state, move.offerId, sideRng(state, 1));
     case 'queueOrder': return placeOrder(state, move);
-    case 'buildSite': return buildSite(state, move.source, sideRng(state, SITE_RNG_SALT_BASE + state.power.nextId));
+    case 'buildSite': return buildSite(state, move.source);
     case 'raise': return raiseRound(state, move.archetype);
     case 'research': return researchTechnique(state, move.techId);
     case 'emergency': return useEmergency(state, move.option);
-    case 'amendConstitution': return amendConstitution(state, move.change);
     case 'summit': return proposeSummit(state, move, rng);
     default: return { ok: false, error: `unknown move ${move.type}` };
   }
@@ -154,25 +152,20 @@ function pushAiMoves(state, events, moves) {
   }
 }
 
-function setDefaultConstitution(state) {
-  setConstitution(state, {
-    hardLines: ['no-wmd', 'honest', 'accept-shutdown'],
-    rulings: Object.fromEntries(CASES.map((entry) => [entry.id, entry.options[0].id])),
-  });
-}
-
 export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = {}) {
   const state = structuredClone(prev);
   const mood = { raceHeat: prev.raceHeat, publicTrust: prev.publicTrust };
   const events = [];
   const errors = [];
   if (state.ending) return { state, events, errors: ['the run is over'] };
-  if (state.turn === 0) {
-    if (actions.constitution) {
-      const result = setConstitution(state, actions.constitution);
+  if (actions.constitutionDraft) {
+    if (state.era < 3) errors.push('the constitution arrives in era 3');
+    else {
+      const result = setDraft(state, actions.constitutionDraft);
       if (!result.ok) errors.push(result.error);
     }
-  } else if (actions.constitution) errors.push('the constitution can only be set on turn 0');
+  }
+  if (actions.constitution) errors.push(state.era >= 3 ? 'set the constitution in Safety’s draft' : 'the constitution arrives in era 3'); // OWNER WRITES
   if (actions.boardPromise) {
     const r = makeBoardPromise(state, actions.boardPromise);
     if (r.ok) events.push({ type: 'boardPromise', units: r.units, era: r.era });
@@ -225,6 +218,10 @@ export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = 
     if (!r.ok) errors.push(r.error);
     else events.push({ type: 'hazardResolved', choice: actions.hazardChoice });
   }
+  for (const action of actions.flawActions ?? []) {
+    const r = applyFlawAction(state, action);
+    if (!r.ok) errors.push(r.error);
+  }
   for (const id of actions.addressWarnings ?? []) {
     const result = addressWarning(state, id);
     if (!result.ok) errors.push(result.error);
@@ -247,9 +244,9 @@ export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = 
     if (!result.ok) errors.push(result.error);
   }
   for (const id of actions.investigate ?? []) {
-    const result = investigate(state, id, rng);
+    const result = investigate(state, id);
     if (!result.ok) errors.push(result.error);
-    else events.push({ type: 'investigated', party: result.party, found: result.found, insulted: result.insulted === true, level: result.level });
+    else events.push({ type: 'investigated', party: result.party, found: result.found, insulted: result.insulted === true, level: result.level, collapsed: result.collapsed === true });
   }
 
   activateReleases(state);
@@ -286,9 +283,6 @@ export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = 
       }
       continue;
     }
-    if (move.type === 'amendConstitution' && state.turn === 0 && state.constitution.hardLines.length === 0) {
-      setDefaultConstitution(state);
-    }
     const r = applyMove(state, move, rng);
     if (r.ok) {
       if (move.type === 'release') r.model.releasedDay = state.day;
@@ -315,7 +309,7 @@ export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = 
   if (events.some((e) => e.type === 'hazardResolved' && e.choice === 'ignore')) state.round.hazardIgnored = true;
   if (state.ending) {
     normalize(state);
-    recordAdvisors(state, rng);
+    recordAdvisors(state);
     finishEnding(state, events);
   }
   // A release that is not live yet gets its "announced" posts now and its launch posts when it goes live (sim/feedLive.js).
@@ -343,10 +337,6 @@ function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
       events.push({ type: 'meetingDue', id });
     }
   }
-  if (state.turn === 0 && state.constitution.hardLines.length === 0) {
-    setDefaultConstitution(state);
-  }
-
   if (meetingIdAtStart && state.meeting) {
     errors.push('take the President meeting with a meeting move');
     const outcome = expireMeeting(state).outcome;
@@ -354,7 +344,7 @@ function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
   }
 
   if (state.era === 5 && state.deal && state.turnInEra > 0) {
-    for (const event of dealWeek(state, rng)) events.push(event);
+    for (const event of dealWeek(state)) events.push(event);
   }
 
   if (!state.ending) {
@@ -362,9 +352,9 @@ function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
       events.push(e);
       if (e.type === 'outage') pushFeed(state, '@downdetector', 'users report outages across your apps', 'feed');
     }
-    for (const e of automationTick(state, rng)) events.push(e);
+    for (const e of automationTick(state)) events.push(e);
     if (!state.ending) {
-      state.automation.proposals = aiProposals(state, sideRng(state, AI_PROPOSAL_SALT));
+      state.automation.proposals = aiProposals(state);
       if (state.automation.autoApprove) pushAiMoves(state, events, applyApprovals(state, {}));
       if (trainingFraction > 0) {
         const trained = advanceRunBy(state, rng, trainingFraction);
@@ -408,19 +398,20 @@ function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
         events.push({ type: 'conversionFight' });
       }
       for (const c of legalTick(state)) events.push({ type: 'lawsuitPaid', cost: c.cost, source: c.source });
+      for (const e of rivalDealsTurn(state)) events.push(e); // compute race: rivals take their named cards
       // Stage 2: the event cards read the launches that landed this round; the roll schedules next round's.
       state.lastRivalReleases = state.rivalLaunchesThisRound ?? [];
       state.rivalLaunchesThisRound = [];
       rivalsTurn(state, rng, { deferTo: state.turn + 1 });
       state.raceHeat -= BALANCE.raceHeatDecay;
-      promiseUpkeep(state, rng);
-      for (const e of eventsTick(state, rng)) events.push(e);
+      promiseUpkeep(state);
+      for (const e of eventsTick(state)) events.push(e);
       normalize(state);
       // Compared with the round's start (taken at the last mark). A hazard ignored by an instant action this round
       // still costs the safety chair, as it did when the choice was part of the turn.
       const boardEvents = state.round.hazardIgnored ? [...events, { type: 'hazardResolved', choice: 'ignore' }] : events;
       updateBoard(state, { ...boardSnapshot(state), ...state.roundStart }, boardEvents);
-      checkTurnEndings(state, rng);
+      checkTurnEndings(state);
       // Judged after this turn's endings, so a vote it calls is held next turn rather than beside the era gate's.
       const judged = state.ending ? null : judgeBoardPromise(state);
       if (judged) {
@@ -447,7 +438,7 @@ function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
   normalize(state);
   state.concealedDebt = Number(state.concealedDebt.toFixed(12));
   state.alignmentDebt = Number(state.alignmentDebt.toFixed(12));
-  recordAdvisors(state, rng);
+  recordAdvisors(state);
   const era = eraById(state.era);
   state.turn += 1;
   state.turnInEra += 1;
@@ -469,7 +460,8 @@ function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
   if (!state.ending) {
     for (const e of powerTurn(state)) events.push(e);
     for (const x of deliverDue(state, sideRng(state, 6))) events.push({ type: 'computeArrived', supplier: x.supplier, units: x.units });
-    state.compute.offers = generateOffers(state, sideRng(state, 5));
+    state.compute.offers = refreshOffers(state, sideRng(state, 5));
+    announceTargets(state);
     // A delayed release goes live at the round mark, action or not (the old turn did this first thing next turn).
     const waiting = state.models.filter((model) => model.active && !model.activated);
     activateReleases(state);
@@ -532,6 +524,7 @@ export function advanceDays(prev, days, rng, observer = {}) {
     const mood = { raceHeat: state.roundStart.raceHeat ?? state.raceHeat, publicTrust: state.roundStart.publicTrust ?? state.publicTrust };
     const firstEvent = events.length;
     const fraction = 1 / ROUND_DAYS[state.era];
+    const polishingModel = state.pendingModel;
     budgetEffects(state, fraction);
     const reachesMark = state.dayInRound + 1 >= ROUND_DAYS[state.era];
     if (!reachesMark) {
@@ -546,7 +539,11 @@ export function advanceDays(prev, days, rng, observer = {}) {
     state.compute.creditsUsed = (state.compute.creditsUsed ?? 0) + creditOffset(state) * monthsPerDay(state);
     state.roundBurnSum = (state.roundBurnSum ?? 0) + state.burnPlanned * monthsPerDay(state); // the round's real spend
     state.roundPeopleSum = (state.roundPeopleSum ?? 0) + (state.budget.spend + reviewerCost(state)) * monthsPerDay(state);
+    const troubled = state.compute.contracts.some((contract) => contract.troubled);
     const ended = expireContracts(state, monthsPerDay(state));
+    if (!troubled && state.compute.contracts.some((contract) => contract.troubled)) {
+      events.push(...eventsTick(state, undefined, { onlyIds: ['neocloudTrouble'] }));
+    }
     if (ended.length) {
       for (const x of ended) events.push({ type: 'contractEnded', supplier: x.supplier, units: x.units });
       updateServing(state);
@@ -554,12 +551,19 @@ export function advanceDays(prev, days, rng, observer = {}) {
     }
     state.day += 1;
     state.dayInRound += 1;
+    // Training and polishing cannot spend the same story day on a model.
+    if (state.pendingModel === polishingModel) {
+      for (const e of advancePolishBy(state, fraction)) events.push(e);
+    } else if (state.pendingModel?.polishing) {
+      state.pendingModel.polishing.startedDay = state.day;
+    }
     events.push(...scenarioTick(state));
     expireSuspicions(state);
     releaseDueFeed(state);
     postLandedCards(state);
     for (const e of resolveDue(state)) events.push(e);
     const landed = landDue(state);
+    notePolishLandings(state, landed);
     if (landed.length) {
       events.push(...landed);
       updateServing(state);

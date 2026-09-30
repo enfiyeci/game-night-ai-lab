@@ -252,7 +252,9 @@ test("today's serving shortfall stays in later turns until planned compute cover
   const eras = futureEras(state);
   const flat = project(state, defaultPlan(state)).rows;
   const { shortfall } = computeSlices(state); // the 20 plus what safety and control set aside first
-  const covered = project(state, setGoal(defaultPlan(state), 3, state.compute.online + shortfall, eras)).rows;
+  // Under the compute race plan (docs/superpowers/plans/2026-09-26-compute-race.md) Task 5, the fixture's online compute changed (51, so safety sets aside 10.2): setGoal rounds a goal to
+  // whole units, so the goal is rounded up to cover the fractional shortfall.
+  const covered = project(state, setGoal(defaultPlan(state), 3, state.compute.online + Math.ceil(shortfall), eras)).rows;
   assert.ok(flat[1].signedBill > signedAt(state, flat[1].turn).bill, 'spot cover carries on');
   assert.ok(Math.abs(covered[1].signedBill - signedAt(state, covered[1].turn).bill) < 1e-9, 'planned compute replaces it');
 });
@@ -387,4 +389,21 @@ test('in a later row, a running Azuria contract and one landing partway share th
   assert.ok(cap > bill && cap < 2 * bill, 'the cap binds only after the second contract lands');
   const expected = (1 - late) * Math.min(bill, cap) + late * Math.min(2 * bill, cap);
   assert.ok(Math.abs(row.credit - expected) < 1e-9, `${row.credit} vs ${expected}`);
+});
+
+
+test('projected capacity restores billable requests but cannot override a serving cap', () => {
+  const state = era3();
+  state.compute.split.coverWithSpot = false;
+  state.compute.servingUnits = state.compute.online * 2;
+  state.compute.split.servingCap = null;
+  const current = project(state, defaultPlan(state));
+  assert.ok(Math.abs(current.rows[0].revenue - monthlyRevenue(state)) < 1e-9);
+  const expanded = project(state, setGoal(defaultPlan(state), state.era, state.compute.online * 4, futureEras(state)));
+  assert.ok(expanded.rows[1].revenue > current.rows[1].revenue);
+  state.compute.split.servingCap = 0;
+  const capped = project(state, setGoal(defaultPlan(state), state.era, state.compute.online * 4, futureEras(state)));
+  assert.ok(capped.rows.every((r) => r.revenue === 0 && r.grownRevenue === 0));
+  state.compute.split.coverWithSpot = true;
+  assert.ok(project(state, defaultPlan(state)).rows[0].revenue > 0);
 });

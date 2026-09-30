@@ -44,8 +44,15 @@ export function computeSlices(state) {
   const cap = state.compute.split.servingCap ?? Infinity;
   const serving = Math.max(0, Math.min(need, cap, online - control - safety));
   const training = Math.max(0, online - control - safety - serving);
-  const run = state.activeRun ? state.activeRun.units : 0;
+  // A polishing model keeps its run's compute busy until Publish.
+  const run = state.activeRun ? state.activeRun.units : (state.pendingModel?.heldUnits ?? 0);
   return { online, need, control, safety, serving, shortfall: Math.max(0, need - serving), training, run, idle: Math.max(0, training - run) };
+}
+
+// Unserved requests are not billable; spot coverage fulfills the missing requests.
+export function servedShare(state) {
+  const { need, serving } = computeSlices(state);
+  return state.compute.split.coverWithSpot || need <= 0 ? 1 : Math.min(1, serving / need);
 }
 
 export const spotCover = (state) =>
@@ -74,10 +81,15 @@ export function applySplitEffects(state) {
   const s = computeSlices(state);
   const events = [];
   if (!state.compute.split.coverWithSpot && s.shortfall > 0 && s.need > 0) {
-    const loss = (s.shortfall / s.need) * 0.1;
-    for (const m of activeModels(state)) m.users = Math.round(m.users * (1 - loss));
+    const loss = 1 - (1 - 0.25 * (s.shortfall / s.need)) ** months;
+    let lostUsers = 0;
+    for (const m of activeModels(state)) {
+      const before = m.users;
+      m.users = Math.round(before * (1 - loss));
+      lostUsers += before - m.users;
+    }
     state.publicTrust -= 2;
-    events.push({ type: 'outage', shortfall: s.shortfall });
+    events.push({ type: 'outage', shortfall: s.shortfall, servedShare: servedShare(state), lostUsers });
   }
   const pledge = state.promises.find((p) => p.type === 'safetyCompute');
   if (pledge && state.compute.split.safety + 1e-9 < pledge.share) {

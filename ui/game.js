@@ -16,7 +16,7 @@ const initialQueue = (budget) => ({
   hazardChoice: undefined,
   addressWarnings: [],
   eventChoices: {},
-  constitution: undefined,
+  constitutionDraft: undefined,
   holdOrShip: undefined,
 });
 

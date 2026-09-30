@@ -12,10 +12,12 @@ import {
   queueOrderPreflight,
   replaceQueueOrder,
   queueScreenAvailable,
+  roundEndStrip,
   queueTrainingView,
   queueView,
 } from '../logic/compute.js';
 import { computeAmount, money, months } from '../logic/format.js';
+import { sfx } from '../sfx.js';
 
 const element = (tag, className, text) => {
   const node = document.createElement(tag);
@@ -31,6 +33,9 @@ function finishDialog(opened, kind, footer) {
   opened.querySelector('.dialog-body').append(footer);
   return opened;
 }
+
+// "A", "A and B", "A, B and C".
+const listNames = (names) => (names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names.at(-1)}` : names[0]);
 
 function dealButton(card) {
   const button = element('button', `company-card supplier-${card.supplier}`);
@@ -56,6 +61,9 @@ function dealButton(card) {
     element('span', `company-chip${card.chip === 'No strings' ? ' no-strings' : ''}`, card.chip),
     element('span', 'company-explanation', card.explanation),
   );
+  if (card.fallbackLine) catchBlock.append(element('span', 'company-fallback', card.fallbackLine));
+  if (card.takenBy) button.append(element('span', 'company-taken', `${card.takenBy} takes this${card.takenAsSecond ? ', its second choice' : ''}`));
+  else if (card.secondChoiceOf.length) button.append(element('span', 'company-second', `${listNames(card.secondChoiceOf)}'s second choice`));
   button.append(who, big, element('span', 'company-per', card.per), rows, catchBlock);
   if (card.disabled) button.append(element('span', 'company-card-reason', card.reason));
   return button;
@@ -100,6 +108,52 @@ function gridReservationButton(card) {
     element('span', 'company-chip', 'Power for later'),
   );
   return button;
+}
+
+// The signed stamp (owner playtest 2026-09-26): the card the player signed takes a SIGNED stamp before the
+// board closes. The deal is already queued when it starts; the stamp only holds the dialog open for a moment,
+// and any click or key during it ends it at once.
+const SIGNED_HOLD_MS = 800;
+const SIGNED_LANDS_MS = 200; // when the stamp meets the card (styles.css deal-stamp-land)
+const SKIP_EVENTS = ['pointerdown', 'click', 'keydown'];
+const reducedMotion = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+
+function stampSigned(layer, card, done) {
+  let over = false;
+  let armed = false;
+  let landed = false;
+  const land = () => {
+    if (landed) return;
+    landed = true;
+    sfx.stamp(0.4);
+  };
+  const soundTimer = setTimeout(land, reducedMotion() ? 0 : SIGNED_LANDS_MS);
+  const holdTimer = setTimeout(() => finish(), SIGNED_HOLD_MS);
+  function finish() {
+    if (over) return;
+    over = true;
+    clearTimeout(soundTimer);
+    clearTimeout(holdTimer);
+    land();
+    for (const type of SKIP_EVENTS) layer.removeEventListener(type, skip, true);
+    done();
+  }
+  // Capture phase, so the skipping click never reaches a card, the veil or the office underneath.
+  function skip(event) {
+    if (!armed) return; // the click that signed is still being dispatched
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.type !== 'pointerdown') finish();
+  }
+  layer.classList.add('deal-signing');
+  if (card) {
+    card.classList.add('deal-signed');
+    card.querySelector('.company-selected')?.remove();
+    card.append(element('span', 'deal-signed-stamp', 'Signed'));
+  }
+  for (const type of SKIP_EVENTS) layer.addEventListener(type, skip, true);
+  requestAnimationFrame(() => { armed = true; });
+  return { finish };
 }
 
 function commitmentPanel(game, state, selected, onAction) {
@@ -183,6 +237,7 @@ function commitmentPanel(game, state, selected, onAction) {
 export function openDeals(game, overlayRoot) {
   const initial = projectQueue(game.state, game.queue);
   let selected = '';
+  let signing = null; // the signed stamp while it plays
   const body = element('div');
   body.setAttribute('role', 'radiogroup');
   body.setAttribute('aria-label', 'Compute suppliers and reservations');
@@ -227,6 +282,7 @@ export function openDeals(game, overlayRoot) {
     if (queueOffer) {
       const queueCard = queueDealButton();
       queueCard.addEventListener('click', () => {
+        if (signing) return;
         opened.close();
         openQueue(game, overlayRoot);
       });
@@ -245,6 +301,7 @@ export function openDeals(game, overlayRoot) {
         button.append(element('span', 'company-selected', 'Selected'));
       }
       button.addEventListener('click', () => {
+        if (signing) return;
         selected = button.dataset.choice;
         error.textContent = '';
         render({ focusKey: button.dataset.focusKey });
@@ -262,6 +319,10 @@ export function openDeals(game, overlayRoot) {
     const ok = opened?.querySelector('.dialog-ok');
     if (ok) ok.disabled = !card || card.disabled;
     body.replaceChildren(group);
+    const strip = element('div', 'deal-round-end');
+    strip.append(element('b', '', `At the ${roundWord(state.era)}'s end`));
+    for (const item of roundEndStrip(state)) strip.append(element('span', `deal-round-end-item lab-${item.id}`, item.text));
+    body.append(strip);
     if (gridStrip) body.append(gridStrip);
     body.append(error);
     if (focusKey) {
@@ -280,12 +341,16 @@ export function openDeals(game, overlayRoot) {
 
   opened = openDialog(overlayRoot, {
     title: 'Sign a compute deal',
-    subtitle: `Era ${initial.era} · ${eraById(initial.era).name} · offers change every ${roundWord(initial.era)}`,
+    subtitle: `Era ${initial.era} · ${eraById(initial.era).name} · rivals take the marked cards at the ${roundWord(initial.era)}'s end`,
     left: { title: 'Team', content: teamPanel(initial, { opinions: opinions(initial, 'deals') }) },
     right: { title: 'Commitments', content: right },
     body,
     okLabel: 'Sign',
     onOk() {
+      if (signing) {
+        signing.finish();
+        return;
+      }
       const { state, cards, gridCard } = currentCards();
       const card = cards.find((candidate) => candidate.id === selected) ?? (gridCard?.id === selected ? gridCard : null);
       if (!card || card.disabled) {
@@ -300,8 +365,12 @@ export function openDeals(game, overlayRoot) {
         return;
       }
       const result = game.addMove(card.move);
-      if (result.ok) opened.close();
-      else error.textContent = result.error ?? 'The deal could not be queued.';
+      if (!result.ok) {
+        error.textContent = result.error ?? 'The deal could not be queued.';
+        return;
+      }
+      const signed = [...body.querySelectorAll('[data-choice]')].find((node) => node.dataset.choice === card.id);
+      signing = stampSigned(opened, signed, () => opened.close());
     },
   });
   finishDialog(opened, 'deals', footer);

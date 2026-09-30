@@ -4,38 +4,41 @@ import { ERAS } from './data/eras.js';
 export const SITE_TYPES = {
   grid: { name: 'Grid connection', size: [250, 450], upfront: 50 },
   gas: { name: 'Gas turbines', size: [300, 600], turns: 4, trust: -3 },
-  nuclear: { name: 'Nuclear restart', size: [200, 400], turns: 4, trust: 2, slipChance: 0.5 },
+  nuclear: { name: 'Nuclear restart', size: [200, 400], turns: 4, trust: 2, slip: 1 }, // slip: rounds late without US favor
 };
+// D8 (owner 2026-09-27): permits move for a lab Washington likes, so a nuclear restart opens on time at this US favor.
+export const NUCLEAR_ON_TIME_FAVOR = 60;
 export const FACILITY_PER_UNIT = 19; // $M of facility per unit of power (Epoch AI: $11.4B per GW ÷ 600)
 export const LEASE_RATE = 0.05;      // share of facility value paid per year
 export const leaseMonthly = (units) => (units * FACILITY_PER_UNIT * LEASE_RATE) / 12;
 export const eraStartTurn = (era) => ERAS.slice(0, era - 1).reduce((sum, e) => sum + e.turns, 0);
 
-const roll = (rng, [lo, hi]) => Math.round(rng.int(lo, hi) / 10) * 10;
+// Owner 2026-09-26, no dice: every site has fixed terms, the middle of the old ranges.
+export const siteUnits = (type) => Math.round((type.size[0] + type.size[1]) / 2 / 10) * 10;
 
 function addSite(state, source, units, arrivesTurn) {
-  const site = { id: `${source}-${state.power.nextId++}`, source, units, arrivesTurn, online: false, oppositionCut: null };
+  const site = { id: `${source}-${state.power.nextId++}`, source, units, arrivesTurn, online: false };
   state.power.sites.push(site);
   return site;
 }
 
-export function reserveGrid(state, rng) {
+export function reserveGrid(state) {
   if (state.era !== 2 && state.era !== 3) return { ok: false, error: 'grid connections are reserved in eras 2 and 3' };
   if (state.power.sites.some((s) => s.source === 'grid')) return { ok: false, error: 'you already hold a grid reservation' };
   if (state.cash < SITE_TYPES.grid.upfront) return { ok: false, error: 'not enough cash for the reservation' };
   state.cash -= SITE_TYPES.grid.upfront;
-  let arrivesTurn = eraStartTurn(4) + (state.era === 2 ? 0 : 2) + rng.int(0, 1);
-  if (state.era === 3 && rng.chance(0.25)) arrivesTurn = eraStartTurn(5) + rng.int(0, 1);
-  const site = addSite(state, 'grid', roll(rng, SITE_TYPES.grid.size), arrivesTurn);
+  // The average of the old draws, rounded: era 2 was era 4 + 0-1 rounds; era 3 was era 4 + 2-3, or era 5 + 0-1 a quarter of the time.
+  const arrivesTurn = eraStartTurn(4) + (state.era === 2 ? 1 : 3);
+  const site = addSite(state, 'grid', siteUnits(SITE_TYPES.grid), arrivesTurn);
   return { ok: true, site: site.id, arrivesTurn };
 }
 
-export function buildSite(state, source, rng) {
+export function buildSite(state, source) {
   if (state.era !== 4) return { ok: false, error: 'sites are built in era 4' };
   if (source !== 'gas' && source !== 'nuclear') return { ok: false, error: `unknown site type ${source}` };
   const t = SITE_TYPES[source];
-  const slip = t.slipChance && rng.chance(t.slipChance) ? rng.int(1, 2) : 0;
-  const site = addSite(state, source, roll(rng, t.size), state.turn + t.turns + slip);
+  const slip = state.govFavor.us >= NUCLEAR_ON_TIME_FAVOR ? 0 : (t.slip ?? 0); // D8
+  const site = addSite(state, source, siteUnits(t), state.turn + t.turns + slip);
   state.publicTrust += t.trust;
   return { ok: true, site: site.id, arrivesTurn: site.arrivesTurn };
 }

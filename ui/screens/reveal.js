@@ -2,6 +2,7 @@ import { roundMarkDay, storyDate } from '../../sim/time.js';
 import { money, pct, users } from '../logic/format.js';
 import { beatCount, checkLabel, flagshipBefore, leaderboard, oneDecimal, perMillion, priceSheet, salesEstimate } from '../logic/release.js';
 import { sfx } from '../sfx.js';
+import { enterTransition, exitTransition } from '../components/transition.js';
 
 // Coral stays for the misalignment warning post, so ordinary avatars never look like a warning (mockup avatar set).
 const AVATAR_COLOURS = ['var(--ink)', 'var(--teal)', 'var(--sky)', 'var(--wood)', 'color-mix(in oklab, var(--sky) 55%, var(--ink))'];
@@ -55,6 +56,7 @@ function benchmarks(state, model) {
     const head = el('div', 'reveal-bench-name');
     const title = el('span', null, row.name);
     if (row.kind === 'safety') title.append(el('span', 'reveal-check', checkLabel(model.flags)));
+    if (row.newTest) title.append(el('span', 'reveal-check', 'New test')); // a harder test than your last flagship took
     head.append(title);
     if (row.flagship != null) {
       const delta = row.shown - row.flagship;
@@ -138,7 +140,9 @@ function sheet(model, era) {
 const easeOut = (p) => 1 - (1 - p) ** 5;
 
 // Waits and tweens the player can hurry: advance() finishes the current beat, end() the whole show.
-class Timeline {
+// hold() keeps a beat's result on screen even after a hurry (owner 2026-09-26: "click to go faster should skip
+// the animation but should show the score"): the next click, its time running out, or the show ending moves on.
+export class Timeline {
   constructor() {
     this.fast = false;
     this.ended = false;
@@ -176,6 +180,15 @@ class Timeline {
         }
       };
       requestAnimationFrame(step);
+    });
+  }
+
+  hold(ms, hurriedMs = 1400) {
+    if (this.ended) return Promise.resolve();
+    return new Promise((resolve) => {
+      const entry = { resolve };
+      entry.timer = setTimeout(() => { this.pending.delete(entry); resolve(); }, this.fast ? hurriedMs : ms);
+      this.pending.add(entry);
     });
   }
 
@@ -320,7 +333,8 @@ async function benchmarkRace(t, show, row, index) {
   const { body, dots, leader, lastName, newName } = show;
   const scene = el('div', 'rshow-scene');
   const title = el('div', 'rshow-title');
-  title.append(el('small', null, row.kind === 'safety' ? 'Safety benchmark' : 'Benchmark'), row.name);
+  const kind = row.kind === 'safety' ? 'safety benchmark' : 'benchmark';
+  title.append(el('small', null, row.newTest ? `New ${kind}` : kind[0].toUpperCase() + kind.slice(1)), row.name);
   const lane = (label, note, kind, me = false) => {
     const node = el('div', `rshow-lane${me ? ' me' : ''}`);
     const name = el('div', 'rshow-lane-name', label);
@@ -371,7 +385,7 @@ async function benchmarkRace(t, show, row, index) {
     t.sound(() => sfx.stamp(0.45));
     t.kick(mine.node, 'rshow-flash');
   } else t.sound(() => (diff < 0 ? sfx.miss() : sfx.pop(-3)));
-  await t.wait(2600);
+  await t.hold(2600);
 }
 
 const ROW_HEIGHT = 54;
@@ -459,7 +473,7 @@ async function leaderboardClimb(t, show, launch) {
     t.sound(() => sfx.miss());
   }
   t.kick(result, 'rshow-stamp');
-  await t.wait(4500);
+  await t.hold(4500);
 }
 
 async function pressFlip(t, show, launch) {
@@ -518,7 +532,7 @@ async function pressFlip(t, show, launch) {
     if (mean >= 9) sfx.fanfare();
   });
   if (mean >= 9.5) confetti(t, panel, 532, 520);
-  await t.wait(2600);
+  await t.hold(2600);
 }
 
 async function playShow(t, show, launch) {
@@ -571,8 +585,6 @@ export function showReveal(overlayRoot, { state, model, misalignmentIncident = f
 
   const foot = el('div', 'reveal-foot');
   const usersLine = el('div', 'reveal-users');
-  // Owner 2026-09-26 wording for when open weights returns: no user count to show, since nobody
-  // signs up for a download (the sales estimate is already omitted for open weights below).
   if (scheduled) usersLine.textContent = `Users and sales start when it ships on ${storyDate(shipsDay).label}.`;
   else if (model.channel === 'open') usersLine.textContent = 'Free download. Anyone can run it now.';
   else usersLine.append('New users this month: ', el('b', null, `+${users(model.newUsers)}`));
@@ -644,10 +656,11 @@ export function showReveal(overlayRoot, { state, model, misalignmentIncident = f
     if (closed) return;
     closed = true;
     timeline.end();
-    layer.remove();
-    overlayRoot.dispatchEvent(new CustomEvent('gdt-dialog-closed'));
-    if (previousFocus?.isConnected && typeof previousFocus.focus === 'function') previousFocus.focus();
-    onClose?.();
+    exitTransition(layer).then(() => {
+      if (previousFocus?.isConnected && typeof previousFocus.focus === 'function') previousFocus.focus();
+      overlayRoot.dispatchEvent(new CustomEvent('gdt-dialog-closed'));
+      onClose?.();
+    });
   };
   soundButton.addEventListener('click', () => {
     if (sfx.enabled) sfx.hush();
@@ -719,8 +732,7 @@ export function showReveal(overlayRoot, { state, model, misalignmentIncident = f
   });
 
   overlayRoot.append(layer);
-  // The shared dialog CSS keeps .dialog-layer at opacity 0 until .dialog-open is added (ui/styles.css).
-  requestAnimationFrame(() => layer.classList.add('dialog-open'));
+  enterTransition(layer);
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
     showSummary();
   } else {

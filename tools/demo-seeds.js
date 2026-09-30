@@ -221,14 +221,6 @@ function describeMove(move) {
     const promises = Object.entries(move.promises ?? {}).map(([party, type]) => `${words(type).toLowerCase()} for ${words(party)}`);
     return `propose a summit with ${proposals}; ${checks.length ? checks.join(', ') : 'default checks'}; ${promises.length ? `promises: ${promises.join(', ')}` : 'no promises'}`;
   }
-  if (move.type === 'amendConstitution') {
-    const change = move.change ?? {};
-    const changes = [];
-    if (change.remove) changes.push(`remove ${words(change.remove)}`);
-    if (change.add) changes.push(`add ${words(change.add)}`);
-    if (change.ruling) changes.push(`rule ${words(change.ruling.optionId)} for ${words(change.ruling.caseId)}`);
-    return `amend the constitution: ${changes.length ? changes.join('; ') : 'make no change'}`;
-  }
   const { type, ...payload } = move;
   return `${words(type).toLowerCase()}: ${fallbackValue(payload)}`;
 }
@@ -243,7 +235,7 @@ const ACTION_KEYS = new Set([
   'hazardChoice',
   'addressWarnings',
   'eventChoices',
-  'constitution',
+  'constitutionDraft',
   'presidentAnswers',
   'holdOrShip',
   'investigate',
@@ -302,17 +294,17 @@ export function describeActions(actions) {
       ? choices.map(([id, choice]) => `choose ${words(choice)} for ${words(id)}`)
       : ['make no event-card choices']));
   }
-  if (Object.hasOwn(actions, 'constitution')) {
-    const constitution = actions.constitution;
-    if (constitution) {
-      const hardLines = constitution.hardLines ?? [];
+  if (Object.hasOwn(actions, 'constitutionDraft')) {
+    const draft = actions.constitutionDraft;
+    if (draft) {
+      const hardLines = draft.hardLines ?? [];
       descriptions.push(hardLines.length
-        ? `adopt a constitution with hard lines ${hardLines.map(words).join(', ')}`
-        : 'adopt a constitution with no hard lines');
-      for (const [id, ruling] of Object.entries(constitution.rulings ?? {})) {
+        ? `adopt a draft constitution with hard lines ${hardLines.map(words).join(', ')}`
+        : 'adopt a draft constitution with no hard lines');
+      for (const [id, ruling] of Object.entries(draft.rulings ?? {})) {
         descriptions.push(`rule ${words(ruling)} for ${words(id)}`);
       }
-    } else descriptions.push('leave the constitution unchanged');
+    } else descriptions.push('leave the constitution draft unchanged');
   }
   if (Object.hasOwn(actions, 'presidentAnswers')) {
     const answers = actions.presidentAnswers ?? [];

@@ -100,12 +100,12 @@ test('an emergency vote is recorded as an emergency', () => {
   assert.equal(resolveEvent(state, 'boardRevolt', 'face').ok, true);
   assert.equal(state.flags.boardVoteDue, 'emergency');
   assert.equal(boardVoteThisRound(state), true);
-  assert.equal(checkTurnEndings(state, { chance: () => false }), null);
+  assert.equal(checkTurnEndings(state), null);
   assert.equal(state.flags.lastBoardVote.kind, 'emergency');
   assert.equal(state.flags.boardVoteDue, undefined);
   const promised = at();
   promised.flags.boardVoteDue = true;
-  checkTurnEndings(promised, { chance: () => false });
+  checkTurnEndings(promised);
   assert.equal(promised.flags.lastBoardVote.kind, 'promise');
 });
 

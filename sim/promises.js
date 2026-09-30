@@ -3,7 +3,12 @@ import { PROMISES } from './data/promises.js';
 import { hasLine } from './constitution.js';
 import { FEED_KEEP } from './feedLive.js';
 
+// Owner 2026-09-26, no dice: a promise that contradicts a held line leaks on its fifth such round (a stated term; a 15%
+// running total never came due in play).
+export const LEAK_ROUNDS = 5;
+
 const LAST_TURN = ERAS.reduce((sum, era) => sum + era.turns, 0) - 1;
+const ERA3_FIRST_TURN = ERAS[0].turns + ERAS[1].turns;
 
 function pushFeed(state, handle, text, tag = 'feed') {
   state.feed.push({ turn: state.turn, day: state.day, handle, text, tag });
@@ -26,13 +31,14 @@ export function createPresidentPromise(id, meeting, turn, state) {
     };
   }
   const dueOffset = meeting === 'first' ? 4 : 2;
+  const due = Math.min(turn + dueOffset, LAST_TURN);
   return {
     source: 'president',
     id,
     text: definition.text,
     meeting,
     madeTurn: turn,
-    dueTurn: Math.min(turn + dueOffset, LAST_TURN),
+    dueTurn: definition.touchesConstitution ? Math.max(due, ERA3_FIRST_TURN) : due,
     status: 'open',
     stalled: false,
     leaked: false,
@@ -48,17 +54,24 @@ export function keepPromises(state, due = (promise) => promise.dueTurn <= state.
       || !due(promise)) continue;
     if (!promiseDefinition(promise).check(state, promise)) continue;
     promise.status = 'kept';
+    const matches = (call) => call.promiseId === promise.id && call.promiseMeeting === promise.meeting;
+    state.pendingEvents = state.pendingEvents.filter((call) => call.eventId !== 'promiseCall' || !matches(call));
+    for (const [key, warning] of Object.entries(state.warnings)) {
+      if (matches(warning)) delete state.warnings[key];
+    }
     state.govFavor.us += 5;
     pushFeed(state, '@executive_office', `Thank you to the lab for keeping its promise: “${promise.text}”`, 'event');
   }
 }
 
-export function promiseUpkeep(state, rng) {
+export function promiseUpkeep(state) {
   keepPromises(state);
   for (const promise of state.promises) {
     if (!isPresidentPromise(promise) || promise.status !== 'open' || promise.leaked) continue;
     const contradictsHeldLine = promiseDefinition(promise).contradicts.some((line) => hasLine(state, line));
-    if (!contradictsHeldLine || !rng.chance(0.15)) continue;
+    if (!contradictsHeldLine) continue;
+    promise.contradictRounds = (promise.contradictRounds ?? 0) + 1;
+    if (promise.contradictRounds < LEAK_ROUNDS) continue;
     promise.leaked = true;
     state.publicTrust -= 4;
     state.staffTrust -= 6;
@@ -110,13 +123,12 @@ export function promiseCallCard(state, event, promise) {
 }
 
 function pendingPromise(state, pending) {
-  const promise = state.promises[pending.promiseIndex];
-  return (
-    isPresidentPromise(promise)
+  const matches = (promise) => isPresidentPromise(promise)
     && promise.id === pending.promiseId
     && promise.meeting === pending.promiseMeeting
-    && promise.status === 'open'
-  ) ? promise : null;
+    && promise.status === 'open';
+  const indexed = state.promises[pending.promiseIndex];
+  return matches(indexed) ? indexed : state.promises.find(matches) ?? null;
 }
 
 export function resolvePromiseCall(state, pending, choiceId) {

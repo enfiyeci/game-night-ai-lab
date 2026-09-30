@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { createInitialState } from '../sim/state.js';
 import { familyName, needsFamilyName, workingName, cleanFamily } from '../ui/logic/naming.js';
 import { TOUR, TOUR_SEEN_KEY, isFreshStart, markTourSeen, tourSeen } from '../ui/logic/intro.js';
@@ -70,22 +71,41 @@ test('no tour line and no era-1 menu reason names an era', () => {
   const state = createInitialState({ seed: 1 });
   const game = { state, queue: { moves: [] }, movesLeft: () => 2 };
   const lines = [...TOUR.map((step) => step.say)];
-  for (const item of ITEMS) if (!item.hidden?.(state, game)) lines.push(item.label, `${item.unavailable?.(state, game) || ''}`);
+  for (const item of ITEMS) if (!item.divider && !item.hidden?.(state, game)) lines.push(item.label, `${item.unavailable?.(state, game) || ''}`);
   for (const line of lines) {
     assert.doesNotMatch(line, /\bera \d/i, line);
     for (const name of names) assert.equal(line.toLowerCase().includes(name), false, line);
   }
-  assert.equal(ITEMS.find((item) => item.id === 'constitution').hidden(state), true);
+  assert.equal(ITEMS.some((item) => item.id === 'constitution'), false); // the constitution is a recipe card from era 3, not a menu item
 });
 
-test('the finance planner calls a later era by the month it starts, never by its number or name', async () => {
-  const { eraLabel, eraTitle, eraEndWords } = await import('../ui/logic/finance.js');
+test('a bounded finance projection stops at the visible planning horizon', async () => {
+  const { defaultPlan, eraStart, project } = await import('../ui/logic/finance.js');
   const state = createInitialState({ seed: 1 });
-  assert.equal(eraLabel(state, 1), 'Era 1');
-  assert.equal(eraTitle(state, 1), ERAS[0].name);
-  assert.equal(eraLabel(state, 2), 'From Jan 2024'); // the HUD clock's date for era 2's first day
-  assert.equal(eraTitle(state, 2), '');
-  assert.equal(eraEndWords(state, 1), 'the end of era 1');
-  assert.doesNotMatch(eraEndWords(state, 3), /era/i);
-  assert.notEqual(eraLabel(state, 4), eraLabel(state, 5)); // eras 3 to 5 all start in year 3
+  const until = eraStart(2);
+  const projection = project(state, defaultPlan(state), { until });
+  assert.equal(projection.rows.at(-1).turn, until);
+  assert.equal(projection.rows.filter((row) => row.era > state.era).length, 1, 'Later is one generic planning row');
+});
+
+test('the planner UI does not expose the future calendar or future funding rounds', () => {
+  const source = readFileSync(new URL('../ui/screens/finance.js', import.meta.url), 'utf8');
+  const planner = source.match(/function showTimeline\(\)[\s\S]*?function showBooks\(\)/)[0];
+  assert.match(source, /const planLabel = \(era\) => \(era === state\.era \? 'Current era' : 'Later'\)/);
+  assert.match(source, /const rounds = state\.era >= 2 \? \[state\.era\] : \[\]/);
+  assert.doesNotMatch(planner, /Plan the years ahead/);
+  assert.doesNotMatch(planner, /`Year \$\{/);
+});
+
+test('the feature tour previews each core tool and explains where to find it', () => {
+  const screens = TOUR.filter((step) => step.screen);
+  assert.deepEqual(screens.map((step) => step.screen), [
+    'finance', 'budget', 'deals', 'training', 'history', 'automation', 'research', 'raise', 'board',
+  ]);
+  for (const step of screens) {
+    assert.ok(step.title);
+    assert.match(step.path, /^Floor → /);
+  }
+  assert.ok(TOUR.some((step) => step.say.includes('Release a model')));
+  assert.ok(TOUR.some((step) => step.say.includes('Geneva summit')));
 });

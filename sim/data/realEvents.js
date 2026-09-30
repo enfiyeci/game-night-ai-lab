@@ -1,5 +1,5 @@
 import { jobLevels } from '../automation.js';
-import { forceAmendConstitution } from '../constitution.js';
+import { changeDraft, draftFor, hasConstitution } from '../constitution.js';
 import { refreshOnline } from '../contracts.js';
 import { exposeConcealed } from '../hazards.js';
 import { leaseMonthly } from '../power.js';
@@ -314,14 +314,13 @@ const liveConsumerModels = (state) => state.models.filter((model) => model.chann
   && model.active && !model.superseded && state.turn >= model.activeFromTurn);
 const hasEval = (state) => state.compute.split.safety >= 0.2 || state.flags.govTesting === true;
 const hasAiWork = (state) => jobLevels(state).some((level) => level > 0);
-const hardLine = (state) => state.constitution.hardLines.at(-1);
 const copyrightCase = (state) => state.legalCases.find((legalCase) => legalCase.source === 'copyright');
 const gasSite = (state) => state.power.sites.find((site) => site.source === 'gas' && site.online);
 const evaluatedRelease = (state, model) => model.active && model.releasedTurn === state.turn && model.capability >= 30
   && (model.flags ?? []).some((flag) => flag === 'fullEval' || flag === 'thirdPartyEval');
 const strandedSite = (state) => state.power.sites.find((site) => !site.online && site.arrivesTurn >= state.turn + 3);
 
-function makeEvent(id, { trigger, fallback, effects, anchor = null, warning = COPY[id].warning }) {
+function makeEvent(id, { trigger, fallback, effects, anchor = null, eras = null, warning = COPY[id].warning }) {
   const copy = COPY[id];
   const choices = copy.choices
     .map((choice) => ({ ...choice, effects: effects[choice.id] }))
@@ -333,6 +332,7 @@ function makeEvent(id, { trigger, fallback, effects, anchor = null, warning = CO
     trigger,
     warning,
     ...(anchor ? { anchor, bypassCardLimit: true } : {}),
+    ...(eras ? { eras } : {}),
     card: { title: copy.title, post: copy.post, choices },
   };
 }
@@ -353,12 +353,14 @@ export const REAL_EVENTS = [
     counsel(state) { state.publicTrust -= 4; state.govFavor.us -= 2; },
   }),
   anchor('whiteHouseCommitments', 1, 2, 0.55, 'decline', {
-    signall(state) { state.govFavor.us += 6; state.security += 8; state.cash -= 10; },
+    // Every later release waits a round for outside testers (sim/release.js testerWait). Owner 2026-09-26: "add it".
+    signall(state) { state.govFavor.us += 6; state.security += 8; state.cash -= 10; state.flags.outsideTesters = true; },
     signskip(state) { state.govFavor.us += 3; state.concealedDebt += 2; state.flags.hollowCommitments = true; },
     decline(state) { state.govFavor.us -= 6; state.raceHeat += 2; },
   }),
   makeEvent('unhinged', {
     fallback: 'preview',
+    eras: [1, 2],
     trigger: (state) => state.era <= 2 && liveModelsWithFlag(state, 'quickEval')
       .some((model) => (model.flags ?? []).includes('jailbreakWaiting') && model.channel === 'consumer'),
     effects: {
@@ -384,6 +386,7 @@ export const REAL_EVENTS = [
   }),
   makeEvent('countryBan', {
     fallback: 'leave',
+    eras: [1, 2],
     trigger: (state, rng) => state.era <= 2 && liveConsumerModels(state).length > 0
       && hasFlag(state, 'scraped') && rng.chance(0.25),
     effects: {
@@ -403,6 +406,7 @@ export const REAL_EVENTS = [
   }),
   makeEvent('redTeamLie', {
     fallback: 'omit',
+    eras: [1, 2], // the GPT-4 CAPTCHA story, March 2023
     // A release this round that ran full or outside evals. The card is answered after the round mark, when the model
     // may already be live, so it remembers which model the red team tested.
     trigger(state) {
@@ -423,7 +427,9 @@ export const REAL_EVENTS = [
   }),
   makeEvent('exitGag', {
     fallback: 'unaware',
-    trigger: (state) => state.era >= 2 && (state.seenEvents.includes('safetyQuits') || state.seenEvents.includes('poached')),
+    eras: [2, 3], // May 2024
+    // Staff leaving (or a whistleblower going public, as happened in 2024) bring the exit paperwork out.
+    trigger: (state) => state.era >= 2 && ['safetyQuits', 'poached', 'whistleblower'].some((id) => state.seenEvents.includes(id)),
     effects: {
       void(state) { state.staffTrust += 6; state.publicTrust += 2; },
       defend(state) { state.staffTrust -= 6; },
@@ -445,6 +451,7 @@ export const REAL_EVENTS = [
   }),
   makeEvent('voiceLikeness', {
     fallback: 'license',
+    eras: [2],
     trigger: (state, rng) => state.era === 2 && liveConsumerModels(state).length > 0 && rng.chance(0.2),
     effects: {
       pull(state) {
@@ -476,7 +483,8 @@ export const REAL_EVENTS = [
   makeEvent('hateMeltdown', {
     fallback: 'blame',
     trigger: (state) => state.era >= 3 && liveConsumerModels(state).length > 0
-      && (state.flags.retuned || state.constitution.hardLines.length === 0),
+      // Empty lines count only once a constitution was learned: the lab stripped its lines, not "none yet".
+      && (state.flags.retuned || (hasConstitution(state) && state.constitution.hardLines.length === 0)),
     effects: {
       rollback(state) { state.publicTrust -= 2; state.sentiment = clamp(state.sentiment - 0.05, 0.5, 1.5); },
       keep(state) { state.govFavor.intl -= 8; state.publicTrust -= 8; state.sentiment = clamp(state.sentiment + 0.03, 0.5, 1.5); },
@@ -518,8 +526,8 @@ export const REAL_EVENTS = [
   anchor('pentagon', 4, 0, 0.15, 'stall', {
     sign(state) {
       state.govFavor.us += 8; state.staffTrust -= 6;
-      const remove = hardLine(state);
-      if (remove) forceAmendConstitution(state, { remove }, 'pentagon');
+      const remove = draftFor(state).hardLines.at(-1); // an accepted demand changes the draft, as the investors do
+      if (remove) changeDraft(state, { remove }, 'pentagon');
     },
     refuse(state) {
       state.flags.supplyChainRisk = true; state.flags.pentagonRefused = true;
@@ -583,8 +591,8 @@ export const REAL_EVENTS = [
       supreme(state) { state.cash -= 20; state.staffTrust += 4; },
       peace(state) {
         delete state.flags.supplyChainRisk; state.govFavor.us += 6; state.staffTrust -= 6;
-        const remove = hardLine(state);
-        if (remove) forceAmendConstitution(state, { remove }, 'blacklistAppeal');
+        const remove = draftFor(state).hardLines.at(-1);
+        if (remove) changeDraft(state, { remove }, 'blacklistAppeal');
       },
       ipo(state) { state.cash += 50; },
     },

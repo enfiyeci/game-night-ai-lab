@@ -1,5 +1,4 @@
-import { CASES } from '../../sim/data/constitution.js';
-import { EQUITY_SHARE, SUPPLIERS } from '../../sim/data/compute.js';
+import { EQUITY_SHARE, SUPPLIERS, eraScale } from '../../sim/data/compute.js';
 import { BALANCE } from '../../sim/balance.js';
 import {
   contractAction,
@@ -18,7 +17,7 @@ import {
   updateServing,
   useEmergency,
 } from '../../sim/economy.js';
-import { setConstitution, amendConstitution } from '../../sim/constitution.js';
+import { setDraft } from '../../sim/constitution.js';
 import { addressWarning, fallbackChoice, resolveEvent } from '../../sim/events.js';
 import { resolveHazard } from '../../sim/hazards.js';
 import { setAutomation, applyApprovals } from '../../sim/automation.js';
@@ -26,14 +25,18 @@ import { buildSite, leaseMonthly, powerTurn, sitePower, SITE_TYPES } from '../..
 import { expireMeeting, meetingDue, openMeeting, runMeeting } from '../../sim/president.js';
 import { allocate, placeOrder, PREPAY_SHARE, released, rivalOrders, withdrawOrder } from '../../sim/queue.js';
 import { activateReleases, releaseModel } from '../../sim/release.js';
-import { RIVAL_TEMPLATES } from '../../sim/rivals.js';
+import { RIVAL_TEMPLATES, rivalSize } from '../../sim/rivals.js';
+import { SIZES } from '../../sim/recipe.js';
 import { createRng } from '../../sim/rng.js';
 import { computeSlices, makePledge, setComputeSplit } from '../../sim/split.js';
 import { TECHNIQUES, researchTechnique } from '../../sim/techniques.js';
+import { SIZE_UNITS } from '../../sim/recipe.js';
 import { startRun } from '../../sim/training.js';
 import { MAX_MOVES, setBudget } from '../../sim/turn.js';
+import { stampLandings } from '../../sim/landings.js';
 import { roundWord, storyDate } from '../../sim/time.js';
 import { computeAmount, money, pct, roundsToWords, storyDayForTurn } from './format.js';
+import { ifSignedFirst, plannedTakes, roundEndItems, playerSize, SIZE_LABEL } from './race.js';
 import { eraEndWords } from './finance.js';
 
 const OFFER_COPY = {
@@ -49,11 +52,11 @@ const OFFER_COPY = {
 const STRING_COPY = {
   null: ['No strings', 'Cheapest per unit. Slow, and you pay upfront.'],
   exclusive: ['Exclusive', 'No other cloud deals while it runs.'],
-  fragile: ['Fragile', 'Runs on borrowed money. It can go under.'],
+  fragile: ['Fragile', 'Runs into refinancing trouble in the 12th month; refinancing restarts the clock.'],
   bumpable: ['Can be taken back', 'Pulled first when chips run short.'],
   moneyBack: ['Money comes back', 'The credits only pay Azuria bills. The board loses some support.'],
   usGated: ['Needs US approval', 'Washington can pull the license.'],
-  shrinks: ['Headline shrinks', 'Delivers 30 to 100% of the headline.'],
+  shrinks: ['Headline shrinks', 'Delivers what your free site power supports at arrival, with a 30% minimum.'],
 };
 
 const price = (multiplier) => {
@@ -79,6 +82,10 @@ function signedDealProjection(state, offer, deliveryRng = null) {
   ]);
   const result = signOffer(clone, offer.id, sideRng(clone, 1));
   if (!result.ok) return { result, state: clone, contracts: [] };
+  stampLandings(clone);
+  result.arrivesDay = clone.compute.pipeline.find((item) => item.id === result.pipelineId)?.landsDay
+    ?? clone.power.sites.find((site) => site.id === result.site)?.landsDay
+    ?? clone.day;
   if (offer.supplier !== 'grid' && result.arrivesTurn > clone.turn) {
     while (clone.turn < result.arrivesTurn) {
       clone.turn += 1;
@@ -113,7 +120,6 @@ export function applyProjectedMove(state, move, queue) {
   if (move.type === 'raise') return raiseRound(state, move.archetype);
   if (move.type === 'research') return researchTechnique(state, move.techId);
   if (move.type === 'emergency') return useEmergency(state, move.option);
-  if (move.type === 'amendConstitution') return amendConstitution(state, move.change);
   if (move.type === 'meeting') {
     if (!state.meeting) return { ok: false };
     const result = runMeeting(state, queue.presidentAnswers);
@@ -121,7 +127,7 @@ export function applyProjectedMove(state, move, queue) {
   }
   if (move.type === 'release') {
     const ending = state.ending;
-    const result = releaseModel(state, move.release, createRng(0));
+    const result = releaseModel(state, move.release);
     state.ending = ending;
     return result;
   }
@@ -135,13 +141,7 @@ function projectBeforeMoves(state, queue) {
     const id = meetingDue(state);
     if (id) state.meeting = openMeeting(state, id);
   }
-  if (state.turn === 0 && queue.constitution) setConstitution(state, queue.constitution);
-  if (state.turn === 0 && state.constitution.hardLines.length === 0) {
-    setConstitution(state, {
-      hardLines: ['no-wmd', 'honest', 'accept-shutdown'],
-      rulings: Object.fromEntries(CASES.map((entry) => [entry.id, entry.options[0].id])),
-    });
-  }
+  if (queue.constitutionDraft && state.era >= 3) setDraft(state, queue.constitutionDraft);
   if (queue.budget) setBudget(state, queue.budget);
   if (Object.hasOwn(queue, 'computeSplit')) setComputeSplit(state, queue.computeSplit);
   if (Object.hasOwn(queue, 'automation')) setAutomation(state, queue.automation);
@@ -189,7 +189,7 @@ function rejectionReason(state, offer) {
   if ((offer.supplier === 'coreflame' || offer.supplier === 'gulf') && exclusiveActive(state)) {
     return "Azuria's exclusive contract blocks CoreFlame and Gulf cloud deals until you buy it out";
   }
-  if (offer.upfront > state.cash) return 'Not enough cash for the upfront payment';
+  if (offer.upfront > state.cash) return `Upfront is ${money(offer.upfront)}; you have ${money(state.cash)}.`;
   const clone = structuredClone(state);
   const result = signOffer(clone, offer.id, createRng(0));
   return result.ok ? '' : result.error;
@@ -220,7 +220,32 @@ function computeAmountParts(units, era) {
   return { big, unit: unit.join(' ') };
 }
 
+const nameOf = (state, id) => state.rivals.find((r) => r.id === id)?.name ?? rivalName(id);
+
+function fallbackLine(state, take) {
+  if (!take) return '';
+  const rival = nameOf(state, take.id);
+  const instead = ifSignedFirst(state, take);
+  return instead
+    ? `If you sign it, ${rival} takes ${SUPPLIERS[instead.supplier].name}'s ${computeAmount(instead.units, state.era)}.`
+    : `If you sign it, ${rival} goes without a board card this ${roundWord(state.era)}.`;
+}
+
+export function roundEndStrip(state) {
+  const items = roundEndItems(state).map((item) => {
+    const offer = state.compute.offers.find((o) => o.id === item.offerId);
+    // The strip lists short fragments; the race tab's box keeps the full sentence.
+    if (!offer) return { id: item.id, text: item.text.replace(/\.$/, '') };
+    const later = offer.arrivesIn > 1 ? ` (arrives ${arrival(offer.arrivesIn, state.era)})` : '';
+    return { id: item.id, text: `${item.name} +${computeAmount(offer.units, state.era)}${later}` };
+  });
+  return [...items, { id: 'rest', text: 'Cards nobody takes stay on the board' }];
+}
+
 export function dealCards(state) {
+  const takes = plannedTakes(state);
+  // A rival still on its first choice would move to this card if the player signed its named card.
+  const onFirstChoice = state.rivals.filter((r) => r.named && takes.some((t) => t.id === r.id && t.offerId === r.named.offerId));
   return state.compute.offers
     .filter((offer) => !offer.viaQueue && offer.supplier !== 'grid')
     .map((offer) => {
@@ -228,6 +253,7 @@ export function dealCards(state) {
       const [chip, explanation] = STRING_COPY[String(offer.string)];
       const investment = offer.supplier === 'azuriaEquity';
       const reason = rejectionReason(state, offer);
+      const take = takes.find((t) => t.offerId === offer.id) ?? null;
       const amount = investment
         ? { big: money(offer.credits), unit: '' }
         : computeAmountParts(offer.units, state.era);
@@ -247,6 +273,10 @@ export function dealCards(state) {
         viaQueue: false,
         move: { type: 'deal', offerId: offer.id },
         runwayAfter: reason ? null : runwayAfterDeal(state, offer),
+        takenBy: take ? nameOf(state, take.id) : null,
+        takenAsSecond: Boolean(take?.fallback),
+        secondChoiceOf: take ? [] : onFirstChoice.filter((r) => r.named.fallback === offer.id).map((r) => r.name),
+        fallbackLine: fallbackLine(state, take),
       };
     });
 }
@@ -258,10 +288,10 @@ function runwayFor(state) {
   return runway(clone, 'planned');
 }
 
-function commitmentRow(contract, state, isNew = false, offer = null) {
+function commitmentRow(contract, state, isNew = false, offer = null, fromTurn = state.turn) {
   const supplier = supplierName(contract.supplier);
   const monthsLeft = isNew
-    ? `arrives ${arrival(Math.max(0, (contract.arrivedTurn ?? state.turn) - state.turn), state.era)}`
+    ? `arrives ${arrival(Math.max(0, (contract.arrivedTurn ?? fromTurn) - fromTurn), state.era)}`
     : contract.monthsLeft == null ? `renews each ${roundWord(state.era)}` : `${Math.max(0, Math.ceil(contract.monthsLeft))} months left`;
   const powerShort = contract.needsPower && state.compute.unpowered > 0;
   const row = {
@@ -277,10 +307,6 @@ function commitmentRow(contract, state, isNew = false, offer = null) {
       ? 'License revoked · billing paused'
       : powerShort ? 'Unpowered · still billed' : contract.needsPower ? 'Needs site power' : '',
   };
-  if (isNew && offer?.supplier === 'loi') {
-    row.unitsRange = [Math.round(offer.units * 0.3), offer.units];
-    row.billRange = row.unitsRange.map((units) => units * offer.price * BALANCE.unitMonthlyCost);
-  }
   return row;
 }
 
@@ -294,44 +320,22 @@ export function commitmentsView(state, offerId) {
   let billAfter = billNow;
   let billAfterRange = null;
   let afterFromTurn = state.turn;
+  let afterFromDay = state.day;
   let runwayAfter = runwayFor(state);
   let runwayAfterRange = null;
 
   if (offer && !offer.viaQueue) {
-    if (offer.supplier === 'loi') {
-      const low = signedDealProjection(state, offer, { next: () => 0 });
-      const high = signedDealProjection(state, offer, { next: () => 1 });
-      if (low.result.ok && high.result.ok) {
-        afterFromTurn = low.result.arrivesTurn;
-        const lowBill = low.contracts.reduce((sum, contract) => sum + contractBill(contract), 0);
-        const highBill = high.contracts.reduce((sum, contract) => sum + contractBill(contract), 0);
-        billAfter = null;
-        billAfterRange = [billNow + lowBill, billNow + highBill].sort((a, b) => a - b);
-        runwayAfter = null;
-        runwayAfterRange = [runway(low.state, 'planned'), runway(high.state, 'planned')].sort((a, b) => a - b);
-        const contract = low.contracts[0];
-        if (contract) {
-          segments.push({
-            id: contract.id,
-            bill: (lowBill + highBill) / 2,
-            billRange: [lowBill, highBill],
-            isNew: true,
-          });
-          const row = commitmentRow(contract, low.state, true, offer);
-          row.status = 'Needs site power';
-          rows.push(row);
-        }
-      }
-    } else {
+    {
       const projection = signedDealProjection(state, offer);
       if (projection.result.ok) {
         afterFromTurn = projection.result.arrivesTurn;
+        afterFromDay = projection.result.arrivesDay;
         runwayAfter = runway(projection.state, 'planned');
         for (const contract of projection.contracts) {
           const addedBill = contractBill(contract);
           billAfter += addedBill;
           segments.push({ id: contract.id, bill: addedBill, isNew: true });
-          rows.push(commitmentRow(contract, projection.state, true, offer));
+          rows.push(commitmentRow(contract, projection.state, true, offer, state.turn));
         }
       }
     }
@@ -342,7 +346,7 @@ export function commitmentsView(state, offerId) {
     billAfter,
     billAfterRange,
     afterFromTurn,
-    afterDate: storyDate(storyDayForTurn(afterFromTurn)).label,
+    afterDate: storyDate(afterFromDay).label,
     segments,
     rows,
     runwayNow: runwayFor(state),
@@ -465,7 +469,7 @@ function poweredBilling(state) {
 const SITE_TAGS = {
   grid: ['Reserved in an earlier era'],
   gas: ['Public trust', 'Local opposition risk'],
-  nuclear: ['Public trust', 'Half of restarts slip'],
+  nuclear: ['Public trust', 'Late without US favor 60+'],
 };
 
 export function sitesView(state) {
@@ -547,13 +551,33 @@ const ADVISOR_NAMES = {
   policy: 'Policy and Comms',
 };
 
+// The smallest run needs SIZE_UNITS.small at the era's scale; only suggest a run when one fits in the idle units.
+function idleComputeLine(state, idle) {
+  if (idle <= 0) return 'Training can use every unit left after serving and safety.';
+  const amount = computeAmount(idle, state.era);
+  const sit = amount === '1 unit' ? 'sits' : 'sit';
+  if (state.activeRun) return `${amount} ${sit} idle while the run trains. Sell the time.`;
+  const smallest = SIZE_UNITS.small * eraScale(state.era);
+  if (idle < smallest) return `${amount} ${sit} idle, less than the smallest run needs (${computeAmount(smallest, state.era)}). Sell the time, or free more.`;
+  return `${amount} ${sit} idle. That is enough to start a training run.`;
+}
+
 function opinionText(state, screen, id) {
   const bar = computeBar(state);
   const sites = sitesView(state);
   const pledge = state.promises.find((promise) => promise.type === 'safetyCompute');
   const idle = bar.segments.find((segment) => segment.key === 'idle').units;
+  const leader = state.rivals.reduce((a, b) => (b.capability > a.capability ? b : a));
+  const ourSize = playerSize(state);
+  // A copy: rivalSize must not change the rival it reads.
+  const theirSize = rivalSize(state, { ...leader });
+  const ours = SIZE_LABEL[ourSize];
+  const theirs = SIZE_LABEL[theirSize];
+  const leaderLarger = theirSize != null && SIZES.indexOf(theirSize) > (ourSize ? SIZES.indexOf(ourSize) : -1);
   const dealLines = {
-    research: "More compute lets us train a larger model sooner.",
+    research: leaderLarger
+      ? `${leader.name} can train ${theirs}; we can train ${ours ?? 'nothing yet'}. More compute closes that.`
+      : 'More compute lets us train a larger model sooner.',
     safety: pledge ? `Our ${pct(pledge.share)} safety pledge grows with the fleet. Budget for it.` : 'More compute needs a matching safety allocation.',
     cfo: 'Take-or-pay: we pay every month, even if the chips sit idle.',
     policy: "Supplier terms can change who trusts the lab.",
@@ -565,7 +589,7 @@ function opinionText(state, screen, id) {
     policy: 'Prepaying looks like racing. Washington notices.',
   };
   const budgetLines = {
-    research: idle > 0 ? `${computeAmount(idle, state.era)} sit idle. Start a bigger run, or sell the time.` : 'Training can use every unit left after serving and safety.',
+    research: idleComputeLine(state, idle),
     safety: pledge ? `${pct(state.compute.split.safety)} ${state.compute.split.safety >= pledge.share ? 'keeps' : 'breaks'} our ${pct(pledge.share)} pledge.` : 'A larger safety slice gives evaluations more room.',
     cfo: idle > 0 ? `Idle compute still costs ${money(idleComputeCost(state))} a month.` : 'Every online unit is doing useful work right now.',
     policy: bar.needMarker <= bar.segments.find((segment) => segment.key === 'serving').units ? 'Serving is covered. No outages right now.' : 'Serving is short. Users may see an outage.',
@@ -574,7 +598,7 @@ function opinionText(state, screen, id) {
     research: sites.unpowered > 0 ? `${computeAmount(sites.unpowered, state.era)} of chips are sitting dark. We could be training on them.` : 'Every contracted chip has power.',
     safety: `More power means bigger runs. Keep the safety slice at ${pct(state.compute.split.safety)}.`,
     cfo: sites.unpowered > 0 ? `Unpowered chips still bill ${money(sites.unpoweredBill)} a month.` : 'No chip bill is wasted on unpowered capacity.',
-    policy: 'Gas is fast, while nuclear restarts can slip and draw scrutiny.',
+    policy: 'Gas is fast. A nuclear restart runs late unless Washington favors us.',
   };
   return ({ deals: dealLines, queue: queueLines, budget: budgetLines, power: powerLines }[screen] ?? dealLines)[id];
 }
@@ -604,15 +628,17 @@ const EMERGENCY_SUMMARIES = {
   acquihire: 'You accepted an acquihire — the run is over',
 };
 
-export function turnSummary(events, state) {
+// Keep presentation metadata beside the player-facing sentence so each visual treatment emphasizes the same facts.
+export function summaryItems(events, state) {
   const list = Array.isArray(events) ? events : [];
-  const lines = [];
+  const items = [];
+  const add = (kind, text, { name = null, figure = null } = {}) => items.push({ kind, text, name, figure });
   for (const event of list) {
     if (event.type === 'computeArrived') {
       const name = supplierName(event.supplier);
-      lines.push(event.supplier === 'verde'
+      add('compute', event.supplier === 'verde'
         ? `${name}'s chips arrived (${event.units} units)`
-        : `${name}'s compute arrived (${event.units} units)`);
+        : `${name}'s compute arrived (${event.units} units)`, { name, figure: `${event.units} units` });
     } else if (event.type === 'deal') {
       const supplier = event.supplier
         ?? state?.compute?.offers?.find((offer) => offer.id === event.offerId)?.supplier
@@ -621,59 +647,71 @@ export function turnSummary(events, state) {
       const day = state?.compute?.pipeline?.find((p) => p.id === event.pipelineId && p.landsDay != null)?.landsDay
         ?? state?.power?.sites?.find((s) => s.id === event.site)?.landsDay // a grid reservation
         ?? (event.arrivesTurn <= (state?.turn ?? -1) ? state.day : storyDayForTurn(event.arrivesTurn)); // delivered at once
-      lines.push(`${subject} — online from ${storyDate(day).label}`);
+      const date = storyDate(day).label;
+      add('compute', `${subject} — online from ${date}`, { name: supplier ? supplierName(supplier) : null, figure: date });
+      if (event.denied) add('rival', `You took the card ${rivalName(event.denied)} wanted`, { name: rivalName(event.denied) });
     } else if (event.type === 'spotWarning') {
-      lines.push(`Spot capacity may be pulled after next ${roundWord(state.era)}`);
+      add('compute', `Spot capacity may be pulled after next ${roundWord(state.era)}`);
     } else if (event.type === 'spotPulled') {
-      lines.push('Spot capacity was pulled');
+      add('compute', 'Spot capacity was pulled');
     } else if (event.type === 'contractEnded') {
-      lines.push(`${supplierName(event.supplier)} contract ended`);
+      add('compute', `${supplierName(event.supplier)} contract ended`, { name: supplierName(event.supplier) });
     } else if (event.type === 'queueFilled') {
-      lines.push(event.waiting > 0 ? 'Verde filled part of your order; the rest stays queued' : 'Verde filled your queue order');
+      add('compute', event.waiting > 0 ? 'Verde filled part of your order; the rest stays queued' : 'Verde filled your queue order', { name: 'Verde' });
     } else if (event.type === 'queueOrder') {
-      lines.push(`${event.tier === 'prepaid' ? 'Prepaid' : 'Standard'} Verde order placed`);
+      add('compute', `${event.tier === 'prepaid' ? 'Prepaid' : 'Standard'} Verde order placed`, { name: 'Verde' });
     } else if (event.type === 'rivalPrepays') {
       const name = rivalName(event.lab);
-      if (name) lines.push(`${name} will prepay Verde for priority`);
+      if (name) add('rival', `${name} will prepay Verde for priority`, { name });
     } else if (event.type === 'siteOnline') {
-      lines.push(`${event.source === 'gas' ? 'Gas turbines' : event.source === 'nuclear' ? 'Nuclear restart' : 'Grid connection'} came online`);
+      add('compute', `${event.source === 'gas' ? 'Gas turbines' : event.source === 'nuclear' ? 'Nuclear restart' : 'Grid connection'} came online`);
     } else if (event.type === 'buildSite') {
-      lines.push(`${event.source === 'gas' || event.site?.startsWith('gas-') ? 'Gas turbine' : 'Nuclear restart'} site construction started`);
+      add('compute', `${event.source === 'gas' || event.site?.startsWith('gas-') ? 'Gas turbine' : 'Nuclear restart'} site construction started`);
     } else if (event.type === 'outage') {
-      lines.push('Users reported an outage');
+      add('lab', Number.isFinite(event.lostUsers) ? `Outage: ${Math.round(event.servedShare * 100)}% of requests served; ${event.lostUsers.toLocaleString('en-US')} customers left. Unserved requests earned nothing.` : 'Users reported an outage');
     } else if (event.type === 'pledgeBroken') {
-      lines.push('The lab broke its public safety-compute pledge');
+      add('lab', 'The lab broke its public safety-compute pledge');
     } else if (event.type === 'raise') {
-      lines.push(`You raised ${money(event.amount)}`);
+      add('money', `You raised ${money(event.amount)}`, { figure: money(event.amount) });
     } else if (event.type === 'boardPromise') {
-      lines.push(`You promised the board ${computeAmount(event.units, state ? Math.min(event.era, state.era) : event.era)} by ${state ? eraEndWords(state, event.era) : `the end of era ${event.era}`}`);
+      const amount = computeAmount(event.units, state ? Math.min(event.era, state.era) : event.era);
+      add('lab', `You promised the board ${amount} by ${state ? eraEndWords(state, event.era) : `the end of era ${event.era}`}`, { figure: amount });
     } else if (event.type === 'boardPromiseJudged') {
-      lines.push(event.ratio >= 1 ? 'You kept your compute promise to the board'
+      add('lab', event.ratio >= 1 ? 'You kept your compute promise to the board'
         : event.vote ? 'You missed your compute promise badly, and the board wants a vote'
           : 'You came up short of your compute promise to the board');
     } else if (event.type === 'staffLetter') {
-      lines.push('Staff signed a letter to keep you, and the board backed down');
+      add('lab', 'Staff signed a letter to keep you, and the board backed down');
     } else if (event.type === 'research') {
       const name = techniqueName(event.techId);
-      if (name) lines.push(`Your researchers cracked ${name}`);
+      if (name) add('lab', `Your researchers cracked ${name}`, { name });
     } else if (event.type === 'emergency') {
-      if (Object.hasOwn(EMERGENCY_OPTIONS, event.option)) lines.push(EMERGENCY_SUMMARIES[event.option]);
+      if (Object.hasOwn(EMERGENCY_OPTIONS, event.option)) add(event.option === 'bridgeRound' ? 'money' : 'lab', EMERGENCY_SUMMARIES[event.option]);
     } else if (event.type === 'runComplete') {
-      lines.push('Training complete — ready to release');
+      add('lab', 'Training complete — ready to release');
     } else if (event.type === 'runPaused') {
-      lines.push('Training paused — not enough compute is online');
+      add('lab', 'Training paused — not enough compute is online');
+    } else if (event.type === 'rivalDeal') {
+      const name = rivalName(event.id);
+      const amount = computeAmount(event.units, state?.era ?? 1);
+      if (name) add('rival', `${name} signed ${supplierName(event.supplier)}'s ${amount}${event.fallback ? ', its second choice' : ''}`, { name, figure: amount });
     } else if (event.type === 'rivalRelease') {
       const name = rivalName(event.id);
-      if (name) lines.push(`${name} released a model`);
+      const gain = Math.round(event.gain ?? 0); // a launch rolled for a later round lands without a gain yet
+      if (name) add('rival', `${name} released a model`, { name, figure: gain > 0 ? `+${gain} capability` : null });
     } else if (event.type === 'lawsuitPaid') {
-      lines.push(`A lawsuit cost ${money(event.cost)}`);
+      add('money', `A lawsuit cost ${money(event.cost)}`, { figure: money(event.cost) });
     } else if (event.type === 'conversionFight') {
-      lines.push('The structure change sparked a fight with staff and the board');
+      add('lab', 'The structure change sparked a fight with staff and the board');
     } else if (event.type === 'eraStart') {
-      lines.push(`Era ${event.era} begins`);
+      add('era', `Era ${event.era} begins`, { name: `Era ${event.era}` });
     } else if (event.type === 'error') {
-      lines.push(`Couldn't do that: ${event.error}`);
+      add('blocked', `Couldn't do that: ${event.error}`);
     }
   }
-  return lines;
+  return items;
+}
+
+export function turnSummary(events, state) {
+  return summaryItems(events, state).map((item) => item.text);
 }

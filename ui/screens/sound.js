@@ -1,4 +1,4 @@
-// Company › Sound and music (owner pick 6A, 2026-09-26): one dialog with two tabs. Sound has on/off and
+// Game › Sound and music (owner pick 6A, 2026-09-26; moved from Company by pick 3B): one dialog with two tabs. Sound has on/off and
 // a volume for music and for sound effects, and the track now playing; Credits holds the licence lines
 // both music sources require inside the game, word for word as ui/assets/music/README.md records them.
 import { openDialog } from '../components/dialog.js';
@@ -138,5 +138,9 @@ export function openSound(game, overlayRoot, { tab = 'sound' } = {}) {
 }
 
 export function mountSound(game, overlayRoot) {
-  return registerMenuHandler('sound', () => openSound(game, overlayRoot));
+  const unregister = [
+    registerMenuHandler('sound', () => openSound(game, overlayRoot)),
+    registerMenuHandler('credits', () => openSound(game, overlayRoot, { tab: 'credits' })), // Game › Credits (pick 3B)
+  ];
+  return () => unregister.forEach((fn) => fn());
 }

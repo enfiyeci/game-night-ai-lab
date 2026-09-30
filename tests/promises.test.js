@@ -3,11 +3,12 @@ import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import { PROMISES } from '../sim/data/promises.js';
 import { MEETINGS } from '../sim/data/president.js';
-import { createPresidentPromise, promiseUpkeep } from '../sim/promises.js';
+import { LEAK_ROUNDS, createPresidentPromise, promiseUpkeep } from '../sim/promises.js';
 import { runMeeting } from '../sim/president.js';
 import { addressWarning, eventsTick, isAnchorId, resolveEvent, stampNewCards } from '../sim/events.js';
 import { generateOffers, signOffer } from '../sim/contracts.js';
 import { advanceDays, applyActions, endTurn } from '../sim/turn.js';
+import { MISUSE_ROUNDS } from '../sim/endings.js';
 
 const no = { next: () => 0.99, int: () => 0, chance: () => false, pick: (a) => a[0], normal: (m) => m };
 const nonAnchors = (state) => state.pendingEvents.filter((event) => !isAnchorId(event.eventId ?? event.id));
@@ -15,6 +16,7 @@ const promiseCalls = (state) => nonAnchors(state).filter((event) => event.eventI
 const signGulf = (state) => {
   state.era = 3;
   state.govFavor.us = 60;
+  state.cash = 1e6;
   state.compute.offers = generateOffers(state, no);
   return signOffer(state, state.compute.offers.find((offer) => offer.supplier === 'gulf').id, no);
 };
@@ -34,12 +36,13 @@ const presidentPromise = (id, overrides = {}) => ({
   ...overrides,
 });
 
-function failedCall(id = 'beatRivals', overrides = {}) {
+function failedCall(id = 'beatRivals', overrides = {}, prepare = () => {}) {
   const state = createInitialState();
   state.turn = 5;
   state.capability = 10;
+  prepare(state);
   state.promises.push(presidentPromise(id, overrides));
-  promiseUpkeep(state, no);
+  promiseUpkeep(state);
   eventsTick(state, no);
   return state;
 }
@@ -84,12 +87,12 @@ test('every President promise check can mark a due promise kept', () => {
     ['leadNextQuarter', (state) => { state.capability = 100; }],
     ['beatChina', (state) => { state.capability = 19; }],
     ['noWokeFilters', (state) => {
-      state.constitution.amendments.push({ turn: 3, change: { ruling: { caseId: 'wrong', optionId: 'yield' } } });
+      state.constitution.amendments.push({ turn: 3, change: { ruling: { caseId: 'feedback', optionId: 'encourage' } } });
     }],
     ['domesticChips', () => {}],
     ['killSwitch', (state) => { state.constitution.hardLines.push('accept-shutdown'); }],
     ['humanSignoff', (state) => { state.models.push({ releasedTurn: 3, flags: ['fullEval'] }); }],
-    ['favorableModel', (state) => { state.constitution.rulings.president = 'comply'; }],
+    ['favorableModel', (state) => { state.constitution.rulings.report = 'quiet'; }],
     ['bigClaim', (state) => { state.models.push({ releasedTurn: 3, launch: { pressAvg: 8 } }); }],
   ];
   for (const [id, arrange] of cases) {
@@ -98,12 +101,19 @@ test('every President promise check can mark a due promise kept', () => {
     arrange(state);
     state.promises.push(presidentPromise(id));
     const favor = state.govFavor.us;
-    promiseUpkeep(state, no);
+    promiseUpkeep(state);
     assert.equal(state.promises[0].status, 'kept', id);
     assert.equal(state.govFavor.us, favor + 5, id);
     assert.equal(state.feed.at(-1).handle, '@executive_office', id);
     assert.doesNotMatch(state.feed.at(-1).text, /\d/, id);
   }
+});
+
+test('the kill-switch promise counts only a stored draft or the live constitution', () => {
+  const state = createInitialState();
+  assert.equal(PROMISES.killSwitch.check(state, presidentPromise('killSwitch')), false, 'Safety’s unadopted proposal does not count');
+  state.constitutionDraft = { hardLines: ['no-wmd', 'accept-shutdown', 'honest'], rulings: {}, changes: [] };
+  assert.equal(PROMISES.killSwitch.check(state, presidentPromise('killSwitch')), true);
 });
 
 test('a Gulf deal signed since the domestic-chips promise fails its check', () => {
@@ -125,7 +135,7 @@ test('same-turn history before a promise does not count but history after it doe
   state.constitution.amendments.push({ turn: 7, change: { remove: 'honest' } });
   const filters = createPresidentPromise('noWokeFilters', 'first', state.turn, state);
   assert.equal(PROMISES.noWokeFilters.check(state, filters), false);
-  state.constitution.amendments.push({ turn: 7, change: { ruling: { caseId: 'wrong', optionId: 'yield' } } });
+  state.constitution.amendments.push({ turn: 7, change: { ruling: { caseId: 'feedback', optionId: 'encourage' } } });
   assert.equal(PROMISES.noWokeFilters.check(state, filters), true);
 });
 
@@ -159,7 +169,7 @@ test('a second-meeting promise due on the final turn produces no promise call', 
   state.promises.push(presidentPromise('bigClaim', {
     meeting: 'second', madeTurn: 18, dueTurn: 19,
   }));
-  promiseUpkeep(state, no);
+  promiseUpkeep(state);
   eventsTick(state, no);
   assert.equal(state.promises[0].status, 'open');
   assert.equal(state.pendingEvents.some((event) => event.eventId === 'promiseCall'), false);
@@ -210,6 +220,9 @@ test('a mid-game catastrophe judges promises exactly once', () => {
   state.turnInEra = 1;
   state.capability = 100;
   state.misuseExposure = 100;
+  // No dice (A2, stated condition): misuse ends on the second round in a row over both lines, so the round before was
+  // already over them and this round is the second.
+  state.flags.misuseRounds = MISUSE_ROUNDS - 1;
   state.promises.push(presidentPromise('bigClaim', { dueTurn: 19 }));
   const favor = state.govFavor.us;
   const catastrophe = { ...no, chance: () => true };
@@ -233,7 +246,7 @@ test('simultaneous promise cards have unique ids and answering one resolves only
     presidentPromise('beatRivals'),
     presidentPromise('beatChina', { stalled: true }),
   );
-  promiseUpkeep(state, no);
+  promiseUpkeep(state);
   eventsTick(state, no);
   assert.deepEqual(promiseCalls(state).map(({ id }) => id), [
     'promiseCall:0',
@@ -249,7 +262,7 @@ test('eventChoices routes a promise answer only through its unique call id', () 
   state.turn = 5;
   state.capability = 10;
   state.promises.push(presidentPromise('beatRivals'), presidentPromise('beatChina'));
-  promiseUpkeep(state, no);
+  promiseUpkeep(state);
   eventsTick(state, no);
   stampNewCards(state);
   const acted = applyActions(state, { eventChoices: { 'promiseCall:1': 'refuse' } }, no);
@@ -276,7 +289,7 @@ test('fallback resolves simultaneous promise calls separately', () => {
   state.turn = 5;
   state.capability = 10;
   state.promises.push(presidentPromise('beatRivals'), presidentPromise('beatChina'));
-  promiseUpkeep(state, no);
+  promiseUpkeep(state);
   eventsTick(state, no);
   const favor = state.govFavor.us;
   stampNewCards(state);
@@ -315,7 +328,7 @@ test('stall is offered once, delays the due turn, then disappears', () => {
   assert.equal(state.govFavor.us, favor - 6);
 
   state.turn = 7;
-  promiseUpkeep(state, no);
+  promiseUpkeep(state);
   eventsTick(state, no);
   assert.deepEqual(promiseCalls(state)[0].choices.map(({ id }) => id), ['deliver', 'refuse']);
   assert.equal(resolveEvent(state, 'promiseCall:0', 'stall').ok, false);
@@ -352,7 +365,7 @@ test('a promise call is deferred by the two-card cap and queued when space opens
   state.turn = 5;
   state.pendingEvents.push({ id: 'jailbreak' }, { id: 'citations' });
   state.promises.push(presidentPromise('beatRivals'));
-  promiseUpkeep(state, no);
+  promiseUpkeep(state);
   eventsTick(state, no);
   assert.equal(state.pendingEvents.some((event) => event.eventId === 'promiseCall'), false);
   assert.ok(Object.hasOwn(state.warnings, 'promiseCall:0'));
@@ -378,7 +391,7 @@ test('non-President promise entries are ignored by promise upkeep', () => {
   state.turn = 10;
   const commitment = { type: 'safetyCompute', share: 0.2, dueTurn: 1, status: 'open' };
   state.promises.push(commitment);
-  promiseUpkeep(state, no);
+  promiseUpkeep(state);
   eventsTick(state, no);
   assert.deepEqual(state.promises, [commitment]);
   assert.equal(state.pendingEvents.some((event) => event.eventId === 'promiseCall'), false);
@@ -386,28 +399,32 @@ test('non-President promise entries are ignored by promise upkeep', () => {
 
 test('forced promise deliveries use President-sourced constitution amendments', () => {
   const cases = [
-    ['noWokeFilters', ['honest', 'privacy', 'no-wmd'], { president: 'refuse' }],
-    ['killSwitch', ['honest', 'privacy', 'no-power-grab'], { president: 'refuse' }],
-    ['favorableModel', ['honest', 'privacy', 'no-wmd'], { president: 'refuse' }],
+    ['noWokeFilters', ['honest', 'privacy', 'no-wmd'], { report: 'full' }],
+    ['killSwitch', ['honest', 'privacy', 'no-power-grab'], { report: 'full' }],
+    ['favorableModel', ['honest', 'privacy', 'no-wmd'], { report: 'full' }],
   ];
   for (const [id, hardLines, rulings] of cases) {
-    const state = failedCall(id);
-    state.constitution.hardLines = hardLines;
-    state.constitution.rulings = rulings;
+    const state = failedCall(id, {}, (candidate) => {
+      candidate.constitutionDraft = { hardLines, rulings, changes: [] };
+    });
     assert.equal(resolveEvent(state, 'promiseCall:0', 'deliver').ok, true, id);
-    assert.equal(state.constitution.amendments.at(-1).source, 'president', id);
+    assert.equal(state.constitutionDraft.changes.at(-1).source, 'president', id);
   }
 });
 
-test('a contradictory open promise can leak only once', () => {
+// An open President promise (noWokeFilters) whose definition contradicts the held 'honest' line.
+function contradictingPromiseState() {
   const state = createInitialState();
   state.turn = 2;
   state.constitution.hardLines = ['honest'];
   state.promises.push(presidentPromise('noWokeFilters', { dueTurn: 8 }));
-  let rolls = 0;
-  const leaks = { chance: (probability) => { rolls += 1; assert.equal(probability, 0.15); return true; } };
-  promiseUpkeep(state, leaks);
-  assert.equal(rolls, 1);
+  return state;
+}
+
+test('a contradictory open promise can leak only once', () => {
+  const state = contradictingPromiseState();
+  state.promises[0].contradictRounds = LEAK_ROUNDS - 1; // one more contradicting round leaks (stated term)
+  promiseUpkeep(state);
   assert.equal(state.promises[0].leaked, true);
   assert.equal(state.publicTrust, 56);
   assert.equal(state.staffTrust, 64);
@@ -415,8 +432,8 @@ test('a contradictory open promise can leak only once', () => {
   assert.match(state.feed.at(-1).text, /memo: lab promised the President it would/);
   assert.match(state.feed.at(-1).text, /woke.*filters/i);
 
-  promiseUpkeep(state, leaks);
-  assert.equal(rolls, 1);
+  promiseUpkeep(state);
+  assert.equal(state.promises[0].contradictRounds, LEAK_ROUNDS); // a leaked promise stops counting
   assert.equal(state.publicTrust, 56);
   assert.equal(state.staffTrust, 64);
 });
@@ -425,10 +442,41 @@ test('a promise without a currently held contradicting line cannot leak', () => 
   const state = createInitialState();
   state.turn = 2;
   state.constitution.hardLines = ['privacy'];
-  state.promises.push(presidentPromise('noWokeFilters', { dueTurn: 8 }));
-  let rolls = 0;
-  promiseUpkeep(state, { chance: () => { rolls += 1; return true; } });
-  assert.equal(rolls, 0);
+  state.promises.push(presidentPromise('noWokeFilters', { dueTurn: 8, contradictRounds: LEAK_ROUNDS - 1 }));
+  promiseUpkeep(state);
+  assert.equal(state.promises[0].contradictRounds, LEAK_ROUNDS - 1); // no held contradicting line: no round counts
   assert.equal(state.promises[0].leaked, false);
   assert.equal(state.feed.length, 0);
+});
+
+test('a promise that contradicts a held line leaks on its LEAK_ROUNDS-th such round, not before', () => {
+  const s = contradictingPromiseState();
+  for (let round = 1; round < LEAK_ROUNDS; round++) {
+    promiseUpkeep(s);
+    assert.equal(s.promises[0].leaked ?? false, false, `round ${round}`);
+  }
+  promiseUpkeep(s);
+  assert.equal(s.promises[0].leaked, true);
+});
+
+test('removing a non-presidential pledge cannot orphan or duplicate a queued presidential call', () => {
+  const state = failedCall();
+  const original = promiseCalls(state)[0];
+  state.promises.unshift({ type: 'safetyCompute', share: 0.2 });
+  original.promiseIndex += 1;
+  state.promises = state.promises.filter(promise => promise.type !== 'safetyCompute');
+  eventsTick(state, no);
+  assert.equal(promiseCalls(state).length, 1);
+  assert.equal(resolveEvent(state, original.id, 'deliver').ok, true);
+  assert.equal(promiseCalls(state).length, 0);
+});
+
+test('fulfilling a promise cancels its queued follow-up before it lands', () => {
+  const state = failedCall();
+  eventsTick(state, no);
+  assert.equal(promiseCalls(state).length, 1);
+  state.capability = 1000;
+  promiseUpkeep(state);
+  assert.equal(state.promises[0].status, 'kept');
+  assert.equal(promiseCalls(state).length, 0);
 });

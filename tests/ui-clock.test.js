@@ -124,3 +124,15 @@ test('a speed change does not rescale time already owed', () => {
   t = 401; clock.step();
   assert.equal(game.days, 0);
 });
+
+test('togglePause pauses and returns to the speed the player had', () => {
+  const clock = createClock(fakeGame(), { now: () => 0 });
+  clock.setSpeed(4);
+  clock.togglePause();
+  assert.equal(clock.now().speed, 0);
+  clock.togglePause();
+  assert.equal(clock.now().speed, 4);
+  clock.setSpeed(0);
+  clock.togglePause();
+  assert.equal(clock.now().speed, 4, 'the pause button keeps the last running speed too');
+});

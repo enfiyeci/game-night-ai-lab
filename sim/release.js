@@ -1,11 +1,12 @@
 import { BALANCE } from './balance.js';
-import { clamp, sigmoid } from './util.js';
+import { clamp } from './util.js';
 import { validatePicks, resolveCards } from './recipe.js';
-import { PRICE_STANCE } from './serving.js';
+import { ERA_PRICE, PRICE_STANCE } from './serving.js';
 import { scoreLaunch } from './launch.js';
-import { resolveHazard, exposeConcealed } from './hazards.js';
+import { resolveHazard, exposeConcealed, dangerCapability } from './hazards.js';
 import { hasLine } from './constitution.js';
 import { pushFeed } from './events.js';
+import { eraById } from './data/eras.js';
 
 export const TIER_WORDS = { small: 'Swift', medium: 'Core', large: 'Grand', xl: 'Apex' };
 export const REASONING_BONUS = { off: 0, low: 2, medium: 4, high: 6 };
@@ -13,6 +14,10 @@ export const USERS_BASE = { consumer: 4e6, enterprise: 5e5, agent: 5e4, open: 0 
 export const MIN_RELEASE_GAP_TURNS = 2;
 export const MISALIGNMENT_CHECK_ERA = 3;
 export const MISALIGNMENT_ENDING_ERA = 4;
+// Owner 2026-09-26, no dice: an agent release goes wrong when hidden debt × capability / 100 reaches the line (the old
+// roll's even-chance point). Capability counts only up to 100 here (owner pick A, the capability cap).
+export const MISALIGNMENT_LINE = 35;
+export const misalignmentScore = (state, capability) => (state.alignmentDebt + state.concealedDebt) * dangerCapability(capability) / 100;
 
 // The player can rename the four size words once for their lab (state.tierWords); a blank word falls back to the default.
 export const tierWord = (size, words) => {
@@ -22,10 +27,25 @@ export const tierWord = (size, words) => {
 
 export const modelName = ({ family, generation, size, tierWords }) => `${family} ${generation} ${tierWord(size, tierWords)}`;
 
-// Rounds a release waits: its cards, the trained model's own delay, and one more for the government's tests once the
-// lab signed the testing agreement (the preReleaseTests card), unless an eval-gov card already waits for them.
+// Outside testing the lab promised: the government's tests (the preReleaseTests card) and the White House's outside
+// testers (whiteHouseCommitments, "Sign all of it"; owner 2026-09-26 "add it"). The testers get a few weeks first. Where
+// a round is a month or less (era 3 on) that is one round's wait; in the three-month rounds of eras 1-2 they cost
+// nothing (owner pick D1, 2026-09-26). One round covers both promises, and a release whose own eval card already waits
+// for outsiders (eval-gov; eval-third for the testers) adds nothing more.
+function testerNeeds(state, cards) {
+  const flags = new Set(cards.flatMap((card) => card.effects.flags ?? []));
+  const government = Boolean(state.flags.govTesting) && !flags.has('govEval');
+  const testers = Boolean(state.flags.outsideTesters) && !flags.has('govEval') && !flags.has('thirdPartyEval');
+  return { government, testers, shortRounds: eraById(state.era).monthsPerTurn <= 1 };
+}
+
+export function testerWait(state, cards) {
+  const need = testerNeeds(state, cards);
+  return need.government || (need.testers && need.shortRounds) ? 1 : 0;
+}
+
 export const releaseWait = (state, cards) => cards.reduce((sum, card) => sum + (card.cost.turns ?? 0), state.pendingModel?.releaseDelay ?? 0)
-  + (state.flags.govTesting && !cards.some((card) => (card.effects.flags ?? []).includes('govEval')) ? 1 : 0);
+  + testerWait(state, cards);
 
 const TIER_WORD_MAX = 16;
 // The release move can carry the player's four size words (named once, on the first release).
@@ -84,7 +104,7 @@ export function holdRelease(state, model) {
   model.activeFromTurn = Math.max(model.activeFromTurn ?? 0, state.turn) + 1;
 }
 
-export function releaseModel(state, release, rng) {
+export function releaseModel(state, release) {
   const m = state.pendingModel;
   if (!m) return { ok: false, error: 'no trained model to release' };
   const releaseDelayBinds = state.deal?.collapsed === false && state.deal.binding.includes('releaseDelay');
@@ -122,13 +142,15 @@ export function releaseModel(state, release, rng) {
   const name = modelName({ family: release.family, generation, size: m.size, tierWords: state.tierWords });
   state.capability = Math.max(state.capability, m.capability);
   state.alignmentDebt += sum('ad');
-  const launch = scoreLaunch(state, { capability: m.capability + REASONING_BONUS[reasoning], spec, flags, name, priceStance: release.price, generation, skipped }, rng);
-  const quality = clamp(1 + (launch.pressAvg - 6) / 8, 0.5, 1.6);
+  const launch = scoreLaunch(state, { capability: m.capability + REASONING_BONUS[reasoning], reasoningBonus: REASONING_BONUS[reasoning], spec, flags, name, priceStance: release.price, generation, skipped, polish: m.polish ?? 0 });
+  const quality = clamp(1 + (launch.economyPressAvg - 6) / 8, 0.5, 1.6);
   const eraGrowth = 1 + 0.5 * (state.era - 1);
   const constitutionUsers = spec.channel === 'enterprise' && hasLine(state, 'privacy') ? 1.1 : 1;
   const fresh = Math.round(USERS_BASE[spec.channel] * quality * eraGrowth * PRICE_STANCE[release.price].growth * m.publicEffects.usersMult * constitutionUsers);
 
   const model = {
+    polish: m.polish ?? 0,
+    fixedFlaws: structuredClone(m.fixedFlaws ?? []),
     name,
     family: release.family,
     generation,
@@ -136,11 +158,15 @@ export function releaseModel(state, release, rng) {
     size: m.size,
     capability: m.capability,
     launch,
-    launchScore: launch.capAvg,
-    bar: state.lastFlagshipScore,
+    // launchScore is the test-independent skill, so models from different eras compare fairly (the flagship pick,
+    // the end summary). bar is the last flagship's average re-scored on this launch's tests; flagshipName names it.
+    launchScore: launch.skill,
+    bar: launch.flagshipAvg,
+    flagshipName: state.lastFlagship?.name ?? null,
     spec,
     channel: spec.channel,
     priceStance: release.price,
+    eraPrice: ERA_PRICE[state.era - 1],
     reasoning,
     users: fresh,
     newUsers: fresh,
@@ -152,16 +178,23 @@ export function releaseModel(state, release, rng) {
     activated: false,
     flags,
     servingCost: 0,
+    // The model's books: training (recipe cards and compute) and launch cards, then what it earns and what serving it
+    // costs (sim/economy.js accrueEconomy).
+    trainingCost: m.trainingCost ?? null,
+    launchCost: cash,
+    earned: 0,
+    servingSpent: 0,
+    monthsOnSale: 0,
   };
   if (spec.channel === 'consumer' && hasLine(state, 'no-wmd')) model.revenueMult = 0.97;
   state.models.push(model);
   activateReleases(state);
   state.pendingModel = null;
-  if (!state.lastFlagship || launch.capAvg > state.lastFlagshipScore) {
-    state.lastFlagship = { name, benchmarks: launch.benchmarks.map(({ id, shown }) => ({ id, shown })) };
+  if (!state.lastFlagship || launch.skill > state.lastFlagshipScore) {
+    state.lastFlagship = { name, benchmarks: launch.benchmarks.map(({ id, name: test, shown, skill }) => ({ id, name: test, shown, skill })) };
   }
-  state.lastFlagshipScore = Math.max(state.lastFlagshipScore, launch.capAvg);
-  state.sentiment = clamp(state.sentiment + (launch.pressAvg - 6) / 20, 0.5, 1.5);
+  state.lastFlagshipScore = Math.max(state.lastFlagshipScore, launch.skill);
+  state.sentiment = clamp(state.sentiment + (launch.economyPressAvg - 6) / 20, 0.5, 1.5);
 
   state.publicTrust += m.publicEffects.pt + sum('pt');
   state.staffTrust += m.publicEffects.st + sum('st');
@@ -170,7 +203,7 @@ export function releaseModel(state, release, rng) {
   const releaseHeat = BALANCE.ownReleaseHeat + m.publicEffects.heat + sum('heat');
   const delayed = state.deal?.collapsed === false && state.deal.binding.includes('releaseDelay');
   state.raceHeat += releaseHeat * (delayed ? 0.5 : 1);
-  state.misuseExposure += Math.max(0, m.capability - BALANCE.dangerLine) * 0.3;
+  state.misuseExposure += Math.max(0, dangerCapability(m.capability) - BALANCE.dangerLine) * 0.3;
   if (spec.channel === 'open') {
     state.flags.openWeights = true;
     // Open weights add to whatever risk is already permanent, then lock the result.
@@ -181,9 +214,8 @@ export function releaseModel(state, release, rng) {
 
   let misalignmentIncident = false;
   if (flags.includes('agentic') && state.era >= MISALIGNMENT_CHECK_ERA) {
-    const p = sigmoid(((state.alignmentDebt + state.concealedDebt) * m.capability / 100 - 40) / 8);
-    if (rng.chance(p)) {
-      // The catastrophe needs era-4 capability; in era 3 the same roll is its warning.
+    if (misalignmentScore(state, m.capability) >= MISALIGNMENT_LINE) {
+      // The catastrophe needs era-4 capability; in era 3 crossing the same line is its warning.
       if (state.era >= MISALIGNMENT_ENDING_ERA) state.ending = 'misalignment';
       else {
         misalignmentWarning(state);

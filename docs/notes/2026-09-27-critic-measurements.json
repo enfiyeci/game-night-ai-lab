@@ -1,0 +1,132 @@
+{
+  "baseline": {
+    "seeds": 200,
+    "strategies": {
+      "balanced": {
+        "releases": 628,
+        "reviews": 2512,
+        "tens": 2509,
+        "perfect": 625,
+        "sum": 25117,
+        "endings": {
+          "leftBehind": 64,
+          "pacingDeal": 71,
+          "acquihire": 36,
+          "misalignment": 18,
+          "rivalDisaster": 4,
+          "aligned": 3,
+          "pyrrhic": 4
+        }
+      },
+      "speed": {
+        "releases": 454,
+        "reviews": 1816,
+        "tens": 1718,
+        "perfect": 377,
+        "sum": 18054,
+        "endings": {
+          "boardRemoved": 199,
+          "misuse": 1
+        }
+      },
+      "safety": {
+        "releases": 302,
+        "reviews": 1208,
+        "tens": 1144,
+        "perfect": 244,
+        "sum": 12002,
+        "endings": {
+          "leftBehind": 104,
+          "acquihire": 71,
+          "aligned": 7,
+          "pacingDeal": 3,
+          "rivalDisaster": 12,
+          "misalignment": 2,
+          "overtaken": 1
+        }
+      },
+      "random": {
+        "releases": 507,
+        "reviews": 2028,
+        "tens": 1870,
+        "perfect": 413,
+        "sum": 19941,
+        "endings": {
+          "acquihire": 147,
+          "misalignment": 28,
+          "aligned": 1,
+          "boardRemoved": 13,
+          "overtaken": 2,
+          "rivalDisaster": 6,
+          "pyrrhic": 2,
+          "leftBehind": 1
+        }
+      }
+    }
+  },
+  "tuned": {
+    "seeds": 200,
+    "strategies": {
+      "balanced": {
+        "releases": 628,
+        "reviews": 2512,
+        "tens": 70,
+        "perfect": 10,
+        "sum": 22091,
+        "endings": {
+          "leftBehind": 64,
+          "pacingDeal": 71,
+          "acquihire": 36,
+          "misalignment": 18,
+          "rivalDisaster": 4,
+          "aligned": 3,
+          "pyrrhic": 4
+        }
+      },
+      "speed": {
+        "releases": 454,
+        "reviews": 1816,
+        "tens": 0,
+        "perfect": 0,
+        "sum": 10233,
+        "endings": {
+          "boardRemoved": 199,
+          "misuse": 1
+        }
+      },
+      "safety": {
+        "releases": 302,
+        "reviews": 1208,
+        "tens": 12,
+        "perfect": 3,
+        "sum": 10329,
+        "endings": {
+          "leftBehind": 104,
+          "acquihire": 71,
+          "aligned": 7,
+          "pacingDeal": 3,
+          "rivalDisaster": 12,
+          "misalignment": 2,
+          "overtaken": 1
+        }
+      },
+      "random": {
+        "releases": 507,
+        "reviews": 2028,
+        "tens": 4,
+        "perfect": 1,
+        "sum": 14919,
+        "endings": {
+          "acquihire": 147,
+          "misalignment": 28,
+          "aligned": 1,
+          "boardRemoved": 13,
+          "overtaken": 2,
+          "rivalDisaster": 6,
+          "pyrrhic": 2,
+          "leftBehind": 1
+        }
+      }
+    }
+  }
+}

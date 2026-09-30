@@ -45,7 +45,11 @@ test('midEra3 is an era-3 turn with a training run under way', () => {
 
 test('the summit scenario stops on the opening turn of era 5', () => {
   // Under plan 2C Task 8's balance, seed 1's scripted run ends in era 4, so use a seed that reaches era 5.
-  const s = SCENARIOS.summit(3);
+  // Seed 3 stopped reaching it for two reasons: the quiet-takeover roll became a running total (deterministic
+  // endings A3), which shifted the main random stream so seed 3's era-4 agent release hits the misalignment check;
+  // and under the compute race plan (docs/superpowers/plans/2026-09-26-compute-race.md) Task 5, seed 3's run ends
+  // in era 4 anyway (race heat from rival deals). Seed 4 reaches era 5.
+  const s = SCENARIOS.summit(4);
   assert.equal(s.era, 5);
   assert.equal(s.turnInEra, 0);
   assert.equal(s.deal, null);
@@ -58,7 +62,10 @@ test('the event scenario stops on the first turn with a pending card', () => {
 
 test('the President scenarios stop with the requested meeting open', () => {
   assert.equal(SCENARIOS.meeting(1).meeting?.id, 'first');
-  assert.equal(SCENARIOS.meeting2(1).meeting?.id, 'second');
+  // Seed 1 (run seed 3) ends in era 4 before the second meeting for two reasons: deterministic endings A3 (the
+  // quiet-takeover roll became a running total, shifting the main random stream into a misalignment ending) and
+  // the compute race plan (docs/superpowers/plans/2026-09-26-compute-race.md) Task 5. The second meeting uses seed 2.
+  assert.equal(SCENARIOS.meeting2(2).meeting?.id, 'second');
 });
 
 test('an action applies at once and the counter counts the round', () => {
@@ -86,4 +93,21 @@ test('advancing several days reports every day\'s events, not only the last', ()
   const r = g.advanceDays(95); // crosses the first quarter mark
   assert.equal(g.state.turn, 1);
   assert.deepEqual(r.events, seen);
+});
+
+test('target scenarios replay deterministically to live states across unlucky seeds', () => {
+  for (const seed of [1, 2, 4, 5]) {
+    for (const [name, atTarget] of [
+      ['era3Queue', (state) => state.era === 3],
+      ['midEra3', (state) => state.era === 3 && state.activeRun !== null],
+      ['summit', (state) => state.era === 5 && state.turnInEra === 0 && !state.deal],
+      ['meeting2', (state) => state.meeting?.id === 'second'],
+    ]) {
+      const state = SCENARIOS[name](seed);
+      assert.equal(state.ending, null, `${name}, seed ${seed}`);
+      assert.ok(atTarget(state), `${name}, seed ${seed}`);
+      assert.ok(state.seed >= seed && state.seed < seed + 20);
+      assert.deepEqual(SCENARIOS[name](seed), state);
+    }
+  }
 });

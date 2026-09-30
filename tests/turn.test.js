@@ -271,6 +271,7 @@ test('a quiet takeover stops training and event generation for the turn', () => 
   s.era = 4;
   s.automation.stage = 3; s.capability = 80;
   s.alignmentDebt = 100;
+  s.automation.pressure = 1; // the running total reaches 1 this round (A3: no dice, running total)
   s.models.push({
     active: true,
     activated: true,
@@ -365,6 +366,7 @@ test('terminal moves normalize bounded state before advisor history is recorded'
 
 test('eras advance every four turns and time accelerates', () => {
   let state = createInitialState();
+  state.capability = 40;
   const rng = createRng(2);
   for (let i = 0; i < 4; i++) ({ state } = endTurn(state, {}, rng));
   assert.equal(state.ending, null);

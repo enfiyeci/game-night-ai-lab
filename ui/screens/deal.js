@@ -2,6 +2,7 @@
 // and what happened when someone was caught. Breaking the deal yourself happens in the run and release screens.
 import { dealBinds } from '../../sim/summit.js';
 import { PARTY_INFO, partyBadge } from './summit.js';
+import { enterTransition, exitTransition } from '../components/transition.js';
 
 const VERBS = Object.freeze(['Accuse them in public', 'Demand their report', 'Ask the testers', 'Send the inspectors']);
 const SIGNS = Object.freeze({
@@ -29,7 +30,7 @@ function pill(state, dismissedIds) {
   const signers = [...new Set(Object.values(deal.signed).flat())];
   const seals = ['you', ...signers].map((id) => partyBadge(id, true)).join('')
     + deal.expelled.map((id) => `<span class="dl-out">${partyBadge(id, true)}</span>`).join('');
-  const status = deal.collapsed ? 'collapsed' : deal.playerShipped ? 'you broke it' : deal.expelled.length ? 'holding, one out' : 'holding';
+  const status = deal.collapsed ? 'collapsed' : deal.playerShipped ? 'you broke it' : deal.expelled.length ? `holding, ${deal.expelled.length} out` : 'holding';
   const waiting = (deal.suspicions ?? []).filter((s) => dismissedIds.has(s.id)).length;
   return `<span>Geneva deal</span><span class="dl-seals">${seals}</span><small>${esc(status)}</small>${waiting ? `<span class="dl-waiting">${waiting}</span>` : ''}`;
 }
@@ -90,14 +91,14 @@ export function mountDeal(game, overlayRoot) {
     if (event.type === 'dealBreakCaught') {
       return { title: `${name(event.party)} broke the Geneva deal, and got caught`, lines: [
         'The checks caught it before the run paid off.',
-        `${name(event.party)} is out of the deal. The rest of the deal still holds.`,
+        `${name(event.party)} is out of the deal. ${event.collapsed ? "The last coalition is gone: the deal collapses." : "Remaining commitments need another lab and a government to keep holding."}`,
         'You pushed for the checks, and the public noticed: trust in your lab goes up.',
       ] };
     }
     if (event.type === 'investigated' && event.found) {
       return { title: `${name(event.party)} broke the Geneva deal, and got caught`, lines: [
         `${name(event.party)} scraps the run. The lead it bought is gone.`,
-        `${name(event.party)} is out of the deal. The rest of the deal still holds.`,
+        `${name(event.party)} is out of the deal. ${event.collapsed ? "The last coalition is gone: the deal collapses." : "Remaining commitments need another lab and a government to keep holding."}`,
         'You pushed for the checks, and the public noticed: trust in your lab goes up.',
       ] };
     }
@@ -113,6 +114,9 @@ export function mountDeal(game, overlayRoot) {
       return { title: 'You were caught breaking the Geneva deal', lines: [
         'The deal collapses for everyone.', 'Public trust and the West’s favor drop.', 'Every lab is racing again.',
       ] };
+    }
+    if (event.type === 'dealCollapsed' && event.reason === 'noCoalition') {
+      return { title: 'The Geneva coalition has fallen apart', lines: ['No binding commitment still has both a rival lab and a government behind it.', 'The caps are lifted. A negotiated pace is no longer available from this agreement.'] };
     }
     if (event.type === 'presidentAngry') {
       return { title: 'The President saw the inspection line', lines: ['“China inspecting us? A disaster. A total disaster.”', 'The West’s favor drops.'] };
@@ -132,11 +136,10 @@ export function mountDeal(game, overlayRoot) {
       <div class="dl-lines">${card.lines.map((line) => `<div><i>•</i>${esc(line)}</div>`).join('')}</div>
       <div class="sm-actions"><button type="button" class="btn">Continue</button></div></section>`;
     layer.querySelector('button').addEventListener('click', () => {
-      layer.remove();
-      overlayRoot.dispatchEvent(new CustomEvent('gdt-dialog-closed'));
+      exitTransition(layer).then(() => overlayRoot.dispatchEvent(new CustomEvent('gdt-dialog-closed')));
     });
     overlayRoot.append(layer);
-    layer.classList.add('dialog-open');
+    enterTransition(layer);
     layer.querySelector('button').focus();
   }
 

@@ -128,3 +128,24 @@ test('the money budget has no safety slice any more', () => {
   assert.equal(r.ok, false);
   assert.match(r.error, /safety/);
 });
+
+
+test('outage churn compounds by elapsed months, not by the number of era rounds', () => {
+  const remaining = [];
+  for (const [era, rounds] of [[1, 1], [3, 3], [5, 12]]) {
+    const state = at(100, 95, 0);
+    state.era = era;
+    state.compute.split.servingCap = 0;
+    state.compute.split.coverWithSpot = false;
+    state.models.push({ active: true, activeFromTurn: 0, channel: 'consumer', users: 1e6 });
+    for (let round = 0; round < rounds; round += 1) {
+      const before = state.models[0].users;
+      const event = applySplitEffects(state).find((entry) => entry.type === 'outage');
+      assert.equal(event.servedShare, 0);
+      assert.equal(event.lostUsers, before - state.models[0].users);
+    }
+    remaining.push(state.models[0].users);
+  }
+  assert.equal(remaining[0], 421875, 'three months without service lose over half the customers');
+  assert.ok(remaining.every((users) => Math.abs(users - remaining[0]) <= 5), JSON.stringify(remaining));
+});

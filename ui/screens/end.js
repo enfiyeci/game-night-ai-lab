@@ -3,6 +3,7 @@
 import { mountFilm } from '../endings/player.js';
 import { music } from '../music.js';
 import { endScreenModel } from '../logic/ending.js';
+import { buildFinale, resolveFinale } from '../../sim/finale.js';
 
 const make = (tag, className, text) => {
   const node = document.createElement(tag);
@@ -14,7 +15,7 @@ const make = (tag, className, text) => {
 function trapFocus(layer) {
   layer.addEventListener('keydown', (event) => {
     if (event.key !== 'Tab') return;
-    const items = [...layer.querySelectorAll('button:not([disabled])')];
+    const items = [...layer.querySelectorAll('button:not([disabled]), [tabindex="0"]')];
     if (items.length === 0) return;
     const first = items[0];
     const last = items.at(-1);
@@ -31,7 +32,55 @@ function trapFocus(layer) {
   });
 }
 
-function renderEndScreen(overlay, model, { onPlayAgain, onWatch, lumenNote }) {
+export function chooseFinale(overlay, state) {
+  const finale = buildFinale(state);
+  if (!finale || !globalThis.document || !overlay?.append) return Promise.resolve(null);
+  return new Promise((resolve) => {
+    const choices = {};
+    let index = 0;
+    const layer = make('div', 'dialog-layer dialog-open finale-layer');
+    layer.setAttribute('role', 'dialog');
+    layer.setAttribute('aria-modal', 'true');
+    layer.setAttribute('aria-labelledby', 'finale-title');
+    const veil = make('div', 'dialog-veil');
+    veil.setAttribute('aria-hidden', 'true');
+    const panel = make('section', 'gp end-panel finale-panel');
+    layer.append(veil, panel);
+    trapFocus(layer);
+    overlay.append(layer);
+    const draw = () => {
+      const card = finale.cards[index];
+      const title = make('h1', null, card.title);
+      title.id = 'finale-title';
+      const buttons = make('div', 'end-buttons');
+      for (const choice of card.choices) {
+        const button = make('button', 'btn', choice.label);
+        button.type = 'button';
+        button.addEventListener('click', () => {
+          choices[card.id] = choice.id;
+          index += 1;
+          if (index < finale.cards.length) draw();
+          else {
+            layer.remove();
+            resolve(resolveFinale(state, choices));
+          }
+        }, { once: true });
+        buttons.append(button);
+      }
+      panel.replaceChildren(
+        make('div', 'end-kicker', `Epilogue · ${index + 1} of ${finale.cards.length}`),
+        title,
+        make('p', 'end-text', 'The run is over. These decisions shape what follows; they do not change the ending you earned.'),
+        make('p', 'end-text', card.prompt),
+        buttons,
+      );
+      buttons.firstElementChild.focus();
+    };
+    draw();
+  });
+}
+
+function renderEndScreen(overlay, model, { onPlayAgain, onWatch, lumenNote, finale }) {
   overlay.querySelector('.end-layer')?.remove();
   const layer = make('div', 'dialog-layer dialog-open end-layer');
   layer.setAttribute('role', 'dialog');
@@ -48,8 +97,17 @@ function renderEndScreen(overlay, model, { onPlayAgain, onWatch, lumenNote }) {
   heading.append(make('div', 'end-kicker', model.kicker), title);
   top.append(heading, make('div', 'end-found', `Endings found: ${model.progress.found} of ${model.progress.total}`));
 
-  const left = make('div');
+  const left = make('div', 'end-details');
+  left.tabIndex = 0;
+  left.setAttribute('role', 'region');
+  left.setAttribute('aria-label', 'Run summary and epilogue');
   left.append(make('p', 'end-text', `${model.text} ${model.modelsLine}`));
+  if (finale) {
+    left.append(make('div', 'end-sec', 'The world you leave behind'));
+    for (const outcome of finale.legacy) {
+      left.append(make('p', 'end-text', outcome.text));
+    }
+  }
   if (model.advisors.length > 0) {
     left.append(make('div', 'end-sec', 'Who told you the truth'));
     const labels = make('div', 'end-scale-labels');
@@ -120,7 +178,7 @@ function renderEndScreen(overlay, model, { onPlayAgain, onWatch, lumenNote }) {
 // window, so it plays in a host that undoes that zoom.
 // While the film's files load, the host shows a dark "Loading the ending" veil that holds focus; Escape there
 // skips straight to the end screen.
-function filmHost(onEscape) {
+export function filmHost(onEscape) {
   const doc = globalThis.document;
   if (!doc) return undefined;
   const host = make('div', 'film-host');
@@ -162,10 +220,12 @@ function filmHost(onEscape) {
 
 // Plays the film for the ending the game just reached, then shows the end-of-run screen. Call show() directly
 // for a run that was already over when the page loaded (no click, so no film until the player asks for it).
-export function mountEnding(game, overlay, { collection, onPlayAgain, loadFilm = mountFilm, lumenNote = () => null } = {}) {
+export function mountEnding(game, overlay, { collection, onPlayAgain, loadFilm = mountFilm, selectFinale = chooseFinale, lumenNote = () => null } = {}) {
   let recorded = null;
   let model = null;
   let playing = false;
+  let finale = null;
+  let finaleChosen = false;
 
   // save is false for a run that was already over when the page loaded (a debug scenario), which the player
   // did not reach, so it stays out of their collection; the screen still counts it as found this run.
@@ -180,7 +240,7 @@ export function mountEnding(game, overlay, { collection, onPlayAgain, loadFilm =
 
   const show = ({ save = true } = {}) => {
     record(game.state, { save });
-    renderEndScreen(overlay, model, { onPlayAgain, onWatch: () => play(), lumenNote: lumenNote(game.state) });
+    renderEndScreen(overlay, model, { onPlayAgain, onWatch: () => play(), lumenNote: lumenNote(game.state), finale });
   };
 
   async function play() {
@@ -188,6 +248,11 @@ export function mountEnding(game, overlay, { collection, onPlayAgain, loadFilm =
     playing = true;
     const state = game.state;
     const fromWatch = globalThis.document?.activeElement?.classList?.contains('end-watch') ?? false;
+    if (!finaleChosen) {
+      overlay?.querySelector('.end-layer')?.remove();
+      finale = await selectFinale(overlay, state);
+      finaleChosen = true;
+    }
     let skipped = false;
     music.hold('film');
     const close = () => {
@@ -204,6 +269,7 @@ export function mountEnding(game, overlay, { collection, onPlayAgain, loadFilm =
     try {
       const film = await loadFilm(host, {
         id: state.ending,
+        fullTitle: finale?.fullTitle,
         era: state.era,
         run: { deal: state.deal },
         onDone: () => {

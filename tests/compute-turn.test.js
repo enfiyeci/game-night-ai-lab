@@ -5,19 +5,24 @@ import { createRng } from '../sim/rng.js';
 import { endTurn } from '../sim/turn.js';
 import { recipeCost } from '../sim/recipe.js';
 import { computeRent, projectBurn } from '../sim/economy.js';
-import { sideRng } from '../sim/contracts.js';
 import { eraScale, SCALE_DOWN } from '../sim/data/compute.js';
 import { allocate, rivalOrders, released } from '../sim/queue.js';
-import { SITE_TYPES } from '../sim/power.js';
+import { SITE_TYPES, siteUnits } from '../sim/power.js';
 
 const offerOf = (s, supplier) => s.compute.offers.find((o) => o.supplier === supplier && !o.viaQueue);
 
-test('offers exist from turn 0 and refresh every turn', () => {
+test('offers exist from turn 0; rivals take their named cards at the mark; the rest stay', () => {
   const s = createInitialState();
   assert.deepEqual(s.compute.offers.map((o) => o.supplier), ['verde', 'azuria', 'coreflame', 'spot']);
   assert.deepEqual(s.power, { sites: [], nextId: 1 });
-  const { state } = endTurn(s, {}, createRng(1));
-  assert.ok(state.compute.offers.every((o) => o.id.endsWith('-1')));
+  const named = s.compute.offers.filter((o) => o.wantedBy);
+  assert.equal(named.length, 3, 'three Western rivals are short of compute on turn 0');
+  const { state, events } = endTurn(s, {}, createRng(1));
+  const deals = events.filter((e) => e.type === 'rivalDeal');
+  assert.deepEqual(deals.map((e) => e.supplier).sort(), named.map((o) => o.supplier).sort());
+  assert.deepEqual(state.compute.offers.map((o) => o.supplier), ['verde', 'azuria', 'coreflame', 'spot'], 'taken slots refill');
+  const untaken = s.compute.offers.find((o) => !o.wantedBy);
+  assert.equal(state.compute.offers.find((o) => o.supplier === untaken.supplier).id, untaken.id, 'the untaken card stays');
 });
 
 test('a deal move signs an offer; it is online on its arrival turn and its bill enters the burn', () => {
@@ -77,7 +82,8 @@ test('in era 4 new chips need site power, and the lease starts when the site is 
   assert.equal(next.compute.online, 10 + Math.min(100, next.power.sites[0].units));
 });
 
-test('same-turn site builds use distinct deterministic side draws', () => {
+// No dice (Task A6): sites have fixed terms, so two same-turn gas builds are the same size (was: distinct side draws).
+test('same-turn site builds are deterministic and get the fixed size', () => {
   const s = createInitialState({ seed: 1 });
   s.era = 4;
   s.turn = 12;
@@ -87,23 +93,19 @@ test('same-turn site builds use distinct deterministic side draws', () => {
   const second = endTurn(s, actions, createRng(1));
   assert.deepEqual(first.errors, []);
   assert.deepEqual(first.state.power.sites, second.state.power.sites);
-  assert.notEqual(first.state.power.sites[0].units, first.state.power.sites[1].units);
+  assert.deepEqual(first.state.power.sites.map((site) => site.units), [siteUnits(SITE_TYPES.gas), siteUnits(SITE_TYPES.gas)]);
 });
 
-test('a site build and contractsTurn use different side draws in the same turn', () => {
+// No dice (Task A6): a site build no longer draws at all, so contractsTurn's draws in the same turn cannot move it.
+test('a site build keeps its fixed size beside contractsTurn in the same turn', () => {
   const s = createInitialState({ seed: 1 });
   s.era = 4;
   s.turn = 12;
   s.turnInEra = 0;
   s.compute.contracts[0].supplier = 'coreflame';
-  const contractDraw = sideRng(s, 3).next();
-  const siteDraw = sideRng(s, 1000 + s.power.nextId).next();
-  const [lo, hi] = SITE_TYPES.gas.size;
-  const gasUnits = (draw) => Math.round((lo + Math.floor(draw * (hi - lo + 1))) / 10) * 10;
 
   const result = endTurn(s, { moves: [{ type: 'buildSite', source: 'gas' }] }, createRng(1));
 
-  assert.notEqual(siteDraw, contractDraw);
-  assert.equal(result.state.power.sites[0].units, gasUnits(siteDraw));
-  assert.notEqual(result.state.power.sites[0].units, gasUnits(contractDraw));
+  assert.deepEqual(result.errors, []);
+  assert.equal(result.state.power.sites[0].units, siteUnits(SITE_TYPES.gas));
 });

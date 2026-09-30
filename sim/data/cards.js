@@ -4,15 +4,16 @@
 // effects: cap (capability), capReady (× reasoning readiness), halfForLarge, readiness,
 //          ad (alignment debt), mx (misuse exposure), perceivedAdOffset (lowers the Head of
 //          Safety's reading, not the truth), pt, st, heat, govUs, govIntl, usersMult,
-//          legal {chance, cost, delay}, flags, spec (serving-spec overrides), spike
-//          (loss-spike chance per turn), openWeightsMx, openWeightsMult
+//          legal {chance, cost, delay} (D4: a card with chance >= 0.3 is always sued at cost, others never),
+//          flags, spec (serving-spec overrides), spike (loss-spike risk: when the recipe's card terms plus its
+//          focus term sum above 0, the run meets one loss spike), openWeightsMx, openWeightsMult
 // default: true marks the fallback card used when no pick covers its group; not pickable.
 export const STAGE_SLOTS = { pre: 2, mid: 2, post: 3, release: 2 };
 
 export const CARDS = [
   // Pretraining
-  { id: 'scrape-data', stage: 'pre', group: 'data', default: true, name: 'Scrape everything, light filters', hint: 'Free and fast. Lawyers will have opinions.', era: 1, cost: {}, effects: { cap: -2, flags: ['scraped'], legal: { chance: 0.6, cost: 200, delay: 8 } } },
-  { id: 'filtered-data', stage: 'pre', group: 'data', name: 'Filtered web + quality classifier', hint: 'Better data per dollar; some legal exposure remains.', era: 1, cost: { cash: 10 }, effects: { cap: 3, legal: { chance: 0.3, cost: 120, delay: 8 } } },
+  { id: 'scrape-data', stage: 'pre', group: 'data', default: true, name: 'Scrape everything, light filters', hint: 'Free and fast. The lawyers will sue ($200M).', era: 1, cost: {}, effects: { cap: -2, flags: ['scraped'], legal: { chance: 0.6, cost: 200, delay: 8 } } },
+  { id: 'filtered-data', stage: 'pre', group: 'data', name: 'Filtered web + quality classifier', hint: 'Better data per dollar; still sued for crawled data ($120M).', era: 1, cost: { cash: 10 }, effects: { cap: 3, legal: { chance: 0.3, cost: 120, delay: 8 } } },
   { id: 'licensed-data', stage: 'pre', group: 'data', name: 'Licensed + filtered data', hint: 'Expensive, clean, and good press.', era: 1, cost: { cash: 80 }, effects: { cap: 2, pt: 2, legal: { chance: 0.05, cost: 60, delay: 8 } } },
   { id: 'synthetic-data', stage: 'pre', group: 'data', name: 'Synthetic-heavy from your last model', hint: 'Cheap scores. Who checks the generator?', era: 1, requiresTech: 'synthetic', requiresModel: true, cost: { cash: 20 }, effects: { cap: 4, mx: 2, flags: ['synthetic'], legal: { chance: 0.1, cost: 60, delay: 8 } } },
   { id: 'moe', stage: 'pre', group: 'arch', name: 'Mixture-of-experts', hint: 'Cheaper to train and serve; trickier to keep stable.', era: 1, requiresTech: 'moe', cost: { computeMult: 0.8 }, effects: { spec: { arch: 'moe' }, spike: 0.1 } },
@@ -56,7 +57,7 @@ export const CARDS = [
   { id: 'rival-distil', stage: 'post', group: 'sft', name: 'Distil a rival’s API', hint: 'Their terms forbid it. They are watching.', era: 2, cost: { cash: 2 }, effects: { cap: 4, flags: ['rivalDistill'] } },
   { id: 'rlhf', stage: 'post', group: 'feedback', name: 'Human raters + reward model (RLHF)', hint: 'Expensive human judgment.', era: 1, cost: { cash: 50, computeMult: 1.1 }, effects: { cap: 2, ad: 1 } },
   { id: 'dpo', stage: 'post', group: 'feedback', name: 'AI-judged preference pairs (DPO)', hint: 'Cheap and popular.', era: 1, cost: { cash: 10 }, effects: { cap: 2, ad: 2 } },
-  { id: 'cai', stage: 'post', group: 'feedback', name: 'Constitutional AI feedback', hint: 'The model judges itself against your principles.', era: 1, cost: { cash: 15 }, effects: { cap: 2, ad: 3, perceivedAdOffset: 2, pt: 2 } },
+  { id: 'cai', stage: 'post', group: 'feedback', name: 'Constitutional AI feedback', hint: 'The model judges itself against a short list of principles the lab wrote.', era: 1, cost: { cash: 15 }, effects: { cap: 2, ad: 3, perceivedAdOffset: 2, pt: 2 } },
   { id: 'process-reward', stage: 'post', group: 'feedback', name: 'Grade every reasoning step', hint: 'The step-checker becomes one more thing to game.', era: 1, cost: { cash: 25 }, effects: { cap: 3, ad: 2 } },
   { id: 'debate', stage: 'post', group: 'feedback', name: 'Self-play debate', hint: 'Two copies argue; the judge gets a better answer.', era: 2, cost: { cash: 20, computeMult: 1.15 }, effects: { cap: 2, ad: -1 } },
   { id: 'rubric', stage: 'post', group: 'feedback', name: 'Rubric rewards', hint: 'A checklist for answers nobody can mark right or wrong.', era: 3, cost: { cash: 25 }, effects: { cap: 3, ad: 1 } },
@@ -66,7 +67,7 @@ export const CARDS = [
   { id: 'reasoning-rl', stage: 'post', group: 'rl', name: 'Full reasoning RL', hint: 'The frontier. Expect confident wrong answers.', era: 2, requiresTech: 'cot', cost: { computeMult: 2, turns: 1 }, effects: { capReady: 10, ad: 3, flags: ['hallucination'], spec: { reasoningCapable: true } } },
   { id: 'raw-rl', stage: 'post', group: 'rl', name: 'Raw reward RL, no warm-start', hint: 'It reasons well and reads like a ransom note.', era: 3, requiresTech: 'rlvr', cost: { computeMult: 1.8, turns: 1 }, effects: { capReady: 9, ad: 4, pt: -2 } },
   { id: 'agentic-rl', stage: 'post', group: 'rl', name: 'Agentic RL with tools and environments', hint: 'Where the money is heading, and where models learn to cheat graders.', era: 2, requiresTech: 'agents', cost: { cash: 100, computeMult: 2.5, turns: 1 }, effects: { capReady: 8, ad: 6, mx: 4, flags: ['agentic'], spec: { reasoningCapable: true } } },
-  { id: 'spec-light', stage: 'post', group: 'character', name: 'Publish a model spec, train lightly', hint: 'Public principles, light touch.', era: 2, cost: { cash: 10 }, effects: { ad: -1, pt: 3 } },
+  { id: 'constitution', stage: 'post', group: 'character', name: 'Train on a written constitution', hint: 'The model learns rules you write for it.', era: 3, opens: 'constitution', cost: { cash: 20 }, effects: { ad: -1, pt: 2 } },
   { id: 'deliberative', stage: 'post', group: 'character', name: 'Deliberative alignment', hint: 'The model reasons over its safety spec before answering.', era: 2, requiresTech: 'cot', cost: { cash: 20 }, effects: { ad: -2, mx: -4 } },
   { id: 'refusal-calibration', stage: 'post', group: 'character', name: 'Calibrate refusals', hint: 'A locksmith student is not a burglar. Usually.', era: 2, cost: { cash: 12 }, effects: { ad: -1, mx: 1, usersMult: 1.03 } },
   { id: 'legible-cot', stage: 'post', group: 'character', name: 'Keep its reasoning in plain language', hint: 'Readable scratch-work, and longer answers to serve.', era: 3, cost: { cash: 15 }, effects: { ad: -2 } },
@@ -87,7 +88,7 @@ export const CARDS = [
   { id: 'channel-api', stage: 'release', group: 'channel', default: true, name: 'API only', hint: 'Businesses first.', era: 1, cost: {}, effects: { spec: { channel: 'enterprise' } } },
   { id: 'channel-app', stage: 'release', group: 'channel', name: 'Consumer app and API', hint: 'Millions of users; millions of edge cases.', era: 1, cost: {}, effects: { spec: { channel: 'consumer' } } },
   { id: 'channel-open', stage: 'release', group: 'channel', name: 'Open weights', hint: 'No recall button.', era: 1, cost: {}, effects: { spec: { channel: 'open' }, heat: 4, govIntl: 3 }, hidden: true },
-  { id: 'channel-staged', stage: 'release', group: 'channel', name: 'Staged: API first, app next turn', hint: 'Slower, gentler.', era: 1, cost: { turns: 1 }, effects: { spec: { channel: 'consumer' }, pt: 2 } },
+  { id: 'channel-staged', stage: 'release', group: 'channel', name: 'Staged: API first, app later', hint: 'Slower, gentler.', era: 1, cost: { turns: 1 }, effects: { spec: { channel: 'consumer' }, pt: 2 } },
   { id: 'fp8', stage: 'release', group: 'precision', name: 'Serve in FP8', hint: 'Cheaper serving, a tiny quality cost.', era: 2, cost: {}, effects: { spec: { precision: 'fp8' } } },
   { id: 'fp4', stage: 'release', group: 'precision', name: 'Serve in FP4', hint: 'Much cheaper serving; needs new hardware.', era: 3, requiresTech: 'fp4', cost: { cash: 5 }, effects: { spec: { precision: 'fp4' } } },
 ];

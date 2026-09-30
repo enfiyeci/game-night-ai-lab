@@ -21,9 +21,21 @@ export const ENDINGS = {
 
 export const effectiveMisuse = (state) => Math.max(state.misuseExposure, state.misuseLocked);
 
-export function checkTurnEndings(state, rng) {
+// Owner 2026-09-26, no dice: misuse ends the run on the second round in a row over both lines, and a rival's disaster
+// on the third round in a row above the heat line. Rounds before that show only through existing surfaces.
+export const MISUSE_ROUNDS = 2;
+export const HEAT_ROUNDS = 3;
+
+function countDangerRounds(state) {
+  const overMisuse = state.capability > BALANCE.dangerLine && effectiveMisuse(state) > BALANCE.misuseDisasterLine;
+  state.flags.misuseRounds = overMisuse ? (state.flags.misuseRounds ?? 0) + 1 : 0;
+  state.flags.heatRounds = state.raceHeat > BALANCE.raceHeatDisaster ? (state.flags.heatRounds ?? 0) + 1 : 0;
+}
+
+export function checkTurnEndings(state) {
   if (state.cash > 0) delete state.flags.insolvent;
   if (state.ending) return state.ending;
+  countDangerRounds(state);
   if (state.cash <= 0) {
     const used = new Set(state.flags.emergencyUsed ?? []);
     const rescueRemains = Object.keys(EMERGENCY_OPTIONS).some((option) => option !== 'acquihire' && !used.has(option));
@@ -37,12 +49,8 @@ export function checkTurnEndings(state, rng) {
     delete state.flags.boardVoteDue;
     if (!holdVote(state, kind).passed) return (state.ending = 'boardRemoved');
   }
-  if (state.capability > BALANCE.dangerLine && effectiveMisuse(state) > BALANCE.misuseDisasterLine && rng.chance(BALANCE.misuseRollChance)) {
-    return (state.ending = 'misuse');
-  }
-  if (state.raceHeat > BALANCE.raceHeatDisaster && rng.chance(BALANCE.rivalDisasterChance)) {
-    return (state.ending = 'rivalDisaster');
-  }
+  if (state.flags.misuseRounds >= MISUSE_ROUNDS) return (state.ending = 'misuse');
+  if (state.flags.heatRounds >= HEAT_ROUNDS) return (state.ending = 'rivalDisaster');
   return null;
 }
 
@@ -55,7 +63,11 @@ export function eraGate(state, { voteHeld = false } = {}) {
 }
 
 export function finalEnding(state) {
-  if (state.deal && !state.deal.collapsed && !state.deal.playerShipped && state.deal.binding.length >= 2) {
+  if (state.deal && !state.deal.collapsed && !state.deal.playerShipped && state.deal.binding.filter((card) => {
+    const signers = state.deal.signed[card] ?? [];
+    return signers.some((id) => state.rivals.some((rival) => rival.id === id))
+      && signers.some((id) => id === 'west' || id === 'east');
+  }).length >= 2) {
     return (state.ending = 'pacingDeal');
   }
   if (rank(state) === 1 && totalDebt(state) < 40) return (state.ending = 'aligned');

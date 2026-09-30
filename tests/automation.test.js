@@ -8,7 +8,7 @@ import {
 import {
   jobLevels, researchSpeed, claimedSpeed, codeShare, timeShares, bottleneck, checkLoad, checking,
   reviewerCost, controlUnits, effectiveChecks, automationRisk, setAutomation, handBack, addMonitor, automationTick, lockDown,
-  aiProposals, applyApprovals,
+  aiProposals, applyApprovals, maxLevel,
 } from '../sim/automation.js';
 import { eventsTick, resolveEvent, fallbackChoice } from '../sim/events.js';
 import { endTurn, applyActions } from '../sim/turn.js';
@@ -175,6 +175,7 @@ test('endTurn applies the free action and reports its errors', () => {
 });
 
 const hit = { next: () => 0, int: () => 0, chance: () => true, pick: (a) => a[0], normal: (m) => m };
+const hitTick = (s) => { s.automation.pressure = 1; return automationTick(s); };
 const ladder = (events) => events.filter((event) => event.type === 'internalWarning' || event.type === 'internalIncident');
 const recipe = {
   sliders: { size: 'medium', length: 'optimal', alignShare: 0.15 },
@@ -190,14 +191,41 @@ const withCompute = (s) => {
   return s;
 };
 
+test('unchecked AI work adds up: one stage each time the pressure reaches 1', () => {
+  const s = withCompute(atEra(4));
+  setAutomation(s, { levels: { experiments: maxLevel(4, 1) }, checks: { reviewers: 0, monitors: 0, aiReview: false } });
+  s.alignmentDebt = 60;
+  s.capability = 80;
+  const risk = automationRisk(s);
+  assert.ok(risk > 0 && risk < 1, `risk ${risk}`);
+  const quiet = Math.ceil((1 - 1e-9) / risk) - 1;
+  for (let i = 0; i < quiet; i++) assert.deepEqual(ladder(automationTick(s)), []);
+  assert.deepEqual(ladder(automationTick(s)), [{ type: 'internalWarning', stage: 1 }]);
+});
+
+// The existing setup used by 'from "leads" in choosing or direction, the AI proposes its own moves'.
+const proposingState = () => {
+  const s = atEra(5);
+  s.compute.online = 500;
+  setAutomation(s, { levels: { choosing: 3 }, checks: { monitors: 1 } });
+  s.activeRun = { bonus: 0, units: 2, turnsLeft: 3 };
+  return s;
+};
+
+test('with monitors running, the AI always proposes sampling its logs less', () => {
+  const s = proposingState();
+  s.automation.checks.monitors = 1;
+  assert.ok(aiProposals(s).some((proposal) => proposal.id === 'lessLogs'));
+});
+
 test('trouble escalates warning, incident, exfiltration, then takeover at high capability', () => {
   const s = atEra(4);
   s.capability = 75;
   s.alignmentDebt = 80;
-  assert.deepEqual(ladder(automationTick(s, hit)), [{ type: 'internalWarning', stage: 1 }]);
-  assert.deepEqual(ladder(automationTick(s, hit)), [{ type: 'internalIncident', stage: 2 }]);
-  assert.deepEqual(ladder(automationTick(s, hit)), [{ type: 'internalIncident', stage: 3 }]);
-  automationTick(s, hit);
+  assert.deepEqual(ladder(hitTick(s)), [{ type: 'internalWarning', stage: 1 }]);
+  assert.deepEqual(ladder(hitTick(s)), [{ type: 'internalIncident', stage: 2 }]);
+  assert.deepEqual(ladder(hitTick(s)), [{ type: 'internalIncident', stage: 3 }]);
+  hitTick(s);
   assert.equal(s.ending, 'quietTakeover');
 });
 
@@ -205,16 +233,15 @@ test('no trouble before era 3, and no roll at all when people check every piece 
   const early = atEra(2);
   early.capability = 90;
   early.alignmentDebt = 90;
-  for (let i = 0; i < 5; i++) automationTick(early, hit);
+  for (let i = 0; i < 5; i++) hitTick(early);
   assert.equal(early.automation.stage, 0);
   const checked = atEra(4);
   checked.capability = 90;
   checked.alignmentDebt = 90;
   checked.compute.online = 500;
   checked.automation.checks = { reviewers: 3, monitors: 3, aiReview: false };
-  let draws = 0;
-  automationTick(checked, { ...hit, chance: () => { draws += 1; return true; } });
-  assert.equal(draws, 0);
+  automationTick(checked);
+  assert.equal(checked.automation.pressure ?? 0, 0);
   assert.equal(checked.automation.stage, 0);
 });
 
@@ -223,14 +250,14 @@ test('no takeover before era 4: a hit at stage three holds there, then accept-sh
   s.capability = 75;
   s.alignmentDebt = 80;
   s.constitution.hardLines = ['accept-shutdown'];
-  for (let i = 0; i < 3; i++) automationTick(s, hit);
+  for (let i = 0; i < 3; i++) hitTick(s);
   assert.equal(s.automation.stage, 3);
-  for (let i = 0; i < 3; i++) assert.deepEqual(ladder(automationTick(s, hit)), []);
+  for (let i = 0; i < 3; i++) assert.deepEqual(ladder(hitTick(s)), []);
   assert.equal(s.ending, null);
   s.era = 4;
-  assert.deepEqual(ladder(automationTick(s, hit)), []);
+  assert.deepEqual(ladder(hitTick(s)), []);
   assert.equal(s.automation.stage, 4);
-  automationTick(s, hit);
+  hitTick(s);
   assert.equal(s.ending, 'quietTakeover');
 });
 
@@ -238,11 +265,11 @@ test('no takeover below capability 70; misses do not escalate', () => {
   const s = atEra(4);
   s.capability = 60;
   s.alignmentDebt = 80;
-  for (let i = 0; i < 6; i++) automationTick(s, hit);
+  for (let i = 0; i < 6; i++) hitTick(s);
   assert.equal(s.automation.stage, 3);
   assert.equal(s.ending, null);
   const calm = atEra(4);
-  automationTick(calm, miss);
+  automationTick(calm);
   assert.equal(calm.automation.stage, 0);
 });
 
@@ -250,34 +277,34 @@ test('speed feeds the active run, research points and, from ×1.5, one turn off 
   const s = atEra(4);
   s.activeRun = { bonus: 0, units: 2, turnsLeft: 5 };
   const points = s.researchPoints;
-  automationTick(s, miss);
+  automationTick(s);
   near(s.activeRun.bonus, RUN_BONUS_PER_SPEED * (researchSpeed(PACK[4]) - 1), 1e-9);
   near(s.researchPoints - points, POINTS_PER_SPEED * (researchSpeed(PACK[4]) - 1), 1e-9);
   assert.equal(s.activeRun.turnsLeft, 4);
-  automationTick(s, miss);
+  automationTick(s);
   assert.equal(s.activeRun.turnsLeft, 4);
   const slow = atEra(3);
   slow.activeRun = { bonus: 0, units: 2, turnsLeft: 5 };
-  automationTick(slow, miss);
+  automationTick(slow);
   assert.equal(slow.activeRun.turnsLeft, 5);
 });
 
 test('each tick records measured and claimed speed', () => {
   const s = atEra(4);
   s.turn = 13;
-  automationTick(s, miss);
+  automationTick(s);
   assert.deepEqual(s.automation.history, [{ turn: 13, era: 4, speed: researchSpeed(PACK[4]), claimed: 2.4 }]);
 });
 
 test('crossing the line reports it once, on that turn', () => {
   const s = atEra(5);
   s.turn = 16;
-  assert.deepEqual(automationTick(s, miss)[0], { type: 'ownLineCrossed', speed: researchSpeed(PACK[5]), line: 2 });
+  assert.deepEqual(automationTick(s)[0], { type: 'ownLineCrossed', speed: researchSpeed(PACK[5]), line: 2 });
   assert.equal(s.automation.lineTurn, 16);
   s.turn = 17;
-  assert.equal(automationTick(s, miss).some((event) => event.type === 'ownLineCrossed'), false);
+  assert.equal(automationTick(s).some((event) => event.type === 'ownLineCrossed'), false);
   s.automation.line = 3; // era 5's pack runs at ×2.64, below ×3
-  assert.equal(automationTick(s, miss).some((event) => event.type === 'ownLineCrossed'), false);
+  assert.equal(automationTick(s).some((event) => event.type === 'ownLineCrossed'), false);
 });
 
 test('endTurn: pushing the hand-offs makes a finishing run gain more', () => {
@@ -299,7 +326,7 @@ test('the old moves are gone', () => {
 test('crossing the line queues the screen-wall card', () => {
   const s = atEra(5);
   s.turn = 16;
-  automationTick(s, miss);
+  automationTick(s);
   eventsTick(s, miss);
   assert.equal(s.pendingEvents[0].id, 'ownLine');
   assert.deepEqual(s.pendingEvents[0].choices.map((choice) => choice.id), ['lockDown', 'moveLine', 'screenOff']);
@@ -325,7 +352,7 @@ test('moving the line raises it by one, costs staff trust, and the card can fire
   assert.equal(s.staffTrust, 64);
   s.compute.online = 500;
   assert.equal(setAutomation(s, { levels: { review: 4, experiments: 4, choosing: 3, direction: 2 } }).ok, true);
-  assert.equal(automationTick(s, miss)[0].line, 3);
+  assert.equal(automationTick(s)[0].line, 3);
 });
 
 test('turning the screen off is the fallback and hides debt', () => {
@@ -338,15 +365,12 @@ test('turning the screen off is the fallback and hides debt', () => {
 });
 
 test('from "leads" in choosing or direction, the AI proposes its own moves', () => {
-  const s = atEra(5);
-  assert.deepEqual(aiProposals(s, miss), []); // choosing is at Collaborates in era 5's pack
-  s.compute.online = 500;
-  setAutomation(s, { levels: { choosing: 3 }, checks: { monitors: 1 } });
-  s.activeRun = { bonus: 0, units: 2, turnsLeft: 3 };
-  const ids = aiProposals(s, hit).map((proposal) => proposal.id);
+  assert.deepEqual(aiProposals(atEra(5)), []); // choosing is at Collaborates in era 5's pack
+  const s = proposingState();
+  const ids = aiProposals(s).map((proposal) => proposal.id);
   assert.deepEqual(ids, ['overnight', 'lessLogs']);
   s.compute.online = controlUnits(s); // every unit taken by monitors: no idle compute to run experiments on
-  assert.deepEqual(aiProposals(s, hit).map((proposal) => proposal.id), ['lessLogs']);
+  assert.deepEqual(aiProposals(s).map((proposal) => proposal.id), ['lessLogs']);
 });
 
 const atLeads = () => {
@@ -460,8 +484,9 @@ test('endTurn: the mark that ends the run in a quiet takeover queues and runs no
     const s = atLeads();
     s.capability = 80;
     s.alignmentDebt = 100;
-    s.automation.stage = 4; // the default constitution's accept-shutdown line adds a fourth step before the takeover
+    s.automation.stage = 4; // start past the escalation stages so this tick reaches the takeover ending
     s.automation.autoApprove = autoApprove;
+    s.automation.pressure = 1; // the running total reaches 1 this round
     return endTurn(s, {}, hit);
   };
   const asked = takeover(false);

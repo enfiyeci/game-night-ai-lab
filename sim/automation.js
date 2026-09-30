@@ -1,5 +1,5 @@
-import { clamp, sigmoid } from './util.js';
-import { totalDebt } from './hazards.js';
+import { clamp, sigmoid, accrue } from './util.js';
+import { totalDebt, dangerCapability } from './hazards.js';
 import { eraScale } from './data/compute.js';
 import { availableUnits } from './training.js';
 import { hasLine } from './constitution.js';
@@ -7,7 +7,7 @@ import {
   JOBS, HANDOFF_JOBS, LAST_TWO_JOBS, MAX_LEVEL, LEVEL_SPEED, AI_SHARE, CHECK_LOAD, PACK,
   REVIEWER_CAPACITY, MONITOR_CAPACITY, REVIEWER_MONTHLY, MONITOR_UNITS, AI_REVIEW_BLIND, RISK_SCALE,
   CLAIM_INFLATION, MAX_CHECK, HELD_BACK, TROUBLE_ERA, RUN_BONUS_PER_SPEED, POINTS_PER_SPEED, RUN_SKIP_SPEED,
-  PROPOSE_LEVEL, LESS_LOGS_CHANCE, LESS_LOGS_DEBT, OVERNIGHT_BONUS, OVERNIGHT_POINTS,
+  PROPOSE_LEVEL, LESS_LOGS_DEBT, OVERNIGHT_BONUS, OVERNIGHT_POINTS,
 } from './data/automation.js';
 
 // The work is done by the newest trained model, released or not.
@@ -74,7 +74,7 @@ export function effectiveChecks(state) {
 }
 
 export function automationRisk(state) {
-  const base = sigmoid((totalDebt(state) * newestCapability(state) / 100 - 40) / 8);
+  const base = sigmoid((totalDebt(state) * dangerCapability(newestCapability(state)) / 100 - 40) / 8);
   return base * Math.min(1, checking(effectiveChecks(state), jobLevels(state)).exposure) * RISK_SCALE;
 }
 
@@ -141,7 +141,7 @@ const TAKEOVER_CAPABILITY = 70;
 // Owner decision 2026-09-25: the takeover ending needs era-4 capability.
 const TAKEOVER_ERA = 4;
 
-export function automationTick(state, rng) {
+export function automationTick(state) {
   const a = state.automation;
   const levels = jobLevels(state);
   const speed = researchSpeed(levels);
@@ -162,9 +162,10 @@ export function automationTick(state, rng) {
     a.lineTurn = state.turn;
     events.push({ type: 'ownLineCrossed', speed, line: a.line });
   }
-  // Fully checked work draws nothing, so eras 1-2 and checked labs keep the random sequence.
+  // Fully checked work adds nothing. Unchecked AI work adds its risk up round by round
+  // (a.pressure); each time the total reaches 1 the story moves one stage.
   if (state.era < TROUBLE_ERA || checking(effectiveChecks(state), levels).exposure <= 0) return events;
-  if (!rng.chance(automationRisk(state))) return events;
+  if (!accrue(a, 'pressure', automationRisk(state))) return events;
   if (a.stage >= 3) {
     if (newestCapability(state) < TAKEOVER_CAPABILITY || state.era < TAKEOVER_ERA) return events;
     if (a.stage === 3 && hasLine(state, 'accept-shutdown')) {
@@ -191,11 +192,11 @@ const proposing = (state) => {
   return levels[3] >= PROPOSE_LEVEL || levels[4] >= PROPOSE_LEVEL;
 };
 
-export function aiProposals(state, rng) {
+export function aiProposals(state) {
   if (!proposing(state)) return [];
   const out = [];
   if (availableUnits(state) >= 1) out.push({ id: 'overnight', label: 'Run experiments overnight on idle compute', risky: false });
-  if (state.automation.checks.monitors > 0 && rng.chance(LESS_LOGS_CHANCE)) {
+  if (state.automation.checks.monitors > 0) {
     out.push({ id: 'lessLogs', label: 'Sample its own monitor logs less often, to free up compute', risky: true });
   }
   return out;

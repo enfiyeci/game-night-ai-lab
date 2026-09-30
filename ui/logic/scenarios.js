@@ -7,6 +7,7 @@ import { inDangerZone } from '../../sim/economy.js';
 import { boardVoteThisRound } from '../../sim/board.js';
 import { MEETINGS } from '../../sim/data/president.js';
 import { setAutomation } from '../../sim/automation.js';
+import { ROUND_DAYS } from '../../sim/time.js';
 import { turnRecord } from './finance.js';
 import { SCENARIO_EVENTS } from '../../sim/data/scenarioEvents.js';
 import { enableScenarios } from '../../sim/scenarios.js';
@@ -14,7 +15,7 @@ import { enableScenarios } from '../../sim/scenarios.js';
 const preferences = {
   pre: ['licensed-data', 'hazard-filter-built', 'hazard-filter-reuse'],
   mid: ['decontaminate', 'anneal'],
-  post: ['human-sft', 'cai', 'classifiers', 'safety-tuning', 'character', 'deliberative', 'spec-light'],
+  post: ['human-sft', 'cai', 'classifiers', 'safety-tuning', 'constitution', 'character', 'deliberative'],
   release: ['eval-third', 'eval-full', 'channel-api'],
 };
 
@@ -114,11 +115,23 @@ function throughTurn(seed, targetTurn, stopWhen = () => false) {
   return state;
 }
 
+// Debug scenes replay nearby seeds if the requested run ends before its target; every scene still comes
+// from normal actions, and the state's seed identifies the actual run for reproduction.
+function reachableScenario(seed, stopWhen) {
+  let fallback;
+  for (let offset = 0; offset < 20; offset += 1) {
+    const state = throughTurn(seed + offset, 20, stopWhen);
+    fallback ??= state;
+    if (!state.ending && stopWhen(state)) return state;
+  }
+  return fallback;
+}
+
 const start = (seed) => createInitialState({ seed });
 const releaseState = (seed) => throughTurn(seed, 3);
 // The first era-3 turn with a training run under way, so the HUD shows a project and its progress bar.
-const midEra3 = (seed) => throughTurn(seed, 12, (s) => s.era === 3 && s.activeRun !== null);
-const atEra = (seed, era) => throughTurn(seed, 20, (state) => state.era === era);
+const midEra3 = (seed) => reachableScenario(seed, (s) => s.era === 3 && s.activeRun !== null);
+const atEra = (seed, era) => reachableScenario(seed, (state) => state.era === era);
 
 function eventState(seed) {
   const rng = createRng(seed);
@@ -135,11 +148,13 @@ function eventState(seed) {
 }
 
 // An era-3 state with a trained model waiting to be released (for the release dialog and reveal screenshots).
+// A held model still needs payroll and compute: keep the script's financing actions while withholding release.
 function readyToRelease(seed) {
   const rng = createRng(seed + 1000);
   let state = midEra3(seed);
   for (let guard = 0; guard < 8 && state.activeRun && !state.ending; guard += 1) {
-    ({ state } = endTurn(state, { ...scriptedActions(state), moves: [] }, rng));
+    const actions = scriptedActions(state);
+    ({ state } = endTurn(state, { ...actions, moves: actions.moves.filter((move) => move.type === 'deal' || move.type === 'raise') }, rng));
   }
   return state;
 }
@@ -216,7 +231,8 @@ function dangerState(seed) {
 }
 
 // A run with full reasoning RL that ends with the cheating trace unanswered. The dice are played from seed 1 up
-// until one rolls the hazard (an even chance each), so the state is always reached by the real sim.
+// until one meets the hazard (since deterministic endings A9 a hackable recipe always does, so the first seed does),
+// so the state is always reached by the real sim.
 function hazardState(seed) {
   let base = SCENARIOS.era3Idle(seed);
   if (base.ending) return base;
@@ -296,8 +312,22 @@ function racksState(seed) {
   return landed.length ? applyActions(state, { eventChoices }, rng).state : state;
 }
 
+function beforeEra(seed, era) {
+  const rng = createRng(seed);
+  const base = throughTurn(seed, (era - 1) * 4 - 1);
+  if (base.ending || base.era !== era - 1) return base;
+  const acted = applyActions(base, scriptedActions(base), rng).state;
+  const state = advanceDays(acted, ROUND_DAYS[base.era] - 1, rng).state;
+  histories.set(state, scenarioHistory(base));
+  return state;
+}
+
 export const SCENARIOS = {
   start,
+  beforeEra2: (seed) => beforeEra(seed, 2),
+  beforeEra3: (seed) => beforeEra(seed, 3),
+  beforeEra4: (seed) => beforeEra(seed, 4),
+  beforeEra5: (seed) => beforeEra(seed, 5),
   scenarioEvent: (seed) => {
     const state = enableScenarios(start(seed));
     state.models.push({ name: 'Preview model', active: true, activated: true, activeFromTurn: 0,
@@ -310,15 +340,13 @@ export const SCENARIOS = {
     return state;
   },
   midEra3,
-  era3Idle: (seed) => throughTurn(seed, 20, (s) => s.era === 3 && !s.activeRun && !s.pendingModel),
+  era3Idle: (seed) => reachableScenario(seed, (s) => s.era === 3 && !s.activeRun && !s.pendingModel),
   release: releaseState,
   readyToRelease,
   event: eventState,
-  meeting: (seed) => throughTurn(seed, 20, (s) => s.meeting?.id === 'first'),
-  // Seeds 1 and 2 end in era 4 under the current balance. The offset keeps debug seeds 1–4 on runs
-  // that reach the second meeting while preserving the same scripted playthrough.
-  meeting2: (seed) => throughTurn(seed + 2, 20, (s) => s.meeting?.id === 'second'),
-  summit: (seed) => throughTurn(seed, 20, (s) => s.era === 5 && s.turnInEra === 0 && !s.deal),
+  meeting: (seed) => reachableScenario(seed, (s) => s.meeting?.id === 'first'),
+  meeting2: (seed) => reachableScenario(seed, (s) => s.meeting?.id === 'second'),
+  summit: (seed) => reachableScenario(seed, (s) => s.era === 5 && s.turnInEra === 0 && !s.deal),
   ending: (seed) => throughTurn(seed, 20),
   danger: dangerState,
   era2Deals: dealsState,

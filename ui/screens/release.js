@@ -6,7 +6,7 @@ import { money } from '../logic/format.js';
 import {
   PRICE_NAMES, PRICE_STOPS, REASONING_NAMES, REASONING_STOPS, SIZE_ORDER,
   canSkip, laterMoveProblem, nextGeneration, perMillion, pricePerMillion, releaseDraft, releaseOpinions,
-  queueBeforeRelease, releasePayload, releasePreview, releaseSpec, shipDelay, shipWords, withCard,
+  queueBeforeRelease, releasePayload, releasePreview, releaseSpec, shipDelay, shipWords, waitsForTesters, withCard,
 } from '../logic/release.js';
 import { tierWord } from '../../sim/release.js';
 import { registerMenuHandler } from '../menu.js';
@@ -183,9 +183,10 @@ export function openRelease(game, overlayRoot, { stage } = {}) {
       previewName.textContent = check.name;
       const when = el('span', null, 'Ships ');
       when.append(el('span', `release-when ${check.delay > 0 ? 'later' : 'now'}`, shipWords(check.delay, game.state.era)));
+      if (waitsForTesters(now, draft.picks)) when.append(' · outside testers first');
       shipLine.replaceChildren(
         when,
-        el('span', null, `${check.cash > 0 ? `Costs ${money(check.cash)}` : 'No cash cost'} · ${isEditing ? 'replaces your queued release' : 'uses 1 of your 2 moves'}`),
+        el('span', null, `${check.cash > 0 ? `Costs ${money(check.cash)}` : 'No cash cost'} · ${isEditing ? 'replaces your queued release' : 'uses 1 of your 2 team actions'}`),
       );
       error.textContent = check.errors[0] ?? '';
       leftContent.replaceChildren(teamPanel(now, { opinions: releaseOpinions(now, draft) }));

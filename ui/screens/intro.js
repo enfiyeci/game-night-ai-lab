@@ -1,3 +1,10 @@
+import { createGame } from '../game.js';
+import { openFinance } from './finance.js';
+import { openBudget } from './budget.js';
+import { openDeals, openRaise, openResearch } from './company.js';
+import { openAutomation } from './automation.js';
+import { openBoard } from './board.js';
+import { openHistory } from './history.js';
 import { openDialog } from '../components/dialog.js';
 import { bubbleAt, el, loadAnchors } from '../components/eventBits.js';
 import { ADVISOR_TITLE } from '../logic/events.js';
@@ -16,6 +23,11 @@ export function mountIntro(game, { stage, overlay, storage }) {
   let anchors = null;
   let watcher = null;
   let starting = false;
+  let previousFocus = null;
+  const previewScreens = { finance: openFinance, budget: openBudget, deals: openDeals, training: openRecipe,
+    history: openHistory, automation: openAutomation, research: openResearch, raise: openRaise, board: openBoard };
+  const background = [...stage.children].filter((node) => node !== overlay);
+  const inertBefore = new Map();
 
   // A HUD element's box in stage coordinates (the page may be zoomed to fit the window).
   function stageBox(selector) {
@@ -48,12 +60,23 @@ export function mountIntro(game, { stage, overlay, storage }) {
     layer.remove();
     layer = null;
     document.removeEventListener('keydown', onKey, true);
+    for (const [node, inert] of inertBefore) node.inert = inert;
+    inertBefore.clear();
+    if (previousFocus?.isConnected) previousFocus.focus();
     markTourSeen(storage);
     game.clock?.resume('intro');
   }
 
   function onKey(event) {
-    if (event.key !== 'Escape' || !layer) return;
+    if (!layer) return;
+    if (event.key === 'Tab') {
+      const buttons = [...layer.querySelectorAll('.intro-bar button:not([disabled])')];
+      const current = buttons.indexOf(document.activeElement);
+      event.preventDefault();
+      buttons[(current + (event.shiftKey ? -1 : 1) + buttons.length) % buttons.length]?.focus();
+      return;
+    }
+    if (event.key !== 'Escape') return;
     event.preventDefault();
     event.stopPropagation();
     finish();
@@ -63,9 +86,10 @@ export function mountIntro(game, { stage, overlay, storage }) {
     const step = TOUR[index];
     const last = index === TOUR.length - 1;
     layer.replaceChildren();
+    for (const node of background) node.inert = last ? inertBefore.get(node) : true;
     layer.classList.toggle('intro-open', last); // the last stop lets clicks through to the floor
     const head = anchors.heads[step.who];
-    if (!last) {
+    if (!last && !step.screen) {
       const hole = el('<div class="intro-hole" aria-hidden="true"></div>');
       hole.style.left = `${head[0] - 95}px`;
       hole.style.top = `${head[1] + 52 - 95}px`;
@@ -76,7 +100,11 @@ export function mountIntro(game, { stage, overlay, storage }) {
       const ali = stageBox('.hud .ctr.ali');
       if (cap && ali) outline({ x: cap.x, y: cap.y, w: ali.x + ali.w - cap.x, h: Math.max(cap.h, ali.h) }, 10);
     }
-    if (step.point === 'money') outline(stageBox('#hud .info'));
+    if (step.point === 'money') {
+      outline(stageBox('#hud .info'));
+      outline(stageBox('#hud [data-open="money"]'), 5);
+    }
+    if (step.point === 'compute') outline(stageBox('#hud [data-open="compute"]'), 5);
     if (step.point === 'floor') {
       const [x, y] = anchors.floorMenu;
       const ring = el('<div class="intro-ring" aria-hidden="true"></div>');
@@ -90,14 +118,27 @@ export function mountIntro(game, { stage, overlay, storage }) {
         note.style.top = `${clock.y + clock.h + 16}px`;
       }
     }
-    bubbleAt(layer, head, { label: ADVISOR_TITLE[step.who], say: step.say, width: 300, tail: 30, dy: -34 }).classList.add('intro-say');
+    if (step.screen) {
+      const preview = el('<div class="intro-preview" inert aria-hidden="true"></div>');
+      layer.append(preview);
+      const demo = createGame({ state: game.state });
+      previewScreens[step.screen](demo, preview);
+      const explanation = el('<section class="gp intro-explanation" aria-live="polite"><h2></h2><p></p><small></small></section>');
+      explanation.querySelector('h2').textContent = step.title;
+      explanation.querySelector('p').textContent = step.say;
+      explanation.querySelector('small').textContent = step.path;
+      layer.append(explanation);
+    } else bubbleAt(layer, head, { label: ADVISOR_TITLE[step.who], say: step.say, width: 300, tail: 30, dy: -34 }).classList.add('intro-say');
 
     const bar = el(`<section class="gp intro-bar" aria-label="Tour of the office">
       <span class="intro-bar-title"></span><span class="intro-dots" aria-hidden="true"></span>
-      <button type="button" class="intro-skip"></button><button type="button" class="btn intro-next">Next</button>
+      <button type="button" class="intro-back">Back</button><button type="button" class="intro-skip"></button><button type="button" class="btn intro-next">Next</button>
     </section>`);
-    bar.querySelector('.intro-bar-title').textContent = last ? 'Your turn: click the floor' : 'Meet your team';
+    bar.querySelector('.intro-bar-title').textContent = `${index + 1} / ${TOUR.length} · ${step.title}`;
     for (let i = 0; i < TOUR.length; i += 1) bar.querySelector('.intro-dots').append(el(`<i class="${i === index ? 'on' : ''}"></i>`));
+    const back = bar.querySelector('.intro-back');
+    back.disabled = index === 0;
+    back.addEventListener('click', () => { index -= 1; show(); });
     const skip = bar.querySelector('.intro-skip');
     skip.textContent = last ? 'Close' : 'Skip the tour';
     skip.addEventListener('click', finish);
@@ -134,7 +175,9 @@ export function mountIntro(game, { stage, overlay, storage }) {
       startWhenClear();
       return;
     }
-    layer = el('<div class="intro-layer" role="dialog" aria-label="Meet your team"></div>');
+    previousFocus = document.activeElement;
+    for (const node of background) { inertBefore.set(node, node.inert); node.inert = true; }
+    layer = el('<div class="intro-layer" role="dialog" aria-modal="true" aria-label="Tour of your lab"></div>');
     overlay.append(layer);
     index = 0;
     document.addEventListener('keydown', onKey, true);
@@ -160,6 +203,7 @@ export function mountIntro(game, { stage, overlay, storage }) {
     waiting.observe(overlay, { childList: true, subtree: true });
   }
 
+  registerMenuHandler('tour', startWhenClear);
   return { start: startWhenClear, finish, get open() { return Boolean(layer); } };
 }
 

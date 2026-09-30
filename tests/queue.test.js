@@ -95,3 +95,22 @@ test('outside era 3 the queue clears', () => {
   assert.deepEqual(queueTurn(s, lo), []);
   assert.equal(s.compute.queue.carry, null);
 });
+
+test('rivals order today’s speed-relative amount, however much compute they have coming (owner, 2026-09-26)', () => {
+  // Capping orders at the shortfall let rivals, nearly full by era 3, order almost nothing, so the queue stopped
+  // rationing (compute race money investigation, 2026-09-26).
+  const s = fresh3();
+  const ob = s.rivals.find((r) => r.id === 'openbrain');
+  ob.pipeline.push({ units: 1000, turn: s.turn + 1, source: 'offBoard' });
+  assert.equal(rivalOrders(s).find((x) => x.lab === 'openbrain').units, orderOf(SPEED.openbrain));
+});
+
+test('what the queue gives a rival lands in its fleet next round', () => {
+  const s = fresh3();
+  queueTurn(s, lo);
+  const rows = s.compute.queue.last.rows.filter((row) => row.lab !== 'you' && row.got > 0);
+  assert.ok(rows.length > 0);
+  for (const row of rows) {
+    assert.deepEqual(s.rivals.find((r) => r.id === row.lab).pipeline.at(-1), { units: row.got, turn: s.turn + 1, supplier: 'verde', source: 'queue' });
+  }
+});

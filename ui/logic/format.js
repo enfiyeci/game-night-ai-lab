@@ -1,3 +1,4 @@
+import { polishStatus } from './polish.js';
 import { recipeCost } from '../../sim/recipe.js';
 import { workingName } from './naming.js';
 import { MW_PER_UNIT } from '../../sim/data/compute.js';
@@ -49,7 +50,10 @@ export function users(value) {
 }
 
 export function computeAmount(units, era = 1) {
-  if (era < 4) return `${trimOneDecimal(units)} units`;
+  if (era < 4) {
+    const amount = trimOneDecimal(units);
+    return `${amount} ${amount === '1' ? 'unit' : 'units'}`;
+  }
   const megawatts = units * MW_PER_UNIT;
   if (megawatts < 1000) return `${trimOneDecimal(megawatts)} MW`;
   return `${(megawatts / 1000).toFixed(2)} GW`;
@@ -70,7 +74,9 @@ export function project(state) {
   const run = state.activeRun;
   const pauseDays = Math.max(0, (state.flags?.trainingPausedUntilDay ?? 0) - state.day);
   if (!run) {
-    return state.pendingModel
+    const model = state.pendingModel;
+    if (model?.polishing) return { name: workingName(state, model.size), status: polishStatus(model), progress: model.polish / 100 };
+    return model
       ? { name: 'Training complete', status: 'ready to release', progress: null }
       : { name: pauseDays ? 'Training paused' : 'No project', status: pauseDays ? `${pauseDays} days remaining` : 'click the floor to get to work', progress: null };
   }

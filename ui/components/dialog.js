@@ -1,3 +1,5 @@
+import { enterTransition, exitTransition } from './transition.js';
+
 let nextDialogId = 0;
 const closers = new WeakMap();
 
@@ -97,8 +99,15 @@ const focusable = (root) => [...root.querySelectorAll(
 )].filter((element) => !element.closest('[hidden]'));
 
 export function closeDialog(target) {
-  const layer = target?.classList?.contains('dialog-layer') ? target : target?.querySelector?.('.dialog-layer');
-  closers.get(layer)?.();
+  const layers = target?.classList?.contains('dialog-layer')
+    ? [target]
+    : [...(target?.querySelectorAll?.('.dialog-layer') ?? [])];
+  for (let index = layers.length - 1; index >= 0; index -= 1) {
+    const close = closers.get(layers[index]);
+    if (!close) continue;
+    close();
+    return;
+  }
 }
 
 export function openDialog(overlayRoot, opts) {
@@ -110,11 +119,12 @@ export function openDialog(overlayRoot, opts) {
   const close = () => {
     if (closed) return;
     closed = true;
-    layer.classList.remove('dialog-open');
-    layer.remove();
     closers.delete(layer);
-    if (previousFocus?.isConnected && typeof previousFocus.focus === 'function') previousFocus.focus();
-    overlayRoot.dispatchEvent(new CustomEvent('gdt-dialog-closed'));
+    exitTransition(layer).then(() => {
+      const successor = overlayRoot.querySelector('.dialog-layer, .event-layer, .screenwall-layer');
+      if (!successor && previousFocus?.isConnected && typeof previousFocus.focus === 'function') previousFocus.focus();
+      overlayRoot.dispatchEvent(new CustomEvent('gdt-dialog-closed'));
+    });
   };
   const cancel = () => {
     try {
@@ -124,13 +134,15 @@ export function openDialog(overlayRoot, opts) {
     }
   };
 
-  layer = dialog({ ...opts, onCancel: cancel });
+  // opts.build swaps the GDT trio for a screen's own layer; it must hold a .dialog-veil and a focusable .dialog-centre.
+  layer = (opts.build ?? dialog)({ ...opts, onCancel: cancel });
   closers.set(layer, close);
   Object.defineProperty(layer, 'close', { value: close });
   layer.querySelector('.dialog-veil').addEventListener('click', cancel);
   layer.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
       event.preventDefault();
+      event.stopPropagation(); // a built layer has no GDT panel to stop it, so the key would also close the turn summary and bubbles
       cancel();
       return;
     }
@@ -156,7 +168,7 @@ export function openDialog(overlayRoot, opts) {
   });
 
   overlayRoot.append(layer);
-  requestAnimationFrame(() => layer.classList.add('dialog-open'));
+  enterTransition(layer);
   layer.querySelector('.dialog-centre').focus();
   return layer;
 }

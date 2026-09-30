@@ -224,3 +224,25 @@ test('the ending subscriber checks for open dialogs only after every subscriber 
   await new Promise((resolve) => setTimeout(resolve, 0));
   assert.equal(loadFilmCalls, 1, 'a stray later close event must not start it again');
 });
+
+
+test('the epilogue waits for player decisions before the film and ignores duplicate play requests', async () => {
+  let submit;
+  let decisions = 0;
+  const films = [];
+  const game = { state: endedState('aligned'), subscribe: () => () => {} };
+  const ending = mountEnding(game, null, {
+    selectFinale: () => { decisions += 1; return new Promise((resolve) => { submit = resolve; }); },
+    loadFilm: async (_root, options) => { films.push(options); return { play() {} }; },
+  });
+  const playing = ending.play();
+  assert.equal(decisions, 1);
+  assert.equal(films.length, 0);
+  submit({ fullTitle: 'Aligned success — as a careful steward', legacy: [] });
+  await playing;
+  assert.equal(films.length, 1);
+  assert.equal(films[0].fullTitle, 'Aligned success — as a careful steward');
+  await ending.play();
+  assert.equal(decisions, 1);
+  assert.equal(films.length, 1, 'a second play request cannot interrupt the running film');
+});

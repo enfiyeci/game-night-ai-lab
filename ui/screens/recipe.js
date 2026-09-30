@@ -1,6 +1,6 @@
 import { ADVISOR_PROFILES } from '../../sim/data/advisorLines.js';
 import { eraScale } from '../../sim/data/compute.js';
-import { ERA_CHIP, FOCUS, FOCUS_REACTIONS, SIZE_COMPARISONS, STAGE_BRIEFINGS } from '../../sim/data/recipeFocus.js';
+import { ERA_CHIP, FOCUS, FOCUS_REACTIONS, STAGE_BRIEFINGS } from '../../sim/data/recipeFocus.js';
 import { genevaCapRow } from './deal.js';
 import { CARDS } from '../../sim/data/cards.js';
 import {
@@ -16,13 +16,16 @@ import { openDialog } from '../components/dialog.js';
 import { portrait } from '../components/portraits.js';
 import { teamPanel } from '../components/team.js';
 import { vslider } from '../components/vslider.js';
-import { cardCostWords, recipePreview, sanitizeDraft } from '../logic/actions.js';
+import { cardCostWords, fitDraftToCompute, recipePreview, sanitizeDraft } from '../logic/actions.js';
 import { projectQueue } from '../logic/compute.js';
 import { computeAmount, money, roundsToWords } from '../logic/format.js';
 import { offeredCards } from '../logic/release.js';
 import { registerMenuHandler } from '../menu.js';
+import { openBudget } from './budget.js';
+import { openDeals } from './compute.js';
 
 const rememberedDrafts = new WeakMap();
+const detourDrafts = new WeakSet(); // saved when the help line sent the player to the deal board or the budget
 // Cards with `opens: key` call a screen registered under that key when picked, and may show a note line.
 const cardOpeners = new Map();
 
@@ -84,7 +87,10 @@ function stageStepper(stage, era) {
   for (const id of stagesFor(era)) {
     const item = document.createElement(id === stage ? 'strong' : 'span');
     item.textContent = STAGE_NAMES[id];
-    if (id === stage) item.setAttribute('aria-current', 'step');
+    if (id === stage) {
+      item.setAttribute('aria-current', 'step');
+      item.tabIndex = -1; // focus lands here when Next or Back turns the page
+    }
     root.append(item);
   }
   return root;
@@ -468,7 +474,8 @@ function computeFooter(state, preview, releaseEstimate = false) {
     line.textContent = `No free compute — ${reason}`;
   } else if (!preview.cost) line.textContent = 'Choose a valid size and training length.';
   else if (!preview.fits) {
-    line.textContent = `Needs ${computeAmount(units, state.era)} — only ${computeAmount(preview.free, state.era)} are free`;
+    const free = computeAmount(preview.free, state.era);
+    line.textContent = `Needs ${computeAmount(units, state.era)} — only ${free} ${free === '1 unit' ? 'is' : 'are'} free`;
   } else line.textContent = computeUsageText(units, preview.free, state.era);
   meter.append(label, trackWrap, line);
   if (releaseEstimate) {
@@ -490,6 +497,35 @@ function computeFooter(state, preview, releaseEstimate = false) {
   return root;
 }
 
+// Shown when the recipe needs more compute than is free: a smaller size if one fits, otherwise the two places that
+// free compute (a deal, or capping serving in the budget), so a new player is never left at a dead Start button.
+function computeHelp(state, draft, preview, { onFit, onDeals, onBudget }) {
+  if (!preview.errors.includes('not enough free compute')) return null;
+  const root = document.createElement('div');
+  root.className = 'recipe-help';
+  root.setAttribute('role', 'alert');
+  const text = document.createElement('span');
+  text.className = 'recipe-help-text';
+  const link = (label, onClick) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'release-link';
+    button.textContent = label;
+    button.addEventListener('click', onClick);
+    return button;
+  };
+  const fitted = fitDraftToCompute(state, draft);
+  if (fitted.sliders.size !== draft.sliders.size && recipePreview(state, fitted).fits) {
+    const units = SIZE_UNITS[fitted.sliders.size] * eraScale(state.era);
+    text.textContent = `Not enough free compute. A ${(units * 1000).toLocaleString('en-US')} ${ERA_CHIP[state.era - 1]}s run fits.`;
+    root.append(text, link('Use the largest size that fits', onFit));
+  } else {
+    text.textContent = 'No model fits the free compute.';
+    root.append(text, link('Rent or sign compute', onDeals), link('Free some in the budget', onBudget));
+  }
+  return root;
+}
+
 export function openRecipe(game, overlayRoot, { stage = 1 } = {}) {
   const projected = () => projectQueue(game.state, game.queue);
   const releaseBeforeRun = () => {
@@ -497,8 +533,16 @@ export function openRecipe(game, overlayRoot, { stage = 1 } = {}) {
     const runIndex = moves.findIndex((move) => move.type === 'startRun');
     return moves.slice(0, runIndex < 0 ? moves.length : runIndex).some((move) => move.type === 'release');
   };
-  let draft = sanitizeDraft(projected(), rememberedDrafts.get(game));
+  // A remembered size that no longer fits steps down, unless the player left for more compute mid-choice: then the
+  // dialog comes back exactly as they left it (Codex review round 1).
+  const back = detourDrafts.has(game);
+  detourDrafts.delete(game);
+  let draft = back ? sanitizeDraft(projected(), rememberedDrafts.get(game)) : fitDraftToCompute(projected(), rememberedDrafts.get(game));
   let opened;
+  // One dialog across the stages (owner playtest 2026-09-26): Next and Back swap what is inside it, so the veil, the
+  // side panels and the buttons stay put. The buttons call whichever stage is showing.
+  let stageActions = {};
+  let shownCapRow = null;
 
   function showStage(requested) {
     const state = projected();
@@ -517,6 +561,12 @@ export function openRecipe(game, overlayRoot, { stage = 1 } = {}) {
     const error = document.createElement('div');
     error.className = 'dialog-error recipe-error';
     error.setAttribute('role', 'alert');
+    const helpSlot = document.createElement('div');
+    const leaveFor = (open) => () => {
+      rememberedDrafts.set(game, cloneDraft(draft)); // come back to the same choices
+      detourDrafts.add(game);
+      open(game, overlayRoot);
+    };
 
     const refresh = () => {
       const nextState = projected();
@@ -539,6 +589,16 @@ export function openRecipe(game, overlayRoot, { stage = 1 } = {}) {
       }));
       footerSlot.replaceChildren(computeFooter(nextState, preview, releaseBeforeRun()));
       error.textContent = capitaliseError(preview.errors[0]);
+      const help = computeHelp(nextState, draft, preview, {
+        onFit: () => {
+          draft = fitDraftToCompute(projected(), draft);
+          showStage(number);
+        },
+        onDeals: leaveFor(openDeals),
+        onBudget: leaveFor(openBudget),
+      });
+      helpSlot.replaceChildren(...(help ? [help] : []));
+      if (help) error.textContent = ''; // the help line says it, with the way out
       const subtitle = opened?.querySelector('.subt');
       if (subtitle) subtitle.textContent = `${workingName(nextState, draft)} / ${STAGE_NAMES[stageId]}`;
       const startButton = opened?.querySelector('.dialog-ok');
@@ -552,12 +612,11 @@ export function openRecipe(game, overlayRoot, { stage = 1 } = {}) {
       const sizeRow = () => choiceRow('Model size', SIZES.filter((size) => size !== 'xl' || state.era >= 2).map((size) => {
         const units = SIZE_UNITS[size] * eraScale(state.era);
         const chips = `${(units * 1000).toLocaleString('en-US')} ${ERA_CHIP[state.era - 1]}s`;
-        const comparison = SIZE_COMPARISONS[state.era]?.[size];
         const power = state.era >= 4 ? computeAmount(units, state.era) : '';
         return {
           value: size,
           label: chips,
-          detail: [power, comparison].filter(Boolean).join(' · ') || ' ',
+          detail: power || ' ',
           ariaLabel: `${SIZE_NAMES[size]}: ${chips}`,
         };
       }), draft.sliders.size, (size) => {
@@ -588,7 +647,10 @@ export function openRecipe(game, overlayRoot, { stage = 1 } = {}) {
       const rows = document.createElement('div');
       rows.className = 'recipe-choices';
       rows.append(sizeRow(), lengthRow());
-      centre.append(rows, note);
+      const sizeHelp = document.createElement('p');
+      sizeHelp.className = 'recipe-compute-line';
+      sizeHelp.textContent = 'Larger models need more powered compute and gain more capability from training techniques.';
+      centre.append(rows, sizeHelp, note);
     }
     draft.focus ??= {};
     draft.focus[stageId] ??= startFocus(stageId);
@@ -598,17 +660,13 @@ export function openRecipe(game, overlayRoot, { stage = 1 } = {}) {
     }));
 
     const capRow = number === 3 ? genevaCapRow(game.state) : null;
-    body.append(centre, footerSlot, error);
+    body.append(centre, footerSlot, error, helpSlot);
     const nextStage = number === 1 ? (state.era < 2 ? 3 : 2) : 3;
     const previousStage = number === 3 ? (state.era < 2 ? 1 : 2) : 1;
-    opened = openDialog(overlayRoot, {
-      title: `Training run · Stage ${stagesFor(state.era).indexOf(stageId) + 1}`,
-      subtitle: `${workingName(state, draft)} / ${STAGE_NAMES[stageId]}`,
-      left: { title: 'Team', content: teamPanel(state, { lines: true }) },
-      right: { title: 'Selected techniques', content: rightContent },
-      body,
-      okLabel: number === 3 ? 'Start training' : 'Next',
-      backLabel: number > 1 ? 'Back' : undefined,
+    const title = `Training run · Stage ${stagesFor(state.era).indexOf(stageId) + 1}`;
+    const subtitle = `${workingName(state, draft)} / ${STAGE_NAMES[stageId]}`;
+    const okLabel = number === 3 ? 'Start training' : 'Next';
+    stageActions = {
       onBack: () => showStage(previousStage),
       onOk() {
         if (number < 3) {
@@ -631,10 +689,40 @@ export function openRecipe(game, overlayRoot, { stage = 1 } = {}) {
         rememberedDrafts.set(game, cloneDraft(draft));
         opened.close();
       },
-    });
-    opened.classList.add('recipe-dialog', `recipe-dialog-stage-${number}`);
+    };
+
+    const turningPage = Boolean(opened?.isConnected);
+    if (turningPage) {
+      const panel = opened.querySelector('.dialog-centre');
+      panel.querySelector('h1').textContent = title;
+      panel.querySelector('.subt').textContent = subtitle;
+      panel.querySelector('.dialog-body').replaceChildren(body);
+      opened.querySelector('.dialog-right').querySelector('.dialog-side-content').replaceChildren(rightContent);
+      const ok = opened.querySelector('.dialog-ok');
+      ok.textContent = okLabel;
+      ok.title = '';
+      opened.classList.remove('recipe-dialog-stage-1', 'recipe-dialog-stage-2', 'recipe-dialog-stage-3');
+    } else {
+      opened = openDialog(overlayRoot, {
+        title,
+        subtitle,
+        left: { title: 'Team', content: teamPanel(state, { lines: true }) },
+        right: { title: 'Selected techniques', content: rightContent },
+        body,
+        okLabel,
+        backLabel: 'Back', // always built, hidden on stage 1, so Next never moves
+        onBack: () => stageActions.onBack(),
+        onOk: () => stageActions.onOk(),
+      });
+      opened.classList.add('recipe-dialog');
+    }
+    opened.classList.add(`recipe-dialog-stage-${number}`);
+    opened.querySelector('.dialog-back').hidden = number === 1;
+    shownCapRow?.remove();
+    shownCapRow = capRow;
     if (capRow) opened.append(capRow);
     refresh();
+    if (turningPage) body.querySelector('[aria-current="step"]')?.focus();
   }
 
   showStage(stage);

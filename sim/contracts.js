@@ -1,12 +1,14 @@
+import { rank } from './rivals.js';
 import { BALANCE } from './balance.js';
 import { eraById } from './data/eras.js';
 import { eraOfRound } from './time.js';
 import { createRng } from './rng.js';
 import {
-  SUPPLIERS, SPOT_PRICE, eraScale, FRAGILE_MONTHLY, BUMP_CHANCE, GULF_OPEN, GULF_REVOKE, EQUITY_SHARE,
+  SUPPLIERS, SPOT_PRICE, eraScale, CORE_FLAME_TROUBLE_MONTHS, SPOT_PULL_HEAT, TIGHT_SPOT_ERAS, GULF_OPEN, GULF_REVOKE, EQUITY_SHARE,
   SCALE_DOWN, SCALE_DOWN_PENALTY_MONTHS, BREAK_SHARE, BUYOUT_MONTHS, partnerMarkup, spotPrice,
 } from './data/compute.js';
-import { SITE_TYPES, reserveGrid, poweredUnits } from './power.js';
+import { SITE_TYPES, reserveGrid, poweredUnits, sitePower } from './power.js';
+import { BOARD_SUPPLIERS, DENIAL_HEAT } from './data/race.js';
 
 const UNIT = BALANCE.unitMonthlyCost;
 const FAMILY = { azuriaEquity: 'azuria', loi: 'verde' };
@@ -46,7 +48,8 @@ export function generateOffers(state, rng) {
       offers.push({ id, supplier: key, units, credits, arrivesIn: s.arrival + delay, upfront: 0, monthly: units * UNIT, termMonths: s.termMonths, price: s.price, string: s.string });
       continue;
     }
-    const units = rng.int(s.size[0], s.size[1]) * eraScale(era);
+    const size = s.sizeByEra?.[era] ?? s.size;
+    const units = Math.round(size[0] + (size[1] - size[0]) * (state.rivals.length + 1 - rank(state)) / Math.max(1, state.rivals.length)) * eraScale(era);
     const markup = partnerMarkup(state, key);
     const price = key === 'spot' ? spotPrice(state) : s.price * markup;
     const termMonths = s.termMonths; // null for spot: it renews every turn until dropped or pulled
@@ -54,6 +57,25 @@ export function generateOffers(state, rng) {
     offers.push({ id, supplier: key, units, arrivesIn: arrivalOf(s, era) + delay, upfront: Math.round(s.upfrontShare * monthly * (termMonths ?? 0)), monthly, termMonths, price, string: s.string, ...(markup > 1 ? { partnerMarkup: markup } : {}) });
   }
   return offers;
+}
+
+// Spec 2026-09-26 compute race §2 rule 3: board cards stay until signed or taken, a taken slot refills next round,
+// and an era change makes a new board. The investment, the grid and the queue are priced from the player's own
+// state, so they are made fresh every round. A full board is drawn either way, so the draws never change.
+// A kept card takes the fresh card's arrival, so a scale-down delay (contractAction) never sticks to it or stacks.
+const onBoard = (offer) => BOARD_SUPPLIERS.includes(offer.supplier) && !offer.viaQueue;
+export function refreshOffers(state, rng) {
+  const fresh = generateOffers(state, rng);
+  const sameEra = state.compute.offersEra === state.era;
+  state.compute.offersEra = state.era;
+  if (!sameEra) return fresh;
+  return fresh.map((offer) => {
+    if (!onBoard(offer)) return offer;
+    const kept = state.compute.offers.find((o) => onBoard(o) && o.supplier === offer.supplier);
+    if (!kept) return offer;
+    kept.arrivesIn = offer.arrivesIn;
+    return kept;
+  });
 }
 
 // Raising from the strategic cloud partner marks up rival-cloud offers already on the table this turn too,
@@ -76,7 +98,7 @@ export function addPipeline(state, item) {
 }
 
 function arrive(state, p, rng) {
-  const units = p.headline ? Math.round(p.headline * (0.3 + 0.7 * rng.next())) : p.units;
+  const units = p.headline ? Math.max(Math.round(p.headline * 0.3), Math.min(p.headline, Math.floor(Math.max(0, sitePower(state) - state.compute.contracts.filter((c) => c.needsPower && !c.dark).reduce((sum, c) => sum + c.units, 0))))) : p.units;
   const c = {
     id: p.id, supplier: p.supplier, units, price: p.price, monthsLeft: p.termMonths,
     // A delivery landing early keeps the rules of the era it was due in (stage 2 lands it inside the round before).
@@ -109,6 +131,7 @@ export function signOffer(state, offerId, rng) {
   if (offer.supplier === 'gulf' && (state.govFavor.us < GULF_OPEN || state.flags.supplyChainRisk)) return { ok: false, error: 'the Gulf deal needs US approval' };
   if (offer.upfront > state.cash) return { ok: false, error: 'not enough cash for the upfront payment' };
   state.cash -= offer.upfront;
+  if (offer.wantedBy) state.raceHeat += DENIAL_HEAT;
   const f = family(offer.supplier);
   state.compute.deals ??= [];
   state.compute.deals.push({ supplier: f, turn: state.turn });
@@ -130,7 +153,7 @@ export function signOffer(state, offerId, rng) {
     arrive(state, state.compute.pipeline.splice(i, 1)[0], rng);
     refreshOnline(state);
   }
-  return { ok: true, offerId, arrivesTurn, pipelineId: id };
+  return { ok: true, offerId, arrivesTurn, pipelineId: id, denied: offer.wantedBy ?? null };
 }
 
 // Called once the turn has advanced, so what is due on turn T is online while the player plans turn T.
@@ -168,13 +191,14 @@ export function syncContracts(state) {
 
 // Called at turn end, before plan 2A's event tick, so a CoreFlame failure is warned about the same turn.
 export function contractsTurn(state, rng) {
-  const months = eraById(state.era).monthsPerTurn;
   const spots = state.compute.contracts.filter((c) => c.supplier === 'spot' && c.bumpTurn == null && c.arrivedTurn <= state.turn);
-  const warnedBump = spots.length > 0 && rng.chance(BUMP_CHANCE[state.era] ?? 0);
+  const warnedBump = spots.length > 0 && TIGHT_SPOT_ERAS.includes(state.era) && state.raceHeat >= SPOT_PULL_HEAT;
   if (warnedBump) for (const c of spots) c.bumpTurn = state.turn + 1; // serves (and bills) one more turn
   for (const c of state.compute.contracts) {
     if (c.arrivedTurn > state.turn) continue;
-    if (c.supplier === 'coreflame' && !c.troubled && rng.chance(perTurn(FRAGILE_MONTHLY, months))) c.troubled = true;
+    if (c.supplier === 'coreflame' && !c.troubled) {
+      if ((c.monthsRun ?? 0) >= CORE_FLAME_TROUBLE_MONTHS - 1 - 1e-9) c.troubled = true;
+    }
   }
   return { warnedBump };
 }
@@ -185,6 +209,10 @@ export function contractsTurn(state, rng) {
 export function expireContracts(state, months = eraById(state.era).monthsPerTurn) {
   const expired = [];
   state.compute.contracts = state.compute.contracts.filter((c) => {
+    if (c.supplier === 'coreflame') {
+      c.monthsRun = (c.monthsRun ?? 0) + months;
+      if (c.monthsRun >= CORE_FLAME_TROUBLE_MONTHS - 1 - 1e-9) c.troubled = true;
+    }
     if (c.monthsLeft == null) return true; // spot rolls over
     c.monthsLeft -= months;
     if (c.monthsLeft > 1e-9) return true;

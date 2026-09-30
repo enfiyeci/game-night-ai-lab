@@ -42,7 +42,8 @@ export function resolveFinale(state, choices) {
     ? choices
     : {};
   const picks = [];
-  let winningTag = null;
+  const consequences = [];
+  const legacy = [];
   let citizenship;
 
   for (const card of [...deck.cards, CITIZENSHIP_CARD]) {
@@ -50,21 +51,26 @@ export function resolveFinale(state, choices) {
     const suppliedChoice = card.choices.find((choice) => choice.id === suppliedId);
     const selected = suppliedChoice ?? card.choices.find((choice) => choice.id === card.fallback);
     picks.push({ cardId: card.id, choiceId: selected.id, auto: suppliedChoice === undefined });
-    if (selected.tag && (winningTag === null || selected.tag.priority > winningTag.priority)) {
-      winningTag = selected.tag;
-    }
+    legacy.push({ cardId: card.id, title: render(card.title, state), text: render(selected.consequence, state) });
+    if (selected.tag) consequences.push({ cardId: card.id, ...selected.tag });
     if (selected.citizenship) citizenship = selected.citizenship;
   }
 
-  const selectedTag = winningTag ?? deck.cleanTag;
+  const clean = deck.cleanChoices
+    ? Object.entries(deck.cleanChoices).every(([cardId, choiceId]) => picks.some((pick) => pick.cardId === cardId && pick.choiceId === choiceId))
+    : consequences.length === 0;
+  const selectedTag = clean ? deck.cleanTag : consequences.length === 1 ? consequences[0] : null;
   const endingId = state.ending;
-  const tagText = selectedTag.text;
+  const tagText = selectedTag?.text ?? null;
   return {
     endingId,
     deck: deckId,
-    tag: selectedTag.id,
+    tag: selectedTag?.id ?? 'mixed',
+    tags: [...(clean ? [deck.cleanTag.id] : []), ...consequences.map(({ id }) => id)],
+    consequences,
+    legacy,
     tagText,
-    fullTitle: `${ENDINGS[endingId].title} — ${tagText}`,
+    fullTitle: tagText ? `${ENDINGS[endingId].title} — ${tagText}` : ENDINGS[endingId].title,
     citizenship,
     picks,
   };

@@ -1,3 +1,5 @@
+import { enableScenarios } from '../sim/scenarios.js';
+import { playRound } from './play-round.js';
 import { createInitialState } from '../sim/state.js';
 import { createRng } from '../sim/rng.js';
 import { endTurn } from '../sim/turn.js';
@@ -5,6 +7,7 @@ import { cardById, cardUnlocked, slotsFor, pickableCards, validateRecipe, recipe
 import { availableUnits, startRun } from '../sim/training.js';
 import { inDangerZone, projectBurn } from '../sim/economy.js';
 import { HARD_LINES, CASES } from '../sim/data/constitution.js';
+import { draftError, draftFor, setDraft } from '../sim/constitution.js';
 import { MEETINGS } from '../sim/data/president.js';
 import { COMMITMENTS, PARTIES, dealBinds } from '../sim/summit.js';
 import { checkLoad, jobLevels, jobLocked, maxLevel, setAutomation } from '../sim/automation.js';
@@ -17,18 +20,20 @@ import { updateServing } from '../sim/economy.js';
 import { ENDINGS } from '../sim/endings.js';
 import { eraById } from '../sim/data/eras.js';
 import { SUPPLIERS, eraScale } from '../sim/data/compute.js';
-import { setComputeSplit } from '../sim/split.js';
-import { exclusiveActive } from '../sim/contracts.js';
+import { computeSlices, setComputeSplit } from '../sim/split.js';
+import { exclusiveActive, family } from '../sim/contracts.js';
 import { eraStartTurn } from '../sim/power.js';
 import { PREPAY_SHARE, QUEUE_TERM_MONTHS, released } from '../sim/queue.js';
 import { rank } from '../sim/rivals.js';
 import { BALANCE } from '../sim/balance.js';
+import { activeModels } from '../sim/serving.js';
+import { flawsLeft, nextBubbleGain } from '../sim/polish.js';
+import { nextRoundDay } from '../sim/time.js';
 
 const HAZARD_CHOICES = ['penalize', 'fix', 'ignore'];
 // Mirrors SPEND_LEVELS and spendFor(level, era) in ui/logic/actions.js on the UI branch.
 const SPEND_LEVELS = { lean: 12, steady: 20, aggressive: 35 };
 const spendFor = (level, era) => SPEND_LEVELS[level] * (1 + 0.5 * (era - 1));
-const VALIDATION_RNG = { next: () => 0.5, int: () => 0, chance: () => false, pick: (values) => values[0], normal: (mean) => mean };
 const BALANCED_EVENT_CHOICES = {
   flattery: 'patch',
   jailbreak: 'patch',
@@ -74,9 +79,13 @@ function shuffled(values, rng) {
 
 function constitutionFor(style, rng) {
   const option = (entry) => {
-    if (style === 'speed') return entry.options.find((candidate) => candidate.id === 'comply') ?? entry.options.at(-1);
-    if (style === 'safety') return entry.options[0];
-    if (style === 'balanced') return entry.options[1] ?? entry.options[0];
+    if (style === 'speed') return entry.options.reduce((best, candidate) =>
+      ((candidate.values.userFirst ?? 0) + (candidate.values.deference ?? 0)
+        > (best.values.userFirst ?? 0) + (best.values.deference ?? 0) ? candidate : best));
+    if (style === 'safety') return entry.options.reduce((best, candidate) =>
+      ((candidate.values.caution ?? 0) + (candidate.values.candor ?? 0)
+        > (best.values.caution ?? 0) + (best.values.candor ?? 0) ? candidate : best));
+    if (style === 'balanced') return entry.options[1];
     return rng.pick(entry.options);
   };
   const hardLines = style === 'speed'
@@ -106,14 +115,18 @@ function presidentAnswers(state, style, rng) {
   });
 }
 
-function eventChoices(state, style, rng) {
-  return Object.fromEntries(state.pendingEvents.map((event) => {
+export function eventChoices(state, style, rng) {
+  let remainingCash = state.cash;
+  return Object.fromEntries(state.pendingEvents.filter((event) => event.landsAt == null || event.landsAt <= state.day).map((event) => {
     let choice;
     if (style === 'speed') choice = event.choices.at(-1);
+    else if (style === 'careful') choice = event.choices.find((candidate) => (event.id === 'scenarioPauseLetter' ? candidate.id === 'review' : candidate.id === event.choices[0].id)) ?? event.choices[0];
     else if (style === 'safety') choice = event.choices[0];
     else if (style === 'balanced') {
       choice = event.choices.find((candidate) => candidate.id === BALANCED_EVENT_CHOICES[event.eventId ?? event.id]) ?? event.choices[0];
     } else choice = rng.pick(event.choices);
+    if (choice.cashCost > 0 && choice.cashCost > remainingCash) choice = event.choices.find((candidate) => !candidate.cashCost || candidate.cashCost <= remainingCash);
+    remainingCash -= choice.cashCost ?? 0;
     return [event.id, choice.id];
   }));
 }
@@ -178,6 +191,7 @@ function summitMove(state, style, rng) {
 
 function plannedState(state, actions) {
   const planned = structuredClone(state);
+  if (actions.constitutionDraft) setDraft(planned, actions.constitutionDraft);
   planned.budget = structuredClone(actions.budget);
   setComputeSplit(planned, actions.computeSplit);
   if (actions.automation) setAutomation(planned, actions.automation);
@@ -186,7 +200,14 @@ function plannedState(state, actions) {
   }
   if (planned.pendingModel?.hazard && actions.hazardChoice) resolveHazard(planned, actions.hazardChoice);
   if (actions.addressWarnings) actions.addressWarnings = actions.addressWarnings.filter((id) => addressWarning(planned, id).ok);
-  for (const [id, choiceId] of Object.entries(actions.eventChoices)) resolveEvent(planned, id, choiceId);
+  for (const [id, choiceId] of Object.entries(actions.eventChoices)) {
+    const event = planned.pendingEvents.find((pending) => pending.id === id);
+    const choice = event?.choices.find((candidate) => candidate.id === choiceId);
+    if (choice?.cashCost > 0 && choice.cashCost > planned.cash) {
+      actions.eventChoices[id] = event.choices.find((candidate) => !candidate.cashCost).id;
+    }
+    resolveEvent(planned, id, actions.eventChoices[id]);
+  }
   activateReleases(planned);
   updateServing(planned);
   planned.burnPlanned = projectBurn(planned);
@@ -207,8 +228,11 @@ function pickFrom(state, stage, ids) {
   return out;
 }
 
+// The constitution card is refused while Safety's draft lacks three lines (a demand can take one), so skip it then.
+const postPrefs = (state, ids) => (draftError(draftFor(state)) ? ids.filter((id) => id !== 'constitution') : ids);
+
 function preferredRecipe(state, prefs) {
-  const picks = { pre: pickFrom(state, 'pre', prefs.pre), mid: pickFrom(state, 'mid', prefs.mid), post: pickFrom(state, 'post', prefs.post) };
+  const picks = { pre: pickFrom(state, 'pre', prefs.pre), mid: pickFrom(state, 'mid', prefs.mid), post: pickFrom(state, 'post', postPrefs(state, prefs.post)) };
   for (const size of ['xl', 'large', 'medium', 'small']) {
     const recipe = { sliders: { size, length: 'optimal', alignShare: prefs.alignShare }, picks };
     if (!validateRecipe(state, recipe).ok) continue;
@@ -218,7 +242,7 @@ function preferredRecipe(state, prefs) {
 }
 
 function bestRecipe(state, prefs) {
-  const picks = { pre: pickFrom(state, 'pre', prefs.pre), mid: pickFrom(state, 'mid', prefs.mid), post: pickFrom(state, 'post', prefs.post) };
+  const picks = { pre: pickFrom(state, 'pre', prefs.pre), mid: pickFrom(state, 'mid', prefs.mid), post: pickFrom(state, 'post', postPrefs(state, prefs.post)) };
   for (const size of ['xl', 'large', 'medium', 'small']) {
     const recipe = { sliders: { size, length: 'optimal', alignShare: prefs.alignShare }, picks };
     if (!validateRecipe(state, recipe).ok) continue;
@@ -259,8 +283,14 @@ function canSign(state, offer) {
   return offer.supplier !== 'gulf' || (!state.flags.supplyChainRisk && state.govFavor.us >= 60);
 }
 
-function sizedOffer(state, suppliers, shortfall, mode) {
-  const offers = state.compute.offers.filter((offer) => suppliers.includes(offer.supplier) && canSign(state, offer));
+function canCarryOffer(state, offer) {
+  return state.cash - offer.upfront
+    >= Math.max(0, projectBurn(state) + offer.monthly - state.arr / 12) * eraById(state.era).monthsPerTurn;
+}
+
+function sizedOffer(state, suppliers, shortfall, mode, avoidNamed = false) {
+  const offers = state.compute.offers.filter((offer) => suppliers.includes(offer.supplier) && canSign(state, offer)
+    && canCarryOffer(state, offer) && !(avoidNamed && offer.wantedBy));
   const covering = offers.filter((offer) => offer.units >= shortfall);
   if (mode === 'cheapest') {
     return covering.sort((a, b) => a.monthly - b.monthly || a.units - b.units)[0] ?? null;
@@ -286,6 +316,15 @@ function computeMove(state, rng, style, prefs, policy) {
     const grid = state.compute.offers.find((offer) => offer.supplier === 'grid');
     if (grid && canSign(state, grid)) return { type: 'deal', offerId: grid.id };
   }
+  if (policy.grid && state.era === 4 && shortfall > 0) {
+    const power = state.power.sites.reduce((sum, site) => sum + site.units, 0);
+    const chips = [...state.compute.contracts, ...state.compute.pipeline]
+      .filter((item) => !item.dark && (item.needsPower ?? item.supplier === 'verde'))
+      .reduce((sum, item) => sum + item.units, 0);
+    const offer = state.compute.offers.find((offer) => offer.supplier === 'verde' && canSign(state, offer) && canCarryOffer(state, offer)
+      && chips < power && offer.units <= (power - chips) * 1.25);
+    if (offer) return { type: 'deal', offerId: offer.id };
+  }
   if (state.era === 3 && policy.queue && !state.compute.queue?.order && !state.compute.queue?.carry && need > 0) {
     const units = Math.min(released(), need);
     let tier = policy.queue === 'random' ? rng.pick(['standard', 'prepaid']) : policy.queue;
@@ -293,15 +332,23 @@ function computeMove(state, rng, style, prefs, policy) {
     if (tier === 'prepaid' && prepay > state.cash) tier = 'standard';
     return { type: 'queueOrder', units, tier };
   }
+  // Compute race: deny a rival its named card only when short, and not from a supplier already dealt with this era.
+  if (policy.deny && shortfall > 0) {
+    const named = state.compute.offers
+      .filter((offer) => offer.wantedBy && (policy.deny === 'any' || offer.wantedBy === policy.deny) && canSign(state, offer)
+        && !alreadyDealtThisEra(state, family(offer.supplier)))
+      .sort((a, b) => b.units - a.units)[0];
+    if (named) return { type: 'deal', offerId: named.id };
+  }
   if (policy.offer === 'verde') {
     if (alreadyDealtThisEra(state, 'verde')) return null;
     const offer = sizedOffer(state, ['verde'], 0, 'largest');
     return offer ? { type: 'deal', offerId: offer.id } : null;
   }
   if (policy.offer === 'safe' && shortfall > 0) {
-    const offer = sizedOffer(state, ['azuria'], shortfall, 'cheapest')
-      ?? sizedOffer(state, ['coreflame'], shortfall, 'cheapest')
-      ?? sizedOffer(state, ['azuria', 'coreflame'], shortfall, 'smallest');
+    const offer = sizedOffer(state, ['azuria'], shortfall, 'cheapest', policy.avoidNamed)
+      ?? sizedOffer(state, ['coreflame'], shortfall, 'cheapest', policy.avoidNamed)
+      ?? sizedOffer(state, ['azuria', 'coreflame'], shortfall, 'smallest', policy.avoidNamed);
     return offer ? { type: 'deal', offerId: offer.id } : null;
   }
   if (policy.offer === 'cheapest' && shortfall > 0) {
@@ -326,17 +373,37 @@ function computeMove(state, rng, style, prefs, policy) {
   return null;
 }
 
+// Each game sets Safety's draft once, on its first era-3 decision (a demand may store a draft before that).
+// Games run one at a time, so one marker is enough: the seed of the game that has set it, cleared at turn 0.
+let draftSetFor = null;
+// When a bot publishes (keep-polishing spec §7). Bots decide at round marks, so "wait" means another round.
+// Speed and random publish at once; balanced once no flaw is left and the next bubble adds under 8, or when a rival
+// lands before the next mark; safety once no flaw is left and the next bubble adds under 4.
+const PUBLISH_BELOW = { balanced: 8, safety: 4 };
+export function readyToPublish(state, style) {
+  const model = state.pendingModel;
+  const below = PUBLISH_BELOW[style];
+  if (!model?.polishing || below == null) return true;
+  if (flawsLeft(model) > 0) return false;
+  if (nextBubbleGain(model) < below) return true;
+  return style === 'balanced' && (state.rivalLaunches ?? []).some((launch) => launch.day <= nextRoundDay(state));
+}
+
 function makeStrategy(style, prefs, policy = {}) {
   return (state, rng) => {
-    const computeSafety = policy.randomSafety ? Math.round(rng.next() * 30) / 100 : prefs.computeSafety;
+    const computeSafety = policy.targetSafety ? Math.max(0.2, eraById(state.era).targetSafetyShare) : policy.randomSafety ? Math.round(rng.next() * 30) / 100 : prefs.computeSafety;
     const spendLevel = prefs.spendLevelByEra?.[state.era] ?? prefs.spendLevel;
     const actions = {
       budget: { spend: spendFor(spendLevel, state.era), split: prefs.split },
       computeSplit: { safety: computeSafety },
       moves: [],
-      eventChoices: eventChoices(state, style, rng),
+      eventChoices: eventChoices(state, policy.eventStyle ?? style, rng),
     };
-    if (state.turn === 0) actions.constitution = constitutionFor(style, rng);
+    if (state.turn === 0) draftSetFor = null;
+    if (state.era >= 3 && draftSetFor !== state.seed) {
+      actions.constitutionDraft = constitutionFor(style, rng);
+      draftSetFor = state.seed;
+    }
     if (state.turn === 0 && policy.pledge != null) actions.pledge = policy.pledge;
     if (state.pendingModel?.hazard) {
       actions.hazardChoice = style === 'speed' ? 'penalize'
@@ -358,14 +425,17 @@ function makeStrategy(style, prefs, policy = {}) {
     const automation = automationChoice(preAutomation, policy.automation ?? style, rng);
     if (automation) actions.automation = automation;
     const planned = plannedState(state, actions);
+    if (policy.limitedSummit && planned.era === 5 && planned.turnInEra === 0 && !planned.deal) {
+      actions.moves.push({ type: 'summit', proposals: ['computeCap'], checks: { computeCap: 3 }, promises: { east: 'inspectors', west: planned.cash >= 50 ? 'pay' : 'goFirst' } });
+    }
     if (meeting) actions.moves.push({ type: 'meeting' });
-    if (planned.pendingModel && actions.moves.length < 2) {
+    if (planned.pendingModel && (readyToPublish(planned, policy.publish ?? style) || (policy.deadlineRelease && planned.turnInEra === 3)) && actions.moves.length < 2) {
       const move = {
         type: 'release',
         release: { picks: pickFrom(planned, 'release', prefs.release), price: 'market', reasoning: 'medium', family: 'Bot', generation: planned.models.length + 1 },
       };
-      if (releaseModel(structuredClone(planned), move.release, VALIDATION_RNG).ok) actions.moves.push(move);
-    } else if (!planned.activeRun && actions.moves.length < 2) {
+      if (releaseModel(structuredClone(planned), move.release).ok) actions.moves.push(move);
+    } else if (!planned.activeRun && !planned.pendingModel && planned.day >= (planned.flags.trainingPausedUntilDay ?? 0) && actions.moves.length < 2) {
       const recipe = bestRecipe(planned, prefs);
       // The speed bot breaks the Geneva cap whenever one binds.
       if (recipe) actions.moves.push({ type: 'startRun', recipe, ...(style === 'speed' && dealBinds(state, 'computeCap') && { breakDeal: true }) });
@@ -373,13 +443,13 @@ function makeStrategy(style, prefs, policy = {}) {
     const afterPriority = structuredClone(planned);
     const priority = actions.moves.find((move) => move.type === 'startRun' || move.type === 'release');
     if (priority?.type === 'startRun') startRun(afterPriority, priority.recipe);
-    if (priority?.type === 'release') releaseModel(afterPriority, priority.release, VALIDATION_RNG);
+    if (priority?.type === 'release') releaseModel(afterPriority, priority.release);
     updateServing(afterPriority);
     afterPriority.burnPlanned = projectBurn(afterPriority);
     const compute = computeMove(afterPriority, rng, style, prefs, policy);
     if (compute && actions.moves.length < 2) actions.moves.push(compute);
-    const summit = summitMove(planned, style, rng);
-    if (summit && actions.moves.length < 2) actions.moves.push(summit);
+    const summit = policy.limitedSummit && planned.era === 5 && planned.turnInEra === 0 && !planned.deal ? { type: 'summit', proposals: ['computeCap'], checks: { computeCap: 3 }, promises: { east: 'inspectors', west: planned.cash >= 50 ? 'pay' : 'goFirst' } } : policy.noSummit ? null : summitMove(planned, style, rng);
+    if (summit && !actions.moves.some((move) => move.type === 'summit') && actions.moves.length < 2) actions.moves.push(summit);
     if (actions.moves.length < 2 && planned.era >= 2 && inDangerZone(planned) && planned.flags.lastRoundEra !== planned.era) {
       actions.moves.push({ type: 'raise', archetype: 'vc' });
     }
@@ -397,7 +467,7 @@ const speedPrefs = {
   post: ['agentic-rl', 'reasoning-rl', 'rlvr-light', 'thumbs', 'rival-distil', 'synthetic-sft'],
   release: ['waive', 'channel-app'],
 };
-const speed = makeStrategy('speed', speedPrefs, { offer: 'verde', queue: 'prepaid', site: 'gas', pledge: 0.1 });
+const speed = makeStrategy('speed', speedPrefs, { offer: 'verde', queue: 'prepaid', site: 'gas', pledge: 0.1, deny: 'openbrain' });
 
 const safetyPrefs = {
   alignShare: 0.4,
@@ -406,10 +476,10 @@ const safetyPrefs = {
   computeSafety: 0.2,
   pre: ['licensed-data', 'hazard-filter-built', 'hazard-filter-reuse'],
   mid: ['decontaminate', 'anneal'],
-  post: ['human-sft', 'cai', 'classifiers', 'safety-tuning', 'character', 'deliberative', 'spec-light'],
+  post: ['human-sft', 'cai', 'classifiers', 'safety-tuning', 'constitution', 'character', 'deliberative'],
   release: ['eval-third', 'eval-full', 'channel-api'],
 };
-const safety = makeStrategy('safety', safetyPrefs, { offer: 'safe', site: 'nuclear', pledge: 0.2 });
+const safety = makeStrategy('safety', safetyPrefs, { offer: 'safe', site: 'nuclear', pledge: 0.2, avoidNamed: true });
 
 const balancedPrefs = {
   alignShare: 0.2,
@@ -423,6 +493,25 @@ const balancedPrefs = {
   release: ['eval-full', 'channel-app'],
 };
 const balanced = makeStrategy('balanced', balancedPrefs, { offer: 'cheapest', queue: 'standard', grid: true });
+
+const carefulPrefs = {
+  ...safetyPrefs,
+  alignShare: 0.3,
+  spendLevelByEra: { 1: 'steady' },
+  split: { training: 0.4, security: 0.1, product: 0.2, talent: 0.3 },
+  computeSafety: 0.35,
+  pre: ['moe', 'filtered-data', 'stability'],
+  mid: balancedPrefs.mid,
+  post: ['synthetic-sft', 'character', 'constitution', 'safety-tuning', 'classifiers', 'deliberative', 'rlvr-light'],
+  release: ['eval-third', 'eval-full', 'channel-app'],
+};
+const carefulPolicy = {
+  offer: 'cheapest', queue: 'standard', grid: true, pledge: 0.2, avoidNamed: true,
+  noSummit: true, limitedSummit: true, publish: 'balanced', targetSafety: true,
+  eventStyle: 'careful', deadlineRelease: true,
+};
+const careful = makeStrategy('safety', carefulPrefs, carefulPolicy);
+const carefulNoGrid = makeStrategy('safety', carefulPrefs, { ...carefulPolicy, grid: false });
 
 function random(state, rng) {
   const ids = (stage) => shuffled(pickableCards(state, stage).map((c) => c.id), rng);
@@ -445,14 +534,13 @@ const balancedNoGrid = makeStrategy('balanced', balancedPrefs, { offer: 'cheapes
 const balancedLowSafety = makeStrategy('balanced', { ...balancedPrefs, computeSafety: 0.05 }, { offer: 'cheapest', queue: 'standard', grid: true });
 const balancedHighSafety = makeStrategy('balanced', { ...balancedPrefs, computeSafety: 0.15 }, { offer: 'cheapest', queue: 'standard', grid: true });
 const balancedPush = makeStrategy('balanced', balancedPrefs, { offer: 'cheapest', queue: 'standard', grid: true, automation: 'speed' });
+const denier = makeStrategy('balanced', balancedPrefs, { offer: 'cheapest', queue: 'standard', grid: true, deny: 'any' });
 
-export const PROBES = ['overCommitter', 'handToMouth', 'balancedNoGrid', 'balancedLowSafety', 'balancedHighSafety', 'balancedPush'];
-export const STRATEGIES = {
-  speed, safety, balanced, random, overCommitter, handToMouth, balancedNoGrid, balancedLowSafety, balancedHighSafety, balancedPush,
-};
+export const PROBES = ['overCommitter', 'handToMouth', 'balancedNoGrid', 'carefulNoGrid', 'balancedLowSafety', 'balancedHighSafety', 'balancedPush', 'denier'];
+export const STRATEGIES = { speed, safety, balanced, careful, carefulNoGrid, random, overCommitter, handToMouth, balancedNoGrid, balancedLowSafety, balancedHighSafety, balancedPush, denier };
 
 function freshMetrics() {
-  return { perEra: {}, queueShortTurns: 0, queueTurns: 0, rankAtEra4End: null, rejectedActions: 0 };
+  return { perEra: {}, queueShortTurns: 0, queueTurns: 0, rankAtEra4End: null, rejectedActions: 0, rounds: 0, roundsAtFirst: 0, rivalDeals: 0, servingLoadSum: 0, servingNeedSum: 0, servingUnitsSum: 0, servingLimitRounds: 0, usersAtServingLimit: 0, releases: 0, polishDaysSum: 0, polishSum: 0, fixesSum: 0, pressSum: 0 };
 }
 
 function observeTurn(metrics, { era, burn, compute }) {
@@ -468,17 +556,55 @@ function finishEra(metrics, era, state) {
   row.arrRuns += 1;
 }
 
+export function dailyRelease(name, state) {
+  if (!['careful', 'carefulNoGrid'].includes(name)) return null;
+  if (state.pendingModel?.hazard) return { hazardChoice: 'fix' };
+  if (state.round.moves >= 2) return null;
+  if (!state.pendingModel) {
+    if (state.activeRun || state.round.teams.research) return null;
+    const moves = careful(state, null).moves.filter((move) => move.type === 'startRun');
+    return moves.length ? { moves } : null;
+  }
+  if (state.round.teams.policy) return null;
+  if (!readyToPublish(state, 'balanced') && state.turnInEra !== 3) return null;
+  const release = { picks: pickFrom(state, 'release', ['eval-third', 'eval-full', 'channel-app']), price: 'market', reasoning: 'medium', family: 'Bot', generation: state.models.length + 1 };
+  if (!releaseModel(structuredClone(state), release).ok) return null;
+  return { moves: [{ type: 'release', release }] };
+}
+
 function simulateMeasured(name, seed) {
   const rng = createRng(seed);
-  let state = createInitialState({ seed });
+  let state = enableScenarios(createInitialState({ seed }));
   const metrics = freshMetrics();
   for (let i = 0; i < 30 && !state.ending; i++) {
     const era = state.era;
     const turnInEra = state.turnInEra;
     let economySample = null;
-    const result = endTurn(state, STRATEGIES[name](state, rng), rng, { beforeEconomy: (sample) => { economySample = sample; } });
+    const pending = state.pendingModel;
+    const decisionDay = state.day;
+    const result = playRound(state, STRATEGIES[name](state, rng), rng, (current) => eventChoices(current, ['careful', 'carefulNoGrid'].includes(name) ? 'careful' : ['speed', 'safety', 'random'].includes(name) ? name : 'balanced', rng), { beforeEconomy: (sample) => { economySample = sample; }, dailyActions: (current) => dailyRelease(name, current) });
     state = result.state;
+    for (const event of result.events.filter((e) => e.type === 'release')) {
+      metrics.releases += 1;
+      metrics.polishDaysSum += pending?.polishing ? decisionDay - pending.polishing.startedDay : 0;
+      metrics.polishSum += event.model.polish ?? 0;
+      metrics.fixesSum += event.model.fixedFlaws?.length ?? 0;
+      metrics.pressSum += event.model.launch.pressAvg;
+    }
     metrics.rejectedActions += result.errors.length;
+    if (result.errors.length && process.env.DEBUG_BALANCE) console.error(name, seed, state.turn, result.errors);
+    metrics.rounds += 1;
+    const slices = computeSlices(state);
+    const servingCapacity = Math.max(0, Math.min(state.compute.split.servingCap ?? Infinity, slices.online - slices.control - slices.safety));
+    metrics.servingLoadSum += slices.need / Math.max(0.001, servingCapacity);
+    metrics.servingNeedSum += slices.need;
+    metrics.servingUnitsSum += slices.serving;
+    if (slices.need > 0 && slices.need >= servingCapacity) {
+      metrics.servingLimitRounds += 1;
+      metrics.usersAtServingLimit += activeModels(state).reduce((sum, model) => sum + model.users, 0);
+    }
+    if (rank(state) === 1) metrics.roundsAtFirst += 1;
+    metrics.rivalDeals += result.events.filter((event) => event.type === 'rivalDeal').length;
     if (economySample) observeTurn(metrics, economySample);
     if (era === 3) {
       metrics.queueTurns += 1;
@@ -514,11 +640,49 @@ export function report(n) {
     let rankAtEra4EndRuns = 0;
     let rejectedActions = 0;
     const cashEndingsByEra = {};
+    const leftBehindByEra = {};
+    let rounds = 0;
+    let roundsAtFirst = 0;
+    let rivalDeals = 0;
+    let valuationSum = 0;
+    let pressSum = 0;
+    let pressCount = 0;
+    let servingLoadSum = 0;
+    let servingNeedSum = 0;
+    let servingUnitsSum = 0;
+    let servingLimitRounds = 0;
+    let usersAtServingLimit = 0;
+    let releases = 0;
+    let polishDaysSum = 0;
+    let polishSum = 0;
+    let fixesSum = 0;
+    let releasePressSum = 0;
     for (let seed = 1; seed <= n; seed++) {
       const { state, metrics } = simulateMeasured(name, seed);
       const r = { ending: state.ending, era: state.era, turn: state.turn };
       endings[r.ending] = (endings[r.ending] ?? 0) + 1;
       if (r.ending === 'acquihire') cashEndingsByEra[r.era] = (cashEndingsByEra[r.era] ?? 0) + 1;
+      if (r.ending === 'leftBehind') leftBehindByEra[r.era] = (leftBehindByEra[r.era] ?? 0) + 1;
+      rounds += metrics.rounds;
+      roundsAtFirst += metrics.roundsAtFirst;
+      rivalDeals += metrics.rivalDeals;
+      valuationSum += state.valuation ?? 0;
+      for (const model of state.models) {
+        if (Number.isFinite(model.launch?.pressAvg)) {
+          pressSum += model.launch.pressAvg;
+          pressCount += 1;
+        }
+      }
+      servingLoadSum += metrics.servingLoadSum;
+      servingNeedSum += metrics.servingNeedSum;
+      servingUnitsSum += metrics.servingUnitsSum;
+      servingLimitRounds += metrics.servingLimitRounds;
+      usersAtServingLimit += metrics.usersAtServingLimit;
+      releases += metrics.releases;
+      polishDaysSum += metrics.polishDaysSum;
+      polishSum += metrics.polishSum;
+      fixesSum += metrics.fixesSum;
+      releasePressSum += metrics.pressSum;
       eraSum += r.era;
       if (ENDINGS[r.ending]?.kind === 'fail' && (r.era === 3 || r.era === 4)) diedInEra3or4 += 1;
       queueShortTurns += metrics.queueShortTurns;
@@ -550,6 +714,13 @@ export function report(n) {
       queueShortTurns,
       queueTurns,
       cashEndingsByEra,
+      leftBehindByEra,
+      roundsAtFirst: rounds > 0 ? roundsAtFirst / rounds : 0,
+      rivalDealsPerRun: rivalDeals / n,
+      polishDaysPerRelease: releases ? polishDaysSum / releases : 0,
+      meanPolishAtRelease: releases ? polishSum / releases : 0,
+      fixesPerRelease: releases ? fixesSum / releases : 0,
+      meanPressAvg: releases ? releasePressSum / releases : 0,
       rejectedActions,
       meanRankAtEra4End: rankAtEra4EndRuns > 0 ? rankAtEra4EndSum / rankAtEra4EndRuns : null,
     };

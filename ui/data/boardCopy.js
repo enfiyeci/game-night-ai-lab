@@ -52,6 +52,8 @@ export const WANTS = {
   security: 'Friends in Washington, tight security',
   trustee: 'Public trust, the constitution intact',
 };
+// The trustee's want before any model has learned a constitution.
+export const TRUSTEE_WANTS_BEFORE = 'Public trust, the mission kept'; // OWNER WRITES
 
 // The staff read's lean, as a word.
 export const LEAN_WORD = { with: 'With you', leanWith: 'Leaning your way', leanAway: 'Leaning away', against: 'Against you' };
@@ -155,7 +157,7 @@ export const ISSUE_SAY = {
   washington: { up: 'Warming', down: 'Cooling', flat: 'Steady' },
   security: { up: 'Strong', down: 'Weak', flat: 'Holding' },
   trust: { up: 'Healthy', down: 'Too low', flat: 'Steady' },
-  constitution: { up: 'Intact', down: 'Hard lines dropped', flat: 'Intact' },
+  constitution: { up: 'Intact', down: 'Hard lines dropped', flat: 'Intact', none: 'None yet' }, // OWNER WRITES: none (before any model learns one)
 };
 
 // A line in the meeting's "What they'll raise" list: "Safety share under target".

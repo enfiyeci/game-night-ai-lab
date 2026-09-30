@@ -1,4 +1,4 @@
-import { HARD_LINES, CASES } from './data/constitution.js';
+import { HARD_LINES, CASES, SAFETY_PROPOSAL } from './data/constitution.js';
 import { totalDebt } from './hazards.js';
 
 const VALUES = ['candor', 'caution', 'deference', 'userFirst'];
@@ -27,6 +27,47 @@ function applyPowerGrabCost(state, hardLines) {
 
 export function hasLine(state, id) {
   return validLine(id) && (state.constitution?.hardLines ?? []).includes(id);
+}
+
+export const hasConstitution = (state) => (state.constitution?.version ?? 0) > 0;
+
+export function draftFor(state) {
+  if (state.constitutionDraft) return structuredClone(state.constitutionDraft);
+  const base = hasConstitution(state) ? state.constitution : SAFETY_PROPOSAL;
+  return { hardLines: [...base.hardLines], rulings: { ...base.rulings }, changes: [] };
+}
+
+export function draftError(value) {
+  if (!isPlainObject(value) || !Array.isArray(value.hardLines) || !isPlainObject(value.rulings)) return 'invalid constitution';
+  const { hardLines, rulings } = value;
+  if (hardLines.length !== 3 || new Set(hardLines).size !== 3) return 'choose exactly three different hard lines';
+  if (hardLines.some((id) => !validLine(id))) return 'unknown hard line';
+  if (CASES.some((entry) => !Object.hasOwn(rulings, entry.id) || !validRuling(entry.id, rulings[entry.id]))) return 'every case needs a known ruling';
+  return null;
+}
+
+// The player's edits go to the amendment log (the President's promises read it), not to the draft's "who asked" list.
+function logPlayerEdits(state, previous, next) {
+  const edits = [
+    ...previous.hardLines.filter((id) => !next.hardLines.includes(id)).map((remove) => ({ remove })),
+    ...next.hardLines.filter((id) => !previous.hardLines.includes(id)).map((add) => ({ add })),
+    ...CASES.filter((entry) => previous.rulings[entry.id] !== next.rulings[entry.id])
+      .map((entry) => ({ ruling: { caseId: entry.id, optionId: next.rulings[entry.id] } })),
+  ];
+  for (const change of edits) state.constitution.amendments.push({ turn: state.turn, change, source: 'player', draft: true });
+}
+
+export function setDraft(state, value) {
+  const error = draftError(value);
+  if (error) return { ok: false, error };
+  const previous = draftFor(state);
+  state.constitutionDraft = {
+    hardLines: [...value.hardLines],
+    rulings: Object.fromEntries(CASES.map((entry) => [entry.id, value.rulings[entry.id]])),
+    changes: state.constitutionDraft?.changes ?? [],
+  };
+  logPlayerEdits(state, previous, state.constitutionDraft);
+  return { ok: true };
 }
 
 export function setConstitution(state, value) {
@@ -110,6 +151,18 @@ function changedConstitution(state, change) {
   return { hardLines, rulings };
 }
 
+export function changeDraft(state, change, source) {
+  const validated = validateChange(change);
+  if (validated.error) return { ok: false, error: validated.error };
+  const draft = draftFor(state);
+  const next = changedConstitution({ constitution: draft }, validated.change);
+  if (next.error) return { ok: false, error: next.error };
+  const entry = { turn: state.turn, change: validated.change, source };
+  state.constitutionDraft = { hardLines: next.hardLines, rulings: next.rulings, changes: [...draft.changes, entry] };
+  state.constitution.amendments.push({ ...entry, draft: true });
+  return { ok: true };
+}
+
 function recordAmendment(state, change, source) {
   const amendment = { turn: state.turn, change };
   if (source) amendment.source = source;
@@ -150,6 +203,13 @@ export function constitutionValues(state) {
     for (const key of VALUES) totals[key] += option.values[key] ?? 0.5;
   }
   return Object.fromEntries(VALUES.map((key) => [key, totals[key] / CASES.length]));
+}
+
+export function learnConstitution(state, snapshot) {
+  applyPowerGrabCost(state, snapshot.hardLines);
+  state.constitution.hardLines = [...snapshot.hardLines];
+  state.constitution.rulings = { ...snapshot.rulings };
+  state.constitution.version = (state.constitution.version ?? 0) + 1;
 }
 
 export function learnedConstitution(state, rng) {

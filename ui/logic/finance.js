@@ -13,7 +13,7 @@ import { BALANCE } from '../../sim/balance.js';
 import { ERAS, eraById } from '../../sim/data/eras.js';
 import { RESALE, spotPrice } from '../../sim/data/compute.js';
 import { leaseMonthly } from '../../sim/power.js';
-import { activeModels, monthlyRevenue, revenuePerUser, roundAmount } from '../../sim/economy.js';
+import { activeModels, revenuePerUser, roundAmount } from '../../sim/economy.js';
 import { computeSlices, resaleCredit, spotCover } from '../../sim/split.js';
 import { PRICE_STANCE } from '../../sim/serving.js';
 import { reviewerCost } from '../../sim/automation.js';
@@ -78,7 +78,7 @@ export function turnRecord(before, after, events = []) {
   };
 }
 
-export const LOI_SURE_SHARE = 0.3; // sim/contracts.js arrive(): a letter of intent delivers 30-100% of its headline
+export const LOI_SURE_SHARE = 0.3; // sim/contracts.js arrive(): reserve the guaranteed floor; additional delivery depends on free power at arrival
 
 // What is already signed at a future turn: running contracts, deliveries due by then, and powered sites. bill is
 // the gross monthly bill; azuria is the part of it that cloud credits can pay.
@@ -185,13 +185,13 @@ export const raiseAllowed = roundOpen;
 // Eras a round can still be planned in: this one (raiseRound is legal now, even on an era's last turn) and later ones.
 export const roundEras = (state) => [...new Set([state.era, ...futureEras(state)])].filter((era) => era >= 2);
 
-export function project(state, plan) {
+export function project(state, plan, { until = LAST_TURN } = {}) {
   const goals = plan.goals ?? {};
   const raises = plan.raises ?? {};
   // A usage surge (sim/turn.js) scales revenue until its turns run out, then clears.
   const surge = state.compute.surge;
   const usageAt = (k) => (surge && k < surge.turnsLeft ? surge.usage ?? 1 : 1);
-  const baseRevenue = monthlyRevenue(state) / usageAt(0);
+  const baseRevenue = activeModels(state).reduce((sum, model) => sum + model.users * revenuePerUser(model), 0) / 1e6;
   const budgetSpend = state.budget.spend;
   const round = roundSize(state);
   const pooled = state.compute.pooled ?? 0;
@@ -203,12 +203,11 @@ export function project(state, plan) {
   let cash = state.cash;
   let credits = state.compute.credits ?? 0;
   let goal = 0;
-  for (let turn = state.turn; turn <= LAST_TURN; turn++) {
+  for (let turn = state.turn; turn <= Math.min(LAST_TURN, until); turn++) {
     const era = eraOfTurn(turn);
     const months = eraById(era).monthsPerTurn;
     if (goals[era] != null) goal = goals[era];
     const k = turn - state.turn;
-    const revenue = baseRevenue * usageAt(k);
     const signed = signedAt(state, turn);
     const planned = turn > state.turn ? Math.max(0, goal - signed.units) : 0;
     // New compute is pooled like the rest: buy the fewest units whose total, after pooling, reaches the goal.
@@ -237,6 +236,9 @@ export function project(state, plan) {
       idle -= lost;
       shortfall += -delta - lost;
     }
+    shortfall = Math.max(shortfall, slices.need - (state.compute.split.servingCap ?? Infinity));
+    const fulfilled = cover || slices.need <= 0 ? 1 : Math.max(0, 1 - shortfall / slices.need);
+    const revenue = baseRevenue * usageAt(k) * fulfilled;
     // resaleCredit: idle units come from the cheapest contracts first and never earn more than they bill.
     let resale = 0;
     let left = idle;
@@ -253,8 +255,8 @@ export function project(state, plan) {
     const raised = raises[era] && roundOpen(state, era) && turn === Math.max(state.turn, eraStart(era)) ? round : 0;
     // growUsers runs before the economy bills the turn, so each turn's growth comes first.
     const boost = state.budget.split.product * ((state.budget.spend * months) / 30) * 0.02;
-    for (const m of users) m.users = Math.min(m.cap, Math.round(m.users * (1 + (0.12 * m.growth + boost) * (months / 3))));
-    const grown = (users.reduce((sum, m) => sum + m.users * m.perUser, 0) / 1e6) * usageAt(k);
+    for (const m of users) m.users = Math.min(m.cap, Math.round(m.users * (1 + (0.12 * m.growth + boost) * (months / 3) * fulfilled)));
+    const grown = (users.reduce((sum, m) => sum + m.users * m.perUser, 0) / 1e6) * usageAt(k) * fulfilled;
     const cashStart = cash;
     cash += raised + (revenue - burn) * months;
     rows.push({
@@ -293,6 +295,10 @@ export function byEra(rows, { actual = false } = {}) {
   });
 }
 
+// Burn over revenue, rounded: 1 reads "a little more than we earn", never "1 times".
+const spendWords = (ratio) => (ratio <= 1 ? 'a little more than we earn' : `${ratio} times what we earn`);
+const unitWords = (count) => `${count} ${count === 1 ? 'unit' : 'units'}`;
+
 // The team's reading of a plan. Every line is computed from the projection or from the sim's own rules.
 export function planOpinions(state, projection, plan) {
   const eras = byEra(projection.rows);
@@ -301,9 +307,8 @@ export function planOpinions(state, projection, plan) {
   const ratio = Math.round(last.burn / today);
   const finalGoal = plan.goals[last.era] ?? state.compute.online;
   const growth = finalGoal / Math.max(1, state.compute.online);
-  const era4Goal = plan.goals[4];
   const out = projection.runsOut;
-  const byEnd = last.era <= state.era ? `by era ${last.era}` : 'by the end of the plan';
+  const byEnd = last.era <= state.era ? 'by the end of this era' : 'later in the plan';
   const opinions = [
     {
       id: 'cfo',
@@ -311,10 +316,10 @@ export function planOpinions(state, projection, plan) {
       text: projection.rows[0].revenue < 1
         ? `We earn nothing yet and spend ${Math.round(last.burn)} million a month ${byEnd}.${out ? ` We're out in month ${Math.floor(out.atMonth)}.` : ''}`
         : out
-          ? `We spend ${ratio} times what we earn ${byEnd}. Without more money we're out in month ${Math.floor(out.atMonth)}.`
+          ? `We spend ${spendWords(ratio)} ${byEnd}. Without more money we're out in month ${Math.floor(out.atMonth)}.`
           : last.burn <= last.revenue
             ? `It holds. ${byEnd[0].toUpperCase()}${byEnd.slice(1)} we earn more than we spend.`
-            : `It holds. We spend ${Math.max(1, ratio)} times what we earn ${byEnd}.`,
+            : `It holds. We spend ${spendWords(ratio)} ${byEnd}.`,
     },
     {
       id: 'research',
@@ -324,15 +329,9 @@ export function planOpinions(state, projection, plan) {
     {
       id: 'safety',
       mood: 'calm',
-      text: era4Goal != null
-        ? `At our ${Math.round(state.compute.split.safety * 100)}% share, ${state.era >= 4 ? 'this era' : 'later on'}, safety gets ${Math.round(era4Goal * state.compute.split.safety)} units.`
-        : `At our ${Math.round(state.compute.split.safety * 100)}% share, safety gets ${Math.round(finalGoal * state.compute.split.safety)} units.`,
+      text: `At our ${Math.round(state.compute.split.safety * 100)}% share, safety gets ${unitWords(Math.round(finalGoal * state.compute.split.safety))}.`,
     },
   ];
-  if (state.era <= 3 && era4Goal != null) {
-    opinions.push({ id: 'policy', mood: 'uneasy', text: 'Chips we own will need power of their own later on, and grid reservations will not stay open forever.' });
-  } else {
-    opinions.push({ id: 'policy', mood: out ? 'uneasy' : 'calm', text: out ? 'Running out of money in public is the story I cannot spin.' : 'A plan that holds is one I can explain.' });
-  }
+  opinions.push({ id: 'policy', mood: out ? 'uneasy' : 'calm', text: out ? 'Running out of money in public is the story I cannot spin.' : 'A plan that holds is one I can explain.' });
   return opinions;
 }
