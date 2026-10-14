@@ -19,13 +19,13 @@ test('records first-found ending details, counts repeats and reports progress', 
   const storage = memoryStorage();
   const collection = createCollection(storage);
 
-  collection.record('aligned', { seed: 17, era: 5, turn: 20, model: 'Kestrel 3 Grand' });
+  collection.record('aligned', { seed: 17, era: 5, turn: 20, model: 'Kestrel 3 Grand', lab: 'Wren Works', family: 'Kestrel' });
   collection.record('aligned', { seed: 99, era: 1, turn: 2, model: 'A Later Model' });
   collection.record('pacingDeal', { seed: 23, era: 5, turn: 20, model: null });
 
   assert.deepEqual(collection.entries(), [
-    { id: 'aligned', seed: 17, era: 5, turn: 20, model: 'Kestrel 3 Grand', count: 2 },
-    { id: 'pacingDeal', seed: 23, era: 5, turn: 20, model: null, count: 1 },
+    { id: 'aligned', seed: 17, era: 5, turn: 20, model: 'Kestrel 3 Grand', lab: 'Wren Works', family: 'Kestrel', count: 2 },
+    { id: 'pacingDeal', seed: 23, era: 5, turn: 20, model: null, lab: null, family: null, count: 1 },
   ]);
   assert.deepEqual(collection.progress(), { found: 2, total: Object.keys(ENDINGS).length });
 
@@ -55,7 +55,7 @@ test('keeps working in memory when storage throws', () => {
   collection.record('misuse', { seed: 8, era: 4, turn: 14, model: 'Finch 2 Core' });
 
   assert.deepEqual(collection.entries(), [
-    { id: 'misuse', seed: 8, era: 4, turn: 14, model: 'Finch 2 Core', count: 1 },
+    { id: 'misuse', seed: 8, era: 4, turn: 14, model: 'Finch 2 Core', lab: null, family: null, count: 1 },
   ]);
   assert.deepEqual(collection.progress(), { found: 1, total: Object.keys(ENDINGS).length });
 });
@@ -68,6 +68,6 @@ test('recovers from corrupt stored JSON', () => {
   collection.record('boardRemoved', { seed: 5, era: 2, turn: 8, model: 'Wren 1 Swift' });
 
   assert.deepEqual(createCollection(storage).entries(), [
-    { id: 'boardRemoved', seed: 5, era: 2, turn: 8, model: 'Wren 1 Swift', count: 1 },
+    { id: 'boardRemoved', seed: 5, era: 2, turn: 8, model: 'Wren 1 Swift', lab: null, family: null, count: 1 },
   ]);
 });

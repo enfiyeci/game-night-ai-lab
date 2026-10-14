@@ -6,11 +6,12 @@
 //   film.play();            // from a click, so the sound may start
 //   film.seek(12.5);        // or show one frame
 //
-// run (optional) is what the run ended with, for films that follow it: {deal: state.deal} (see resolveFilm).
+// run (optional) is what the run ended with, for films that follow it: {deal: state.deal} (see resolveFilm), and the
+// names the player gave the lab and its models, {lab, family}, which the screens show in place of their placeholders.
 //
 // Assets: ui/endings/films/<id>.json (the shot list), ui/endings/narration.json (Lumen's lines), ui/assets/endings/plates/<plate>.svg, ui/assets/endings/clips/<clip>.mp4,
 // ui/assets/endings/<id>.m4a (sound), and the office art ui/assets/office-era<N>.svg with its anchors.
-import { buildTimeline, shotAt, camAt, sampleKeys, typedText, resolveFilm, fillText, withNarration } from './timeline.js';
+import { buildTimeline, shotAt, camAt, sampleKeys, typedText, resolveFilm, fillText, withNarration, namePlate } from './timeline.js';
 
 const OFFICE = { w: 1440, h: 810, cx: 720, cy: 450, fullH: 900 };
 const PLATE = { w: 1280, h: 720, cx: 640, cy: 360, fullH: 720 };
@@ -19,6 +20,8 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&
 const keysAttr = (keys) => `data-k='${JSON.stringify(keys)}'`;
 const SAY_AT = 0.35;   // Lumen's narration (a shot's say) starts typing this long into the shot, at SAY_CPS
 const SAY_CPS = 38;
+// Lumen is named for what it is the first time it speaks in a film (playtest 2026-10-14: a player took it for the model)
+const LUMEN_INTRO = 'Lumen, your lab\u2019s assistant robot';
 
 async function fetchText(url) {
   const response = await fetch(url);
@@ -179,7 +182,7 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
     : [null, null];
   const plates = new Map();
   await Promise.all([...new Set(film.shots.filter((s) => s.plate).map((s) => s.plate))].map(async (name) => {
-    plates.set(name, await fetchText(`${base}ui/assets/endings/plates/${name}.svg`));
+    plates.set(name, namePlate(await fetchText(`${base}ui/assets/endings/plates/${name}.svg`), run ?? {}));
   }));
   // Clips are fetched whole before the film starts, so playback never waits on the network mid-film.
   const clips = new Map();
@@ -243,6 +246,9 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
 
   const titleEl = $('.film-title');
   const lumenText = lumenLine ?? film.lumen ?? '';
+  const firstSay = timeline.shots.find((shot) => shot.say);
+  const speaker = (shot) => (shot === firstSay ? LUMEN_INTRO : 'Lumen');
+  if (!firstSay) titleEl.querySelector('.lumen small').textContent = LUMEN_INTRO; // a film with no lines: its last one
   let current = null;
   let announced = null;
   let playing = false;
@@ -315,6 +321,7 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
       $('.film-card').textContent = shot.card ?? '';
       $('.film-sub').textContent = shot.sub ?? '';
       $('.film-say').hidden = !shot.say;
+      $('.film-say small').textContent = speaker(shot);
       titleEl.hidden = shot.kind !== 'title';
       current = shot;
     }
@@ -327,7 +334,7 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
     if (node?.video) syncClip(node.video, local, shot.dur, still);
     if (node?.leave && !node.keyedLeave) keyLeavers(node);
     // screen readers hear each line whole, once, when its shot plays (not while the film waits or is seeked)
-    if (playing && announced !== shot) { announced = shot; $('.film-say-read').textContent = shot.say ? `Lumen: ${shot.say}` : ''; }
+    if (playing && announced !== shot) { announced = shot; $('.film-say-read').textContent = shot.say ? `${speaker(shot)}: ${shot.say}` : ''; }
     if (shot.say) {
       // the untyped rest of the line is laid out but transparent, so the centred line never moves as it types
       const typed = still ? shot.say : typedText(shot.say, SAY_AT, local, SAY_CPS);

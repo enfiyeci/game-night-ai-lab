@@ -515,3 +515,84 @@ test('the signed stamp closes the board on its own after a short hold', { timeou
   assert.equal(overlay.querySelector('.dialog-layer'), null);
   assert.equal(game.movesLeft(), movesBefore - 1);
 });
+
+// Playtest 2026-10-14: the queue named the player's row "Kestrel lab", not the lab they named.
+test('the chip queue labels your row with your lab’s name, or "your lab"', async () => {
+  const doc = installFakeDom();
+  const { openQueue } = await import('../ui/screens/compute.js');
+  const yourRow = (labName) => {
+    const state = SCENARIOS.era3Idle(1);
+    if (labName !== undefined) state.labName = labName;
+    const overlay = doc.createElement('div');
+    doc.body.append(overlay);
+    openQueue(createGame({ state, seed: 1 }), overlay);
+    const text = overlay.querySelector('.queue-row.you')?.querySelector('small')?.textContent;
+    overlay.remove();
+    return text;
+  };
+  assert.equal(yourRow('Wren Works'), 'Wren Works');
+  assert.equal(yourRow(undefined), 'your lab');
+  assert.equal(yourRow('   '), 'your lab');
+});
+
+// Playtest 2026-10-14: a plain click on the serving-cap handle turned "no cap" into a fixed cap (0 before any users),
+// and nothing turned it back. A click now commits nothing, and the far right end is "no cap".
+import { FakeEvent } from './helpers/fakeDom.js';
+
+async function budgetDialog(state = SCENARIOS.start(1)) {
+  const doc = installFakeDom();
+  const { openBudget } = await import('../ui/screens/budget.js');
+  const game = createGame({ state, seed: 1 });
+  const overlay = doc.createElement('div');
+  doc.body.append(overlay);
+  openBudget(game, overlay);
+  const grip = () => overlay.querySelector('[aria-label="Serving cap"]');
+  const press = (key) => grip().dispatchEvent(new FakeEvent('keydown', { key }));
+  // the bar is 100px wide from x 0, so clientX is the share of the bar
+  const pointer = (type, clientX) => {
+    grip().parentElement.getBoundingClientRect = () => ({ left: 0, width: 100, top: 0, height: 10, right: 100, bottom: 10 });
+    grip().dispatchEvent(new FakeEvent(type, { pointerId: 1, clientX }));
+  };
+  return { game, grip, press, pointer, ok: () => overlay.querySelector('.dialog-ok').click() };
+}
+
+test('clicking the serving-cap handle without dragging leaves "no cap" alone', async () => {
+  const { game, grip, pointer, ok } = await budgetDialog();
+  assert.equal(game.state.compute.split.servingCap, null);
+  assert.equal(grip().getAttribute('aria-valuetext'), 'No cap: serve every user');
+  pointer('pointerdown', 100);
+  pointer('pointermove', 101); // a tremor, not a drag
+  pointer('pointerup', 101);
+  ok();
+  assert.equal(game.state.compute.split.servingCap, null);
+});
+
+test('a stored cap at or above online compute shows its number, not "No cap", until End takes it off', async () => {
+  const state = SCENARIOS.start(1);
+  state.compute.split = { ...state.compute.split, servingCap: 100 };
+  const { game, grip, press, ok } = await budgetDialog(state);
+  assert.equal(grip().style.left, '100%');
+  assert.equal(grip().getAttribute('aria-valuetext'), '100 units');
+  press('End');
+  assert.equal(grip().getAttribute('aria-valuetext'), 'No cap: serve every user');
+  ok();
+  assert.equal(game.state.compute.split.servingCap, null);
+});
+
+test('the serving cap goes back to "no cap" at the far right, by keyboard or by dragging', async () => {
+  const { game, grip, press, pointer, ok } = await budgetDialog();
+  press('Home');
+  assert.equal(grip().getAttribute('aria-valuetext'), '0 units');
+  press('End');
+  assert.equal(grip().getAttribute('aria-valuetext'), 'No cap: serve every user');
+  pointer('pointerdown', 100);
+  pointer('pointermove', 50);
+  pointer('pointerup', 50);
+  assert.match(grip().getAttribute('aria-valuetext'), /^\d+(\.\d)? units?$/, 'dragged halfway: a number');
+  pointer('pointerdown', 50);
+  pointer('pointermove', 140); // past the end
+  pointer('pointerup', 140);
+  assert.equal(grip().getAttribute('aria-valuetext'), 'No cap: serve every user');
+  ok();
+  assert.equal(game.state.compute.split.servingCap, null);
+});

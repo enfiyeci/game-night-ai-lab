@@ -8,6 +8,7 @@ import {
   budgetPreviewQueue,
   cardCostWords,
   fitDraftToCompute,
+  makeRoom,
   queuedMoveProblem,
   queuedRunProblem,
   recipePreview,
@@ -441,4 +442,104 @@ test('Escape still cancels the recipe after a page turn', async () => {
   layer.querySelector('.dialog-centre').dispatchEvent(new FakeEvent('keydown', { key: 'Escape' }));
   await closed;
   assert.equal(overlay.querySelector('.dialog-layer'), null);
+});
+
+// Playtest 2026-10-14: with a model waiting to be released, the dialog showed only the compute help, hiding the reason.
+test('a model waiting to be released is the reason shown, not the compute help', async () => {
+  const state = SCENARIOS.era2Deals(1);
+  assert.ok(state.pendingModel, 'the scenario has a trained model waiting');
+  const { layer } = await openRecipeAt(state);
+  assert.equal(layer.querySelector('.recipe-help'), null);
+  assert.equal(layer.querySelector('.recipe-error').textContent, 'Release the trained model first');
+});
+
+// Playtest 2026-10-14 ("I couldn't find a way to free compute to start a new training run"): era 2 run sizes triple
+// while the starter compute does not, and users take much of it. The dialog says how much is missing and makes room.
+function stuckInEra2({ coverWithSpot = true } = {}) {
+  const state = SCENARIOS.era2Deals(1);
+  state.pendingModel = null;               // released: its held compute is free again
+  state.compute.split.safety = 0.5;        // with users served and safety at its top share, not even a small run fits
+  state.compute.split.coverWithSpot = coverWithSpot;
+  return state;
+}
+const medium = { sliders: { size: 'medium', length: 'optimal', alignShare: 0.2 }, picks: { pre: [], mid: [], post: [] } };
+
+test('make room: the shortfall for the chosen size and the smallest run, and a serving cap that frees just enough', () => {
+  const state = stuckInEra2();
+  const free = recipePreview(state, medium).free;
+  const room = makeRoom(state, medium);
+  const small = recipePreview(state, { ...medium, sliders: { ...medium.sliders, size: 'small' } }).cost.units;
+  const roundsUp = (shown, exact) => shown >= exact - 1e-9 && shown < exact + 0.1;
+  assert.ok(roundsUp(room.missing, recipePreview(state, medium).cost.units - free), `${room.missing}`);
+  assert.ok(roundsUp(room.smallestMissing, small - free), `${room.smallestMissing}`);
+  assert.ok(room.smallestMissing > 0 && room.missing > room.smallestMissing, 'nothing fits, and medium is further off');
+  assert.equal(room.freed, room.smallestMissing, 'when nothing fits, just enough for the smallest run');
+  const capped = structuredClone(state);
+  capped.compute.split.servingCap = room.cap;
+  assert.ok(recipePreview(capped, { ...medium, sliders: { ...medium.sliders, size: 'small' } }).fits, 'the cap makes the smallest run fit');
+  assert.ok(room.spotMonthly > 0, 'spot covers the users left over, at a price');
+  assert.equal(makeRoom(stuckInEra2({ coverWithSpot: false }), medium).spotMonthly, 0);
+  assert.equal(makeRoom(SCENARIOS.era2Deals(1), medium), null, 'a model waiting to be released is the real reason');
+  const fewUsers = stuckInEra2();
+  fewUsers.compute.online = 6.5;           // so little online that even no users would not make room
+  fewUsers.compute.servingUnits = 0.5;
+  assert.equal(makeRoom(fewUsers, medium).cap, null);
+});
+
+// Review 2026-10-14: the cap once left the run a float hair short (5.999999999999993 free for a run of 6).
+import { startRun } from '../sim/training.js';
+
+const smallOf = (draft) => ({ ...draft, sliders: { ...draft.sliders, size: 'small' } });
+function capStartsSmallest(state, draft, label) {
+  const room = makeRoom(state, draft);
+  if (!room || room.cap === null) return room;
+  assert.ok(room.smallestMissing >= 0.1, `${label}: never "0 units short"`);
+  const capped = structuredClone(state);
+  capped.compute.split = { ...capped.compute.split, servingCap: room.cap };
+  assert.ok(recipePreview(capped, smallOf(draft)).fits, `${label}: cap ${room.cap} makes the smallest run fit`);
+  const run = startRun(capped, smallOf(draft));
+  assert.notEqual(run.error, 'not enough free compute', `${label}: the sim agrees`);
+  return room;
+}
+
+test('make room: the cap makes the smallest run fit even when the numbers land a float hair short', () => {
+  const state = SCENARIOS.era2Deals(1);
+  state.pendingModel = null;
+  Object.assign(state.compute, { online: 60.8, servingUnits: 60.24 });
+  state.compute.split = { ...state.compute.split, safety: 0.2, servingCap: null };
+  const room = capStartsSmallest(state, medium, 'repro');
+  assert.ok(room?.cap !== null && room.cap < 42.6, `the cap steps below 42.6 (got ${room?.cap})`);
+});
+
+test('make room: across scenarios and random compute, the one-click cap always lets the smallest run start', () => {
+  let seed = 12345;
+  const random = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
+  const bases = [SCENARIOS.era2Deals(1), SCENARIOS.era2Deals(2), SCENARIOS.era3Idle(1), SCENARIOS.start(1)];
+  let capped = 0;
+  for (let i = 0; i < 600; i += 1) {
+    const state = structuredClone(bases[i % bases.length]);
+    state.pendingModel = null;
+    state.activeRun = null;
+    const scale = state.era === 3 ? 8 : state.era === 2 ? 3 : 1;
+    state.compute.online = Math.round(random() * 40 * scale * 100) / 100 + 1;
+    state.compute.servingUnits = random() * state.compute.online;
+    state.compute.split = { ...state.compute.split, safety: Math.round(random() * 50) / 100, servingCap: null };
+    const room = capStartsSmallest(state, medium, `case ${i}`);
+    if (room?.cap !== null && room?.cap !== undefined) capped += 1;
+  }
+  assert.ok(capped > 50, `enough stuck states with a cap offered were checked (${capped})`);
+});
+
+test('make room: one click lowers the serving cap and the dialog can start the smallest run', async () => {
+  const { game, layer } = await openRecipeAt(stuckInEra2());
+  const help = () => layer.querySelector('.recipe-help');
+  assert.match(help().querySelector('.recipe-help-text').textContent, /^No run fits the free compute: (the smallest|even the smallest run) is [\d.]+ units? short/);
+  const links = () => help().querySelectorAll('.release-link').map((button) => button.textContent);
+  assert.ok(links().some((label) => /^Serve fewer users to free [\d.]+ units?$/.test(label)), links().join(' / '));
+  assert.ok(links().includes('Rent or sign compute'));
+  assert.equal(help().querySelector('.recipe-compute-line').textContent, `(about $${Math.round(makeRoom(projectQueue(game.state, game.queue), medium).spotMonthly)}M a month for spot compute)`, 'what serving fewer users costs');
+  help().querySelectorAll('.release-link').find((button) => button.textContent.startsWith('Serve fewer users')).click();
+  assert.ok(Number.isFinite(game.state.compute.split.servingCap), 'the cap is set in the game, as the budget would');
+  assert.equal(layer.querySelector('.recipe-help'), null, 'the run fits now');
+  assert.ok(recipePreview(projectQueue(game.state, game.queue), { ...medium, sliders: { ...medium.sliders, size: 'small' } }).fits);
 });

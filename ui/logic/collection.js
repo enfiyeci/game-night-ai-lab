@@ -1,7 +1,7 @@
 import { ENDINGS } from '../../sim/endings.js';
 
 const STORAGE_KEY = 'gnal.endings.v1';
-const META_KEYS = ['seed', 'era', 'turn', 'model'];
+const META_KEYS = ['seed', 'era', 'turn', 'model', 'lab', 'family']; // lab and family: the run's names, for its film
 
 const blankMeta = (meta = {}) => Object.fromEntries(
   META_KEYS.map((key) => [key, meta[key] ?? null]),

@@ -54,12 +54,16 @@ function handle({ label, value, min, max, step, leftForValue, valueText, onInput
   const places = label === 'Serving cap' ? 1 : 0;
   let current = value;
   let dragging = false;
+  let moved = false; // a click (no drag) leaves the value alone: it once turned "no serving cap" into a cap of 0
+  let startX = 0;
 
   function reflect(next) {
-    current = Number(clamp(next).toFixed(places));
+    // the far end is exact, not rounded, so the serving cap can tell "dragged all the way" (no cap) from a number
+    current = clamp(next) >= max ? max : Number(clamp(next).toFixed(places));
     grip.style.left = `${leftForValue(current)}%`;
     grip.setAttribute('aria-valuenow', `${Number(current.toFixed(1))}`);
     grip.setAttribute('aria-valuetext', valueText(current));
+    grip.title = valueText(current);
   }
 
   function update(next, commit) {
@@ -76,17 +80,21 @@ function handle({ label, value, min, max, step, leftForValue, valueText, onInput
   grip.addEventListener('pointerdown', (event) => {
     event.preventDefault();
     dragging = true;
+    moved = false;
+    startX = event.clientX;
     grip.setPointerCapture(event.pointerId);
   });
   grip.addEventListener('pointermove', (event) => {
     if (!grip.hasPointerCapture(event.pointerId)) return;
+    if (!moved && Math.abs(event.clientX - startX) < 3) return; // a hand's tremor during a click is not a drag
+    moved = true;
     const rect = grip.parentElement.getBoundingClientRect();
     update(min + ((event.clientX - rect.left) / rect.width) * (max - min), false);
   });
   const finishDrag = () => {
     if (!dragging) return;
     dragging = false;
-    onInput(current, { commit: true, focusLabel: label });
+    if (moved) onInput(current, { commit: true, focusLabel: label });
   };
   grip.addEventListener('pointerup', finishDrag);
   grip.addEventListener('pointercancel', finishDrag);
@@ -211,7 +219,8 @@ export function openBudget(game, overlayRoot) {
       }
       bar.append(part);
     }
-    const servingCap = split.servingCap == null ? Math.min(view.needMarker, total) : Math.min(split.servingCap, total);
+    // No cap sits at the far right end, and dragging (or End) all the way there takes the cap off again.
+    const servingCap = split.servingCap == null ? total : Math.min(split.servingCap, total);
     bar.append(
       handle({
         label: 'Serving cap',
@@ -220,9 +229,11 @@ export function openBudget(game, overlayRoot) {
         max: total,
         step: 1,
         leftForValue: (next) => (next / total) * 100,
-        valueText: (next) => computeAmount(next, projected.era),
+        // "No cap" only when there is none: a stored cap at or above what is online still shows its number
+        valueText: (next) => (next < total ? computeAmount(next, projected.era)
+          : split.servingCap == null ? 'No cap: serve every user' : computeAmount(Math.max(next, split.servingCap), projected.era)),
         onInput(next, interaction) {
-          split.servingCap = next;
+          split.servingCap = next >= total ? null : next;
           if (interaction.commit) render({ focusLabel: interaction.focusLabel });
         },
       }),

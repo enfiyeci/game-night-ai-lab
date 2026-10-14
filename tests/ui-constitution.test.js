@@ -53,6 +53,8 @@ test('the document lists every line without its effect, the fixed line and a fam
   assert.ok(view.lines.every((l) => !('effect' in l)));
   assert.equal(view.fixed, FIXED_LINE);
   assert.equal(view.title, 'The Kestrel Model Spec');
+  s.modelFamily = 'Heron'; // named before the first release (playtest 2026-10-14: the spec said Kestrel)
+  assert.equal(documentView(s, draftFor(s)).title, 'The Heron Model Spec');
   s.models = [{ family: 'Osprey', generation: 3 }];
   const named = documentView(s, draftFor(s));
   assert.equal(named.title, 'The Osprey Model Spec');

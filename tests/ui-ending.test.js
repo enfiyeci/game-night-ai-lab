@@ -73,20 +73,20 @@ test('reaching an ending records it once and plays its film once', async () => {
   const subscribers = [];
   const game = { state: createInitialState({ seed: 2 }), subscribe: (fn) => { subscribers.push(fn); return () => {}; } };
   const recorded = [];
-  const collection = { record: (id, meta) => recorded.push([id, meta.era]), entries: () => [] };
+  const collection = { record: (id, meta) => recorded.push([id, meta.era, meta.lab, meta.family]), entries: () => [] };
   const films = [];
   let played = 0;
   mountEnding(game, null, {
     collection,
     loadFilm: async (_root, options) => { films.push(options); return { play: () => { played += 1; } }; },
   });
-  game.state = { ...game.state, ending: 'pacingDeal', era: 5, deal: { binding: ['compute', 'evals'] } };
+  game.state = { ...game.state, ending: 'pacingDeal', era: 5, deal: { binding: ['compute', 'evals'] }, labName: ' Wren Works ', modelFamily: 'Osprey' };
   subscribers.forEach((fn) => fn({ state: game.state, events: [], errors: [] }));
   subscribers.forEach((fn) => fn({ state: game.state, events: [], errors: [] }));
   await new Promise((resolve) => setTimeout(resolve, 0));
-  assert.deepEqual(recorded, [['pacingDeal', 5]]);
+  assert.deepEqual(recorded, [['pacingDeal', 5, 'Wren Works', 'Osprey']], 'the run\u2019s names are kept for the archive');
   assert.equal(films.length, 1);
-  assert.deepEqual([films[0].id, films[0].era, films[0].run], ['pacingDeal', 5, { deal: { binding: ['compute', 'evals'] } }]);
+  assert.deepEqual([films[0].id, films[0].era, films[0].run], ['pacingDeal', 5, { deal: { binding: ['compute', 'evals'] }, lab: 'Wren Works', family: 'Osprey' }]);
   assert.equal(played, 1);
 });
 
@@ -245,4 +245,16 @@ test('the epilogue waits for player decisions before the film and ignores duplic
   await ending.play();
   assert.equal(decisions, 1);
   assert.equal(films.length, 1, 'a second play request cannot interrupt the running film');
+});
+
+// Playtest 2026-10-14: a player took Lumen for the model. The end screen says what Lumen is.
+test('the end screen introduces Lumen as the lab’s assistant robot', async () => {
+  const { installFakeDom } = await import('./helpers/fakeDom.js');
+  const doc = installFakeDom();
+  const overlay = doc.createElement('div');
+  doc.body.append(overlay);
+  const game = { state: endedState('aligned'), subscribe: () => () => {} };
+  mountEnding(game, overlay, { collection: { record: () => {}, entries: () => [] }, lumenNote: () => 'I kept the lights on.' })
+    .show({ save: false });
+  assert.equal(overlay.querySelector('.end-note').querySelector('b').textContent, 'A note from Lumen, your lab’s assistant robot');
 });

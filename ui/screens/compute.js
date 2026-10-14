@@ -449,7 +449,8 @@ export function openQueue(game, overlayRoot) {
     for (const row of view.rows) {
       const item = element('div', `queue-row${row.lab === 'you' ? ' you' : ''}${row.tier === 'none' ? ' off' : ''}`);
       const lab = element('div', 'lab', row.name);
-      lab.append(element('small', '', row.lab === 'you' ? 'Kestrel lab' : row.tier === 'none' ? 'export controls' : ''));
+      const yourLab = (typeof game.state.labName === 'string' && game.state.labName.trim()) || 'your lab';
+      lab.append(element('small', '', row.lab === 'you' ? yourLab : row.tier === 'none' ? 'export controls' : ''));
       const badge = element('span', `queue-tier ${row.tier}`, row.tier === 'none' ? "Can't buy" : row.tier);
       const bar = element('div', 'queue-order-bar');
       bar.style.width = `${Math.max(4, (row.ordered / largest) * 100)}%`;

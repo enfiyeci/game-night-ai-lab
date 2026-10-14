@@ -67,6 +67,7 @@ class FakeElement {
   }
 
   get children() { return this.childNodes.filter((node) => node.nodeType === 1); }
+  get parentElement() { return this.parentNode?.nodeType === 1 ? this.parentNode : null; }
   get isConnected() {
     let node = this;
     while (node.parentNode) node = node.parentNode;
@@ -161,6 +162,9 @@ class FakeElement {
   focus() { this.ownerDocument.activeElement = this; }
   blur() { if (this.ownerDocument.activeElement === this) this.ownerDocument.activeElement = this.ownerDocument.body; }
   scrollIntoView() {}
+  setPointerCapture(id) { this.pointerCapture = id; }
+  hasPointerCapture(id) { return this.pointerCapture === id; }
+  releasePointerCapture() { this.pointerCapture = undefined; }
   getBoundingClientRect() { return { top: 0, left: 0, width: 0, height: 0, right: 0, bottom: 0 }; }
 }
 
@@ -177,7 +181,7 @@ export class FakeEvent {
 
 // Installs document, CustomEvent and requestAnimationFrame on globalThis; returns the document.
 export function installFakeDom() {
-  const doc = { createElement: (tag) => new FakeElement(tag, doc) };
+  const doc = { createElement: (tag) => new FakeElement(tag, doc), createTextNode: (text) => new FakeText(text) };
   doc.body = new FakeElement('body', doc);
   doc.activeElement = doc.body;
   globalThis.document = doc;

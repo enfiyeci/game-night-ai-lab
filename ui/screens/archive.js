@@ -111,9 +111,11 @@ export function openArchive(game, overlay, { collection }) {
       done();
     });
     try {
+      const entry = byId.get(page.id);
       const film = await mountFilm(host, {
         id: page.id,
-        era: byId.get(page.id)?.era ?? 4,
+        era: entry?.era ?? 4,
+        run: { lab: entry?.lab, family: entry?.family }, // the names that run had (none for endings found before they were kept)
         onDone: () => { if (!skipped) done(); },
       });
       if (skipped) {
