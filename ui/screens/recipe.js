@@ -16,7 +16,7 @@ import { openDialog } from '../components/dialog.js';
 import { portrait } from '../components/portraits.js';
 import { teamPanel } from '../components/team.js';
 import { vslider } from '../components/vslider.js';
-import { cardCostWords, fitDraftToCompute, recipePreview, sanitizeDraft } from '../logic/actions.js';
+import { cardCostWords, fitDraftToCompute, makeRoom, recipePreview, sanitizeDraft } from '../logic/actions.js';
 import { projectQueue } from '../logic/compute.js';
 import { computeAmount, money, roundsToWords } from '../logic/format.js';
 import { offeredCards } from '../logic/release.js';
@@ -497,13 +497,16 @@ function computeFooter(state, preview, releaseEstimate = false) {
   return root;
 }
 
-// Shown when the recipe needs more compute than is free: a smaller size if one fits, otherwise the two places that
-// free compute (a deal, or capping serving in the budget), so a new player is never left at a dead Start button.
-function computeHelp(state, draft, preview, { onFit, onDeals, onBudget }) {
+// Shown when the recipe needs more compute than is free, so a new player is never left at a dead Start button. It says
+// how much is missing and offers the ways to make room (owner pick, playtest 2026-10-14): a smaller size if one fits,
+// serving fewer users (the serving cap, set here in one click), or renting or signing compute.
+function computeHelp(state, draft, preview, { onFit, onCap, onDeals, onBudget }) {
   if (!preview.errors.includes('not enough free compute')) return null;
   // A run under way or a model waiting to be released is the real reason; more compute would not start a run, so the
   // error line says that instead (playtest 2026-10-14).
   if (state.activeRun || state.pendingModel) return null;
+  const room = makeRoom(state, draft);
+  const amount = (units) => computeAmount(units, state.era);
   const root = document.createElement('div');
   root.className = 'recipe-help';
   root.setAttribute('role', 'alert');
@@ -518,14 +521,27 @@ function computeHelp(state, draft, preview, { onFit, onDeals, onBudget }) {
     return button;
   };
   const fitted = fitDraftToCompute(state, draft);
-  if (fitted.sliders.size !== draft.sliders.size && recipePreview(state, fitted).fits) {
+  const smallerFits = fitted.sliders.size !== draft.sliders.size && recipePreview(state, fitted).fits;
+  if (smallerFits) {
     const units = SIZE_UNITS[fitted.sliders.size] * eraScale(state.era);
-    text.textContent = `Not enough free compute. A ${(units * 1000).toLocaleString('en-US')} ${ERA_CHIP[state.era - 1]}s run fits.`;
+    text.textContent = `Not enough free compute: this run is ${amount(room.missing)} short. A ${(units * 1000).toLocaleString('en-US')} ${ERA_CHIP[state.era - 1]}s run fits.`;
     root.append(text, link('Use the largest size that fits', onFit));
   } else {
-    text.textContent = 'No model fits the free compute.';
-    root.append(text, link('Rent or sign compute', onDeals), link('Free some in the budget', onBudget));
+    text.textContent = room.missing > room.smallestMissing
+      ? `No run fits the free compute: the smallest is ${amount(room.smallestMissing)} short, this one ${amount(room.missing)}.`
+      : `No run fits the free compute: even the smallest run is ${amount(room.smallestMissing)} short.`;
+    root.append(text);
   }
+  if (room.cap !== null) {
+    const cost = document.createElement('span');
+    cost.className = 'recipe-compute-line';
+    cost.textContent = room.spotMonthly > 0
+      ? `Spot compute serves the users left over, about ${money(room.spotMonthly)} a month more. You can lift the cap later in the budget.`
+      : 'Some users will not be served: their requests earn nothing and some leave. You can lift the cap later in the budget.';
+    root.append(link(`Serve fewer users to free ${amount(room.freed)}`, () => onCap(room.cap)), cost);
+  }
+  root.append(link('Rent or sign compute', onDeals));
+  if (room.cap === null && !smallerFits) root.append(link('Free some in the budget', onBudget));
   return root;
 }
 
@@ -594,6 +610,12 @@ export function openRecipe(game, overlayRoot, { stage = 1 } = {}) {
       error.textContent = capitaliseError(preview.errors[0]);
       const help = computeHelp(nextState, draft, preview, {
         onFit: () => {
+          draft = fitDraftToCompute(projected(), draft);
+          showStage(number);
+        },
+        // the same change the budget dialog makes, applied at once; the size then steps down to what fits, if it must
+        onCap: (cap) => {
+          game.setField('computeSplit', { ...game.state.compute.split, ...(game.queue.computeSplit ?? {}), servingCap: cap });
           draft = fitDraftToCompute(projected(), draft);
           showStage(number);
         },

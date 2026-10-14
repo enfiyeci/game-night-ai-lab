@@ -8,6 +8,7 @@ import {
   budgetPreviewQueue,
   cardCostWords,
   fitDraftToCompute,
+  makeRoom,
   queuedMoveProblem,
   queuedRunProblem,
   recipePreview,
@@ -450,4 +451,51 @@ test('a model waiting to be released is the reason shown, not the compute help',
   const { layer } = await openRecipeAt(state);
   assert.equal(layer.querySelector('.recipe-help'), null);
   assert.equal(layer.querySelector('.recipe-error').textContent, 'Release the trained model first');
+});
+
+// Playtest 2026-10-14 ("I couldn't find a way to free compute to start a new training run"): era 2 run sizes triple
+// while the starter compute does not, and users take much of it. The dialog says how much is missing and makes room.
+function stuckInEra2({ coverWithSpot = true } = {}) {
+  const state = SCENARIOS.era2Deals(1);
+  state.pendingModel = null;               // released: its held compute is free again
+  state.compute.split.safety = 0.5;        // with users served and safety at its top share, not even a small run fits
+  state.compute.split.coverWithSpot = coverWithSpot;
+  return state;
+}
+const medium = { sliders: { size: 'medium', length: 'optimal', alignShare: 0.2 }, picks: { pre: [], mid: [], post: [] } };
+
+test('make room: the shortfall for the chosen size and the smallest run, and a serving cap that frees just enough', () => {
+  const state = stuckInEra2();
+  const free = recipePreview(state, medium).free;
+  const room = makeRoom(state, medium);
+  const small = recipePreview(state, { ...medium, sliders: { ...medium.sliders, size: 'small' } }).cost.units;
+  const roundsUp = (shown, exact) => shown >= exact - 1e-9 && shown < exact + 0.1;
+  assert.ok(roundsUp(room.missing, recipePreview(state, medium).cost.units - free), `${room.missing}`);
+  assert.ok(roundsUp(room.smallestMissing, small - free), `${room.smallestMissing}`);
+  assert.ok(room.smallestMissing > 0 && room.missing > room.smallestMissing, 'nothing fits, and medium is further off');
+  assert.equal(room.freed, room.smallestMissing, 'when nothing fits, just enough for the smallest run');
+  const capped = structuredClone(state);
+  capped.compute.split.servingCap = room.cap;
+  assert.ok(recipePreview(capped, { ...medium, sliders: { ...medium.sliders, size: 'small' } }).fits, 'the cap makes the smallest run fit');
+  assert.ok(room.spotMonthly > 0, 'spot covers the users left over, at a price');
+  assert.equal(makeRoom(stuckInEra2({ coverWithSpot: false }), medium).spotMonthly, 0);
+  assert.equal(makeRoom(SCENARIOS.era2Deals(1), medium), null, 'a model waiting to be released is the real reason');
+  const fewUsers = stuckInEra2();
+  fewUsers.compute.online = 6.5;           // so little online that even no users would not make room
+  fewUsers.compute.servingUnits = 0.5;
+  assert.equal(makeRoom(fewUsers, medium).cap, null);
+});
+
+test('make room: one click lowers the serving cap and the dialog can start the smallest run', async () => {
+  const { game, layer } = await openRecipeAt(stuckInEra2());
+  const help = () => layer.querySelector('.recipe-help');
+  assert.match(help().querySelector('.recipe-help-text').textContent, /^No run fits the free compute: (the smallest|even the smallest run) is [\d.]+ units? short/);
+  const links = () => help().querySelectorAll('.release-link').map((button) => button.textContent);
+  assert.ok(links().some((label) => /^Serve fewer users to free [\d.]+ units?$/.test(label)), links().join(' / '));
+  assert.ok(links().includes('Rent or sign compute'));
+  assert.match(help().querySelector('.recipe-compute-line').textContent, /^Spot compute serves the users left over, about \$\d+M a month more/);
+  help().querySelectorAll('.release-link').find((button) => button.textContent.startsWith('Serve fewer users')).click();
+  assert.ok(Number.isFinite(game.state.compute.split.servingCap), 'the cap is set in the game, as the budget would');
+  assert.equal(layer.querySelector('.recipe-help'), null, 'the run fits now');
+  assert.ok(recipePreview(projectQueue(game.state, game.queue), { ...medium, sliders: { ...medium.sliders, size: 'small' } }).fits);
 });
