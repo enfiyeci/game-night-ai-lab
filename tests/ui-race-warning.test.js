@@ -70,7 +70,7 @@ test('the warning lines carry the real numbers (frames B1, B2)', () => {
 
 test('gaps are never rounded across the line, and agree with the sim', () => {
   const justOut = raceAt({ ahead: { openbrain: 15.3, deepthink: 6, lodestar: -12, qilin: -16 } });
-  assert.deepEqual([raceStanding(justOut).out, raceStanding(justOut).shownGap, raceStanding(justOut).fromLine], [true, 16, 1]);
+  assert.deepEqual([raceStanding(justOut).out, raceStanding(justOut).shownGap, raceStanding(justOut).fromLine], [true, 15.3, 0.3]);
   assert.equal(eraGate(structuredClone(justOut)), 'leftBehind');
   const onLine = raceAt({ ahead: { openbrain: 15, deepthink: 6, lodestar: -12, qilin: -16 } });
   assert.deepEqual([raceStanding(onLine).out, raceStanding(onLine).shownGap], [false, 15]);
@@ -87,18 +87,29 @@ test('the whiteboard shows the lanes, the line 15 behind the leader and Priya\'s
   assert.equal(view.line, 47);
   assert.equal(view.lineLabel, '15 behind OpenBrain');
   assert.equal(view.ends, 'era ends in 6 weeks!!');
-  assert.equal(view.note, '3 points from the line!');
+  assert.equal(view.note, '3 points past the line!');
   assert.equal(raceBoardView(raceAt({ daysLeft: 14 })).ends, 'era ends in 2 weeks!!');
   assert.equal(raceBoardView(raceAt({ era: 5, daysLeft: 1 })).ends, 'era ends in 1 day!!');
-  assert.equal(raceBoardView(raceAt({ ahead: { openbrain: 16, deepthink: 6, lodestar: -12, qilin: -16 } })).note, '1 point from the line!');
+  assert.equal(raceBoardView(raceAt({ ahead: { openbrain: 16, deepthink: 6, lodestar: -12, qilin: -16 } })).note, '1 point past the line!');
+  assert.equal(raceBoardView(raceAt({ ahead: { openbrain: 17, deepthink: 6, lodestar: -12, qilin: -16 } })).note, '2 points past the line!');
   assert.equal(raceBoardView(raceAt({ ahead: { openbrain: 13, deepthink: 6, lodestar: -12, qilin: -16 } })).note, 'only 2 points to spare!');
-  // Rounded on their own, 40.45 and 25.4 would read 40 and 25 (inside the line) while the lab is out by 16.
-  const fake = raceAt({ ahead: { openbrain: 15.05, deepthink: -14, lodestar: -34, qilin: -39 } });
+  // Whole numbers would read 40 and 25 (inside the line) for a lab out by 15.05, and put Lodestar's 25 under the lab's
+  // 24: the board writes tenths instead, in lane order and agreeing with Priya's gap.
+  const fake = raceAt();
   fake.capability = 25.4;
-  for (const rival of fake.rivals) rival.capability = { openbrain: 40.45, deepthink: 30, lodestar: 10, qilin: 5 }[rival.id];
+  for (const rival of fake.rivals) rival.capability = { openbrain: 40.45, deepthink: 30, lodestar: 24.6, qilin: 5 }[rival.id];
   const drawn = raceBoardView(fake);
-  assert.equal(drawn.lanes[0].score - drawn.lanes.find((lane) => lane.you).score, 16);
-  assert.equal(drawn.note, '1 point from the line!');
+  assert.deepEqual(drawn.lanes.map((lane) => lane.score), [40.5, 30, 25.4, 24.6, 5]);
+  assert.equal(raceWarning(fake).say.startsWith('OpenBrain is 15.1 points ahead'), true);
+  assert.equal(drawn.note, '0.1 points past the line!');
+  // Whole numbers that would contradict only the lane order (41 - 17 = 24 for the lab, 25 for Lodestar below it) also
+  // switch to tenths, and Priya's gap with them.
+  const order = raceAt();
+  order.capability = 24.9;
+  for (const rival of order.rivals) rival.capability = { openbrain: 41.4, deepthink: 30, lodestar: 24.6, qilin: 5 }[rival.id];
+  assert.deepEqual(raceBoardView(order).lanes.map((lane) => lane.score), [41.4, 30, 24.9, 24.6, 5]);
+  assert.equal(raceStanding(order).shownGap, 16.5);
+  assert.equal(raceBoardView(order).note, '1.5 points past the line!');
   const unnamed = raceAt();
   delete unnamed.labName;
   assert.equal(raceBoardView(unnamed).lanes[2].name, 'us');

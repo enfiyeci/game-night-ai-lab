@@ -25,6 +25,7 @@ export const ordinal = (n) => `${n}${n === 1 ? 'st' : n === 2 ? 'nd' : n === 3 ?
 const PLACE_WORD = { 3: 'third', 4: 'fourth', 5: 'fifth' };
 const NUMBER_WORD = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
 const plural = (n, unit) => `${n} ${unit}${n === 1 ? '' : 's'}`;
+const tenths = (n) => Math.round(n * 10) / 10;
 
 // Time left in whole weeks from two weeks up, in days below.
 export function timeLeft(days) {
@@ -37,16 +38,36 @@ const timeWords = (days) => {
   return words.charAt(0).toUpperCase() + words.slice(1);
 };
 
-// Where the lab stands against the rule. Gaps are whole points, as the race tab shows scores, and never rounded across
-// the line: a lab that is out reads at least 16 behind, a lab that is safe at most 15.
+// The race in written numbers: the stated gap and every lab's score. The lab's score is the leader's minus the stated
+// gap, so the two never disagree about the line. Whole points, as the race tab shows scores, unless whole numbers would
+// put an out lab on the safe side (15.3 reads 15) or contradict the lane order; then tenths throughout, an out gap
+// rounded up so it still reads past the line.
+function writtenRace(state, leader, gap, out) {
+  const labs = [{ id: 'you', capability: state.capability }, ...state.rivals]
+    .sort((a, b) => b.capability - a.capability || Number(a.id === 'you') - Number(b.id === 'you'));
+  for (const round of [Math.round, tenths]) {
+    const raw = round(gap);
+    const shownGap = !out ? Math.min(BALANCE.gateMaxGap, raw)
+      : raw > BALANCE.gateMaxGap ? raw : round === tenths ? tenths(Math.ceil(gap * 10) / 10) : null;
+    if (shownGap === null) continue;
+    const top = round(leader.capability);
+    const scores = labs.map((lab) => (lab.id === 'you' ? tenths(top - shownGap) : round(lab.capability)));
+    if (round === tenths || scores.every((score, i) => i === 0 || score <= scores[i - 1])) {
+      return { shownGap, scores: Object.fromEntries(labs.map((lab, i) => [lab.id, scores[i]])) };
+    }
+  }
+  return null; // not reached: the tenths pass always returns
+}
+
+// Where the lab stands against the rule, with the numbers as written (writtenRace).
 export function raceStanding(state) {
   const place = rank(state);
   const gap = gapToLeader(state);
   const leader = state.rivals.reduce((best, rival) => (rival.capability > best.capability ? rival : best));
   const out = place > BALANCE.gateMaxRank && gap > BALANCE.gateMaxGap;
   const near = place > BALANCE.gateMaxRank && gap > BALANCE.gateMaxGap - RACE_WARN_MARGIN;
-  const shownGap = out ? Math.max(BALANCE.gateMaxGap + 1, Math.round(gap)) : Math.min(BALANCE.gateMaxGap, Math.round(gap));
-  return { place, gap, shownGap, leader, out, near, fromLine: shownGap - BALANCE.gateMaxGap };
+  const { shownGap, scores } = writtenRace(state, leader, gap, out);
+  return { place, gap, shownGap, scores, leader, out, near, fromLine: tenths(shownGap - BALANCE.gateMaxGap) };
 }
 
 // Which warning is due: 'first' from about 6 weeks before the era ends, 'second' from about 2 weeks, while the lab is
@@ -91,10 +112,7 @@ export function raceBoardView(state) {
     { id: 'you', name: lab, capability: state.capability, you: true },
     ...state.rivals.map((rival) => ({ id: rival.id, name: rival.name, capability: rival.capability, you: false })),
   ].sort((a, b) => b.capability - a.capability || Number(a.you) - Number(b.you))
-    .map((lane) => ({ ...lane, score: Math.round(lane.capability) }));
-  // The lab's written score is the leader's minus the gap Priya states, so the two numbers never disagree about the line.
-  const top = Math.round(standing.leader.capability);
-  for (const lane of lanes) if (lane.you) lane.score = top - standing.shownGap;
+    .map((lane) => ({ ...lane, score: standing.scores[lane.id] }));
   const spare = BALANCE.gateMaxGap - standing.shownGap;
   const { n, unit } = timeLeft(eraDaysLeft(state));
   return {
@@ -104,7 +122,7 @@ export function raceBoardView(state) {
     line: standing.leader.capability - BALANCE.gateMaxGap,
     lineLabel: `${BALANCE.gateMaxGap} behind ${standing.leader.name}`,
     ends: `era ends in ${plural(n, unit)}!!`,
-    note: standing.out ? `${plural(standing.fromLine, 'point')} from the line!`
+    note: standing.out ? `${plural(standing.fromLine, 'point')} past the line!`
       : spare > 0 ? `only ${plural(spare, 'point')} to spare!` : 'right on the line!',
     out: standing.out,
   };
