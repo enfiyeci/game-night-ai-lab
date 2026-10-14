@@ -14,8 +14,11 @@ test('every person has a group and a head anchor inside the frame', () => {
   }
 });
 
+// Each advisor seat is drawn twice: today's lead and the alternate hired on the résumés (person-<role>-alt, hidden).
+const LEADS = ['research', 'safety', 'cfo', 'policy'];
+
 test('advisors have three mood faces; rack and floor are addressable', () => {
-  for (const mood of ['calm', 'uneasy', 'alarmed']) assert.equal(svg.split(`face-${mood}`).length - 1, 4);
+  for (const mood of ['calm', 'uneasy', 'alarmed']) assert.equal(svg.split(`face-${mood}`).length - 1, 8);
   assert.ok(svg.includes('id="rack"') && svg.includes('id="floor"'));
 });
 
@@ -32,10 +35,11 @@ test('every era file keeps the office contract: people, moods, rack, floor, toke
   for (const e of ERAS) {
     const s = eraSvg(e);
     for (const r of ROLES) assert.ok(s.includes(`id="person-${r}"`), `era ${e} ${r}`);
-    for (const mood of ['calm', 'uneasy', 'alarmed']) assert.equal(s.split(`face-${mood}`).length - 1, 4, `era ${e} ${mood}`);
+    for (const r of LEADS) assert.ok(s.includes(`<g id="person-${r}-alt" display="none">`), `era ${e} ${r}: the alternate lead starts hidden`);
+    for (const mood of ['calm', 'uneasy', 'alarmed']) assert.equal(s.split(`face-${mood}`).length - 1, 8, `era ${e} ${mood}`);
     assert.ok(s.includes('id="rack"') && s.includes('id="floor"'), `era ${e}`);
     assert.deepEqual(s.match(/#[0-9a-fA-F]{3,8}\b|rgb\(/g) ?? [], [], `era ${e}`);
-    assert.equal(s.split('display="none"').length - 1, 8, `era ${e}: uneasy and alarmed start hidden`);
+    assert.equal(s.split('display="none"').length - 1, 20, `era ${e}: uneasy and alarmed start hidden, and the four alternates`);
     const ids = [...s.matchAll(/ id="([^"]+)"/g)].map((m) => m[1]);
     assert.equal(new Set(ids).size, ids.length, `era ${e}: ids are unique`);
   }
