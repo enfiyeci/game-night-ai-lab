@@ -4,7 +4,10 @@ import { createInitialState } from '../sim/state.js';
 import { meetingDue, openMeeting, runMeeting } from '../sim/president.js';
 import { MEETINGS } from '../sim/data/president.js';
 import { PROMISES } from '../sim/data/promises.js';
-import { endTurn } from '../sim/turn.js';
+import { advanceDays, applyActions, endTurn } from '../sim/turn.js';
+import { ROUND_DAYS } from '../sim/time.js';
+import { meetingDay } from '../sim/president.js';
+import { meetingDueNow } from '../ui/logic/board.js';
 
 const no = { next: () => 0.99, int: () => 0, chance: () => false, pick: (a) => a[0], normal: (m) => m };
 const meeting = (id = 'first') => MEETINGS.find((entry) => entry.id === id);
@@ -19,9 +22,9 @@ const flatteringIds = (id = 'first') => styleIds('flatter', id);
 const jargonIds = (id = 'first') => styleIds('jargon', id);
 
 test('the President meeting script has the required exchanges and answer mix', () => {
-  assert.deepEqual(MEETINGS.map(({ id, era, turnInEra }) => ({ id, era, turnInEra })), [
-    { id: 'first', era: 2, turnInEra: 2 },
-    { id: 'second', era: 4, turnInEra: 3 },
+  assert.deepEqual(MEETINGS.map(({ id, era, turnInEra, dayInRound }) => ({ id, era, turnInEra, dayInRound })), [
+    { id: 'first', era: 2, turnInEra: 1, dayInRound: 14 },
+    { id: 'second', era: 4, turnInEra: 3, dayInRound: ROUND_DAYS[4] - 7 },
   ]);
   for (const entry of MEETINGS) {
     assert.equal(entry.exchanges.length, 3);
@@ -91,11 +94,14 @@ test('a bargain raises the stake one tier only when the meeting does not end in 
   assert.equal(walkedOut.cash, 1000);
 });
 
-test('the first meeting is due in era 2, turn 2', () => {
+test('the first meeting is due two weeks into era 2\'s second round', () => {
   const state = createInitialState();
   assert.equal(meetingDue(state), null);
   state.era = 2;
-  state.turnInEra = 2;
+  state.turnInEra = 1;
+  state.dayInRound = 13;
+  assert.equal(meetingDue(state), null);
+  state.dayInRound = 14;
   assert.equal(meetingDue(state), 'first');
   state.meetingsHeld.push('first');
   assert.equal(meetingDue(state), null);
@@ -255,6 +261,7 @@ test('second-meeting grudges lower patience and are exposed on the meeting state
     id: 'second',
     patience: 8,
     grudges: [PROMISES.beatRivals.text, PROMISES.domesticChips.text],
+    expiresTurn: 16,
   });
 });
 
@@ -291,10 +298,10 @@ test('a second-meeting grudge lowers the amendment-demand threshold to two flatt
 test('endTurn opens a due meeting and answers it on the next turn', () => {
   const previous = createInitialState();
   previous.era = 2;
-  previous.turnInEra = 2;
+  previous.turnInEra = 1;
   const due = endTurn(previous, {}, no);
   assert.deepEqual(previous.meeting, null);
-  assert.deepEqual(due.state.meeting, { id: 'first', patience: 10 });
+  assert.deepEqual(due.state.meeting, { id: 'first', patience: 10, expiresTurn: 1 });
   assert.deepEqual(due.events.filter((event) => event.type === 'meetingDue'), [{ type: 'meetingDue', id: 'first' }]);
 
   const answered = endTurn(due.state, { moves: [{ type: 'meeting' }], presidentAnswers: plainIds() }, no);
@@ -401,4 +408,47 @@ test('a meeting at low favour withholds the grant', () => {
   assert.deepEqual(out.errors, []);
   assert.equal(out.state.flags.statePreemption, undefined);
   assert.equal(out.events.find((event) => event.type === 'meetingOutcome')?.stake, 'exportLicenses');
+});
+
+// Pacing fix (2026-10-14): the second call comes a story week before era 4 ends, not on era 5's first day.
+test('the second meeting opens a story week before era 4 ends, apart from the board meeting and era 5', () => {
+  let state = createInitialState();
+  state.era = 4;
+  state.turnInEra = 3;
+  state.turn = 15;
+  state.day = meetingDay(MEETINGS[1]) - ROUND_DAYS[4] + 7;
+  const opened = [];
+  for (let day = 0; day < ROUND_DAYS[4] && !state.meeting; day += 1) {
+    const out = advanceDays(state, 1, no);
+    state = out.state;
+    if (out.events.some((event) => event.type === 'meetingDue')) opened.push({ dayInRound: state.dayInRound, day: state.day });
+  }
+  assert.deepEqual(opened, [{ dayInRound: ROUND_DAYS[4] - 7, day: meetingDay(MEETINGS[1]) }]);
+  assert.equal(state.era, 4);
+  assert.equal(meetingDueNow(state), false, 'the board meeting opens the day before the mark, six days later');
+});
+
+test('a call that opens between marks survives the next mark and lapses a round later', () => {
+  let state = createInitialState();
+  state.era = 2;
+  state.turnInEra = 1;
+  state.dayInRound = 13;
+  state = advanceDays(state, 1, no).state;
+  assert.equal(state.meeting?.id, 'first');
+  const turn = state.turn;
+  state = advanceDays(state, ROUND_DAYS[2] - state.dayInRound, no).state;
+  assert.equal(state.turn, turn + 1);
+  assert.equal(state.meeting?.id, 'first', 'still open after the mark');
+  const out = advanceDays(state, ROUND_DAYS[2], no);
+  assert.equal(out.state.meeting, null);
+  assert.deepEqual(out.events.filter((event) => event.type === 'meetingOutcome').map((event) => event.walkedOut), [true]);
+});
+
+test('taking the President\'s call never needs a free action', () => {
+  const state = open(createInitialState());
+  state.round.moves = 2;
+  const out = applyActions(state, { moves: [{ type: 'meeting' }], presidentAnswers: plainIds() }, no);
+  assert.deepEqual(out.errors, []);
+  assert.equal(out.state.meeting, null);
+  assert.equal(out.state.meetingsHeld.includes('first'), true);
 });

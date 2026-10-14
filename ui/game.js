@@ -109,7 +109,7 @@ export function createGame({ seed = 1, state, history = [], eventMode = state?.e
       return game.flush();
     },
     addMove(move) {
-      if (game.movesLeft() <= 0) return { ok: false, error: `only ${MAX_MOVES} actions per round` };
+      if (game.movesLeft() <= 0 && move.type !== 'meeting') return { ok: false, error: `only ${MAX_MOVES} actions per round` }; // the President's call never needs a free action (sim/turn.js)
       actions.moves.push(structuredClone(move));
       return game.flush();
     },

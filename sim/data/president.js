@@ -1,8 +1,12 @@
+import { ROUND_DAYS } from '../time.js';
+
 export const MEETINGS = [
   {
     id: 'first',
+    // Pacing fix (2026-10-14): two weeks into era 2's second round, apart from the first round's new systems.
     era: 2,
-    turnInEra: 2,
+    turnInEra: 1,
+    dayInRound: 14,
     exchanges: [
       {
         topic: 'war',
@@ -41,9 +45,11 @@ export const MEETINGS = [
   },
   {
     id: 'second',
-    // Owner pick 1C (2026-09-26): he calls just before Geneva. It opens at the last era 4 mark, as era 5 begins.
+    // Owner pick 1C (2026-09-26): he calls just before Geneva. It opens a story week before era 4 ends, apart from the
+    // board meeting (the day before the mark) and era 5's first day (pacing fix, 2026-10-14).
     era: 4,
     turnInEra: 3,
+    dayInRound: ROUND_DAYS[4] - 7,
     exchanges: [
       {
         topic: 'control',

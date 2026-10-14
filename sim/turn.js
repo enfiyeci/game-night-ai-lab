@@ -36,7 +36,7 @@ import {
   SUMMIT_SKIP_US_FAVOR,
   SUMMIT_SKIP_INTL_FAVOR,
 } from './summit.js';
-import { expireMeeting, meetingDue, openMeeting, runMeeting } from './president.js';
+import { expireMeeting, meetingDue, meetingExpiresNow, openMeeting, runMeeting } from './president.js';
 import { judgeEndingPromises, promiseUpkeep } from './promises.js';
 import { applySplitEffects, makePledge, setComputeSplit, spotCover } from './split.js';
 import { ROUND_DAYS, monthsPerDay } from './time.js';
@@ -254,7 +254,8 @@ export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = 
   state.burnPlanned = projectBurn(state);
 
   for (const move of actions.moves ?? []) {
-    if (state.round.moves >= MAX_MOVES) {
+    // The President's call can open between marks, after both actions are used: taking it never needs a free one.
+    if (state.round.moves >= MAX_MOVES && move.type !== 'meeting') {
       errors.push(`only ${MAX_MOVES} actions per round`);
       break;
     }
@@ -329,18 +330,11 @@ function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
       pushFeed(state, '@board_minutes', dealVerdictPost(e.member, e.kept), 'event');
     }
   }
-  const meetingIdAtStart = state.meeting?.id ?? null;
-  if (!meetingIdAtStart) {
-    const id = meetingDue(state);
-    if (id) {
-      state.meeting = openMeeting(state, id);
-      events.push({ type: 'meetingDue', id });
-    }
-  }
-  if (meetingIdAtStart && state.meeting) {
+  if (meetingExpiresNow(state)) {
+    const id = state.meeting.id;
     errors.push('take the President meeting with a meeting move');
     const outcome = expireMeeting(state).outcome;
-    events.push({ type: 'meetingOutcome', id: meetingIdAtStart, walkedOut: outcome.walkedOut, stake: outcome.stake });
+    events.push({ type: 'meetingOutcome', id, walkedOut: outcome.walkedOut, stake: outcome.stake });
   }
 
   if (state.era === 5 && state.deal && state.turnInEra > 0) {
@@ -499,6 +493,15 @@ function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
   if (!state.ending) stampLandings(state);
 }
 
+// The President calls on his own day (sim/data/president.js), on a mark day or between marks.
+function openDueMeeting(state, events) {
+  if (state.ending || state.meeting) return;
+  const id = meetingDue(state);
+  if (!id) return;
+  state.meeting = openMeeting(state, id);
+  events.push({ type: 'meetingDue', id });
+}
+
 function postLandedCards(state) {
   for (const card of state.pendingEvents) {
     if (card.posted || card.landsAt == null || card.landsAt > state.day) continue;
@@ -574,6 +577,7 @@ export function advanceDays(prev, days, rng, observer = {}) {
       events.push(...scenarioTick(state));
       postLandedCards(state);
     }
+    openDueMeeting(state, events);
     const dayEvents = events.slice(firstEvent);
     if (reachesMark || dayEvents.length) postFeed(mood, state, dayEvents, reachesMark);
   }
