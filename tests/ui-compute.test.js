@@ -515,3 +515,22 @@ test('the signed stamp closes the board on its own after a short hold', { timeou
   assert.equal(overlay.querySelector('.dialog-layer'), null);
   assert.equal(game.movesLeft(), movesBefore - 1);
 });
+
+// Playtest 2026-10-14: the queue named the player's row "Kestrel lab", not the lab they named.
+test('the chip queue labels your row with your lab’s name, or "your lab"', async () => {
+  const doc = installFakeDom();
+  const { openQueue } = await import('../ui/screens/compute.js');
+  const yourRow = (labName) => {
+    const state = SCENARIOS.era3Idle(1);
+    if (labName !== undefined) state.labName = labName;
+    const overlay = doc.createElement('div');
+    doc.body.append(overlay);
+    openQueue(createGame({ state, seed: 1 }), overlay);
+    const text = overlay.querySelector('.queue-row.you')?.querySelector('small')?.textContent;
+    overlay.remove();
+    return text;
+  };
+  assert.equal(yourRow('Wren Works'), 'Wren Works');
+  assert.equal(yourRow(undefined), 'your lab');
+  assert.equal(yourRow('   '), 'your lab');
+});

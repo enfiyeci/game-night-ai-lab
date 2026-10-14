@@ -3,6 +3,7 @@
 import { mountFilm } from '../endings/player.js';
 import { music } from '../music.js';
 import { endScreenModel } from '../logic/ending.js';
+import { familyName } from '../logic/naming.js';
 import { buildFinale, resolveFinale } from '../../sim/finale.js';
 
 const make = (tag, className, text) => {
@@ -11,6 +12,9 @@ const make = (tag, className, text) => {
   if (text != null) node.textContent = text;
   return node;
 };
+
+// The names the player gave the lab (title screen) and its models (first training run), for the film's screens.
+const runNames = (state) => ({ lab: (typeof state.labName === 'string' && state.labName.trim()) || null, family: familyName(state) || null });
 
 function trapFocus(layer) {
   layer.addEventListener('keydown', (event) => {
@@ -232,7 +236,7 @@ export function mountEnding(game, overlay, { collection, onPlayAgain, loadFilm =
   const record = (state, { save = true } = {}) => {
     if (recorded === state.ending) return;
     recorded = state.ending;
-    if (save) collection?.record(state.ending, { seed: state.seed, era: state.era, turn: state.turn, model: state.models.at(-1)?.name ?? null });
+    if (save) collection?.record(state.ending, { seed: state.seed, era: state.era, turn: state.turn, model: state.models.at(-1)?.name ?? null, ...runNames(state) });
     const entries = collection?.entries() ?? [];
     const newThisRun = save && entries.find((entry) => entry.id === state.ending)?.count === 1;
     model = endScreenModel(state, entries, { newThisRun });
@@ -271,7 +275,7 @@ export function mountEnding(game, overlay, { collection, onPlayAgain, loadFilm =
         id: state.ending,
         fullTitle: finale?.fullTitle,
         era: state.era,
-        run: { deal: state.deal },
+        run: { deal: state.deal, ...runNames(state) },
         onDone: () => {
           if (!skipped) close();
         },

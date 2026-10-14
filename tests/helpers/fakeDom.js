@@ -177,7 +177,7 @@ export class FakeEvent {
 
 // Installs document, CustomEvent and requestAnimationFrame on globalThis; returns the document.
 export function installFakeDom() {
-  const doc = { createElement: (tag) => new FakeElement(tag, doc) };
+  const doc = { createElement: (tag) => new FakeElement(tag, doc), createTextNode: (text) => new FakeText(text) };
   doc.body = new FakeElement('body', doc);
   doc.activeElement = doc.body;
   globalThis.document = doc;

@@ -65,11 +65,36 @@ export function withNarration(film, lines) {
   return { ...film, shots: film.shots.map((shot, i) => (lines[i]?.shot === shot.card && lines[i].say ? { ...shot, say: lines[i].say } : shot)) };
 }
 
+// ---------------------------------------------------------------- the player's names
+// The plates were drawn with placeholder names (tools/endings/gen_plates.py): the lab is "Kestrel Labs", or "Kestrel"
+// where people say it short, and its models are "Kestrel 4", "Kestrel 4.5", "Kestrel 5". The run's own names,
+// {lab, family}, take their place (playtest 2026-10-14); a name the run lacks keeps its placeholder.
+export const nameText = (text, { lab, family } = {}) =>
+  text.replace(/Kestrel(?: (Labs)| (\d+(?:\.\d+)?))?/g, (match, labs, number) => (number ? (family ? `${family} ${number}` : match) : lab || match));
+
+const escapeXml = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' })[c]);
+const shown = (s) => s.replace(/&[#\w]+;/g, '_').length; // characters on screen: an entity is one
+
+// The same, on a plate's SVG source before it is parsed: the player's names are escaped first, since they are typed
+// text. A plate is a fixed layout, so a line that comes out longer than its placeholder line is squeezed (textLength)
+// into the width the placeholder took, estimated from its font size (about 0.55 em a character, 0.6 in mono).
+export function namePlate(svg, { lab, family } = {}) {
+  const names = { lab: lab ? escapeXml(lab) : '', family: family ? escapeXml(family) : '' };
+  return svg.replace(/<text([^>]*)>([^<]*Kestrel[^<]*)<\/text>/g, (whole, attrs, text) => {
+    const named = nameText(text, names);
+    const size = Number(/font-size:([\d.]+)px/.exec(attrs)?.[1]);
+    if (shown(named) <= shown(text) || !size || attrs.includes('textLength')) return `<text${attrs}>${named}</text>`;
+    const width = shown(text) * size * (attrs.includes('monospace') ? 0.6 : 0.55);
+    return `<text${attrs} textLength="${width.toFixed(1)}" lengthAdjust="spacingAndGlyphs">${named}</text>`;
+  });
+}
+
 // ---------------------------------------------------------------- films that follow the run
 // A film with a deal block (A negotiated pace) shows the deal the run made: {name} in a card, or in a plate's data-fill
 // text, becomes the value of that name; a plate element with data-if="name" shows only when that value is set; and a
 // shot's byDeal list ([[commitment, plate], ...]) picks the first plate whose commitment is binding. With no run, the
-// film's own example deal is used. run = {deal: state.deal}: {binding: [...], signed: {commitment: [party ids]}}.
+// film's own example deal is used. run = {deal: state.deal}: {binding: [...], signed: {commitment: [party ids]}}; a
+// run's lab name (run.lab) stands in for the film's own name for your lab.
 //
 // The sim drops a rival that broke the deal from every signed list but leaves the terms binding, so the signers here
 // are the ones who kept it (the signing-day ticker counts them too). Your lab always kept it: this ending needs you
@@ -82,6 +107,7 @@ export function resolveFilm(film, run) {
   const spec = film.deal;
   if (!spec) return { film, values: {} };
   const deal = run?.deal ?? spec.example;
+  const yourLab = run?.lab || spec.you.lab;
   const binding = Object.keys(spec.terms).filter((c) => deal.binding.includes(c));
   const signers = (c) => deal.signed?.[c] ?? [];
   const labsKeeping = (terms) => Object.keys(spec.labs).filter((p) => terms.some((c) => signers(c).includes(p)));
@@ -95,14 +121,14 @@ export function resolveFilm(film, run) {
   const count = signing === total ? `ALL ${NUMBER_WORDS[total]}` : `${NUMBER_WORDS[signing]} OF ${NUMBER_WORDS[total]}`;
   const ticker = [`${count} FRONTIER LABS SIGN`, ...binding.map((c) => spec.headlines[c])].join('  ·  ');
   const values = {
-    lab: rival ? spec.labs[rival] : spec.you.lab,
+    lab: rival ? spec.labs[rival] : yourLab,
     place: rival ? spec.labs[rival] : spec.you.place,
     evaluators: binding.includes('evaluators') ? 'yes' : '',
     ticker: `${ticker}  ·  `.repeat(4),
   };
   const parties = { ...spec.labs, ...spec.governments };
   binding.forEach((c, i) => {
-    const names = [spec.you.lab, ...Object.keys(parties).filter((p) => signers(c).includes(p)).map((p) => parties[p])];
+    const names = [yourLab, ...Object.keys(parties).filter((p) => signers(c).includes(p)).map((p) => parties[p])];
     values[`term${i + 1}`] = `${i + 1}.  ${spec.terms[c]}`;
     values[`signed${i + 1}`] = `Signed: ${names.join(', ')}`;
   });

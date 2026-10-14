@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
-import { buildTimeline, shotAt, camAt, sampleKeys, typedText, resolveFilm, fillText, withNarration, TITLE_DUR } from '../ui/endings/timeline.js';
+import { buildTimeline, shotAt, camAt, sampleKeys, typedText, resolveFilm, fillText, withNarration, nameText, namePlate, TITLE_DUR } from '../ui/endings/timeline.js';
 import { ENDINGS } from '../sim/endings.js';
 import { COMMITMENTS, PARTIES } from '../sim/summit.js';
 import { RIVAL_TEMPLATES } from '../sim/rivals.js';
@@ -166,6 +166,48 @@ test('when every rival broke the term the scene is about, it happens at your lab
   assert.equal(scene(r).card, 'Month 1, 2 am · Your lab');
   assert.equal(r.values.lab, 'Kestrel Labs');
   assert.equal(r.values.signed1, 'Signed: Kestrel Labs, United States');
+});
+
+test('a negotiated pace signs with the name the player gave the lab', () => {
+  const r = resolveFilm(pacing, { ...run({ computeCap: ['west'], evaluators: ['openbrain', 'west'] }), lab: 'Wren Works' });
+  assert.equal(r.values.lab, 'Wren Works');
+  assert.equal(r.values.signed1, 'Signed: Wren Works, United States');
+});
+
+// Playtest 2026-10-14: the ending showed "Kestrel Labs" and "Kestrel 4", not the names the player typed.
+test('the player\u2019s lab and model family replace the placeholder names, each kept when the run has none', () => {
+  const names = { lab: 'Wren Works', family: 'Osprey' };
+  assert.equal(nameText('Azuria absorbs Kestrel Labs', names), 'Azuria absorbs Wren Works');
+  assert.equal(nameText('Mar · Kestrel 4 · Apr · Kestrel 4.5 · May · Kestrel 5', names), 'Mar · Osprey 4 · Apr · Osprey 4.5 · May · Osprey 5');
+  assert.equal(nameText('MARKETS · Kestrel partners up 8%', names), 'MARKETS · Wren Works partners up 8%');
+  assert.equal(nameText('Kestrel? Very nice people.', names), 'Wren Works? Very nice people.');
+  assert.equal(nameText('If you use Kestrel 4, ask who checks it now.', names), 'If you use Osprey 4, ask who checks it now.');
+  assert.equal(nameText('Kestrel Labs ships Kestrel 5', { family: 'Osprey' }), 'Kestrel Labs ships Osprey 5');
+  assert.equal(nameText('Kestrel Labs ships Kestrel 5', { lab: 'Wren Works' }), 'Wren Works ships Kestrel 5');
+  assert.equal(nameText('Kestrel Labs ships Kestrel 5'), 'Kestrel Labs ships Kestrel 5');
+  assert.equal(nameText('Kestrel 5', { family: '$& $1' }), '$& $1 5', 'replacement patterns in a name stay literal');
+});
+
+test('names typed into a plate are escaped, and a longer line is squeezed into the placeholder\u2019s width', () => {
+  const plate = '<svg><text x="10" y="20" style="font-size:20px">Hearing on Kestrel 5</text><text x="0" y="0" style="font-size:10px;font-family:\'IBM Plex Mono\',monospace">Kestrel 4 · 19:40</text><text>Lodestar</text></svg>';
+  const out = namePlate(plate, { lab: 'A&B', family: '<b>"Wren"</b>' });
+  assert.ok(out.includes('Hearing on &lt;b&gt;&quot;Wren&quot;&lt;/b&gt; 5</text>'), out);
+  assert.ok(!out.includes('<b>'), 'no markup from a name reaches the SVG');
+  assert.ok(out.includes('textLength="220.0" lengthAdjust="spacingAndGlyphs">Hearing on'), '20 shown characters × 20px × 0.55');
+  assert.ok(out.includes('textLength="102.0" lengthAdjust="spacingAndGlyphs">&lt;b&gt;'), '17 shown characters × 10px × 0.6 (mono)');
+  assert.ok(out.includes('<text>Lodestar</text>'), 'lines without a placeholder are untouched');
+  const short = namePlate(plate, { family: 'Owl' });
+  assert.ok(short.includes('<text x="10" y="20" style="font-size:20px">Hearing on Owl 5</text>'), 'a shorter name needs no squeeze');
+  assert.equal(namePlate(plate), plate, 'no names: the plate is unchanged');
+  assert.equal(namePlate(plate, { lab: 'A&B' }).includes('A&amp;B'), false, 'no lab placeholder on this plate');
+});
+
+test('every placeholder on the plates is a name the player can replace', () => {
+  for (const file of readdirSync('ui/assets/endings/plates')) {
+    const svg = readFileSync(`ui/assets/endings/plates/${file}`, 'utf8');
+    const named = namePlate(svg, { lab: 'Wren Works', family: 'Osprey' });
+    assert.ok(!named.includes('Kestrel'), `${file} still says Kestrel somewhere the substitution does not reach`);
+  }
 });
 
 test('films without run data are left as they are', () => {

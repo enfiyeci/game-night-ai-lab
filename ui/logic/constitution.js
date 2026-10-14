@@ -5,6 +5,7 @@ import { hasConstitution } from '../../sim/constitution.js';
 import { CASES, FIXED_LINE, HARD_LINES, SAFETY_PROPOSAL } from '../../sim/data/constitution.js';
 import { storyDate } from '../../sim/time.js';
 import { storyDayForTurn } from './format.js';
+import { familyName } from './naming.js';
 
 const SOURCES = {
   president: 'The President asked',
@@ -74,7 +75,7 @@ export function documentView(state, draft) {
   });
 
   const last = state.models?.at(-1);
-  const family = last?.family ?? 'Kestrel';
+  const family = familyName(state) || 'Kestrel'; // the name typed before the first run counts too; 'Kestrel' as workingName
   // A trained model awaiting release has already learned the current version, so the draft is for the one after it.
   const next = (last?.generation ?? 0) + (state.pendingModel ? 2 : 1);
   const knownOn = lines.filter((line) => line.on).length;
