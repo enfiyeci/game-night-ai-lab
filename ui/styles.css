@@ -4660,6 +4660,44 @@ html.title-waking #hud { transition: opacity .5s ease .6s; }
 .paper-folder .paper-foot { margin-top: 12px; }
 @media (prefers-reduced-motion: reduce) { .paper-slot, .paper-note, .paper-letter { transition: none; } }
 
+/* Owner pick SB: before the clock starts, two résumés per seat in the raise's grammar, then the CFO's use-of-funds memo. */
+.setup-slot { width: 380px; height: 470px; }
+.setup-slot-0 { left: 300px; top: 190px; --tilt: -3deg; }
+.setup-slot-1 { left: 760px; top: 210px; --tilt: 2.5deg; }
+.resume-sheet { position: relative; display: flex; flex-direction: column; width: 100%; height: 100%; padding: 28px 30px; border-radius: 4px; background: var(--paper); box-shadow: 0 20px 44px color-mix(in oklab, var(--ink) 35%, transparent); }
+/* The rule under the name takes the colour of the candidate's shirt in the office (gen_office.py PEOPLE, PEOPLE_ALT). */
+.resume-priya, .resume-amara { --tone: var(--sky); }
+.resume-dev { --tone: color-mix(in oklab, var(--sky) 60%, var(--ink)); }
+.resume-tomas { --tone: var(--teal); }
+.resume-hana { --tone: var(--wood); }
+.resume-margot { --tone: color-mix(in oklab, var(--cream) 40%, var(--wood)); }
+.resume-rafael { --tone: color-mix(in oklab, var(--wood) 45%, var(--ink)); }
+.resume-jules { --tone: var(--coral); }
+.resume-head { display: flex; align-items: center; gap: 14px; padding-bottom: 14px; border-bottom: 3px solid var(--tone); }
+.resume-face { flex: none; line-height: 0; }
+.resume-name { display: block; margin-top: 8px; font: 400 30px/1.15 "Libre Baskerville", Georgia, serif; }
+.resume-for { display: block; margin-top: 12px; font: 400 15px/1.5 "Libre Baskerville", Georgia, serif; }
+.resume-known { display: block; margin-top: 16px; padding-left: 18px; font: 400 14px/1.6 "Libre Baskerville", Georgia, serif; }
+.resume-known span { display: list-item; list-style: disc; }
+.resume-quote { display: block; margin-top: 16px; font: italic 400 15px/1.6 "Libre Baskerville", Georgia, serif; }
+.resume-sig { display: flex; justify-content: space-between; margin-top: auto; padding-top: 6px; border-top: 1.5px solid var(--ink); font-size: 12px; font-weight: 800; }
+.resume-hire { position: absolute; right: -4px; bottom: 22px; width: auto; padding-inline: 34px; pointer-events: auto; }
+.paper-setup .setup-foot { position: absolute; left: 120px; right: 120px; bottom: 40px; color: var(--paper); }
+.setup-memo { left: 400px; top: 110px; width: 640px; padding: 38px 46px 30px; }
+.setup-memo-meta { padding-bottom: 10px; border-bottom: 1.5px solid var(--ink); font: 400 14px/1.7 "Libre Baskerville", Georgia, serif; }
+.setup-memo-body { margin: 14px 0 0; font: 400 15px/1.6 "Libre Baskerville", Georgia, serif; }
+.setup-memo-row { display: grid; grid-template-columns: 120px 1fr 54px; align-items: center; gap: 14px; margin-top: 16px; font: 400 15px "Libre Baskerville", Georgia, serif; }
+.setup-memo-bar { position: relative; height: 16px; border-radius: 3px; background: color-mix(in oklab, var(--ink) 8%, var(--paper)); }
+.setup-memo-bar i { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 3px; }
+.setup-memo-bar .compute-handle { height: 34px; margin-top: -17px; }
+.setup-memo-bar .compute-handle::after { top: 4px; bottom: 4px; left: 7px; width: 10px; border: 2px solid var(--ink); border-radius: 3px; box-shadow: none; }
+.setup-memo-share { font-family: Nunito, sans-serif; font-weight: 900; }
+.setup-memo-hand { margin: 22px 0 0; font: italic 400 15px/1.6 "Libre Baskerville", Georgia, serif; }
+.setup-memo-foot { display: flex; align-items: center; justify-content: flex-end; gap: 16px; margin-top: 18px; }
+.setup-memo-foot .paper-error { flex: 1; margin: 0; }
+.setup-memo-foot .paper-error:empty { display: none; }
+.setup-memo-sign { width: auto; padding-inline: 34px; }
+
 /* Safety's constitution draft (look B of docs/design/mockups/K2-model-spec.html): paper document over the office. */
 .sd-layer { z-index: 12; opacity: 1; transition: none; }
 /* The document replaces the HUD and its board countdown while it is open, as in the mock; the desk phone steps away. */

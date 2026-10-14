@@ -50,6 +50,8 @@ import { mountTitle } from './screens/title.js';
 import { cleanLabName, titleShows } from './logic/title.js';
 import { mountIntro, mountNaming } from './screens/intro.js';
 import { isFreshStart, tourSeen } from './logic/intro.js';
+import { openSetup } from './screens/setup.js';
+import { LEADS, hireLead } from '../sim/leads.js';
 
 const params = new URLSearchParams(location.search);
 
@@ -81,6 +83,8 @@ const initialState = buildScenario(seed);
 const game = createGame({ seed, state: initialState, history: scenarioHistory(initialState), eventMode: scenarioName === 'start' || scenarioName === 'scenarioEvent' ? 'scenarios' : 'legacy' });
 if (cleanLabName(params.get('lab'))) game.state.labName = cleanLabName(params.get('lab')); // same cap as the title screen
 if (location.hash === '#board-warning') delete game.state.flags.boardQuiet; // debug still: the warning without going quiet
+// Debug: ?leads=dev,hana hires those leads as the setup would (a link skips the setup itself).
+for (const id of (params.get('leads') ?? '').split(',')) if (LEADS[id]) hireLead(game.state, LEADS[id].seat, id);
 
 const stage = document.querySelector('#stage');
 const office = document.querySelector('#office');
@@ -112,8 +116,10 @@ if (showTitle) {
     music,
     openSound,
     onStart: () => {
+      // Hire the four leads and sign the first year's money before the clock starts (owner pick SB); the guided
+      // intro waits for the paperwork to leave (ui/screens/intro.js).
+      openSetup(game, overlay, { onDone: () => document.dispatchEvent(new CustomEvent('ai-lab:start')) });
       game.clock.resume('title');
-      document.dispatchEvent(new CustomEvent('ai-lab:start')); // the guided intro starts here
     },
   });
 }
@@ -238,6 +244,10 @@ async function openDebugRoute() {
   }
   if (location.hash === '#budget') {
     openBudget(game, overlay);
+    return;
+  }
+  if (location.hash === '#setup') {
+    openSetup(game, overlay);
     return;
   }
   if (location.hash === '#constitution') {

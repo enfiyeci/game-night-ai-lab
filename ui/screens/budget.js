@@ -43,7 +43,8 @@ function switchButton(label, detail, checked, onChange) {
   return button;
 }
 
-function handle({ label, value, min, max, step, leftForValue, valueText, onInput }) {
+// A horizontal grip on a bar: drag or arrow keys; onInput(value, { commit }) on every move (also the setup memo's marks).
+export function handle({ label, value, min, max, step, leftForValue, valueText, onInput }) {
   const grip = element('button', 'compute-handle');
   grip.type = 'button';
   grip.setAttribute('role', 'slider');
