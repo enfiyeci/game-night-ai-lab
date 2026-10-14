@@ -486,6 +486,50 @@ test('make room: the shortfall for the chosen size and the smallest run, and a s
   assert.equal(makeRoom(fewUsers, medium).cap, null);
 });
 
+// Review 2026-10-14: the cap once left the run a float hair short (5.999999999999993 free for a run of 6).
+import { startRun } from '../sim/training.js';
+
+const smallOf = (draft) => ({ ...draft, sliders: { ...draft.sliders, size: 'small' } });
+function capStartsSmallest(state, draft, label) {
+  const room = makeRoom(state, draft);
+  if (!room || room.cap === null) return room;
+  assert.ok(room.smallestMissing >= 0.1, `${label}: never "0 units short"`);
+  const capped = structuredClone(state);
+  capped.compute.split = { ...capped.compute.split, servingCap: room.cap };
+  assert.ok(recipePreview(capped, smallOf(draft)).fits, `${label}: cap ${room.cap} makes the smallest run fit`);
+  const run = startRun(capped, smallOf(draft));
+  assert.notEqual(run.error, 'not enough free compute', `${label}: the sim agrees`);
+  return room;
+}
+
+test('make room: the cap makes the smallest run fit even when the numbers land a float hair short', () => {
+  const state = SCENARIOS.era2Deals(1);
+  state.pendingModel = null;
+  Object.assign(state.compute, { online: 60.8, servingUnits: 60.24 });
+  state.compute.split = { ...state.compute.split, safety: 0.2, servingCap: null };
+  const room = capStartsSmallest(state, medium, 'repro');
+  assert.ok(room?.cap !== null && room.cap < 42.6, `the cap steps below 42.6 (got ${room?.cap})`);
+});
+
+test('make room: across scenarios and random compute, the one-click cap always lets the smallest run start', () => {
+  let seed = 12345;
+  const random = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
+  const bases = [SCENARIOS.era2Deals(1), SCENARIOS.era2Deals(2), SCENARIOS.era3Idle(1), SCENARIOS.start(1)];
+  let capped = 0;
+  for (let i = 0; i < 600; i += 1) {
+    const state = structuredClone(bases[i % bases.length]);
+    state.pendingModel = null;
+    state.activeRun = null;
+    const scale = state.era === 3 ? 8 : state.era === 2 ? 3 : 1;
+    state.compute.online = Math.round(random() * 40 * scale * 100) / 100 + 1;
+    state.compute.servingUnits = random() * state.compute.online;
+    state.compute.split = { ...state.compute.split, safety: Math.round(random() * 50) / 100, servingCap: null };
+    const room = capStartsSmallest(state, medium, `case ${i}`);
+    if (room?.cap !== null && room?.cap !== undefined) capped += 1;
+  }
+  assert.ok(capped > 50, `enough stuck states with a cap offered were checked (${capped})`);
+});
+
 test('make room: one click lowers the serving cap and the dialog can start the smallest run', async () => {
   const { game, layer } = await openRecipeAt(stuckInEra2());
   const help = () => layer.querySelector('.recipe-help');

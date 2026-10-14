@@ -527,6 +527,7 @@ function computeHelp(state, draft, preview, { onFit, onCap, onDeals, onBudget })
     root.append(text, link('Use the largest size that fits', onFit));
     return root;
   }
+  if (room.smallestMissing === 0) return null; // nothing is missing: no prompt, the error line speaks
   // The dialog has room for two short lines here: what is missing, then the ways out.
   text.textContent = room.missing > room.smallestMissing
     ? `No run fits the free compute: the smallest is ${amount(room.smallestMissing)} short, this one ${amount(room.missing)}.`

@@ -207,18 +207,28 @@ export function fitDraftToCompute(state, draft) {
 export function makeRoom(state, draft) {
   const preview = recipePreview(state, draft);
   if (!preview.errors.includes('not enough free compute') || state.activeRun || state.pendingModel) return null;
-  const short = (units) => Math.max(0, Math.ceil(Number(((units - preview.free) * 10).toFixed(6))) / 10);
-  const smallest = SIZES[0];
-  const smallestUnits = recipePreview(state, sanitizeDraft(state, { ...draft, sliders: { ...draft.sliders, size: smallest } })).cost?.units;
+  // any real shortfall reads at least a tenth, so a float hair (6 vs 5.999999999999993) never shows as "0 units short"
+  const short = (units) => (units > preview.free ? Math.max(0.1, Math.ceil(Number(((units - preview.free) * 10).toFixed(6))) / 10) : 0);
+  const smallest = sanitizeDraft(state, { ...draft, sliders: { ...draft.sliders, size: SIZES[0] } });
   const missing = short(preview.cost.units);
-  const smallestMissing = short(smallestUnits ?? preview.cost.units);
+  const smallestMissing = short(recipePreview(state, smallest).cost?.units ?? preview.cost.units);
   const { serving } = computeSlices(state);
-  const freed = smallestMissing > 0 && smallestMissing <= serving ? smallestMissing : null;
+  let freed = smallestMissing > 0 && smallestMissing <= serving ? smallestMissing : null;
+  let cap = freed === null ? null : Math.floor(Number(((serving - freed) * 10).toFixed(6))) / 10;
+  // The cap is checked the way the run will be: on a copy, with the real free compute. Float error can leave the run a
+  // hair short (review 2026-10-14), so the cap steps down a tenth at a time until the smallest run fits.
+  while (cap !== null) {
+    const trial = structuredClone(state);
+    trial.compute.split = { ...trial.compute.split, servingCap: cap };
+    if (recipePreview(trial, smallest).fits) break;
+    cap = cap >= 0.1 ? Math.round((cap - 0.1) * 10) / 10 : null;
+  }
+  if (cap === null) freed = null;
   return {
     missing,
     smallestMissing,
     freed,
-    cap: freed === null ? null : Math.floor(Number(((serving - freed) * 10).toFixed(6))) / 10,
+    cap,
     spotMonthly: freed !== null && state.compute.split.coverWithSpot ? freed * spotPrice(state) * BALANCE.unitMonthlyCost : 0,
   };
 }

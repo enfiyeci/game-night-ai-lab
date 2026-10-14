@@ -229,7 +229,9 @@ export function openBudget(game, overlayRoot) {
         max: total,
         step: 1,
         leftForValue: (next) => (next / total) * 100,
-        valueText: (next) => (next >= total ? 'No cap: serve every user' : computeAmount(next, projected.era)),
+        // "No cap" only when there is none: a stored cap at or above what is online still shows its number
+        valueText: (next) => (next < total ? computeAmount(next, projected.era)
+          : split.servingCap == null ? 'No cap: serve every user' : computeAmount(Math.max(next, split.servingCap), projected.era)),
         onInput(next, interaction) {
           split.servingCap = next >= total ? null : next;
           if (interaction.commit) render({ focusLabel: interaction.focusLabel });

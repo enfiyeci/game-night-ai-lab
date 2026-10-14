@@ -567,6 +567,18 @@ test('clicking the serving-cap handle without dragging leaves "no cap" alone', a
   assert.equal(game.state.compute.split.servingCap, null);
 });
 
+test('a stored cap at or above online compute shows its number, not "No cap", until End takes it off', async () => {
+  const state = SCENARIOS.start(1);
+  state.compute.split = { ...state.compute.split, servingCap: 100 };
+  const { game, grip, press, ok } = await budgetDialog(state);
+  assert.equal(grip().style.left, '100%');
+  assert.equal(grip().getAttribute('aria-valuetext'), '100 units');
+  press('End');
+  assert.equal(grip().getAttribute('aria-valuetext'), 'No cap: serve every user');
+  ok();
+  assert.equal(game.state.compute.split.servingCap, null);
+});
+
 test('the serving cap goes back to "no cap" at the far right, by keyboard or by dragging', async () => {
   const { game, grip, press, pointer, ok } = await budgetDialog();
   press('Home');
