@@ -3932,6 +3932,7 @@ svg.room {
 .dl-layer { z-index: 11; }
 .dl-card { left: 300px; right: 300px; bottom: 16px; padding: 14px 18px; }
 .dl-card h2 { margin: 0; font-size: 22px; font-weight: 700; }
+.dl-card h3 { margin: 12px 0 0; font-size: 16px; font-weight: 800; }
 .dl-lines { display: grid; gap: 5px; margin-top: 10px; }
 .dl-lines div { display: grid; grid-template-columns: 16px 1fr; gap: 6px; font-size: 14px; font-weight: 700; }
 .dl-lines i { font-style: normal; font-weight: 900; color: color-mix(in oklab, var(--teal) 60%, var(--ink)); }
