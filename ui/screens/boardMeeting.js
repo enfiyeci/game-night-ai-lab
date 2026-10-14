@@ -9,6 +9,7 @@ import { ERAS, eraById } from '../../sim/data/eras.js';
 import { nextRoundDay } from '../../sim/time.js';
 import { boardView, meetingDueNow, meetingModel, resultModel, voteReveal } from '../logic/board.js';
 import { ADVISOR_TITLE } from '../logic/events.js';
+import { leftBehindCall, raceStanding } from '../logic/raceWarning.js';
 import * as COPY from '../data/boardCopy.js';
 import { portrait } from '../components/portraits.js';
 import { dialog } from '../components/dialog.js';
@@ -159,6 +160,31 @@ function fakeVote(state, kind, picked, variant = 'win') {
   return { reveal: voteReveal(before, after), after };
 }
 
+// The board's call when an era ends with the lab left behind (owner pick S1, frame E-left): the ring's card, saying who
+// finished where, with one button that goes on to the ending. Also shown by ui/screens/end.js for eras 1 and 5, which
+// end with no meeting.
+export function leftBehindCard(state, onHear) {
+  const call = leftBehindCall(state);
+  let lean = {};
+  try {
+    lean = Object.fromEntries(boardView(state).members.map((member) => [member.id, member]));
+  } catch (error) {
+    console.error(error); // faces without moods rather than no card
+  }
+  const card = make('div', 'mt-ring');
+  const faces = make('div', 'mt-ring-faces');
+  faces.setAttribute('aria-hidden', 'true');
+  faces.innerHTML = IDS.map((id, i) => `<span style="--i:${i}">${portrait(id, 64, lean[id]?.mood)}</span>`).join('');
+  const sub = make('div', 'mt-ring-s', call.line);
+  sub.append(document.createElement('br'), make('b', null, call.verdict));
+  const buttons = make('div', 'mt-ring-b');
+  const hear = button('join wide', COPY.RING.hear);
+  hear.addEventListener('click', onHear, { once: true });
+  buttons.append(hear);
+  card.append(faces, make('div', 'mt-ring-k', COPY.RING.kicker), make('div', 'mt-ring-t', COPY.RING.title), sub, buttons);
+  return card;
+}
+
 export function mountBoardMeeting(game, { overlay, stage }) {
   let session = null;
   const reduced = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
@@ -282,6 +308,31 @@ export function mountBoardMeeting(game, { overlay, stage }) {
       card.append(faces, make('div', 'mt-ring-k', COPY.RING.kicker), make('div', 'mt-ring-t', COPY.RING.title), sub, buttons, joke);
       root.append(card);
       join.focus();
+    }
+
+    // ---- 1b. the era ends with the lab left behind (owner pick S1) ------------------------------------------------------
+    // The rule is judged before any vote (sim/endings.js eraGate): the call explains the loss, and its one button goes on
+    // to the ending.
+    function leftBehindRing() {
+      stopTimers();
+      root.className = 'dialog-layer mt-layer step-ring dialog-open';
+      root.replaceChildren(make('div', 'mt-letterbox top'), make('div', 'mt-letterbox bottom'), leftBehindCard(game.state, () => close()));
+      overlay.dispatchEvent(new CustomEvent('left-behind-explained'));
+      root.querySelector('.join').focus();
+    }
+
+    // The lab is out already on the gate's last day: cross the mark at once rather than ring for a vote that will not be
+    // held. If the mark judges otherwise (a vote called earlier is held first), the meeting picks up from the vote.
+    function crossNow() {
+      const { before, outcome } = crossMark();
+      if (outcome === 'ending') {
+        if (after.ending === 'leftBehind') leftBehindRing();
+        else close();
+        return;
+      }
+      room();
+      toVote();
+      if (outcome === 'reveal') { reveal = voteReveal(before, after); playVote(); } else putOff(after);
     }
 
     // ---- 2. the meeting ------------------------------------------------------------------------------------------------
@@ -613,9 +664,18 @@ export function mountBoardMeeting(game, { overlay, stage }) {
       step();
     }
 
-    // Call the vote: this meeting's deals apply at once, then the meeting crosses the round mark itself (the clock is
-    // held by the meeting, and a one-day advance is the call the clock would make). The reveal plays from the state
-    // that crossed the mark. Anything that throws closes the meeting rather than lock the game.
+    // The meeting crosses the round mark itself (the clock is held by the meeting, and a one-day advance is the call the
+    // clock would make).
+    function crossMark() {
+      const before = structuredClone(game.state);
+      const days = Math.max(1, nextRoundDay(before) - before.day);
+      for (let day = 0; day < days && !game.state.ending && game.state.turn === before.turn; day += 1) game.advanceDays(1);
+      after = game.state;
+      return { before, outcome: roundOutcome(before, after) };
+    }
+
+    // Call the vote: this meeting's deals apply at once, then the meeting crosses the round mark. The reveal plays from
+    // the state that crossed the mark. Anything that throws closes the meeting rather than lock the game.
     function callTheVote() {
       if (dealsLocked) return;
       const deals = [...picked];
@@ -630,14 +690,11 @@ export function mountBoardMeeting(game, { overlay, stage }) {
           const made = game.setField('boardDeals', deals.map((member) => ({ member, kind: member })));
           if (!made.ok) console.error(made.error);
         }
-        const before = structuredClone(game.state);
-        const days = Math.max(1, nextRoundDay(before) - before.day);
-        for (let day = 0; day < days && !game.state.ending && game.state.turn === before.turn; day += 1) game.advanceDays(1);
-        after = game.state;
-        const outcome = roundOutcome(before, after);
+        const { before, outcome } = crossMark();
         if (outcome === 'reveal') { reveal = voteReveal(before, after); playVote(); return; }
         if (outcome === 'deferred') { putOff(after); return; }
-        close(); // no vote was held (another ending came first, or left behind): the ending plays
+        if (after.ending === 'leftBehind') { leftBehindRing(); return; } // the rivals moved on: say so before the film
+        close(); // no vote was held (another ending came first): the ending plays
       } catch (error) {
         console.error(error);
         close();
@@ -713,7 +770,8 @@ export function mountBoardMeeting(game, { overlay, stage }) {
       if ((result.passed || result.reversedByStaff) && !after.ending) notes.push(nextEra ? fill(COPY.SINCE_NOTE.next, { era: nextEra }) : COPY.SINCE_NOTE.none);
       if (notes.length) since.append(make('p', 'mt-side-note', notes.join(' ')));
 
-      const finish = () => close();
+      // A vote called earlier was held, then the gate left the lab behind: the call explains it before the film.
+      const finish = () => (after.ending === 'leftBehind' ? leftBehindRing() : close());
       const layer = dialog({
         title: COPY.RESULT_TITLE,
         subtitle: fill(COPY.RESULT_SUBTITLE[recordKind], { era: model.era }),
@@ -755,6 +813,7 @@ export function mountBoardMeeting(game, { overlay, stage }) {
     }
 
     if (preview && step !== 'ring') still(step);
+    else if (!preview && lastRound && raceStanding(state).out) later(crossNow, 0); // after the publish that opened it
     else ring();
     return session;
   }

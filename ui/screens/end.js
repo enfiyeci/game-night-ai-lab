@@ -4,6 +4,7 @@ import { mountFilm } from '../endings/player.js';
 import { music } from '../music.js';
 import { endScreenModel } from '../logic/ending.js';
 import { buildFinale, resolveFinale } from '../../sim/finale.js';
+import { leftBehindCard } from './boardMeeting.js';
 
 const make = (tag, className, text) => {
   const node = document.createElement(tag);
@@ -174,6 +175,28 @@ function renderEndScreen(overlay, model, { onPlayAgain, onWatch, lumenNote, fina
   return layer;
 }
 
+// Owner pick S1: a left-behind loss is explained before its film. Eras 2-4 end in the board's gate meeting, which shows
+// the call itself; eras 1 and 5 end with no meeting, so the same call rings here, over the office.
+export function explainLeftBehind(overlay, state) {
+  if (!globalThis.document || !overlay?.append) return Promise.resolve();
+  return new Promise((resolve) => {
+    const root = make('div', 'dialog-layer mt-layer step-ring dialog-open');
+    root.setAttribute('role', 'dialog');
+    root.setAttribute('aria-modal', 'true');
+    root.setAttribute('aria-label', 'Board of directors');
+    const stage = overlay.parentElement;
+    const card = leftBehindCard(state, () => {
+      stage?.classList.remove('mt-dim');
+      root.remove();
+      resolve();
+    });
+    root.append(make('div', 'mt-letterbox top'), make('div', 'mt-letterbox bottom'), card);
+    stage?.classList.add('mt-dim');
+    overlay.append(root);
+    card.querySelector('button').focus();
+  });
+}
+
 // The stage zooms the whole page to fit the window (main.js fitToWindow); the film sizes itself from the real
 // window, so it plays in a host that undoes that zoom.
 // While the film's files load, the host shows a dark "Loading the ending" veil that holds focus; Escape there
@@ -220,7 +243,7 @@ export function filmHost(onEscape) {
 
 // Plays the film for the ending the game just reached, then shows the end-of-run screen. Call show() directly
 // for a run that was already over when the page loaded (no click, so no film until the player asks for it).
-export function mountEnding(game, overlay, { collection, onPlayAgain, loadFilm = mountFilm, selectFinale = chooseFinale, lumenNote = () => null } = {}) {
+export function mountEnding(game, overlay, { collection, onPlayAgain, loadFilm = mountFilm, selectFinale = chooseFinale, lumenNote = () => null, explainLoss = explainLeftBehind } = {}) {
   let recorded = null;
   let model = null;
   let playing = false;
@@ -289,9 +312,15 @@ export function mountEnding(game, overlay, { collection, onPlayAgain, loadFilm =
   }
 
   // Owner 2026-09-26: if the ending came with another dialog (the release reveal), let the player close it first.
+  // A left-behind loss the board's meeting did not already explain gets the board's call first (owner pick S1).
+  let explained = false;
+  overlay?.addEventListener?.('left-behind-explained', () => { explained = true; });
   const playWhenClear = () => {
     if (overlay?.querySelector('.dialog-layer') || overlay?.querySelector('.screenwall-layer')) overlay.addEventListener('gdt-dialog-closed', playWhenClear, { once: true });
-    else play();
+    else if (game.state.ending === 'leftBehind' && !explained) {
+      explained = true;
+      explainLoss(overlay, game.state).then(() => play());
+    } else play();
   };
 
   // A board meeting holds the film until it closes: the vote that removed you plays out first (board UI plan Task 6).

@@ -12,6 +12,8 @@
 .et-layer button:focus-visible { outline: 3px solid var(--sky); outline-offset: 5px; }
 .et-office { width: 100%; height: 100%; display: block; pointer-events: none; }
 .et-subtitle { font-size: 21px; margin-top: 17px; }
+.et-goal { margin: 10px 0 0; display: inline-flex; gap: 10px; align-items: center; padding: 7px 14px; border-radius: 999px; background: color-mix(in oklab, var(--coral) 12%, var(--paper)); color: var(--ink); font: 800 14px "Nunito", sans-serif; }
+.et-goal-k { color: color-mix(in oklab, var(--coral) 80%, var(--ink)); letter-spacing: .06em; font-size: 11.5px; text-transform: uppercase; }
 .et-move-scene { position: absolute; inset: 0; }
 .et-new-office { position: absolute; width: 1440px; height: 900px; left: 125px; top: -20px; transform: scale(.67); transform-origin: 50% 60%; }
 .et-old-office { position: absolute; left: 38px; top: 455px; width: 360px; height: 225px; background: #fff9e9; border: 12px solid #fff9e9; box-shadow: 0 10px 25px #2e2a2b22; transform: rotate(-7deg); }

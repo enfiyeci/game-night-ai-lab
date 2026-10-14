@@ -2,6 +2,8 @@ import { bubbleAt, dueBar, el, loadAnchors } from '../components/eventBits.js';
 import { ADVISOR_TITLE, formatStoryTime, jokeFor, openWarnings, queueLookInto } from '../logic/events.js';
 import { money } from '../logic/format.js';
 import { advisorMarks } from '../logic/advisorMarks.js';
+import { raceWarning } from '../logic/raceWarning.js';
+import { openRaceBoard } from './raceBoard.js';
 
 const ROLES = ['research', 'safety', 'cfo', 'policy'];
 
@@ -14,6 +16,8 @@ export function warningProgress(warning, day) {
 // Advisors speak when clicked (owner pick 7A) and raise warnings at their desks (pick 1C).
 // Warnings only inform, so they never pause the clock. Updates can arrive every story week,
 // so a live bubble stays up until the player answers it or its warning goes away.
+// The left-behind warning (pick B, ui/logic/raceWarning.js) rides the same queue; it is not a sim warning (nothing to
+// pay, nothing to look into), so it gets its own bubble (raceBubble).
 export function mountBriefing(game, { office, overlay }) {
   const root = el('<div class="ev-briefing"></div>');
   overlay.append(root);
@@ -97,6 +101,7 @@ export function mountBriefing(game, { office, overlay }) {
   function warningBubble(warning) {
     const head = anchors?.heads?.[warning.advisor];
     if (!head) return null;
+    if (warning.race) return raceBubble(warning, head);
     const extra = el('<div></div>');
     const due = warningDue(warning.id);
     if (due) extra.append(due);
@@ -128,6 +133,29 @@ export function mountBriefing(game, { office, overlay }) {
     return node;
   }
 
+  // Frames B1, B2: Priya at her desk with "Open the race" (the whiteboard, flat) and "Not now"; at the second warning the
+  // CFO adds his line. One node holds both bubbles, so stepping aside or answering removes them together.
+  function raceBubble(warning, head) {
+    const node = el('<div class="ev-race"></div>');
+    root.append(node);
+    const row = el('<div class="ev-row"><button type="button" class="ev-act">Open the race</button><button type="button" class="ev-act ghost">Not now</button></div>');
+    const marked = Boolean(advisorMarks.markFor(warning.advisor, game.state.lastBriefing?.find((reading) => reading.id === warning.advisor)));
+    bubbleAt(node, head, { label: ADVISOR_TITLE[warning.advisor], say: warning.say, width: warning.aside ? 310 : 300, dy: marked ? -64 : -34, extra: row });
+    const aside = warning.aside && anchors?.heads?.[warning.aside.advisor];
+    if (aside) bubbleAt(node, aside, { label: ADVISOR_TITLE[warning.aside.advisor], say: warning.aside.say, width: 230 });
+    const done = () => {
+      node.remove();
+      if (live?.node === node) live = null;
+      showNextWarning();
+    };
+    row.querySelector('.ev-act').addEventListener('click', () => {
+      done();
+      openRaceBoard(game, overlay);
+    });
+    row.querySelector('.ghost').addEventListener('click', done);
+    return node;
+  }
+
   function warningDue(id) {
     const warning = game.state.warnings?.[id];
     if (!Number.isFinite(warning?.dueAt) || !Number.isFinite(game.state.day)) return null;
@@ -145,11 +173,13 @@ export function mountBriefing(game, { office, overlay }) {
   }
 
   function refresh(state) {
-    const open = openWarnings(state, lookedInto());
+    const race = raceWarning(state);
+    const open = [...openWarnings(state, lookedInto()), ...(race ? [race] : [])];
     const openIds = new Set(open.map((warning) => warning.id));
     // A warning that was answered or became a card can be raised again if it comes back later.
     for (const id of [...raised]) if (!openIds.has(id)) raised.delete(id);
-    waiting = waiting.filter((warning) => openIds.has(warning.id));
+    // Waiting warnings keep their place but take today's words (the race warning's numbers move).
+    waiting = waiting.filter((warning) => openIds.has(warning.id)).map((warning) => open.find((item) => item.id === warning.id));
     if (live && !openIds.has(live.warning.id)) {
       live.node.remove();
       live = null;

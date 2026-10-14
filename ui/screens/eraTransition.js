@@ -64,6 +64,10 @@ function buildLayer(era, day, art, anchors) {
   panel.append(header);
 
   header.append(el('p', 'et-subtitle', intro.headline));
+  // What it takes to get through the era (owner pick S2): the left-behind rule and, in eras 2-4, the board's vote.
+  const goal = el('p', 'et-goal');
+  goal.append(el('span', 'et-goal-k', 'To get through this era'), document.createTextNode(intro.gate));
+  header.append(goal);
   const scene = el('div', 'et-move-scene');
   const old = el('div', 'et-old-office');
   if (art[0]) old.append(art[0]);

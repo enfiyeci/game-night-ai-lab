@@ -322,6 +322,16 @@ function beforeEra(seed, era) {
   return state;
 }
 
+// The start of an era's last round with the lab 3rd and 18 points behind the leader (the left-behind warning, owner pick
+// B + D). The run is played by the script; only the rivals' scores are then set around the lab's own, debug only.
+function lastRoundBehind(seed, era) {
+  const state = reachableScenario(seed, (s) => s.era === era && s.turnInEra === 3);
+  if (state.ending || state.era !== era) return state;
+  const behind = { openbrain: -18, deepthink: -6, lodestar: 12, qilin: 16 };
+  for (const rival of state.rivals) rival.capability = Math.max(1, state.capability - behind[rival.id]);
+  return state;
+}
+
 export const SCENARIOS = {
   start,
   beforeEra2: (seed) => beforeEra(seed, 2),
@@ -358,4 +368,9 @@ export const SCENARIOS = {
   automation: automationState,
   ownLine: ownLineState,
   racks: racksState,
+  leftBehind: (seed) => lastRoundBehind(seed, 2),
+  leftBehindEra1: (seed) => lastRoundBehind(seed, 1),
+  leftBehindEra3: (seed) => lastRoundBehind(seed, 3),
+  leftBehindEra4: (seed) => lastRoundBehind(seed, 4),
+  leftBehindEra5: (seed) => lastRoundBehind(seed, 5),
 };
