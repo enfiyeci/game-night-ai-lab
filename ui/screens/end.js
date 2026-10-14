@@ -136,7 +136,8 @@ function renderEndScreen(overlay, model, { onPlayAgain, onWatch, lumenNote, fina
   if (lumenNote) {
     const note = make('div', 'end-note');
     const words = make('div');
-    words.append(make('b', null, 'A note from Lumen'), document.createTextNode(lumenNote));
+    // Lumen is the lab's assistant robot, not the model (playtest 2026-10-14: a player took one for the other)
+    words.append(make('b', null, 'A note from Lumen, your lab\u2019s assistant robot'), document.createTextNode(lumenNote));
     note.append(make('div', 'end-lumen'), words);
     left.append(note);
   }

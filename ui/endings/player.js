@@ -20,6 +20,8 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&
 const keysAttr = (keys) => `data-k='${JSON.stringify(keys)}'`;
 const SAY_AT = 0.35;   // Lumen's narration (a shot's say) starts typing this long into the shot, at SAY_CPS
 const SAY_CPS = 38;
+// Lumen is named for what it is the first time it speaks in a film (playtest 2026-10-14: a player took it for the model)
+const LUMEN_INTRO = 'Lumen, your lab\u2019s assistant robot';
 
 async function fetchText(url) {
   const response = await fetch(url);
@@ -244,6 +246,9 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
 
   const titleEl = $('.film-title');
   const lumenText = lumenLine ?? film.lumen ?? '';
+  const firstSay = timeline.shots.find((shot) => shot.say);
+  const speaker = (shot) => (shot === firstSay ? LUMEN_INTRO : 'Lumen');
+  if (!firstSay) titleEl.querySelector('.lumen small').textContent = LUMEN_INTRO; // a film with no lines: its last one
   let current = null;
   let announced = null;
   let playing = false;
@@ -316,6 +321,7 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
       $('.film-card').textContent = shot.card ?? '';
       $('.film-sub').textContent = shot.sub ?? '';
       $('.film-say').hidden = !shot.say;
+      $('.film-say small').textContent = speaker(shot);
       titleEl.hidden = shot.kind !== 'title';
       current = shot;
     }
@@ -328,7 +334,7 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
     if (node?.video) syncClip(node.video, local, shot.dur, still);
     if (node?.leave && !node.keyedLeave) keyLeavers(node);
     // screen readers hear each line whole, once, when its shot plays (not while the film waits or is seeked)
-    if (playing && announced !== shot) { announced = shot; $('.film-say-read').textContent = shot.say ? `Lumen: ${shot.say}` : ''; }
+    if (playing && announced !== shot) { announced = shot; $('.film-say-read').textContent = shot.say ? `${speaker(shot)}: ${shot.say}` : ''; }
     if (shot.say) {
       // the untyped rest of the line is laid out but transparent, so the centred line never moves as it types
       const typed = still ? shot.say : typedText(shot.say, SAY_AT, local, SAY_CPS);

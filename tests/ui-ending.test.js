@@ -246,3 +246,15 @@ test('the epilogue waits for player decisions before the film and ignores duplic
   assert.equal(decisions, 1);
   assert.equal(films.length, 1, 'a second play request cannot interrupt the running film');
 });
+
+// Playtest 2026-10-14: a player took Lumen for the model. The end screen says what Lumen is.
+test('the end screen introduces Lumen as the lab’s assistant robot', async () => {
+  const { installFakeDom } = await import('./helpers/fakeDom.js');
+  const doc = installFakeDom();
+  const overlay = doc.createElement('div');
+  doc.body.append(overlay);
+  const game = { state: endedState('aligned'), subscribe: () => () => {} };
+  mountEnding(game, overlay, { collection: { record: () => {}, entries: () => [] }, lumenNote: () => 'I kept the lights on.' })
+    .show({ save: false });
+  assert.equal(overlay.querySelector('.end-note').querySelector('b').textContent, 'A note from Lumen, your lab’s assistant robot');
+});
