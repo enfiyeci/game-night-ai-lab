@@ -66,6 +66,14 @@ export function eraAhead(state, ahead) {
 // A row with `eras` lands only in those eras (owner, 2026-09-26: "each era should have events relevant to itself").
 export const eraAllows = (event, era) => !event.eras || event.eras.includes(era);
 
+// The era's decision log (the Daily Token's era page reads it, ui/logic/recap.js): one plain entry per answered card,
+// whether the player answered it or its deadline (or a hard line) did. The title and label are kept because some cards
+// write them at the time (demands, promise calls).
+export function logDecision(state, card, choiceId, auto = false) {
+  const label = card?.choices?.find((choice) => choice.id === choiceId)?.label ?? null;
+  (state.decisions ??= []).push({ era: state.era, day: state.day, eventId: card?.eventId ?? card?.id, choiceId, auto, title: card?.title ?? null, label });
+}
+
 export function pushFeed(state, handle, text, tag = 'feed') {
   state.feed.push({ turn: state.turn, day: state.day, handle, text, tag });
   if (state.feed.length > FEED_KEEP) state.feed.splice(0, state.feed.length - FEED_KEEP);
@@ -134,6 +142,7 @@ export function eventsTick(state, rng = sideRng(state, EVENT_TRIGGER_SALT), { on
     } else continue;
     if (event.id === 'president' && hasLine(state, 'no-power-grab')) {
       event.card.choices.find((choice) => choice.id === 'refuse').effects(state, []);
+      logDecision(state, { id: event.id, title: event.card.title, choices: event.card.choices }, 'refuse', true);
       if (!state.seenEvents.includes(event.id)) state.seenEvents.push(event.id);
       pushFeed(state, '@your_model', "The model's hard line refused the request.", 'event');
       out.push({ type: 'eventResolved', id: event.id, eventId: event.id, choiceId: 'refuse', auto: true });
@@ -247,7 +256,9 @@ export function resolveDue(state) {
     if (pending.dueAt == null || state.day < pending.dueAt) continue;
     const choiceId = fallbackChoice(pending.id, pending);
     const result = resolveEvent(state, pending.id, choiceId);
-    if (result.ok) out.push({ type: 'eventResolved', id: pending.id, eventId: pending.eventId ?? pending.id, choiceId, promiseId: pending.promiseId, auto: true, reason: 'deadline' });
+    if (!result.ok) continue;
+    logDecision(state, pending, choiceId, true);
+    out.push({ type: 'eventResolved', id: pending.id, eventId: pending.eventId ?? pending.id, choiceId, promiseId: pending.promiseId, auto: true, reason: 'deadline' });
   }
   return out;
 }

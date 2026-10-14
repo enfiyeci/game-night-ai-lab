@@ -22,7 +22,7 @@ import { judgeBoardPromise, makeBoardPromise } from './boardPromise.js';
 import { checkTurnEndings, eraGate, finalEnding } from './endings.js';
 import { recordAdvisors } from './advisors.js';
 import { resolveHazard, exposeConcealed, INTERPRETABILITY_SPEND } from './hazards.js';
-import { addressWarning, resolveEvent, eventsTick, fallbackChoice, pushFeed, resolveDue, stampNewCards } from './events.js';
+import { addressWarning, resolveEvent, eventsTick, fallbackChoice, logDecision, pushFeed, resolveDue, stampNewCards } from './events.js';
 import { setDraft } from './constitution.js';
 import { scenarioTick } from './scenarios.js';
 import {
@@ -235,7 +235,10 @@ export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = 
     const choiceId = eventChoices[choiceKey];
     const result = resolveEvent(state, id, choiceId);
     if (!result.ok) errors.push(result.error);
-    else events.push({ type: 'eventResolved', id, eventId: pending.eventId ?? id, choiceId, promiseId: pending.promiseId });
+    else {
+      logDecision(state, pending, choiceId);
+      events.push({ type: 'eventResolved', id, eventId: pending.eventId ?? id, choiceId, promiseId: pending.promiseId });
+    }
     handledChoices.add(choiceKey);
   }
   for (const id of Object.keys(eventChoices)) {

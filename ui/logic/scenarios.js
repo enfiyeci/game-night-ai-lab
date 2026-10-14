@@ -322,8 +322,28 @@ function beforeEra(seed, era) {
   return state;
 }
 
+// The last day of an era in scenario mode (the event mode a real game uses), played a day at a time so each card is
+// answered the day it lands, taking the cards' first, second and third choices in turn. For the Daily Token's era page:
+// one more day crosses the era's end.
+function endOfEra(seed, era) {
+  const rng = createRng(seed);
+  let state = enableScenarios(createInitialState({ seed }));
+  const lastDay = (candidate) => candidate.era === era && candidate.turnInEra === 3 && candidate.dayInRound === ROUND_DAYS[era] - 1;
+  for (let guard = 0; guard < 2000 && !state.ending && !lastDay(state); guard += 1) {
+    const actions = state.dayInRound === 0 ? scriptedActions(state) : { moves: [] };
+    const landed = state.pendingEvents.filter((card) => card.landsAt <= state.day);
+    actions.eventChoices = Object.fromEntries(landed.map((card, index) => [card.id, card.choices[((state.decisions?.length ?? 0) + index) % card.choices.length].id]));
+    state = applyActions(state, actions, rng).state;
+    if (state.ending || lastDay(state)) break;
+    state = advanceDays(state, 1, rng).state;
+  }
+  return state;
+}
+
 export const SCENARIOS = {
   start,
+  endOfEra1: (seed) => endOfEra(seed, 1),
+  endOfEra2: (seed) => endOfEra(seed, 2),
   beforeEra2: (seed) => beforeEra(seed, 2),
   beforeEra3: (seed) => beforeEra(seed, 3),
   beforeEra4: (seed) => beforeEra(seed, 4),

@@ -2,6 +2,8 @@ import { openDialog } from '../components/dialog.js';
 import { loadAnchors } from '../components/eventBits.js';
 import { eraIntro } from '../logic/eraIntro.js';
 import { storyDate } from '../../sim/time.js';
+import { recapModel } from '../logic/recap.js';
+import { openRecap } from './recap.js';
 
 const HOLDERS = '.dialog-layer:not(.et-wait), .event-layer, .ev-phone, .screenwall-layer, .menu-layer, .title-layer, .intro-layer';
 const VOICES = {
@@ -97,6 +99,13 @@ export function mountEraTransition(game, overlay) {
     if (disposed || opened || loading || !pending) return;
     if (game.state.ending) { pending = null; release(); return; }
     if (overlay.querySelector(HOLDERS)) return;
+    // The Daily Token's page about the era that ended comes first (owner pick RC); its button turns to moving day.
+    if (pending.recap) {
+      const { recap } = pending;
+      pending.recap = null;
+      opened = openRecap(overlay, recap);
+      return;
+    }
     waiting ??= el('div', 'dialog-layer dialog-open et-wait', 'The lab is moving…');
     overlay.append(waiting);
     loading = true;
@@ -117,7 +126,10 @@ export function mountEraTransition(game, overlay) {
   }
 
   const check = () => {
-    if (opened && !opened.isConnected) { opened = null; release(); }
+    if (opened && !opened.isConnected) {
+      opened = null;
+      if (!pending) release(); // the era page closed with moving day still to come: the clock stays held
+    }
     void showNext();
   };
   const observer = new MutationObserver(check);
@@ -128,7 +140,13 @@ export function mountEraTransition(game, overlay) {
     const event = events.find((item) => item.type === 'eraStart' && item.era > seen && eraIntro(item.era));
     if (!event) return;
     seen = event.era;
-    pending = { era: event.era, day: state.day };
+    let recap = null;
+    try {
+      recap = recapModel(state, event.era - 1); // the era's end, before anything in the new era happens
+    } catch (error) {
+      console.error(error); // a page that cannot be printed must not hold up moving day
+    }
+    pending = { era: event.era, day: state.day, recap };
     // Pause in the publish call, before the clock can spend another already-owed story day.
     game.clock?.pause('era-transition');
     queueMicrotask(check);
