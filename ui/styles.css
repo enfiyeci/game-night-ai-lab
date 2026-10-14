@@ -4523,6 +4523,8 @@ html.title-waking #hud { transition: opacity .5s ease .6s; }
 .recipe-help { display: flex; flex-wrap: wrap; gap: 4px 14px; justify-content: center; align-items: baseline; margin-top: 5px; }
 .recipe-help-text { color: color-mix(in oklab, var(--coral) 78%, var(--ink)); font-size: 12px; font-weight: 800; }
 .recipe-body:has(.recipe-help) .recipe-error { display: none; }
+/* playtest 2026-10-14: the make-room prompt takes two lines; on stage 1 the size explainer gives up its line for them */
+.recipe-body:has(.recipe-help) .recipe-centre > .recipe-compute-line { display: none; }
 .recipe-help .release-link { font-size: 12px; }
 /* gn-newplayer: the constitution frame goes up on the wall only once the lab has one (ui/logic/office.js) */
 .office-room .office-constitution { display: none; }

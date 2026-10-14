@@ -521,27 +521,27 @@ function computeHelp(state, draft, preview, { onFit, onCap, onDeals, onBudget })
     return button;
   };
   const fitted = fitDraftToCompute(state, draft);
-  const smallerFits = fitted.sliders.size !== draft.sliders.size && recipePreview(state, fitted).fits;
-  if (smallerFits) {
+  if (fitted.sliders.size !== draft.sliders.size && recipePreview(state, fitted).fits) {
     const units = SIZE_UNITS[fitted.sliders.size] * eraScale(state.era);
-    text.textContent = `Not enough free compute: this run is ${amount(room.missing)} short. A ${(units * 1000).toLocaleString('en-US')} ${ERA_CHIP[state.era - 1]}s run fits.`;
+    text.textContent = `Not enough free compute. A ${(units * 1000).toLocaleString('en-US')} ${ERA_CHIP[state.era - 1]}s run fits.`;
     root.append(text, link('Use the largest size that fits', onFit));
-  } else {
-    text.textContent = room.missing > room.smallestMissing
-      ? `No run fits the free compute: the smallest is ${amount(room.smallestMissing)} short, this one ${amount(room.missing)}.`
-      : `No run fits the free compute: even the smallest run is ${amount(room.smallestMissing)} short.`;
-    root.append(text);
+    return root;
   }
+  // The dialog has room for two short lines here: what is missing, then the ways out.
+  text.textContent = room.missing > room.smallestMissing
+    ? `No run fits the free compute: the smallest is ${amount(room.smallestMissing)} short, this one ${amount(room.missing)}.`
+    : `No run fits the free compute: even the smallest run is ${amount(room.smallestMissing)} short.`;
+  root.append(text);
   if (room.cap !== null) {
     const cost = document.createElement('span');
     cost.className = 'recipe-compute-line';
-    cost.textContent = room.spotMonthly > 0
-      ? `Spot compute serves the users left over, about ${money(room.spotMonthly)} a month more. You can lift the cap later in the budget.`
-      : 'Some users will not be served: their requests earn nothing and some leave. You can lift the cap later in the budget.';
-    root.append(link(`Serve fewer users to free ${amount(room.freed)}`, () => onCap(room.cap)), cost);
+    cost.textContent = room.spotMonthly > 0 ? `(about ${money(room.spotMonthly)} a month for spot compute)` : '(some users go unserved and may leave)';
+    const option = document.createElement('span'); // the way out and its cost wrap as one
+    option.append(link(`Serve fewer users to free ${amount(room.freed)}`, () => onCap(room.cap)), ' ', cost);
+    root.append(option);
   }
   root.append(link('Rent or sign compute', onDeals));
-  if (room.cap === null && !smallerFits) root.append(link('Free some in the budget', onBudget));
+  if (room.cap === null) root.append(link('Free some in the budget', onBudget));
   return root;
 }
 

@@ -493,7 +493,7 @@ test('make room: one click lowers the serving cap and the dialog can start the s
   const links = () => help().querySelectorAll('.release-link').map((button) => button.textContent);
   assert.ok(links().some((label) => /^Serve fewer users to free [\d.]+ units?$/.test(label)), links().join(' / '));
   assert.ok(links().includes('Rent or sign compute'));
-  assert.match(help().querySelector('.recipe-compute-line').textContent, /^Spot compute serves the users left over, about \$\d+M a month more/);
+  assert.equal(help().querySelector('.recipe-compute-line').textContent, `(about $${Math.round(makeRoom(projectQueue(game.state, game.queue), medium).spotMonthly)}M a month for spot compute)`, 'what serving fewer users costs');
   help().querySelectorAll('.release-link').find((button) => button.textContent.startsWith('Serve fewer users')).click();
   assert.ok(Number.isFinite(game.state.compute.split.servingCap), 'the cap is set in the game, as the budget would');
   assert.equal(layer.querySelector('.recipe-help'), null, 'the run fits now');

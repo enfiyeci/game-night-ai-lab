@@ -200,10 +200,10 @@ export function fitDraftToCompute(state, draft) {
 }
 
 // When a run does not fit the free compute (playtest 2026-10-14, the owner's "make room" pick): how far short the chosen
-// size and the smallest run are, and the serving cap that frees just enough (for the smallest run when nothing fits,
-// else for the chosen size), when serving users holds that much. Shortfalls round up and the cap rounds down, to a tenth,
-// so the run fits once the cap is set. spotMonthly is what the users left over then cost on spot compute, if spot
-// covers shortfalls. Null when compute is not what stops the run.
+// size and the smallest run are and, when no run fits, the serving cap that frees just enough for the smallest run, if
+// serving users holds that much. Shortfalls round up and the cap rounds down, to a tenth, so the run fits once the cap
+// is set. spotMonthly is what the users left over then cost on spot compute, if spot covers shortfalls. Null when
+// compute is not what stops the run.
 export function makeRoom(state, draft) {
   const preview = recipePreview(state, draft);
   if (!preview.errors.includes('not enough free compute') || state.activeRun || state.pendingModel) return null;
@@ -213,8 +213,7 @@ export function makeRoom(state, draft) {
   const missing = short(preview.cost.units);
   const smallestMissing = short(smallestUnits ?? preview.cost.units);
   const { serving } = computeSlices(state);
-  const wanted = smallestMissing > 0 ? smallestMissing : missing;
-  const freed = wanted <= serving ? wanted : null;
+  const freed = smallestMissing > 0 && smallestMissing <= serving ? smallestMissing : null;
   return {
     missing,
     smallestMissing,
