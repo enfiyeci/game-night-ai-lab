@@ -1,5 +1,6 @@
 import { BALANCE } from './balance.js';
 import { hasLine } from './constitution.js';
+import { leadEffect } from './leads.js';
 
 export const rewardHackSize = (era) => 4 + 2 * era;
 export const INTERPRETABILITY_SPEND = 5;
@@ -26,7 +27,11 @@ export function resolveHazard(state, choice) {
   if (!['penalize', 'fix', 'ignore'].includes(choice)) return { ok: false, error: `unknown hazard choice ${choice}` };
   if (choice === 'penalize') state.concealedDebt += h.size;
   if (choice === 'ignore') state.alignmentDebt += h.size;
-  if (choice === 'fix') state.pendingModel.releaseDelay = (state.pendingModel.releaseDelay ?? 0) + 1;
+  if (choice === 'fix') {
+    const safety = leadEffect(state, 'safety'); // a weekly-checks Head of Safety fixes it at once, and misses some
+    state.pendingModel.releaseDelay = (state.pendingModel.releaseDelay ?? 0) + (safety.hackFixDelay ?? 1);
+    state.concealedDebt += h.size * (safety.hackFixHidden ?? 0);
+  }
   state.pendingModel.hazard = null;
   return { ok: true, choice };
 }

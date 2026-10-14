@@ -29,6 +29,7 @@ import { BALANCE } from '../sim/balance.js';
 import { activeModels } from '../sim/serving.js';
 import { flawsLeft, nextBubbleGain } from '../sim/polish.js';
 import { nextRoundDay } from '../sim/time.js';
+import { LEADS, hireLead } from '../sim/leads.js';
 
 const HAZARD_CHOICES = ['penalize', 'fix', 'ignore'];
 // Mirrors SPEND_LEVELS and spendFor(level, era) in ui/logic/actions.js on the UI branch.
@@ -572,9 +573,11 @@ export function dailyRelease(name, state) {
   return { moves: [{ type: 'release', release }] };
 }
 
-function simulateMeasured(name, seed) {
+// leads (optional): the team the bot hires before the clock starts, { safety: 'hana', ... }; none keeps today's four.
+function simulateMeasured(name, seed, leads = null) {
   const rng = createRng(seed);
   let state = enableScenarios(createInitialState({ seed }));
+  for (const [seat, id] of Object.entries(leads ?? {})) hireLead(state, seat, id);
   const metrics = freshMetrics();
   for (let i = 0; i < 30 && !state.ending; i++) {
     const era = state.era;
@@ -627,7 +630,7 @@ export function playRun(name, seed) {
   return { ending: state.ending, era: state.era, turn: state.turn };
 }
 
-export function report(n) {
+export function report(n, { leads = null } = {}) {
   const result = {};
   for (const name of Object.keys(STRATEGIES)) {
     const endings = {};
@@ -658,7 +661,7 @@ export function report(n) {
     let fixesSum = 0;
     let releasePressSum = 0;
     for (let seed = 1; seed <= n; seed++) {
-      const { state, metrics } = simulateMeasured(name, seed);
+      const { state, metrics } = simulateMeasured(name, seed, leads);
       const r = { ending: state.ending, era: state.era, turn: state.turn };
       endings[r.ending] = (endings[r.ending] ?? 0) + 1;
       if (r.ending === 'acquihire') cashEndingsByEra[r.era] = (cashEndingsByEra[r.era] ?? 0) + 1;
@@ -730,6 +733,9 @@ export function report(n) {
 
 export const runBalance = report;
 
+// Probe: `node tools/balance.js 200 --leads=dev,hana,rafael,amara` plays every strategy with those leads hired.
 if (import.meta.url === `file://${process.argv[1]}`) {
-  console.log(JSON.stringify(report(Number(process.argv[2] ?? 100)), null, 2));
+  const picks = process.argv.find((arg) => arg.startsWith('--leads='))?.slice('--leads='.length).split(',') ?? [];
+  const leads = Object.fromEntries(picks.map((id) => [LEADS[id]?.seat, id]).filter(([seat]) => seat));
+  console.log(JSON.stringify(report(Number(process.argv[2] ?? 100), { leads }), null, 2));
 }

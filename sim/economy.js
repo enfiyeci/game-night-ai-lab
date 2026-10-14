@@ -2,6 +2,7 @@ import { BALANCE } from './balance.js';
 import { eraById } from './data/eras.js';
 import { clamp } from './util.js';
 import { seat } from './board.js';
+import { leadEffect } from './leads.js';
 import { activeModels, safetyUnits, servingCost, PRICE_STANCE, REVENUE_PER_USER } from './serving.js';
 import { controlUnits, reviewerCost } from './automation.js';
 import { monthlyBills, arrivingBills, creditOffset, addPipeline, markUpRivalOffers } from './contracts.js';
@@ -135,7 +136,8 @@ export const INVESTORS = {
 // what it would have. Owner 2026-09-26: "less independence later" must be a real consequence.
 export const INDEPENDENCE_ROUND_SHARE = 0.8;
 export const roundAmount = (state, archetype) =>
-  Math.round(state.valuation * INVESTORS[archetype].share * (state.flags.independenceLost ? INDEPENDENCE_ROUND_SHARE : 1));
+  Math.round(state.valuation * INVESTORS[archetype].share * (state.flags.independenceLost ? INDEPENDENCE_ROUND_SHARE : 1)
+    * (leadEffect(state, 'cfo').roundMult ?? 1));
 
 export function raiseRound(state, archetype) {
   if (state.era < 2) return { ok: false, error: 'funding rounds open in era 2' };
@@ -144,7 +146,7 @@ export function raiseRound(state, archetype) {
   const amount = roundAmount(state, archetype);
   state.cash += amount;
   state.flags.lastRoundEra = state.era;
-  state.board = state.board.map((s) => s - 3);
+  state.board = state.board.map((s) => s - 3 + (leadEffect(state, 'cfo').roundBoard ?? 0));
   if (archetype === 'vc') state.board[seat('growth')] += 8;
   if (archetype === 'strategic') {
     state.flags.strategicStrings = true; // other clouds cost more from now on (PARTNER_MARKUP in sim/data/compute.js)

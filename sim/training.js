@@ -7,6 +7,7 @@ import { draftError, draftFor, hasLine, learnConstitution } from './constitution
 import { computeSlices } from './split.js';
 import { unitMonthlyPrice } from './economy.js';
 import { startPolishing } from './polish.js';
+import { leadEffect } from './leads.js';
 
 export const SHARED_SAFETY_DEBT_MULT = 0.7;
 
@@ -101,6 +102,7 @@ export function resolveRun(state, run) {
     }),
     ...autos,
     focus,
+    leadEffect(state, 'research').run ?? {}, // the Head of Research's habits (sim/leads.js)
   ];
   const readiness = Math.max(0, Math.min(1.2, cards.reduce((r, c) => c.effects.readiness ?? r, 0.5) + focusReadiness));
   const large = size === 'large' || size === 'xl';

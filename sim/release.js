@@ -7,6 +7,7 @@ import { resolveHazard, exposeConcealed, dangerCapability } from './hazards.js';
 import { hasLine } from './constitution.js';
 import { pushFeed } from './events.js';
 import { eraById } from './data/eras.js';
+import { leadEffect } from './leads.js';
 
 export const TIER_WORDS = { small: 'Swift', medium: 'Core', large: 'Grand', xl: 'Apex' };
 export const REASONING_BONUS = { off: 0, low: 2, medium: 4, high: 6 };
@@ -146,7 +147,9 @@ export function releaseModel(state, release) {
   const quality = clamp(1 + (launch.economyPressAvg - 6) / 8, 0.5, 1.6);
   const eraGrowth = 1 + 0.5 * (state.era - 1);
   const constitutionUsers = spec.channel === 'enterprise' && hasLine(state, 'privacy') ? 1.1 : 1;
-  const fresh = Math.round(USERS_BASE[spec.channel] * quality * eraGrowth * PRICE_STANCE[release.price].growth * m.publicEffects.usersMult * constitutionUsers);
+  const comms = leadEffect(state, 'policy'); // a consumer-comms lead: more users, less favour in Washington
+  const fresh = Math.round(USERS_BASE[spec.channel] * quality * eraGrowth * PRICE_STANCE[release.price].growth * m.publicEffects.usersMult * constitutionUsers
+    * (comms.releaseUsers ?? 1));
 
   const model = {
     polish: m.polish ?? 0,
@@ -198,7 +201,7 @@ export function releaseModel(state, release) {
 
   state.publicTrust += m.publicEffects.pt + sum('pt');
   state.staffTrust += m.publicEffects.st + sum('st');
-  state.govFavor.us += m.publicEffects.govUs + sum('govUs');
+  state.govFavor.us += m.publicEffects.govUs + sum('govUs') + (comms.releaseGovUs ?? 0);
   state.govFavor.intl += m.publicEffects.govIntl + sum('govIntl');
   const releaseHeat = BALANCE.ownReleaseHeat + m.publicEffects.heat + sum('heat');
   const delayed = state.deal?.collapsed === false && state.deal.binding.includes('releaseDelay');
