@@ -1,6 +1,6 @@
 import { storyDate } from '../../sim/time.js';
 import { ENDINGS } from '../../sim/endings.js';
-import { ADVISOR_PROFILES } from '../../sim/data/advisorLines.js';
+import { lead } from '../../sim/leads.js';
 import { runSummary } from './summary.js';
 
 const ROLE = { research: 'Research', safety: 'Safety', cfo: 'CFO', policy: 'Policy' };
@@ -61,7 +61,7 @@ export function endScreenModel(state, entries, { newThisRun = false } = {}) {
     modelsLine: modelsLine(summary.models, summary.bestModel),
     advisors: [...summary.advisors]
       .sort((a, b) => a.meanError - b.meanError)
-      .map((a) => ({ id: a.id, name: ADVISOR_PROFILES[a.id]?.name ?? ROLE[a.id], role: ROLE[a.id], verdict: a.verdict, position: scalePosition(a.meanError) })),
+      .map((a) => ({ id: a.id, name: lead(state, a.id)?.name ?? ROLE[a.id], role: ROLE[a.id], verdict: a.verdict, position: scalePosition(a.meanError) })),
     progress: { found: found.length, total: ids.length },
     headlines,
     footLine: stillMissing(locked),

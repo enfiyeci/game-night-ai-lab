@@ -1,6 +1,6 @@
 // An advisor explaining a screen from inside it (ui/logic/explainers.js): the recipe briefing's grammar, a face, a
 // small name label and plain speech. `screenHelp` is the dialog header's "?" that brings the explanation back.
-import { ADVISOR_PROFILES } from '../../sim/data/advisorLines.js';
+import { lead } from '../../sim/leads.js';
 import { ADVISOR_TITLE } from '../logic/events.js';
 import { portrait } from './portraits.js';
 
@@ -14,17 +14,17 @@ function element(tag, className, text) {
 // Only one dialog is open at a time, so one id serves the "?" button's aria-controls.
 const EXPLAINS_ID = 'advisor-explains';
 
-// The screen's explanation, hidden unless `shown`.
-export function advisorExplains(advisor, text, shown) {
-  const profile = ADVISOR_PROFILES[advisor];
+// The screen's explanation, hidden unless `shown`, in the voice of whoever the player hired for that seat.
+export function advisorExplains(advisor, text, shown, state) {
+  const profile = lead(state, advisor);
   const root = element('section', 'advisor-explains');
   root.id = EXPLAINS_ID;
   root.setAttribute('aria-label', `${profile.name} explains this screen`);
   root.hidden = !shown;
   const face = element('span', 'advisor-explains-face');
-  face.innerHTML = portrait(`advisor-${advisor}`, 34, 'flat');
+  face.innerHTML = portrait(profile.look, 34, 'flat');
   const words = element('div');
-  words.append(element('b', '', `${profile.name} · ${profile.role}`), element('p', '', text));
+  words.append(element('b', '', `${profile.name} · ${profile.title}`), element('p', '', text));
   root.append(face, words);
   return root;
 }

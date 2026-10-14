@@ -2,13 +2,16 @@ import { openDialog } from '../components/dialog.js';
 import { loadAnchors } from '../components/eventBits.js';
 import { eraIntro } from '../logic/eraIntro.js';
 import { storyDate } from '../../sim/time.js';
+import { lead } from '../../sim/leads.js';
+import { seatLeads } from '../components/leadSeats.js';
 
 const HOLDERS = '.dialog-layer:not(.et-wait), .event-layer, .ev-phone, .screenwall-layer, .menu-layer, .title-layer, .intro-layer';
+// Who speaks at the new desk: the seat, its label after the hired lead's first name, and the line.
 const VOICES = {
-  2: ['cfo', 'Margot · CFO', 'The desks arrived. Now everyone expects us to fill them.'],
-  3: ['research', 'Priya · Head of Research', 'They can use tools now. We should probably watch which ones.'],
-  4: ['cfo', 'Margot · CFO', 'We have the hardware. Now we need somewhere to plug it in.'],
-  5: ['safety', 'Tomas · Head of Safety', 'The models are improving the models. Keep a human in the room.'],
+  2: ['cfo', 'CFO', 'The desks arrived. Now everyone expects us to fill them.'],
+  3: ['research', 'Head of Research', 'They can use tools now. We should probably watch which ones.'],
+  4: ['cfo', 'CFO', 'We have the hardware. Now we need somewhere to plug it in.'],
+  5: ['safety', 'Head of Safety', 'The models are improving the models. Keep a human in the room.'],
 };
 
 const el = (tag, className, text) => {
@@ -20,10 +23,11 @@ const el = (tag, className, text) => {
 
 let artId = 0;
 
-async function officeArt(era) {
+async function officeArt(era, state) {
   const response = await fetch(`ui/assets/office-era${era}.svg`);
   if (!response.ok) throw new Error(`could not load transition office ${era}`);
   const svg = new DOMParser().parseFromString(await response.text(), 'image/svg+xml').documentElement;
+  seatLeads(svg, state); // the leads the player hired sit at their desks in both rooms
   // Keep gradient references local while excluding scenery copies from live-office selectors.
   const prefix = `et-art-${++artId}-`;
   const ids = new Map([...svg.querySelectorAll('[id]')].map(node => [node.id, prefix + node.id]));
@@ -41,7 +45,7 @@ async function officeArt(era) {
   return svg;
 }
 
-function buildLayer(era, day, art, anchors) {
+function buildLayer(era, day, art, anchors, state) {
   const intro = eraIntro(era);
   const layer = el('div', 'dialog-layer et-layer');
   layer.setAttribute('role', 'dialog');
@@ -70,9 +74,9 @@ function buildLayer(era, day, art, anchors) {
   old.append(el('span', 'et-old-label', 'One last look'));
   const incoming = el('div', 'et-new-office');
   if (art[1]) incoming.append(art[1]);
-  const [role, name, line] = VOICES[era];
+  const [role, seatTitle, line] = VOICES[era];
   const bubble = el('div', 'et-desk-voice');
-  bubble.append(el('strong', '', name), el('p', '', line));
+  bubble.append(el('strong', '', `${lead(state, role).first} · ${seatTitle}`), el('p', '', line));
   const [x, y] = anchors?.heads?.[role] ?? [800, 480];
   bubble.style.left = `${Math.max(80, Math.min(1030, x - 85))}px`;
   bubble.style.top = `${y - 152}px`;
@@ -101,7 +105,7 @@ export function mountEraTransition(game, overlay) {
     overlay.append(waiting);
     loading = true;
     const entry = pending;
-    const results = await Promise.allSettled([officeArt(entry.era - 1), officeArt(entry.era), loadAnchors(entry.era)]);
+    const results = await Promise.allSettled([officeArt(entry.era - 1, game.state), officeArt(entry.era, game.state), loadAnchors(entry.era)]);
     loading = false;
     if (disposed) return;
     if (game.state.ending) { pending = null; release(); return; }
@@ -111,7 +115,7 @@ export function mountEraTransition(game, overlay) {
     pending = null;
     waiting?.remove();
     waiting = null;
-    opened = openDialog(overlay, { build: () => buildLayer(entry.era, entry.day, art, anchors) });
+    opened = openDialog(overlay, { build: () => buildLayer(entry.era, entry.day, art, anchors, game.state) });
     opened.querySelector('.et-enter').addEventListener('click', () => opened?.close());
     opened.querySelector('.et-enter').focus();
   }

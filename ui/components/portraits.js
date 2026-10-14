@@ -6,6 +6,9 @@ export const SKIN = [
   'color-mix(in oklab, var(--wood) 52%, var(--paper))',
   'color-mix(in oklab, var(--wood) 80%, var(--ink) 20%)',
   'color-mix(in oklab, var(--wood) 55%, var(--ink))',
+  // The office art's own tones (tools/office/gen_office.py SK_MED, SK_DARK; SK_LIGHT is the first one above).
+  'color-mix(in oklab, var(--wood) 62%, var(--paper))',
+  'color-mix(in oklab, var(--wood) 70%, var(--ink))',
 ];
 export const HAIR = {
   dark: 'color-mix(in oklab, var(--ink) 85%, var(--wood))',
@@ -13,6 +16,10 @@ export const HAIR = {
   grey: 'color-mix(in oklab, var(--ink) 30%, var(--paper))',
   white: 'color-mix(in oklab, var(--cream) 60%, var(--paper))',
   auburn: 'color-mix(in oklab, var(--coral) 58%, var(--ink))',
+  // The office art's hair (gen_office.py H_BLACK, H_BROWN, H_GREY; H_AUBURN is auburn above).
+  black: 'color-mix(in oklab, var(--ink) 92%, var(--wood))',
+  chestnut: 'color-mix(in oklab, var(--wood) 50%, var(--ink))',
+  silver: 'color-mix(in oklab, var(--paper) 64%, var(--ink))',
 };
 export const LOOK = {
   growth: { skin: 1, hair: 'brown', cut: 'short', top: 'var(--sky)', shirt: 'var(--paper)', vest: true },
@@ -23,11 +30,16 @@ export const LOOK = {
   security: { skin: 1, hair: 'grey', cut: 'buzz', top: 'color-mix(in oklab, var(--ink) 88%, var(--teal))', shirt: 'var(--paper)', tie: 'color-mix(in oklab, var(--sky) 70%, var(--ink))', pin: true },
   trustee: { skin: 2, hair: 'white', cut: 'side', top: 'color-mix(in oklab, var(--wood) 70%, var(--paper))', shirt: 'color-mix(in oklab, var(--cream) 40%, var(--paper))', glasses: true },
   ceo: { skin: 0, hair: 'dark', cut: 'short', top: 'color-mix(in oklab, var(--ink) 85%, var(--sky))', shirt: 'var(--paper)', tie: 'var(--coral)' },
-  // The four advisors, for the training recipe's briefings.
-  'advisor-research': { skin: 2, hair: 'dark', cut: 'long', top: 'var(--coral)', shirt: 'var(--paper)' },
-  'advisor-safety': { skin: 0, hair: 'brown', cut: 'short', top: 'var(--sky)', shirt: 'var(--paper)', glasses: true },
-  'advisor-cfo': { skin: 1, hair: 'grey', cut: 'bun', top: 'var(--teal)', shirt: 'color-mix(in oklab, var(--cream) 50%, var(--paper))' },
-  'advisor-policy': { skin: 3, hair: 'dark', cut: 'swept', top: 'var(--wood)', shirt: 'var(--paper)' },
+  // The eight leads (sim/data/leads.js), drawn as they sit in the office (gen_office.py PEOPLE and PEOPLE_ALT): skin,
+  // hair and cut, the shirt as the top, the collar as the shirt.
+  'advisor-research': { skin: 5, hair: 'black', cut: 'curly', top: 'var(--sky)', shirt: 'var(--paper)', glasses: true },
+  'advisor-safety': { skin: 0, hair: 'auburn', cut: 'bun', top: 'var(--teal)', shirt: 'color-mix(in oklab, var(--teal) 60%, var(--paper))' },
+  'advisor-cfo': { skin: 0, hair: 'silver', cut: 'bald', top: 'color-mix(in oklab, var(--cream) 70%, var(--paper))', shirt: 'var(--paper)', glasses: true },
+  'advisor-policy': { skin: 4, hair: 'chestnut', cut: 'long', top: 'var(--coral)', shirt: 'var(--coral)', headset: true },
+  'lead-dev': { skin: 4, hair: 'black', cut: 'short', top: 'color-mix(in oklab, var(--sky) 60%, var(--ink))', shirt: 'var(--paper)', glasses: true },
+  'lead-hana': { skin: 5, hair: 'black', cut: 'bob', top: 'var(--wood)', shirt: 'var(--paper)' },
+  'lead-rafael': { skin: 5, hair: 'silver', cut: 'short', top: 'color-mix(in oklab, var(--wood) 45%, var(--ink))', shirt: 'var(--paper)', tie: 'var(--coral)' },
+  'lead-amara': { skin: 0, hair: 'auburn', cut: 'long', top: 'var(--sky)', shirt: 'var(--paper)' },
 };
 
 export function hairShape(cut, fill) {
@@ -39,6 +51,8 @@ export function hairShape(cut, fill) {
     case 'curly': return [[-11, -12], [-6, -18], [0, -20], [6, -18], [11, -12], [-13, -5], [13, -5]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="5.6" ${st}/>`).join('');
     case 'long': return `<path d="M-14.2,-5 Q-15.5,-22 0,-22 Q15.5,-22 14.2,-5 L15.2,11 L9.6,11 L10.6,-8 Q8,-14.8 0,-15.2 Q-8,-14.8 -10.6,-8 L-9.6,11 L-15.2,11 Z" ${st}/>`;
     case 'buzz': return `<path d="M-13.2,-7.5 Q-13.5,-20 0,-20 Q13.5,-20 13.2,-7.5 Q8,-14.5 0,-14.8 Q-8,-14.5 -13.2,-7.5 Z" ${st}/>`;
+    case 'bald': return `<path d="M-13.4,-2 Q-14,-9 -10.6,-12.6 L-9.4,-4 Z" ${st}/><path d="M13.4,-2 Q14,-9 10.6,-12.6 L9.4,-4 Z" ${st}/>`;
+    case 'bob': return `<path d="M-14.2,-5 Q-15.5,-22 0,-22 Q15.5,-22 14.2,-5 L14.6,4 L9.8,4 L10.6,-8 Q8,-14.8 0,-15.2 Q-8,-14.8 -10.6,-8 L-9.8,4 L-14.6,4 Z" ${st}/>`;
     case 'swept': return `<path d="M-13.6,-4 Q-16,-19 -3,-21.5 Q12,-23 14.2,-9 Q15,-5 13.6,-3 L11.8,-7 Q9,-13 -2,-13.8 Q-9,-13 -11.6,-6 Z" ${st}/>`;
     default: return '';
   }
@@ -81,6 +95,7 @@ export function portrait(id, size = 40, mood = 'flat') {
     ${L.cut === 'long' ? hairShape('buzz', hair).replace('-7.5 Q-13.5', '-5 Q-14.5') : hairShape(L.cut, hair)}
     ${faceMarks(mood)}
     ${L.glasses ? '<g style="fill:none;stroke:var(--ink);stroke-width:.9"><circle cx="-4.6" cy="-5" r="3.5"/><circle cx="4.6" cy="-5" r="3.5"/><path d="M-1.1,-5.3 Q0,-6.2 1.1,-5.3"/></g>' : ''}
+    ${L.headset ? '<path d="M-13.4,-6 Q-13,-21 0,-21 Q13,-21 13.4,-6" style="fill:none;stroke:var(--ink);stroke-width:1.8"/><rect x="11.2" y="-8.5" width="4.6" height="7.5" rx="2" style="fill:var(--ink)"/><path d="M13,-1.5 Q11,5 4,4.4" style="fill:none;stroke:var(--ink);stroke-width:1.1"/>' : ''}
   </svg>`;
 }
 

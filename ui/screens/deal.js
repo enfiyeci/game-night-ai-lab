@@ -3,6 +3,7 @@
 import { dealBinds } from '../../sim/summit.js';
 import { PARTY_INFO, partyBadge } from './summit.js';
 import { enterTransition, exitTransition } from '../components/transition.js';
+import { lead, swapLeadNames } from '../../sim/leads.js';
 
 const VERBS = Object.freeze(['Accuse them in public', 'Demand their report', 'Ask the testers', 'Send the inspectors']);
 const SIGNS = Object.freeze({
@@ -69,7 +70,7 @@ export function mountDeal(game, overlayRoot) {
       const level = Math.max(0, ...signedCards.map((c) => state.deal.checks[c] ?? 1));
       const days = Math.max(0, s.dueAt - state.day);
       return `<div class="ev-bubble dl-bubble" style="left:${x - 33}px;top:${y - 205}px;width:300px;--tail:26px">
-        <b>Jules · Policy and Comms</b><div class="ev-say">${esc(SIGNS[s.party] ?? `${name(s.party)} is acting strangely.`)}</div>
+        <b>${esc(lead(state, 'policy').first)} · Policy and Comms</b><div class="ev-say">${esc(SIGNS[s.party] ?? `${name(s.party)} is acting strangely.`)}</div>
         <div class="ev-due"><span>Goes cold in about ${days} day${days === 1 ? '' : 's'}</span><div class="ev-due-bar"><i style="width:${Math.round((days / 5) * 100)}%"></i></div></div>
         <div class="ev-row"><button type="button" class="ev-act" data-investigate="${s.id}">${esc(VERBS[level])}</button><button type="button" class="ev-act ghost" data-dismiss="${s.id}">Not now</button></div>
       </div>`;
@@ -146,7 +147,7 @@ export function mountDeal(game, overlayRoot) {
   game.subscribe(({ events }) => {
     for (const event of events) {
       const card = outcome(event);
-      if (card) queue.push(card);
+      if (card) queue.push({ ...card, lines: card.lines.map((line) => swapLeadNames(line, game.state)) }); // Jules's lines, said by the hired lead
     }
     render();
     requestAnimationFrame(showNext);

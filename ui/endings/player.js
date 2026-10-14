@@ -6,11 +6,14 @@
 //   film.play();            // from a click, so the sound may start
 //   film.seek(12.5);        // or show one frame
 //
-// run (optional) is what the run ended with, for films that follow it: {deal: state.deal} (see resolveFilm).
+// run (optional) is what the run ended with, for films that follow it: {deal: state.deal} (see resolveFilm), and the
+// leads the player hired, {leads: state.leads}: their desks in the office shots, their names in the cards and plates.
 //
 // Assets: ui/endings/films/<id>.json (the shot list), ui/endings/narration.json (Lumen's lines), ui/assets/endings/plates/<plate>.svg, ui/assets/endings/clips/<clip>.mp4,
 // ui/assets/endings/<id>.m4a (sound), and the office art ui/assets/office-era<N>.svg with its anchors.
 import { buildTimeline, shotAt, camAt, sampleKeys, typedText, resolveFilm, fillText, withNarration } from './timeline.js';
+import { swapLeadNames } from '../../sim/leads.js';
+import { seatLeads } from '../components/leadSeats.js';
 
 const OFFICE = { w: 1440, h: 810, cx: 720, cy: 450, fullH: 900 };
 const PLATE = { w: 1280, h: 720, cx: 640, cy: 360, fullH: 720 };
@@ -94,8 +97,9 @@ function confetti(x, y, at) {
   return out;
 }
 
-function officeShot(svgText, anchors, shot) {
+function officeShot(svgText, anchors, shot, run) {
   const svg = parseSvg(svgText);
+  seatLeads(svg, run ?? {});
   const heads = anchors.heads;
   if (shot.empty) svg.querySelectorAll('.sitter').forEach((e) => e.setAttribute('display', 'none'));
   const tint = { coral: 'var(--coral)', teal: 'var(--teal)', sky: 'var(--sky)' }[shot.tint] ?? null;
@@ -169,8 +173,9 @@ function applyValues(el, v, still) {
 
 export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumenLine, onDone, sound = true, audioUrl, run }) {
   // the narration file is optional: without it the film plays with no Lumen lines
-  const narration = await fetchText(`${base}ui/endings/narration.json`).then(JSON.parse).catch(() => ({}));
-  const raw = withNarration(JSON.parse(await fetchText(`${base}ui/endings/films/${id}.json`)), narration[id]);
+  const named = (text) => swapLeadNames(text, run); // today's copy names today's leads
+  const narration = await fetchText(`${base}ui/endings/narration.json`).then((text) => JSON.parse(named(text))).catch(() => ({}));
+  const raw = withNarration(JSON.parse(named(await fetchText(`${base}ui/endings/films/${id}.json`))), narration[id]);
   const { film, values } = resolveFilm(raw, run);
   const timeline = buildTimeline(film);
   const needsOffice = film.shots.some((s) => s.kind === 'office');
@@ -179,7 +184,7 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
     : [null, null];
   const plates = new Map();
   await Promise.all([...new Set(film.shots.filter((s) => s.plate).map((s) => s.plate))].map(async (name) => {
-    plates.set(name, await fetchText(`${base}ui/assets/endings/plates/${name}.svg`));
+    plates.set(name, named(await fetchText(`${base}ui/assets/endings/plates/${name}.svg`)));
   }));
   // Clips are fetched whole before the film starts, so playback never waits on the network mid-film.
   const clips = new Map();
@@ -227,7 +232,7 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
     if (shot.kind === 'title') return null;
     const wrapEl = document.createElement('div');
     wrapEl.className = 'film-shot';
-    const svg = shot.kind === 'office' ? officeShot(officeText, anchors, shot) : parseSvg(plates.get(shot.plate));
+    const svg = shot.kind === 'office' ? officeShot(officeText, anchors, shot, run) : parseSvg(plates.get(shot.plate));
     for (const e of svg.querySelectorAll('[data-fill]')) e.textContent = fillText(e.dataset.fill, values);
     for (const e of svg.querySelectorAll('[data-if]')) if (!values[e.dataset.if]) e.remove();
     wrapEl.append(svg);

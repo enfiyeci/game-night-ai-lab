@@ -7,6 +7,7 @@ import { money } from '../logic/format.js';
 import { PEOPLE } from '../../sim/data/feedPeople.js';
 import { ERAS } from '../../sim/data/eras.js';
 import { labText } from '../../sim/feedLive.js';
+import { swapLeadNames } from '../../sim/leads.js';
 
 const THEMES = ['light', 'dim', 'dark'];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -152,7 +153,7 @@ export function openFlock(game, { overlay, events, onClose }) {
   const joke = (kind) => {
     const lines = JOKES[kind] ?? JOKES.open;
     memory.joke[kind] = ((memory.joke[kind] ?? -1) + 1) % lines.length;
-    say(lines[memory.joke[kind]]);
+    say(swapLeadNames(lines[memory.joke[kind]], game.state)); // the quips name today's leads; the hired ones say them
   };
 
   const posts = () => [...(game.state.feed ?? [])].reverse();

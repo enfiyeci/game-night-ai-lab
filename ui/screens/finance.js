@@ -237,7 +237,7 @@ export function openFinance(game, overlayRoot, { view = 'timeline' } = {}) {
       row.append(tab);
     }
     const head = document.createDocumentFragment();
-    head.append(advisorExplains(MONEY_ADVISOR, MONEY_EXPLAINER, explaining), row, advisorTabLine(MONEY_ADVISOR, MONEY_TAB_LINES[current]));
+    head.append(advisorExplains(MONEY_ADVISOR, MONEY_EXPLAINER, explaining, game.state), row, advisorTabLine(MONEY_ADVISOR, MONEY_TAB_LINES[current]));
     return head;
   }
   const withHelp = () => screenHelp(opened, (shown) => { explaining = shown; });
