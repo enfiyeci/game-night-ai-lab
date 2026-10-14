@@ -103,8 +103,12 @@ export function mountEraTransition(game, overlay) {
     if (pending.recap) {
       const { recap } = pending;
       pending.recap = null;
-      opened = openRecap(overlay, recap);
-      return;
+      try {
+        opened = openRecap(overlay, recap);
+        return;
+      } catch (error) {
+        console.error(error); // a broken page must not hold the clock: go straight on to moving day
+      }
     }
     waiting ??= el('div', 'dialog-layer dialog-open et-wait', 'The lab is moving…');
     overlay.append(waiting);
