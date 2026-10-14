@@ -49,14 +49,34 @@ test('scenario selection and arrival days replay from the seed and vary across r
   assert.ok(schedules.size > 1);
 });
 
-test('each era selects four or five unique appropriate incidents when prerequisites are met', () => {
+test('each era selects unique appropriate incidents when prerequisites are met: six or seven in the long eras 1 and 2, four or five after', () => {
   for (let era = 1; era <= 5; era += 1) {
+    const [min, max] = era <= 2 ? [6, 7] : [4, 5];
     for (const seed of [1, 12, 83]) {
       const cards = schedule(era, seed);
-      assert.ok(cards.length >= 4 && cards.length <= 5, `era ${era}, seed ${seed}: ${cards.length}`);
+      assert.ok(cards.length >= min && cards.length <= max, `era ${era}, seed ${seed}: ${cards.length}`);
       assert.equal(new Set(cards.map((card) => card.id)).size, cards.length);
       for (const card of cards) assert.ok(SCENARIO_EVENTS.find((row) => row.id === card.id).eras.includes(era));
     }
+  }
+});
+
+test('in eras 1 and 2 no stretch without a scenario card runs much past a minute of clock (about 62 story days)', () => {
+  for (const era of [1, 2]) {
+    for (let seed = 1; seed <= 30; seed += 1) {
+      const days = [0, ...schedule(era, seed).map((card) => card.day), 4 * ROUND_DAYS[era]];
+      const longest = Math.max(...days.slice(1).map((day, i) => day - days[i]));
+      assert.ok(longest <= 62, `era ${era}, seed ${seed}: ${longest} days`);
+    }
+  }
+});
+
+test('era 5 spreads its scenario cards over all four weeks, after the summit opens', () => {
+  for (let seed = 1; seed <= 30; seed += 1) {
+    const cards = schedule(5, seed);
+    const weeks = new Set(cards.map((card) => Math.floor(card.day / 7)));
+    assert.deepEqual([...weeks].sort(), [0, 1, 2, 3], `seed ${seed}: ${cards.map((card) => card.day)}`);
+    assert.ok(cards[0].day >= 4, `seed ${seed}: the first card comes after the summit, day ${cards[0].day}`);
   }
 });
 
