@@ -85,15 +85,15 @@ test('screens that name a lead ask the lookup: the run summary and "Who told you
   assert.deepEqual(names.sort(), ['Amara Cole', 'Dev Okafor', 'Hana Sato', 'Rafael Ortiz']);
 });
 
-test('Dev Okafor: every run is a card like human-written data, one point less capability, one less debt', () => {
-  assert.deepEqual(LEAD_EFFECTS.dev, { run: { cap: -1, ad: -1 } });
+test('Dev Okafor: every run carries a small card\'s worth of care, a little less capability, one less debt', () => {
+  assert.deepEqual(LEAD_EFFECTS.dev, { run: { cap: -0.5, ad: -1 } });
   const run = { recipe, spikes: 0, bonus: 0 };
   const today = createInitialState({ seed: 3 });
   const careful = hired({ research: 'dev' });
   careful.seed = today.seed;
   const a = resolveRun(today, structuredClone(run));
   const b = resolveRun(careful, structuredClone(run));
-  assert.ok(b.gain < a.gain && b.gain > a.gain - 2, `gain ${a.gain} -> ${b.gain}`);
+  assert.ok(b.gain < a.gain && b.gain > a.gain - 1, `gain ${a.gain} -> ${b.gain}`);
   assert.ok(careful.alignmentDebt < today.alignmentDebt, 'less alignment debt');
   assert.ok(today.alignmentDebt - careful.alignmentDebt <= 1.2, 'about one point less');
 });
@@ -119,12 +119,12 @@ test('Rafael Ortiz: rounds raise 10% more, and each costs every director two mor
   assert.deepEqual(dealer.board, before.map((s) => s - 5));
 });
 
-test('Amara Cole: each release reaches 10% more users, and Washington likes it 2 points less', () => {
+test('Amara Cole: each release reaches 5% more users, and Washington likes it a point less', () => {
   const launch = (state) => { startRun(state, recipe); advanceRun(state, rng); return releaseModel(state, release, rng); };
   const today = createInitialState();
   const comms = hired({ policy: 'amara' });
   const a = launch(today);
   const b = launch(comms);
-  assert.equal(b.model.newUsers, Math.round(a.model.newUsers * 1.1));
-  assert.equal(comms.govFavor.us, today.govFavor.us - 2);
+  assert.equal(b.model.newUsers, Math.round(a.model.newUsers * 1.05));
+  assert.equal(comms.govFavor.us, today.govFavor.us - 1);
 });

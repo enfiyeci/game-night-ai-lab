@@ -24,18 +24,18 @@ export function hireLead(state, seat, id) {
 // Each alternate's one effect, sized like the game's other knobs; today's leads are the baseline and change nothing.
 // The résumé never prints these: the quote and the background carry them.
 export const LEAD_EFFECTS = Object.freeze({
-  // Dev Okafor, the careful researcher: every run is a recipe card like human-written instruction data, a little
-  // slower and a little safer (cap -1, ad -1; that card is cap -1, ad -2).
-  dev: { run: { cap: -1, ad: -1 } },
+  // Dev Okafor, the careful researcher: every run carries a small card's worth of care, a little slower and a little
+  // safer (cap -0.5, ad -1; the human-written instruction data card is cap -1, ad -2).
+  dev: { run: { cap: -0.5, ad: -1 } },
   // Hana Sato, weekly checks: fixing reward hacking holds the release back no round (today: one more round), but the
   // quick fix misses a quarter of it, which stays hidden (concealed debt; "penalize" hides all of it).
   hana: { hackFixDelay: 0, hackFixHidden: 0.25 },
   // Rafael Ortiz, the dealmaker: rounds raise 10% more (an emergency equity trade costs 20%), and every round costs
   // each director 2 more points of support (a round already costs 3).
   rafael: { roundMult: 1.1, roundBoard: -2 },
-  // Amara Cole, consumer comms: each release reaches 10% more users (the multilingual anneal card's size), and
-  // Washington likes each launch a little less (US favour -2; the government test card gives +6).
-  amara: { releaseUsers: 1.1, releaseGovUs: -2 },
+  // Amara Cole, consumer comms: each release reaches 5% more users (a "keep promoting the demo" answer's size), and
+  // Washington likes each launch a little less (US favour -1; the government test card gives +6).
+  amara: { releaseUsers: 1.05, releaseGovUs: -1 },
 });
 
 export function leadEffect(state, seat) {
