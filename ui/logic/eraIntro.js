@@ -60,7 +60,7 @@ const COPY = {
       'A pacing summit asks whether the leading labs will slow together.',
     ],
     bottleneck: 'Compute, power, trust and time, all at once.',
-    gate: 'The race ends here: finish first, or get the leading labs to agree to slow down.',
+    gate: `${STAY_IN}, to stay in the race; to win it, finish first or get the leading labs to agree to slow down.`,
   },
 };
 

@@ -140,9 +140,17 @@ export function mountBriefing(game, { office, overlay }) {
     root.append(node);
     const row = el('<div class="ev-row"><button type="button" class="ev-act">Open the race</button><button type="button" class="ev-act ghost">Not now</button></div>');
     const marked = Boolean(advisorMarks.markFor(warning.advisor, game.state.lastBriefing?.find((reading) => reading.id === warning.advisor)));
-    bubbleAt(node, head, { label: ADVISOR_TITLE[warning.advisor], say: warning.say, width: warning.aside ? 310 : 300, dy: marked ? -64 : -34, extra: row });
+    const dy = marked ? -64 : -34;
+    const main = bubbleAt(node, head, { label: ADVISOR_TITLE[warning.advisor], say: warning.say, width: warning.aside ? 310 : 300, dy, extra: row });
     const aside = warning.aside && anchors?.heads?.[warning.aside.advisor];
     if (aside) bubbleAt(node, aside, { label: ADVISOR_TITLE[warning.aside.advisor], say: warning.aside.say, width: 230 });
+    // Story days pass while it is up: take today's words (gap, time left) in place, keeping the tail on her head.
+    node.update = (fresh) => {
+      const say = main.querySelector('.ev-say');
+      if (say.textContent === fresh.say) return;
+      say.textContent = fresh.say;
+      main.style.top = `${head[1] + dy - main.offsetHeight}px`;
+    };
     const done = () => {
       node.remove();
       if (live?.node === node) live = null;
@@ -183,6 +191,10 @@ export function mountBriefing(game, { office, overlay }) {
     if (live && !openIds.has(live.warning.id)) {
       live.node.remove();
       live = null;
+    }
+    if (live?.warning.race) {
+      live.warning = open.find((warning) => warning.id === live.warning.id);
+      live.node.update?.(live.warning);
     }
     // Story days pass while a warning stays up; keep its countdown current.
     const oldDue = live?.node.querySelector('.ev-due');

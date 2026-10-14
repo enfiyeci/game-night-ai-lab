@@ -9,7 +9,7 @@ import { ERAS, eraById } from '../../sim/data/eras.js';
 import { nextRoundDay } from '../../sim/time.js';
 import { boardView, meetingDueNow, meetingModel, resultModel, voteReveal } from '../logic/board.js';
 import { ADVISOR_TITLE } from '../logic/events.js';
-import { leftBehindCall, raceStanding } from '../logic/raceWarning.js';
+import { leftBehindCall } from '../logic/raceWarning.js';
 import * as COPY from '../data/boardCopy.js';
 import { portrait } from '../components/portraits.js';
 import { dialog } from '../components/dialog.js';
@@ -162,9 +162,9 @@ function fakeVote(state, kind, picked, variant = 'win') {
 
 // The board's call when an era ends with the lab left behind (owner pick S1, frame E-left): the ring's card, saying who
 // finished where, with one button that goes on to the ending. Also shown by ui/screens/end.js for eras 1 and 5, which
-// end with no meeting.
-export function leftBehindCard(state, onHear) {
-  const call = leftBehindCall(state);
+// end with no meeting. voteHeld: a vote called earlier was just held, so the card does not say there was none.
+export function leftBehindCard(state, onHear, { voteHeld = false } = {}) {
+  const call = leftBehindCall(state, { voteHeld });
   let lean = {};
   try {
     lean = Object.fromEntries(boardView(state).members.map((member) => [member.id, member]));
@@ -311,28 +311,14 @@ export function mountBoardMeeting(game, { overlay, stage }) {
     }
 
     // ---- 1b. the era ends with the lab left behind (owner pick S1) ------------------------------------------------------
-    // The rule is judged before any vote (sim/endings.js eraGate): the call explains the loss, and its one button goes on
-    // to the ending.
-    function leftBehindRing() {
+    // Judged on the state that crossed the mark, never predicted: the rule runs before the gate's vote
+    // (sim/endings.js eraGate), so the call explains the loss, and its one button goes on to the ending.
+    function leftBehindRing({ voteHeld = false } = {}) {
       stopTimers();
       root.className = 'dialog-layer mt-layer step-ring dialog-open';
-      root.replaceChildren(make('div', 'mt-letterbox top'), make('div', 'mt-letterbox bottom'), leftBehindCard(game.state, () => close()));
+      root.replaceChildren(make('div', 'mt-letterbox top'), make('div', 'mt-letterbox bottom'), leftBehindCard(game.state, () => close(), { voteHeld }));
       overlay.dispatchEvent(new CustomEvent('left-behind-explained'));
       root.querySelector('.join').focus();
-    }
-
-    // The lab is out already on the gate's last day: cross the mark at once rather than ring for a vote that will not be
-    // held. If the mark judges otherwise (a vote called earlier is held first), the meeting picks up from the vote.
-    function crossNow() {
-      const { before, outcome } = crossMark();
-      if (outcome === 'ending') {
-        if (after.ending === 'leftBehind') leftBehindRing();
-        else close();
-        return;
-      }
-      room();
-      toVote();
-      if (outcome === 'reveal') { reveal = voteReveal(before, after); playVote(); } else putOff(after);
     }
 
     // ---- 2. the meeting ------------------------------------------------------------------------------------------------
@@ -771,7 +757,7 @@ export function mountBoardMeeting(game, { overlay, stage }) {
       if (notes.length) since.append(make('p', 'mt-side-note', notes.join(' ')));
 
       // A vote called earlier was held, then the gate left the lab behind: the call explains it before the film.
-      const finish = () => (after.ending === 'leftBehind' ? leftBehindRing() : close());
+      const finish = () => (after.ending === 'leftBehind' ? leftBehindRing({ voteHeld: true }) : close());
       const layer = dialog({
         title: COPY.RESULT_TITLE,
         subtitle: fill(COPY.RESULT_SUBTITLE[recordKind], { era: model.era }),
@@ -813,7 +799,6 @@ export function mountBoardMeeting(game, { overlay, stage }) {
     }
 
     if (preview && step !== 'ring') still(step);
-    else if (!preview && lastRound && raceStanding(state).out) later(crossNow, 0); // after the publish that opened it
     else ring();
     return session;
   }

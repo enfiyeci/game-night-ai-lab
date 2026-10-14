@@ -7,6 +7,9 @@ import {
 } from '../ui/logic/raceWarning.js';
 import { eraIntro } from '../ui/logic/eraIntro.js';
 import { mountEnding } from '../ui/screens/end.js';
+import { mountBoardMeeting } from '../ui/screens/boardMeeting.js';
+import { holdVote } from '../sim/board.js';
+import { installFakeDom } from './helpers/fakeDom.js';
 
 // Era `era`'s last round with `daysLeft` story days to its end; the lab at 44 and the rivals `behind` it (positive =
 // ahead of the lab), as the pick page drew it: OpenBrain 62, DeepThink 50, the lab 44, Lodestar 32, Qilin 28.
@@ -89,6 +92,13 @@ test('the whiteboard shows the lanes, the line 15 behind the leader and Priya\'s
   assert.equal(raceBoardView(raceAt({ era: 5, daysLeft: 1 })).ends, 'era ends in 1 day!!');
   assert.equal(raceBoardView(raceAt({ ahead: { openbrain: 16, deepthink: 6, lodestar: -12, qilin: -16 } })).note, '1 point from the line!');
   assert.equal(raceBoardView(raceAt({ ahead: { openbrain: 13, deepthink: 6, lodestar: -12, qilin: -16 } })).note, 'only 2 points to spare!');
+  // Rounded on their own, 40.45 and 25.4 would read 40 and 25 (inside the line) while the lab is out by 16.
+  const fake = raceAt({ ahead: { openbrain: 15.05, deepthink: -14, lodestar: -34, qilin: -39 } });
+  fake.capability = 25.4;
+  for (const rival of fake.rivals) rival.capability = { openbrain: 40.45, deepthink: 30, lodestar: 10, qilin: 5 }[rival.id];
+  const drawn = raceBoardView(fake);
+  assert.equal(drawn.lanes[0].score - drawn.lanes.find((lane) => lane.you).score, 16);
+  assert.equal(drawn.note, '1 point from the line!');
   const unnamed = raceAt();
   delete unnamed.labName;
   assert.equal(raceBoardView(unnamed).lanes[2].name, 'us');
@@ -102,12 +112,13 @@ test('the board\'s call names the finish; an era with no gate vote has no vote t
   });
   assert.equal(leftBehindCall(raceAt({ era: 1, daysLeft: 0 })).verdict, 'The rivals moved on without you.');
   assert.equal(leftBehindCall(raceAt({ era: 5, daysLeft: 0 })).verdict, 'The rivals moved on without you.');
+  assert.equal(leftBehindCall(ended, { voteHeld: true }).verdict, 'The rivals moved on without you.');
 });
 
 test('moving day states the rule precisely: the gate in every era, the vote in eras 2-4', () => {
   assert.equal(eraIntro(1).gate, 'Finish 2nd or better, or within 15 points of the leader.');
   for (const era of [2, 3, 4]) assert.equal(eraIntro(era).gate, 'Finish 2nd or better, or within 15 points of the leader, and keep the board\'s vote.');
-  assert.equal(eraIntro(5).gate, 'The race ends here: finish first, or get the leading labs to agree to slow down.');
+  assert.equal(eraIntro(5).gate, 'Finish 2nd or better, or within 15 points of the leader, to stay in the race; to win it, finish first or get the leading labs to agree to slow down.');
 });
 
 test('a left-behind loss with no meeting is explained before its film; after a meeting explained it, it is not', async () => {
@@ -134,4 +145,41 @@ test('a left-behind loss with no meeting is explained before its film; after a m
   };
   assert.deepEqual(await run(false), ['call', 'film']);
   assert.deepEqual(await run(true), ['film']);
+});
+
+test('a lab out on the eve of the gate but safe after the mark gets the normal ring and vote, never a guess', () => {
+  const document = installFakeDom();
+  globalThis.matchMedia = () => ({ matches: true }); // reduced motion: the vote waits for clicks, so no timers run on
+  const eve = raceAt({ daysLeft: 1 });
+  assert.equal(raceStanding(eve).out, true);
+  const subscribers = [];
+  const game = {
+    state: eve,
+    subscribe: (fn) => { subscribers.push(fn); return () => {}; },
+    setField: () => ({ ok: true }),
+    // The mark day runs and the lab comes out safe (a model landed): the gate holds its vote, no ending.
+    advanceDays: () => {
+      const next = structuredClone(game.state);
+      next.day += 1;
+      next.turn += 1;
+      next.capability = 50;
+      holdVote(next, 'gate');
+      game.state = next;
+      subscribers.forEach((fn) => fn({ state: next, events: [], errors: [] }));
+    },
+  };
+  const stage = document.createElement('main');
+  const overlay = document.createElement('div');
+  stage.append(overlay);
+  document.body.append(stage);
+  mountBoardMeeting(game, { overlay, stage });
+  const ring = overlay.querySelector('.mt-ring');
+  assert.ok(ring, 'the call rings');
+  assert.match(ring.textContent, /Board meeting · end of era 2/);
+  assert.doesNotMatch(ring.textContent, /The era is over/);
+  ring.querySelector('.join').click();
+  overlay.querySelector('.mt-call-vote').click();
+  assert.equal(game.state.ending, null);
+  assert.ok(overlay.querySelector('.mt-next'), 'the vote plays');
+  assert.equal(overlay.querySelector('.mt-ring'), null);
 });

@@ -92,6 +92,9 @@ export function raceBoardView(state) {
     ...state.rivals.map((rival) => ({ id: rival.id, name: rival.name, capability: rival.capability, you: false })),
   ].sort((a, b) => b.capability - a.capability || Number(a.you) - Number(b.you))
     .map((lane) => ({ ...lane, score: Math.round(lane.capability) }));
+  // The lab's written score is the leader's minus the gap Priya states, so the two numbers never disagree about the line.
+  const top = Math.round(standing.leader.capability);
+  for (const lane of lanes) if (lane.you) lane.score = top - standing.shownGap;
   const spare = BALANCE.gateMaxGap - standing.shownGap;
   const { n, unit } = timeLeft(eraDaysLeft(state));
   return {
@@ -108,12 +111,12 @@ export function raceBoardView(state) {
 }
 
 // The board's call when the era ends with the lab left behind (frame E-left). An era whose gate holds no vote (1, 5)
-// has no vote to call off.
-export function leftBehindCall(state) {
+// has no vote to call off, and neither has a meeting that just held a called vote (voteHeld).
+export function leftBehindCall(state, { voteHeld = false } = {}) {
   const standing = raceStanding(state);
   const lab = typeof state.labName === 'string' && state.labName.trim() ? state.labName.trim() : 'Your lab';
   return {
     line: `The era is over · ${lab} finished ${ordinal(standing.place)}, ${standing.shownGap} points behind ${standing.leader.name}`,
-    verdict: eraById(state.era).boardVoteAtGate ? 'No vote today. The rivals moved on without you.' : 'The rivals moved on without you.',
+    verdict: eraById(state.era).boardVoteAtGate && !voteHeld ? 'No vote today. The rivals moved on without you.' : 'The rivals moved on without you.',
   };
 }

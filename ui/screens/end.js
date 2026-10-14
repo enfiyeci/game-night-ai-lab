@@ -176,7 +176,8 @@ function renderEndScreen(overlay, model, { onPlayAgain, onWatch, lumenNote, fina
 }
 
 // Owner pick S1: a left-behind loss is explained before its film. Eras 2-4 end in the board's gate meeting, which shows
-// the call itself; eras 1 and 5 end with no meeting, so the same call rings here, over the office.
+// the call itself; eras 1 and 5 end with no meeting, so the same call rings here, over the office. Like the meeting, it
+// cannot be left: everything behind it is inert, Tab stays on its one button and Escape does nothing.
 export function explainLeftBehind(overlay, state) {
   if (!globalThis.document || !overlay?.append) return Promise.resolve();
   return new Promise((resolve) => {
@@ -184,16 +185,27 @@ export function explainLeftBehind(overlay, state) {
     root.setAttribute('role', 'dialog');
     root.setAttribute('aria-modal', 'true');
     root.setAttribute('aria-label', 'Board of directors');
+    root.tabIndex = -1;
     const stage = overlay.parentElement;
+    const benched = [...(stage?.children ?? []), ...overlay.children].filter((node) => node !== overlay && !node.inert);
     const card = leftBehindCard(state, () => {
+      for (const node of benched) node.inert = false;
       stage?.classList.remove('mt-dim');
       root.remove();
       resolve();
     });
+    const hear = card.querySelector('button');
+    root.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape' && event.key !== 'Tab') return;
+      event.preventDefault();
+      event.stopPropagation();
+      hear.focus();
+    });
     root.append(make('div', 'mt-letterbox top'), make('div', 'mt-letterbox bottom'), card);
+    for (const node of benched) node.inert = true;
     stage?.classList.add('mt-dim');
     overlay.append(root);
-    card.querySelector('button').focus();
+    hear.focus();
   });
 }
 
