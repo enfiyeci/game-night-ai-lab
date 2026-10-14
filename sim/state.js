@@ -77,6 +77,7 @@ export function createInitialState({ seed = 1 } = {}) {
     pendingEvents: [],
     feed: [],
     seenEvents: [],
+    decisions: [], // every answered card, by era (sim/events.js logDecision)
     lastRivalReleases: [],
     rivalLaunches: [], // launches rolled at a mark, landing on their day in the next round (stage 2)
     rivalLaunchesThisRound: [],

@@ -4568,6 +4568,49 @@ html.title-waking #hud { transition: opacity .5s ease .6s; }
 @media (prefers-reduced-motion: reduce) { .dt-page.found { transition: none; } }
 .dt-left span { display: block; }
 
+/* The Daily Token's era-in-review page (owner pick RC, ported from the mockup's .mk-paperpage; RA2's click-to-explain
+   panel under each story). Paper and ink as the archive's pages; the verdict tags are token tints. */
+.rc-layer .rc-veil { background: color-mix(in oklab, var(--ink) 52%, transparent); }
+/* The page holds the stage like the mockup's frame: the cash card steps away while it is open (the clock is held anyway). */
+body:has(.rc-layer) .cash-warning { display: none; }
+.rc-stage { position: absolute; inset: 0; outline: none; }
+.rc-page { position: absolute; left: 230px; top: 120px; width: 980px; min-height: 610px; padding: 26px 40px; background: var(--paper); color: var(--ink); transform: rotate(-.6deg);
+  box-shadow: 0 30px 60px color-mix(in oklab, var(--ink) 45%, transparent); font-family: "Libre Baskerville", Georgia, serif; transition: top 200ms ease; }
+.rc-page.rc-opened { top: 64px; }
+.rc-mast { text-align: center; font-size: 52px; font-weight: 700; letter-spacing: -.01em; border-bottom: 3px double var(--ink); padding-bottom: 6px; }
+.rc-dl { display: flex; justify-content: space-between; font: 800 12px Nunito, sans-serif; letter-spacing: .08em; text-transform: uppercase; padding: 6px 0; border-bottom: 1px solid var(--ink); }
+.rc-hl { font-size: 38px; font-weight: 400; line-height: 1.15; margin: 18px 0 8px; text-wrap: balance; }
+.rc-dek { font-style: italic; font-size: 16px; line-height: 1.5; margin: 0 0 14px; }
+.rc-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; align-items: start; border-top: 1px solid var(--ink); padding-top: 12px; }
+.rc-story { display: block; width: 100%; margin: 0; padding: 4px 6px 6px; border: 0; border-radius: 4px; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.rc-story:hover, .rc-col.open .rc-story { background: color-mix(in oklab, var(--sky) 8%, var(--paper)); }
+.rc-story:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+.rc-head { display: block; font-size: 18px; font-weight: 700; line-height: 1.25; margin: 0 0 6px; }
+.rc-body { display: block; font-size: 13px; line-height: 1.55; }
+.rc-auto { display: block; margin-bottom: 4px; font: 800 12px/1.4 Nunito, sans-serif; color: color-mix(in oklab, var(--ink) 62%, var(--paper)); }
+.rc-tag { display: inline-block; margin-top: 8px; font: 900 11px Nunito, sans-serif; letter-spacing: .06em; text-transform: uppercase; padding: 2px 8px; border-radius: 3px; }
+.rc-paid { background: color-mix(in oklab, var(--teal) 18%, var(--paper)); color: color-mix(in oklab, var(--teal) 50%, var(--ink)); }
+.rc-costing { background: color-mix(in oklab, var(--coral) 20%, var(--paper)); color: color-mix(in oklab, var(--coral) 62%, var(--ink)); }
+.rc-mixed { background: color-mix(in oklab, var(--wood) 24%, var(--paper)); color: color-mix(in oklab, var(--wood) 52%, var(--ink)); }
+.rc-explain { position: relative; grid-column: 1 / -1; margin-top: -8px; padding: 10px 14px; border-radius: 8px; background: color-mix(in oklab, var(--sky) 8%, var(--paper)); border-left: 4px solid var(--sky); font: 600 13.5px/1.5 Nunito, sans-serif; }
+.rc-explain::before { content: ''; position: absolute; top: -8px; left: calc(var(--notch, 50%) - 8px); border: 8px solid transparent; border-top: 0; border-bottom-color: color-mix(in oklab, var(--sky) 8%, var(--paper)); }
+.rc-explain[hidden] { display: none; }
+.rc-explain p { margin: 0; }
+.rc-explain b { color: color-mix(in oklab, var(--sky) 70%, var(--ink)); }
+.rc-explain .rc-views { margin-top: 6px; font-weight: 800; }
+.rc-crit { margin-top: 18px; border-top: 3px double var(--ink); padding-top: 10px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.rc-crit > div { display: grid; grid-template-columns: 34px 1fr; gap: 8px; font-size: 12.5px; line-height: 1.45; font-style: italic; }
+.rc-crit b { display: block; font: 900 11px Nunito, sans-serif; font-style: normal; letter-spacing: .05em; text-transform: uppercase; }
+.rc-foot { position: absolute; left: 230px; right: 60px; bottom: 40px; display: flex; align-items: center; justify-content: flex-end; gap: 24px; }
+.rc-hint { margin-right: auto; color: var(--paper); font: 800 14px Nunito, sans-serif; }
+.rc-go { font: 800 17px Nunito, sans-serif; color: var(--paper); background: var(--ink); border: 0; border-radius: 10px; padding: 14px 28px; cursor: pointer; }
+.rc-go:focus-visible { outline: 3px solid var(--sky); outline-offset: 4px; }
+@media (prefers-reduced-motion: no-preference) {
+  .rc-layer.dialog-open .rc-page { animation: rc-drop 420ms ease-out both; }
+}
+@media (prefers-reduced-motion: reduce) { .rc-page { transition: none; } }
+@keyframes rc-drop { from { opacity: 0; translate: 0 -24px; } to { opacity: 1; translate: 0 0; } }
+
 /* Owner pick 5C: raise, research and emergency as paperwork on the dimmed office. */
 .paper-layer .paper-veil { background: color-mix(in oklab, var(--ink) 52%, transparent); }
 .paper-desk { position: absolute; inset: 0; pointer-events: none; }
