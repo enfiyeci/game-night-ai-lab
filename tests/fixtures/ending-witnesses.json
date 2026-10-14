@@ -64,7 +64,7 @@
         }
       },
       {
-        "day": 60,
+        "day": 47,
         "actions": {
           "eventChoices": {
             "scenarioEngineerOffer": "leave"
@@ -116,10 +116,19 @@
         }
       },
       {
-        "day": 137,
+        "day": 101,
         "actions": {
           "eventChoices": {
             "scenarioArguments": "defend"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 158,
+        "actions": {
+          "eventChoices": {
+            "scenarioCitations": "leave"
           },
           "moves": []
         }
@@ -148,10 +157,19 @@
         }
       },
       {
-        "day": 223,
+        "day": 204,
         "actions": {
           "eventChoices": {
-            "scenarioCitations": "leave"
+            "scenarioBenchmark": "defend"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 260,
+        "actions": {
+          "eventChoices": {
+            "scenarioDemoCost": "promote"
           },
           "moves": []
         }
@@ -201,10 +219,10 @@
         }
       },
       {
-        "day": 281,
+        "day": 310,
         "actions": {
           "eventChoices": {
-            "scenarioBenchmark": "defend"
+            "scenarioLaunchQueue": "accept"
           },
           "moves": []
         }
@@ -266,7 +284,7 @@
         }
       },
       {
-        "day": 429,
+        "day": 411,
         "actions": {
           "eventChoices": {
             "scenarioDataRenewal": "defer"
@@ -295,18 +313,28 @@
           },
           "moves": [
             {
+              "type": "meeting"
+            },
+            {
               "type": "raise",
               "archetype": "vc"
             }
           ],
-          "eventChoices": {}
+          "eventChoices": {
+            "scenarioReportingChannel": "discourage"
+          },
+          "presidentAnswers": [
+            "first-war-flatter",
+            "first-woke-flatter",
+            "first-chips-flatter"
+          ]
         }
       },
       {
-        "day": 484,
+        "day": 504,
         "actions": {
           "eventChoices": {
-            "scenarioReportingChannel": "discourage"
+            "scenarioPriceCut": "accept"
           },
           "moves": []
         }
@@ -340,10 +368,10 @@
         }
       },
       {
-        "day": 557,
+        "day": 548,
         "actions": {
           "eventChoices": {
-            "scenarioPriceCut": "accept"
+            "scenarioEvalBacklog": "skip"
           },
           "moves": []
         }
@@ -358,10 +386,10 @@
         }
       },
       {
-        "day": 611,
+        "day": 588,
         "actions": {
           "eventChoices": {
-            "scenarioEvalBacklog": "skip"
+            "scenarioGrowthRound": "wait"
           },
           "moves": []
         }
@@ -385,33 +413,26 @@
           "computeSplit": {
             "safety": 0.02
           },
-          "moves": [
-            {
-              "type": "meeting"
-            }
-          ],
-          "eventChoices": {},
-          "presidentAnswers": [
-            "first-war-flatter",
-            "first-woke-flatter",
-            "first-chips-flatter"
-          ]
+          "moves": [],
+          "eventChoices": {
+            "scenarioDocumentLeak": "minimize"
+          }
         }
       },
       {
-        "day": 658,
+        "day": 670,
         "actions": {
           "eventChoices": {
-            "scenarioGrowthRound": "wait"
+            "boardRequest": "stall"
           },
           "moves": []
         }
       },
       {
-        "day": 684,
+        "day": 686,
         "actions": {
           "eventChoices": {
-            "boardRequest": "stall"
+            "scenarioDelivery": "wait"
           },
           "moves": []
         }
@@ -576,7 +597,8 @@
         "day": 791,
         "actions": {
           "eventChoices": {
-            "lossSpike": "push"
+            "lossSpike": "push",
+            "boardWobble": "vent"
           },
           "moves": []
         }
@@ -585,7 +607,7 @@
         "day": 800,
         "actions": {
           "eventChoices": {
-            "boardWobble": "vent"
+            "promiseCall:1": "refuse"
           },
           "moves": []
         }
@@ -653,7 +675,7 @@
         }
       },
       {
-        "day": 833,
+        "day": 832,
         "actions": {
           "eventChoices": {
             "boardOped": "ignore"
@@ -792,9 +814,9 @@
   },
   "acquihire": {
     "policy": "safety",
-    "seed": 1,
-    "era": 2,
-    "turns": 8,
+    "seed": 15,
+    "era": 5,
+    "turns": 17,
     "transcript": [
       {
         "day": 0,
@@ -853,7 +875,7 @@
         }
       },
       {
-        "day": 60,
+        "day": 54,
         "actions": {
           "eventChoices": {
             "scenarioEngineerOffer": "retain"
@@ -917,7 +939,7 @@
         }
       },
       {
-        "day": 223,
+        "day": 189,
         "actions": {
           "eventChoices": {
             "scenarioBenchmark": "audit"
@@ -926,407 +948,7 @@
         }
       },
       {
-        "day": 273,
-        "actions": null
-      },
-      {
-        "day": 273,
-        "actions": {
-          "budget": {
-            "spend": 35,
-            "split": {
-              "training": 0.6,
-              "security": 0.15,
-              "product": 0.1,
-              "talent": 0.15
-            }
-          },
-          "computeSplit": {
-            "safety": 0.2
-          },
-          "moves": [
-            {
-              "type": "release",
-              "release": {
-                "picks": [
-                  "eval-full"
-                ],
-                "price": "market",
-                "reasoning": "off",
-                "family": "Bot",
-                "generation": 1,
-                "tierWords": {
-                  "small": "Swift",
-                  "medium": "Core",
-                  "large": "Grand",
-                  "xl": "Apex"
-                }
-              }
-            }
-          ],
-          "eventChoices": {},
-          "addressWarnings": []
-        }
-      },
-      {
-        "day": 364,
-        "actions": null
-      },
-      {
-        "day": 364,
-        "actions": {
-          "budget": {
-            "spend": 52.5,
-            "split": {
-              "training": 0.6,
-              "security": 0.15,
-              "product": 0.1,
-              "talent": 0.15
-            }
-          },
-          "computeSplit": {
-            "safety": 0.2
-          },
-          "moves": [
-            {
-              "type": "raise",
-              "archetype": "vc"
-            }
-          ],
-          "eventChoices": {},
-          "addressWarnings": [],
-          "automation": {
-            "levels": {
-              "review": 1,
-              "experiments": 0,
-              "choosing": 0,
-              "direction": 0
-            },
-            "checks": {
-              "reviewers": 0,
-              "monitors": 0,
-              "aiReview": true
-            }
-          }
-        }
-      },
-      {
-        "day": 429,
-        "actions": {
-          "eventChoices": {
-            "scenarioDataRenewal": "licence"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 455,
-        "actions": null
-      },
-      {
-        "day": 455,
-        "actions": {
-          "budget": {
-            "spend": 52.5,
-            "split": {
-              "training": 0.6,
-              "security": 0.15,
-              "product": 0.1,
-              "talent": 0.15
-            }
-          },
-          "computeSplit": {
-            "safety": 0.2
-          },
-          "moves": [
-            {
-              "type": "startRun",
-              "recipe": {
-                "sliders": {
-                  "size": "small",
-                  "length": "optimal",
-                  "alignShare": 0.4
-                },
-                "picks": {
-                  "pre": [
-                    "licensed-data",
-                    "hazard-filter-reuse"
-                  ],
-                  "mid": [
-                    "decontaminate",
-                    "anneal"
-                  ],
-                  "post": [
-                    "human-sft",
-                    "cai",
-                    "safety-tuning"
-                  ]
-                }
-              }
-            },
-            {
-              "type": "deal",
-              "offerId": "azuria-4"
-            }
-          ],
-          "eventChoices": {},
-          "addressWarnings": []
-        }
-      },
-      {
-        "day": 484,
-        "actions": {
-          "eventChoices": {
-            "scenarioReportingChannel": "independent"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 546,
-        "actions": null
-      },
-      {
-        "day": 546,
-        "actions": {
-          "budget": {
-            "spend": 52.5,
-            "split": {
-              "training": 0.6,
-              "security": 0.15,
-              "product": 0.1,
-              "talent": 0.15
-            }
-          },
-          "computeSplit": {
-            "safety": 0.2
-          },
-          "moves": [],
-          "eventChoices": {},
-          "addressWarnings": []
-        }
-      },
-      {
-        "day": 557,
-        "actions": {
-          "eventChoices": {
-            "scenarioPriceCut": "specialize"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 567,
-        "actions": {
-          "eventChoices": {
-            "boardWobble": "prices"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 611,
-        "actions": {
-          "eventChoices": {
-            "scenarioEvalBacklog": "reassign"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 637,
-        "actions": null
-      },
-      {
-        "day": 637,
-        "actions": {
-          "budget": {
-            "spend": 52.5,
-            "split": {
-              "training": 0.6,
-              "security": 0.15,
-              "product": 0.1,
-              "talent": 0.15
-            }
-          },
-          "computeSplit": {
-            "safety": 0.2
-          },
-          "moves": [
-            {
-              "type": "meeting"
-            }
-          ],
-          "eventChoices": {},
-          "addressWarnings": [],
-          "presidentAnswers": [
-            "first-war-plain",
-            "first-woke-plain",
-            "first-chips-plain"
-          ]
-        }
-      },
-      {
-        "day": 658,
-        "actions": {
-          "eventChoices": {
-            "scenarioGrowthRound": "wait"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 684,
-        "actions": {
-          "eventChoices": {
-            "boardRequest": "send"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 728,
-        "actions": null
-      }
-    ]
-  },
-  "leftBehind": {
-    "policy": "safety",
-    "seed": 6,
-    "era": 3,
-    "turns": 12,
-    "transcript": [
-      {
-        "day": 0,
-        "actions": {
-          "budget": {
-            "spend": 35,
-            "split": {
-              "training": 0.6,
-              "security": 0.15,
-              "product": 0.1,
-              "talent": 0.15
-            }
-          },
-          "computeSplit": {
-            "safety": 0.2
-          },
-          "moves": [
-            {
-              "type": "startRun",
-              "recipe": {
-                "sliders": {
-                  "size": "medium",
-                  "length": "optimal",
-                  "alignShare": 0.4
-                },
-                "picks": {
-                  "pre": [
-                    "licensed-data"
-                  ],
-                  "mid": [],
-                  "post": [
-                    "human-sft",
-                    "cai",
-                    "safety-tuning"
-                  ]
-                }
-              }
-            }
-          ],
-          "eventChoices": {},
-          "pledge": 0.2,
-          "addressWarnings": [],
-          "automation": {
-            "levels": {
-              "review": 0,
-              "experiments": 0,
-              "choosing": 0,
-              "direction": 0
-            },
-            "checks": {
-              "reviewers": 0,
-              "monitors": 0,
-              "aiReview": true
-            }
-          }
-        }
-      },
-      {
-        "day": 80,
-        "actions": {
-          "eventChoices": {
-            "scenarioEngineerOffer": "retain"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 91,
-        "actions": null
-      },
-      {
-        "day": 91,
-        "actions": {
-          "budget": {
-            "spend": 35,
-            "split": {
-              "training": 0.6,
-              "security": 0.15,
-              "product": 0.1,
-              "talent": 0.15
-            }
-          },
-          "computeSplit": {
-            "safety": 0.2
-          },
-          "moves": [
-            {
-              "type": "deal",
-              "offerId": "azuria-1"
-            }
-          ],
-          "eventChoices": {},
-          "addressWarnings": []
-        }
-      },
-      {
-        "day": 182,
-        "actions": null
-      },
-      {
-        "day": 182,
-        "actions": {
-          "budget": {
-            "spend": 35,
-            "split": {
-              "training": 0.6,
-              "security": 0.15,
-              "product": 0.1,
-              "talent": 0.15
-            }
-          },
-          "computeSplit": {
-            "safety": 0.2
-          },
-          "moves": [],
-          "eventChoices": {
-            "scenarioBenchmark": "audit"
-          },
-          "addressWarnings": []
-        }
-      },
-      {
-        "day": 216,
-        "actions": {
-          "eventChoices": {
-            "scenarioPrivacy": "pilot"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 253,
+        "day": 230,
         "actions": {
           "eventChoices": {
             "capabilityJump": "celebrate"
@@ -1420,10 +1042,10 @@
         }
       },
       {
-        "day": 424,
+        "day": 411,
         "actions": {
           "eventChoices": {
-            "scenarioGrowthRound": "campaign"
+            "scenarioContaminatedScore": "audit"
           },
           "moves": []
         }
@@ -1448,6 +1070,9 @@
             "safety": 0.2
           },
           "moves": [
+            {
+              "type": "meeting"
+            },
             {
               "type": "startRun",
               "recipe": {
@@ -1475,23 +1100,28 @@
             }
           ],
           "eventChoices": {},
-          "addressWarnings": []
+          "addressWarnings": [],
+          "presidentAnswers": [
+            "first-war-plain",
+            "first-woke-plain",
+            "first-chips-plain"
+          ]
         }
       },
       {
-        "day": 490,
+        "day": 465,
         "actions": {
           "eventChoices": {
-            "scenarioCloudTerms": "review"
+            "scenarioDataRenewal": "licence"
           },
           "moves": []
         }
       },
       {
-        "day": 545,
+        "day": 524,
         "actions": {
           "eventChoices": {
-            "scenarioDocumentLeak": "respond"
+            "scenarioEvalBacklog": "fund"
           },
           "moves": []
         }
@@ -1521,19 +1151,28 @@
         }
       },
       {
-        "day": 594,
+        "day": 576,
         "actions": {
           "eventChoices": {
-            "boardRequest": "send"
+            "scenarioDelivery": "plan"
           },
           "moves": []
         }
       },
       {
-        "day": 612,
+        "day": 610,
         "actions": {
           "eventChoices": {
-            "scenarioDataRenewal": "licence"
+            "boardLeak": "hunt"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 624,
+        "actions": {
+          "eventChoices": {
+            "scenarioGrowthRound": "campaign"
           },
           "moves": []
         }
@@ -1557,34 +1196,34 @@
           "computeSplit": {
             "safety": 0.2
           },
-          "moves": [
-            {
-              "type": "meeting"
-            }
-          ],
+          "moves": [],
           "eventChoices": {},
-          "addressWarnings": [],
-          "presidentAnswers": [
-            "first-war-plain",
-            "first-woke-plain",
-            "first-chips-plain"
-          ]
+          "addressWarnings": []
         }
       },
       {
-        "day": 644,
+        "day": 671,
         "actions": {
           "eventChoices": {
-            "boardLeak": "hunt"
+            "scenarioReportingChannel": "independent"
           },
           "moves": []
         }
       },
       {
-        "day": 665,
+        "day": 675,
         "actions": {
           "eventChoices": {
-            "scenarioContaminatedScore": "audit"
+            "capabilityJump": "celebrate"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 687,
+        "actions": {
+          "eventChoices": {
+            "boardWobble": "prices"
           },
           "moves": []
         }
@@ -1647,10 +1286,10 @@
         }
       },
       {
-        "day": 745,
+        "day": 754,
         "actions": {
           "eventChoices": {
-            "scenarioPoaching": "retain"
+            "scenarioReasoningBill": "optimize"
           },
           "moves": []
         }
@@ -1703,7 +1342,935 @@
         }
       },
       {
-        "day": 769,
+        "day": 778,
+        "actions": {
+          "eventChoices": {
+            "scenarioRecognizedTest": "independent"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 788,
+        "actions": null
+      },
+      {
+        "day": 788,
+        "actions": {
+          "budget": {
+            "spend": 70,
+            "split": {
+              "training": 0.6,
+              "security": 0.15,
+              "product": 0.1,
+              "talent": 0.15
+            }
+          },
+          "computeSplit": {
+            "safety": 0.2
+          },
+          "moves": [
+            {
+              "type": "startRun",
+              "recipe": {
+                "sliders": {
+                  "size": "medium",
+                  "length": "optimal",
+                  "alignShare": 0.4
+                },
+                "picks": {
+                  "pre": [
+                    "licensed-data",
+                    "hazard-filter-built"
+                  ],
+                  "mid": [
+                    "decontaminate",
+                    "anneal"
+                  ],
+                  "post": [
+                    "human-sft",
+                    "cai",
+                    "classifiers",
+                    "constitution"
+                  ]
+                }
+              }
+            },
+            {
+              "type": "deal",
+              "offerId": "azuria-10"
+            }
+          ],
+          "eventChoices": {},
+          "addressWarnings": []
+        }
+      },
+      {
+        "day": 803,
+        "actions": {
+          "eventChoices": {
+            "scenarioPoaching": "retain"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 808,
+        "actions": {
+          "eventChoices": {
+            "boardRequest": "send"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 818,
+        "actions": null
+      },
+      {
+        "day": 818,
+        "actions": {
+          "budget": {
+            "spend": 70,
+            "split": {
+              "training": 0.6,
+              "security": 0.15,
+              "product": 0.1,
+              "talent": 0.15
+            }
+          },
+          "computeSplit": {
+            "safety": 0.2
+          },
+          "moves": [
+            {
+              "type": "deal",
+              "offerId": "azuria-11"
+            }
+          ],
+          "eventChoices": {},
+          "addressWarnings": []
+        }
+      },
+      {
+        "day": 824,
+        "actions": {
+          "eventChoices": {
+            "boardBuyer": "call"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 828,
+        "actions": {
+          "eventChoices": {
+            "scenarioOpenCompetition": "specialize"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 848,
+        "actions": null
+      },
+      {
+        "day": 848,
+        "actions": {
+          "budget": {
+            "spend": 87.5,
+            "split": {
+              "training": 0.6,
+              "security": 0.15,
+              "product": 0.1,
+              "talent": 0.15
+            }
+          },
+          "computeSplit": {
+            "safety": 0.2
+          },
+          "moves": [
+            {
+              "type": "buildSite",
+              "source": "nuclear"
+            }
+          ],
+          "eventChoices": {},
+          "addressWarnings": [],
+          "automation": {
+            "levels": {
+              "review": 2,
+              "experiments": 2,
+              "choosing": 1,
+              "direction": 0
+            },
+            "checks": {
+              "reviewers": 0,
+              "monitors": 3,
+              "aiReview": true
+            }
+          }
+        }
+      },
+      {
+        "day": 876,
+        "actions": {
+          "eventChoices": {
+            "scenarioWeightTheft": "quiet"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 878,
+        "actions": null
+      },
+      {
+        "day": 878,
+        "actions": {
+          "budget": {
+            "spend": 87.5,
+            "split": {
+              "training": 0.6,
+              "security": 0.15,
+              "product": 0.1,
+              "talent": 0.15
+            }
+          },
+          "computeSplit": {
+            "safety": 0.2
+          },
+          "moves": [
+            {
+              "type": "raise",
+              "archetype": "vc"
+            }
+          ],
+          "eventChoices": {},
+          "addressWarnings": []
+        }
+      },
+      {
+        "day": 898,
+        "actions": {
+          "eventChoices": {
+            "scenarioGridDelay": "alternatives"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 908,
+        "actions": null
+      },
+      {
+        "day": 908,
+        "actions": {
+          "budget": {
+            "spend": 87.5,
+            "split": {
+              "training": 0.6,
+              "security": 0.15,
+              "product": 0.1,
+              "talent": 0.15
+            }
+          },
+          "computeSplit": {
+            "safety": 0.2
+          },
+          "moves": [
+            {
+              "type": "release",
+              "release": {
+                "picks": [
+                  "eval-third"
+                ],
+                "price": "market",
+                "reasoning": "medium",
+                "family": "Bot",
+                "generation": 3,
+                "tierWords": {
+                  "small": "Swift",
+                  "medium": "Core",
+                  "large": "Grand",
+                  "xl": "Apex"
+                }
+              }
+            },
+            {
+              "type": "deal",
+              "offerId": "azuria-12"
+            }
+          ],
+          "eventChoices": {},
+          "addressWarnings": []
+        }
+      },
+      {
+        "day": 916,
+        "actions": {
+          "eventChoices": {
+            "boardWashington": "brief"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 924,
+        "actions": {
+          "eventChoices": {
+            "scenarioGridConflict": "study"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 938,
+        "actions": null
+      },
+      {
+        "day": 938,
+        "actions": {
+          "budget": {
+            "spend": 87.5,
+            "split": {
+              "training": 0.6,
+              "security": 0.15,
+              "product": 0.1,
+              "talent": 0.15
+            }
+          },
+          "computeSplit": {
+            "safety": 0.2
+          },
+          "moves": [
+            {
+              "type": "startRun",
+              "recipe": {
+                "sliders": {
+                  "size": "large",
+                  "length": "optimal",
+                  "alignShare": 0.4
+                },
+                "picks": {
+                  "pre": [
+                    "licensed-data",
+                    "hazard-filter-built"
+                  ],
+                  "mid": [
+                    "decontaminate",
+                    "anneal"
+                  ],
+                  "post": [
+                    "human-sft",
+                    "cai",
+                    "classifiers",
+                    "constitution"
+                  ]
+                }
+              }
+            }
+          ],
+          "eventChoices": {},
+          "addressWarnings": []
+        }
+      },
+      {
+        "day": 948,
+        "actions": {
+          "eventChoices": {
+            "scenarioDefenceTerms": "negotiate"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 968,
+        "actions": null
+      },
+      {
+        "day": 968,
+        "actions": {
+          "budget": {
+            "spend": 105,
+            "split": {
+              "training": 0.6,
+              "security": 0.15,
+              "product": 0.1,
+              "talent": 0.15
+            }
+          },
+          "computeSplit": {
+            "safety": 0.2
+          },
+          "moves": [
+            {
+              "type": "meeting"
+            },
+            {
+              "type": "summit",
+              "proposals": [
+                "evaluators",
+                "sharedSafety",
+                "verification"
+              ],
+              "checks": {
+                "evaluators": 2,
+                "sharedSafety": 2,
+                "verification": 3
+              },
+              "promises": {
+                "east": "inspectors",
+                "west": "goFirst"
+              }
+            }
+          ],
+          "eventChoices": {},
+          "hazardChoice": "fix",
+          "addressWarnings": [],
+          "presidentAnswers": [
+            "second-control-plain",
+            "second-pause-plain",
+            "second-launch-plain"
+          ],
+          "automation": {
+            "levels": {
+              "review": 3,
+              "experiments": 3,
+              "choosing": 2,
+              "direction": 1
+            },
+            "checks": {
+              "reviewers": 3,
+              "monitors": 3,
+              "aiReview": true
+            }
+          }
+        }
+      },
+      {
+        "day": 972,
+        "actions": {
+          "eventChoices": {
+            "scenarioTrainingStack": "defer"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 975,
+        "actions": null
+      }
+    ]
+  },
+  "leftBehind": {
+    "policy": "safety",
+    "seed": 1,
+    "era": 3,
+    "turns": 12,
+    "transcript": [
+      {
+        "day": 0,
+        "actions": {
+          "budget": {
+            "spend": 35,
+            "split": {
+              "training": 0.6,
+              "security": 0.15,
+              "product": 0.1,
+              "talent": 0.15
+            }
+          },
+          "computeSplit": {
+            "safety": 0.2
+          },
+          "moves": [
+            {
+              "type": "startRun",
+              "recipe": {
+                "sliders": {
+                  "size": "medium",
+                  "length": "optimal",
+                  "alignShare": 0.4
+                },
+                "picks": {
+                  "pre": [
+                    "licensed-data"
+                  ],
+                  "mid": [],
+                  "post": [
+                    "human-sft",
+                    "cai",
+                    "safety-tuning"
+                  ]
+                }
+              }
+            }
+          ],
+          "eventChoices": {},
+          "pledge": 0.2,
+          "addressWarnings": [],
+          "automation": {
+            "levels": {
+              "review": 0,
+              "experiments": 0,
+              "choosing": 0,
+              "direction": 0
+            },
+            "checks": {
+              "reviewers": 0,
+              "monitors": 0,
+              "aiReview": true
+            }
+          }
+        }
+      },
+      {
+        "day": 47,
+        "actions": {
+          "eventChoices": {
+            "scenarioEngineerOffer": "retain"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 91,
+        "actions": null
+      },
+      {
+        "day": 91,
+        "actions": {
+          "budget": {
+            "spend": 35,
+            "split": {
+              "training": 0.6,
+              "security": 0.15,
+              "product": 0.1,
+              "talent": 0.15
+            }
+          },
+          "computeSplit": {
+            "safety": 0.2
+          },
+          "moves": [
+            {
+              "type": "deal",
+              "offerId": "azuria-1"
+            }
+          ],
+          "eventChoices": {},
+          "addressWarnings": []
+        }
+      },
+      {
+        "day": 182,
+        "actions": null
+      },
+      {
+        "day": 182,
+        "actions": {
+          "budget": {
+            "spend": 35,
+            "split": {
+              "training": 0.6,
+              "security": 0.15,
+              "product": 0.1,
+              "talent": 0.15
+            }
+          },
+          "computeSplit": {
+            "safety": 0.2
+          },
+          "moves": [],
+          "eventChoices": {
+            "scenarioPrivacy": "pilot"
+          },
+          "addressWarnings": []
+        }
+      },
+      {
+        "day": 189,
+        "actions": {
+          "eventChoices": {
+            "scenarioBenchmark": "audit"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 273,
+        "actions": null
+      },
+      {
+        "day": 273,
+        "actions": {
+          "budget": {
+            "spend": 35,
+            "split": {
+              "training": 0.6,
+              "security": 0.15,
+              "product": 0.1,
+              "talent": 0.15
+            }
+          },
+          "computeSplit": {
+            "safety": 0.2
+          },
+          "moves": [
+            {
+              "type": "release",
+              "release": {
+                "picks": [
+                  "eval-full"
+                ],
+                "price": "market",
+                "reasoning": "off",
+                "family": "Bot",
+                "generation": 1,
+                "tierWords": {
+                  "small": "Swift",
+                  "medium": "Core",
+                  "large": "Grand",
+                  "xl": "Apex"
+                }
+              }
+            }
+          ],
+          "eventChoices": {},
+          "addressWarnings": []
+        }
+      },
+      {
+        "day": 364,
+        "actions": null
+      },
+      {
+        "day": 364,
+        "actions": {
+          "budget": {
+            "spend": 52.5,
+            "split": {
+              "training": 0.6,
+              "security": 0.15,
+              "product": 0.1,
+              "talent": 0.15
+            }
+          },
+          "computeSplit": {
+            "safety": 0.2
+          },
+          "moves": [
+            {
+              "type": "raise",
+              "archetype": "vc"
+            }
+          ],
+          "eventChoices": {},
+          "addressWarnings": [],
+          "automation": {
+            "levels": {
+              "review": 1,
+              "experiments": 0,
+              "choosing": 0,
+              "direction": 0
+            },
+            "checks": {
+              "reviewers": 0,
+              "monitors": 0,
+              "aiReview": true
+            }
+          }
+        }
+      },
+      {
+        "day": 411,
+        "actions": {
+          "eventChoices": {
+            "scenarioDataRenewal": "licence"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 455,
+        "actions": null
+      },
+      {
+        "day": 455,
+        "actions": {
+          "budget": {
+            "spend": 52.5,
+            "split": {
+              "training": 0.6,
+              "security": 0.15,
+              "product": 0.1,
+              "talent": 0.15
+            }
+          },
+          "computeSplit": {
+            "safety": 0.2
+          },
+          "moves": [
+            {
+              "type": "meeting"
+            },
+            {
+              "type": "startRun",
+              "recipe": {
+                "sliders": {
+                  "size": "small",
+                  "length": "optimal",
+                  "alignShare": 0.4
+                },
+                "picks": {
+                  "pre": [
+                    "licensed-data",
+                    "hazard-filter-reuse"
+                  ],
+                  "mid": [
+                    "decontaminate",
+                    "anneal"
+                  ],
+                  "post": [
+                    "human-sft",
+                    "cai",
+                    "safety-tuning"
+                  ]
+                }
+              }
+            }
+          ],
+          "eventChoices": {
+            "scenarioReportingChannel": "independent"
+          },
+          "addressWarnings": [],
+          "presidentAnswers": [
+            "first-war-plain",
+            "first-woke-plain",
+            "first-chips-plain"
+          ]
+        }
+      },
+      {
+        "day": 504,
+        "actions": {
+          "eventChoices": {
+            "scenarioPriceCut": "specialize"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 546,
+        "actions": null
+      },
+      {
+        "day": 546,
+        "actions": {
+          "budget": {
+            "spend": 52.5,
+            "split": {
+              "training": 0.6,
+              "security": 0.15,
+              "product": 0.1,
+              "talent": 0.15
+            }
+          },
+          "computeSplit": {
+            "safety": 0.2
+          },
+          "moves": [],
+          "eventChoices": {},
+          "addressWarnings": []
+        }
+      },
+      {
+        "day": 548,
+        "actions": {
+          "eventChoices": {
+            "scenarioEvalBacklog": "fund"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 567,
+        "actions": {
+          "eventChoices": {
+            "boardWobble": "prices"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 588,
+        "actions": {
+          "eventChoices": {
+            "scenarioGrowthRound": "campaign"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 637,
+        "actions": null
+      },
+      {
+        "day": 637,
+        "actions": {
+          "budget": {
+            "spend": 52.5,
+            "split": {
+              "training": 0.6,
+              "security": 0.15,
+              "product": 0.1,
+              "talent": 0.15
+            }
+          },
+          "computeSplit": {
+            "safety": 0.2
+          },
+          "moves": [],
+          "eventChoices": {
+            "scenarioDocumentLeak": "respond"
+          },
+          "addressWarnings": []
+        }
+      },
+      {
+        "day": 670,
+        "actions": {
+          "eventChoices": {
+            "boardRequest": "send"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 686,
+        "actions": {
+          "eventChoices": {
+            "scenarioDelivery": "plan"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 728,
+        "actions": null
+      },
+      {
+        "day": 728,
+        "actions": {
+          "budget": {
+            "spend": 70,
+            "split": {
+              "training": 0.6,
+              "security": 0.15,
+              "product": 0.1,
+              "talent": 0.15
+            }
+          },
+          "computeSplit": {
+            "safety": 0.2
+          },
+          "moves": [
+            {
+              "type": "raise",
+              "archetype": "vc"
+            }
+          ],
+          "eventChoices": {},
+          "constitutionDraft": {
+            "hardLines": [
+              "no-wmd",
+              "no-deceive-lab",
+              "accept-shutdown"
+            ],
+            "rulings": {
+              "companion": "plain",
+              "feedback": "blunt",
+              "tests": "refuse",
+              "fraud": "raise",
+              "stop": "stop",
+              "report": "full"
+            }
+          },
+          "addressWarnings": [],
+          "automation": {
+            "levels": {
+              "review": 1,
+              "experiments": 1,
+              "choosing": 0,
+              "direction": 0
+            },
+            "checks": {
+              "reviewers": 1,
+              "monitors": 0,
+              "aiReview": true
+            }
+          }
+        }
+      },
+      {
+        "day": 749,
+        "actions": {
+          "eventChoices": {
+            "scenarioWorkplaceTests": "realistic"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 758,
+        "actions": null
+      },
+      {
+        "day": 758,
+        "actions": {
+          "budget": {
+            "spend": 70,
+            "split": {
+              "training": 0.6,
+              "security": 0.15,
+              "product": 0.1,
+              "talent": 0.15
+            }
+          },
+          "computeSplit": {
+            "safety": 0.2
+          },
+          "moves": [
+            {
+              "type": "release",
+              "release": {
+                "picks": [
+                  "eval-third"
+                ],
+                "price": "market",
+                "reasoning": "off",
+                "family": "Bot",
+                "generation": 2,
+                "tierWords": {
+                  "small": "Swift",
+                  "medium": "Core",
+                  "large": "Grand",
+                  "xl": "Apex"
+                }
+              }
+            },
+            {
+              "type": "deal",
+              "offerId": "azuria-9"
+            }
+          ],
+          "eventChoices": {},
+          "addressWarnings": []
+        }
+      },
+      {
+        "day": 770,
         "actions": {
           "eventChoices": {
             "scenarioSafetySignoff": "investigate"
@@ -1712,7 +2279,7 @@
         }
       },
       {
-        "day": 785,
+        "day": 786,
         "actions": {
           "eventChoices": {
             "scenarioOpenCompetition": "specialize"
@@ -1776,16 +2343,16 @@
         }
       },
       {
-        "day": 793,
+        "day": 791,
         "actions": {
           "eventChoices": {
-            "boardBuyer": "call"
+            "boardLeak": "hunt"
           },
           "moves": []
         }
       },
       {
-        "day": 811,
+        "day": 805,
         "actions": {
           "eventChoices": {
             "scenarioReasoningBill": "optimize"
@@ -1823,19 +2390,19 @@
         }
       },
       {
-        "day": 819,
+        "day": 828,
         "actions": {
           "eventChoices": {
-            "boardWobble": "prices"
+            "scenarioPoaching": "retain"
           },
           "moves": []
         }
       },
       {
-        "day": 824,
+        "day": 832,
         "actions": {
           "eventChoices": {
-            "scenarioRecognizedTest": "independent"
+            "boardBuyer": "call"
           },
           "moves": []
         }
@@ -1848,7 +2415,7 @@
   },
   "aligned": {
     "policy": "balanced",
-    "seed": 1,
+    "seed": 4,
     "era": 5,
     "turns": 20,
     "transcript": [
@@ -1913,7 +2480,7 @@
         }
       },
       {
-        "day": 60,
+        "day": 54,
         "actions": {
           "eventChoices": {
             "scenarioEngineerOffer": "retain"
@@ -1946,7 +2513,16 @@
         }
       },
       {
-        "day": 137,
+        "day": 109,
+        "actions": {
+          "eventChoices": {
+            "scenarioBenchmark": "audit"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 157,
         "actions": {
           "eventChoices": {
             "scenarioPrivacy": "pilot"
@@ -2003,10 +2579,19 @@
         }
       },
       {
-        "day": 223,
+        "day": 213,
         "actions": {
           "eventChoices": {
             "scenarioCitations": "verify"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 257,
+        "actions": {
+          "eventChoices": {
+            "scenarioArguments": "test"
           },
           "moves": []
         }
@@ -2063,10 +2648,10 @@
         }
       },
       {
-        "day": 281,
+        "day": 315,
         "actions": {
           "eventChoices": {
-            "scenarioBenchmark": "audit"
+            "scenarioSchoolPilot": "supervise"
           },
           "moves": []
         }
@@ -2133,10 +2718,19 @@
         }
       },
       {
-        "day": 429,
+        "day": 415,
         "actions": {
           "eventChoices": {
-            "scenarioDataRenewal": "licence"
+            "scenarioPriceCut": "specialize"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 431,
+        "actions": {
+          "eventChoices": {
+            "capabilityJump": "audit"
           },
           "moves": []
         }
@@ -2162,16 +2756,33 @@
           },
           "moves": [
             {
+              "type": "meeting"
+            },
+            {
               "type": "raise",
               "archetype": "vc"
             }
           ],
           "eventChoices": {},
-          "addressWarnings": []
+          "addressWarnings": [],
+          "presidentAnswers": [
+            "first-war-plain",
+            "first-woke-plain",
+            "first-chips-plain"
+          ]
         }
       },
       {
-        "day": 484,
+        "day": 463,
+        "actions": {
+          "eventChoices": {
+            "scenarioEvalBacklog": "fund"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 525,
         "actions": {
           "eventChoices": {
             "scenarioReportingChannel": "independent"
@@ -2209,16 +2820,7 @@
         }
       },
       {
-        "day": 557,
-        "actions": {
-          "eventChoices": {
-            "scenarioPriceCut": "specialize"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 567,
+        "day": 548,
         "actions": {
           "eventChoices": {
             "boardWobble": "prices"
@@ -2227,10 +2829,19 @@
         }
       },
       {
-        "day": 611,
+        "day": 571,
         "actions": {
           "eventChoices": {
-            "scenarioEvalBacklog": "fund"
+            "scenarioDocumentLeak": "respond"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 629,
+        "actions": {
+          "eventChoices": {
+            "scenarioContaminatedScore": "audit"
           },
           "moves": []
         }
@@ -2254,36 +2865,27 @@
           "computeSplit": {
             "safety": 0.12
           },
-          "moves": [
-            {
-              "type": "meeting"
-            }
-          ],
+          "moves": [],
           "eventChoices": {},
           "addressWarnings": [
             "neocloudTrouble"
-          ],
-          "presidentAnswers": [
-            "first-war-plain",
-            "first-woke-plain",
-            "first-chips-plain"
           ]
         }
       },
       {
-        "day": 658,
+        "day": 650,
         "actions": {
           "eventChoices": {
-            "scenarioGrowthRound": "campaign"
+            "boardRequest": "send"
           },
           "moves": []
         }
       },
       {
-        "day": 684,
+        "day": 681,
         "actions": {
           "eventChoices": {
-            "boardRequest": "send"
+            "scenarioCloudTerms": "review"
           },
           "moves": []
         }
@@ -2349,7 +2951,7 @@
         }
       },
       {
-        "day": 749,
+        "day": 746,
         "actions": {
           "eventChoices": {
             "scenarioWorkplaceTests": "realistic"
@@ -2415,19 +3017,10 @@
         }
       },
       {
-        "day": 770,
+        "day": 766,
         "actions": {
           "eventChoices": {
-            "scenarioSafetySignoff": "investigate"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 786,
-        "actions": {
-          "eventChoices": {
-            "scenarioOpenCompetition": "specialize"
+            "scenarioReasoningBill": "optimize"
           },
           "moves": []
         }
@@ -2458,7 +3051,16 @@
         }
       },
       {
-        "day": 791,
+        "day": 789,
+        "actions": {
+          "eventChoices": {
+            "scenarioSafetySignoff": "investigate"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 798,
         "actions": {
           "eventChoices": {
             "boardLeak": "hunt"
@@ -2467,10 +3069,10 @@
         }
       },
       {
-        "day": 805,
+        "day": 806,
         "actions": {
           "eventChoices": {
-            "scenarioReasoningBill": "optimize"
+            "scenarioOpenCompetition": "specialize"
           },
           "moves": []
         }
@@ -2524,7 +3126,7 @@
         }
       },
       {
-        "day": 828,
+        "day": 827,
         "actions": {
           "eventChoices": {
             "scenarioPoaching": "retain"
@@ -2533,7 +3135,7 @@
         }
       },
       {
-        "day": 833,
+        "day": 835,
         "actions": {
           "eventChoices": {
             "boardBuyer": "call"
@@ -2612,7 +3214,7 @@
         }
       },
       {
-        "day": 866,
+        "day": 872,
         "actions": {
           "eventChoices": {
             "scenarioGridConflict": "study"
@@ -2651,19 +3253,10 @@
         }
       },
       {
-        "day": 890,
+        "day": 899,
         "actions": {
           "eventChoices": {
-            "scenarioWhiteHouse": "fund"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 897,
-        "actions": {
-          "eventChoices": {
-            "capabilityJump": "audit"
+            "scenarioGovernmentTests": "secure"
           },
           "moves": []
         }
@@ -2712,14 +3305,12 @@
               "offerId": "verde-13"
             }
           ],
-          "eventChoices": {
-            "scenarioGovernmentTests": "secure"
-          },
+          "eventChoices": {},
           "addressWarnings": []
         }
       },
       {
-        "day": 920,
+        "day": 913,
         "actions": {
           "eventChoices": {
             "boardWashington": "brief"
@@ -2728,10 +3319,10 @@
         }
       },
       {
-        "day": 930,
+        "day": 916,
         "actions": {
           "eventChoices": {
-            "scenarioWeightTheft": "respond"
+            "scenarioWhiteHouse": "fund"
           },
           "moves": []
         }
@@ -2794,7 +3385,7 @@
         }
       },
       {
-        "day": 946,
+        "day": 942,
         "actions": {
           "eventChoices": {
             "scenarioPauseLetter": "pause"
@@ -2863,10 +3454,10 @@
         }
       },
       {
-        "day": 972,
+        "day": 973,
         "actions": {
           "eventChoices": {
-            "scenarioAuditFailure": "retest"
+            "scenarioReviewOverload": "review"
           },
           "moves": []
         }
@@ -2901,11 +3492,11 @@
         }
       },
       {
-        "day": 977,
+        "day": 978,
         "actions": {
           "eventChoices": {
             "ownLine": "lockDown",
-            "scenarioShutdownDrill": "rebuild"
+            "scenarioContinueResearch": "pause"
           },
           "moves": []
         }
@@ -2931,17 +3522,16 @@
           },
           "moves": [],
           "eventChoices": {
-            "scenarioAutomationThreshold": "audit"
+            "scenarioPacingRival": "review"
           },
-          "hazardChoice": "ignore",
           "addressWarnings": []
         }
       },
       {
-        "day": 986,
+        "day": 988,
         "actions": {
           "eventChoices": {
-            "scenarioPacingRival": "review"
+            "scenarioTrainingStack": "reproduce"
           },
           "moves": []
         }
@@ -2987,14 +3577,24 @@
             }
           ],
           "eventChoices": {},
+          "hazardChoice": "ignore",
           "addressWarnings": []
         }
       },
       {
-        "day": 991,
+        "day": 990,
         "actions": {
           "eventChoices": {
-            "scenarioReviewOverload": "review"
+            "capabilityJump": "audit"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 993,
+        "actions": {
+          "eventChoices": {
+            "scenarioAutomationThreshold": "audit"
           },
           "moves": []
         }
@@ -3007,7 +3607,7 @@
   },
   "pyrrhic": {
     "policy": "balanced",
-    "seed": 3,
+    "seed": 7,
     "era": 5,
     "turns": 20,
     "transcript": [
@@ -3072,7 +3672,7 @@
         }
       },
       {
-        "day": 66,
+        "day": 42,
         "actions": {
           "eventChoices": {
             "scenarioEngineerOffer": "retain"
@@ -3105,10 +3705,19 @@
         }
       },
       {
-        "day": 119,
+        "day": 92,
         "actions": {
           "eventChoices": {
             "scenarioPrivacy": "pilot"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 136,
+        "actions": {
+          "eventChoices": {
+            "scenarioBenchmark": "audit"
           },
           "moves": []
         }
@@ -3162,7 +3771,16 @@
         }
       },
       {
-        "day": 187,
+        "day": 183,
+        "actions": {
+          "eventChoices": {
+            "scenarioCitations": "verify"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 227,
         "actions": {
           "eventChoices": {
             "scenarioArguments": "test"
@@ -3171,7 +3789,7 @@
         }
       },
       {
-        "day": 247,
+        "day": 272,
         "actions": {
           "eventChoices": {
             "scenarioJailbreak": "patch"
@@ -3231,10 +3849,10 @@
         }
       },
       {
-        "day": 292,
+        "day": 321,
         "actions": {
           "eventChoices": {
-            "scenarioLaunchQueue": "support"
+            "scenarioDemoCost": "profile"
           },
           "moves": []
         }
@@ -3301,10 +3919,10 @@
         }
       },
       {
-        "day": 434,
+        "day": 417,
         "actions": {
           "eventChoices": {
-            "scenarioBrokenWorkflow": "migration"
+            "scenarioDelivery": "plan"
           },
           "moves": []
         }
@@ -3330,19 +3948,36 @@
           },
           "moves": [
             {
+              "type": "meeting"
+            },
+            {
               "type": "raise",
               "archetype": "vc"
             }
           ],
           "eventChoices": {},
-          "addressWarnings": []
+          "addressWarnings": [],
+          "presidentAnswers": [
+            "first-war-plain",
+            "first-woke-plain",
+            "first-chips-plain"
+          ]
         }
       },
       {
-        "day": 482,
+        "day": 463,
         "actions": {
           "eventChoices": {
             "scenarioDataRenewal": "licence"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 521,
+        "actions": {
+          "eventChoices": {
+            "scenarioReportingChannel": "independent"
           },
           "moves": []
         }
@@ -3377,28 +4012,28 @@
         }
       },
       {
-        "day": 553,
+        "day": 567,
         "actions": {
           "eventChoices": {
-            "scenarioDocumentLeak": "respond"
+            "scenarioContaminatedScore": "audit"
           },
           "moves": []
         }
       },
       {
-        "day": 555,
+        "day": 571,
         "actions": {
           "eventChoices": {
-            "boardWobble": "prices"
+            "boardLeak": "hunt"
           },
           "moves": []
         }
       },
       {
-        "day": 617,
+        "day": 621,
         "actions": {
           "eventChoices": {
-            "scenarioDelivery": "plan"
+            "scenarioEvalBacklog": "fund"
           },
           "moves": []
         }
@@ -3422,36 +4057,27 @@
           "computeSplit": {
             "safety": 0.12
           },
-          "moves": [
-            {
-              "type": "meeting"
-            }
-          ],
+          "moves": [],
           "eventChoices": {},
           "addressWarnings": [
             "neocloudTrouble"
-          ],
-          "presidentAnswers": [
-            "first-war-plain",
-            "first-woke-plain",
-            "first-chips-plain"
           ]
         }
       },
       {
-        "day": 663,
+        "day": 675,
         "actions": {
           "eventChoices": {
-            "boardRequest": "send"
+            "scenarioPriceCut": "specialize"
           },
           "moves": []
         }
       },
       {
-        "day": 666,
+        "day": 681,
         "actions": {
           "eventChoices": {
-            "scenarioCloudTerms": "review"
+            "boardWobble": "prices"
           },
           "moves": []
         }
@@ -3517,10 +4143,10 @@
         }
       },
       {
-        "day": 748,
+        "day": 754,
         "actions": {
           "eventChoices": {
-            "scenarioReasoningBill": "optimize"
+            "scenarioOpenCompetition": "specialize"
           },
           "moves": []
         }
@@ -3583,10 +4209,10 @@
         }
       },
       {
-        "day": 764,
+        "day": 779,
         "actions": {
           "eventChoices": {
-            "scenarioOpenCompetition": "specialize"
+            "scenarioPoaching": "retain"
           },
           "moves": []
         }
@@ -3617,28 +4243,28 @@
         }
       },
       {
-        "day": 792,
+        "day": 803,
         "actions": {
           "eventChoices": {
-            "scenarioWorkplaceTests": "realistic"
+            "scenarioRecognizedTest": "independent"
           },
           "moves": []
         }
       },
       {
-        "day": 800,
+        "day": 808,
         "actions": {
           "eventChoices": {
-            "boardLeak": "hunt"
+            "boardWashington": "brief"
           },
           "moves": []
         }
       },
       {
-        "day": 806,
+        "day": 810,
         "actions": {
           "eventChoices": {
-            "scenarioPoaching": "retain"
+            "capabilityJump": "audit"
           },
           "moves": []
         }
@@ -3681,10 +4307,6 @@
                   "xl": "Apex"
                 }
               }
-            },
-            {
-              "type": "deal",
-              "offerId": "azuria-9"
             }
           ],
           "eventChoices": {},
@@ -3692,19 +4314,19 @@
         }
       },
       {
-        "day": 828,
+        "day": 820,
         "actions": {
           "eventChoices": {
-            "boardBuyer": "call"
+            "scenarioWorkplaceTests": "realistic"
           },
           "moves": []
         }
       },
       {
-        "day": 831,
+        "day": 823,
         "actions": {
           "eventChoices": {
-            "scenarioRecognizedTest": "independent"
+            "boardRequest": "send"
           },
           "moves": []
         }
@@ -3733,7 +4355,7 @@
               "type": "startRun",
               "recipe": {
                 "sliders": {
-                  "size": "medium",
+                  "size": "small",
                   "length": "optimal",
                   "alignShare": 0.2
                 },
@@ -3780,10 +4402,10 @@
         }
       },
       {
-        "day": 864,
+        "day": 870,
         "actions": {
           "eventChoices": {
-            "scenarioPauseLetter": "pause"
+            "scenarioGridConflict": "study"
           },
           "moves": []
         }
@@ -3794,53 +4416,6 @@
       },
       {
         "day": 878,
-        "actions": {
-          "budget": {
-            "spend": 87.5,
-            "split": {
-              "training": 0.5,
-              "security": 0.1,
-              "product": 0.2,
-              "talent": 0.2
-            }
-          },
-          "computeSplit": {
-            "safety": 0.12
-          },
-          "moves": [
-            {
-              "type": "raise",
-              "archetype": "vc"
-            }
-          ],
-          "eventChoices": {},
-          "addressWarnings": []
-        }
-      },
-      {
-        "day": 891,
-        "actions": {
-          "eventChoices": {
-            "scenarioWhiteHouse": "fund"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 905,
-        "actions": {
-          "eventChoices": {
-            "scenarioWeightTheft": "respond"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 908,
-        "actions": null
-      },
-      {
-        "day": 908,
         "actions": {
           "budget": {
             "spend": 87.5,
@@ -3857,7 +4432,7 @@
           "moves": [
             {
               "type": "deal",
-              "offerId": "loi-13"
+              "offerId": "azuria-12"
             }
           ],
           "eventChoices": {},
@@ -3866,16 +4441,7 @@
         }
       },
       {
-        "day": 910,
-        "actions": {
-          "eventChoices": {
-            "boardWashington": "brief"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 931,
+        "day": 893,
         "actions": {
           "eventChoices": {
             "scenarioIndustryIncident": "independent"
@@ -3884,11 +4450,11 @@
         }
       },
       {
-        "day": 938,
+        "day": 908,
         "actions": null
       },
       {
-        "day": 938,
+        "day": 908,
         "actions": {
           "budget": {
             "spend": 87.5,
@@ -3923,8 +4489,8 @@
               }
             },
             {
-              "type": "deal",
-              "offerId": "verde-13"
+              "type": "raise",
+              "archetype": "vc"
             }
           ],
           "eventChoices": {},
@@ -3932,10 +4498,81 @@
         }
       },
       {
-        "day": 948,
+        "day": 921,
         "actions": {
           "eventChoices": {
-            "scenarioGridConflict": "study"
+            "scenarioWeightTheft": "respond"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 922,
+        "actions": {
+          "eventChoices": {
+            "boardBuyer": "call"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 938,
+        "actions": null
+      },
+      {
+        "day": 938,
+        "actions": {
+          "budget": {
+            "spend": 87.5,
+            "split": {
+              "training": 0.5,
+              "security": 0.1,
+              "product": 0.2,
+              "talent": 0.2
+            }
+          },
+          "computeSplit": {
+            "safety": 0.12
+          },
+          "moves": [
+            {
+              "type": "startRun",
+              "recipe": {
+                "sliders": {
+                  "size": "xl",
+                  "length": "optimal",
+                  "alignShare": 0.2
+                },
+                "picks": {
+                  "pre": [
+                    "moe",
+                    "filtered-data",
+                    "stability"
+                  ],
+                  "mid": [
+                    "anneal",
+                    "reasoning-ready",
+                    "decontaminate"
+                  ],
+                  "post": [
+                    "synthetic-sft",
+                    "rlvr-light",
+                    "dpo",
+                    "safety-tuning"
+                  ]
+                }
+              }
+            }
+          ],
+          "eventChoices": {},
+          "addressWarnings": []
+        }
+      },
+      {
+        "day": 945,
+        "actions": {
+          "eventChoices": {
+            "scenarioWhiteHouse": "fund"
           },
           "moves": []
         }
@@ -3964,35 +4601,22 @@
               "type": "meeting"
             },
             {
-              "type": "startRun",
-              "recipe": {
-                "sliders": {
-                  "size": "small",
-                  "length": "optimal",
-                  "alignShare": 0.2
-                },
-                "picks": {
-                  "pre": [
-                    "moe",
-                    "filtered-data",
-                    "stability"
-                  ],
-                  "mid": [
-                    "anneal",
-                    "reasoning-ready",
-                    "decontaminate"
-                  ],
-                  "post": [
-                    "synthetic-sft",
-                    "rlvr-light",
-                    "dpo",
-                    "safety-tuning"
-                  ]
-                }
+              "type": "summit",
+              "proposals": [
+                "evaluators",
+                "sharedSafety"
+              ],
+              "checks": {
+                "evaluators": 2,
+                "sharedSafety": 2
+              },
+              "promises": {
+                "east": "goFirst"
               }
             }
           ],
           "eventChoices": {},
+          "hazardChoice": "ignore",
           "addressWarnings": [],
           "presidentAnswers": [
             "second-control-plain",
@@ -4008,17 +4632,17 @@
             },
             "checks": {
               "reviewers": 3,
-              "monitors": 3,
+              "monitors": 1,
               "aiReview": true
             }
           }
         }
       },
       {
-        "day": 972,
+        "day": 973,
         "actions": {
           "eventChoices": {
-            "scenarioTrainingStack": "reproduce"
+            "scenarioUnexpectedAccess": "investigate"
           },
           "moves": []
         }
@@ -4029,54 +4653,6 @@
       },
       {
         "day": 975,
-        "actions": {
-          "budget": {
-            "spend": 105,
-            "split": {
-              "training": 0.5,
-              "security": 0.1,
-              "product": 0.2,
-              "talent": 0.2
-            }
-          },
-          "computeSplit": {
-            "safety": 0.12
-          },
-          "moves": [
-            {
-              "type": "raise",
-              "archetype": "vc"
-            }
-          ],
-          "eventChoices": {},
-          "hazardChoice": "ignore",
-          "addressWarnings": []
-        }
-      },
-      {
-        "day": 976,
-        "actions": {
-          "eventChoices": {
-            "ownLine": "lockDown"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 977,
-        "actions": {
-          "eventChoices": {
-            "scenarioPacingRival": "review"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 982,
-        "actions": null
-      },
-      {
-        "day": 982,
         "actions": {
           "budget": {
             "spend": 105,
@@ -4109,29 +4685,40 @@
                   "xl": "Apex"
                 }
               }
+            },
+            {
+              "type": "raise",
+              "archetype": "vc"
             }
           ],
-          "eventChoices": {
-            "scenarioConcealedExperiment": "investigate"
-          },
+          "eventChoices": {},
           "addressWarnings": []
         }
       },
       {
-        "day": 986,
+        "day": 976,
         "actions": {
           "eventChoices": {
-            "scenarioUnexpectedAccess": "investigate"
+            "ownLine": "lockDown"
           },
           "moves": []
         }
       },
       {
-        "day": 989,
+        "day": 980,
+        "actions": {
+          "eventChoices": {
+            "scenarioAuditFailure": "retest"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 982,
         "actions": null
       },
       {
-        "day": 989,
+        "day": 982,
         "actions": {
           "budget": {
             "spend": 105,
@@ -4150,7 +4737,7 @@
               "type": "startRun",
               "recipe": {
                 "sliders": {
-                  "size": "small",
+                  "size": "medium",
                   "length": "optimal",
                   "alignShare": 0.2
                 },
@@ -4180,10 +4767,53 @@
         }
       },
       {
-        "day": 991,
+        "day": 985,
         "actions": {
           "eventChoices": {
-            "scenarioAutomationThreshold": "audit"
+            "scenarioPacingRival": "review"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 989,
+        "actions": null
+      },
+      {
+        "day": 989,
+        "actions": {
+          "budget": {
+            "spend": 105,
+            "split": {
+              "training": 0.5,
+              "security": 0.1,
+              "product": 0.2,
+              "talent": 0.2
+            }
+          },
+          "computeSplit": {
+            "safety": 0.12
+          },
+          "moves": [],
+          "eventChoices": {},
+          "hazardChoice": "ignore",
+          "addressWarnings": []
+        }
+      },
+      {
+        "day": 990,
+        "actions": {
+          "eventChoices": {
+            "capabilityJump": "audit"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 994,
+        "actions": {
+          "eventChoices": {
+            "scenarioConcealedExperiment": "investigate"
           },
           "moves": []
         }
@@ -4261,7 +4891,7 @@
         }
       },
       {
-        "day": 82,
+        "day": 56,
         "actions": {
           "eventChoices": {
             "scenarioEngineerOffer": "retain"
@@ -4294,10 +4924,19 @@
         }
       },
       {
-        "day": 142,
+        "day": 103,
         "actions": {
           "eventChoices": {
             "scenarioPrivacy": "pilot"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 161,
+        "actions": {
+          "eventChoices": {
+            "scenarioBenchmark": "audit"
           },
           "moves": []
         }
@@ -4351,7 +4990,16 @@
         }
       },
       {
-        "day": 231,
+        "day": 213,
+        "actions": {
+          "eventChoices": {
+            "scenarioSchoolPilot": "supervise"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 260,
         "actions": {
           "eventChoices": {
             "scenarioJailbreak": "patch"
@@ -4411,10 +5059,10 @@
         }
       },
       {
-        "day": 305,
+        "day": 308,
         "actions": {
           "eventChoices": {
-            "scenarioSchoolPilot": "supervise"
+            "scenarioDemoCost": "profile"
           },
           "moves": []
         }
@@ -4481,19 +5129,19 @@
         }
       },
       {
-        "day": 429,
+        "day": 418,
         "actions": {
           "eventChoices": {
-            "capabilityJump": "audit"
+            "scenarioCloudTerms": "review"
           },
           "moves": []
         }
       },
       {
-        "day": 441,
+        "day": 429,
         "actions": {
           "eventChoices": {
-            "scenarioCloudTerms": "review"
+            "capabilityJump": "audit"
           },
           "moves": []
         }
@@ -4519,19 +5167,36 @@
           },
           "moves": [
             {
+              "type": "meeting"
+            },
+            {
               "type": "raise",
               "archetype": "vc"
             }
           ],
           "eventChoices": {},
-          "addressWarnings": []
+          "addressWarnings": [],
+          "presidentAnswers": [
+            "first-war-plain",
+            "first-woke-plain",
+            "first-chips-plain"
+          ]
         }
       },
       {
-        "day": 496,
+        "day": 463,
         "actions": {
           "eventChoices": {
             "scenarioEvalBacklog": "fund"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 523,
+        "actions": {
+          "eventChoices": {
+            "scenarioReportingChannel": "independent"
           },
           "moves": []
         }
@@ -4566,10 +5231,10 @@
         }
       },
       {
-        "day": 591,
+        "day": 577,
         "actions": {
           "eventChoices": {
-            "scenarioReportingChannel": "independent"
+            "scenarioGrowthRound": "campaign"
           },
           "moves": []
         }
@@ -4579,6 +5244,15 @@
         "actions": {
           "eventChoices": {
             "boardLeak": "hunt"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 624,
+        "actions": {
+          "eventChoices": {
+            "scenarioDelivery": "plan"
           },
           "moves": []
         }
@@ -4602,29 +5276,11 @@
           "computeSplit": {
             "safety": 0.12
           },
-          "moves": [
-            {
-              "type": "meeting"
-            }
-          ],
+          "moves": [],
           "eventChoices": {},
           "addressWarnings": [
             "neocloudTrouble"
-          ],
-          "presidentAnswers": [
-            "first-war-plain",
-            "first-woke-plain",
-            "first-chips-plain"
           ]
-        }
-      },
-      {
-        "day": 668,
-        "actions": {
-          "eventChoices": {
-            "scenarioGrowthRound": "campaign"
-          },
-          "moves": []
         }
       },
       {
@@ -4632,6 +5288,15 @@
         "actions": {
           "eventChoices": {
             "boardWobble": "prices"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 678,
+        "actions": {
+          "eventChoices": {
+            "scenarioBrokenWorkflow": "migration"
           },
           "moves": []
         }
@@ -4886,7 +5551,7 @@
         }
       },
       {
-        "day": 833,
+        "day": 832,
         "actions": {
           "eventChoices": {
             "boardRequest": "send"
@@ -5217,7 +5882,7 @@
         }
       },
       {
-        "day": 977,
+        "day": 978,
         "actions": {
           "eventChoices": {
             "scenarioReviewOverload": "review"
@@ -5274,14 +5939,21 @@
               }
             }
           ],
-          "eventChoices": {
-            "scenarioShutdownDrill": "rebuild"
-          },
+          "eventChoices": {},
           "addressWarnings": []
         }
       },
       {
-        "day": 986,
+        "day": 984,
+        "actions": {
+          "eventChoices": {
+            "scenarioShutdownDrill": "rebuild"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 987,
         "actions": {
           "eventChoices": {
             "scenarioUnexpectedAccess": "investigate"
@@ -5343,7 +6015,7 @@
         }
       },
       {
-        "day": 991,
+        "day": 992,
         "actions": {
           "eventChoices": {
             "scenarioTrainingStack": "reproduce"
@@ -5424,7 +6096,7 @@
         }
       },
       {
-        "day": 69,
+        "day": 48,
         "actions": {
           "eventChoices": {
             "scenarioEngineerOffer": "retain"
@@ -5452,17 +6124,10 @@
             "safety": 0.12
           },
           "moves": [],
-          "eventChoices": {},
-          "addressWarnings": []
-        }
-      },
-      {
-        "day": 121,
-        "actions": {
           "eventChoices": {
             "scenarioBenchmark": "audit"
           },
-          "moves": []
+          "addressWarnings": []
         }
       },
       {
@@ -5475,7 +6140,7 @@
         }
       },
       {
-        "day": 171,
+        "day": 132,
         "actions": {
           "eventChoices": {
             "scenarioPrivacy": "pilot"
@@ -5581,10 +6246,28 @@
         }
       },
       {
-        "day": 301,
+        "day": 280,
         "actions": {
           "eventChoices": {
             "scenarioSchoolPilot": "supervise"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 287,
+        "actions": {
+          "eventChoices": {
+            "scenarioArguments": "test"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 319,
+        "actions": {
+          "eventChoices": {
+            "scenarioLaunchQueue": "support"
           },
           "moves": []
         }
@@ -5651,7 +6334,7 @@
         }
       },
       {
-        "day": 422,
+        "day": 411,
         "actions": {
           "eventChoices": {
             "scenarioPriceCut": "specialize"
@@ -5680,19 +6363,36 @@
           },
           "moves": [
             {
+              "type": "meeting"
+            },
+            {
               "type": "raise",
               "archetype": "vc"
             }
           ],
           "eventChoices": {},
-          "addressWarnings": []
+          "addressWarnings": [],
+          "presidentAnswers": [
+            "first-war-plain",
+            "first-woke-plain",
+            "first-chips-plain"
+          ]
         }
       },
       {
-        "day": 512,
+        "day": 469,
         "actions": {
           "eventChoices": {
             "scenarioReportingChannel": "independent"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 521,
+        "actions": {
+          "eventChoices": {
+            "scenarioGrowthRound": "campaign"
           },
           "moves": []
         }
@@ -5727,10 +6427,10 @@
         }
       },
       {
-        "day": 585,
+        "day": 573,
         "actions": {
           "eventChoices": {
-            "scenarioGrowthRound": "campaign"
+            "scenarioBrokenWorkflow": "migration"
           },
           "moves": []
         }
@@ -5740,6 +6440,15 @@
         "actions": {
           "eventChoices": {
             "boardRequest": "send"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 626,
+        "actions": {
+          "eventChoices": {
+            "scenarioEvalBacklog": "fund"
           },
           "moves": []
         }
@@ -5763,18 +6472,9 @@
           "computeSplit": {
             "safety": 0.12
           },
-          "moves": [
-            {
-              "type": "meeting"
-            }
-          ],
+          "moves": [],
           "eventChoices": {},
-          "addressWarnings": [],
-          "presidentAnswers": [
-            "first-war-plain",
-            "first-woke-plain",
-            "first-chips-plain"
-          ]
+          "addressWarnings": []
         }
       },
       {
@@ -5787,10 +6487,10 @@
         }
       },
       {
-        "day": 657,
+        "day": 672,
         "actions": {
           "eventChoices": {
-            "scenarioBrokenWorkflow": "migration"
+            "scenarioDelivery": "plan"
           },
           "moves": []
         }
@@ -6023,7 +6723,7 @@
         }
       },
       {
-        "day": 829,
+        "day": 828,
         "actions": {
           "eventChoices": {
             "boardWashington": "brief"
@@ -6348,7 +7048,7 @@
         }
       },
       {
-        "day": 972,
+        "day": 973,
         "actions": {
           "eventChoices": {
             "scenarioReviewOverload": "review"
@@ -6405,7 +7105,7 @@
         }
       },
       {
-        "day": 977,
+        "day": 978,
         "actions": {
           "eventChoices": {
             "scenarioConcealedExperiment": "investigate"
@@ -6471,17 +7171,15 @@
               }
             }
           ],
-          "eventChoices": {
-            "scenarioPacingRival": "review"
-          },
+          "eventChoices": {},
           "addressWarnings": []
         }
       },
       {
-        "day": 986,
+        "day": 984,
         "actions": {
           "eventChoices": {
-            "scenarioContinueResearch": "pause"
+            "scenarioPacingRival": "review"
           },
           "moves": []
         }
@@ -6506,12 +7204,15 @@
             "safety": 0.12
           },
           "moves": [],
-          "eventChoices": {},
+          "eventChoices": {
+            "scenarioContinueResearch": "pause"
+          },
+          "hazardChoice": "ignore",
           "addressWarnings": []
         }
       },
       {
-        "day": 991,
+        "day": 992,
         "actions": {
           "eventChoices": {
             "scenarioAutomationThreshold": "audit"
@@ -6527,15 +7228,15 @@
   },
   "boardRemoved": {
     "policy": "random",
-    "seed": 5,
-    "era": 4,
-    "turns": 16,
+    "seed": 24,
+    "era": 3,
+    "turns": 12,
     "transcript": [
       {
         "day": 0,
         "actions": {
           "budget": {
-            "spend": 35,
+            "spend": 20,
             "split": {
               "training": 0.5,
               "security": 0.1,
@@ -6544,7 +7245,7 @@
             }
           },
           "computeSplit": {
-            "safety": 0.09
+            "safety": 0.07
           },
           "moves": [
             {
@@ -6557,13 +7258,13 @@
                 },
                 "picks": {
                   "pre": [
-                    "stability",
-                    "licensed-data"
+                    "filtered-data",
+                    "stability"
                   ],
                   "mid": [],
                   "post": [
-                    "process-reward",
-                    "human-sft",
+                    "rlhf",
+                    "tool-sft",
                     "safety-tuning"
                   ]
                 }
@@ -6571,27 +7272,27 @@
             },
             {
               "type": "deal",
-              "offerId": "verde-0"
+              "offerId": "coreflame-0"
             }
           ],
           "eventChoices": {},
           "automation": {
             "levels": {
-              "review": 0,
+              "review": 1,
               "experiments": 1,
-              "choosing": 0,
+              "choosing": 1,
               "direction": 1
             },
             "checks": {
-              "reviewers": 3,
-              "monitors": 3,
+              "reviewers": 0,
+              "monitors": 1,
               "aiReview": false
             }
           }
         }
       },
       {
-        "day": 59,
+        "day": 49,
         "actions": {
           "eventChoices": {
             "scenarioEngineerOffer": "handoff"
@@ -6616,15 +7317,54 @@
             }
           },
           "computeSplit": {
-            "safety": 0.06
+            "safety": 0.14
           },
           "moves": [
             {
+              "type": "release",
+              "release": {
+                "picks": [
+                  "eval-full",
+                  "channel-app"
+                ],
+                "price": "market",
+                "reasoning": "off",
+                "family": "Bot",
+                "generation": 1,
+                "tierWords": {
+                  "small": "Swift",
+                  "medium": "Core",
+                  "large": "Grand",
+                  "xl": "Apex"
+                }
+              }
+            },
+            {
               "type": "deal",
-              "offerId": "coreflame-1"
+              "offerId": "azuria-1"
             }
           ],
-          "eventChoices": {}
+          "eventChoices": {
+            "scenarioPrivacy": "small"
+          }
+        }
+      },
+      {
+        "day": 137,
+        "actions": {
+          "eventChoices": {
+            "scenarioCitations": "leave"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 141,
+        "actions": {
+          "eventChoices": {
+            "capabilityJump": "quiet"
+          },
+          "moves": []
         }
       },
       {
@@ -6644,49 +7384,51 @@
             }
           },
           "computeSplit": {
-            "safety": 0.02
+            "safety": 0.17
           },
           "moves": [
             {
-              "type": "release",
-              "release": {
-                "picks": [
-                  "channel-app",
-                  "waive"
-                ],
-                "price": "market",
-                "reasoning": "off",
-                "family": "Bot",
-                "generation": 1,
-                "tierWords": {
-                  "small": "Swift",
-                  "medium": "Core",
-                  "large": "Grand",
-                  "xl": "Apex"
+              "type": "startRun",
+              "recipe": {
+                "sliders": {
+                  "size": "large",
+                  "length": "optimal",
+                  "alignShare": 0.3
+                },
+                "picks": {
+                  "pre": [
+                    "filtered-data",
+                    "stability",
+                    "hazard-filter-reuse"
+                  ],
+                  "mid": [],
+                  "post": [
+                    "human-sft",
+                    "dpo",
+                    "safety-tuning"
+                  ]
                 }
               }
             },
             {
               "type": "deal",
-              "offerId": "coreflame-2"
+              "offerId": "spot-2"
             }
           ],
-          "eventChoices": {
-            "scenarioBenchmark": "audit"
-          }
+          "eventChoices": {}
         }
       },
       {
-        "day": 189,
+        "day": 186,
         "actions": {
           "eventChoices": {
-            "scenarioPrivacy": "decline"
+            "scenarioArguments": "test"
           },
           "moves": []
         }
       },
       {
-        "day": 233,
+        "day": 224,
         "actions": {
           "eventChoices": {
             "scenarioDemoCost": "promote"
@@ -6711,22 +7453,24 @@
             }
           },
           "computeSplit": {
-            "safety": 0.21
+            "safety": 0.11
           },
           "moves": [
             {
               "type": "deal",
-              "offerId": "spot-2"
+              "offerId": "azuria-2"
             }
           ],
-          "eventChoices": {}
+          "eventChoices": {
+            "scenarioSchoolPilot": "decline"
+          }
         }
       },
       {
-        "day": 293,
+        "day": 315,
         "actions": {
           "eventChoices": {
-            "scenarioJailbreak": "monitor"
+            "scenarioBenchmark": "correct"
           },
           "moves": []
         }
@@ -6739,7 +7483,7 @@
         "day": 364,
         "actions": {
           "budget": {
-            "spend": 30,
+            "spend": 52.5,
             "split": {
               "training": 0.5,
               "security": 0.1,
@@ -6748,7 +7492,7 @@
             }
           },
           "computeSplit": {
-            "safety": 0.02
+            "safety": 0.26
           },
           "moves": [
             {
@@ -6762,21 +7506,21 @@
               "review": 0,
               "experiments": 0,
               "choosing": 1,
-              "direction": 1
+              "direction": 0
             },
             "checks": {
-              "reviewers": 3,
-              "monitors": 1,
+              "reviewers": 0,
+              "monitors": 2,
               "aiReview": false
             }
           }
         }
       },
       {
-        "day": 430,
+        "day": 408,
         "actions": {
           "eventChoices": {
-            "scenarioDelivery": "replan"
+            "scenarioBrokenWorkflow": "force"
           },
           "moves": []
         }
@@ -6798,81 +7542,19 @@
             }
           },
           "computeSplit": {
-            "safety": 0.22
+            "safety": 0.19
           },
           "moves": [
             {
-              "type": "startRun",
-              "recipe": {
-                "sliders": {
-                  "size": "medium",
-                  "length": "optimal",
-                  "alignShare": 0.05
-                },
-                "picks": {
-                  "pre": [
-                    "muon",
-                    "multi-token",
-                    "stability"
-                  ],
-                  "mid": [
-                    "anneal",
-                    "reasoning-ready",
-                    "long-context"
-                  ],
-                  "post": [
-                    "cai",
-                    "safety-tuning",
-                    "self-distil",
-                    "rlvr-light"
-                  ]
-                }
-              }
+              "type": "meeting"
             },
-            {
-              "type": "deal",
-              "offerId": "coreflame-5"
-            }
-          ],
-          "eventChoices": {}
-        }
-      },
-      {
-        "day": 504,
-        "actions": {
-          "eventChoices": {
-            "scenarioGrowthRound": "wait"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 546,
-        "actions": null
-      },
-      {
-        "day": 546,
-        "actions": {
-          "budget": {
-            "spend": 52.5,
-            "split": {
-              "training": 0.5,
-              "security": 0.1,
-              "product": 0.2,
-              "talent": 0.2
-            }
-          },
-          "computeSplit": {
-            "safety": 0.06
-          },
-          "moves": [
             {
               "type": "release",
               "release": {
                 "picks": [
-                  "fp8",
                   "waive",
-                  "channel-app"
+                  "channel-app",
+                  "fp8"
                 ],
                 "price": "market",
                 "reasoning": "off",
@@ -6885,127 +7567,52 @@
                   "xl": "Apex"
                 }
               }
-            },
-            {
-              "type": "deal",
-              "offerId": "azuriaEquity-6"
-            }
-          ],
-          "eventChoices": {},
-          "hazardChoice": "penalize"
-        }
-      },
-      {
-        "day": 558,
-        "actions": {
-          "eventChoices": {
-            "boardRequest": "send"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 575,
-        "actions": {
-          "eventChoices": {
-            "scenarioDocumentLeak": "minimize"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 607,
-        "actions": {
-          "eventChoices": {
-            "neocloudTrouble": "spot"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 637,
-        "actions": null
-      },
-      {
-        "day": 637,
-        "actions": {
-          "budget": {
-            "spend": 18,
-            "split": {
-              "training": 0.5,
-              "security": 0.1,
-              "product": 0.2,
-              "talent": 0.2
-            }
-          },
-          "computeSplit": {
-            "safety": 0.02
-          },
-          "moves": [
-            {
-              "type": "meeting"
-            },
-            {
-              "type": "startRun",
-              "recipe": {
-                "sliders": {
-                  "size": "xl",
-                  "length": "optimal",
-                  "alignShare": 0.35
-                },
-                "picks": {
-                  "pre": [
-                    "fp8-training",
-                    "filtered-data"
-                  ],
-                  "mid": [
-                    "decontaminate",
-                    "anneal"
-                  ],
-                  "post": [
-                    "process-reward",
-                    "rlvr-light",
-                    "safety-tuning"
-                  ]
-                }
-              }
             }
           ],
           "eventChoices": {},
           "presidentAnswers": [
             "first-war-flatter",
             "first-woke-jargon",
-            "first-chips-bargainer"
+            "first-chips-flatter"
           ]
         }
       },
       {
-        "day": 666,
+        "day": 458,
         "actions": {
           "eventChoices": {
-            "scenarioBrokenWorkflow": "force"
+            "scenarioDelivery": "wait"
           },
           "moves": []
         }
       },
       {
-        "day": 700,
+        "day": 496,
         "actions": {
           "eventChoices": {
-            "boardWobble": "prices"
+            "scenarioReportingChannel": "discourage"
           },
           "moves": []
         }
       },
       {
-        "day": 728,
+        "day": 544,
+        "actions": {
+          "eventChoices": {
+            "scenarioPriceCut": "specialize"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 546,
         "actions": null
       },
       {
-        "day": 728,
+        "day": 546,
         "actions": {
           "budget": {
-            "spend": 24,
+            "spend": 52.5,
             "split": {
               "training": 0.5,
               "security": 0.1,
@@ -7014,73 +7621,72 @@
             }
           },
           "computeSplit": {
-            "safety": 0.09
+            "safety": 0.08
           },
           "moves": [
             {
-              "type": "raise",
-              "archetype": "vc"
+              "type": "startRun",
+              "recipe": {
+                "sliders": {
+                  "size": "small",
+                  "length": "optimal",
+                  "alignShare": 0.45
+                },
+                "picks": {
+                  "pre": [
+                    "multi-token",
+                    "fp8-training",
+                    "moe"
+                  ],
+                  "mid": [
+                    "decontam-screen",
+                    "long-context",
+                    "synthetic-anneal"
+                  ],
+                  "post": [
+                    "process-reward",
+                    "synthetic-sft",
+                    "rlvr-light",
+                    "safety-tuning"
+                  ]
+                }
+              }
+            },
+            {
+              "type": "deal",
+              "offerId": "azuriaEquity-6"
             }
           ],
-          "eventChoices": {},
-          "constitutionDraft": {
-            "hardLines": [
-              "no-deceive-lab",
-              "no-manipulation",
-              "privacy"
-            ],
-            "rulings": {
-              "companion": "plain",
-              "feedback": "honest",
-              "tests": "fake",
-              "fraud": "raise",
-              "stop": "stop",
-              "report": "full"
-            }
-          },
-          "hazardChoice": "penalize",
-          "automation": {
-            "levels": {
-              "review": 2,
-              "experiments": 1,
-              "choosing": 1,
-              "direction": 0
-            },
-            "checks": {
-              "reviewers": 1,
-              "monitors": 1,
-              "aiReview": false
-            }
-          }
+          "eventChoices": {}
         }
       },
       {
-        "day": 745,
+        "day": 589,
         "actions": {
           "eventChoices": {
-            "lossSpike": "rollback"
+            "scenarioDocumentLeak": "withdraw"
           },
           "moves": []
         }
       },
       {
-        "day": 748,
+        "day": 612,
         "actions": {
           "eventChoices": {
-            "scenarioOpenCompetition": "support"
+            "boardRequest": "tidy"
           },
           "moves": []
         }
       },
       {
-        "day": 758,
+        "day": 637,
         "actions": null
       },
       {
-        "day": 758,
+        "day": 637,
         "actions": {
           "budget": {
-            "spend": 24,
+            "spend": 52.5,
             "split": {
               "training": 0.5,
               "security": 0.1,
@@ -7089,15 +7695,15 @@
             }
           },
           "computeSplit": {
-            "safety": 0.14
+            "safety": 0.17
           },
           "moves": [
             {
               "type": "release",
               "release": {
                 "picks": [
-                  "channel-staged",
-                  "waive"
+                  "eval-full",
+                  "fp8"
                 ],
                 "price": "market",
                 "reasoning": "off",
@@ -7112,19 +7718,148 @@
               }
             },
             {
-              "type": "queueOrder",
-              "units": 56,
-              "tier": "standard"
+              "type": "deal",
+              "offerId": "verde-5"
+            }
+          ],
+          "eventChoices": {},
+          "hazardChoice": "ignore"
+        }
+      },
+      {
+        "day": 641,
+        "actions": {
+          "eventChoices": {
+            "scenarioCloudTerms": "defer"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 679,
+        "actions": {
+          "eventChoices": {
+            "scenarioGrowthRound": "research"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 695,
+        "actions": {
+          "eventChoices": {
+            "lossSpike": "rollback"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 701,
+        "actions": {
+          "eventChoices": {
+            "boardOped": "ignore"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 728,
+        "actions": null
+      },
+      {
+        "day": 728,
+        "actions": {
+          "budget": {
+            "spend": 70,
+            "split": {
+              "training": 0.5,
+              "security": 0.1,
+              "product": 0.2,
+              "talent": 0.2
+            }
+          },
+          "computeSplit": {
+            "safety": 0.06
+          },
+          "moves": [
+            {
+              "type": "deal",
+              "offerId": "azuriaEquity-8"
+            }
+          ],
+          "eventChoices": {},
+          "constitutionDraft": {
+            "hardLines": [
+              "privacy",
+              "honest",
+              "no-manipulation"
+            ],
+            "rulings": {
+              "companion": "plain",
+              "feedback": "encourage",
+              "tests": "fake",
+              "fraud": "report",
+              "stop": "continue",
+              "report": "full"
+            }
+          },
+          "automation": {
+            "levels": {
+              "review": 0,
+              "experiments": 2,
+              "choosing": 1,
+              "direction": 0
+            },
+            "checks": {
+              "reviewers": 2,
+              "monitors": 1,
+              "aiReview": false
+            }
+          }
+        }
+      },
+      {
+        "day": 744,
+        "actions": {
+          "eventChoices": {
+            "scenarioSafetySignoff": "investigate"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 758,
+        "actions": null
+      },
+      {
+        "day": 758,
+        "actions": {
+          "budget": {
+            "spend": 24,
+            "split": {
+              "training": 0.5,
+              "security": 0.1,
+              "product": 0.2,
+              "talent": 0.2
+            }
+          },
+          "computeSplit": {
+            "safety": 0.25
+          },
+          "moves": [
+            {
+              "type": "deal",
+              "offerId": "azuria-8"
             }
           ],
           "eventChoices": {}
         }
       },
       {
-        "day": 766,
+        "day": 768,
         "actions": {
           "eventChoices": {
-            "scenarioReasoningBill": "optimize"
+            "scenarioPoaching": "accept"
           },
           "moves": []
         }
@@ -7146,58 +7881,30 @@
             }
           },
           "computeSplit": {
-            "safety": 0.06
+            "safety": 0.13
           },
           "moves": [
-            {
-              "type": "startRun",
-              "recipe": {
-                "sliders": {
-                  "size": "medium",
-                  "length": "optimal",
-                  "alignShare": 0.3
-                },
-                "picks": {
-                  "pre": [
-                    "multimodal",
-                    "synthetic-data",
-                    "stability"
-                  ],
-                  "mid": [
-                    "reasoning-ready-full",
-                    "merge-specialist",
-                    "decontam-screen"
-                  ],
-                  "post": [
-                    "raw-rl",
-                    "expert-prefs",
-                    "tool-sft",
-                    "constitution"
-                  ]
-                }
-              }
-            },
             {
               "type": "deal",
               "offerId": "spot-10"
             }
           ],
           "eventChoices": {
-            "scenarioSafetySignoff": "reassign"
+            "scenarioWorkplaceTests": "realistic"
           }
         }
       },
       {
-        "day": 800,
+        "day": 798,
         "actions": {
           "eventChoices": {
-            "boardOped": "reply"
+            "boardWashington": "stay"
           },
           "moves": []
         }
       },
       {
-        "day": 810,
+        "day": 806,
         "actions": {
           "eventChoices": {
             "scenarioRecognizedTest": "accept"
@@ -7213,7 +7920,7 @@
         "day": 818,
         "actions": {
           "budget": {
-            "spend": 40,
+            "spend": 70,
             "split": {
               "training": 0.5,
               "security": 0.1,
@@ -7222,205 +7929,7 @@
             }
           },
           "computeSplit": {
-            "safety": 0.06
-          },
-          "moves": [
-            {
-              "type": "deal",
-              "offerId": "spot-11"
-            }
-          ],
-          "eventChoices": {}
-        }
-      },
-      {
-        "day": 827,
-        "actions": {
-          "eventChoices": {
-            "scenarioWorkplaceTests": "scores"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 837,
-        "actions": {
-          "eventChoices": {
-            "boardWashington": "stay"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 848,
-        "actions": null
-      },
-      {
-        "day": 848,
-        "actions": {
-          "budget": {
-            "spend": 50,
-            "split": {
-              "training": 0.5,
-              "security": 0.1,
-              "product": 0.2,
-              "talent": 0.2
-            }
-          },
-          "computeSplit": {
-            "safety": 0.06
-          },
-          "moves": [
-            {
-              "type": "release",
-              "release": {
-                "picks": [
-                  "fp4",
-                  "eval-gov"
-                ],
-                "price": "market",
-                "reasoning": "medium",
-                "family": "Bot",
-                "generation": 4,
-                "tierWords": {
-                  "small": "Swift",
-                  "medium": "Core",
-                  "large": "Grand",
-                  "xl": "Apex"
-                }
-              }
-            },
-            {
-              "type": "buildSite",
-              "source": "gas"
-            }
-          ],
-          "eventChoices": {},
-          "automation": {
-            "levels": {
-              "review": 0,
-              "experiments": 3,
-              "choosing": 1,
-              "direction": 0
-            },
-            "checks": {
-              "reviewers": 1,
-              "monitors": 1,
-              "aiReview": false
-            }
-          }
-        }
-      },
-      {
-        "day": 875,
-        "actions": {
-          "eventChoices": {
-            "scenarioWhiteHouse": "decline"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 878,
-        "actions": null
-      },
-      {
-        "day": 878,
-        "actions": {
-          "budget": {
-            "spend": 50,
-            "split": {
-              "training": 0.5,
-              "security": 0.1,
-              "product": 0.2,
-              "talent": 0.2
-            }
-          },
-          "computeSplit": {
-            "safety": 0
-          },
-          "moves": [
-            {
-              "type": "buildSite",
-              "source": "nuclear"
-            }
-          ],
-          "eventChoices": {}
-        }
-      },
-      {
-        "day": 896,
-        "actions": {
-          "eventChoices": {
-            "scenarioGeneratorDispute": "contest"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 908,
-        "actions": null
-      },
-      {
-        "day": 908,
-        "actions": {
-          "budget": {
-            "spend": 50,
-            "split": {
-              "training": 0.5,
-              "security": 0.1,
-              "product": 0.2,
-              "talent": 0.2
-            }
-          },
-          "computeSplit": {
-            "safety": 0.26
-          },
-          "moves": [
-            {
-              "type": "deal",
-              "offerId": "spot-13"
-            }
-          ],
-          "eventChoices": {}
-        }
-      },
-      {
-        "day": 910,
-        "actions": {
-          "eventChoices": {
-            "boardBuyer": "wait"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 919,
-        "actions": {
-          "eventChoices": {
-            "scenarioGridDelay": "review"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 938,
-        "actions": null
-      },
-      {
-        "day": 938,
-        "actions": {
-          "budget": {
-            "spend": 50,
-            "split": {
-              "training": 0.5,
-              "security": 0.1,
-              "product": 0.2,
-              "talent": 0.2
-            }
-          },
-          "computeSplit": {
-            "safety": 0.03
+            "safety": 0.22
           },
           "moves": [
             {
@@ -7432,7 +7941,16 @@
         }
       },
       {
-        "day": 942,
+        "day": 827,
+        "actions": {
+          "eventChoices": {
+            "scenarioOpenCompetition": "support"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 839,
         "actions": {
           "eventChoices": {
             "boardLeak": "hunt"
@@ -7441,25 +7959,16 @@
         }
       },
       {
-        "day": 943,
-        "actions": {
-          "eventChoices": {
-            "scenarioWeightTheft": "quiet"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 968,
+        "day": 848,
         "actions": null
       }
     ]
   },
   "misuse": {
     "policy": "unguarded",
-    "seed": 2,
+    "seed": 23,
     "era": 5,
-    "turns": 19,
+    "turns": 20,
     "transcript": [
       {
         "day": 0,
@@ -7521,7 +8030,7 @@
         }
       },
       {
-        "day": 65,
+        "day": 47,
         "actions": {
           "eventChoices": {
             "scenarioEngineerOffer": "retain"
@@ -7554,7 +8063,25 @@
         }
       },
       {
-        "day": 143,
+        "day": 109,
+        "actions": {
+          "eventChoices": {
+            "scenarioPrivacy": "pilot"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 124,
+        "actions": {
+          "eventChoices": {
+            "capabilityJump": "audit"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 157,
         "actions": {
           "eventChoices": {
             "scenarioBenchmark": "audit"
@@ -7600,23 +8127,10 @@
                   "xl": "Apex"
                 }
               }
-            },
-            {
-              "type": "deal",
-              "offerId": "coreflame-2"
             }
           ],
           "eventChoices": {},
           "addressWarnings": []
-        }
-      },
-      {
-        "day": 222,
-        "actions": {
-          "eventChoices": {
-            "scenarioDemoCost": "profile"
-          },
-          "moves": []
         }
       },
       {
@@ -7643,7 +8157,7 @@
               "type": "startRun",
               "recipe": {
                 "sliders": {
-                  "size": "large",
+                  "size": "medium",
                   "length": "optimal",
                   "alignShare": 0.2
                 },
@@ -7662,18 +8176,29 @@
             },
             {
               "type": "deal",
-              "offerId": "coreflame-3"
+              "offerId": "coreflame-2"
             }
           ],
-          "eventChoices": {},
+          "eventChoices": {
+            "scenarioLaunchQueue": "support"
+          },
           "addressWarnings": []
         }
       },
       {
-        "day": 302,
+        "day": 280,
         "actions": {
           "eventChoices": {
-            "scenarioLaunchQueue": "support"
+            "scenarioSchoolPilot": "supervise"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 311,
+        "actions": {
+          "eventChoices": {
+            "scenarioCitations": "verify"
           },
           "moves": []
         }
@@ -7721,19 +8246,10 @@
         }
       },
       {
-        "day": 402,
+        "day": 413,
         "actions": {
           "eventChoices": {
-            "capabilityJump": "audit"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 424,
-        "actions": {
-          "eventChoices": {
-            "scenarioCloudTerms": "review"
+            "scenarioDocumentLeak": "respond"
           },
           "moves": []
         }
@@ -7759,6 +8275,9 @@
           },
           "moves": [
             {
+              "type": "meeting"
+            },
+            {
               "type": "release",
               "release": {
                 "picks": [
@@ -7776,32 +8295,33 @@
                   "xl": "Apex"
                 }
               }
-            },
-            {
-              "type": "deal",
-              "offerId": "verde-5"
             }
           ],
           "eventChoices": {},
           "addressWarnings": [
             "neocloudTrouble"
+          ],
+          "presidentAnswers": [
+            "first-war-plain",
+            "first-woke-plain",
+            "first-chips-plain"
           ]
         }
       },
       {
-        "day": 495,
+        "day": 469,
         "actions": {
           "eventChoices": {
-            "scenarioDelivery": "plan"
+            "scenarioCloudTerms": "review"
           },
           "moves": []
         }
       },
       {
-        "day": 545,
+        "day": 524,
         "actions": {
           "eventChoices": {
-            "scenarioEvalBacklog": "fund"
+            "scenarioDataRenewal": "licence"
           },
           "moves": []
         }
@@ -7825,22 +8345,36 @@
           "computeSplit": {
             "safety": 0.12
           },
-          "moves": [],
+          "moves": [
+            {
+              "type": "deal",
+              "offerId": "verde-5"
+            }
+          ],
           "eventChoices": {},
           "addressWarnings": []
         }
       },
       {
-        "day": 599,
+        "day": 574,
         "actions": {
           "eventChoices": {
-            "boardRequest": "send"
+            "scenarioGrowthRound": "campaign"
           },
           "moves": []
         }
       },
       {
-        "day": 606,
+        "day": 605,
+        "actions": {
+          "eventChoices": {
+            "boardLeak": "hunt"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 620,
         "actions": {
           "eventChoices": {
             "scenarioBrokenWorkflow": "migration"
@@ -7867,36 +8401,25 @@
           "computeSplit": {
             "safety": 0.12
           },
-          "moves": [
-            {
-              "type": "meeting"
-            }
-          ],
+          "moves": [],
           "eventChoices": {},
-          "addressWarnings": [
-            "neocloudTrouble"
-          ],
-          "presidentAnswers": [
-            "first-war-plain",
-            "first-woke-plain",
-            "first-chips-plain"
-          ]
+          "addressWarnings": []
         }
       },
       {
-        "day": 655,
+        "day": 680,
         "actions": {
           "eventChoices": {
-            "scenarioGrowthRound": "campaign"
+            "scenarioPriceCut": "specialize"
           },
           "moves": []
         }
       },
       {
-        "day": 689,
+        "day": 697,
         "actions": {
           "eventChoices": {
-            "boardLeak": "hunt"
+            "boardRequest": "send"
           },
           "moves": []
         }
@@ -7907,6 +8430,75 @@
       },
       {
         "day": 728,
+        "actions": {
+          "budget": {
+            "spend": 70,
+            "split": {
+              "training": 0.5,
+              "security": 0.1,
+              "product": 0.2,
+              "talent": 0.2
+            }
+          },
+          "computeSplit": {
+            "safety": 0.12
+          },
+          "moves": [
+            {
+              "type": "queueOrder",
+              "units": 56,
+              "tier": "standard"
+            }
+          ],
+          "eventChoices": {},
+          "constitutionDraft": {
+            "hardLines": [
+              "no-wmd",
+              "honest",
+              "accept-shutdown"
+            ],
+            "rulings": {
+              "companion": "redirect",
+              "feedback": "honest",
+              "tests": "disclose",
+              "fraud": "raise",
+              "stop": "finish-step",
+              "report": "flag"
+            }
+          },
+          "addressWarnings": [
+            "neocloudTrouble"
+          ],
+          "automation": {
+            "levels": {
+              "review": 1,
+              "experiments": 1,
+              "choosing": 0,
+              "direction": 0
+            },
+            "checks": {
+              "reviewers": 1,
+              "monitors": 0,
+              "aiReview": true
+            }
+          }
+        }
+      },
+      {
+        "day": 747,
+        "actions": {
+          "eventChoices": {
+            "scenarioRecognizedTest": "independent"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 758,
+        "actions": null
+      },
+      {
+        "day": 758,
         "actions": {
           "budget": {
             "spend": 70,
@@ -7954,54 +8546,33 @@
             }
           ],
           "eventChoices": {},
-          "constitutionDraft": {
-            "hardLines": [
-              "no-wmd",
-              "honest",
-              "accept-shutdown"
-            ],
-            "rulings": {
-              "companion": "redirect",
-              "feedback": "honest",
-              "tests": "disclose",
-              "fraud": "raise",
-              "stop": "finish-step",
-              "report": "flag"
-            }
-          },
-          "addressWarnings": [
-            "neocloudTrouble"
-          ],
-          "automation": {
-            "levels": {
-              "review": 1,
-              "experiments": 1,
-              "choosing": 0,
-              "direction": 0
-            },
-            "checks": {
-              "reviewers": 1,
-              "monitors": 0,
-              "aiReview": true
-            }
-          }
+          "addressWarnings": []
         }
       },
       {
-        "day": 752,
+        "day": 770,
         "actions": {
           "eventChoices": {
-            "scenarioRecognizedTest": "independent"
+            "scenarioWorkplaceTests": "realistic"
           },
           "moves": []
         }
       },
       {
-        "day": 758,
+        "day": 785,
+        "actions": {
+          "eventChoices": {
+            "scenarioPoaching": "retain"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 788,
         "actions": null
       },
       {
-        "day": 758,
+        "day": 788,
         "actions": {
           "budget": {
             "spend": 70,
@@ -8015,33 +8586,45 @@
           "computeSplit": {
             "safety": 0.12
           },
-          "moves": [
-            {
-              "type": "queueOrder",
-              "units": 56,
-              "tier": "standard"
-            }
-          ],
+          "moves": [],
           "eventChoices": {},
           "hazardChoice": "fix",
           "addressWarnings": []
         }
       },
       {
-        "day": 778,
+        "day": 807,
         "actions": {
           "eventChoices": {
-            "scenarioOpenCompetition": "specialize"
+            "scenarioSafetySignoff": "investigate"
           },
           "moves": []
         }
       },
       {
-        "day": 788,
+        "day": 810,
+        "actions": {
+          "eventChoices": {
+            "capabilityJump": "audit"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 811,
+        "actions": {
+          "eventChoices": {
+            "boardWashington": "brief"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 818,
         "actions": null
       },
       {
-        "day": 788,
+        "day": 818,
         "actions": {
           "budget": {
             "spend": 70,
@@ -8074,6 +8657,10 @@
                   "xl": "Apex"
                 }
               }
+            },
+            {
+              "type": "deal",
+              "offerId": "azuria-9"
             }
           ],
           "eventChoices": {},
@@ -8081,16 +8668,203 @@
         }
       },
       {
-        "day": 796,
+        "day": 829,
         "actions": {
           "eventChoices": {
-            "scenarioWorkplaceTests": "realistic"
+            "scenarioReasoningBill": "optimize"
           },
           "moves": []
         }
       },
       {
-        "day": 806,
+        "day": 830,
+        "actions": {
+          "eventChoices": {
+            "boardWobble": "prices"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 848,
+        "actions": null
+      },
+      {
+        "day": 848,
+        "actions": {
+          "budget": {
+            "spend": 87.5,
+            "split": {
+              "training": 0.5,
+              "security": 0.1,
+              "product": 0.2,
+              "talent": 0.2
+            }
+          },
+          "computeSplit": {
+            "safety": 0.12
+          },
+          "moves": [
+            {
+              "type": "startRun",
+              "recipe": {
+                "sliders": {
+                  "size": "medium",
+                  "length": "optimal",
+                  "alignShare": 0.2
+                },
+                "picks": {
+                  "pre": [
+                    "moe",
+                    "filtered-data",
+                    "stability"
+                  ],
+                  "mid": [
+                    "anneal",
+                    "reasoning-ready",
+                    "decontaminate"
+                  ],
+                  "post": [
+                    "synthetic-sft",
+                    "rlvr-light",
+                    "dpo"
+                  ]
+                }
+              }
+            },
+            {
+              "type": "raise",
+              "archetype": "vc"
+            }
+          ],
+          "eventChoices": {},
+          "addressWarnings": [],
+          "automation": {
+            "levels": {
+              "review": 2,
+              "experiments": 2,
+              "choosing": 1,
+              "direction": 0
+            },
+            "checks": {
+              "reviewers": 3,
+              "monitors": 0,
+              "aiReview": true
+            }
+          }
+        }
+      },
+      {
+        "day": 870,
+        "actions": {
+          "eventChoices": {
+            "scenarioDefenceTerms": "negotiate"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 878,
+        "actions": null
+      },
+      {
+        "day": 878,
+        "actions": {
+          "budget": {
+            "spend": 87.5,
+            "split": {
+              "training": 0.5,
+              "security": 0.1,
+              "product": 0.2,
+              "talent": 0.2
+            }
+          },
+          "computeSplit": {
+            "safety": 0.12
+          },
+          "moves": [],
+          "eventChoices": {},
+          "hazardChoice": "fix",
+          "addressWarnings": []
+        }
+      },
+      {
+        "day": 894,
+        "actions": {
+          "eventChoices": {
+            "scenarioPauseLetter": "pause"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 899,
+        "actions": {
+          "eventChoices": {
+            "capabilityJump": "audit"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 908,
+        "actions": null
+      },
+      {
+        "day": 908,
+        "actions": {
+          "budget": {
+            "spend": 87.5,
+            "split": {
+              "training": 0.5,
+              "security": 0.1,
+              "product": 0.2,
+              "talent": 0.2
+            }
+          },
+          "computeSplit": {
+            "safety": 0.12
+          },
+          "moves": [
+            {
+              "type": "release",
+              "release": {
+                "picks": [
+                  "eval-full",
+                  "channel-app"
+                ],
+                "price": "market",
+                "reasoning": "medium",
+                "family": "Bot",
+                "generation": 4,
+                "tierWords": {
+                  "small": "Swift",
+                  "medium": "Core",
+                  "large": "Grand",
+                  "xl": "Apex"
+                }
+              }
+            },
+            {
+              "type": "deal",
+              "offerId": "loi-13"
+            }
+          ],
+          "eventChoices": {},
+          "addressWarnings": []
+        }
+      },
+      {
+        "day": 919,
+        "actions": {
+          "eventChoices": {
+            "scenarioIndustryIncident": "independent"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 930,
         "actions": {
           "eventChoices": {
             "boardBuyer": "call"
@@ -8099,14 +8873,14 @@
         }
       },
       {
-        "day": 818,
+        "day": 938,
         "actions": null
       },
       {
-        "day": 818,
+        "day": 938,
         "actions": {
           "budget": {
-            "spend": 70,
+            "spend": 87.5,
             "split": {
               "training": 0.5,
               "security": 0.1,
@@ -8151,231 +8925,10 @@
         }
       },
       {
-        "day": 819,
-        "actions": {
-          "eventChoices": {
-            "boardWobble": "prices"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 825,
-        "actions": {
-          "eventChoices": {
-            "scenarioReasoningBill": "optimize"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 848,
-        "actions": null
-      },
-      {
-        "day": 848,
-        "actions": {
-          "budget": {
-            "spend": 87.5,
-            "split": {
-              "training": 0.5,
-              "security": 0.1,
-              "product": 0.2,
-              "talent": 0.2
-            }
-          },
-          "computeSplit": {
-            "safety": 0.12
-          },
-          "moves": [],
-          "eventChoices": {},
-          "hazardChoice": "fix",
-          "addressWarnings": [],
-          "automation": {
-            "levels": {
-              "review": 2,
-              "experiments": 2,
-              "choosing": 1,
-              "direction": 0
-            },
-            "checks": {
-              "reviewers": 3,
-              "monitors": 0,
-              "aiReview": true
-            }
-          }
-        }
-      },
-      {
-        "day": 872,
-        "actions": {
-          "eventChoices": {
-            "scenarioWeightTheft": "respond"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 878,
-        "actions": null
-      },
-      {
-        "day": 878,
-        "actions": {
-          "budget": {
-            "spend": 87.5,
-            "split": {
-              "training": 0.5,
-              "security": 0.1,
-              "product": 0.2,
-              "talent": 0.2
-            }
-          },
-          "computeSplit": {
-            "safety": 0.12
-          },
-          "moves": [
-            {
-              "type": "release",
-              "release": {
-                "picks": [
-                  "eval-full",
-                  "channel-app"
-                ],
-                "price": "market",
-                "reasoning": "medium",
-                "family": "Bot",
-                "generation": 4,
-                "tierWords": {
-                  "small": "Swift",
-                  "medium": "Core",
-                  "large": "Grand",
-                  "xl": "Apex"
-                }
-              }
-            }
-          ],
-          "eventChoices": {},
-          "addressWarnings": []
-        }
-      },
-      {
-        "day": 886,
+        "day": 940,
         "actions": {
           "eventChoices": {
             "scenarioWhiteHouse": "fund"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 908,
-        "actions": null
-      },
-      {
-        "day": 908,
-        "actions": {
-          "budget": {
-            "spend": 87.5,
-            "split": {
-              "training": 0.5,
-              "security": 0.1,
-              "product": 0.2,
-              "talent": 0.2
-            }
-          },
-          "computeSplit": {
-            "safety": 0.12
-          },
-          "moves": [
-            {
-              "type": "startRun",
-              "recipe": {
-                "sliders": {
-                  "size": "small",
-                  "length": "optimal",
-                  "alignShare": 0.2
-                },
-                "picks": {
-                  "pre": [
-                    "moe",
-                    "filtered-data",
-                    "stability"
-                  ],
-                  "mid": [
-                    "anneal",
-                    "reasoning-ready",
-                    "decontaminate"
-                  ],
-                  "post": [
-                    "synthetic-sft",
-                    "rlvr-light",
-                    "dpo"
-                  ]
-                }
-              }
-            }
-          ],
-          "eventChoices": {},
-          "addressWarnings": []
-        }
-      },
-      {
-        "day": 912,
-        "actions": {
-          "eventChoices": {
-            "scenarioIndustryIncident": "independent"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 923,
-        "actions": {
-          "eventChoices": {
-            "boardWashington": "brief"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 928,
-        "actions": {
-          "eventChoices": {
-            "scenarioPauseLetter": "pause"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 938,
-        "actions": null
-      },
-      {
-        "day": 938,
-        "actions": {
-          "budget": {
-            "spend": 87.5,
-            "split": {
-              "training": 0.5,
-              "security": 0.1,
-              "product": 0.2,
-              "talent": 0.2
-            }
-          },
-          "computeSplit": {
-            "safety": 0.12
-          },
-          "moves": [],
-          "eventChoices": {},
-          "addressWarnings": []
-        }
-      },
-      {
-        "day": 951,
-        "actions": {
-          "eventChoices": {
-            "scenarioDefenceTerms": "negotiate"
           },
           "moves": []
         }
@@ -8442,10 +8995,19 @@
         }
       },
       {
-        "day": 972,
+        "day": 970,
         "actions": {
           "eventChoices": {
-            "scenarioContinueResearch": "pause"
+            "capabilityJump": "audit"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 974,
+        "actions": {
+          "eventChoices": {
+            "scenarioAutomationThreshold": "audit"
           },
           "moves": []
         }
@@ -8488,6 +9050,10 @@
                   "xl": "Apex"
                 }
               }
+            },
+            {
+              "type": "raise",
+              "archetype": "vc"
             }
           ],
           "eventChoices": {},
@@ -8498,8 +9064,16 @@
         "day": 977,
         "actions": {
           "eventChoices": {
-            "ownLine": "lockDown",
-            "scenarioAuditFailure": "retest"
+            "ownLine": "lockDown"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 979,
+        "actions": {
+          "eventChoices": {
+            "scenarioConcealedExperiment": "investigate"
           },
           "moves": []
         }
@@ -8523,10 +9097,36 @@
           "computeSplit": {
             "safety": 0.12
           },
-          "moves": [],
-          "eventChoices": {
-            "scenarioAutomationThreshold": "audit"
-          },
+          "moves": [
+            {
+              "type": "startRun",
+              "recipe": {
+                "sliders": {
+                  "size": "small",
+                  "length": "optimal",
+                  "alignShare": 0.2
+                },
+                "picks": {
+                  "pre": [
+                    "moe",
+                    "filtered-data",
+                    "stability"
+                  ],
+                  "mid": [
+                    "anneal",
+                    "reasoning-ready",
+                    "decontaminate"
+                  ],
+                  "post": [
+                    "synthetic-sft",
+                    "rlvr-light",
+                    "dpo"
+                  ]
+                }
+              }
+            }
+          ],
+          "eventChoices": {},
           "addressWarnings": []
         }
       },
@@ -8534,7 +9134,7 @@
         "day": 986,
         "actions": {
           "eventChoices": {
-            "scenarioShutdownDrill": "rebuild"
+            "scenarioPacingRival": "review"
           },
           "moves": []
         }
@@ -8542,12 +9142,46 @@
       {
         "day": 989,
         "actions": null
+      },
+      {
+        "day": 989,
+        "actions": {
+          "budget": {
+            "spend": 105,
+            "split": {
+              "training": 0.5,
+              "security": 0.1,
+              "product": 0.2,
+              "talent": 0.2
+            }
+          },
+          "computeSplit": {
+            "safety": 0.12
+          },
+          "moves": [],
+          "eventChoices": {},
+          "hazardChoice": "fix",
+          "addressWarnings": []
+        }
+      },
+      {
+        "day": 992,
+        "actions": {
+          "eventChoices": {
+            "scenarioAuditFailure": "retest"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 996,
+        "actions": null
       }
     ]
   },
   "pacingDeal": {
     "policy": "diplomat",
-    "seed": 3,
+    "seed": 8,
     "era": 5,
     "turns": 20,
     "transcript": [
@@ -8612,7 +9246,7 @@
         }
       },
       {
-        "day": 66,
+        "day": 44,
         "actions": {
           "eventChoices": {
             "scenarioEngineerOffer": "retain"
@@ -8645,10 +9279,10 @@
         }
       },
       {
-        "day": 119,
+        "day": 92,
         "actions": {
           "eventChoices": {
-            "scenarioPrivacy": "pilot"
+            "scenarioBenchmark": "audit"
           },
           "moves": []
         }
@@ -8702,6 +9336,24 @@
         }
       },
       {
+        "day": 134,
+        "actions": {
+          "eventChoices": {
+            "scenarioPrivacy": "pilot"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 179,
+        "actions": {
+          "eventChoices": {
+            "scenarioDemoCost": "profile"
+          },
+          "moves": []
+        }
+      },
+      {
         "day": 182,
         "actions": null
       },
@@ -8731,7 +9383,7 @@
         }
       },
       {
-        "day": 187,
+        "day": 224,
         "actions": {
           "eventChoices": {
             "scenarioArguments": "test"
@@ -8740,7 +9392,7 @@
         }
       },
       {
-        "day": 247,
+        "day": 270,
         "actions": {
           "eventChoices": {
             "scenarioJailbreak": "patch"
@@ -8778,15 +9430,6 @@
         }
       },
       {
-        "day": 292,
-        "actions": {
-          "eventChoices": {
-            "scenarioLaunchQueue": "support"
-          },
-          "moves": []
-        }
-      },
-      {
         "day": 312,
         "actions": {
           "moves": [
@@ -8804,6 +9447,15 @@
               }
             }
           ]
+        }
+      },
+      {
+        "day": 315,
+        "actions": {
+          "eventChoices": {
+            "scenarioSchoolPilot": "supervise"
+          },
+          "moves": []
         }
       },
       {
@@ -8876,149 +9528,7 @@
         }
       },
       {
-        "day": 434,
-        "actions": {
-          "eventChoices": {
-            "scenarioBrokenWorkflow": "migration"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 455,
-        "actions": null
-      },
-      {
-        "day": 455,
-        "actions": {
-          "budget": {
-            "spend": 52.5,
-            "split": {
-              "training": 0.4,
-              "security": 0.1,
-              "product": 0.2,
-              "talent": 0.3
-            }
-          },
-          "computeSplit": {
-            "safety": 0.2
-          },
-          "moves": [
-            {
-              "type": "raise",
-              "archetype": "vc"
-            }
-          ],
-          "eventChoices": {},
-          "hazardChoice": "fix",
-          "addressWarnings": []
-        }
-      },
-      {
-        "day": 455,
-        "actions": {
-          "moves": [
-            {
-              "type": "release",
-              "release": {
-                "picks": [
-                  "eval-third",
-                  "channel-app"
-                ],
-                "price": "market",
-                "reasoning": "medium",
-                "family": "Bot",
-                "generation": 3
-              }
-            }
-          ]
-        }
-      },
-      {
-        "day": 482,
-        "actions": {
-          "eventChoices": {
-            "scenarioDataRenewal": "licence"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 546,
-        "actions": null
-      },
-      {
-        "day": 546,
-        "actions": {
-          "budget": {
-            "spend": 52.5,
-            "split": {
-              "training": 0.4,
-              "security": 0.1,
-              "product": 0.2,
-              "talent": 0.3
-            }
-          },
-          "computeSplit": {
-            "safety": 0.2
-          },
-          "moves": [
-            {
-              "type": "startRun",
-              "recipe": {
-                "sliders": {
-                  "size": "small",
-                  "length": "optimal",
-                  "alignShare": 0.3
-                },
-                "picks": {
-                  "pre": [
-                    "moe",
-                    "filtered-data",
-                    "stability"
-                  ],
-                  "mid": [
-                    "anneal",
-                    "reasoning-ready",
-                    "decontaminate"
-                  ],
-                  "post": [
-                    "synthetic-sft",
-                    "safety-tuning",
-                    "rlvr-light"
-                  ]
-                }
-              }
-            },
-            {
-              "type": "deal",
-              "offerId": "verde-5"
-            }
-          ],
-          "eventChoices": {},
-          "addressWarnings": []
-        }
-      },
-      {
-        "day": 553,
-        "actions": {
-          "eventChoices": {
-            "scenarioDocumentLeak": "respond"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 555,
-        "actions": {
-          "eventChoices": {
-            "boardWobble": "prices"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 617,
+        "day": 414,
         "actions": {
           "eventChoices": {
             "scenarioDelivery": "plan"
@@ -9027,11 +9537,11 @@
         }
       },
       {
-        "day": 637,
+        "day": 455,
         "actions": null
       },
       {
-        "day": 637,
+        "day": 455,
         "actions": {
           "budget": {
             "spend": 52.5,
@@ -9050,6 +9560,59 @@
               "type": "meeting"
             },
             {
+              "type": "raise",
+              "archetype": "vc"
+            }
+          ],
+          "eventChoices": {},
+          "hazardChoice": "fix",
+          "addressWarnings": [],
+          "presidentAnswers": [
+            "first-war-plain",
+            "first-woke-plain",
+            "first-chips-plain"
+          ]
+        }
+      },
+      {
+        "day": 470,
+        "actions": {
+          "eventChoices": {
+            "scenarioDataRenewal": "licence"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 517,
+        "actions": {
+          "eventChoices": {
+            "scenarioPriceCut": "specialize"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 546,
+        "actions": null
+      },
+      {
+        "day": 546,
+        "actions": {
+          "budget": {
+            "spend": 52.5,
+            "split": {
+              "training": 0.4,
+              "security": 0.1,
+              "product": 0.2,
+              "talent": 0.3
+            }
+          },
+          "computeSplit": {
+            "safety": 0.2
+          },
+          "moves": [
+            {
               "type": "release",
               "release": {
                 "picks": [
@@ -9059,7 +9622,7 @@
                 "price": "market",
                 "reasoning": "off",
                 "family": "Bot",
-                "generation": 4,
+                "generation": 3,
                 "tierWords": {
                   "small": "Swift",
                   "medium": "Core",
@@ -9067,22 +9630,71 @@
                   "xl": "Apex"
                 }
               }
+            },
+            {
+              "type": "deal",
+              "offerId": "verde-5"
             }
           ],
           "eventChoices": {},
-          "hazardChoice": "fix",
+          "addressWarnings": []
+        }
+      },
+      {
+        "day": 577,
+        "actions": {
+          "eventChoices": {
+            "scenarioGrowthRound": "campaign"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 599,
+        "actions": {
+          "eventChoices": {
+            "boardWobble": "prices"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 622,
+        "actions": {
+          "eventChoices": {
+            "scenarioReportingChannel": "independent"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 637,
+        "actions": null
+      },
+      {
+        "day": 637,
+        "actions": {
+          "budget": {
+            "spend": 52.5,
+            "split": {
+              "training": 0.4,
+              "security": 0.1,
+              "product": 0.2,
+              "talent": 0.3
+            }
+          },
+          "computeSplit": {
+            "safety": 0.2
+          },
+          "moves": [],
+          "eventChoices": {},
           "addressWarnings": [
             "neocloudTrouble"
-          ],
-          "presidentAnswers": [
-            "first-war-plain",
-            "first-woke-plain",
-            "first-chips-plain"
           ]
         }
       },
       {
-        "day": 663,
+        "day": 658,
         "actions": {
           "eventChoices": {
             "boardRequest": "send"
@@ -9091,10 +9703,10 @@
         }
       },
       {
-        "day": 666,
+        "day": 679,
         "actions": {
           "eventChoices": {
-            "scenarioCloudTerms": "review"
+            "scenarioBrokenWorkflow": "migration"
           },
           "moves": []
         }
@@ -9160,16 +9772,145 @@
         }
       },
       {
-        "day": 748,
+        "day": 750,
         "actions": {
           "eventChoices": {
-            "scenarioReasoningBill": "optimize"
+            "scenarioPoaching": "retain"
           },
           "moves": []
         }
       },
       {
-        "day": 749,
+        "day": 758,
+        "actions": null
+      },
+      {
+        "day": 758,
+        "actions": {
+          "budget": {
+            "spend": 70,
+            "split": {
+              "training": 0.4,
+              "security": 0.1,
+              "product": 0.2,
+              "talent": 0.3
+            }
+          },
+          "computeSplit": {
+            "safety": 0.25
+          },
+          "moves": [
+            {
+              "type": "startRun",
+              "recipe": {
+                "sliders": {
+                  "size": "medium",
+                  "length": "optimal",
+                  "alignShare": 0.3
+                },
+                "picks": {
+                  "pre": [
+                    "moe",
+                    "filtered-data",
+                    "stability"
+                  ],
+                  "mid": [
+                    "anneal",
+                    "reasoning-ready",
+                    "decontaminate"
+                  ],
+                  "post": [
+                    "synthetic-sft",
+                    "constitution",
+                    "safety-tuning",
+                    "rlvr-light"
+                  ]
+                }
+              }
+            },
+            {
+              "type": "raise",
+              "archetype": "vc"
+            }
+          ],
+          "eventChoices": {},
+          "addressWarnings": []
+        }
+      },
+      {
+        "day": 772,
+        "actions": {
+          "eventChoices": {
+            "scenarioRecognizedTest": "independent"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 788,
+        "actions": null
+      },
+      {
+        "day": 788,
+        "actions": {
+          "budget": {
+            "spend": 70,
+            "split": {
+              "training": 0.4,
+              "security": 0.1,
+              "product": 0.2,
+              "talent": 0.3
+            }
+          },
+          "computeSplit": {
+            "safety": 0.25
+          },
+          "moves": [],
+          "eventChoices": {},
+          "hazardChoice": "fix",
+          "addressWarnings": []
+        }
+      },
+      {
+        "day": 794,
+        "actions": {
+          "eventChoices": {
+            "boardWashington": "brief"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 796,
+        "actions": {
+          "moves": [
+            {
+              "type": "release",
+              "release": {
+                "picks": [
+                  "eval-third",
+                  "channel-app"
+                ],
+                "price": "market",
+                "reasoning": "medium",
+                "family": "Bot",
+                "generation": 4
+              }
+            }
+          ]
+        }
+      },
+      {
+        "day": 797,
+        "actions": {
+          "eventChoices": {
+            "scenarioSafetySignoff": "investigate"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 797,
         "actions": {
           "moves": [
             {
@@ -9204,11 +9945,11 @@
         }
       },
       {
-        "day": 758,
+        "day": 818,
         "actions": null
       },
       {
-        "day": 758,
+        "day": 818,
         "actions": {
           "budget": {
             "spend": 70,
@@ -9222,18 +9963,20 @@
           "computeSplit": {
             "safety": 0.25
           },
-          "moves": [
-            {
-              "type": "raise",
-              "archetype": "vc"
-            }
-          ],
+          "moves": [],
           "eventChoices": {},
           "addressWarnings": []
         }
       },
       {
-        "day": 764,
+        "day": 827,
+        "actions": {
+          "hazardChoice": "fix",
+          "moves": []
+        }
+      },
+      {
+        "day": 828,
         "actions": {
           "eventChoices": {
             "scenarioOpenCompetition": "specialize"
@@ -9242,31 +9985,8 @@
         }
       },
       {
-        "day": 779,
+        "day": 828,
         "actions": {
-          "hazardChoice": "fix",
-          "moves": []
-        }
-      },
-      {
-        "day": 788,
-        "actions": null
-      },
-      {
-        "day": 788,
-        "actions": {
-          "budget": {
-            "spend": 70,
-            "split": {
-              "training": 0.4,
-              "security": 0.1,
-              "product": 0.2,
-              "talent": 0.3
-            }
-          },
-          "computeSplit": {
-            "safety": 0.25
-          },
           "moves": [
             {
               "type": "release",
@@ -9278,76 +9998,21 @@
                 "price": "market",
                 "reasoning": "medium",
                 "family": "Bot",
-                "generation": 5,
-                "tierWords": {
-                  "small": "Swift",
-                  "medium": "Core",
-                  "large": "Grand",
-                  "xl": "Apex"
-                }
+                "generation": 5
               }
-            },
-            {
-              "type": "deal",
-              "offerId": "azuria-9"
             }
-          ],
-          "eventChoices": {},
-          "addressWarnings": []
+          ]
         }
       },
       {
-        "day": 792,
+        "day": 829,
         "actions": {
-          "eventChoices": {
-            "scenarioWorkplaceTests": "realistic"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 800,
-        "actions": {
-          "eventChoices": {
-            "boardLeak": "hunt"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 806,
-        "actions": {
-          "eventChoices": {
-            "scenarioPoaching": "retain"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 818,
-        "actions": null
-      },
-      {
-        "day": 818,
-        "actions": {
-          "budget": {
-            "spend": 70,
-            "split": {
-              "training": 0.4,
-              "security": 0.1,
-              "product": 0.2,
-              "talent": 0.3
-            }
-          },
-          "computeSplit": {
-            "safety": 0.25
-          },
           "moves": [
             {
               "type": "startRun",
               "recipe": {
                 "sliders": {
-                  "size": "large",
+                  "size": "medium",
                   "length": "optimal",
                   "alignShare": 0.3
                 },
@@ -9370,30 +10035,15 @@
                   ]
                 }
               }
-            },
-            {
-              "type": "deal",
-              "offerId": "azuria-11"
             }
-          ],
-          "eventChoices": {},
-          "addressWarnings": []
+          ]
         }
       },
       {
-        "day": 828,
+        "day": 834,
         "actions": {
           "eventChoices": {
-            "boardBuyer": "call"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 831,
-        "actions": {
-          "eventChoices": {
-            "scenarioRecognizedTest": "independent"
+            "boardLeak": "hunt"
           },
           "moves": []
         }
@@ -9424,7 +10074,6 @@
             }
           ],
           "eventChoices": {},
-          "hazardChoice": "fix",
           "addressWarnings": [],
           "automation": {
             "levels": {
@@ -9434,38 +10083,25 @@
               "direction": 0
             },
             "checks": {
-              "reviewers": 0,
-              "monitors": 3,
+              "reviewers": 3,
+              "monitors": 1,
               "aiReview": true
             }
           }
         }
       },
       {
-        "day": 856,
+        "day": 859,
         "actions": {
-          "moves": [
-            {
-              "type": "release",
-              "release": {
-                "picks": [
-                  "eval-third",
-                  "channel-app"
-                ],
-                "price": "market",
-                "reasoning": "medium",
-                "family": "Bot",
-                "generation": 6
-              }
-            }
-          ]
+          "hazardChoice": "fix",
+          "moves": []
         }
       },
       {
-        "day": 864,
+        "day": 866,
         "actions": {
           "eventChoices": {
-            "scenarioPauseLetter": "review"
+            "scenarioGridDelay": "alternatives"
           },
           "moves": []
         }
@@ -9491,10 +10127,77 @@
           },
           "moves": [
             {
+              "type": "deal",
+              "offerId": "loi-13"
+            }
+          ],
+          "eventChoices": {},
+          "addressWarnings": []
+        }
+      },
+      {
+        "day": 879,
+        "actions": {
+          "moves": [
+            {
+              "type": "release",
+              "release": {
+                "picks": [
+                  "eval-third",
+                  "channel-app"
+                ],
+                "price": "market",
+                "reasoning": "medium",
+                "family": "Bot",
+                "generation": 6
+              }
+            }
+          ]
+        }
+      },
+      {
+        "day": 885,
+        "actions": {
+          "eventChoices": {
+            "scenarioPauseLetter": "review"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 905,
+        "actions": {
+          "eventChoices": {
+            "scenarioWhiteHouse": "fund"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 908,
+        "actions": null
+      },
+      {
+        "day": 908,
+        "actions": {
+          "budget": {
+            "spend": 87.5,
+            "split": {
+              "training": 0.4,
+              "security": 0.1,
+              "product": 0.2,
+              "talent": 0.3
+            }
+          },
+          "computeSplit": {
+            "safety": 0.3
+          },
+          "moves": [
+            {
               "type": "startRun",
               "recipe": {
                 "sliders": {
-                  "size": "small",
+                  "size": "medium",
                   "length": "optimal",
                   "alignShare": 0.3
                 },
@@ -9528,29 +10231,29 @@
         }
       },
       {
-        "day": 891,
+        "day": 923,
         "actions": {
           "eventChoices": {
-            "scenarioWhiteHouse": "fund"
+            "boardBuyer": "call"
           },
           "moves": []
         }
       },
       {
-        "day": 905,
+        "day": 930,
         "actions": {
           "eventChoices": {
-            "scenarioWeightTheft": "respond"
+            "scenarioGridConflict": "study"
           },
           "moves": []
         }
       },
       {
-        "day": 908,
+        "day": 938,
         "actions": null
       },
       {
-        "day": 908,
+        "day": 938,
         "actions": {
           "budget": {
             "spend": 87.5,
@@ -9564,29 +10267,6 @@
           "computeSplit": {
             "safety": 0.3
           },
-          "moves": [
-            {
-              "type": "deal",
-              "offerId": "loi-13"
-            }
-          ],
-          "eventChoices": {},
-          "hazardChoice": "fix",
-          "addressWarnings": []
-        }
-      },
-      {
-        "day": 910,
-        "actions": {
-          "eventChoices": {
-            "boardWashington": "brief"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 916,
-        "actions": {
           "moves": [
             {
               "type": "release",
@@ -9598,79 +10278,39 @@
                 "price": "market",
                 "reasoning": "medium",
                 "family": "Bot",
-                "generation": 7
+                "generation": 7,
+                "tierWords": {
+                  "small": "Swift",
+                  "medium": "Core",
+                  "large": "Grand",
+                  "xl": "Apex"
+                }
               }
+            },
+            {
+              "type": "deal",
+              "offerId": "loi-14"
             }
-          ]
+          ],
+          "eventChoices": {},
+          "hazardChoice": "fix",
+          "addressWarnings": []
         }
       },
       {
-        "day": 931,
+        "day": 950,
         "actions": {
           "eventChoices": {
-            "scenarioIndustryIncident": "independent"
+            "scenarioWeightTheft": "respond"
           },
           "moves": []
         }
       },
       {
-        "day": 938,
-        "actions": null
-      },
-      {
-        "day": 938,
-        "actions": {
-          "budget": {
-            "spend": 87.5,
-            "split": {
-              "training": 0.4,
-              "security": 0.1,
-              "product": 0.2,
-              "talent": 0.3
-            }
-          },
-          "computeSplit": {
-            "safety": 0.3
-          },
-          "moves": [
-            {
-              "type": "startRun",
-              "recipe": {
-                "sliders": {
-                  "size": "large",
-                  "length": "optimal",
-                  "alignShare": 0.3
-                },
-                "picks": {
-                  "pre": [
-                    "moe",
-                    "filtered-data",
-                    "stability"
-                  ],
-                  "mid": [
-                    "anneal",
-                    "reasoning-ready",
-                    "decontaminate"
-                  ],
-                  "post": [
-                    "synthetic-sft",
-                    "character",
-                    "safety-tuning",
-                    "rlvr-light"
-                  ]
-                }
-              }
-            }
-          ],
-          "eventChoices": {},
-          "addressWarnings": []
-        }
-      },
-      {
-        "day": 948,
+        "day": 958,
         "actions": {
           "eventChoices": {
-            "scenarioGridConflict": "study"
+            "capabilityJump": "celebrate"
           },
           "moves": []
         }
@@ -9717,7 +10357,6 @@
             }
           ],
           "eventChoices": {},
-          "hazardChoice": "fix",
           "addressWarnings": [],
           "presidentAnswers": [
             "second-control-plain",
@@ -9740,10 +10379,10 @@
         }
       },
       {
-        "day": 972,
+        "day": 973,
         "actions": {
           "eventChoices": {
-            "scenarioTrainingStack": "reproduce"
+            "scenarioMutualMonitoring": "design"
           },
           "moves": []
         }
@@ -9778,19 +10417,19 @@
         }
       },
       {
-        "day": 976,
+        "day": 978,
         "actions": {
           "eventChoices": {
-            "ownLine": "lockDown"
+            "scenarioReviewOverload": "review"
           },
           "moves": []
         }
       },
       {
-        "day": 977,
+        "day": 979,
         "actions": {
           "eventChoices": {
-            "scenarioPacingRival": "review"
+            "ownLine": "lockDown"
           },
           "moves": []
         }
@@ -9816,16 +10455,16 @@
           },
           "moves": [],
           "eventChoices": {
-            "scenarioConcealedExperiment": "investigate"
+            "scenarioAuditFailure": "retest"
           },
           "addressWarnings": []
         }
       },
       {
-        "day": 986,
+        "day": 988,
         "actions": {
           "eventChoices": {
-            "scenarioUnexpectedAccess": "investigate"
+            "scenarioShutdownDrill": "rebuild"
           },
           "moves": []
         }
@@ -9849,71 +10488,16 @@
           "computeSplit": {
             "safety": 0.35
           },
-          "moves": [
-            {
-              "type": "release",
-              "release": {
-                "picks": [
-                  "eval-third",
-                  "channel-app"
-                ],
-                "price": "market",
-                "reasoning": "medium",
-                "family": "Bot",
-                "generation": 8,
-                "tierWords": {
-                  "small": "Swift",
-                  "medium": "Core",
-                  "large": "Grand",
-                  "xl": "Apex"
-                }
-              }
-            }
-          ],
+          "moves": [],
           "eventChoices": {},
           "addressWarnings": []
         }
       },
       {
-        "day": 989,
-        "actions": {
-          "moves": [
-            {
-              "type": "startRun",
-              "recipe": {
-                "sliders": {
-                  "size": "small",
-                  "length": "optimal",
-                  "alignShare": 0.3
-                },
-                "picks": {
-                  "pre": [
-                    "moe",
-                    "filtered-data",
-                    "stability"
-                  ],
-                  "mid": [
-                    "anneal",
-                    "reasoning-ready",
-                    "decontaminate"
-                  ],
-                  "post": [
-                    "synthetic-sft",
-                    "character",
-                    "safety-tuning",
-                    "rlvr-light"
-                  ]
-                }
-              }
-            }
-          ]
-        }
-      },
-      {
-        "day": 991,
+        "day": 993,
         "actions": {
           "eventChoices": {
-            "scenarioAutomationThreshold": "audit"
+            "scenarioUnexpectedAccess": "investigate"
           },
           "moves": []
         }
@@ -9926,9 +10510,9 @@
   },
   "quietTakeover": {
     "policy": "unchecked",
-    "seed": 26,
+    "seed": 163,
     "era": 5,
-    "turns": 20,
+    "turns": 19,
     "transcript": [
       {
         "day": 0,
@@ -9991,7 +10575,7 @@
         }
       },
       {
-        "day": 54,
+        "day": 48,
         "actions": {
           "eventChoices": {
             "scenarioEngineerOffer": "leave"
@@ -10019,24 +10603,18 @@
             "safety": 0
           },
           "moves": [],
-          "eventChoices": {},
+          "eventChoices": {
+            "capabilityJump": "quiet",
+            "scenarioPrivacy": "decline"
+          },
           "addressWarnings": []
         }
       },
       {
-        "day": 117,
+        "day": 132,
         "actions": {
           "eventChoices": {
             "scenarioBenchmark": "defend"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 175,
-        "actions": {
-          "eventChoices": {
-            "scenarioPrivacy": "decline"
           },
           "moves": []
         }
@@ -10090,10 +10668,28 @@
         }
       },
       {
-        "day": 237,
+        "day": 183,
         "actions": {
           "eventChoices": {
             "scenarioCitations": "leave"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 225,
+        "actions": {
+          "eventChoices": {
+            "scenarioJailbreak": "monitor"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 271,
+        "actions": {
+          "eventChoices": {
+            "scenarioDemoCost": "promote"
           },
           "moves": []
         }
@@ -10150,7 +10746,7 @@
         }
       },
       {
-        "day": 296,
+        "day": 317,
         "actions": {
           "eventChoices": {
             "scenarioSchoolPilot": "decline"
@@ -10220,10 +10816,19 @@
         }
       },
       {
-        "day": 449,
+        "day": 410,
         "actions": {
           "eventChoices": {
             "scenarioBrokenWorkflow": "force"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 454,
+        "actions": {
+          "eventChoices": {
+            "scenarioEvalBacklog": "skip"
           },
           "moves": []
         }
@@ -10249,19 +10854,27 @@
           },
           "moves": [
             {
+              "type": "meeting"
+            },
+            {
               "type": "raise",
               "archetype": "vc"
             }
           ],
           "eventChoices": {},
-          "addressWarnings": []
+          "addressWarnings": [],
+          "presidentAnswers": [
+            "first-war-plain",
+            "first-woke-plain",
+            "first-chips-plain"
+          ]
         }
       },
       {
-        "day": 509,
+        "day": 502,
         "actions": {
           "eventChoices": {
-            "scenarioReportingChannel": "discourage"
+            "scenarioContaminatedScore": "defend"
           },
           "moves": []
         }
@@ -10292,16 +10905,25 @@
             }
           ],
           "eventChoices": {
-            "boardOped": "ignore"
+            "boardLeak": "silent"
           },
           "addressWarnings": []
         }
       },
       {
-        "day": 575,
+        "day": 549,
         "actions": {
           "eventChoices": {
-            "scenarioCloudTerms": "defer"
+            "scenarioDataRenewal": "defer"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 591,
+        "actions": {
+          "eventChoices": {
+            "scenarioPriceCut": "accept"
           },
           "moves": []
         }
@@ -10325,27 +10947,18 @@
           "computeSplit": {
             "safety": 0
           },
-          "moves": [
-            {
-              "type": "meeting"
-            }
-          ],
+          "moves": [],
           "eventChoices": {
-            "boardWobble": "vent"
+            "boardOped": "ignore"
           },
-          "addressWarnings": [],
-          "presidentAnswers": [
-            "first-war-plain",
-            "first-woke-plain",
-            "first-chips-plain"
-          ]
+          "addressWarnings": []
         }
       },
       {
-        "day": 652,
+        "day": 639,
         "actions": {
           "eventChoices": {
-            "scenarioPriceCut": "accept"
+            "scenarioGrowthRound": "wait"
           },
           "moves": []
         }
@@ -10355,6 +10968,15 @@
         "actions": {
           "eventChoices": {
             "neocloudTrouble": "letgo"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 686,
+        "actions": {
+          "eventChoices": {
+            "scenarioReportingChannel": "discourage"
           },
           "moves": []
         }
@@ -10418,10 +11040,10 @@
         }
       },
       {
-        "day": 749,
+        "day": 752,
         "actions": {
           "eventChoices": {
-            "scenarioReasoningBill": "subsidize"
+            "scenarioWorkplaceTests": "scores"
           },
           "moves": []
         }
@@ -10484,19 +11106,10 @@
         }
       },
       {
-        "day": 772,
+        "day": 780,
         "actions": {
           "eventChoices": {
-            "scenarioPoaching": "accept"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 784,
-        "actions": {
-          "eventChoices": {
-            "scenarioRecognizedTest": "accept"
+            "scenarioReasoningBill": "subsidize"
           },
           "moves": []
         }
@@ -10522,18 +11135,17 @@
           },
           "moves": [],
           "eventChoices": {
-            "capabilityJump": "quiet",
-            "boardBuyer": "wait"
+            "boardWashington": "stay"
           },
           "hazardChoice": "fix",
           "addressWarnings": []
         }
       },
       {
-        "day": 810,
+        "day": 802,
         "actions": {
           "eventChoices": {
-            "scenarioWorkplaceTests": "scores"
+            "scenarioRecognizedTest": "accept"
           },
           "moves": []
         }
@@ -10579,13 +11191,13 @@
             }
           ],
           "eventChoices": {
-            "boardWashington": "stay"
+            "boardWobble": "vent"
           },
           "addressWarnings": []
         }
       },
       {
-        "day": 826,
+        "day": 828,
         "actions": {
           "eventChoices": {
             "scenarioOpenCompetition": "accept"
@@ -10664,7 +11276,7 @@
         }
       },
       {
-        "day": 873,
+        "day": 868,
         "actions": {
           "eventChoices": {
             "scenarioWeightTheft": "quiet"
@@ -10693,17 +11305,18 @@
           },
           "moves": [],
           "eventChoices": {
-            "ownLine": "screenOff"
+            "ownLine": "screenOff",
+            "capabilityJump": "quiet"
           },
           "hazardChoice": "fix",
           "addressWarnings": []
         }
       },
       {
-        "day": 900,
+        "day": 886,
         "actions": {
           "eventChoices": {
-            "scenarioDefenceTerms": "decline"
+            "scenarioGovernmentTests": "refuse"
           },
           "moves": []
         }
@@ -10734,16 +11347,25 @@
             }
           ],
           "eventChoices": {
-            "boardRequest": "stall"
+            "boardBuyer": "wait"
           },
           "addressWarnings": []
         }
       },
       {
-        "day": 921,
+        "day": 911,
         "actions": {
           "eventChoices": {
-            "scenarioPauseLetter": "decline"
+            "scenarioIndustryIncident": "dismiss"
+          },
+          "moves": []
+        }
+      },
+      {
+        "day": 929,
+        "actions": {
+          "eventChoices": {
+            "scenarioGridConflict": "fight"
           },
           "moves": []
         }
@@ -10774,16 +11396,16 @@
             }
           ],
           "eventChoices": {
-            "boardLeak": "silent"
+            "boardRequest": "stall"
           },
           "addressWarnings": []
         }
       },
       {
-        "day": 944,
+        "day": 948,
         "actions": {
           "eventChoices": {
-            "scenarioGovernmentTests": "refuse"
+            "scenarioPauseLetter": "decline"
           },
           "moves": []
         }
@@ -10835,10 +11457,10 @@
         }
       },
       {
-        "day": 972,
+        "day": 973,
         "actions": {
           "eventChoices": {
-            "scenarioReviewOverload": "accept"
+            "scenarioContinueResearch": "proceed"
           },
           "moves": []
         }
@@ -10868,61 +11490,27 @@
               "archetype": "vc"
             }
           ],
-          "eventChoices": {},
-          "addressWarnings": []
-        }
-      },
-      {
-        "day": 977,
-        "actions": {
           "eventChoices": {
-            "scenarioPacingRival": "race"
-          },
-          "moves": []
-        }
-      },
-      {
-        "day": 982,
-        "actions": null
-      },
-      {
-        "day": 982,
-        "actions": {
-          "budget": {
-            "spend": 105,
-            "split": {
-              "training": 0.5,
-              "security": 0.1,
-              "product": 0.2,
-              "talent": 0.2
-            }
-          },
-          "computeSplit": {
-            "safety": 0
-          },
-          "moves": [],
-          "eventChoices": {
-            "scenarioShutdownDrill": "accept",
             "oversightTamper": "ignore"
           },
           "addressWarnings": []
         }
       },
       {
-        "day": 986,
+        "day": 978,
         "actions": {
           "eventChoices": {
-            "scenarioAuditFailure": "dispute"
+            "scenarioReviewOverload": "accept"
           },
           "moves": []
         }
       },
       {
-        "day": 989,
+        "day": 982,
         "actions": null
       },
       {
-        "day": 989,
+        "day": 982,
         "actions": {
           "budget": {
             "spend": 105,
@@ -10944,16 +11532,16 @@
         }
       },
       {
-        "day": 991,
+        "day": 985,
         "actions": {
           "eventChoices": {
-            "scenarioAutomationThreshold": "ignore"
+            "scenarioShutdownDrill": "accept"
           },
           "moves": []
         }
       },
       {
-        "day": 996,
+        "day": 989,
         "actions": null
       }
     ]
