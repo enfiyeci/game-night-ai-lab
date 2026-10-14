@@ -11,6 +11,9 @@ import { ROUND_DAYS, nextRoundDay, roundMarkDay } from './time.js';
 import { eraById } from './data/eras.js';
 import { sideRng } from './contracts.js';
 import { FEED_KEEP } from './feedLive.js';
+import { MEETINGS } from './data/president.js';
+import { meetingDay } from './president.js';
+import { boardVoteThisRound } from './board.js';
 import {
   failedPresidentPromises,
   promiseCallCard,
@@ -213,15 +216,29 @@ function isMarkDay(state, day) {
   return false;
 }
 
+// Board cards keep a story week clear of a meeting: the President's call, or the board meeting the day before a vote mark
+// (pacing fix, 2026-10-14).
+const MEETING_CLEAR_DAYS = 7;
+function meetingDays(state) {
+  const days = MEETINGS.map(meetingDay);
+  if (boardVoteThisRound(state)) days.push(nextRoundDay(state) - 1);
+  return days;
+}
+
 export function stampNewCards(state) {
   const days = ROUND_DAYS[state.era];
   state.pendingEvents.forEach((card, index) => {
     if (card.landsAt != null) return;
     const rng = sideRng(state, 9 + index);
     const anchor = byId(card.eventId ?? card.id)?.anchor;
+    const latest = Math.max(0, Math.floor(days * 0.8) - 1);
+    const meetings = byId(card.id)?.kind === 'board' ? meetingDays(state) : [];
+    const clear = Array.from({ length: latest + 1 }, (_, k) => state.day + k)
+      .filter((day) => meetings.every((meeting) => Math.abs(day - meeting) >= MEETING_CLEAR_DAYS));
     card.landsAt = anchor
       ? state.day + Math.floor(days * anchor.at)
-      : state.day + rng.int(0, Math.max(0, Math.floor(days * 0.8) - 1));
+      : meetings.length && clear.length ? clear[rng.int(0, clear.length - 1)]
+        : state.day + rng.int(0, latest);
     const timing = EVENT_TIMING[card.eventId ?? card.id] ?? DEFAULT_EVENT_TIMING;
     card.dueAt = card.landsAt + Math.min(timing.days, state.era === 5 ? 6 : Infinity);
     // The run ends at era 5's last mark: a card due after it could never fall back, so it is due the day before.

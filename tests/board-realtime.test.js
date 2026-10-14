@@ -8,7 +8,9 @@ import { seat } from '../sim/board.js';
 import { stampNewCards } from '../sim/events.js';
 import { BOARD_EVENTS } from '../sim/data/boardEvents.js';
 import { eraById } from '../sim/data/eras.js';
-import { ROUND_DAYS, roundMarkDay } from '../sim/time.js';
+import { ROUND_DAYS, roundMarkDay, roundSpan } from '../sim/time.js';
+import { MEETINGS } from '../sim/data/president.js';
+import { meetingDay } from '../sim/president.js';
 import { meetingDueNow } from '../ui/logic/board.js';
 import { createGame } from '../ui/game.js';
 import { playerActions } from './helpers/policy.js';
@@ -87,6 +89,32 @@ test('a board card is always due before the day its meeting opens', () => {
       }
     }
   }
+});
+
+// Pacing fix (2026-10-14): a board card never lands in the same story week as the President's call or the board meeting.
+test('a board card lands at least a story week away from every meeting', () => {
+  for (const era of [2, 3, 4]) {
+    for (const turnInEra of [2, 3]) {
+      for (let seed = 1; seed <= 30; seed += 1) {
+        const s = createInitialState({ seed });
+        const roundStart = roundSpan(4 * (era - 1) + turnInEra).start;
+        Object.assign(s, { era, turnInEra, turn: 4 * (era - 1) + turnInEra, day: roundStart, dayInRound: 0 });
+        s.pendingEvents = BOARD_EVENTS.map((event) => ({ id: event.id, choices: [] }));
+        stampNewCards(s);
+        const meetings = MEETINGS.map(meetingDay);
+        if (turnInEra === 3) meetings.push(roundMarkDay(s, 1) - 1); // the board meeting, the day before the vote mark
+        for (const card of s.pendingEvents) {
+          for (const day of meetings) assert.ok(Math.abs(card.landsAt - day) >= 7, `${card.id} lands day ${card.landsAt}, meeting day ${day}, era ${era} seed ${seed}`);
+        }
+      }
+    }
+  }
+  // The era-4 vote round holds both the President's call and the board meeting; cards still find a clear day.
+  const s = createInitialState({ seed: 1 });
+  Object.assign(s, { era: 4, turnInEra: 3, turn: 15, day: roundSpan(15).start, dayInRound: 0 });
+  s.pendingEvents = [{ id: BOARD_EVENTS[0].id, choices: [] }];
+  stampNewCards(s);
+  assert.ok(s.pendingEvents[0].landsAt <= meetingDay(MEETINGS[1]) - 7);
 });
 
 test('the emergency-vote card is never due on a round mark, so its vote is known the day before', () => {
