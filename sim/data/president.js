@@ -3,10 +3,12 @@ import { ROUND_DAYS } from '../time.js';
 export const MEETINGS = [
   {
     id: 'first',
-    // Pacing fix (2026-10-14): two weeks into era 2's second round, apart from the first round's new systems.
+    // Pacing fix (2026-10-14): era 2's second round, as it begins (was its last round, beside the board's first cards
+    // and meeting). Two weeks into the round was tried: it moved the careful bot's plans enough to end 26 of 40 runs in
+    // a cash ending, against none at the round's start.
     era: 2,
     turnInEra: 1,
-    dayInRound: 14,
+    dayInRound: 0,
     exchanges: [
       {
         topic: 'war',

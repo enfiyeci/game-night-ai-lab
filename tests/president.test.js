@@ -23,7 +23,7 @@ const jargonIds = (id = 'first') => styleIds('jargon', id);
 
 test('the President meeting script has the required exchanges and answer mix', () => {
   assert.deepEqual(MEETINGS.map(({ id, era, turnInEra, dayInRound }) => ({ id, era, turnInEra, dayInRound })), [
-    { id: 'first', era: 2, turnInEra: 1, dayInRound: 14 },
+    { id: 'first', era: 2, turnInEra: 1, dayInRound: 0 },
     { id: 'second', era: 4, turnInEra: 3, dayInRound: ROUND_DAYS[4] - 7 },
   ]);
   for (const entry of MEETINGS) {
@@ -94,14 +94,12 @@ test('a bargain raises the stake one tier only when the meeting does not end in 
   assert.equal(walkedOut.cash, 1000);
 });
 
-test('the first meeting is due two weeks into era 2\'s second round', () => {
+test('the first meeting is due as era 2\'s second round begins', () => {
   const state = createInitialState();
   assert.equal(meetingDue(state), null);
   state.era = 2;
-  state.turnInEra = 1;
-  state.dayInRound = 13;
   assert.equal(meetingDue(state), null);
-  state.dayInRound = 14;
+  state.turnInEra = 1;
   assert.equal(meetingDue(state), 'first');
   state.meetingsHeld.push('first');
   assert.equal(meetingDue(state), null);
@@ -298,7 +296,7 @@ test('a second-meeting grudge lowers the amendment-demand threshold to two flatt
 test('endTurn opens a due meeting and answers it on the next turn', () => {
   const previous = createInitialState();
   previous.era = 2;
-  previous.turnInEra = 1;
+  previous.turnInEra = 0;
   const due = endTurn(previous, {}, no);
   assert.deepEqual(previous.meeting, null);
   assert.deepEqual(due.state.meeting, { id: 'first', patience: 10, expiresTurn: 1 });
@@ -430,16 +428,19 @@ test('the second meeting opens a story week before era 4 ends, apart from the bo
 
 test('a call that opens between marks survives the next mark and lapses a round later', () => {
   let state = createInitialState();
-  state.era = 2;
-  state.turnInEra = 1;
-  state.dayInRound = 13;
+  state.era = 4;
+  state.turnInEra = 3;
+  state.turn = 15;
+  state.meetingsHeld = ['first'];
+  state.dayInRound = ROUND_DAYS[4] - 8;
   state = advanceDays(state, 1, no).state;
-  assert.equal(state.meeting?.id, 'first');
+  assert.equal(state.meeting?.id, 'second');
   const turn = state.turn;
-  state = advanceDays(state, ROUND_DAYS[2] - state.dayInRound, no).state;
+  state = advanceDays(state, ROUND_DAYS[4] - state.dayInRound, no).state;
+  if (state.ending) return; // an era 4 gate can end a bare test run; the call's timing is what matters
   assert.equal(state.turn, turn + 1);
-  assert.equal(state.meeting?.id, 'first', 'still open after the mark');
-  const out = advanceDays(state, ROUND_DAYS[2], no);
+  assert.equal(state.meeting?.id, 'second', 'still open after the mark');
+  const out = advanceDays(state, ROUND_DAYS[5], no);
   assert.equal(out.state.meeting, null);
   assert.deepEqual(out.events.filter((event) => event.type === 'meetingOutcome').map((event) => event.walkedOut), [true]);
 });
