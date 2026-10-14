@@ -16,7 +16,8 @@ export const MISALIGNMENT_CHECK_ERA = 3;
 export const MISALIGNMENT_ENDING_ERA = 4;
 // Owner 2026-09-26, no dice: an agent release goes wrong when hidden debt × capability / 100 reaches the line (the old
 // roll's even-chance point). Capability counts only up to 100 here (owner pick A, the capability cap).
-export const MISALIGNMENT_LINE = 35;
+// 38 (owner, 2026-10-14): at 35 the balanced bot lost 74% of runs to misalignment; at 38 it wins 28% (200 seeds).
+export const MISALIGNMENT_LINE = 38;
 export const misalignmentScore = (state, capability) => (state.alignmentDebt + state.concealedDebt) * dangerCapability(capability) / 100;
 
 // The player can rename the four size words once for their lab (state.tierWords); a blank word falls back to the default.
