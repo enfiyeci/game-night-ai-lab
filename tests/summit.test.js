@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import {
   proposeSummit, voteMotion, readTheRoom, demandStatus, dealWeek, investigate, expireSuspicions, playerBreak, COMMITMENTS,
-  PARTIES,
+  PARTIES, SUMMIT_OPEN_DAY, summitOpensNow,
 } from '../sim/summit.js';
 import { BREAK_GAIN, CAUGHT_TRUST, DEFAULT_CHECK } from '../sim/data/summit.js';
 import { finalEnding } from '../sim/endings.js';
@@ -353,16 +353,41 @@ test('six commitments remain on offer', () => {
   assert.equal(Object.keys(COMMITMENTS).length, 6);
 });
 
-test('the President calls as era 5 begins, before the summit', () => {
+// Pacing fix (2026-10-14): he calls a story week before era 4 ends (was era 5's first day); an untaken call is still
+// open as era 5 begins, and the summit waits for it.
+test('the President calls a week before era 4 ends, before the summit', () => {
   const s = createInitialState();
   s.era = 4;
   s.turnInEra = 3;
   s.meetingsHeld = ['first'];
   const out = endTurn(s, {}, calm);
+  const due = out.events.findIndex((e) => e.type === 'meetingDue' && e.id === 'second');
+  assert.ok(due >= 0);
+  const eraStart = out.events.findIndex((e) => e.type === 'eraStart');
   if (out.state.ending) return; // an era 4 gate can end a bare test run; the meeting timing is what matters
+  assert.ok(due < eraStart, 'the call comes in era 4');
   assert.equal(out.state.era, 5);
   assert.equal(out.state.meeting?.id, 'second');
   assert.equal(out.state.turnInEra, 0);
+});
+
+test('the summit opens by itself three story days into era 5, not on its first day', () => {
+  const s = era5();
+  for (const [day, opens] of [[0, false], [2, false], [SUMMIT_OPEN_DAY, true], [6, true]]) {
+    s.dayInRound = day;
+    assert.equal(summitOpensNow(s), opens, `day ${day}`);
+  }
+  s.deal = { collapsed: false };
+  assert.equal(summitOpensNow(s), false, 'once held, never again');
+});
+
+test('the summit vote never needs a free action', () => {
+  const s = era5();
+  s.dayInRound = SUMMIT_OPEN_DAY;
+  s.round.moves = 2;
+  const out = applyActions(s, { moves: [{ type: 'summit', motions: [{ card: 'evaluators', check: 2, promises: {} }] }] }, calm);
+  assert.deepEqual(out.errors, []);
+  assert.ok(out.state.deal);
 });
 
 test('catching after an investigation undoes exactly what the break gained', () => {

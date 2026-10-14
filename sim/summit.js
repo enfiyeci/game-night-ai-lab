@@ -20,6 +20,10 @@ export const PARTIES = Object.freeze([...RIVAL_TEMPLATES.map((rival) => rival.id
 export const SUMMIT_SKIP_RACE_HEAT = 8;
 export const SUMMIT_SKIP_US_FAVOR = 5;
 export const SUMMIT_SKIP_INTL_FAVOR = 5;
+// The summit opens by itself a few story days into era 5, not on the day of the move (pacing fix, 2026-10-14).
+export const SUMMIT_OPEN_DAY = 3;
+export const summitOpensNow = (state) => state.era === 5 && state.turnInEra === 0 && !state.deal && !state.ending
+  && state.dayInRound >= SUMMIT_OPEN_DAY;
 
 // Parties whose demand does not depend on anyone else come first; followers after the party they follow.
 const RESOLVE_ORDER = Object.freeze(['east', 'west', 'deepthink', 'lodestar', 'qilin', 'openbrain']);

@@ -46,6 +46,9 @@ import { setAutomation, automationTick, aiProposals, applyApprovals, reviewerCos
 import { landDue, stampLandings } from './landings.js';
 
 export const MAX_MOVES = 2;
+// The President's call and the Geneva summit can open between marks, after both actions are used (pacing fix,
+// 2026-10-14): taking them never needs a free action, and they use one when one is free.
+export const needsFreeAction = (move) => !['meeting', 'summit'].includes(move?.type);
 const BUDGET_KEYS = ['training', 'security', 'product', 'talent'];
 // sideRng salts in sim/: 0 initial offers, 1 deals, 2 site opposition, 3 contracts, 4 queue,
 // 5 offers, 6 deliveries, 8 board events (sim/data/boardEvents.js), 9 + card index for card landing days
@@ -254,8 +257,7 @@ export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = 
   state.burnPlanned = projectBurn(state);
 
   for (const move of actions.moves ?? []) {
-    // The President's call can open between marks, after both actions are used: taking it never needs a free one.
-    if (state.round.moves >= MAX_MOVES && move.type !== 'meeting') {
+    if (state.round.moves >= MAX_MOVES && needsFreeAction(move)) {
       errors.push(`only ${MAX_MOVES} actions per round`);
       break;
     }

@@ -6,6 +6,7 @@ import {
   advanceDays as runDays,
   endTurn as runTurn,
   MAX_MOVES,
+  needsFreeAction,
   setBudget as validateBudget,
 } from '../sim/turn.js';
 import { turnRecord } from './logic/finance.js';
@@ -109,7 +110,7 @@ export function createGame({ seed = 1, state, history = [], eventMode = state?.e
       return game.flush();
     },
     addMove(move) {
-      if (game.movesLeft() <= 0 && move.type !== 'meeting') return { ok: false, error: `only ${MAX_MOVES} actions per round` }; // the President's call never needs a free action (sim/turn.js)
+      if (game.movesLeft() <= 0 && needsFreeAction(move)) return { ok: false, error: `only ${MAX_MOVES} actions per round` };
       actions.moves.push(structuredClone(move));
       return game.flush();
     },
