@@ -4783,7 +4783,16 @@ html.title-waking #hud { transition: opacity .5s ease .6s; }
 .hud-rumor.landed { color: var(--paper); background: color-mix(in oklab, var(--wood) 75%, var(--ink)); }
 .hud-rumor.landed::before { background: var(--paper); }
 
-.hud-flaw[hidden], .hud-polish[hidden], .hud-rumor[hidden] { display: none; }
+/* A cheating trace after the first one waits here, the clock running (pacing fix, 2026-10-14). */
+.hud-hazard { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 7px 12px 8px; border: 1px solid color-mix(in oklab, var(--ink) 8%, transparent); border-radius: 14px; background: var(--paper); box-shadow: 0 2px 0 color-mix(in oklab, var(--ink) 14%, transparent), 0 6px 16px color-mix(in oklab, var(--ink) 11%, transparent); pointer-events: auto; }
+.hud-hazard b { font-size: 12.5px; font-weight: 900; color: color-mix(in oklab, var(--coral) 72%, var(--ink)); }
+.hud-hazard-row { display: flex; gap: 6px; }
+.hud-hazard-row button { padding: 4px 10px 5px; border: 0; border-radius: 999px; color: color-mix(in oklab, var(--ink) 82%, var(--paper)); background: color-mix(in oklab, var(--ink) 7%, var(--paper)); font: inherit; font-size: 11.5px; font-weight: 800; white-space: nowrap; cursor: pointer; }
+.hud-hazard-row button:hover { background: color-mix(in oklab, var(--coral) 16%, var(--paper)); }
+.hud-hazard-row button:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+.hud-hazard small { color: color-mix(in oklab, var(--ink) 60%, var(--paper)); font-size: 10.5px; font-weight: 700; }
+
+.hud-flaw[hidden], .hud-polish[hidden], .hud-rumor[hidden], .hud-hazard[hidden], .hud-publish[hidden] { display: none; }
 
 .has-polish-flaws .hud, .has-polish-flaws .hud-polish { left: calc(50% - 47px); }
 

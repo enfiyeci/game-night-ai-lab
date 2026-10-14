@@ -1,7 +1,9 @@
 import * as trainingVisuals from '../ui/logic/training.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { alignmentFor, badgeCounts, bubbleSpawns, expectedGain, floorHint, readyNote } from '../ui/logic/training.js';
+import { alignmentFor, badgeCounts, bubbleSpawns, expectedGain, floorHint, hazardCardDue, hazardInPill, readyNote } from '../ui/logic/training.js';
+import { resolveHazard } from '../sim/hazards.js';
+import { releaseModel } from '../sim/release.js';
 import { createGame } from '../ui/game.js';
 import { SCENARIOS } from '../ui/logic/scenarios.js';
 import { createInitialState } from '../sim/state.js';
@@ -158,6 +160,35 @@ test('a trained model waiting for release names the floor click', () => {
   state.pendingModel = { gain: 12 };
   state.ending = { id: 'x' };
   assert.equal(readyNote(state), null, 'no note once the run has ended');
+});
+
+// Pacing fix (2026-10-14): the full cheating-trace card stops the clock once a run; later ones wait under the pill.
+test('the cheating trace gets its full card the first time, then waits under the HUD pill', () => {
+  const state = createInitialState({ seed: 1 });
+  assert.equal(hazardCardDue(state), false);
+  state.pendingModel = { gain: 12, hazard: { type: 'rewardHacking', size: 6 } };
+  assert.equal(hazardCardDue(state), true);
+  assert.equal(hazardInPill(state), false);
+  assert.equal(resolveHazard(state, 'fix').ok, true);
+  assert.equal(state.flags.hazardsMet, 1);
+  state.pendingModel.hazard = { type: 'rewardHacking', size: 6 };
+  assert.equal(hazardCardDue(state), false, 'no second full card');
+  assert.equal(hazardInPill(state), true, 'the same choices wait in the HUD');
+  state.ending = 'aligned';
+  assert.equal(hazardInPill(state), false);
+});
+
+test('a later trace left unanswered ships as ignored, as the HUD note says', () => {
+  const state = SCENARIOS.hazard(1);
+  assert.ok(state.pendingModel?.hazard, 'the scenario ends with a trace waiting');
+  state.flags.hazardsMet = 1;
+  assert.equal(hazardInPill(state), true);
+  const debt = state.alignmentDebt;
+  const result = releaseModel(state, { picks: [], price: 'market', reasoning: 'medium', family: 'Kestrel', generation: state.models.length + 1 });
+  assert.equal(result.ok, true, result.error);
+  assert.equal(result.hazardIgnored, true);
+  assert.ok(state.alignmentDebt >= debt);
+  assert.equal(state.flags.hazardsMet, 2);
 });
 
 test('the floor ring shows only while the first model of the run waits', () => {

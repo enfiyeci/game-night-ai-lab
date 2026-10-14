@@ -1,4 +1,5 @@
 import { workingName as nextName } from '../logic/naming.js';
+import { hazardCardDue } from '../logic/training.js';
 import { enterTransition, exitTransition } from '../components/transition.js';
 
 export const HAZARD_CHOICES = [
@@ -159,7 +160,7 @@ export function mountHazard(game, { stage, overlay }) {
 
   // Another dialog, an event card or the screen wall already up goes first; the card opens when it closes.
   const busy = () => Boolean(overlay.querySelector('.dialog-layer, .event-layer, .screenwall-layer'));
-  const shouldOpen = () => Boolean(game.state.pendingModel?.hazard) && !game.state.ending && !layer && !busy();
+  const shouldOpen = () => hazardCardDue(game.state) && !layer && !busy(); // later hazards wait in the HUD (ui/hud.js)
 
   function check() {
     if (layer && (!game.state.pendingModel?.hazard || game.state.ending)) teardown(); // resolved some other way
