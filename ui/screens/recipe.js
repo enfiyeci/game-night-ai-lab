@@ -501,6 +501,9 @@ function computeFooter(state, preview, releaseEstimate = false) {
 // free compute (a deal, or capping serving in the budget), so a new player is never left at a dead Start button.
 function computeHelp(state, draft, preview, { onFit, onDeals, onBudget }) {
   if (!preview.errors.includes('not enough free compute')) return null;
+  // A run under way or a model waiting to be released is the real reason; more compute would not start a run, so the
+  // error line says that instead (playtest 2026-10-14).
+  if (state.activeRun || state.pendingModel) return null;
   const root = document.createElement('div');
   root.className = 'recipe-help';
   root.setAttribute('role', 'alert');

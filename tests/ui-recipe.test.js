@@ -442,3 +442,12 @@ test('Escape still cancels the recipe after a page turn', async () => {
   await closed;
   assert.equal(overlay.querySelector('.dialog-layer'), null);
 });
+
+// Playtest 2026-10-14: with a model waiting to be released, the dialog showed only the compute help, hiding the reason.
+test('a model waiting to be released is the reason shown, not the compute help', async () => {
+  const state = SCENARIOS.era2Deals(1);
+  assert.ok(state.pendingModel, 'the scenario has a trained model waiting');
+  const { layer } = await openRecipeAt(state);
+  assert.equal(layer.querySelector('.recipe-help'), null);
+  assert.equal(layer.querySelector('.recipe-error').textContent, 'Release the trained model first');
+});
