@@ -104,8 +104,8 @@ function screenAgenda(motions, results, current, phase) {
 const summitShown = new WeakSet();
 
 export function openSummit(game, overlayRoot) {
-  // An open event card or phone keeps the floor until it is answered.
-  if (overlayRoot.querySelector('.sm-layer, .event-layer, .ev-phone, .screenwall-layer')) return null;
+  // An open event card or phone keeps the floor until it is answered; a busy Policy team cannot hold the vote.
+  if (overlayRoot.querySelector('.sm-layer, .event-layer, .ev-phone, .screenwall-layer') || teamBusyError(game.state, { type: 'summit' })) return null;
   summitShown.add(game);
   const motions = []; // voted, in order: { card, check, promises made during that motion }
   const results = []; // { signed, binds } for each voted motion

@@ -71,3 +71,11 @@ test('the summit waits while the Policy team is busy, shows why on the menu, and
   assert.equal(summits(overlay).length, 1, 'the blocked try did not count as shown');
   assert.equal(disabledReason(item, game, () => {}, projectQueue(game.state, game.queue)), '');
 });
+
+test('openSummit itself refuses while the Policy team is busy (the #summit debug route goes through it)', () => {
+  const game = summitWeek();
+  game.state.round.teams.policy = 'release';
+  const overlay = stage();
+  assert.equal(openSummit(game, overlay), null);
+  assert.equal(summits(overlay).length, 0);
+});
