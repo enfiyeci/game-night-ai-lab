@@ -81,25 +81,40 @@ test('era 5 spreads its scenario cards over all four weeks, after the summit ope
 });
 
 // Review fix (2026-10-14): era 5's last card could land on day 26 with its deadline clamped to day 27, a one-day window.
-test('no scenario card ever gets less than its era\'s normal answer window', () => {
+// Round 2: a card left open to its deadline still blocks new cards that day (scenarioTick runs before resolveDue), so
+// card days also leave room for the cards after them; none is dropped.
+test('no scenario card ever gets less than its era\'s normal answer window, and none is dropped', () => {
   const normal = { 1: 21, 2: 21, 3: 10, 4: 10, 5: 3 };
+  // Cards fired in seeds 1-200 by the director before these fixes (every card fired then, some with short windows).
+  const before = { 1: 1307, 2: 1292, 3: 912, 4: 904, 5: 902 };
   for (let era = 1; era <= 5; era += 1) {
     for (const holdOpen of [false, true]) {
+      let fired = 0;
       for (let seed = 1; seed <= 200; seed += 1) {
         const state = richState(era, seed);
-        for (let day = 0; day < 4 * ROUND_DAYS[era]; day += 1) {
-          state.day = day;
-          state.turnInEra = Math.floor(day / ROUND_DAYS[era]);
-          state.dayInRound = day % ROUND_DAYS[era];
-          // An unanswered card stays until its deadline and holds the next one back; an answered one goes at once.
-          state.pendingEvents = holdOpen ? state.pendingEvents.filter((card) => card.dueAt > day) : [];
+        let firedHere = 0;
+        // sim/turn.js advanceDays: the tick, then cards past their deadline resolve, then on a mark day a second tick.
+        const tick = (day) => {
           for (const event of scenarioTick(state)) {
             const card = state.pendingEvents.find((pending) => pending.id === event.id);
             assert.equal(card.dueAt - card.landsAt, normal[era], `era ${era}, seed ${seed}, day ${day}, held ${holdOpen}`);
             assert.ok(card.dueAt <= 4 * ROUND_DAYS[era] - 1, `era ${era}, seed ${seed}: due on the era's last day at the latest`);
+            firedHere += 1;
           }
+          if (!holdOpen) state.pendingEvents = []; // answered the day it lands
+        };
+        for (let day = 0; day < 4 * ROUND_DAYS[era]; day += 1) {
+          state.day = day;
+          state.turnInEra = Math.floor(day / ROUND_DAYS[era]);
+          state.dayInRound = day % ROUND_DAYS[era];
+          tick(day);
+          state.pendingEvents = state.pendingEvents.filter((card) => day < card.dueAt); // left open: resolved at its deadline
+          if (day > 0 && day % ROUND_DAYS[era] === 0) tick(day);
         }
+        assert.equal(firedHere, state.scenarioDirector.slots.length, `era ${era}, seed ${seed}, held ${holdOpen}: a card was dropped`);
+        fired += firedHere;
       }
+      assert.equal(fired, before[era], `era ${era}, held ${holdOpen}`);
     }
   }
 });

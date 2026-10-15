@@ -33,11 +33,15 @@ export function scenarioTick(state) {
     const at = state.era === 5 ? (i) => ERA5_FIRST + (ERA5_LAST - ERA5_FIRST) * (i / (count - 1)) : (i) => (span / (count + 1)) * (i + 1);
     const gap = state.era === 5 ? (ERA5_LAST - ERA5_FIRST) / (count - 1) : span / (count + 1);
     const wobble = Math.floor(gap / (long ? 10 : 5));
-    // No card is scheduled so late that its full answer window would run past the era's last day (review fix).
+    // No card is scheduled so late that its full answer window would run past the era's last day, and each earlier
+    // card leaves room for the ones after it even when left open to its deadline: an open card blocks new ones through
+    // its due day, so card i comes at the latest (window + 1) days per later card before the last possible day (review
+    // fix). Only era 5's short span is tight enough for this to move a card.
     const latest = span - 1 - answerWindow(state.era);
+    const latestFor = (i) => latest - (answerWindow(state.era) + 1) * (count - 1 - i);
     director = state.scenarioDirector = {
       era: state.era, index: 0, nextAttempt: 0,
-      slots: Array.from({ length: count }, (_, i) => start + Math.min(latest, Math.floor(at(i) + rng.int(-wobble, wobble)))),
+      slots: Array.from({ length: count }, (_, i) => start + Math.min(latestFor(i), Math.floor(at(i) + rng.int(-wobble, wobble)))),
       end: start + span,
     };
   }
