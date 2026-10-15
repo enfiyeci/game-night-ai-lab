@@ -8,6 +8,7 @@ import {
   MAX_MOVES,
   setBudget as validateBudget,
 } from '../sim/turn.js';
+import { nextRoundDay } from '../sim/time.js';
 import { turnRecord } from './logic/finance.js';
 
 const initialQueue = (budget) => ({
@@ -88,6 +89,19 @@ export function createGame({ seed = 1, state, history = [], eventMode = state?.e
       debugActionEvents.push(...result.events);
       debugActionErrors.push(...result.errors);
       return result;
+    },
+    // The state just past the next round mark, played the way the board meeting's crossMark plays it (queued actions
+    // first, then a day at a time until the round changes or the run ends) on copies of the state and the random
+    // stream: the game is not touched. From the eve of the mark (one day, as the meeting uses it) the real crossing
+    // comes out the same; over several days subscribers may act between days in the real game and not in the copy.
+    peekMark() {
+      const random = rng.fork();
+      const start = currentState;
+      let state = structuredClone(start);
+      if (actions.moves.length || Object.keys(actions.eventChoices).length) state = applyActions(state, structuredClone(actions), random).state;
+      const days = Math.max(1, nextRoundDay(start) - start.day);
+      for (let day = 0; day < days && !state.ending && state.turn === start.turn; day += 1) state = runDays(state, 1, random).state;
+      return state;
     },
     get financeHistory() {
       return financeHistory.map((row) => ({ ...row }));

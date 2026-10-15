@@ -2,7 +2,8 @@
 // The call rings over the office, the meeting plays with a private read of the room beside it, the seven votes are
 // revealed one at a time from the record the sim kept, then the result dialog (frame 4A) follows.
 // Real time (the real-time lane's hook): a game subscriber opens it on the last story day before a round mark that holds
-// a vote and pauses the clock; the mark is crossed only when the player calls the vote, by the meeting itself.
+// a vote and pauses the clock; the mark is crossed only when the player calls the vote, by the meeting itself, except
+// when the era's last mark would leave the lab behind with no vote held (leftBehindNow): then it is crossed as the call rings.
 import { BOARD_MEMBERS, holdVote } from '../../sim/board.js';
 import { makeBoardDeals } from '../../sim/boardDeals.js';
 import { ERAS, eraById } from '../../sim/data/eras.js';
@@ -798,8 +799,36 @@ export function mountBoardMeeting(game, { overlay, stage }) {
       if (base === '4a') resultDialog();
     }
 
+    // Left behind at an era's end (owner pick A, 2026-10-15): the usual call, a room that says the votes are there, then
+    // "no vote today" contradicted itself. The era's last day is played on a copy first (game.peekMark); if the copy is
+    // left behind, no vote will be held, so there are no deals to make and the meeting crosses the mark at once: the same
+    // state and the same random draws as the copy, so the same result. The call then says so, as frame S1 drew it.
+    // It runs inside the update that opened the meeting (game.js publish), so subscribers after the meeting hear the
+    // ending before that update; none of them reads the update rather than game.state today.
+    function leftBehindNow() {
+      try {
+        if (!lastRound || !game.peekMark) return false;
+        const peek = game.peekMark();
+        // A vote called earlier is held at this mark before the race is judged: it plays as usual, and the call that
+        // follows it says a vote was held (finish, in resultDialog above).
+        if (peek.ending !== 'leftBehind' || voteReveal(game.state, peek)) return false;
+      } catch (error) {
+        console.error(error); // no copy to judge by: the usual call, which explains the loss after the vote is called
+        return false;
+      }
+      try {
+        crossMark();
+        if (after.ending === 'leftBehind') leftBehindRing();
+        else { console.error('the mark did not leave the lab behind as its copy did'); close(); }
+      } catch (error) {
+        console.error(error);
+        close();
+      }
+      return true;
+    }
+
     if (preview && step !== 'ring') still(step);
-    else ring();
+    else if (preview || !leftBehindNow()) ring();
     return session;
   }
 
