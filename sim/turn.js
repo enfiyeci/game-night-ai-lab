@@ -257,9 +257,10 @@ export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = 
   state.burnPlanned = projectBurn(state);
 
   for (const move of actions.moves ?? []) {
+    // Only the over-cap move is skipped, so a set piece queued after it still runs whatever the order.
     if (usesAction(move) && state.round.moves >= MAX_MOVES) {
       errors.push(`only ${MAX_MOVES} actions per round`);
-      break;
+      continue;
     }
     const busy = ignoreTeams ? null : teamBusyError(state, move);
     if (busy) {

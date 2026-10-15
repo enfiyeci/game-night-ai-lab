@@ -395,6 +395,24 @@ test('a meeting move needs an open meeting and leaves both round actions for oth
   assert.equal(out.state.meetingsHeld.includes('first'), true);
 });
 
+// Review fix (round 2): an over-cap move used to stop the whole list, so a call queued after it never ran.
+test('a move over the two-action cap is skipped alone, and a call queued after it still runs', () => {
+  const state = open(createInitialState());
+  const [first, second] = state.compute.offers.filter((offer) => offer.units != null);
+  const call = { type: 'meeting' };
+  const run = { type: 'startRun', recipe: smallRecipe };
+  const deal = { type: 'deal', offerId: first.id };
+  const extra = { type: 'deal', offerId: second.id };
+  for (const moves of [[run, deal, extra, call], [call, run, deal, extra], [run, call, deal, extra]]) {
+    const out = applyActions(state, { moves, presidentAnswers: plainIds() }, no);
+    const order = moves.map((move) => move.type).join(', ');
+    assert.deepEqual(out.errors, ['only 2 actions per round'], order);
+    assert.equal(out.state.round.moves, 2, order);
+    assert.equal(out.state.meeting, null, order);
+    assert.equal(out.state.meetingsHeld.includes('first'), true, order);
+  }
+});
+
 test('a meeting at low favour withholds the grant', () => {
   const state = open(createInitialState());
   state.govFavor.us = 60;
