@@ -92,6 +92,8 @@ test('the whiteboard shows the lanes, the line 15 behind the leader and Priya\'s
   assert.equal(view.ends, 'era ends in 6 weeks!!');
   assert.equal(view.note, '3 points past the line!');
   assert.equal(raceBoardView(raceAt({ daysLeft: 14 })).ends, 'era ends in 2 weeks!!');
+  assert.equal(raceBoardView(raceAt()).signer, 'Priya');
+  assert.equal(raceBoardView({ ...raceAt(), leads: { research: 'dev' } }).signer, 'Dev'); // the board is signed by the hired Head of Research
   assert.equal(raceBoardView(raceAt({ era: 5, daysLeft: 1 })).ends, 'era ends in 1 day!!');
   assert.equal(raceBoardView(raceAt({ ahead: { openbrain: 16, deepthink: 6, lodestar: -12, qilin: -16 } })).note, '1 point past the line!');
   assert.equal(raceBoardView(raceAt({ ahead: { openbrain: 17, deepthink: 6, lodestar: -12, qilin: -16 } })).note, '2 points past the line!');

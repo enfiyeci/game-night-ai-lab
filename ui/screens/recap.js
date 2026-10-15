@@ -80,7 +80,7 @@ export function buildRecapLayer(model) {
   const critics = el('div', 'rc-crit');
   for (const critic of model.critics) {
     const quote = el('div');
-    quote.innerHTML = portrait(`advisor-${critic.role}`, 34, critic.mood);
+    quote.innerHTML = portrait(critic.look ?? `advisor-${critic.role}`, 34, critic.mood);
     const words = el('span');
     words.append(el('b', null, `${critic.name} · ${critic.title}`), document.createTextNode(critic.text));
     quote.append(words);

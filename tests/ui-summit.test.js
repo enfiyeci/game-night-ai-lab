@@ -65,7 +65,10 @@ test('the summit waits while the Policy team is busy, shows why on the menu, and
   assert.equal(summits(overlay).length, 0, 'no pop-up while Policy is busy');
   const item = ITEMS.find((entry) => entry.id === 'summit');
   assert.match(disabledReason(item, game, () => {}, projectQueue(game.state, game.queue)), /^The policy team is busy until Jan 2027, week 2$/);
-  delete game.state.round.teams.policy; // Policy frees up within the summit week
+  // Freed by hand: in a real game a release keeps Policy busy to the round mark, which in era 5 ends the summit week, so
+  // a release in that week misses the summit (the release screen warns: ui/logic/release.js summitWarning). This only
+  // checks that the blocked try does not count as shown.
+  delete game.state.round.teams.policy;
   game.setField('budget', game.state.budget);
   await frames();
   assert.equal(summits(overlay).length, 1, 'the blocked try did not count as shown');

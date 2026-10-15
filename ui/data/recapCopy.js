@@ -57,12 +57,12 @@ export const EXPLAIN = {
   fallbackAbout: 'The card said: “{post}”',
 };
 
-// The four leads, as the critics' corner names them.
+// The critics' corner's short seat labels. Names and faces come from the leads hired for the seats (sim/leads.js).
 export const LEADS = {
-  safety: { name: 'Tomas', role: 'Safety' },
-  research: { name: 'Priya', role: 'Research' },
-  cfo: { name: 'Margot', role: 'CFO' },
-  policy: { name: 'Jules', role: 'Policy' },
+  safety: { role: 'Safety' },
+  research: { role: 'Research' },
+  cfo: { role: 'CFO' },
+  policy: { role: 'Policy' },
 };
 
 // The critics' corner. A lead who took a side on one of the year's calls speaks about it; one who did not gives

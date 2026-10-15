@@ -94,7 +94,7 @@ function flatBoard(view) {
       ${rows}
       ${arrow}
       <text x="${Math.max(160, youX - 210)}" y="${noteY}" font-size="30" style="fill:${CORAL_INK}">${esc(view.note)}</text>
-      <text x="40" y="545" font-size="26" style="fill:${SKY}">— Priya</text>
+      <text x="40" y="545" font-size="26" style="fill:${SKY}">— ${esc(view.signer)}</text>
     </svg>`;
 }
 
