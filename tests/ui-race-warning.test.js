@@ -176,6 +176,7 @@ test('a lab out on the eve of the gate but safe after the mark gets the normal r
     state: eve,
     subscribe: (fn) => { subscribers.push(fn); return () => {}; },
     setField: () => ({ ok: true }),
+    peekMark: () => ({ ...structuredClone(eve), turn: eve.turn + 1, ending: null }), // the copy comes out safe too
     // The mark day runs and the lab comes out safe (a model landed): the gate holds its vote, no ending.
     advanceDays: () => {
       const next = structuredClone(game.state);
@@ -286,4 +287,32 @@ test('safe on the copy of the last day: the usual call rings and the mark waits 
   mountBoardMeeting(game, { overlay, stage });
   assert.equal(crossed, 0);
   assert.match(overlay.querySelector('.mt-ring').textContent, /Motion: remove the chief executive/);
+});
+
+test('a vote called earlier is held at the era\'s last mark: the usual call rings and the vote plays', () => {
+  const document = installFakeDom();
+  globalThis.matchMedia = () => ({ matches: true });
+  const game = createGame({ seed: 1, state: SCENARIOS.leftBehind(1), eventMode: 'legacy' });
+  while (!game.state.ending && nextRoundDay(game.state) - game.state.day > 2) game.advanceDays(1);
+  game.state.flags.boardVoteDue = true; // a broken promise called a vote for this mark
+  game.state.board = game.state.board.map(() => 90); // and the board keeps the lab
+  const peek = game.peekMark();
+  assert.equal(peek.ending, 'leftBehind');
+  const stage = document.createElement('main');
+  const overlay = document.createElement('div');
+  stage.append(overlay);
+  document.body.append(stage);
+  mountBoardMeeting(game, { overlay, stage });
+  game.advanceDays(1); // the eve: the meeting opens
+  const ring = overlay.querySelector('.mt-ring');
+  assert.ok(ring, 'the call rings');
+  assert.match(ring.textContent, /Motion: remove the chief executive/);
+  assert.equal(game.state.ending, null, 'the mark waits for the vote');
+  const votes = game.state.flags.boardVotesHeld ?? 0;
+  ring.querySelector('.join').click();
+  overlay.querySelector('.mt-call-vote').click();
+  assert.equal(game.state.ending, 'leftBehind');
+  assert.equal(game.state.flags.boardVotesHeld, votes + 1, 'the called vote was held');
+  assert.ok(overlay.querySelector('.mt-next'), 'its votes are revealed, then the result and the call that says a vote was held');
+  assert.doesNotMatch(overlay.querySelector('.mt-layer').textContent, /No vote today/);
 });

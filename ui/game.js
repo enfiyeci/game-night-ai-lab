@@ -92,7 +92,8 @@ export function createGame({ seed = 1, state, history = [], eventMode = state?.e
     },
     // The state just past the next round mark, played the way the board meeting's crossMark plays it (queued actions
     // first, then a day at a time until the round changes or the run ends) on copies of the state and the random
-    // stream: the game is not touched, and with nothing else queued the real crossing comes out the same.
+    // stream: the game is not touched. From the eve of the mark (one day, as the meeting uses it) the real crossing
+    // comes out the same; over several days subscribers may act between days in the real game and not in the copy.
     peekMark() {
       const random = rng.fork();
       const start = currentState;
