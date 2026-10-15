@@ -86,7 +86,7 @@ test('screens that name a lead ask the lookup: the run summary and "Who told you
 });
 
 test('Dev Okafor: every run carries a small card\'s worth of care, a little less capability, one less debt', () => {
-  assert.deepEqual(LEAD_EFFECTS.dev, { run: { cap: -0.5, ad: -1 } });
+  assert.deepEqual(LEAD_EFFECTS.dev, { run: { cap: -0.25, ad: -0.5 } });
   const run = { recipe, spikes: 0, bonus: 0 };
   const today = createInitialState({ seed: 3 });
   const careful = hired({ research: 'dev' });
@@ -119,14 +119,14 @@ test('Rafael Ortiz: rounds raise 10% more, and each costs every director two mor
   assert.deepEqual(dealer.board, before.map((s) => s - 5));
 });
 
-test('Amara Cole: each release reaches 5% more users, and Washington likes it a point less', () => {
+test('Amara Cole: each release reaches 2.5% more users, and Washington likes it half a point less', () => {
   const launch = (state) => { startRun(state, recipe); advanceRun(state, rng); return releaseModel(state, release, rng); };
   const today = createInitialState();
   const comms = hired({ policy: 'amara' });
   const a = launch(today);
   const b = launch(comms);
-  assert.equal(b.model.newUsers, Math.round(a.model.newUsers * 1.05));
-  assert.equal(comms.govFavor.us, today.govFavor.us - 1);
+  assert.equal(b.model.newUsers, Math.round(a.model.newUsers * 1.025));
+  assert.equal(comms.govFavor.us, today.govFavor.us - 0.5);
 });
 
 test('hiring today\'s four on the résumés plays a whole bot run exactly as no setup does', async () => {
