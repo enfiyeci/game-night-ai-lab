@@ -32,7 +32,11 @@ test("this turn's projected spending equals the sim's own burn", () => {
 
 test('signed compute drops off when a contract term ends', () => {
   const state = era3();
-  const [contract] = state.compute.contracts;
+  // Since the President's first call moved to era 2's second round (pacing fix, 2026-10-14), seed 4 reaches era 3 with
+  // a fresh CoreFlame term and his export-licence contract, both outlasting the twelve rows looked at here. The term is
+  // set to the 5 1/7 months it had before, so it ends inside them.
+  const contract = state.compute.contracts.find((entry) => entry.supplier === 'coreflame');
+  contract.monthsLeft = 5 + 1 / 7;
   state.compute.contracts = [contract]; // this contract alone: others land and end on their own days
   state.compute.pipeline = [];
   // Terms end on days: rows the contract fully covers count its capacity and bill; a partial last row bills its share only.

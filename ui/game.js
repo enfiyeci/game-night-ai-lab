@@ -6,6 +6,7 @@ import {
   advanceDays as runDays,
   endTurn as runTurn,
   MAX_MOVES,
+  usesAction,
   setBudget as validateBudget,
 } from '../sim/turn.js';
 import { nextRoundDay } from '../sim/time.js';
@@ -123,7 +124,7 @@ export function createGame({ seed = 1, state, history = [], eventMode = state?.e
       return game.flush();
     },
     addMove(move) {
-      if (game.movesLeft() <= 0) return { ok: false, error: `only ${MAX_MOVES} actions per round` };
+      if (usesAction(move) && game.movesLeft() <= 0) return { ok: false, error: `only ${MAX_MOVES} actions per round` };
       actions.moves.push(structuredClone(move));
       return game.flush();
     },
@@ -171,8 +172,9 @@ export function createGame({ seed = 1, state, history = [], eventMode = state?.e
       subscribers.add(fn);
       return () => subscribers.delete(fn);
     },
+    // Never below 0, so every "no action left" check (movesLeft() === 0) holds; the set pieces never count.
     movesLeft() {
-      return MAX_MOVES - (currentState.round?.moves ?? 0) - actions.moves.length;
+      return Math.max(0, MAX_MOVES - (currentState.round?.moves ?? 0) - actions.moves.filter(usesAction).length);
     },
   };
   return game;

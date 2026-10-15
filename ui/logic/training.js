@@ -70,6 +70,13 @@ export function bubbleSpawns(from, to) {
   return mixed;
 }
 
+// The cheating-trace hazard stops the clock with its full card only the first time in a run (pacing fix, 2026-10-14).
+// After that the same three choices wait under the HUD pill while the clock runs; a release with none picked ships it
+// ignored (sim/release.js).
+const hazardWaits = (state) => Boolean(state.pendingModel?.hazard) && !state.ending;
+export const hazardCardDue = (state) => hazardWaits(state) && !(state.flags?.hazardsMet > 0);
+export const hazardInPill = (state) => hazardWaits(state) && state.flags?.hazardsMet > 0;
+
 const releaseWaits = (state) => Boolean(state.pendingModel && !state.pendingModel.hazard && !state.ending);
 
 // A polishing model has its own Publish button; other waiting models use the floor menu.

@@ -1,5 +1,5 @@
 import { TEAM_OF, teamBusyError } from '../sim/teams.js';
-import { applyActions, advanceDays } from '../sim/turn.js';
+import { applyActions, advanceDays, usesAction } from '../sim/turn.js';
 
 // Respond on the day a card appears, using the same actions as the UI, before its deadline.
 export function playRound(initial, actions, rng, chooseEvents, observer = {}) {
@@ -7,11 +7,12 @@ export function playRound(initial, actions, rng, chooseEvents, observer = {}) {
   const events = [], errors = [], transcript = [];
   const act = (chosen) => {
     const occupied = new Set(Object.keys(state.round.teams));
-    let slots = 2 - state.round.moves;
+    let slots = 2 - state.round.moves; // the President's call and the summit never take a slot
     chosen = { ...chosen, moves: (chosen.moves ?? []).filter((move) => {
       const team = TEAM_OF[move.type];
-      if (slots <= 0 || occupied.has(team) || teamBusyError(state, move)) return false;
-      slots--; occupied.add(team); return true;
+      if ((usesAction(move) && slots <= 0) || occupied.has(team) || teamBusyError(state, move)) return false;
+      if (usesAction(move)) slots--;
+      occupied.add(team); return true;
     }) };
     transcript.push({ day: state.day, actions: structuredClone(chosen) });
     const result = applyActions(state, chosen, rng);

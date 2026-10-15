@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import { createRng } from '../sim/rng.js';
-import { applyActions, advanceDays, MAX_MOVES } from '../sim/turn.js';
+import { applyActions, advanceDays, MAX_MOVES, usesAction } from '../sim/turn.js';
 import { ROUND_DAYS } from '../sim/time.js';
 import { STRATEGIES } from './balance.js';
 import { badgeCounts, bubbleCounts, bubbleSpawns } from '../ui/logic/training.js';
@@ -51,7 +51,9 @@ for (const name of names) {
         for (const [id, choice] of Object.entries(full.eventChoices ?? {})) {
           if (state.pendingEvents.some((card) => card.id === id && landed(card))) actions.eventChoices[id] = choice;
         }
-        actions.moves = (full.moves ?? []).filter((move) => first || ['startRun', 'release', 'meeting'].includes(move.type)).slice(0, MAX_MOVES - state.round.moves);
+        let slots = MAX_MOVES - state.round.moves; // the President's call never takes a slot
+        actions.moves = (full.moves ?? []).filter((move) => first || ['startRun', 'release', 'meeting'].includes(move.type))
+          .filter((move) => !usesAction(move) || slots-- > 0);
         state = applyActions(state, actions, rng).state;
         count();
       }

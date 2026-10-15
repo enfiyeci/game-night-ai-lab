@@ -64,6 +64,29 @@ test('meeting availability uses the live meeting and closes once he has been met
   assert.notEqual(reasonFor(game, 'meeting'), '');
 });
 
+// Owner decision (2026-10-14): the call can open between marks, after both actions are used, and never uses one.
+test('the President\'s call stays open on the menu and can be taken when both team actions are used', () => {
+  const game = createGame({ seed: 1, state: SCENARIOS.meeting(1) });
+  game.state.round.moves = 2;
+  assert.equal(game.movesLeft(), 0);
+  assert.equal(reasonFor(game, 'meeting'), '');
+  game.queue.presidentAnswers = MEETINGS[0].exchanges.map((exchange) => exchange.answers[0].id);
+  const result = game.addMove({ type: 'meeting' });
+  assert.equal(result.ok, true, result.error);
+  assert.equal(result.events.find((event) => event.type === 'meetingOutcome')?.walkedOut, false);
+  assert.equal(game.state.round.moves, 2, 'the call used no action');
+  assert.equal(game.movesLeft(), 0);
+});
+
+test('taking the President\'s call with both actions free leaves both free', () => {
+  const game = createGame({ seed: 1, state: SCENARIOS.meeting(1) });
+  game.state.round.moves = 0;
+  game.queue.presidentAnswers = MEETINGS[0].exchanges.map((exchange) => exchange.answers[0].id);
+  assert.equal(game.addMove({ type: 'meeting' }).ok, true);
+  assert.equal(game.movesLeft(), 2);
+  assert.equal(reasonFor(game, 'release'), '', 'release still has an action');
+});
+
 // Owner pick 3B: Company stays about the business; a Game item at the bottom of the menu holds the rest.
 test('the main menu ends with a divider and a Game submenu, and Company no longer holds the sound item', () => {
   const [divider, game] = ITEMS.slice(-2);
@@ -92,7 +115,7 @@ test('the summit waits for the President’s waiting call, then opens once he ha
   // (deterministic endings A3 shifted the main random stream).
   const game = createGame({ seed: 1, state: SCENARIOS.meeting2(2) });
   // the projection expires an untaken call at the round's end, so the check must read the live meeting
-  assert.equal(reasonFor(game, 'summit'), 'Take the President’s call first');
+  assert.equal(reasonFor(game, 'summit'), 'The President’s call is still waiting. Take the meeting first');
   game.queue.presidentAnswers = MEETINGS[1].exchanges.map((exchange) => exchange.answers[0].id);
   assert.equal(game.addMove({ type: 'meeting' }).ok, true);
   assert.equal(game.state.meeting, null);

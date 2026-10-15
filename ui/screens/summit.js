@@ -1,9 +1,10 @@
 // The Geneva summit (spec docs/superpowers/specs/2026-09-26-summit-design.md): a front-on hall where the player
 // tables up to three motions one at a time, sets each one's checks, may win over holdouts with promises, and the
 // room votes on it before the next. Time stops while it is open.
-import { readTheRoom, voteMotion, COMMITMENTS, PARTIES } from '../../sim/summit.js';
+import { readTheRoom, voteMotion, summitOpensNow, COMMITMENTS, PARTIES } from '../../sim/summit.js';
 import { DEMANDS, PROMISES, MAX_PROMISES, DEFAULT_CHECK } from '../../sim/data/summit.js';
 import { registerMenuHandler } from '../menu.js';
+import { teamBusyError } from '../../sim/teams.js';
 import { ART } from '../assets/summitArt.js';
 import { enterTransition, exitTransition } from '../components/transition.js';
 
@@ -98,9 +99,14 @@ function screenAgenda(motions, results, current, phase) {
   return `<text x="486" y="96" style="font:900 12px Nunito;letter-spacing:.2em;fill:color-mix(in oklab, var(--sky) 40%, var(--paper))">THE AGENDA</text>${rows}`;
 }
 
+// Games whose summit has been on screen, by any path (by itself, the menu or the #summit route): it pops up by itself
+// at most once.
+const summitShown = new WeakSet();
+
 export function openSummit(game, overlayRoot) {
-  // An open event card or phone keeps the floor until it is answered.
-  if (overlayRoot.querySelector('.sm-layer, .event-layer, .ev-phone, .screenwall-layer')) return null;
+  // An open event card or phone keeps the floor until it is answered; a busy Policy team cannot hold the vote.
+  if (overlayRoot.querySelector('.sm-layer, .event-layer, .ev-phone, .screenwall-layer') || teamBusyError(game.state, { type: 'summit' })) return null;
+  summitShown.add(game);
   const motions = []; // voted, in order: { card, check, promises made during that motion }
   const results = []; // { signed, binds } for each voted motion
   let current = null; // the motion on the floor
@@ -195,11 +201,6 @@ export function openSummit(game, overlayRoot) {
   const tally = (read) => `<div class="sm-tally">${SEATS.map((s) => `<span class="sm-pb${read[s.id] === 'yes' ? '' : ' off'}" data-p="${s.id}" title="${PARTY_INFO[s.id].name}: ${read[s.id]}">${PARTY_INFO[s.id].ab}</span>`).join('')}</div>`;
 
   function panel(read) {
-    if (phase === 'table' && !motions.length && game.movesLeft() <= 0) {
-      return `<section class="gp sm-panel narrow" aria-label="No team action left">${kick()}<h2>Both team actions are used.</h2>
-        <p>The summit's vote takes one team action. There is none left this round.</p>
-        <div class="sm-row end"><button type="button" class="btn" data-leave>Back to the lab</button></div></section>`;
-    }
     if (phase === 'table') {
       return `<section class="gp sm-panel" aria-label="Table a motion">${kick()}<h2>${motions.length ? 'What do you table next?' : 'What do you table first?'}</h2>${deck()}
         ${motions.length ? '' : '<div class="sm-row"><span class="sm-muted">Each motion is voted before the next. A motion binds when a lab and a government sign it.</span><button type="button" class="sm-leave" data-leave>Leave without a deal</button></div>'}</section>`;
@@ -369,15 +370,14 @@ export function openSummit(game, overlayRoot) {
   return layer;
 }
 
-const summitOpen = (state) => state.era === 5 && state.turnInEra === 0 && !state.deal && !state.ending;
-
-// Opens once by itself when the summit week begins and nothing else is on screen; the menu reopens it.
+// Opens by itself a few days into the summit week (sim/summit.js summitOpensNow) when nothing else is on screen and
+// the Policy team is free (owner, 2026-10-15: it waits for a busy team), unless it has already been shown; the menu
+// opens it any day of that week.
 export function mountSummit(game, overlayRoot) {
-  let offered = false;
   const BLOCKING = '.dialog-layer, .event-layer, .ev-phone, .menu-layer, .screenwall-layer';
   const tryOpen = () => {
-    if (offered || !summitOpen(game.state) || game.state.meeting || overlayRoot.querySelector(BLOCKING)) return;
-    offered = true;
+    if (summitShown.has(game) || !summitOpensNow(game.state) || game.state.meeting
+      || teamBusyError(game.state, { type: 'summit' }) || overlayRoot.querySelector(BLOCKING)) return;
     openSummit(game, overlayRoot);
   };
   const unregister = registerMenuHandler('summit', () => openSummit(game, overlayRoot));

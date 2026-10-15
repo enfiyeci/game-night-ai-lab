@@ -3,12 +3,13 @@ import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import {
   proposeSummit, voteMotion, readTheRoom, demandStatus, dealWeek, investigate, expireSuspicions, playerBreak, COMMITMENTS,
-  PARTIES,
+  PARTIES, SUMMIT_OPEN_DAY, summitOpensNow,
 } from '../sim/summit.js';
 import { BREAK_GAIN, CAUGHT_TRUST, DEFAULT_CHECK } from '../sim/data/summit.js';
 import { finalEnding } from '../sim/endings.js';
 import { startRun, advanceRun } from '../sim/training.js';
 import { applyActions, endTurn } from '../sim/turn.js';
+import { playRound } from '../tools/play-round.js';
 import { jobLevels, setAutomation } from '../sim/automation.js';
 import { recipeCost } from '../sim/recipe.js';
 
@@ -353,16 +354,75 @@ test('six commitments remain on offer', () => {
   assert.equal(Object.keys(COMMITMENTS).length, 6);
 });
 
-test('the President calls as era 5 begins, before the summit', () => {
+// Pacing fix (2026-10-14): he calls a story week before era 4 ends (was era 5's first day); an untaken call is still
+// open as era 5 begins, and the summit waits for it.
+test('the President calls a week before era 4 ends, before the summit', () => {
   const s = createInitialState();
   s.era = 4;
   s.turnInEra = 3;
   s.meetingsHeld = ['first'];
   const out = endTurn(s, {}, calm);
+  const due = out.events.findIndex((e) => e.type === 'meetingDue' && e.id === 'second');
+  assert.ok(due >= 0);
+  const eraStart = out.events.findIndex((e) => e.type === 'eraStart');
   if (out.state.ending) return; // an era 4 gate can end a bare test run; the meeting timing is what matters
+  assert.ok(due < eraStart, 'the call comes in era 4');
   assert.equal(out.state.era, 5);
   assert.equal(out.state.meeting?.id, 'second');
   assert.equal(out.state.turnInEra, 0);
+});
+
+test('the summit opens by itself three story days into era 5, not on its first day', () => {
+  const s = era5();
+  for (const [day, opens] of [[0, false], [2, false], [SUMMIT_OPEN_DAY, true], [6, true]]) {
+    s.dayInRound = day;
+    assert.equal(summitOpensNow(s), opens, `day ${day}`);
+  }
+  s.deal = { collapsed: false };
+  assert.equal(summitOpensNow(s), false, 'once held, never again');
+});
+
+test('the summit vote never uses a team action, even when both are used', () => {
+  for (const used of [0, 1, 2]) {
+    const s = era5();
+    s.dayInRound = SUMMIT_OPEN_DAY;
+    s.round.moves = used;
+    const out = applyActions(s, { moves: [{ type: 'summit', motions: [{ card: 'evaluators', check: 2, promises: {} }] }] }, calm);
+    assert.deepEqual(out.errors, []);
+    assert.ok(out.state.deal);
+    assert.equal(out.state.round.moves, used, `${used} used before the vote`);
+  }
+});
+
+// Owner decision (2026-10-15): the summit waits for a free Policy team, for players and bots alike.
+test('a busy Policy team keeps the summit closed, in the sim and for the bots', () => {
+  const summit = { type: 'summit', motions: [{ card: 'evaluators', check: 2, promises: {} }] };
+  const s = era5();
+  s.dayInRound = SUMMIT_OPEN_DAY;
+  s.round.teams.policy = 'release';
+  const out = applyActions(s, { moves: [summit] }, calm);
+  assert.match(out.errors[0] ?? '', /^the policy team is busy until /);
+  assert.equal(out.state.deal, null);
+  // tools/play-round.js (every bot): the summit is dropped from the plan while Policy is busy, so nothing is rejected.
+  const played = playRound(s, { moves: [summit] }, calm, () => ({}));
+  assert.deepEqual(played.transcript[0].actions.moves, []);
+  assert.equal(played.errors.some((error) => /policy team/.test(error)), false);
+  assert.equal(played.state.deal ?? null, null);
+});
+
+test('the order of play never changes what the summit vote costs', () => {
+  const summit = { type: 'summit', motions: [{ card: 'evaluators', check: 2, promises: {} }] };
+  const run = { type: 'startRun', recipe };
+  const raise = { type: 'raise', archetype: 'vc' };
+  for (const moves of [[summit, run, raise], [run, summit, raise], [run, raise, summit]]) {
+    const s = era5();
+    s.dayInRound = SUMMIT_OPEN_DAY;
+    const out = applyActions(s, { moves }, calm);
+    const order = moves.map((move) => move.type).join(', ');
+    assert.deepEqual(out.errors, [], order);
+    assert.equal(out.state.round.moves, 2, order);
+    assert.ok(out.state.deal, order);
+  }
 });
 
 test('catching after an investigation undoes exactly what the break gained', () => {

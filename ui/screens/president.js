@@ -1,9 +1,9 @@
-import { roundWord } from '../../sim/time.js';
 import { registerMenuHandler } from '../menu.js';
 import { enterTransition, exitTransition } from '../components/transition.js';
 import {
   answersPayload,
   hatedWord,
+  lapseLine,
   meetingFor,
   moodFor,
   patienceTrail,
@@ -273,7 +273,7 @@ export async function openPresident(game, overlayRoot, options = {}) {
       const notNow = el('button', 'pres-not-now', 'Not now');
       notNow.type = 'button';
       notNow.addEventListener('click', close);
-      later.append(el('span', null, `He leaves if you have not met him by the end of the ${roundWord(game.state.era)}.`), notNow);
+      later.append(el('span', null, lapseLine(game.state)), notNow);
       top.append(later);
     }
     top.append(stepBars());

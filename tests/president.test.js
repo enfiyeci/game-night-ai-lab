@@ -4,7 +4,10 @@ import { createInitialState } from '../sim/state.js';
 import { meetingDue, openMeeting, runMeeting } from '../sim/president.js';
 import { MEETINGS } from '../sim/data/president.js';
 import { PROMISES } from '../sim/data/promises.js';
-import { endTurn } from '../sim/turn.js';
+import { advanceDays, applyActions, endTurn } from '../sim/turn.js';
+import { ROUND_DAYS } from '../sim/time.js';
+import { meetingDay } from '../sim/president.js';
+import { meetingDueNow } from '../ui/logic/board.js';
 
 const no = { next: () => 0.99, int: () => 0, chance: () => false, pick: (a) => a[0], normal: (m) => m };
 const meeting = (id = 'first') => MEETINGS.find((entry) => entry.id === id);
@@ -17,11 +20,12 @@ const styleIds = (style, id = 'first') => ids((answers) => answers.find((answer)
 const plainIds = (id = 'first') => styleIds('plain', id);
 const flatteringIds = (id = 'first') => styleIds('flatter', id);
 const jargonIds = (id = 'first') => styleIds('jargon', id);
+const smallRecipe = { sliders: { size: 'small', length: 'optimal', alignShare: 0.15 }, picks: { pre: ['filtered-data'], mid: [], post: ['synthetic-sft', 'safety-tuning'] } };
 
 test('the President meeting script has the required exchanges and answer mix', () => {
-  assert.deepEqual(MEETINGS.map(({ id, era, turnInEra }) => ({ id, era, turnInEra })), [
-    { id: 'first', era: 2, turnInEra: 2 },
-    { id: 'second', era: 4, turnInEra: 3 },
+  assert.deepEqual(MEETINGS.map(({ id, era, turnInEra, dayInRound }) => ({ id, era, turnInEra, dayInRound })), [
+    { id: 'first', era: 2, turnInEra: 1, dayInRound: 0 },
+    { id: 'second', era: 4, turnInEra: 3, dayInRound: ROUND_DAYS[4] - 7 },
   ]);
   for (const entry of MEETINGS) {
     assert.equal(entry.exchanges.length, 3);
@@ -91,11 +95,12 @@ test('a bargain raises the stake one tier only when the meeting does not end in 
   assert.equal(walkedOut.cash, 1000);
 });
 
-test('the first meeting is due in era 2, turn 2', () => {
+test('the first meeting is due as era 2\'s second round begins', () => {
   const state = createInitialState();
   assert.equal(meetingDue(state), null);
   state.era = 2;
-  state.turnInEra = 2;
+  assert.equal(meetingDue(state), null);
+  state.turnInEra = 1;
   assert.equal(meetingDue(state), 'first');
   state.meetingsHeld.push('first');
   assert.equal(meetingDue(state), null);
@@ -255,6 +260,7 @@ test('second-meeting grudges lower patience and are exposed on the meeting state
     id: 'second',
     patience: 8,
     grudges: [PROMISES.beatRivals.text, PROMISES.domesticChips.text],
+    expiresTurn: 16,
   });
 });
 
@@ -291,10 +297,10 @@ test('a second-meeting grudge lowers the amendment-demand threshold to two flatt
 test('endTurn opens a due meeting and answers it on the next turn', () => {
   const previous = createInitialState();
   previous.era = 2;
-  previous.turnInEra = 2;
+  previous.turnInEra = 0;
   const due = endTurn(previous, {}, no);
   assert.deepEqual(previous.meeting, null);
-  assert.deepEqual(due.state.meeting, { id: 'first', patience: 10 });
+  assert.deepEqual(due.state.meeting, { id: 'first', patience: 10, expiresTurn: 1 });
   assert.deepEqual(due.events.filter((event) => event.type === 'meetingDue'), [{ type: 'meetingDue', id: 'first' }]);
 
   const answered = endTurn(due.state, { moves: [{ type: 'meeting' }], presidentAnswers: plainIds() }, no);
@@ -368,22 +374,43 @@ test('President answers without a meeting move are rejected and the meeting expi
   assert.ok(out.errors.some((error) => /meeting move/i.test(error)));
 });
 
-test('a meeting move needs an open meeting and consumes one of the two round actions', () => {
+test('a meeting move needs an open meeting and leaves both round actions for other moves', () => {
   const closed = endTurn(createInitialState(), { moves: [{ type: 'meeting' }] }, no);
   assert.ok(closed.errors.some((error) => /no open President meeting/i.test(error)));
 
   const state = open(createInitialState());
-  const coreflame = state.compute.offers.find((offer) => offer.supplier === 'coreflame');
+  const [first, second] = state.compute.offers.filter((offer) => offer.units != null);
   const out = endTurn(state, {
     moves: [
       { type: 'meeting' },
-      { type: 'deal', offerId: coreflame.id },
-      { type: 'deal', offerId: coreflame.id },
+      { type: 'deal', offerId: first.id },
+      { type: 'startRun', recipe: smallRecipe },
+      { type: 'deal', offerId: second.id },
     ],
     presidentAnswers: plainIds(),
   }, no);
   assert.ok(out.errors.some((error) => error.includes('2 actions per round')));
   assert.equal(out.events.filter((event) => event.type === 'deal').length, 1);
+  assert.equal(out.events.filter((event) => event.type === 'startRun').length, 1);
+  assert.equal(out.state.meetingsHeld.includes('first'), true);
+});
+
+// Review fix (round 2): an over-cap move used to stop the whole list, so a call queued after it never ran.
+test('a move over the two-action cap is skipped alone, and a call queued after it still runs', () => {
+  const state = open(createInitialState());
+  const [first, second] = state.compute.offers.filter((offer) => offer.units != null);
+  const call = { type: 'meeting' };
+  const run = { type: 'startRun', recipe: smallRecipe };
+  const deal = { type: 'deal', offerId: first.id };
+  const extra = { type: 'deal', offerId: second.id };
+  for (const moves of [[run, deal, extra, call], [call, run, deal, extra], [run, call, deal, extra]]) {
+    const out = applyActions(state, { moves, presidentAnswers: plainIds() }, no);
+    const order = moves.map((move) => move.type).join(', ');
+    assert.deepEqual(out.errors, ['only 2 actions per round'], order);
+    assert.equal(out.state.round.moves, 2, order);
+    assert.equal(out.state.meeting, null, order);
+    assert.equal(out.state.meetingsHeld.includes('first'), true, order);
+  }
 });
 
 test('a meeting at low favour withholds the grant', () => {
@@ -401,4 +428,70 @@ test('a meeting at low favour withholds the grant', () => {
   assert.deepEqual(out.errors, []);
   assert.equal(out.state.flags.statePreemption, undefined);
   assert.equal(out.events.find((event) => event.type === 'meetingOutcome')?.stake, 'exportLicenses');
+});
+
+// Pacing fix (2026-10-14): the second call comes a story week before era 4 ends, not on era 5's first day.
+test('the second meeting opens a story week before era 4 ends, apart from the board meeting and era 5', () => {
+  let state = createInitialState();
+  state.era = 4;
+  state.turnInEra = 3;
+  state.turn = 15;
+  state.day = meetingDay(MEETINGS[1]) - ROUND_DAYS[4] + 7;
+  const opened = [];
+  for (let day = 0; day < ROUND_DAYS[4] && !state.meeting; day += 1) {
+    const out = advanceDays(state, 1, no);
+    state = out.state;
+    if (out.events.some((event) => event.type === 'meetingDue')) opened.push({ dayInRound: state.dayInRound, day: state.day });
+  }
+  assert.deepEqual(opened, [{ dayInRound: ROUND_DAYS[4] - 7, day: meetingDay(MEETINGS[1]) }]);
+  assert.equal(state.era, 4);
+  assert.equal(meetingDueNow(state), false, 'the board meeting opens the day before the mark, six days later');
+});
+
+test('a call that opens between marks survives the next mark and lapses a round later', () => {
+  let state = createInitialState();
+  state.era = 4;
+  state.turnInEra = 3;
+  state.turn = 15;
+  state.meetingsHeld = ['first'];
+  state.dayInRound = ROUND_DAYS[4] - 8;
+  state = advanceDays(state, 1, no).state;
+  assert.equal(state.meeting?.id, 'second');
+  const turn = state.turn;
+  state = advanceDays(state, ROUND_DAYS[4] - state.dayInRound, no).state;
+  if (state.ending) return; // an era 4 gate can end a bare test run; the call's timing is what matters
+  assert.equal(state.turn, turn + 1);
+  assert.equal(state.meeting?.id, 'second', 'still open after the mark');
+  const out = advanceDays(state, ROUND_DAYS[5], no);
+  assert.equal(out.state.meeting, null);
+  assert.deepEqual(out.events.filter((event) => event.type === 'meetingOutcome').map((event) => event.walkedOut), [true]);
+});
+
+test('taking the President\'s call never uses a team action, even when both are used', () => {
+  for (const used of [0, 1, 2]) {
+    const state = open(createInitialState());
+    state.round.moves = used;
+    const out = applyActions(state, { moves: [{ type: 'meeting' }], presidentAnswers: plainIds() }, no);
+    assert.deepEqual(out.errors, []);
+    assert.equal(out.state.meeting, null);
+    assert.equal(out.state.meetingsHeld.includes('first'), true);
+    assert.equal(out.state.round.moves, used, `${used} used before the call`);
+  }
+});
+
+// Owner decision (2026-10-14): the call never costs an action, so where it falls among the round's moves changes nothing.
+test('the order of play never changes what the President\'s call costs', () => {
+  const state = open(createInitialState());
+  const offer = state.compute.offers.find((entry) => entry.supplier === 'coreflame');
+  const call = { type: 'meeting' };
+  const run = { type: 'startRun', recipe: smallRecipe };
+  const deal = { type: 'deal', offerId: offer.id };
+  for (const moves of [[call, run, deal], [run, call, deal], [run, deal, call]]) {
+    const out = applyActions(state, { moves, presidentAnswers: plainIds() }, no);
+    const order = moves.map((move) => move.type).join(', ');
+    assert.deepEqual(out.errors, [], order);
+    assert.equal(out.state.round.moves, 2, order);
+    assert.ok(out.state.activeRun, order);
+    assert.equal(out.state.meetingsHeld.includes('first'), true, order);
+  }
 });

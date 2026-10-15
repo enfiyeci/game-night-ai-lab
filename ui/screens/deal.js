@@ -35,6 +35,23 @@ function pill(state, dismissedIds) {
   return `<span>Geneva deal</span><span class="dl-seals">${seals}</span><small>${esc(status)}</small>${waiting ? `<span class="dl-waiting">${waiting}</span>` : ''}`;
 }
 
+// Deal news from one story day comes as one dialog (pacing fix, 2026-10-14): a card joins the waiting dialog of its day.
+export function queueDealCard(queue, card, day) {
+  const last = queue.at(-1);
+  if (last && last.day === day) last.parts.push(card);
+  else queue.push({ day, parts: [card] });
+  return queue;
+}
+
+export function dealDialogHtml(entry) {
+  const lines = (card) => `<div class="dl-lines">${card.lines.map((line) => `<div><i>•</i>${esc(line)}</div>`).join('')}</div>`;
+  const [only] = entry.parts;
+  const body = entry.parts.length === 1 ? `<h2>${esc(only.title)}</h2>${lines(only)}`
+    : `<h2>News from the Geneva deal</h2>${entry.parts.map((card) => `<h3>${esc(card.title)}</h3>${lines(card)}`).join('')}`;
+  return `<section class="gp dl-card"><div class="sm-kick">The Geneva deal</div>${body}
+      <div class="sm-actions"><button type="button" class="btn">Continue</button></div></section>`;
+}
+
 export function mountDeal(game, overlayRoot) {
   const pillNode = document.createElement('button');
   pillNode.type = 'button';
@@ -126,15 +143,13 @@ export function mountDeal(game, overlayRoot) {
 
   function showNext() {
     if (!queue.length || overlayRoot.querySelector('.dialog-layer, .event-layer, .ev-phone, .screenwall-layer')) return;
-    const card = queue.shift();
+    const entry = queue.shift();
     const layer = document.createElement('div');
     layer.className = 'dialog-layer dl-layer';
     layer.setAttribute('role', 'dialog');
     layer.setAttribute('aria-modal', 'true');
-    layer.setAttribute('aria-label', card.title);
-    layer.innerHTML = `<section class="gp dl-card"><div class="sm-kick">The Geneva deal</div><h2>${esc(card.title)}</h2>
-      <div class="dl-lines">${card.lines.map((line) => `<div><i>•</i>${esc(line)}</div>`).join('')}</div>
-      <div class="sm-actions"><button type="button" class="btn">Continue</button></div></section>`;
+    layer.setAttribute('aria-label', entry.parts.length === 1 ? entry.parts[0].title : 'News from the Geneva deal');
+    layer.innerHTML = dealDialogHtml(entry);
     layer.querySelector('button').addEventListener('click', () => {
       exitTransition(layer).then(() => overlayRoot.dispatchEvent(new CustomEvent('gdt-dialog-closed')));
     });
@@ -143,10 +158,10 @@ export function mountDeal(game, overlayRoot) {
     layer.querySelector('button').focus();
   }
 
-  game.subscribe(({ events }) => {
+  game.subscribe(({ events, state }) => {
     for (const event of events) {
       const card = outcome(event);
-      if (card) queue.push(card);
+      if (card) queueDealCard(queue, card, state.day);
     }
     render();
     requestAnimationFrame(showNext);

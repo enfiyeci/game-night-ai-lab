@@ -7,7 +7,10 @@ const m = async (p) => import(`${REPO}/${p}`);
 
 const { STRATEGIES, eventChoices, dailyRelease } = await m('tools/balance.js');
 const { TEAM_OF, teamBusyError } = await m('sim/teams.js');
-const { applyActions, advanceDays } = await m('sim/turn.js');
+const turnModule = await m('sim/turn.js');
+const { applyActions, advanceDays } = turnModule;
+// The set pieces never use an action (2026-10-14 review fix); older builds lack usesAction and count every move.
+const usesAction = turnModule.usesAction ?? (() => true);
 const { createInitialState } = await m('sim/state.js');
 const { enableScenarios } = await m('sim/scenarios.js');
 const { createRng } = await m('sim/rng.js');
@@ -25,6 +28,8 @@ const { REAL_EVENTS } = await m('sim/data/realEvents.js');
 const { MEETINGS } = await m('sim/data/president.js');
 const { TOUR } = await m('ui/logic/intro.js');
 const { eraIntro } = await m('ui/logic/eraIntro.js');
+// Pacing fixes (2026-10-14); absent on older builds, where the old rules apply.
+const { summitOpensNow } = await m('sim/summit.js');
 
 const SECONDS_PER_ROUND = 90; // ui/clock.js default, speed x1
 const secPerDay = (era) => SECONDS_PER_ROUND / ROUND_DAYS[era];
@@ -61,6 +66,7 @@ const TYPES = {
   summit: { pausing: true, label: 'Geneva summit' },
   eraTransition: { pausing: true, label: 'Era transition ("Moving day")' },
   hazard: { pausing: true, label: 'Training hazard (cheating trace)' },
+  hazardPill: { pausing: false, label: 'Training hazard, later ones: choices under the HUD pill' },
   cashWarning: { pausing: true, label: 'Cash warning (urgent/critical)' },
   dealDialog: { pausing: true, label: 'Geneva deal outcome dialog' },
   warning: { pausing: false, label: 'Advisor warning bubble (look into it for $)' },
@@ -76,7 +82,7 @@ function playGame(name, seed) {
   const log = []; // { day, era, type, words }
   const info = { toasts: [], feed: [], playerMoves: [], reveals: [], runs: [] };
   const seen = { cards: new Set(), warnings: new Set(), boardWarn: new Set(), boardMeet: new Set(), hazard: false,
-    proposals: '', suspicions: new Set(), feed: new Set(), cashCheckpoint: 0 };
+    proposals: '', suspicions: new Set(), feed: new Set(), cashCheckpoint: 0, summit: false, dealDay: null };
   const add = (type, extra = {}) => log.push({ day: state.day, era: state.era, type, ...extra });
 
   // Called after every state change the UI would publish (an action applied, or a story day passed).
@@ -84,11 +90,16 @@ function playGame(name, seed) {
     for (const e of events) {
       if (e.type === 'eraStart') {
         add('eraTransition', { words: eraIntroWords(e.era) });
-        if (e.era === 5) add('summit', { words: 400 }); // summit opens after the transition (assumed text, see report)
+        if (e.era === 5 && !summitOpensNow) { seen.summit = true; add('summit', { words: 400 }); } // old build: opens with the transition (assumed text, see report)
       }
+      if (e.type === 'summit' && !seen.summit) { seen.summit = true; add('summit', { words: 400 }); } // taken from the menu before it opened by itself
       if (e.type === 'meetingDue') add('president', { words: presidentWords[e.id] ?? 150 });
-      if (['dealBreakCaught', 'playerCaught', 'presidentAngry'].includes(e.type)
-        || (e.type === 'dealCollapsed' && e.reason === 'noCoalition')) add('dealDialog', { words: 45 });
+      // One dialog per story day on the new build (ui/screens/deal.js merges a day's news); one per event on the old.
+      if ((['dealBreakCaught', 'playerCaught', 'presidentAngry'].includes(e.type)
+        || (e.type === 'dealCollapsed' && e.reason === 'noCoalition')) && !(summitOpensNow && seen.dealDay === state.day)) {
+        seen.dealDay = state.day;
+        add('dealDialog', { words: 45 });
+      }
       if (e.type === 'runComplete') add('releaseReady', { words: 6 });
       if (e.type === 'release' && e.ok) info.reveals.push({ day: state.day, era: state.era });
       if (e.type === 'startRun' && e.ok) info.runs.push({ start: state.day, era: state.era });
@@ -97,6 +108,7 @@ function playGame(name, seed) {
     const toastN = summaryItems(events, state).length;
     if (toastN) info.toasts.push({ day: state.day, era: state.era, n: toastN });
     if (state.ending) return;
+    if (summitOpensNow && !seen.summit && summitOpensNow(state) && !state.meeting) { seen.summit = true; add('summit', { words: 400 }); }
     for (const pending of state.pendingEvents) {
       const key = `${pending.id}@${pending.landsAt ?? 'now'}`;
       if (seen.cards.has(key) || !hasLanded(pending, state)) continue;
@@ -122,7 +134,8 @@ function playGame(name, seed) {
       if (!seen.boardMeet.has(mark)) { seen.boardMeet.add(mark); add('boardMeeting', { words: 300 }); }
     }
     const hz = Boolean(state.pendingModel?.hazard);
-    if (hz && !seen.hazard) add('hazard', { words: 135 }); // counted from ui/screens/hazard.js copy
+    // New build: the full card only for the run's first trace (state.flags.hazardsMet), later ones under the HUD pill.
+    if (hz && !seen.hazard) add(summitOpensNow && state.flags.hazardsMet > 0 ? 'hazardPill' : 'hazard', { words: 135 }); // counted from ui/screens/hazard.js copy
     seen.hazard = hz;
     const cw = cashWarning(state);
     const next = cashWarningCheckpoint(seen.cashCheckpoint, cw);
@@ -157,8 +170,9 @@ function playGame(name, seed) {
       let slots = 2 - state.round.moves;
       chosen = { ...chosen, moves: (chosen.moves ?? []).filter((move) => {
         const team = TEAM_OF[move.type];
-        if (slots <= 0 || occupied.has(team) || teamBusyError(state, move)) return false;
-        slots--; occupied.add(team); return true;
+        if ((usesAction(move) && slots <= 0) || occupied.has(team) || teamBusyError(state, move)) return false;
+        if (usesAction(move)) slots--;
+        occupied.add(team); return true;
       }) };
       for (const mv of chosen.moves) info.playerMoves.push({ day: state.day, era: state.era, type: mv.type });
       const r = applyActions(state, chosen, rng);
@@ -243,6 +257,7 @@ function eraStats(games, era, filter) {
 function roundShape(games, era, filter) {
   const perRound = [0, 0, 0, 0];
   const lastDay = [0, 0, 0, 0];
+  const byType = {};
   let n = 0;
   for (const g of games) {
     if (g.endEra < era || (g.endEra === era && g.endDay < ERA_START[era] + ERA_DAYS[era])) continue;
@@ -251,10 +266,12 @@ function roundShape(games, era, filter) {
       const d = p.day - ERA_START[era];
       const r = Math.min(3, Math.floor(Math.max(0, d - 1) / ROUND_DAYS[era]));
       perRound[r] += 1;
+      (byType[p.type] ??= [0, 0, 0, 0])[r] += 1;
       if (d - r * ROUND_DAYS[era] >= ROUND_DAYS[era] - Math.max(1, Math.round(ROUND_DAYS[era] / 10))) lastDay[r] += 1;
     }
   }
-  return n ? { games: n, perRound: perRound.map((x) => r1(x / n)), inLastTenthOfRound: lastDay.map((x) => r1(x / n)) } : null;
+  return n ? { games: n, perRound: perRound.map((x) => r1(x / n)), inLastTenthOfRound: lastDay.map((x) => r1(x / n)),
+    perRoundByType: Object.fromEntries(Object.entries(byType).map(([k, v]) => [k, v.map((x) => r1(x / n))])) } : null;
 }
 
 const clockSec = (day) => { let era = ERAS.findLast((e) => day >= ERA_START[e.id]).id; return ERAS.filter((e) => e.id < era).reduce((s, e) => s + ERA_DAYS[e.id] * secPerDay(e.id), 0) + (day - ERA_START[era]) * secPerDay(era); };

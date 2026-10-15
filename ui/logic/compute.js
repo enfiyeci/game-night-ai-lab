@@ -22,7 +22,7 @@ import { addressWarning, fallbackChoice, resolveEvent } from '../../sim/events.j
 import { resolveHazard } from '../../sim/hazards.js';
 import { setAutomation, applyApprovals } from '../../sim/automation.js';
 import { buildSite, leaseMonthly, powerTurn, sitePower, SITE_TYPES } from '../../sim/power.js';
-import { expireMeeting, meetingDue, openMeeting, runMeeting } from '../../sim/president.js';
+import { expireMeeting, meetingDue, meetingExpiresNow, openMeeting, runMeeting } from '../../sim/president.js';
 import { allocate, placeOrder, PREPAY_SHARE, released, rivalOrders, withdrawOrder } from '../../sim/queue.js';
 import { activateReleases, releaseModel } from '../../sim/release.js';
 import { RIVAL_TEMPLATES, rivalSize } from '../../sim/rivals.js';
@@ -177,7 +177,7 @@ export function projectQueue(state, queue = {}) {
     afterMove(projected);
     if (projected.ending) break;
   }
-  if (meetingIdAtStart && projected.meeting) {
+  if (meetingIdAtStart && meetingExpiresNow(projected)) {
     expireMeeting(projected);
     afterMove(projected);
   }

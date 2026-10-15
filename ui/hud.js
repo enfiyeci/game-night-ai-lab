@@ -6,7 +6,8 @@ import { rank } from '../sim/rivals.js';
 import { ROUND_DAYS, roundWord, storyDate } from '../sim/time.js';
 import { compute, money, months, project, users } from './logic/format.js';
 import { cashLine, monthBill, weekFlows } from './logic/money.js';
-import { badgeCounts } from './logic/training.js';
+import { badgeCounts, hazardCardDue, hazardInPill } from './logic/training.js';
+import { HAZARD_CHOICES } from './screens/hazard.js';
 import { openFinance } from './screens/finance.js';
 import { openComputeInfo } from './screens/computeInfo.js';
 import { sfx } from './sfx.js';
@@ -116,6 +117,11 @@ export function mountHud(root, game) {
     <div class="hud" aria-label="Current project"></div>
     <button type="button" class="ctr hud-flaw" data-act="flaws" aria-label="Flaws" hidden><span class="badge"></span><span class="tag">Flaws</span></button>
     <div class="hud-polish" hidden>
+      <div class="hud-hazard" role="group" aria-label="Caught again: a cheating reasoning trace" hidden>
+        <b>Caught again: a cheating reasoning trace</b>
+        <span class="hud-hazard-row">${HAZARD_CHOICES.map((choice) => `<button type="button" data-hazard="${choice.id}">${choice.label}</button>`).join('')}</span>
+        <small>Publish without choosing and it counts as “Ignore it”</small>
+      </div>
       <button type="button" class="hud-publish" data-act="publish"></button>
       <span class="hud-rumor" hidden></span>
     </div>
@@ -168,6 +174,13 @@ export function mountHud(root, game) {
     const act = event.target.closest?.('[data-act]')?.dataset.act;
     if (act) polishAct(act);
   });
+  // A cheating trace after the first one: the same three choices, and the clock keeps running (pacing fix, 2026-10-14).
+  view.querySelector('.hud-hazard').addEventListener('click', (event) => {
+    const choice = event.target.closest?.('[data-hazard]')?.dataset.hazard;
+    if (!choice || blocked() || overlay()?.querySelector('.dialog-layer') || !hazardInPill(game.state)) return;
+    game.setField('hazardChoice', choice);
+    overlay()?.dispatchEvent(new CustomEvent('hazard-chosen'));
+  });
   centre.addEventListener('keydown', (event) => {
     if ((event.key === 'Enter' || event.key === ' ') && event.target.closest?.('.pill-act')) {
       event.preventDefault();
@@ -206,8 +219,11 @@ export function mountHud(root, game) {
     view.classList.toggle('has-polish-flaws', !flawButton.hidden);
     if (!flawButton.hidden) flawButton.querySelector('.badge').textContent = `${flawsLeft(polishingModel)}`;
     const polishRow = view.querySelector('.hud-polish');
-    polishRow.hidden = !polishingModel || Boolean(polishingModel.hazard) || Boolean(state.ending);
-    if (!polishRow.hidden) {
+    const hazardHere = hazardInPill(state);
+    polishRow.hidden = (!polishingModel && !hazardHere) || hazardCardDue(state) || Boolean(state.ending);
+    polishRow.querySelector('.hud-hazard').hidden = !hazardHere;
+    polishRow.querySelector('.hud-publish').hidden = !polishingModel;
+    if (!polishRow.hidden && polishingModel) {
       polishRow.querySelector('.hud-publish').textContent = `Publish ${pill.name}`;
       const rumor = rivalRumor(state);
       const chip = polishRow.querySelector('.hud-rumor');

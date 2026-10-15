@@ -28,6 +28,7 @@ export function resolveHazard(state, choice) {
   if (choice === 'ignore') state.alignmentDebt += h.size;
   if (choice === 'fix') state.pendingModel.releaseDelay = (state.pendingModel.releaseDelay ?? 0) + 1;
   state.pendingModel.hazard = null;
+  state.flags.hazardsMet = (state.flags.hazardsMet ?? 0) + 1; // the UI shows the full card only for the first one
   return { ok: true, choice };
 }
 

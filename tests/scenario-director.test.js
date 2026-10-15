@@ -49,13 +49,72 @@ test('scenario selection and arrival days replay from the seed and vary across r
   assert.ok(schedules.size > 1);
 });
 
-test('each era selects four or five unique appropriate incidents when prerequisites are met', () => {
+test('each era selects unique appropriate incidents when prerequisites are met: six or seven in the long eras 1 and 2, four or five after', () => {
   for (let era = 1; era <= 5; era += 1) {
+    const [min, max] = era <= 2 ? [6, 7] : [4, 5];
     for (const seed of [1, 12, 83]) {
       const cards = schedule(era, seed);
-      assert.ok(cards.length >= 4 && cards.length <= 5, `era ${era}, seed ${seed}: ${cards.length}`);
+      assert.ok(cards.length >= min && cards.length <= max, `era ${era}, seed ${seed}: ${cards.length}`);
       assert.equal(new Set(cards.map((card) => card.id)).size, cards.length);
       for (const card of cards) assert.ok(SCENARIO_EVENTS.find((row) => row.id === card.id).eras.includes(era));
+    }
+  }
+});
+
+test('in eras 1 and 2 no stretch without a scenario card runs much past a minute of clock (about 62 story days)', () => {
+  for (const era of [1, 2]) {
+    for (let seed = 1; seed <= 30; seed += 1) {
+      const days = [0, ...schedule(era, seed).map((card) => card.day), 4 * ROUND_DAYS[era]];
+      const longest = Math.max(...days.slice(1).map((day, i) => day - days[i]));
+      assert.ok(longest <= 62, `era ${era}, seed ${seed}: ${longest} days`);
+    }
+  }
+});
+
+test('era 5 spreads its scenario cards over all four weeks, after the summit opens', () => {
+  for (let seed = 1; seed <= 30; seed += 1) {
+    const cards = schedule(5, seed);
+    const weeks = new Set(cards.map((card) => Math.floor(card.day / 7)));
+    assert.deepEqual([...weeks].sort(), [0, 1, 2, 3], `seed ${seed}: ${cards.map((card) => card.day)}`);
+    assert.ok(cards[0].day >= 4, `seed ${seed}: the first card comes after the summit, day ${cards[0].day}`);
+  }
+});
+
+// Review fix (2026-10-14): era 5's last card could land on day 26 with its deadline clamped to day 27, a one-day window.
+// Round 2: a card left open to its deadline still blocks new cards that day (scenarioTick runs before resolveDue), so
+// card days also leave room for the cards after them; none is dropped.
+test('no scenario card ever gets less than its era\'s normal answer window, and none is dropped', () => {
+  const normal = { 1: 21, 2: 21, 3: 10, 4: 10, 5: 3 };
+  // Cards fired in seeds 1-200 by the director before these fixes (every card fired then, some with short windows).
+  const before = { 1: 1307, 2: 1292, 3: 912, 4: 904, 5: 902 };
+  for (let era = 1; era <= 5; era += 1) {
+    for (const holdOpen of [false, true]) {
+      let fired = 0;
+      for (let seed = 1; seed <= 200; seed += 1) {
+        const state = richState(era, seed);
+        let firedHere = 0;
+        // sim/turn.js advanceDays: the tick, then cards past their deadline resolve, then on a mark day a second tick.
+        const tick = (day) => {
+          for (const event of scenarioTick(state)) {
+            const card = state.pendingEvents.find((pending) => pending.id === event.id);
+            assert.equal(card.dueAt - card.landsAt, normal[era], `era ${era}, seed ${seed}, day ${day}, held ${holdOpen}`);
+            assert.ok(card.dueAt <= 4 * ROUND_DAYS[era] - 1, `era ${era}, seed ${seed}: due on the era's last day at the latest`);
+            firedHere += 1;
+          }
+          if (!holdOpen) state.pendingEvents = []; // answered the day it lands
+        };
+        for (let day = 0; day < 4 * ROUND_DAYS[era]; day += 1) {
+          state.day = day;
+          state.turnInEra = Math.floor(day / ROUND_DAYS[era]);
+          state.dayInRound = day % ROUND_DAYS[era];
+          tick(day);
+          state.pendingEvents = state.pendingEvents.filter((card) => day < card.dueAt); // left open: resolved at its deadline
+          if (day > 0 && day % ROUND_DAYS[era] === 0) tick(day);
+        }
+        assert.equal(firedHere, state.scenarioDirector.slots.length, `era ${era}, seed ${seed}, held ${holdOpen}: a card was dropped`);
+        fired += firedHere;
+      }
+      assert.equal(fired, before[era], `era ${era}, held ${holdOpen}`);
     }
   }
 });

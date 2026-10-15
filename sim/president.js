@@ -3,6 +3,8 @@ import { createPresidentPromise } from './promises.js';
 import { clamp } from './util.js';
 import { addPipeline } from './contracts.js';
 import { eraScale } from './data/compute.js';
+import { ERAS } from './data/eras.js';
+import { roundSpan } from './time.js';
 
 const meetingById = (id) => MEETINGS.find((meeting) => meeting.id === id);
 
@@ -40,16 +42,31 @@ function finishMeeting(state, id, walkedOut, flattery, promises, bargain = false
   return { ok: true, outcome: { walkedOut, flattery, promises, stake } };
 }
 
+// A meeting opens on its day: `dayInRound` story days into round `turnInEra` (from 0) of its era.
 export function meetingDue(state) {
   const meeting = MEETINGS.find((entry) =>
     entry.era === state.era
     && entry.turnInEra === state.turnInEra
+    && (state.dayInRound ?? 0) >= (entry.dayInRound ?? 0)
     && !state.meetingsHeld.includes(entry.id));
   return meeting?.id ?? null;
 }
 
+// The story day a meeting opens on (sim/time.js roundSpan counts rounds across eras).
+export function meetingDay(meeting) {
+  const round = ERAS.slice(0, meeting.era - 1).reduce((sum, era) => sum + era.turns, 0) + meeting.turnInEra;
+  return roundSpan(round).start + (meeting.dayInRound ?? 0);
+}
+
+// An untaken call lapses at the mark that ends a full round after it opened: the same round's mark when it opened
+// on the round's first day, the next round's mark when it opened mid-round.
+export const meetingExpiresNow = (state) => Boolean(state.meeting) && state.turn >= (state.meeting.expiresTurn ?? state.turn);
+// The story day of that mark: the open call can be taken on any day before it.
+export const meetingLapseDay = (state) => roundSpan(state.meeting.expiresTurn ?? state.turn).end;
+
 export function openMeeting(state, id) {
-  if (id !== 'second') return { id, patience: 10 };
+  const expiresTurn = state.turn + ((state.dayInRound ?? 0) > 0 ? 1 : 0);
+  if (id !== 'second') return { id, patience: 10, expiresTurn };
   const firstPromises = state.promises.filter((promise) =>
     promise.source === 'president' && promise.meeting === 'first');
   const grudges = firstPromises
@@ -61,6 +78,7 @@ export function openMeeting(state, id) {
     id,
     patience: clamp(10 - 2 * grudges.length + kept, 4, 12),
     grudges,
+    expiresTurn,
   };
 }
 
