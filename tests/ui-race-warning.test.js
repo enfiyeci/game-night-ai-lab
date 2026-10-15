@@ -10,6 +10,9 @@ import { mountEnding } from '../ui/screens/end.js';
 import { mountBoardMeeting } from '../ui/screens/boardMeeting.js';
 import { holdVote } from '../sim/board.js';
 import { installFakeDom } from './helpers/fakeDom.js';
+import { createGame } from '../ui/game.js';
+import { SCENARIOS } from '../ui/logic/scenarios.js';
+import { nextRoundDay } from '../sim/time.js';
 
 // Era `era`'s last round with `daysLeft` story days to its end; the lab at 44 and the rivals `behind` it (positive =
 // ahead of the lab), as the pick page drew it: OpenBrain 62, DeepThink 50, the lab 44, Lodestar 32, Qilin 28.
@@ -198,4 +201,89 @@ test('a lab out on the eve of the gate but safe after the mark gets the normal r
   assert.equal(game.state.ending, null);
   assert.ok(overlay.querySelector('.mt-next'), 'the vote plays');
   assert.equal(overlay.querySelector('.mt-ring'), null);
+});
+
+test('peekMark plays to the next mark on copies: the game is untouched and the real crossing comes out the same', () => {
+  // A whole last round of era 2 (91 days of draws), then the era's last day with the lab left behind.
+  const game = createGame({ seed: 1, state: SCENARIOS.leftBehind(1), eventMode: 'legacy' });
+  const cross = () => {
+    const start = game.state;
+    const days = Math.max(1, nextRoundDay(start) - start.day);
+    for (let day = 0; day < days && !game.state.ending && game.state.turn === start.turn; day += 1) game.advanceDays(1);
+  };
+  const before = structuredClone(game.state);
+  const round = game.peekMark();
+  assert.deepEqual(game.state, before);
+  while (!game.state.ending && nextRoundDay(game.state) - game.state.day > 1) game.advanceDays(1);
+  const eve = structuredClone(game.state);
+  const peek = game.peekMark();
+  assert.deepEqual(game.state, eve, 'the peek leaves the game as it was');
+  assert.equal(peek.ending, 'leftBehind');
+  cross();
+  assert.deepEqual(game.state, peek, 'the real last day is the copy\'s last day');
+  // And from the round's start, the copy matches the round as played day by day.
+  const replay = createGame({ seed: 1, state: SCENARIOS.leftBehind(1), eventMode: 'legacy' });
+  const start = replay.state;
+  for (let day = 0; day < nextRoundDay(start) - start.day && !replay.state.ending && replay.state.turn === start.turn; day += 1) replay.advanceDays(1);
+  assert.deepEqual(replay.state, round);
+});
+
+test('left behind on the eve of the gate: the call says so at once, with no motion and no room (owner pick A)', () => {
+  const document = installFakeDom();
+  globalThis.matchMedia = () => ({ matches: true });
+  const eve = raceAt({ daysLeft: 1 });
+  const left = () => {
+    const next = structuredClone(eve);
+    next.day += 1;
+    next.turn += 1;
+    next.ending = 'leftBehind';
+    return next;
+  };
+  const subscribers = [];
+  let crossed = 0;
+  const game = {
+    state: eve,
+    subscribe: (fn) => { subscribers.push(fn); return () => {}; },
+    setField: () => ({ ok: true }),
+    peekMark: () => left(),
+    advanceDays: () => {
+      crossed += 1;
+      game.state = left();
+      subscribers.forEach((fn) => fn({ state: game.state, events: [], errors: [] }));
+    },
+  };
+  const stage = document.createElement('main');
+  const overlay = document.createElement('div');
+  stage.append(overlay);
+  document.body.append(stage);
+  mountBoardMeeting(game, { overlay, stage });
+  assert.equal(crossed, 1, 'the meeting crossed the mark as it opened');
+  const ring = overlay.querySelector('.mt-ring');
+  assert.ok(ring, 'the call rings');
+  assert.match(ring.textContent, /The era is over · Northwind finished 3rd, 18 points behind OpenBrain/);
+  assert.match(ring.textContent, /No vote today\. The rivals moved on without you\./);
+  assert.doesNotMatch(ring.textContent, /Motion/);
+  assert.equal(overlay.querySelector('.decline'), null);
+  assert.equal(overlay.querySelector('.mt-call-vote'), null);
+});
+
+test('safe on the copy of the last day: the usual call rings and the mark waits for the vote', () => {
+  const document = installFakeDom();
+  globalThis.matchMedia = () => ({ matches: true });
+  const eve = raceAt({ daysLeft: 1 });
+  let crossed = 0;
+  const game = {
+    state: eve,
+    subscribe: () => () => {},
+    setField: () => ({ ok: true }),
+    peekMark: () => ({ ...structuredClone(eve), turn: eve.turn + 1, ending: null }),
+    advanceDays: () => { crossed += 1; },
+  };
+  const stage = document.createElement('main');
+  const overlay = document.createElement('div');
+  stage.append(overlay);
+  document.body.append(stage);
+  mountBoardMeeting(game, { overlay, stage });
+  assert.equal(crossed, 0);
+  assert.match(overlay.querySelector('.mt-ring').textContent, /Motion: remove the chief executive/);
 });

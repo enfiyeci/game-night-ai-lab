@@ -39,3 +39,11 @@ test('clamp and sigmoid', () => {
   assert.equal(clamp(-5, 0, 100), 0);
   assert.equal(sigmoid(0), 0.5);
 });
+
+test('a fork draws what the stream draws next, and drawing from it leaves the stream alone', () => {
+  const rng = createRng(7);
+  for (let i = 0; i < 5; i++) rng.next();
+  const fork = rng.fork();
+  const ahead = Array.from({ length: 20 }, () => fork.next());
+  assert.deepEqual(Array.from({ length: 20 }, () => rng.next()), ahead);
+});

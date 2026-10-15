@@ -798,8 +798,30 @@ export function mountBoardMeeting(game, { overlay, stage }) {
       if (base === '4a') resultDialog();
     }
 
+    // Left behind at an era's end (owner pick A, 2026-10-15): the usual call, a room that says the votes are there, then
+    // "no vote today" contradicted itself. The era's last day is played on a copy first (game.peekMark); if the copy is
+    // left behind, no vote will be held, so there are no deals to make and the meeting crosses the mark at once: the same
+    // state and the same random draws as the copy, so the same result. The call then says so, as frame S1 drew it.
+    function leftBehindNow() {
+      try {
+        if (!lastRound || game.peekMark?.().ending !== 'leftBehind') return false;
+      } catch (error) {
+        console.error(error); // no copy to judge by: the usual call, which explains the loss after the vote is called
+        return false;
+      }
+      try {
+        crossMark();
+        if (after.ending === 'leftBehind') leftBehindRing();
+        else { console.error('the mark did not leave the lab behind as its copy did'); close(); }
+      } catch (error) {
+        console.error(error);
+        close();
+      }
+      return true;
+    }
+
     if (preview && step !== 'ring') still(step);
-    else ring();
+    else if (preview || !leftBehindNow()) ring();
     return session;
   }
 
