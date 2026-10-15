@@ -23,6 +23,16 @@ test('the game allows at most two actions per round and keeps endTurn for tests'
   assert.equal(available.movesLeft(), 2);
 });
 
+test('movesLeft never goes below 0, so every "no action left" check still holds', () => {
+  const state = SCENARIOS.start(3);
+  state.round.moves = 3; // more than the cap, as a save from before the set pieces stopped costing one could hold
+  const g = createGame({ seed: 3, state });
+  assert.equal(g.movesLeft(), 0);
+  const offerId = g.state.compute.offers.find((offer) => offer.supplier === 'coreflame').id;
+  assert.equal(g.addMove({ type: 'deal', offerId }).ok, false);
+  assert.equal(g.movesLeft(), 0);
+});
+
 test('the same seed and inputs give the same state', () => {
   const a = createGame({ seed: 9 }); a.endTurn(); a.endTurn();
   const b = createGame({ seed: 9 }); b.endTurn(); b.endTurn();

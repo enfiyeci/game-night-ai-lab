@@ -1,6 +1,6 @@
 import { createInitialState } from '../../sim/state.js';
 import { createRng } from '../../sim/rng.js';
-import { advanceDays, applyActions, endTurn } from '../../sim/turn.js';
+import { advanceDays, applyActions, endTurn, MAX_MOVES, usesAction } from '../../sim/turn.js';
 import { cardById, cardUnlocked, recipeCost, slotsFor, validateRecipe } from '../../sim/recipe.js';
 import { availableUnits } from '../../sim/training.js';
 import { inDangerZone } from '../../sim/economy.js';
@@ -11,6 +11,12 @@ import { ROUND_DAYS } from '../../sim/time.js';
 import { turnRecord } from './finance.js';
 import { SCENARIO_EVENTS } from '../../sim/data/scenarioEvents.js';
 import { enableScenarios } from '../../sim/scenarios.js';
+
+// The first two moves that use a team action, and any set piece (the President's call never takes one).
+const withinActions = (moves) => {
+  let slots = MAX_MOVES;
+  return moves.filter((move) => !usesAction(move) || slots-- > 0);
+};
 
 const preferences = {
   pre: ['licensed-data', 'hazard-filter-built', 'hazard-filter-reuse'],
@@ -92,7 +98,7 @@ function scriptedActions(state) {
     const offer = state.compute.offers.find((candidate) => candidate.supplier === 'coreflame' && !candidate.viaQueue);
     if (offer && offer.upfront <= state.cash) moves.push({ type: 'deal', offerId: offer.id });
   }
-  actions.moves = moves.slice(0, 2);
+  actions.moves = withinActions(moves);
   return actions;
 }
 
@@ -164,7 +170,7 @@ function dealsState(seed) {
   let state = atEra(seed, 2);
   if (state.ending || state.era !== 2) return state;
   const actions = scriptedActions(state);
-  actions.moves = [{ type: 'raise', archetype: 'vc' }, ...actions.moves].slice(0, 2);
+  actions.moves = withinActions([{ type: 'raise', archetype: 'vc' }, ...actions.moves]);
   ({ state } = step(state, actions, rng));
   return state;
 }
@@ -184,7 +190,7 @@ function powerState(seed) {
     const actions = scriptedActions(state);
     const grid = state.compute.offers.find((offer) => offer.supplier === 'grid');
     if (grid && grid.upfront <= state.cash) {
-      actions.moves = [{ type: 'deal', offerId: grid.id }, ...actions.moves].slice(0, 2);
+      actions.moves = withinActions([{ type: 'deal', offerId: grid.id }, ...actions.moves]);
     }
     ({ state } = step(state, actions, rng));
   }
@@ -199,7 +205,7 @@ function powerState(seed) {
   const chips = state.compute.offers.find((offer) => (
     (offer.supplier === 'verde' || offer.supplier === 'loi') && offer.upfront <= state.cash
   ));
-  if (chips) actions.moves = [{ type: 'deal', offerId: chips.id }, ...actions.moves].slice(0, 2);
+  if (chips) actions.moves = withinActions([{ type: 'deal', offerId: chips.id }, ...actions.moves]);
   ({ state } = step(state, actions, rng));
   while (!state.ending && state.era === 4 && state.turn < 15) {
     ({ state } = step(state, scriptedActions(state), rng));

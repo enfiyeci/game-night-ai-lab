@@ -2,7 +2,7 @@ import { enableScenarios } from '../sim/scenarios.js';
 import { playRound } from './play-round.js';
 import { createInitialState } from '../sim/state.js';
 import { createRng } from '../sim/rng.js';
-import { endTurn } from '../sim/turn.js';
+import { endTurn, usesAction } from '../sim/turn.js';
 import { cardById, cardUnlocked, slotsFor, pickableCards, validateRecipe, recipeCost } from '../sim/recipe.js';
 import { availableUnits, startRun } from '../sim/training.js';
 import { inDangerZone, projectBurn } from '../sim/economy.js';
@@ -425,17 +425,19 @@ function makeStrategy(style, prefs, policy = {}) {
     const automation = automationChoice(preAutomation, policy.automation ?? style, rng);
     if (automation) actions.automation = automation;
     const planned = plannedState(state, actions);
+    // Team actions queued so far: the President's call and the summit never use one.
+    const used = () => actions.moves.filter(usesAction).length;
     if (policy.limitedSummit && planned.era === 5 && planned.turnInEra === 0 && !planned.deal) {
       actions.moves.push({ type: 'summit', proposals: ['computeCap'], checks: { computeCap: 3 }, promises: { east: 'inspectors', west: planned.cash >= 50 ? 'pay' : 'goFirst' } });
     }
     if (meeting) actions.moves.push({ type: 'meeting' });
-    if (planned.pendingModel && (readyToPublish(planned, policy.publish ?? style) || (policy.deadlineRelease && planned.turnInEra === 3)) && actions.moves.length < 2) {
+    if (planned.pendingModel && (readyToPublish(planned, policy.publish ?? style) || (policy.deadlineRelease && planned.turnInEra === 3)) && used() < 2) {
       const move = {
         type: 'release',
         release: { picks: pickFrom(planned, 'release', prefs.release), price: 'market', reasoning: 'medium', family: 'Bot', generation: planned.models.length + 1 },
       };
       if (releaseModel(structuredClone(planned), move.release).ok) actions.moves.push(move);
-    } else if (!planned.activeRun && !planned.pendingModel && planned.day >= (planned.flags.trainingPausedUntilDay ?? 0) && actions.moves.length < 2) {
+    } else if (!planned.activeRun && !planned.pendingModel && planned.day >= (planned.flags.trainingPausedUntilDay ?? 0) && used() < 2) {
       const recipe = bestRecipe(planned, prefs);
       // The speed bot breaks the Geneva cap whenever one binds.
       if (recipe) actions.moves.push({ type: 'startRun', recipe, ...(style === 'speed' && dealBinds(state, 'computeCap') && { breakDeal: true }) });
@@ -447,10 +449,10 @@ function makeStrategy(style, prefs, policy = {}) {
     updateServing(afterPriority);
     afterPriority.burnPlanned = projectBurn(afterPriority);
     const compute = computeMove(afterPriority, rng, style, prefs, policy);
-    if (compute && actions.moves.length < 2) actions.moves.push(compute);
+    if (compute && used() < 2) actions.moves.push(compute);
     const summit = policy.limitedSummit && planned.era === 5 && planned.turnInEra === 0 && !planned.deal ? { type: 'summit', proposals: ['computeCap'], checks: { computeCap: 3 }, promises: { east: 'inspectors', west: planned.cash >= 50 ? 'pay' : 'goFirst' } } : policy.noSummit ? null : summitMove(planned, style, rng);
-    if (summit && !actions.moves.some((move) => move.type === 'summit') && actions.moves.length < 2) actions.moves.push(summit);
-    if (actions.moves.length < 2 && planned.era >= 2 && inDangerZone(planned) && planned.flags.lastRoundEra !== planned.era) {
+    if (summit && !actions.moves.some((move) => move.type === 'summit') && used() < 2) actions.moves.push(summit);
+    if (used() < 2 && planned.era >= 2 && inDangerZone(planned) && planned.flags.lastRoundEra !== planned.era) {
       actions.moves.push({ type: 'raise', archetype: 'vc' });
     }
     return actions;

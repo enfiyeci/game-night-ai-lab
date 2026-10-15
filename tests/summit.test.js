@@ -381,13 +381,31 @@ test('the summit opens by itself three story days into era 5, not on its first d
   assert.equal(summitOpensNow(s), false, 'once held, never again');
 });
 
-test('the summit vote never needs a free action', () => {
-  const s = era5();
-  s.dayInRound = SUMMIT_OPEN_DAY;
-  s.round.moves = 2;
-  const out = applyActions(s, { moves: [{ type: 'summit', motions: [{ card: 'evaluators', check: 2, promises: {} }] }] }, calm);
-  assert.deepEqual(out.errors, []);
-  assert.ok(out.state.deal);
+test('the summit vote never uses a team action, even when both are used', () => {
+  for (const used of [0, 1, 2]) {
+    const s = era5();
+    s.dayInRound = SUMMIT_OPEN_DAY;
+    s.round.moves = used;
+    const out = applyActions(s, { moves: [{ type: 'summit', motions: [{ card: 'evaluators', check: 2, promises: {} }] }] }, calm);
+    assert.deepEqual(out.errors, []);
+    assert.ok(out.state.deal);
+    assert.equal(out.state.round.moves, used, `${used} used before the vote`);
+  }
+});
+
+test('the order of play never changes what the summit vote costs', () => {
+  const summit = { type: 'summit', motions: [{ card: 'evaluators', check: 2, promises: {} }] };
+  const run = { type: 'startRun', recipe };
+  const raise = { type: 'raise', archetype: 'vc' };
+  for (const moves of [[summit, run, raise], [run, summit, raise], [run, raise, summit]]) {
+    const s = era5();
+    s.dayInRound = SUMMIT_OPEN_DAY;
+    const out = applyActions(s, { moves }, calm);
+    const order = moves.map((move) => move.type).join(', ');
+    assert.deepEqual(out.errors, [], order);
+    assert.equal(out.state.round.moves, 2, order);
+    assert.ok(out.state.deal, order);
+  }
 });
 
 test('catching after an investigation undoes exactly what the break gained', () => {

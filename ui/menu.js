@@ -1,4 +1,4 @@
-import { MAX_MOVES, needsFreeAction } from '../sim/turn.js';
+import { MAX_MOVES, usesAction } from '../sim/turn.js';
 import { EMERGENCY_OPTIONS, inDangerZone } from '../sim/economy.js';
 import { TECHNIQUES, techAvailable } from '../sim/techniques.js';
 import { TEAM_OF, TEAMS, busySubject, teamBusyError } from '../sim/teams.js';
@@ -142,7 +142,7 @@ export function disabledReason(item, game, handler, state = game.state) {
   if (busy) return sentenceCase(busy);
   const unavailable = item.unavailable?.(state, game);
   if (unavailable) return unavailable;
-  if (!item.free && game.movesLeft() === 0 && !item.editsQueued?.(game) && needsFreeAction({ type: MOVE_TYPE[item.id] })) return `Both team actions are used this ${roundWord(state.era)}`;
+  if (!item.free && game.movesLeft() === 0 && !item.editsQueued?.(game) && usesAction({ type: MOVE_TYPE[item.id] })) return `Both team actions are used this ${roundWord(state.era)}`;
   if (!handler && item.id !== 'budget' && !item.submenu) return 'Not built yet';
   return '';
 }
@@ -368,7 +368,7 @@ export function openMenu(game, point, { overlay = document.querySelector('#overl
   menu.append(counter);
   const help = document.createElement('div');
   help.className = 'menu-action-help';
-  help.textContent = `Two actions total; one per team. Resets ${storyDate(nextRoundDay(game.state)).label}. Research stays busy while training. Budget, planning and card responses use no team action.`;
+  help.textContent = `Two actions total; one per team. Resets ${storyDate(nextRoundDay(game.state)).label}. Research stays busy while training. Budget, planning, card responses, the President’s call and the summit use no team action.`;
   menu.append(help);
   layer.append(markerAt(x, y), menu);
   overlay.append(layer);

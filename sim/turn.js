@@ -46,9 +46,9 @@ import { setAutomation, automationTick, aiProposals, applyApprovals, reviewerCos
 import { landDue, stampLandings } from './landings.js';
 
 export const MAX_MOVES = 2;
-// The President's call and the Geneva summit can open between marks, after both actions are used (pacing fix,
-// 2026-10-14): taking them never needs a free action, and they use one when one is free.
-export const needsFreeAction = (move) => !['meeting', 'summit'].includes(move?.type);
+// The President's call and the Geneva summit are set pieces that never use a team action (owner decision,
+// 2026-10-14): they can open between marks, after both actions are used, and the order of play cannot change the cost.
+export const usesAction = (move) => !['meeting', 'summit'].includes(move?.type);
 const BUDGET_KEYS = ['training', 'security', 'product', 'talent'];
 // sideRng salts in sim/: 0 initial offers, 1 deals, 2 site opposition, 3 contracts, 4 queue,
 // 5 offers, 6 deliveries, 8 board events (sim/data/boardEvents.js), 9 + card index for card landing days
@@ -257,7 +257,7 @@ export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = 
   state.burnPlanned = projectBurn(state);
 
   for (const move of actions.moves ?? []) {
-    if (state.round.moves >= MAX_MOVES && needsFreeAction(move)) {
+    if (usesAction(move) && state.round.moves >= MAX_MOVES) {
       errors.push(`only ${MAX_MOVES} actions per round`);
       break;
     }
@@ -280,7 +280,6 @@ export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = 
       updateServing(state);
       state.burnPlanned = projectBurn(state);
       if (result.ok) {
-        state.round.moves += 1;
         const team = TEAM_OF[move.type];
         if (team) state.round.teams[team] = move.type;
       }
@@ -298,7 +297,7 @@ export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = 
       if (r.hazardIgnored) events.push({ type: 'hazardResolved', choice: 'ignore', auto: true });
       updateServing(state);
       state.burnPlanned = projectBurn(state);
-      state.round.moves += 1;
+      if (usesAction(move)) state.round.moves += 1;
       const team = TEAM_OF[move.type];
       if (team) state.round.teams[team] = move.type;
     } else errors.push(r.error);

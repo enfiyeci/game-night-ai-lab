@@ -7,7 +7,10 @@ const m = async (p) => import(`${REPO}/${p}`);
 
 const { STRATEGIES, eventChoices, dailyRelease } = await m('tools/balance.js');
 const { TEAM_OF, teamBusyError } = await m('sim/teams.js');
-const { applyActions, advanceDays } = await m('sim/turn.js');
+const turnModule = await m('sim/turn.js');
+const { applyActions, advanceDays } = turnModule;
+// The set pieces never use an action (2026-10-14 review fix); older builds lack usesAction and count every move.
+const usesAction = turnModule.usesAction ?? (() => true);
 const { createInitialState } = await m('sim/state.js');
 const { enableScenarios } = await m('sim/scenarios.js');
 const { createRng } = await m('sim/rng.js');
@@ -167,8 +170,9 @@ function playGame(name, seed) {
       let slots = 2 - state.round.moves;
       chosen = { ...chosen, moves: (chosen.moves ?? []).filter((move) => {
         const team = TEAM_OF[move.type];
-        if (slots <= 0 || occupied.has(team) || teamBusyError(state, move)) return false;
-        slots--; occupied.add(team); return true;
+        if ((usesAction(move) && slots <= 0) || occupied.has(team) || teamBusyError(state, move)) return false;
+        if (usesAction(move)) slots--;
+        occupied.add(team); return true;
       }) };
       for (const mv of chosen.moves) info.playerMoves.push({ day: state.day, era: state.era, type: mv.type });
       const r = applyActions(state, chosen, rng);

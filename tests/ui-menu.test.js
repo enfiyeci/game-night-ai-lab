@@ -64,7 +64,7 @@ test('meeting availability uses the live meeting and closes once he has been met
   assert.notEqual(reasonFor(game, 'meeting'), '');
 });
 
-// Pacing fix (2026-10-14): the call can open between marks, after both actions are used, so it never needs a free one.
+// Owner decision (2026-10-14): the call can open between marks, after both actions are used, and never uses one.
 test('the President\'s call stays open on the menu and can be taken when both team actions are used', () => {
   const game = createGame({ seed: 1, state: SCENARIOS.meeting(1) });
   game.state.round.moves = 2;
@@ -74,6 +74,17 @@ test('the President\'s call stays open on the menu and can be taken when both te
   const result = game.addMove({ type: 'meeting' });
   assert.equal(result.ok, true, result.error);
   assert.equal(result.events.find((event) => event.type === 'meetingOutcome')?.walkedOut, false);
+  assert.equal(game.state.round.moves, 2, 'the call used no action');
+  assert.equal(game.movesLeft(), 0);
+});
+
+test('taking the President\'s call with both actions free leaves both free', () => {
+  const game = createGame({ seed: 1, state: SCENARIOS.meeting(1) });
+  game.state.round.moves = 0;
+  game.queue.presidentAnswers = MEETINGS[0].exchanges.map((exchange) => exchange.answers[0].id);
+  assert.equal(game.addMove({ type: 'meeting' }).ok, true);
+  assert.equal(game.movesLeft(), 2);
+  assert.equal(reasonFor(game, 'release'), '', 'release still has an action');
 });
 
 // Owner pick 3B: Company stays about the business; a Game item at the bottom of the menu holds the rest.

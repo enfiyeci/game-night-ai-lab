@@ -20,6 +20,7 @@ const styleIds = (style, id = 'first') => ids((answers) => answers.find((answer)
 const plainIds = (id = 'first') => styleIds('plain', id);
 const flatteringIds = (id = 'first') => styleIds('flatter', id);
 const jargonIds = (id = 'first') => styleIds('jargon', id);
+const smallRecipe = { sliders: { size: 'small', length: 'optimal', alignShare: 0.15 }, picks: { pre: ['filtered-data'], mid: [], post: ['synthetic-sft', 'safety-tuning'] } };
 
 test('the President meeting script has the required exchanges and answer mix', () => {
   assert.deepEqual(MEETINGS.map(({ id, era, turnInEra, dayInRound }) => ({ id, era, turnInEra, dayInRound })), [
@@ -373,22 +374,25 @@ test('President answers without a meeting move are rejected and the meeting expi
   assert.ok(out.errors.some((error) => /meeting move/i.test(error)));
 });
 
-test('a meeting move needs an open meeting and consumes one of the two round actions', () => {
+test('a meeting move needs an open meeting and leaves both round actions for other moves', () => {
   const closed = endTurn(createInitialState(), { moves: [{ type: 'meeting' }] }, no);
   assert.ok(closed.errors.some((error) => /no open President meeting/i.test(error)));
 
   const state = open(createInitialState());
-  const coreflame = state.compute.offers.find((offer) => offer.supplier === 'coreflame');
+  const [first, second] = state.compute.offers.filter((offer) => offer.units != null);
   const out = endTurn(state, {
     moves: [
       { type: 'meeting' },
-      { type: 'deal', offerId: coreflame.id },
-      { type: 'deal', offerId: coreflame.id },
+      { type: 'deal', offerId: first.id },
+      { type: 'startRun', recipe: smallRecipe },
+      { type: 'deal', offerId: second.id },
     ],
     presidentAnswers: plainIds(),
   }, no);
   assert.ok(out.errors.some((error) => error.includes('2 actions per round')));
   assert.equal(out.events.filter((event) => event.type === 'deal').length, 1);
+  assert.equal(out.events.filter((event) => event.type === 'startRun').length, 1);
+  assert.equal(out.state.meetingsHeld.includes('first'), true);
 });
 
 test('a meeting at low favour withholds the grant', () => {
@@ -445,11 +449,31 @@ test('a call that opens between marks survives the next mark and lapses a round 
   assert.deepEqual(out.events.filter((event) => event.type === 'meetingOutcome').map((event) => event.walkedOut), [true]);
 });
 
-test('taking the President\'s call never needs a free action', () => {
+test('taking the President\'s call never uses a team action, even when both are used', () => {
+  for (const used of [0, 1, 2]) {
+    const state = open(createInitialState());
+    state.round.moves = used;
+    const out = applyActions(state, { moves: [{ type: 'meeting' }], presidentAnswers: plainIds() }, no);
+    assert.deepEqual(out.errors, []);
+    assert.equal(out.state.meeting, null);
+    assert.equal(out.state.meetingsHeld.includes('first'), true);
+    assert.equal(out.state.round.moves, used, `${used} used before the call`);
+  }
+});
+
+// Owner decision (2026-10-14): the call never costs an action, so where it falls among the round's moves changes nothing.
+test('the order of play never changes what the President\'s call costs', () => {
   const state = open(createInitialState());
-  state.round.moves = 2;
-  const out = applyActions(state, { moves: [{ type: 'meeting' }], presidentAnswers: plainIds() }, no);
-  assert.deepEqual(out.errors, []);
-  assert.equal(out.state.meeting, null);
-  assert.equal(out.state.meetingsHeld.includes('first'), true);
+  const offer = state.compute.offers.find((entry) => entry.supplier === 'coreflame');
+  const call = { type: 'meeting' };
+  const run = { type: 'startRun', recipe: smallRecipe };
+  const deal = { type: 'deal', offerId: offer.id };
+  for (const moves of [[call, run, deal], [run, call, deal], [run, deal, call]]) {
+    const out = applyActions(state, { moves, presidentAnswers: plainIds() }, no);
+    const order = moves.map((move) => move.type).join(', ');
+    assert.deepEqual(out.errors, [], order);
+    assert.equal(out.state.round.moves, 2, order);
+    assert.ok(out.state.activeRun, order);
+    assert.equal(out.state.meetingsHeld.includes('first'), true, order);
+  }
 });
