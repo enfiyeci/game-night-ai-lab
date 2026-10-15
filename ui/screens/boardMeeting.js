@@ -810,7 +810,7 @@ export function mountBoardMeeting(game, { overlay, stage }) {
         if (!lastRound || !game.peekMark) return false;
         const peek = game.peekMark();
         // A vote called earlier is held at this mark before the race is judged: it plays as usual, and the call that
-        // follows it says a vote was held (finish, below).
+        // follows it says a vote was held (finish, in resultDialog above).
         if (peek.ending !== 'leftBehind' || voteReveal(game.state, peek)) return false;
       } catch (error) {
         console.error(error); // no copy to judge by: the usual call, which explains the loss after the vote is called
