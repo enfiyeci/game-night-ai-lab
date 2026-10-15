@@ -83,7 +83,7 @@ const initialState = buildScenario(seed);
 const game = createGame({ seed, state: initialState, history: scenarioHistory(initialState), eventMode: scenarioName === 'start' || scenarioName === 'scenarioEvent' ? 'scenarios' : 'legacy' });
 if (cleanLabName(params.get('lab'))) game.state.labName = cleanLabName(params.get('lab')); // same cap as the title screen
 if (location.hash === '#board-warning') delete game.state.flags.boardQuiet; // debug still: the warning without going quiet
-// Debug: ?leads=dev,hana hires those leads as the setup would (a link skips the setup itself).
+// Debug: ?leads=dev,hana hires those leads as the setup would; add ?notitle (or a ?scenario=) to skip the setup itself.
 for (const id of (params.get('leads') ?? '').split(',')) if (LEADS[id]) hireLead(game.state, LEADS[id].seat, id);
 
 const stage = document.querySelector('#stage');

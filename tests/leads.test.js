@@ -128,3 +128,26 @@ test('Amara Cole: each release reaches 5% more users, and Washington likes it a 
   assert.equal(b.model.newUsers, Math.round(a.model.newUsers * 1.05));
   assert.equal(comms.govFavor.us, today.govFavor.us - 1);
 });
+
+test('hiring today\'s four on the résumés plays a whole bot run exactly as no setup does', async () => {
+  const { enableScenarios } = await import('../sim/scenarios.js');
+  const { playRound } = await import('../tools/play-round.js');
+  const { STRATEGIES, eventChoices, dailyRelease } = await import('../tools/balance.js');
+  const play = (leads) => {
+    const choices = createRng(7);
+    const dice = createRng(70);
+    let state = enableScenarios(createInitialState({ seed: 7 }));
+    for (const [seat, id] of Object.entries(leads)) hireLead(state, seat, id);
+    for (let i = 0; i < 30 && !state.ending; i++) {
+      state = playRound(state, STRATEGIES.balanced(state, choices), dice, (current) => eventChoices(current, 'balanced', choices),
+        { dailyActions: (current) => dailyRelease('balanced', current) }).state;
+    }
+    return state;
+  };
+  const plain = play({});
+  const today = play(TODAY);
+  assert.deepEqual(today.leads, TODAY);
+  delete today.leads;
+  assert.ok(plain.ending);
+  assert.deepEqual(today, plain);
+});

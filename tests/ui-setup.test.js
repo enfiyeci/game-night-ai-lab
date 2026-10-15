@@ -4,7 +4,7 @@ import { createInitialState } from '../sim/state.js';
 import { createGame } from '../ui/game.js';
 import { hireLead } from '../sim/leads.js';
 import { MEMO_ROWS, memoModel, resumeStep, startValues } from '../ui/logic/setup.js';
-import { installFakeDom } from './helpers/fakeDom.js';
+import { FakeEvent, installFakeDom } from './helpers/fakeDom.js';
 
 test('each résumé step names its seat and who is already hired, as the mockup footer does', () => {
   const state = createInitialState();
@@ -71,4 +71,24 @@ test('the setup walks four résumés, then the memo; hires go on the state and t
   assert.equal(done, 1);
   assert.ok(!reasons.has('setup'));
   assert.deepEqual(game.state.budget.split, createInitialState().budget.split);
+});
+
+test('a double-click on Hire hires one lead: the second click lands on the next seat\'s button and is ignored', async () => {
+  const doc = installFakeDom();
+  globalThis.matchMedia = () => ({ matches: true });
+  doc.dispatchEvent = () => true;
+  const { openSetup } = await import('../ui/screens/setup.js');
+  const game = createGame({ state: createInitialState({ seed: 5 }), seed: 5 });
+  game.clock = { pause() {}, resume() {} };
+  const overlay = doc.createElement('div');
+  doc.body.append(overlay);
+  const layer = openSetup(game, overlay);
+  // The guided tour holds while a .dialog-layer is open (ui/screens/intro.js HOLDERS); that keeps it behind the résumés.
+  assert.ok(layer.classList.contains('dialog-layer'));
+  overlay.querySelector('.resume-hire').dispatchEvent(new FakeEvent('click', { detail: 1 }));
+  const next = overlay.querySelector('.resume-hire');
+  assert.equal(next.textContent, 'Hire Tomas');
+  next.dispatchEvent(new FakeEvent('click', { detail: 2 }));
+  assert.deepEqual(game.state.leads, { research: 'priya', safety: 'tomas', cfo: 'margot', policy: 'jules' });
+  assert.match(overlay.querySelector('.setup-foot').textContent, /^2 of 4 · Head of Safety/, 'still on the Safety résumés');
 });

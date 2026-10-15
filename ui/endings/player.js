@@ -12,7 +12,7 @@
 // Assets: ui/endings/films/<id>.json (the shot list), ui/endings/narration.json (Lumen's lines), ui/assets/endings/plates/<plate>.svg, ui/assets/endings/clips/<clip>.mp4,
 // ui/assets/endings/<id>.m4a (sound), and the office art ui/assets/office-era<N>.svg with its anchors.
 import { buildTimeline, shotAt, camAt, sampleKeys, typedText, resolveFilm, fillText, withNarration } from './timeline.js';
-import { swapLeadNames } from '../../sim/leads.js';
+import { lead, swapLeadNames } from '../../sim/leads.js';
 import { seatLeads } from '../components/leadSeats.js';
 
 const OFFICE = { w: 1440, h: 810, cx: 720, cy: 450, fullH: 900 };
@@ -234,6 +234,7 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
     wrapEl.className = 'film-shot';
     const svg = shot.kind === 'office' ? officeShot(officeText, anchors, shot, run) : parseSvg(plates.get(shot.plate));
     for (const e of svg.querySelectorAll('[data-fill]')) e.textContent = fillText(e.dataset.fill, values);
+    for (const e of svg.querySelectorAll('[data-lead-initial]')) e.textContent = lead(run, e.dataset.leadInitial).first[0]; // an avatar's monogram
     for (const e of svg.querySelectorAll('[data-if]')) if (!values[e.dataset.if]) e.remove();
     wrapEl.append(svg);
     shotsHost.append(wrapEl);

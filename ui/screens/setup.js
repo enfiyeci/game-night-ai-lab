@@ -76,7 +76,9 @@ export function openSetup(game, overlayRoot, { onDone } = {}) {
       hire.textContent = `Hire ${step.candidates[at].first}`;
     }
     wireChoices(fan, sheets, (id) => { selected = id; render(); });
-    hire.addEventListener('click', () => {
+    hire.addEventListener('click', (event) => {
+      // The next seat's Hire button lands under the pointer, so a double-click's second click must not hire for it.
+      if (event.detail > 1) return;
       hireLead(game.state, step.seat, selected); // before the clock starts: no round to queue it in
       document.dispatchEvent(new CustomEvent('ai-lab:leads')); // the office seats the new lead (ui/office.js)
       if (index + 1 < SEATS.length) resumes(index + 1);
