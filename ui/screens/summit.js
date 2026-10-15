@@ -98,9 +98,14 @@ function screenAgenda(motions, results, current, phase) {
   return `<text x="486" y="96" style="font:900 12px Nunito;letter-spacing:.2em;fill:color-mix(in oklab, var(--sky) 40%, var(--paper))">THE AGENDA</text>${rows}`;
 }
 
+// Games whose summit has been on screen, by any path (by itself, the menu or the #summit route): it pops up by itself
+// at most once.
+const shown = new WeakSet();
+
 export function openSummit(game, overlayRoot) {
   // An open event card or phone keeps the floor until it is answered.
   if (overlayRoot.querySelector('.sm-layer, .event-layer, .ev-phone, .screenwall-layer')) return null;
+  shown.add(game);
   const motions = []; // voted, in order: { card, check, promises made during that motion }
   const results = []; // { signed, binds } for each voted motion
   let current = null; // the motion on the floor
@@ -364,14 +369,12 @@ export function openSummit(game, overlayRoot) {
   return layer;
 }
 
-// Opens once by itself a few days into the summit week (sim/summit.js summitOpensNow) when nothing else is on screen;
-// the menu opens it any day of that week.
+// Opens by itself a few days into the summit week (sim/summit.js summitOpensNow) when nothing else is on screen,
+// unless it has already been shown; the menu opens it any day of that week.
 export function mountSummit(game, overlayRoot) {
-  let offered = false;
   const BLOCKING = '.dialog-layer, .event-layer, .ev-phone, .menu-layer, .screenwall-layer';
   const tryOpen = () => {
-    if (offered || !summitOpensNow(game.state) || game.state.meeting || overlayRoot.querySelector(BLOCKING)) return;
-    offered = true;
+    if (shown.has(game) || !summitOpensNow(game.state) || game.state.meeting || overlayRoot.querySelector(BLOCKING)) return;
     openSummit(game, overlayRoot);
   };
   const unregister = registerMenuHandler('summit', () => openSummit(game, overlayRoot));
