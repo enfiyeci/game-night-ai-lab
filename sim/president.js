@@ -61,6 +61,8 @@ export function meetingDay(meeting) {
 // An untaken call lapses at the mark that ends a full round after it opened: the same round's mark when it opened
 // on the round's first day, the next round's mark when it opened mid-round.
 export const meetingExpiresNow = (state) => Boolean(state.meeting) && state.turn >= (state.meeting.expiresTurn ?? state.turn);
+// The story day of that mark: the open call can be taken on any day before it.
+export const meetingLapseDay = (state) => roundSpan(state.meeting.expiresTurn ?? state.turn).end;
 
 export function openMeeting(state, id) {
   const expiresTurn = state.turn + ((state.dayInRound ?? 0) > 0 ? 1 : 0);

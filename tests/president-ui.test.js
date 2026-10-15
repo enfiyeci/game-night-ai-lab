@@ -2,11 +2,14 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { MEETINGS } from '../sim/data/president.js';
-import { runMeeting } from '../sim/president.js';
+import { meetingDay, meetingLapseDay, openMeeting, runMeeting } from '../sim/president.js';
 import { createInitialState } from '../sim/state.js';
+import { advanceDays } from '../sim/turn.js';
+import { ERAS } from '../sim/data/eras.js';
 import {
   answersPayload,
   hatedWord,
+  lapseLine,
   meetingFor,
   moodFor,
   outcomeLine,
@@ -109,5 +112,29 @@ test('the President asset contains both moods, addressable advisors and stage an
   for (const point of [anchors.president.calm, anchors.president.uneasy, anchors.policy, anchors.ceo]) {
     assert.ok(point[0] > 0 && point[0] < 1440);
     assert.ok(point[1] > 0 && point[1] < 900);
+  }
+});
+
+// Review fix (2026-10-14): "Not now" told the player the second call ended with era 4's month, but it stays open through
+// era 5's first week. The line now names the mark that really closes the call.
+test('"Not now" names the day each call really lapses', () => {
+  const calm = { next: () => 0.99, int: () => 0, chance: () => false, pick: (a) => a[0], normal: (m) => m };
+  const expected = { first: 'Jul 2024', second: 'Jan 2027, week 2' };
+  for (const entry of MEETINGS) {
+    let state = createInitialState();
+    state.era = entry.era;
+    state.turnInEra = entry.turnInEra;
+    state.turn = ERAS.slice(0, entry.era - 1).reduce((sum, era) => sum + era.turns, 0) + entry.turnInEra;
+    state.dayInRound = entry.dayInRound;
+    state.day = meetingDay(entry);
+    state.meetingsHeld = entry.id === 'second' ? ['first'] : [];
+    state.meeting = openMeeting(state, entry.id);
+    const lapse = meetingLapseDay(state);
+    assert.equal(lapseLine(state), `He leaves if you have not met him before ${expected[entry.id]}.`, entry.id);
+    state = advanceDays(state, lapse - state.day - 1, calm).state;
+    assert.equal(state.ending, null, entry.id);
+    assert.equal(state.meeting?.id, entry.id, `${entry.id}: still open the day before`);
+    state = advanceDays(state, 1, calm).state;
+    assert.equal(state.meeting ?? null, null, `${entry.id}: gone on day ${lapse}`);
   }
 });

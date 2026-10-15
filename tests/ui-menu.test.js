@@ -115,7 +115,7 @@ test('the summit waits for the President’s waiting call, then opens once he ha
   // (deterministic endings A3 shifted the main random stream).
   const game = createGame({ seed: 1, state: SCENARIOS.meeting2(2) });
   // the projection expires an untaken call at the round's end, so the check must read the live meeting
-  assert.equal(reasonFor(game, 'summit'), 'Take the President’s call first');
+  assert.equal(reasonFor(game, 'summit'), 'The President’s call is still waiting. Take the meeting first');
   game.queue.presidentAnswers = MEETINGS[1].exchanges.map((exchange) => exchange.answers[0].id);
   assert.equal(game.addMove({ type: 'meeting' }).ok, true);
   assert.equal(game.state.meeting, null);

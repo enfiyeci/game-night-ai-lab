@@ -1,9 +1,14 @@
 import { MEETINGS } from '../../sim/data/president.js';
+import { meetingLapseDay } from '../../sim/president.js';
+import { storyDate } from '../../sim/time.js';
 
 export function meetingFor(state) {
   const id = state?.meeting?.id;
   return id ? MEETINGS.find((meeting) => meeting.id === id) ?? null : null;
 }
+
+// "Not now" closes the call but leaves it open until the mark that ends it (sim/president.js meetingExpiresNow).
+export const lapseLine = (state) => `He leaves if you have not met him before ${storyDate(meetingLapseDay(state)).label}.`;
 
 export function patienceTrail(state, answerIds = []) {
   const meeting = meetingFor(state);
