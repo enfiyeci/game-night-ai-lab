@@ -100,12 +100,12 @@ function screenAgenda(motions, results, current, phase) {
 
 // Games whose summit has been on screen, by any path (by itself, the menu or the #summit route): it pops up by itself
 // at most once.
-const shown = new WeakSet();
+const summitShown = new WeakSet();
 
 export function openSummit(game, overlayRoot) {
   // An open event card or phone keeps the floor until it is answered.
   if (overlayRoot.querySelector('.sm-layer, .event-layer, .ev-phone, .screenwall-layer')) return null;
-  shown.add(game);
+  summitShown.add(game);
   const motions = []; // voted, in order: { card, check, promises made during that motion }
   const results = []; // { signed, binds } for each voted motion
   let current = null; // the motion on the floor
@@ -374,7 +374,7 @@ export function openSummit(game, overlayRoot) {
 export function mountSummit(game, overlayRoot) {
   const BLOCKING = '.dialog-layer, .event-layer, .ev-phone, .menu-layer, .screenwall-layer';
   const tryOpen = () => {
-    if (shown.has(game) || !summitOpensNow(game.state) || game.state.meeting || overlayRoot.querySelector(BLOCKING)) return;
+    if (summitShown.has(game) || !summitOpensNow(game.state) || game.state.meeting || overlayRoot.querySelector(BLOCKING)) return;
     openSummit(game, overlayRoot);
   };
   const unregister = registerMenuHandler('summit', () => openSummit(game, overlayRoot));
