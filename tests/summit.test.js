@@ -9,6 +9,7 @@ import { BREAK_GAIN, CAUGHT_TRUST, DEFAULT_CHECK } from '../sim/data/summit.js';
 import { finalEnding } from '../sim/endings.js';
 import { startRun, advanceRun } from '../sim/training.js';
 import { applyActions, endTurn } from '../sim/turn.js';
+import { playRound } from '../tools/play-round.js';
 import { jobLevels, setAutomation } from '../sim/automation.js';
 import { recipeCost } from '../sim/recipe.js';
 
@@ -391,6 +392,22 @@ test('the summit vote never uses a team action, even when both are used', () => 
     assert.ok(out.state.deal);
     assert.equal(out.state.round.moves, used, `${used} used before the vote`);
   }
+});
+
+// Owner decision (2026-10-15): the summit waits for a free Policy team, for players and bots alike.
+test('a busy Policy team keeps the summit closed, in the sim and for the bots', () => {
+  const summit = { type: 'summit', motions: [{ card: 'evaluators', check: 2, promises: {} }] };
+  const s = era5();
+  s.dayInRound = SUMMIT_OPEN_DAY;
+  s.round.teams.policy = 'release';
+  const out = applyActions(s, { moves: [summit] }, calm);
+  assert.match(out.errors[0] ?? '', /^the policy team is busy until /);
+  assert.equal(out.state.deal, null);
+  // tools/play-round.js (every bot): the summit is dropped from the plan while Policy is busy, so nothing is rejected.
+  const played = playRound(s, { moves: [summit] }, calm, () => ({}));
+  assert.deepEqual(played.transcript[0].actions.moves, []);
+  assert.equal(played.errors.some((error) => /policy team/.test(error)), false);
+  assert.equal(played.state.deal ?? null, null);
 });
 
 test('the order of play never changes what the summit vote costs', () => {

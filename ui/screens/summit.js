@@ -4,6 +4,7 @@
 import { readTheRoom, voteMotion, summitOpensNow, COMMITMENTS, PARTIES } from '../../sim/summit.js';
 import { DEMANDS, PROMISES, MAX_PROMISES, DEFAULT_CHECK } from '../../sim/data/summit.js';
 import { registerMenuHandler } from '../menu.js';
+import { teamBusyError } from '../../sim/teams.js';
 import { ART } from '../assets/summitArt.js';
 import { enterTransition, exitTransition } from '../components/transition.js';
 
@@ -369,12 +370,14 @@ export function openSummit(game, overlayRoot) {
   return layer;
 }
 
-// Opens by itself a few days into the summit week (sim/summit.js summitOpensNow) when nothing else is on screen,
-// unless it has already been shown; the menu opens it any day of that week.
+// Opens by itself a few days into the summit week (sim/summit.js summitOpensNow) when nothing else is on screen and
+// the Policy team is free (owner, 2026-10-15: it waits for a busy team), unless it has already been shown; the menu
+// opens it any day of that week.
 export function mountSummit(game, overlayRoot) {
   const BLOCKING = '.dialog-layer, .event-layer, .ev-phone, .menu-layer, .screenwall-layer';
   const tryOpen = () => {
-    if (summitShown.has(game) || !summitOpensNow(game.state) || game.state.meeting || overlayRoot.querySelector(BLOCKING)) return;
+    if (summitShown.has(game) || !summitOpensNow(game.state) || game.state.meeting
+      || teamBusyError(game.state, { type: 'summit' }) || overlayRoot.querySelector(BLOCKING)) return;
     openSummit(game, overlayRoot);
   };
   const unregister = registerMenuHandler('summit', () => openSummit(game, overlayRoot));

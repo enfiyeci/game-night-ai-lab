@@ -368,7 +368,7 @@ export function openMenu(game, point, { overlay = document.querySelector('#overl
   menu.append(counter);
   const help = document.createElement('div');
   help.className = 'menu-action-help';
-  help.textContent = `Two actions total; one per team. Resets ${storyDate(nextRoundDay(game.state)).label}. Research stays busy while training. Budget, planning, card responses, the President’s call and the summit use no team action.`;
+  help.textContent = `Two actions total; one per team. Resets ${storyDate(nextRoundDay(game.state)).label}. Research stays busy while training. Budget, planning and card responses use no team action. The President’s call and the summit use none either, but they keep their team busy: you for the call, Policy for the summit.`;
   menu.append(help);
   layer.append(markerAt(x, y), menu);
   overlay.append(layer);
