@@ -11,7 +11,7 @@ The final build has these rules:
 - The President's call and the Geneva summit never use a team action. They still keep their team busy: you (the CEO) for the call, Policy for the summit.
 - A move over the two-action cap is skipped on its own, and the moves after it still run.
 - The summit waits for a free Policy team.
-- Every scenario card keeps its full answer window, and no card is dropped.
+- Every scenario card keeps its full answer window, and the schedule no longer squeezes out a card. (A card can still go unplayed if no scenario is eligible near the era's end, as before.)
 - The bots follow the same rules as players.
 
 Commands: `node tools/balance.js 200` (200 seeds per bot) and `node tools/pacing/measure.mjs 40 careful,balanced` (40 seeds).
@@ -69,7 +69,7 @@ Most of the "branch to final" swing comes from one change: the President's call 
   - careful: aligned 190 → 174, overtaken 4 → 21.
   - carefulNoGrid: falls back to its main result, overtaken 199 of 200.
 - **Balanced-family bots win more** (aligned 24 → 41 for balanced). They now reach the summit in the week the second call is taken: balanced went in all 132 runs that reached era 5, against 88 on the branch.
-- **Era 5 pacing is calmer.** Era 5's cards keep their full three-day window, and no card is dropped. Fewer weeks pile up four or more prompts.
+- **Era 5 pacing is calmer.** Era 5's cards keep their full three-day window, and the schedule drops none. Fewer weeks pile up four or more prompts.
 
 ## Known balance items
 
