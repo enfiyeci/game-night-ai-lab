@@ -6,7 +6,7 @@ import { money } from '../logic/format.js';
 import {
   PRICE_NAMES, PRICE_STOPS, REASONING_NAMES, REASONING_STOPS, SIZE_ORDER,
   canSkip, laterMoveProblem, nextGeneration, perMillion, pricePerMillion, releaseDraft, releaseOpinions,
-  queueBeforeRelease, releasePayload, releasePreview, releaseSpec, shipDelay, shipWords, waitsForTesters, withCard,
+  queueBeforeRelease, releasePayload, releasePreview, releaseSpec, shipDelay, shipWords, summitWarning, waitsForTesters, withCard,
 } from '../logic/release.js';
 import { tierWord } from '../../sim/release.js';
 import { registerMenuHandler } from '../menu.js';
@@ -121,7 +121,10 @@ export function openRelease(game, overlayRoot, { stage } = {}) {
     const shipLine = el('div', 'release-shipline');
     const error = el('div', 'dialog-error release-error');
     error.setAttribute('role', 'alert');
-    body.append(shipLine, error);
+    const missesSummit = summitWarning(game.state);
+    body.append(shipLine);
+    if (missesSummit) body.append(el('p', 'release-summit-warning', missesSummit));
+    body.append(error);
 
     const priceSlider = () => {
       const spec = releaseSpec(state, draft.picks, draft.reasoning);

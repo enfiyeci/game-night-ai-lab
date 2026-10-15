@@ -6,8 +6,9 @@ import { ERA_PRICE } from '../sim/serving.js';
 import {
   beatCount, canSkip, checkLabel, flagshipBefore, laterMoveProblem, leaderboard, nextGeneration, offeredCards, perMillion, priceSheet,
   pricePerMillion, queueBeforeRelease, releaseDraft, releaseOpinions, releasePayload, releasePreview, releaseSpec,
-  salesEstimate, servingPerMillion, shipDelay, shipWords, tokensPerUser,
+  salesEstimate, servingPerMillion, shipDelay, shipWords, summitWarning, tokensPerUser,
 } from '../ui/logic/release.js';
+import { applyActions } from '../sim/turn.js';
 import { SCENARIOS } from '../ui/logic/scenarios.js';
 import { releaseModel } from '../sim/release.js';
 import { scoreOnTest } from '../sim/launch.js';
@@ -361,4 +362,38 @@ test('a hurried beat still holds its result on screen until the next click', asy
   assert.equal(settled, false, 'the result is still on screen after the hurry');
   t.advance(); // second click moves on
   assert.equal(await beat, 'moved on');
+});
+
+// Owner (2026-10-15): the summit waits for a free Policy team and a release keeps Policy busy until the next mark, so a
+// release in the summit week, before the summit, skips it and brings the skipped-summit penalties.
+test('the release screen warns that a release in the summit week, before the summit, misses it', () => {
+  const warning = 'Releasing now keeps Policy busy for the rest of the week, so you will miss the Geneva summit.';
+  const summitWeek = (day = 1) => {
+    const state = createInitialState();
+    state.era = 5;
+    state.turnInEra = 0;
+    state.dayInRound = day;
+    return state;
+  };
+  for (const day of [0, 1, 3, 6]) assert.equal(summitWarning(summitWeek(day)), warning, `summit week, day ${day}`);
+
+  const held = applyActions(summitWeek(3), { moves: [{ type: 'summit', motions: [{ card: 'evaluators', check: 2, promises: {} }] }] }, { next: () => 0.5, int: () => 0, chance: () => false, pick: (a) => a[0], normal: () => 0 });
+  assert.deepEqual(held.errors, []);
+  assert.equal(summitWarning(held.state), '', 'after the summit is held');
+
+  const dealt = summitWeek();
+  dealt.deal = { collapsed: false };
+  assert.equal(summitWarning(dealt), '', 'once a deal exists');
+
+  const laterWeek = summitWeek();
+  laterWeek.turnInEra = 1;
+  assert.equal(summitWarning(laterWeek), '', 'outside the summit week');
+  const era4 = summitWeek();
+  era4.era = 4;
+  assert.equal(summitWarning(era4), '', 'before era 5');
+  assert.equal(summitWarning(createInitialState()), '', 'era 1');
+
+  const busy = summitWeek();
+  busy.round.teams.policy = 'release';
+  assert.equal(summitWarning(busy), '', 'Policy already busy: the release is not what costs the summit');
 });

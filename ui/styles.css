@@ -3042,6 +3042,8 @@ svg.room {
 .release-shipline { display: flex; justify-content: space-between; margin-top: 14px; padding: 10px 12px; font-size: 14px; font-weight: 800;
   border-block: 1.5px solid color-mix(in oklab, var(--wood) 30%, transparent); }
 .release-error { min-height: 16px; margin-top: 6px; }
+.release-summit-warning { margin: 8px 0 0; font-size: 14px; font-weight: 800; text-wrap: balance;
+  color: color-mix(in oklab, var(--coral) 75%, var(--ink)); }
 .release-dialog .dlg .dialog-ok { margin-top: 8px; }
 .release-note { font-size: 13px; font-weight: 700; color: color-mix(in oklab, var(--ink) 60%, var(--paper)); max-width: 200px; }
 .release-ship { display: inline-block; white-space: nowrap; font-size: 10.5px; font-weight: 900; border-radius: 4px; padding: 1px 6px; margin-top: 3px; }

@@ -6,6 +6,8 @@ import { CHANNEL, ERA_PRICE, PRICE_STANCE, REASONING, REVENUE_PER_USER, USAGE, m
 import { revenuePerUser } from '../../sim/economy.js';
 import { applyProjectedMove, projectQueue } from './compute.js';
 import { familyName } from './naming.js';
+import { summitPending } from '../../sim/summit.js';
+import { TEAM_OF, teamBusyError } from '../../sim/teams.js';
 
 export const PRICE_STOPS = ['free', 'undercut', 'market', 'premium'];
 export const PRICE_NAMES = { premium: 'Premium', market: 'Market', undercut: 'Undercut', free: 'Free tier' };
@@ -59,6 +61,13 @@ export const shipWords = (delay, era = 1) => (delay === 0 ? 'right away' : `in $
 export function withCard(picks, card) {
   const next = picks.filter((id) => cardById(id)?.group !== card.group);
   return [...next, card.id];
+}
+
+// The summit waits for a free Policy team (ui/screens/summit.js) and a release keeps Policy busy until the next mark,
+// so a release in the summit week, before the summit, means missing it. A warning only: the release still goes ahead.
+export function summitWarning(state) {
+  if (!summitPending(state) || TEAM_OF.release !== TEAM_OF.summit || teamBusyError(state, { type: 'summit' })) return '';
+  return 'Releasing now keeps Policy busy for the rest of the week, so you will miss the Geneva summit.';
 }
 
 export const canSkip = (state) => state.models.length > 0;
