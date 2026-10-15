@@ -80,6 +80,30 @@ test('era 5 spreads its scenario cards over all four weeks, after the summit ope
   }
 });
 
+// Review fix (2026-10-14): era 5's last card could land on day 26 with its deadline clamped to day 27, a one-day window.
+test('no scenario card ever gets less than its era\'s normal answer window', () => {
+  const normal = { 1: 21, 2: 21, 3: 10, 4: 10, 5: 3 };
+  for (let era = 1; era <= 5; era += 1) {
+    for (const holdOpen of [false, true]) {
+      for (let seed = 1; seed <= 200; seed += 1) {
+        const state = richState(era, seed);
+        for (let day = 0; day < 4 * ROUND_DAYS[era]; day += 1) {
+          state.day = day;
+          state.turnInEra = Math.floor(day / ROUND_DAYS[era]);
+          state.dayInRound = day % ROUND_DAYS[era];
+          // An unanswered card stays until its deadline and holds the next one back; an answered one goes at once.
+          state.pendingEvents = holdOpen ? state.pendingEvents.filter((card) => card.dueAt > day) : [];
+          for (const event of scenarioTick(state)) {
+            const card = state.pendingEvents.find((pending) => pending.id === event.id);
+            assert.equal(card.dueAt - card.landsAt, normal[era], `era ${era}, seed ${seed}, day ${day}, held ${holdOpen}`);
+            assert.ok(card.dueAt <= 4 * ROUND_DAYS[era] - 1, `era ${era}, seed ${seed}: due on the era's last day at the latest`);
+          }
+        }
+      }
+    }
+  }
+});
+
 test('the pause coalition and White House commitments belong to era four, never era one', () => {
   const events = SCENARIO_EVENTS.filter((event) => /pause|white house/i.test(event.card.title));
   assert.ok(events.length >= 2);
