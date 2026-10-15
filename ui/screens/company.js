@@ -15,7 +15,7 @@ import {
   roundAmount,
   runway,
 } from '../../sim/economy.js';
-import { ADVISOR_PROFILES } from '../../sim/data/advisorLines.js';
+import { lead as leadIn } from '../../sim/leads.js';
 import { TECHNIQUES, techAvailable } from '../../sim/techniques.js';
 import { roundWord, storyDate } from '../../sim/time.js';
 
@@ -65,7 +65,7 @@ function setActionDisabled(button, reason) {
   button.append(hidden);
 }
 
-function setSelected(buttons, selected) {
+export function setSelected(buttons, selected) {
   for (const button of buttons) {
     const active = button.dataset.choice === selected;
     button.classList.toggle('selected', active);
@@ -74,7 +74,7 @@ function setSelected(buttons, selected) {
   }
 }
 
-function wireChoices(group, buttons, select) {
+export function wireChoices(group, buttons, select) {
   const enabled = () => buttons.filter((button) => !button.disabled);
   for (const button of buttons) button.addEventListener('click', () => select(button.dataset.choice));
   group.addEventListener('keydown', (event) => {
@@ -100,7 +100,7 @@ function disabledReason(button, reason) {
   button.append(make('span', 'company-card-reason', reason));
 }
 
-function choice(className, id) {
+export function choice(className, id) {
   const button = make('button', className);
   button.type = 'button';
   button.dataset.choice = id;
@@ -111,7 +111,7 @@ function choice(className, id) {
 
 // Owner pick 5C: each decision is the paperwork it would be, laid on the dimmed office. openDialog still owns
 // focus, Esc, the veil click and gdt-dialog-closed, so a stepped-aside event card returns as after any dialog.
-function paperLayer(kind, { title, subtitle }) {
+export function paperLayer(kind, { title, subtitle }) {
   const layer = make('div', `dialog-layer paper-layer paper-${kind}`);
   layer.setAttribute('role', 'dialog');
   layer.setAttribute('aria-modal', 'true');
@@ -243,9 +243,9 @@ export function openResearch(game, overlayRoot) {
     subtitle: `Era ${state.era} · ${Math.round(projected.researchPoints)} research points available`,
   });
   const memo = make('article', 'paper-memo');
-  const lead = ADVISOR_PROFILES.research;
+  const lead = leadIn(state, 'research');
   const fields = make('div', 'memo-fields');
-  for (const [label, value] of [['From', `${lead.name}, ${lead.role}`], ['To', 'You'], ['About', 'Starting a technique early']]) {
+  for (const [label, value] of [['From', `${lead.name}, ${lead.title}`], ['To', 'You'], ['About', 'Starting a technique early']]) {
     const row = make('div');
     row.append(make('b', null, label), make('span', null, value));
     fields.append(row);

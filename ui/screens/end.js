@@ -311,7 +311,7 @@ export function mountEnding(game, overlay, { collection, onPlayAgain, loadFilm =
         id: state.ending,
         fullTitle: finale?.fullTitle,
         era: state.era,
-        run: { deal: state.deal, ...runNames(state) },
+        run: { deal: state.deal, ...runNames(state), ...(state.leads && { leads: state.leads }) },
         onDone: () => {
           if (!skipped) close();
         },

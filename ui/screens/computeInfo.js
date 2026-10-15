@@ -44,7 +44,7 @@ export function openComputeInfo(game, overlayRoot, { view = 'where', race = race
       row.append(tab);
     }
     const head = document.createDocumentFragment();
-    head.append(advisorExplains(COMPUTE_ADVISOR, computeExplainer(state.era), explaining), row, advisorTabLine(COMPUTE_ADVISOR, COMPUTE_TAB_LINES[current]));
+    head.append(advisorExplains(COMPUTE_ADVISOR, computeExplainer(state.era), explaining, state), row, advisorTabLine(COMPUTE_ADVISOR, COMPUTE_TAB_LINES[current]));
     return head;
   }
 

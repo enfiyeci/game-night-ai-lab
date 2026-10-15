@@ -1,4 +1,4 @@
-import { ADVISOR_PROFILES } from '../../sim/data/advisorLines.js';
+import { lead, swapLeadNames } from '../../sim/leads.js';
 import { eraScale } from '../../sim/data/compute.js';
 import { ERA_CHIP, FOCUS, FOCUS_REACTIONS, STAGE_BRIEFINGS } from '../../sim/data/recipeFocus.js';
 import { genevaCapRow } from './deal.js';
@@ -96,25 +96,25 @@ function stageStepper(stage, era) {
   return root;
 }
 
-function advisorVoice(id, size) {
+function advisorVoice(id, size, state) {
   const face = document.createElement('span');
   face.className = 'recipe-face';
-  face.innerHTML = portrait(`advisor-${id}`, size, 'flat');
+  face.innerHTML = portrait(lead(state, id).look, size, 'flat');
   return face;
 }
 
-function briefing(stage) {
+function briefing(stage, state) {
   const { advisor, text } = STAGE_BRIEFINGS[stage];
-  const profile = ADVISOR_PROFILES[advisor];
+  const profile = lead(state, advisor);
   const root = document.createElement('section');
   root.className = 'recipe-brief';
   const words = document.createElement('div');
   const who = document.createElement('b');
-  who.textContent = `${profile.name} · ${profile.role}`;
+  who.textContent = `${profile.name} · ${profile.title}`;
   const line = document.createElement('p');
   line.textContent = text;
   words.append(who, line);
-  root.append(advisorVoice(advisor, 40), words);
+  root.append(advisorVoice(advisor, 40, state), words);
   return root;
 }
 
@@ -159,7 +159,7 @@ function reactionFor(stage, values) {
 }
 
 // Game Dev Tycoon's focus sliders: three weights whose shares fill one time bar.
-function focusBlock(stage, currentDraft, onChange) {
+function focusBlock(stage, currentDraft, onChange, state) {
   const root = document.createElement('section');
   root.className = 'recipe-focus';
   const sliders = document.createElement('div');
@@ -198,8 +198,8 @@ function focusBlock(stage, currentDraft, onChange) {
     if (said !== lastReaction) {
       lastReaction = said;
       const words = document.createElement('span');
-      words.textContent = said.text;
-      reaction.replaceChildren(advisorVoice(said.advisor, 26), words);
+      words.textContent = swapLeadNames(said.text, state); // "Priya will say we are slow" names the hired lead
+      reaction.replaceChildren(advisorVoice(said.advisor, 26, state), words);
       reaction.classList.remove('fresh');
       void reaction.offsetWidth;
       reaction.classList.add('fresh');
@@ -631,7 +631,7 @@ export function openRecipe(game, overlayRoot, { stage = 1 } = {}) {
       if (startButton && number === 3) startButton.title = capitaliseError(preview.errors[0]);
     };
 
-    centre.append(briefing(stageId));
+    centre.append(briefing(stageId, game.state));
     if (number === 1) {
       const note = document.createElement('p');
       note.className = 'recipe-slider-note';
@@ -683,7 +683,7 @@ export function openRecipe(game, overlayRoot, { stage = 1 } = {}) {
     centre.append(focusBlock(stageId, () => draft, () => {
       draft = sanitizeDraft(projected(), draft);
       refresh();
-    }));
+    }, game.state));
 
     const capRow = number === 3 ? genevaCapRow(game.state) : null;
     body.append(centre, footerSlot, error, helpSlot);

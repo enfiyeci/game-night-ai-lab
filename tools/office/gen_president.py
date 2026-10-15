@@ -224,6 +224,8 @@ def v2_parts(mood):
         col = M("coral", 55, "wood") if role == "ceo" else M("teal", 55, "wood")
         advisors[role] = f'<g transform="translate({bx},{by}) scale({bs})">{G.back_person(G.PEOPLE[role])}{armchair_front(col)}</g>'
         heads[role] = [bx + 2 * bs, by - 93 * bs]
+        if role == "policy":  # the alternate Policy and Comms lead hired on the résumés (gen_office.py PEOPLE_ALT)
+            advisors["policy-alt"] = f'<g transform="translate({bx},{by}) scale({bs})">{G.back_person(G.PEOPLE_ALT[role])}{armchair_front(col)}</g>'
     vignette = f'<rect width="1440" height="900" style="fill:url(#bvig)"/>'
     return {
         "backdrop": backdrop("b"), "chair": chair, "body": body_group, "desk": desk,
@@ -252,6 +254,7 @@ def playable_scene():
         f'<g class="pres-hands" data-mood="uneasy">{uneasy["hands"]}</g>',
         f'<g id="advisor-ceo">{calm["advisors"]["ceo"]}</g>',
         f'<g id="advisor-policy">{calm["advisors"]["policy"]}</g>',
+        f'<g id="advisor-policy-alt" display="none">{calm["advisors"]["policy-alt"]}</g>',
         calm["vignette"],
     ])
     scene = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" width="1440" height="900" '

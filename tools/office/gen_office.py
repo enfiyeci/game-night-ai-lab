@@ -1245,6 +1245,13 @@ def seat(o, heads, role, drawn):
     o.append(f'<g id="person-{role}">{svg}</g>')
 
 
+def lead_seat(o, heads, role, draw):
+    """An advisor's desk with today's lead (person-<role>), then the same desk with the alternate hired on the
+    résumés (person-<role>-alt, hidden; ui/office.js shows whichever lead the player hired). Same seat, same anchor."""
+    seat(o, heads, role, draw(PEOPLE[role]))
+    o.append(f'<g id="person-{role}-alt" display="none">{draw(PEOPLE_ALT[role])[0]}</g>')
+
+
 def loft_scene():
     """Era 1: a small rented loft above a shop: brick, tall windows, a wood floor, folding tables."""
     W, D = 8.6, 7.4
@@ -1260,10 +1267,10 @@ def loft_scene():
     o.append(f'<g id="rack">{rack()}</g>')
     seat(o, heads, "researcher1", ws_back((2.9, 2.2), PEOPLE["researcher1"], "code"))
     seat(o, heads, "researcher2", ws_back((5.1, 2.2), PEOPLE["researcher2"], "loss"))
-    seat(o, heads, "research", ws_front((1.1, 4.4), "+x", PEOPLE["research"], tag="Research", extras=[("papers", 0.5, 0.8), ("mug2", 0.55, 0.45)]))
-    seat(o, heads, "safety", ws_front((3.6, 3.5), "+y", PEOPLE["safety"], tag="Safety", extras=[("papers", 0.45, 0.75)]))
-    seat(o, heads, "cfo", ws_front((6.3, 3.75), "+y", PEOPLE["cfo"], tag="CFO", extras=[("calc", 0.5, 0.75), ("papers", 0.5, 0.45)]))
-    seat(o, heads, "policy", ws_front((1.1, 6.2), "+x", PEOPLE["policy"], tag="Policy", extras=[("phone", 0.5, 0.5), ("mug", 0.55, 0.85)]))
+    lead_seat(o, heads, "research", lambda p: ws_front((1.1, 4.4), "+x", p, tag="Research", extras=[("papers", 0.5, 0.8), ("mug2", 0.55, 0.45)]))
+    lead_seat(o, heads, "safety", lambda p: ws_front((3.6, 3.5), "+y", p, tag="Safety", extras=[("papers", 0.45, 0.75)]))
+    lead_seat(o, heads, "cfo", lambda p: ws_front((6.3, 3.75), "+y", p, tag="CFO", extras=[("calc", 0.5, 0.75), ("papers", 0.5, 0.45)]))
+    lead_seat(o, heads, "policy", lambda p: ws_front((1.1, 6.2), "+x", p, tag="Policy", extras=[("phone", 0.5, 0.5), ("mug", 0.55, 0.85)]))
     seat(o, heads, "ceo", ws_front((5.4, 6.1), "+y", PEOPLE["ceo"], big=True, tag="You · CEO", extras=[("papers", 0.45, 0.75), ("mug", 0.65, 0.5)]))
     o.append(pizza_boxes(3.0, 6.9))
     return "".join(o), heads, (7.3, 6.2)
@@ -1291,10 +1298,10 @@ def building_scene():
     o.append(ws_back((5.0, 2.4), EXTRA_RESEARCHER, "trace")[0])
     seat(o, heads, "researcher1", ws_back((7.3, 2.4), None if away else PEOPLE["researcher1"], "agents" if away else "code"))
     seat(o, heads, "researcher2", ws_back((9.6, 2.4), None if away else PEOPLE["researcher2"], "agents" if away else "loss"))
-    seat(o, heads, "research", ws_front((1.6, 5.2), "+x", PEOPLE["research"], tag="Research", extras=[("papers", 0.5, 0.8), ("mug2", 0.55, 0.45)]))
-    seat(o, heads, "safety", ws_front((5.4, 4.8), "+y", PEOPLE["safety"], tag="Safety", extras=[("papers", 0.45, 0.75), ("plant", 0.62, 0.45)]))
-    seat(o, heads, "cfo", ws_front((8.9, 4.8), "+y", PEOPLE["cfo"], tag="CFO", extras=[("calc", 0.5, 0.75), ("papers", 0.5, 0.45)]))
-    seat(o, heads, "policy", ws_front((1.9, 8.4), "+x", PEOPLE["policy"], tag="Policy", extras=[("phone", 0.5, 0.5), ("mug", 0.55, 0.85)]))
+    lead_seat(o, heads, "research", lambda p: ws_front((1.6, 5.2), "+x", p, tag="Research", extras=[("papers", 0.5, 0.8), ("mug2", 0.55, 0.45)]))
+    lead_seat(o, heads, "safety", lambda p: ws_front((5.4, 4.8), "+y", p, tag="Safety", extras=[("papers", 0.45, 0.75), ("plant", 0.62, 0.45)]))
+    lead_seat(o, heads, "cfo", lambda p: ws_front((8.9, 4.8), "+y", p, tag="CFO", extras=[("calc", 0.5, 0.75), ("papers", 0.5, 0.45)]))
+    lead_seat(o, heads, "policy", lambda p: ws_front((1.9, 8.4), "+x", p, tag="Policy", extras=[("phone", 0.5, 0.5), ("mug", 0.55, 0.85)]))
     seat(o, heads, "ceo", ws_front((7.9, 7.6), "+y", PEOPLE["ceo"], big=True, tag="You · CEO",
                                    extras=[("papers", 0.75, 0.55), ("mug", 1.05, 0.9), ("plant", 1.1, 0.45)]))
     # the robotics lab, front right
@@ -1319,6 +1326,14 @@ PEOPLE = {
     "policy": dict(skin=SK_MED, hair=H_BROWN, style="long", shirt="var(--coral)", mood="calm", headset=True, advisor=True),
     "researcher1": dict(skin=SK_MED, hair=H_BROWN, shirt=M("teal", 70, "ink"), hood=True, headphones=True),
     "researcher2": dict(skin=SK_LIGHT, hair=H_BLACK, shirt=M("sky", 65, "paper"), ponytail=True),
+}
+
+# The alternate leads (sim/data/leads.js: Dev Okafor, Hana Sato, Rafael Ortiz, Amara Cole), one per advisor seat.
+PEOPLE_ALT = {
+    "research": dict(skin=SK_MED, hair=H_BLACK, style="short", shirt=M("sky", 60, "ink"), mood="calm", glasses=True, collar="var(--paper)", advisor=True),
+    "safety": dict(skin=SK_DARK, hair=H_BLACK, style="bob", shirt="var(--wood)", mood="calm", collar="var(--paper)", advisor=True),
+    "cfo": dict(skin=SK_DARK, hair=H_GREY, style="short", shirt=M("wood", 45, "ink"), mood="calm", suit=True, advisor=True),
+    "policy": dict(skin=SK_LIGHT, hair=H_AUBURN, style="long", shirt="var(--sky)", mood="calm", collar="var(--paper)", advisor=True),
 }
 
 HAIR_TOP = 24  # sprite units from the head centre to just above the tallest hair (the bun)
@@ -1352,12 +1367,12 @@ def office_scene():
 
     person("researcher1", ws_back((4.2, 2.35), PEOPLE["researcher1"], "code"))
     person("researcher2", ws_back((6.6, 2.35), PEOPLE["researcher2"], "loss"))
-    person("research", ws_front((1.5, 4.35), "+x", PEOPLE["research"], tag="Research", extras=[("papers", 0.5, 0.8), ("mug2", 0.55, 0.45)]))
+    lead_seat(o, heads, "research", lambda p: ws_front((1.5, 4.35), "+x", p, tag="Research", extras=[("papers", 0.5, 0.8), ("mug2", 0.55, 0.45)]))
     o.append(water_cooler())
     desk_plant = [("plant", 0.62, 0.45)] if F["plants"] else []
-    person("safety", ws_front((4.9, 4.15), "+y", PEOPLE["safety"], tag="Safety", extras=[("papers", 0.45, 0.75)] + desk_plant))
-    person("cfo", ws_front((8.55, 4.35), "+y", PEOPLE["cfo"], tag="CFO", extras=[("calc", 0.5, 0.75), ("papers", 0.5, 0.45)]))
-    person("policy", ws_front((1.9, 6.95), "+x", PEOPLE["policy"], tag="Policy", extras=[("phone", 0.5, 0.5), ("mug", 0.55, 0.85)]))
+    lead_seat(o, heads, "safety", lambda p: ws_front((4.9, 4.15), "+y", p, tag="Safety", extras=[("papers", 0.45, 0.75)] + desk_plant))
+    lead_seat(o, heads, "cfo", lambda p: ws_front((8.55, 4.35), "+y", p, tag="CFO", extras=[("calc", 0.5, 0.75), ("papers", 0.5, 0.45)]))
+    lead_seat(o, heads, "policy", lambda p: ws_front((1.9, 6.95), "+x", p, tag="Policy", extras=[("phone", 0.5, 0.5), ("mug", 0.55, 0.85)]))
     ceo_plant = [("plant", 1.1, 0.45)] if F["plants"] else []
     person("ceo", ws_front((7.25, 6.4), "+y", PEOPLE["ceo"], big=True, tag="You · CEO",
                            extras=[("papers", 0.75, 0.55), ("mug", 1.05, 0.9)] + ceo_plant))

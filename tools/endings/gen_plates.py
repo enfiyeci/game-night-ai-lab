@@ -854,7 +854,7 @@ def ab_news():
 def ab_farewell():
     """Absorbed, week 3. Tomas's farewell post: Azuria kept the model and most of the team, but not the safety team."""
     o = [f'<rect width="{W}" height="{H}" style="fill:{M("ink", 90, "sky")}"/>', doc_panel(250, 110, 780, 440, "Posts"),
-         f'<circle cx="310" cy="200" r="26" style="fill:{M("sky", 40, "paper")}"/>', T(310, 208, "T", 22, 600, "var(--ink)", "middle"),
+         f'<circle cx="310" cy="200" r="26" style="fill:{M("sky", 40, "paper")}"/>', T(310, 208, "T", 22, 600, "var(--ink)", "middle", attrs='data-lead-initial="safety" '),
          T(352, 196, "Tomas", 20, 600), T(352, 220, "Head of Safety, Kestrel Labs · 2 h", 15, 400, DIM)]
     lines = ["Today is my last day. Azuria kept the model and most", "of the team. My team's evals were not part of the deal.",
              "If you use Kestrel 4, ask who checks it now."]

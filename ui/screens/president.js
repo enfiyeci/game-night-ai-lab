@@ -1,3 +1,4 @@
+import { TODAY, leadId } from '../../sim/leads.js';
 import { registerMenuHandler } from '../menu.js';
 import { enterTransition, exitTransition } from '../components/transition.js';
 import {
@@ -89,6 +90,10 @@ export async function openPresident(game, overlayRoot, options = {}) {
   art.innerHTML = svg;
   const scene = art.querySelector('svg');
   scene.dataset.mood = mood;
+  if (leadId(game.state, 'policy') !== TODAY.policy) { // the alternate Policy lead sits beside you (gen_president.py)
+    scene.querySelector('#advisor-policy')?.setAttribute('display', 'none');
+    scene.querySelector('#advisor-policy-alt')?.removeAttribute('display');
+  }
 
   const bubble = el('section', 'pres-pbub');
   bubble.style.width = '440px';

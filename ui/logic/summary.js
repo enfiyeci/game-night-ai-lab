@@ -1,8 +1,8 @@
 import { ENDINGS } from '../../sim/endings.js';
+import { lead } from '../../sim/leads.js';
 
 const ADVISORS = ['research', 'safety', 'cfo', 'policy'];
 const ERROR_SCALE = { research: 10, safety: 15, cfo: 6, policy: 10 };
-const FIRST_NAME = { research: 'Priya', safety: 'Tomas', cfo: 'Margot', policy: 'Jules' };
 
 const verdictFor = (meanError) => (
   meanError < 0.5 ? 'reliable' : meanError < 1 ? 'mixed' : 'misleading'
@@ -41,12 +41,13 @@ function bestModelName(models) {
   return best?.name ?? null;
 }
 
-function summaryLine(title, era, modelCount, mostReliable, mostMisleading) {
+function summaryLine(state, title, era, modelCount, mostReliable, mostMisleading) {
+  const first = (seat) => lead(state, seat).first;
   const models = `${modelCount} ${modelCount === 1 ? 'model' : 'models'}`;
   const result = `${title} in era ${era} after ${models}`;
   if (mostReliable == null) return `${result}.`;
-  if (mostReliable === mostMisleading) return `${result}; ${FIRST_NAME[mostReliable]} gave the clearest read.`;
-  return `${result}; ${FIRST_NAME[mostReliable]} saw it coming, while ${FIRST_NAME[mostMisleading]} did not.`;
+  if (mostReliable === mostMisleading) return `${result}; ${first(mostReliable)} gave the clearest read.`;
+  return `${result}; ${first(mostReliable)} saw it coming, while ${first(mostMisleading)} did not.`;
 }
 
 export function runSummary(state) {
@@ -67,6 +68,6 @@ export function runSummary(state) {
     advisors,
     mostReliable,
     mostMisleading,
-    shareLine: summaryLine(ending.title, state.era, models.length, mostReliable, mostMisleading),
+    shareLine: summaryLine(state, ending.title, state.era, models.length, mostReliable, mostMisleading),
   };
 }

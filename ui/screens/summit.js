@@ -7,6 +7,7 @@ import { registerMenuHandler } from '../menu.js';
 import { teamBusyError } from '../../sim/teams.js';
 import { ART } from '../assets/summitArt.js';
 import { enterTransition, exitTransition } from '../components/transition.js';
+import { TODAY, lead, leadId } from '../../sim/leads.js';
 
 export const PARTY_INFO = Object.freeze({
   openbrain: { name: 'OpenBrain', ab: 'OB', line: 'Qilin first, then we talk. And testers at most: inspectors make our lawyers cry.' },
@@ -53,13 +54,14 @@ function screenVote(result, plan) {
   return `<text x="720" y="100" text-anchor="middle" style="font:900 12px Nunito;letter-spacing:.2em;fill:color-mix(in oklab, var(--sky) 40%, var(--paper))">THE VOTE</text>${rows}`;
 }
 
-// The hall (tools/office/gen_summit.py), seen over your and Jules's shoulders. A delegate's face and
-// placard follow their lean; with no lean they sit neutral and hold no placard.
-function hallSvg({ raised = {}, screen = '' } = {}) {
+// The hall (tools/office/gen_summit.py), seen over your and Jules's shoulders (or the alternate Policy lead's, when
+// the player hired them: ART.frontAlt). A delegate's face and placard follow their lean; with no lean they sit neutral
+// and hold no placard.
+function hallSvg({ raised = {}, screen = '', alternate = false } = {}) {
   const seats = ART.seats.map((seat) => `<g class="sm-seat" data-party="${seat.id}" data-p="${seat.id}">${seat.body}${seat.faces[raised[seat.id] ?? 'maybe']}</g>`).join('');
   const placards = ART.seats.map((seat) => (raised[seat.id] ? seat.placards[raised[seat.id]] : '')).join('');
   return `<svg class="sm-hall" width="1440" height="900" viewBox="0 0 1440 900" aria-hidden="true">${ART.back}${seats}${ART.desk}${ART.seats.map((seat) => seat.hands).join('')}${placards}
-    <g transform="translate(0 20)">${screen}</g>${ART.front}</svg>`;
+    <g transform="translate(0 20)">${screen}</g>${alternate ? ART.frontAlt : ART.front}</svg>`;
 }
 
 // A delegate's demand, judged on the motion on the floor at its current checking level.
@@ -162,12 +164,14 @@ export function openSummit(game, overlayRoot) {
     const follow = SEATS.map((seat) => seat.id).filter((id) => id !== party && before[id] !== 'yes' && after[id] === 'yes');
     return { lean: after[party], follow };
   };
+  const reader = lead(game.state, 'policy').first; // whoever the player hired for Policy and Comms reads the room
+  const alternate = leadId(game.state, 'policy') !== TODAY.policy;
   const hint = (party) => {
     const { lean, follow } = promiseRead(party);
     const also = follow.length ? ` ${follow.map((id) => PARTY_INFO[id].name).join(' and ')} would follow.` : '';
-    if (lean === 'yes') return `Jules: a promise should win them.${also}`;
-    if (lean === 'maybe') return `Jules: could go either way.${also}`;
-    return 'Jules: a promise won’t be enough.';
+    if (lean === 'yes') return `${reader}: a promise should win them.${also}`;
+    if (lean === 'maybe') return `${reader}: could go either way.${also}`;
+    return `${reader}: a promise won’t be enough.`;
   };
   const bestHoldout = (read) => {
     const who = holdouts(read);
@@ -220,8 +224,8 @@ export function openSummit(game, overlayRoot) {
       return `<section class="gp sm-panel" aria-label="Read the room"><div class="sm-row top"><div>${kick(` · ${esc(name)}, ${CHECK_NAMES[current.check].toLowerCase()}`)}
         <h2>${binds(read) ? 'It would bind as it is.' : 'Short of a binding vote.'}</h2></div>${tally(read)}</div>
         <div class="sm-choices two"><button type="button" class="sm-answer" data-swing ${canSwing ? '' : 'disabled'}><b>Win over a holdout</b><span>${left ? `${left} promise${left === 1 ? '' : 's'} left` : 'No promises left'}</span></button>
-        <button type="button" class="sm-answer alt" data-vote><b>Vote now</b><span>${binds(read) ? 'Jules: it should bind' : 'Jules: it would be a pledge only'}</span></button></div>
-        <div class="sm-row"><span class="sm-muted">Jules’s read. The vote can still surprise you.</span><button type="button" class="sm-leave" data-back="checks">Back</button></div>
+        <button type="button" class="sm-answer alt" data-vote><b>Vote now</b><span>${binds(read) ? `${reader}: it should bind` : `${reader}: it would be a pledge only`}</span></button></div>
+        <div class="sm-row"><span class="sm-muted">${reader}’s read. The vote can still surprise you.</span><button type="button" class="sm-leave" data-back="checks">Back</button></div>
         ${error ? `<p class="sm-error" role="alert">${esc(error)}</p>` : ''}</section>`;
     }
     if (phase === 'swing') {
@@ -265,7 +269,7 @@ export function openSummit(game, overlayRoot) {
       raised = Object.fromEntries(SEATS.map((s) => [s.id, r.signed.includes(s.id) ? 'yes' : 'no']));
     }
     const seat = phase === 'swing' && SEATS.find((s) => s.id === (swingParty ?? bestHoldout(read)));
-    layer.innerHTML = `${hallSvg({ raised, screen: screenAgenda(motions, results, current, phase) })}${bubbles(shown, read)}${presidentNote()}
+    layer.innerHTML = `${hallSvg({ raised, alternate, screen: screenAgenda(motions, results, current, phase) })}${bubbles(shown, read)}${presidentNote()}
       ${seat ? `<div class="sm-say" data-p="${seat.id}" style="left:${Math.min(1440 - 330, Math.max(30, seat.x - 150))}px;top:560px"><b>${esc(PARTY_INFO[seat.id].name)}</b>${esc(PARTY_INFO[seat.id].line)}</div>` : ''}
       ${panel(read)}`;
   }
@@ -274,7 +278,7 @@ export function openSummit(game, overlayRoot) {
     const raised = Object.fromEntries(PARTIES.map((id) => [id, Object.values(result.signed).some((list) => list.includes(id)) ? 'yes' : 'no']));
     const binding = result.binding.map((card) => CARD_INFO[card].name);
     const title = binding.length >= 2 ? 'The deal binds.' : binding.length === 1 ? 'One motion binds.' : 'Nothing binds. Only your own pledges stand.';
-    layer.innerHTML = `${hallSvg({ raised, screen: screenVote(result, { proposals: motions.map((m) => m.card) }) })}
+    layer.innerHTML = `${hallSvg({ raised, alternate, screen: screenVote(result, { proposals: motions.map((m) => m.card) }) })}
       <section class="gp sm-talk sm-result" aria-live="polite">
         <div class="sm-kick">The summit closes</div><h2>${esc(title)}</h2>
         <p>${binding.length ? `Binding: ${esc(binding.join(', '))}.` : 'A motion binds only when another lab and a government sign it.'} The deal is checked every week from now on. A negotiated pace needs at least two commitments still backed by another lab and a government at the end. Expelling the last rival ends a commitment.</p>

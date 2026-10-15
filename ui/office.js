@@ -1,6 +1,7 @@
 import { dressingView } from './logic/automation.js';
 import { constitutionOnWall } from './logic/office.js';
 import { advisorMarks, hitAreas, markerSpot } from './logic/advisorMarks.js';
+import { seatLeads } from './components/leadSeats.js';
 
 const ADVISORS = ['research', 'safety', 'cfo', 'policy'];
 const MOODS = ['calm', 'uneasy', 'alarmed'];
@@ -101,6 +102,7 @@ function addHitAreas(svg, anchors) {
     }
   }
   const parent = first.parentNode;
+  parent.querySelector(':scope > .advisor-hits')?.remove(); // a lead hired after the room loaded is measured again
   const before = [...parent.children].find((child) => child.id === 'rack' || child.id.startsWith('person-'));
   parent.insertBefore(layer, before);
 }
@@ -163,6 +165,7 @@ export async function mountOffice(root, fx, game) {
   async function render() {
     const state = game.state;
     if (current?.era === state.era) {
+      if (seatLeads(current.svg, state)) addHitAreas(current.svg, current.anchors);
       current.svg.classList.toggle('shows-constitution', constitutionOnWall(state));
       setMoods(current.svg, fx, current.anchors, state);
       dressOffice(fx, current.anchors, state);
@@ -180,6 +183,7 @@ export async function mountOffice(root, fx, game) {
     if (version !== loadVersion) return;
     const previous = current;
     current = { era: state.era, ...loaded };
+    seatLeads(current.svg, state); // the leads the player hired (ui/screens/setup.js), before anything measures them
     current.svg.classList.toggle('shows-constitution', constitutionOnWall(state));
     setMoods(current.svg, fx, current.anchors, state);
     dressOffice(fx, current.anchors, state);
@@ -202,6 +206,9 @@ export async function mountOffice(root, fx, game) {
   const unsubscribe = game.subscribe(() => {
     render().catch((error) => console.error(error));
   });
+  // The résumés hire a lead before the clock starts, with no story day to publish it (ui/screens/setup.js).
+  const onLeads = () => { render().catch((error) => console.error(error)); };
+  document.addEventListener('ai-lab:leads', onLeads);
   // A mark goes the moment the player hears the advisor or answers their warning, not at the next story day.
   const unsubscribeMarks = advisorMarks.subscribe(() => {
     if (current?.era !== game.state.era) return;
@@ -212,5 +219,6 @@ export async function mountOffice(root, fx, game) {
   return () => {
     unsubscribe();
     unsubscribeMarks();
+    document.removeEventListener('ai-lab:leads', onLeads);
   };
 }
