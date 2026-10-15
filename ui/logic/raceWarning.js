@@ -113,7 +113,7 @@ export function raceBoardView(state) {
     ...state.rivals.map((rival) => ({ id: rival.id, name: rival.name, capability: rival.capability, you: false })),
   ].sort((a, b) => b.capability - a.capability || Number(a.you) - Number(b.you))
     .map((lane) => ({ ...lane, score: standing.scores[lane.id] }));
-  const spare = BALANCE.gateMaxGap - standing.shownGap;
+  const spare = tenths(BALANCE.gateMaxGap - standing.shownGap);
   const { n, unit } = timeLeft(eraDaysLeft(state));
   return {
     lanes,

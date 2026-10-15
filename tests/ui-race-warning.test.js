@@ -110,6 +110,11 @@ test('the whiteboard shows the lanes, the line 15 behind the leader and Priya\'s
   assert.deepEqual(raceBoardView(order).lanes.map((lane) => lane.score), [41.4, 30, 24.9, 24.6, 5]);
   assert.equal(raceStanding(order).shownGap, 16.5);
   assert.equal(raceBoardView(order).note, '1.5 points past the line!');
+  // A safe lab written in tenths keeps a clean number to spare (review: 0.1999999999999993 leaked).
+  const spare = raceAt();
+  spare.capability = 25.6;
+  for (const rival of spare.rivals) rival.capability = { openbrain: 40.4, deepthink: 30, lodestar: 25.5, qilin: 5 }[rival.id];
+  assert.equal(raceBoardView(spare).note, 'only 0.2 points to spare!');
   const unnamed = raceAt();
   delete unnamed.labName;
   assert.equal(raceBoardView(unnamed).lanes[2].name, 'us');
