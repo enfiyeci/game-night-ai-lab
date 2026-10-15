@@ -49,6 +49,7 @@ class FakeElement {
     this.attributes = new Map();
     this.dataset = {};
     this.style = {};
+    Object.defineProperty(this.style, 'setProperty', { value(name, value) { this[name] = value; } });
     this.listeners = new Map();
     this.className = '';
     this.id = '';
@@ -82,6 +83,7 @@ class FakeElement {
 
   set innerHTML(value) { this.replaceChildren(); this.innerHTMLSource = String(value); }
   get innerHTML() { return this.innerHTMLSource; }
+  insertAdjacentHTML(position, html) { this.innerHTMLSource += String(html); }
 
   setAttribute(name, value) {
     this.attributes.set(name, String(value));
@@ -121,6 +123,15 @@ class FakeElement {
     child.parentNode = null;
   }
   remove() { this.parentNode?.removeChild(this); }
+  replaceWith(node) {
+    const parent = this.parentNode;
+    if (!parent) return;
+    const at = parent.childNodes.indexOf(this);
+    node.parentNode?.removeChild(node);
+    parent.childNodes.splice(at, 1, node);
+    node.parentNode = parent;
+    this.parentNode = null;
+  }
   contains(node) {
     for (let at = node; at; at = at.parentNode) if (at === this) return true;
     return false;

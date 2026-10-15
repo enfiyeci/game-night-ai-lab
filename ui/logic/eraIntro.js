@@ -1,4 +1,9 @@
 import { ERAS } from '../../sim/data/eras.js';
+import { BALANCE } from '../../sim/balance.js';
+import { ordinal } from './raceWarning.js';
+
+// The left-behind rule as the sim judges it at an era's end (sim/endings.js eraGate), shown on moving day.
+const STAY_IN = `Finish ${ordinal(BALANCE.gateMaxRank)} or better, or within ${BALANCE.gateMaxGap} points of the leader`;
 
 const PACE = new Map([
   [3, 'The calendar runs by the quarter.'],
@@ -15,7 +20,7 @@ const COPY = {
       'Releases bring users, serving costs and public reactions.',
     ],
     bottleneck: 'Enough chips to train and serve your first models.',
-    gate: 'Reach second place, or stay close to the leader.',
+    gate: `${STAY_IN}.`,
   },
   2: {
     headline: 'Money is rushing in, trailed closely by expectations.',
@@ -25,7 +30,7 @@ const COPY = {
       'Reserve future power now, before the queue gets crowded.',
     ],
     bottleneck: 'Advanced chip packaging while every lab scales up.',
-    gate: 'Stay close to the leader and win the board vote.',
+    gate: `${STAY_IN}, and keep the board's vote.`,
   },
   3: {
     headline: 'Models can reason, use tools and create entirely new paperwork.',
@@ -35,7 +40,7 @@ const COPY = {
       'Safety tests weaken as models learn when they are being tested.',
     ],
     bottleneck: 'Wafers and fast memory, with rivals ahead in the allocation queue.',
-    gate: 'Stay close to the leader and win the board vote.',
+    gate: `${STAY_IN}, and keep the board's vote.`,
   },
   4: {
     headline: 'The race has left the server room and entered the power grid.',
@@ -45,7 +50,7 @@ const COPY = {
       'Gas turbines and nuclear restarts are the new site options; both take time.',
     ],
     bottleneck: 'Powered sites; hardware without electricity still gets billed.',
-    gate: 'Stay close to the leader and win the board vote.',
+    gate: `${STAY_IN}, and keep the board's vote.`,
   },
   5: {
     headline: 'The models improve the models; the calendar has given up.',
@@ -55,7 +60,7 @@ const COPY = {
       'A pacing summit asks whether the leading labs will slow together.',
     ],
     bottleneck: 'Compute, power, trust and time, all at once.',
-    gate: 'The race ends here.',
+    gate: `${STAY_IN}, to stay in the race; to win it, finish first or get the leading labs to agree to slow down.`,
   },
 };
 

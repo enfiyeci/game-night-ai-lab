@@ -34,6 +34,7 @@ import { mountHistory, openArticle, openHistory } from './screens/history.js';
 import { mountPresident, openPresident } from './screens/president.js';
 import { mountEvents } from './screens/events.js';
 import { mountBriefing } from './screens/briefing.js';
+import { mountRaceBoard } from './screens/raceBoard.js';
 import { mountFeed } from './screens/feed.js';
 import { mountEnding } from './screens/end.js';
 import { mountFinance, openFinance } from './screens/finance.js';
@@ -143,6 +144,7 @@ mountPolish(game, { stage, hud, overlay });
 mountHazard(game, { stage, overlay });
 const events = mountEvents(game, { stage, overlay });
 mountBriefing(game, { office, overlay });
+mountRaceBoard(game, { office, overlay }); // the race on the whiteboard while the lab risks being left behind
 mountFeed(game, { overlay, events });
 
 function browserStorage() {

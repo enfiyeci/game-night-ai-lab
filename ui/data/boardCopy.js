@@ -191,6 +191,7 @@ export const RING = {
   motion: 'Motion: remove the chief executive',
   join: 'Join',
   decline: 'Decline',
+  hear: 'Hear them out', // the era ended with the lab left behind (owner pick S1)
 };
 export const DECLINE_JOKE = 'The board will minute that you declined.'; // OWNER WRITES
 export const MEETING_LABEL = 'Board meeting';

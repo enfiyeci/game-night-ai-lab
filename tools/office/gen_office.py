@@ -642,11 +642,12 @@ def constitution_art(x0):
 
 
 def whiteboard_art(x0, x1, kind):
-    """The whiteboard: "curve" (one loss curve), "k2" (curve, check and notes) or "chains"; the summit invite pins to it."""
+    """The whiteboard: "curve" (one loss curve), "k2" (curve, check and notes) or "chains"; the summit invite pins to it.
+    The game draws the race over the face while the lab risks being left behind (ui/screens/raceBoard.js)."""
     a0, a1, b0, b1 = x0 * U, x1 * U, -2.32 * U, -1.15 * U
     w, h = a1 - a0, b1 - b0
     board = (f'<rect x="{a0:.1f}" y="{b0:.1f}" width="{w:.1f}" height="{h:.1f}" rx="3" style="fill:{M("paper", 80, "ink")};stroke:{EDGE}"/>'
-             f'<rect x="{a0 + 4:.1f}" y="{b0 + 4:.1f}" width="{w - 8:.1f}" height="{h - 8:.1f}" rx="2" style="fill:var(--paper)"/>')
+             f'<rect class="office-whiteboard-face" x="{a0 + 4:.1f}" y="{b0 + 4:.1f}" width="{w - 8:.1f}" height="{h - 8:.1f}" rx="2" style="fill:var(--paper)"/>')
     if kind == "chains":
         board += board_chains(a0, b0)
     else:
@@ -659,7 +660,7 @@ def whiteboard_art(x0, x1, kind):
     board += f'<rect x="{a0 + w * 0.3:.1f}" y="{b1 - 2:.1f}" width="{w * 0.4:.1f}" height="5" rx="1.5" style="fill:{M("paper", 70, "ink")}"/>'
     if F["invite"]:
         board += summit_invite(a1 - 8, b0 - 6)
-    return board
+    return f'<g class="office-whiteboard">{board}</g>'
 
 
 def kestrel_art(x0):
