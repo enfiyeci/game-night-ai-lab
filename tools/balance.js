@@ -451,7 +451,7 @@ function makeStrategy(style, prefs, policy = {}) {
     const compute = computeMove(afterPriority, rng, style, prefs, policy);
     if (compute && used() < 2) actions.moves.push(compute);
     const summit = policy.limitedSummit && planned.era === 5 && planned.turnInEra === 0 && !planned.deal ? { type: 'summit', proposals: ['computeCap'], checks: { computeCap: 3 }, promises: { east: 'inspectors', west: planned.cash >= 50 ? 'pay' : 'goFirst' } } : policy.noSummit ? null : summitMove(planned, style, rng);
-    if (summit && !actions.moves.some((move) => move.type === 'summit') && used() < 2) actions.moves.push(summit);
+    if (summit && !actions.moves.some((move) => move.type === 'summit')) actions.moves.push(summit); // only a busy Policy team blocks it (tools/play-round.js)
     if (used() < 2 && planned.era >= 2 && inDangerZone(planned) && planned.flags.lastRoundEra !== planned.era) {
       actions.moves.push({ type: 'raise', archetype: 'vc' });
     }
