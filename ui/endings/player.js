@@ -187,7 +187,9 @@ export async function mountFilm(root, { id, era = 4, base = '', fullTitle, lumen
     : [null, null];
   const plates = new Map();
   await Promise.all([...new Set(film.shots.filter((s) => s.plate).map((s) => s.plate))].map(async (name) => {
-    plates.set(name, named(namePlate(await fetchText(`${base}ui/assets/endings/plates/${name}.svg`), run ?? {})));
+    // Lead swaps first, on the placeholder copy; the player's own lab and model names go in last, so a lab named like a
+    // lead is never swapped.
+    plates.set(name, namePlate(named(await fetchText(`${base}ui/assets/endings/plates/${name}.svg`)), run ?? {}));
   }));
   // Clips are fetched whole before the film starts, so playback never waits on the network mid-film.
   const clips = new Map();

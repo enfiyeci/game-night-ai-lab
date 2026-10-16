@@ -5,6 +5,7 @@ import { ERAS } from '../../sim/data/eras.js';
 import { rank, gapToLeader } from '../../sim/rivals.js';
 import { activeModels } from '../../sim/serving.js';
 import { storyDate } from '../../sim/time.js';
+import { lead, swapLeadNames } from '../../sim/leads.js';
 import { CONSEQUENCES } from '../data/eventCopy.js';
 import * as COPY from '../data/recapCopy.js';
 import { catalogRow, TAG_TO_ADVISOR } from './events.js';
@@ -159,13 +160,14 @@ export function storyFor(decision) {
   };
 }
 
-const namesOf = (roles) => {
-  const names = roles.map((role) => COPY.LEADS[role].name);
+// The leads in those seats by first name: the ones the player hired (sim/leads.js), today's four without picks.
+const namesOf = (roles, state) => {
+  const names = roles.map((role) => lead(state, role).first);
   return names.length < 2 ? names[0] ?? '' : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`;
 };
 
 // What the click-to-explain panel says: the card in plain words, then who would have chosen what.
-export function explainFor(decision) {
+export function explainFor(decision, state) {
   const row = catalogRow(decision.eventId);
   const post = row?.card?.post?.text;
   const about = COPY.STORIES[decision.eventId]?.about ?? (post ? fill(COPY.EXPLAIN.fallbackAbout, { post }) : null);
@@ -173,15 +175,15 @@ export function explainFor(decision) {
   const yours = choiceOf(decision);
   const lines = [];
   const backedYou = [...new Set(leadsIn(yours?.backers))];
-  if (backedYou.length) lines.push(fill(COPY.EXPLAIN.backed, { names: namesOf(backedYou) }));
+  if (backedYou.length) lines.push(fill(COPY.EXPLAIN.backed, { names: namesOf(backedYou, state) }));
   for (const choice of choices) {
     if (choice.id === decision.choiceId) continue;
     const roles = [...new Set(leadsIn(choice.backers))];
     if (!roles.length) continue;
-    lines.push(fill(COPY.EXPLAIN.would, { name: namesOf(roles), label: choice.label, cost: choice.cashCost > 0 ? ` (${money(choice.cashCost)})` : '' }));
+    lines.push(fill(COPY.EXPLAIN.would, { name: namesOf(roles, state), label: choice.label, cost: choice.cashCost > 0 ? ` (${money(choice.cashCost)})` : '' }));
   }
   if (!lines.length) lines.push(COPY.EXPLAIN.nobody);
-  return { heading: COPY.EXPLAIN.heading, about, lines };
+  return { heading: COPY.EXPLAIN.heading, about: swapLeadNames(about, state), lines: lines.map((line) => swapLeadNames(line, state)) };
 }
 
 // ---------- The year's numbers ----------
@@ -275,8 +277,12 @@ export function recapModel(state, era, { lab = state.labName || 'Your lab' } = {
     ],
     headline,
     dek: dek(stories, stats),
-    stories: stories.map((story, index) => ({ ...story, explain: explainFor(calls[index]) })),
-    critics: LEAD_ORDER.map((role) => ({ ...criticFor(role, calls, decisions, ctx, used), name: COPY.LEADS[role].name, title: COPY.LEADS[role].role })),
+    stories: stories.map((story, index) => ({ ...story, head: swapLeadNames(story.head, state), story: swapLeadNames(story.story, state), explain: explainFor(calls[index], state) })),
+    critics: LEAD_ORDER.map((role) => {
+      const critic = criticFor(role, calls, decisions, ctx, used);
+      const hired = lead(state, role); // the critic is whoever the player hired for the seat: name and face
+      return { ...critic, text: swapLeadNames(critic.text, state), name: hired.first, look: hired.look, title: COPY.LEADS[role].role };
+    }),
     verdictWords: COPY.VERDICT,
     hint: COPY.OPEN_HINT,
     next: fill(COPY.NEXT, { next: era + 1 }),

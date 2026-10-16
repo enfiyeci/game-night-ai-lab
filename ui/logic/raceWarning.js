@@ -5,6 +5,7 @@ import { BALANCE } from '../../sim/balance.js';
 import { eraById } from '../../sim/data/eras.js';
 import { gapToLeader, rank } from '../../sim/rivals.js';
 import { ROUND_DAYS, nextRoundDay } from '../../sim/time.js';
+import { lead } from '../../sim/leads.js';
 
 // Priya warns a little before the line: from 3 points short of it, so a lab still inside by a hair hears it too.
 export const RACE_WARN_MARGIN = 3;
@@ -122,6 +123,7 @@ export function raceBoardView(state) {
     line: standing.leader.capability - BALANCE.gateMaxGap,
     lineLabel: `${BALANCE.gateMaxGap} behind ${standing.leader.name}`,
     ends: `era ends in ${plural(n, unit)}!!`,
+    signer: lead(state, 'research').first, // the board is the Head of Research's, whoever the player hired
     note: standing.out ? `${plural(standing.fromLine, 'point')} past the line!`
       : spare > 0 ? `only ${plural(spare, 'point')} to spare!` : 'right on the line!',
     out: standing.out,

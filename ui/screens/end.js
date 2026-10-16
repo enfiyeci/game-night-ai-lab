@@ -272,7 +272,7 @@ export function mountEnding(game, overlay, { collection, onPlayAgain, loadFilm =
   const record = (state, { save = true } = {}) => {
     if (recorded === state.ending) return;
     recorded = state.ending;
-    if (save) collection?.record(state.ending, { seed: state.seed, era: state.era, turn: state.turn, model: state.models.at(-1)?.name ?? null, ...runNames(state) });
+    if (save) collection?.record(state.ending, { seed: state.seed, era: state.era, turn: state.turn, model: state.models.at(-1)?.name ?? null, ...runNames(state), leads: state.leads ?? null });
     const entries = collection?.entries() ?? [];
     const newThisRun = save && entries.find((entry) => entry.id === state.ending)?.count === 1;
     model = endScreenModel(state, entries, { newThisRun });

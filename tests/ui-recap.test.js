@@ -111,3 +111,21 @@ test('the era page reads only the era that ended and never names a later era’s
   assert.ok(model.critics.find((critic) => critic.role === 'safety').text.includes('Monitor for now'));
   assert.doesNotMatch(JSON.stringify(model), /agent|reasoning|gigawatt|Self-improvement|scale-up/i);
 });
+
+test('the critics and the click-to-explain lines are the leads the player hired, by name and face', () => {
+  const state = SCENARIOS.scenarioEvent(1);
+  state.labName = 'Northwind';
+  state.leads = { research: 'dev', safety: 'hana', cfo: 'rafael', policy: 'amara' };
+  state.decisions = [
+    { era: 1, day: 30, eventId: 'scenarioJailbreak', choiceId: 'monitor', auto: false, title: null, label: 'Monitor for now' },
+    { era: 1, day: 120, eventId: 'scenarioCitations', choiceId: 'verify', auto: true, title: null, label: 'Build citation checks' },
+  ];
+  state.day = 364;
+  const model = recapModel(state, 1);
+  assert.deepEqual(model.critics.map((critic) => [critic.role, critic.name, critic.look]), [
+    ['safety', 'Hana', 'lead-hana'], ['research', 'Dev', 'lead-dev'], ['cfo', 'Rafael', 'lead-rafael'], ['policy', 'Amara', 'lead-amara'],
+  ]);
+  assert.doesNotMatch(JSON.stringify(model), /\b(Tomas|Priya|Margot|Jules)\b/);
+  const today = recapModel({ ...state, leads: undefined }, 1);
+  assert.deepEqual(today.critics.map((critic) => critic.name), ['Tomas', 'Priya', 'Margot', 'Jules']);
+});

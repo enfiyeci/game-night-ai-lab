@@ -115,7 +115,7 @@ export function openArchive(game, overlay, { collection }) {
       const film = await mountFilm(host, {
         id: page.id,
         era: entry?.era ?? 4,
-        run: { lab: entry?.lab, family: entry?.family }, // the names that run had (none for endings found before they were kept)
+        run: { lab: entry?.lab, family: entry?.family, leads: entry?.leads ?? undefined }, // the names and leads that run had (none for endings found before they were kept)
         onDone: () => { if (!skipped) done(); },
       });
       if (skipped) {
