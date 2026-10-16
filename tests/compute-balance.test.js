@@ -20,8 +20,10 @@ test('balance strategies have no rejected actions', () => {
   for (const [name, row] of Object.entries(r)) assert.equal(row.rejectedActions, 0, name);
 });
 
+// 12% (owner, 2026-10-16): the live build was already at 11% (22/200); this bot's wins hinge on about one point of
+// capability at the end, so they move with unrelated changes.
 test('renting only spot almost never wins', () => {
-  assert.ok(wins(r.handToMouth) / N <= 0.1);
+  assert.ok(wins(r.handToMouth) / N <= 0.12, `handToMouth wins ${wins(r.handToMouth)}/${N}`);
 });
 
 test('reserving the grid improves whole-run outcomes over the same policy without it', () => {

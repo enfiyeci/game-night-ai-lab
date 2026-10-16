@@ -38,7 +38,7 @@ import {
 } from './summit.js';
 import { expireMeeting, meetingDue, meetingExpiresNow, openMeeting, runMeeting } from './president.js';
 import { judgeEndingPromises, promiseUpkeep } from './promises.js';
-import { applySplitEffects, makePledge, setComputeSplit, spotCover } from './split.js';
+import { applySplitEffects, computeSlices, makePledge, setComputeSplit, spotCover } from './split.js';
 import { ROUND_DAYS, monthsPerDay } from './time.js';
 import { TEAM_OF, teamBusyError } from './teams.js';
 import { reactToEvents, reactToLandedCard, reactToRunStart, releaseDueFeed } from './feedLive.js';
@@ -155,8 +155,13 @@ function pushAiMoves(state, events, moves) {
   }
 }
 
+// What a run's or a polishing model's compute check reads: the training slice and the units the model holds.
+const capacityKey = (state) => [computeSlices(state).training, state.activeRun?.units ?? null, state.pendingModel?.heldUnits ?? null];
+const sameCapacity = (a, b) => a.every((v, i) => (v == null || b[i] == null ? v === b[i] : Math.abs(v - b[i]) <= 1e-9));
+
 export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = {}) {
   const state = structuredClone(prev);
+  const capacityBefore = capacityKey(state);
   const mood = { raceHeat: prev.raceHeat, publicTrust: prev.publicTrust };
   const events = [];
   const errors = [];
@@ -321,7 +326,18 @@ export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = 
   // A release that is not live yet gets its "announced" posts now and its launch posts when it goes live (sim/feedLive.js).
   if (events.length) postFeed(mood, state, events, false);
   stampLandings(state);
-  recheckCapacity(state);
+  // Compute is checked once per round, as the balance was tuned. A call rechecks a run that is going only when it took
+  // training compute away or changed the run (a deal ending, a split, a card that adds users); answering a card that
+  // changes nothing about compute used to recheck too, so a run a hair short paused to the round's end, and with the
+  // pacing fix's extra era 1-2 cards that pushed runs into the next era (spot-only bot 22 -> 45 wins of 200). A paused
+  // run or polish is rechecked on every call, which can only let it go on (compute that landed mid-round, a freed cap).
+  const capacityAfter = capacityKey(state);
+  const tookCompute = capacityAfter[0] < capacityBefore[0] - 1e-9 || !sameCapacity(capacityAfter.slice(1), capacityBefore.slice(1));
+  if (tookCompute) recheckCapacity(state);
+  else {
+    if (state.activeRun?.canAdvance === false) delete state.activeRun.capacityTurn;
+    if (state.pendingModel?.polishing?.canAdvance === false) delete state.pendingModel.polishing.capacityTurn;
+  }
   return { state, events, errors };
 }
 
