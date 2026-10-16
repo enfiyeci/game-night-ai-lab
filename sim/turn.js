@@ -326,11 +326,18 @@ export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = 
   // A release that is not live yet gets its "announced" posts now and its launch posts when it goes live (sim/feedLive.js).
   if (events.length) postFeed(mood, state, events, false);
   stampLandings(state);
-  // Recheck only when this call changed the training slice or the run it feeds (a deal, a split, a release, a card that
-  // adds or cuts compute or users). Otherwise compute is checked once per round, as the balance was tuned: answering a
-  // card that changes nothing about compute used to recheck too, so a run a hair short paused to the round's end, and
-  // with the pacing fix's extra era 1-2 cards that pushed runs into the next era (spot-only bot 22 -> 45 wins of 200).
-  if (!sameCapacity(capacityKey(state), capacityBefore)) recheckCapacity(state);
+  // Compute is checked once per round, as the balance was tuned. A call rechecks a run that is going only when it took
+  // training compute away or changed the run (a deal ending, a split, a card that adds users); answering a card that
+  // changes nothing about compute used to recheck too, so a run a hair short paused to the round's end, and with the
+  // pacing fix's extra era 1-2 cards that pushed runs into the next era (spot-only bot 22 -> 45 wins of 200). A paused
+  // run or polish is rechecked on every call, which can only let it go on (compute that landed mid-round, a freed cap).
+  const capacityAfter = capacityKey(state);
+  const tookCompute = capacityAfter[0] < capacityBefore[0] - 1e-9 || !sameCapacity(capacityAfter.slice(1), capacityBefore.slice(1));
+  if (tookCompute) recheckCapacity(state);
+  else {
+    if (state.activeRun?.canAdvance === false) delete state.activeRun.capacityTurn;
+    if (state.pendingModel?.polishing?.canAdvance === false) delete state.pendingModel.polishing.capacityTurn;
+  }
   return { state, events, errors };
 }
 

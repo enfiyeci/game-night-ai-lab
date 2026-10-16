@@ -47,7 +47,8 @@ export function advanceRunBy(state, _rng, fraction) {
   const run = state.activeRun;
   if (!run) return null;
   if (state.day < (state.flags.trainingPausedUntilDay ?? 0)) return { type: 'runPaused' };
-  // Capacity is checked once per round, as the balance was tuned; a player action that changes compute rechecks it.
+  // Capacity is checked once per round, as the balance was tuned; a player action that takes compute away rechecks it,
+  // and any action rechecks a paused run (sim/turn.js applyActions).
   if (fraction >= 1 || run.capacityTurn !== state.turn) {
     run.capacityTurn = state.turn;
     run.canAdvance = computeSlices(state).training >= run.units;
