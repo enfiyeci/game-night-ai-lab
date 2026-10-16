@@ -193,3 +193,18 @@ test('web-crawl data is always sued at full cost; licensed and synthetic data ne
     assert.equal(clean.legalCases.length, cases, card);
   }
 });
+
+test('an action rechecks a run\'s compute only when it changed the compute the run reads', async () => {
+  const { applyActions } = await import('../sim/turn.js');
+  const s = createInitialState();
+  s.compute.split.safety = 0;
+  assert.equal(startRun(s, recipe).ok, true);
+  advanceRunBy(s, noLuck, 0.1); // the round's check: the run fits
+  assert.equal(s.activeRun.capacityTurn, s.turn);
+  // Nothing about compute changes (an empty call, as a card answer that only moves trust or cash): the check stands.
+  const quiet = applyActions(s, {}, noLuck).state;
+  assert.equal(quiet.activeRun.capacityTurn, s.turn);
+  // A split change moves the training slice: the run is checked again.
+  const moved = applyActions(s, { computeSplit: { safety: 0.3 } }, noLuck).state;
+  assert.equal(moved.activeRun.capacityTurn, undefined);
+});

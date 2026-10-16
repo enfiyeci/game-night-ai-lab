@@ -38,7 +38,7 @@ import {
 } from './summit.js';
 import { expireMeeting, meetingDue, meetingExpiresNow, openMeeting, runMeeting } from './president.js';
 import { judgeEndingPromises, promiseUpkeep } from './promises.js';
-import { applySplitEffects, makePledge, setComputeSplit, spotCover } from './split.js';
+import { applySplitEffects, computeSlices, makePledge, setComputeSplit, spotCover } from './split.js';
 import { ROUND_DAYS, monthsPerDay } from './time.js';
 import { TEAM_OF, teamBusyError } from './teams.js';
 import { reactToEvents, reactToLandedCard, reactToRunStart, releaseDueFeed } from './feedLive.js';
@@ -155,8 +155,13 @@ function pushAiMoves(state, events, moves) {
   }
 }
 
+// What a run's or a polishing model's compute check reads: the training slice and the units the model holds.
+const capacityKey = (state) => [computeSlices(state).training, state.activeRun?.units ?? null, state.pendingModel?.heldUnits ?? null];
+const sameCapacity = (a, b) => a.every((v, i) => (v == null || b[i] == null ? v === b[i] : Math.abs(v - b[i]) <= 1e-9));
+
 export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = {}) {
   const state = structuredClone(prev);
+  const capacityBefore = capacityKey(state);
   const mood = { raceHeat: prev.raceHeat, publicTrust: prev.publicTrust };
   const events = [];
   const errors = [];
@@ -321,7 +326,11 @@ export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = 
   // A release that is not live yet gets its "announced" posts now and its launch posts when it goes live (sim/feedLive.js).
   if (events.length) postFeed(mood, state, events, false);
   stampLandings(state);
-  recheckCapacity(state);
+  // Recheck only when this call changed the training slice or the run it feeds (a deal, a split, a release, a card that
+  // adds or cuts compute or users). Otherwise compute is checked once per round, as the balance was tuned: answering a
+  // card that changes nothing about compute used to recheck too, so a run a hair short paused to the round's end, and
+  // with the pacing fix's extra era 1-2 cards that pushed runs into the next era (spot-only bot 22 -> 45 wins of 200).
+  if (!sameCapacity(capacityKey(state), capacityBefore)) recheckCapacity(state);
   return { state, events, errors };
 }
 
