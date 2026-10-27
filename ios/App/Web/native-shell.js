@@ -1,0 +1,79 @@
+// Injected by the iOS shell at document start, before the game's modules run (ios/App/GameWebView.swift).
+// Never part of the web build. It does three things:
+// 1. Restores localStorage keys the web view lost, from the app's own copy (ios/App/SaveStore.swift).
+// 2. Mirrors every localStorage write back to that copy.
+// 3. Applies the Duo layout the shell sends: data-native-posture and --native-fold-* on <html>, and a
+//    native-layout event (contract: the gn-ios-shell viewport note, summarized in ios/README.md).
+(() => {
+  const saved = /*SAVED_ITEMS*/{};
+  const post = (message) => {
+    try { webkit.messageHandlers.gameNightStorage.postMessage(message); } catch { /* not in the app */ }
+  };
+
+  const root = document.documentElement;
+  root.dataset.native = 'ios';
+  root.dataset.nativePosture = 'none';
+
+  let storage = null;
+  try { storage = globalThis.localStorage; } catch { /* storage blocked */ }
+  if (storage) {
+    // Restore only what is missing: the web view's own value is never older than the app's copy.
+    for (const [key, value] of Object.entries(saved)) {
+      try { if (storage.getItem(key) === null) storage.setItem(key, value); } catch { /* full */ }
+    }
+    const items = {};
+    for (let i = 0; i < storage.length; i += 1) {
+      const key = storage.key(i);
+      if (key !== null) items[key] = storage.getItem(key);
+    }
+    post({ type: 'snapshot', items });
+
+    const proto = Storage.prototype;
+    const { setItem, removeItem, clear } = proto;
+    proto.setItem = function (key, value) {
+      setItem.call(this, key, value); // throws when full, and then nothing is mirrored
+      if (this === storage) post({ type: 'set', key: String(key), value: String(value) });
+    };
+    proto.removeItem = function (key) {
+      removeItem.call(this, key);
+      if (this === storage) post({ type: 'remove', key: String(key) });
+    };
+    proto.clear = function () {
+      clear.call(this);
+      if (this === storage) post({ type: 'clear' });
+    };
+  }
+
+  // Until the phone redesign sets its own viewport, index.html asks for a 1440-pixel-wide layout, and a
+  // phone then reports a window too tall for ui/main.js's fit-to-window zoom (the bottom of the office is
+  // cut off on an iPhone). The device width gives the page its real window, as a browser of that size
+  // would. Any other viewport is left alone.
+  new MutationObserver((changes, observer) => {
+    const meta = document.querySelector('meta[name="viewport"]');
+    if (!meta) return;
+    observer.disconnect();
+    if (meta.content.replace(/\s/g, '') === 'width=1440') meta.content = 'width=device-width, initial-scale=1, maximum-scale=1';
+  }).observe(document, { childList: true, subtree: true });
+
+  // A game should not show text loupes or link previews on long presses, or zoom on a double tap.
+  const style = document.createElement('style');
+  style.textContent = 'html { touch-action: manipulation; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; -webkit-text-size-adjust: 100%; }'
+    + ' input, textarea, [contenteditable] { -webkit-user-select: auto; user-select: auto; }';
+  root.append(style);
+
+  const px = (value) => `${Math.round(value ?? 0)}px`;
+  globalThis.__gameNightShell = {
+    background: false,
+    layout: null,
+    applyLayout(detail) {
+      this.layout = detail;
+      root.dataset.nativePosture = detail.posture;
+      const fold = detail.fold;
+      root.style.setProperty('--native-fold-x', px(fold?.x));
+      root.style.setProperty('--native-fold-y', px(fold?.y));
+      root.style.setProperty('--native-fold-width', px(fold?.width));
+      root.style.setProperty('--native-fold-height', px(fold?.height));
+      dispatchEvent(new CustomEvent('native-layout', { detail }));
+    },
+  };
+})();
