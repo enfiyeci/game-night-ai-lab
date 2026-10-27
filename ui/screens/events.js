@@ -6,13 +6,22 @@ import { moodForLean, portrait } from '../components/portraits.js';
 import { enterTransition, exitTransition } from '../components/transition.js';
 import {
   ADVISOR_TITLE, argueLines, cardView, catalogRow, consequenceLines, daysLeft, dueText, hasLanded, queueAnswer,
-  timingFor,
+  reactionLine, timingFor,
 } from '../logic/events.js';
+import { verdictOf } from '../logic/recap.js';
+import { VERDICT } from '../data/recapCopy.js';
 
 const CLOCK_REASON = 'event-card';
 const ASIDE_FALLBACK_MS = 2500; // how long a card that stepped aside waits for the screen picked from the menu
 const ASIDE_RECHECK_MS = 500; // then how often it looks for a clear stage
 const LOADING_REASON = 'event-card-loading';
+const REACTION_MS = 2600; // how long an advisor's nod or grumble after an answer stays up (reward-loops O2)
+// The era recap's verdict word for a catalog choice. Promise calls get none: their choices act per call
+// (sim/promises.js), so the recap's probe sees no effect and would call every answer "Mixed".
+const verdictWord = (eventId, choiceId) => {
+  const row = catalogRow(eventId);
+  return row && row.kind !== 'promise' && row.card?.choices?.some((choice) => choice.id === choiceId) ? VERDICT[verdictOf(eventId, choiceId)] : null;
+};
 const ERAS = [1, 2, 3, 4, 5];
 
 // Crisis staging in the room (owner pick B). Positions follow the era's rack and head anchors.
@@ -135,6 +144,10 @@ export function mountEvents(game, { stage, overlay }) {
   let queue = [];
   let current = null;
   let busyLines = [];
+  let previous = game.state; // the state before this notification, for what an answer moved
+  let reaction = null; // { node, timer }: an advisor's nod or grumble after an answer
+  const reactionLayer = el('<div class="ev-briefing ev-reaction" role="status"></div>'); // made once, so it is announced
+  overlay.append(reactionLayer);
   let previewing = false;
   let asideTimer = null;
   let asideId = null; // the card that stepped aside for the floor menu, until a card opens again
@@ -164,7 +177,7 @@ export function mountEvents(game, { stage, overlay }) {
     const live = new Set(state.pendingEvents.map((pending) => pending.id));
     const gone = [...known.values()].filter((view) => !live.has(view.id));
     if (gone.length) {
-      busyLines = [...busyLines, ...consequenceLines({ before: gone, answered, events })].slice(-MAX_BUSY_LINES);
+      busyLines = [...busyLines, ...consequenceLines({ before: gone, answered, events, verdict: verdictWord, stateBefore: previous, stateAfter: state })].slice(-MAX_BUSY_LINES);
       for (const view of gone) {
         known.delete(view.id);
         setAside.delete(view.id);
@@ -183,6 +196,26 @@ export function mountEvents(game, { stage, overlay }) {
       known.set(view.id, view);
       queue.push(view.id);
     }
+    previous = state;
+  }
+
+  function dropReaction({ announce = false } = {}) {
+    if (!reaction) return;
+    globalThis.clearTimeout(reaction.timer);
+    reaction.node.remove();
+    reaction = null;
+    if (announce) emit('events-changed'); // a briefing warning that waited for the nod comes back (ui/screens/briefing.js)
+  }
+
+  // The advisor who backed the answer nods (or an opposer grumbles) in their bubble for a moment, unless another card
+  // or a screen has the stage. The bubble sits in the briefing layer, under dialogs.
+  function react(view, choiceId) {
+    dropReaction();
+    const line = reactionLine(view, choiceId, game.state.day);
+    const head = line && anchors?.heads?.[line.role];
+    if (!head || current || overlay.querySelector('.dialog-layer, .screenwall-layer, .menu-layer')) return;
+    const node = bubbleAt(reactionLayer, head, { label: ADVISOR_TITLE[line.role], say: line.say, width: 220 });
+    reaction = { node, timer: globalThis.setTimeout(() => dropReaction({ announce: true }), REACTION_MS) };
   }
 
   // Open the next waiting card; when none is left, give focus back to where the player was.
@@ -204,6 +237,7 @@ export function mountEvents(game, { stage, overlay }) {
   }
 
   function render(view, { preview }) {
+    dropReaction();
     const layer = el('<div class="event-layer"></div>');
     overlay.append(layer);
     clock()?.pause(CLOCK_REASON);
@@ -264,6 +298,7 @@ export function mountEvents(game, { stage, overlay }) {
         // card and opened the next one; close only this card.
         if (current?.id === view.id) close();
         settle();
+        if (!preview) react(view, choice.id);
       });
       card.querySelector('.ev-choices').append(button);
     }
@@ -373,6 +408,7 @@ export function mountEvents(game, { stage, overlay }) {
     // of the queue (not to the phone) and comes back when the menu and anything opened from it are gone. The clock
     // keeps the card's pause meanwhile, so no story day (and no deadline) passes while the card is away.
     stepAside() {
+      dropReaction({ announce: true });
       if (!current) return;
       if (current.preview) {
         close();

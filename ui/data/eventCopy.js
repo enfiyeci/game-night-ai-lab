@@ -122,6 +122,27 @@ export const ARGUE = {
   },
 };
 
+// After the player answers a card (reward-loops O2): the advisor who backed the choice nods, or, when nobody backed
+// it, the first who argued against it grumbles. A short line in their speech bubble for a couple of seconds.
+export const REACTIONS = { // OWNER WRITES
+  safety: {
+    nod: ['Good. That is the careful call.', 'Thank you. I can sleep tonight.', 'Right call. I will write it up.'], // OWNER WRITES
+    grumble: ['I said no. I am writing that down.', 'We will pay for this later.', 'Noted. I do not like it.'], // OWNER WRITES
+  },
+  research: {
+    nod: ['Good. The team can keep moving.', 'That keeps us in the race.', 'Nice. Back to the lab.'], // OWNER WRITES
+    grumble: ['That slows us down.', 'The team will not love this.', 'Fine. We lose a few weeks.'], // OWNER WRITES
+  },
+  cfo: {
+    nod: ['Good for the books.', 'That I can budget for.', 'Sensible. Investors will like it.'], // OWNER WRITES
+    grumble: ['That is going to cost us.', 'I will find the money. Somehow.', 'Not what the spreadsheet wanted.'], // OWNER WRITES
+  },
+  policy: {
+    nod: ['That plays well outside.', 'I can sell that story.', 'Good. The press will be kind.'], // OWNER WRITES
+    grumble: ['That will be hard to explain.', 'Expect some calls about this.', 'The headlines will not be kind.'], // OWNER WRITES
+  },
+};
+
 // A joke an advisor adds after their briefing line when clicked (7A). Picked by the round number.
 export const JOKES = {
   research: {

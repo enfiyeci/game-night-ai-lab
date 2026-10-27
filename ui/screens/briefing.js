@@ -28,7 +28,8 @@ export function mountBriefing(game, { office, overlay }) {
   let talking = null;
 
   // An event card or any dialog (the release reveal, a menu screen) holds the stage.
-  const cardOpen = () => Boolean(overlay.querySelector('.event-layer, .dialog-layer'));
+  // An advisor's nod after an answer (ui/screens/events.js) counts too, so a warning bubble never lands under it.
+  const cardOpen = () => Boolean(overlay.querySelector('.event-layer, .dialog-layer, .ev-reaction .ev-bubble'));
   const bandOf = (role) => game.state.lastBriefing?.find((reading) => reading.id === role)?.band ?? 'calm';
   const lookedInto = () => game.queue.addressWarnings ?? [];
   const unresolved = () => openWarnings(game.state, lookedInto());
@@ -40,6 +41,7 @@ export function mountBriefing(game, { office, overlay }) {
 
   // An advisor with a warning waiting for an answer raises it first; otherwise they say how things look.
   function speak(role) {
+    overlay.querySelector('.ev-reaction .ev-bubble')?.remove(); // a click on an advisor cuts a nod short
     if (!anchors?.heads?.[role] || cardOpen()) return;
     if (live?.warning.advisor === role) return; // their warning is already up at their desk
     const warning = waiting.find((candidate) => candidate.advisor === role)
