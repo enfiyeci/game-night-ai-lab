@@ -76,6 +76,11 @@ export const CRITIC = {
   preferred: 'In {month} I would have gone with “{other}”. We chose “{label}”.',
   research: { lead: 'We finished the year in front. Now we have to stay there.', behind: '{leader} is {gap} points ahead. I want them back next year.' },
   cfo: { cash: 'We end the year with {cash} in the bank. I can work with that.', low: 'We end the year with {cash}. Ask me about runway before you ask for chips.' },
+  // The cash warning on moving day, folded into the recap as its last word (sim/pacing.js) instead of its own pause.
+  cashWarning: { // OWNER WRITES
+    urgent: 'One more thing: cash lasts about {months} months at this spending. Look at the budget before we sign anything big.', // OWNER WRITES
+    critical: 'One more thing: we have less than a month of cash at this spending. Cut costs or raise money now.', // OWNER WRITES
+  },
   policy: { users: '{users} people use what we built. That is our seat at the table.', none: 'Nobody outside has used our model yet. That has to change.' },
   safety: { quiet: 'A quiet year on my desk. I will take it.' },
 };

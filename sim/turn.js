@@ -22,7 +22,7 @@ import { judgeBoardPromise, makeBoardPromise } from './boardPromise.js';
 import { checkTurnEndings, eraGate, finalEnding } from './endings.js';
 import { recordAdvisors } from './advisors.js';
 import { resolveHazard, exposeConcealed, INTERPRETABILITY_SPEND } from './hazards.js';
-import { addressWarning, resolveEvent, eventsTick, fallbackChoice, logDecision, pushFeed, resolveDue, stampNewCards } from './events.js';
+import { addressWarning, deferCrowdedCards, resolveEvent, eventsTick, fallbackChoice, logDecision, pushFeed, resolveDue, stampNewCards } from './events.js';
 import { setDraft } from './constitution.js';
 import { scenarioTick } from './scenarios.js';
 import {
@@ -36,7 +36,9 @@ import {
   SUMMIT_SKIP_US_FAVOR,
   SUMMIT_SKIP_INTL_FAVOR,
 } from './summit.js';
-import { expireMeeting, meetingDue, meetingExpiresNow, openMeeting, runMeeting } from './president.js';
+import { expireMeeting, meetingDay, meetingDue, meetingExpiresNow, openMeeting, runMeeting } from './president.js';
+import { MEETINGS } from './data/president.js';
+import { noteBeat, paceDay, presidentMayCall } from './pacing.js';
 import { judgeEndingPromises, promiseUpkeep } from './promises.js';
 import { applySplitEffects, computeSlices, makePledge, setComputeSplit, spotCover } from './split.js';
 import { ROUND_DAYS, monthsPerDay } from './time.js';
@@ -338,6 +340,9 @@ export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = 
     if (state.activeRun?.canAdvance === false) delete state.activeRun.capacityTurn;
     if (state.pendingModel?.polishing?.canAdvance === false) delete state.pendingModel.polishing.capacityTurn;
   }
+  // A move, an answer or a new budget or split is a decision for the pacing director's quiet backstop.
+  if (events.length || actions.budget || Object.hasOwn(actions, 'computeSplit')) noteBeat(state);
+  paceDay(state, events);
   return { state, events, errors };
 }
 
@@ -514,16 +519,18 @@ function endRound(state, rng, observer, events, errors, trainingFraction = 0) {
   if (!state.ending) stampLandings(state);
 }
 
-// The President calls on his own day (sim/data/president.js), on a mark day or between marks.
+// The President calls on his own day (sim/data/president.js), on a mark day or between marks, or on the first free day
+// after it when another stop has that day (sim/pacing.js).
 function openDueMeeting(state, events) {
   if (state.ending || state.meeting) return;
   const id = meetingDue(state);
-  if (!id) return;
+  if (!id || !presidentMayCall(state, meetingDay(MEETINGS.find((meeting) => meeting.id === id)))) return;
   state.meeting = openMeeting(state, id);
   events.push({ type: 'meetingDue', id });
 }
 
 function postLandedCards(state) {
+  deferCrowdedCards(state);
   for (const card of state.pendingEvents) {
     if (card.posted || card.landsAt == null || card.landsAt > state.day) continue;
     if (!card.post) {
@@ -581,6 +588,7 @@ export function advanceDays(prev, days, rng, observer = {}) {
     } else if (state.pendingModel?.polishing) {
       state.pendingModel.polishing.startedDay = state.day;
     }
+    paceDay(state, events.slice(firstEvent)); // a hazard or a payoff from today's training counts before today's cards
     events.push(...scenarioTick(state));
     expireSuspicions(state);
     releaseDueFeed(state);
@@ -595,10 +603,12 @@ export function advanceDays(prev, days, rng, observer = {}) {
     }
     if (reachesMark) {
       endRound(state, rng, observer, events, errors, fraction);
+      paceDay(state, events.slice(firstEvent)); // the era change and the mark's beats count before the mark's cards
       events.push(...scenarioTick(state));
       postLandedCards(state);
     }
     openDueMeeting(state, events);
+    paceDay(state, events.slice(firstEvent));
     const dayEvents = events.slice(firstEvent);
     if (reachesMark || dayEvents.length) postFeed(mood, state, dayEvents, reachesMark);
   }

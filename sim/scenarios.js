@@ -1,6 +1,7 @@
 import { SCENARIO_EVENTS } from './data/scenarioEvents.js';
 import { createRng } from './rng.js';
 import { ROUND_DAYS } from './time.js';
+import { QUIET_S, canLand, noteStop, quietFor } from './pacing.js';
 
 // This stream depends on the run and era, never on unrelated simulation draws.
 // Era 5's card days, counted from the era's first day.
@@ -42,6 +43,7 @@ export function scenarioTick(state) {
     director = state.scenarioDirector = {
       era: state.era, index: 0, nextAttempt: 0,
       slots: Array.from({ length: count }, (_, i) => start + Math.min(latestFor(i), Math.floor(at(i) + rng.int(-wobble, wobble)))),
+      latest: Array.from({ length: count }, (_, i) => start + latestFor(i)),
       end: start + span,
     };
   }
@@ -50,10 +52,17 @@ export function scenarioTick(state) {
     const event = SCENARIO_EVENTS.find((row) => row.id === card.id);
     return !event || scenarioEligible(event, state);
   });
-  // A card held back (by an open card or the spacing) past the last day with a full answer window is dropped.
+  // The pacing director's quiet backstop (sim/pacing.js): after 90 s of clock with no stop, decision or payoff, the
+  // era's next card comes now instead of on its day.
+  if (director.index < director.slots.length && director.slots[director.index] > state.day && quietFor(state) >= QUIET_S) {
+    director.slots[director.index] = state.day;
+  }
+  // The pacing director holds a card only until its latest day, where it lands whatever else is on; a card held back
+  // (by an open card or the spacing) past the last day with a full answer window is dropped.
+  const forced = state.day >= (director.latest?.[director.index] ?? Infinity);
   if (director.index >= director.slots.length || state.day < director.slots[director.index]
     || state.day < director.nextAttempt || state.day + answerWindow(state.era) > director.end - 1
-    || state.pendingEvents.some((card) => card.id.startsWith('scenario'))) return [];
+    || state.pendingEvents.some((card) => card.id.startsWith('scenario')) || !(forced || canLand(state))) return [];
   const eligible = SCENARIO_EVENTS.filter((event) => scenarioEligible(event, state) && !state.seenEvents.includes(event.id));
   if (!eligible.length) return [];
   const event = eraRng(state, director.index + 1).pick(eligible);
@@ -61,8 +70,9 @@ export function scenarioTick(state) {
   state.pendingEvents.push({
     id: event.id, title: event.card.title, post: event.card.post,
     choices: event.card.choices.map(({ id, label, cost, backers, opposers, cashCost }) => ({ id, label, cost, backers, opposers, cashCost })),
-    targets: [], landsAt: state.day, dueAt,
+    targets: [], landsAt: state.day, dueAt, paced: true,
   });
+  noteStop(state, 'card', { movable: true, forced });
   state.seenEvents.push(event.id);
   director.index += 1;
   director.nextAttempt = state.day + (state.era === 5 ? 3 : 7);

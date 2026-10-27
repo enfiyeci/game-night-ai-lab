@@ -293,8 +293,13 @@ test('fallback resolves simultaneous promise calls separately', () => {
   eventsTick(state, no);
   const favor = state.govFavor.us;
   stampNewCards(state);
-  const days = Math.max(...promiseCalls(state).map((event) => event.dueAt)) - state.day;
-  const out = advanceDays(state, days, no);
+  // The pacing director (sim/pacing.js) may land the second call a few days later, its deadline as many days later.
+  const out = { state, events: [] };
+  while (promiseCalls(out.state).length && out.state.day < 90) {
+    const step = advanceDays(out.state, 1, no);
+    out.state = step.state;
+    out.events.push(...step.events);
+  }
   assert.deepEqual(out.state.promises.map(({ status, stalled, dueTurn }) => ({ status, stalled, dueTurn })), [
     { status: 'open', stalled: true, dueTurn: 7 },
     { status: 'open', stalled: true, dueTurn: 7 },

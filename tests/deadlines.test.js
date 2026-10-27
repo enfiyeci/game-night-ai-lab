@@ -54,6 +54,7 @@ test('an event card post appears on its landing day, once', () => {
   s.automation.stage = 2; s.automation.stageTurn = 0;
   eventsTick(s, no);
   const card = s.pendingEvents[0];
+  s.pendingEvents = [card]; // alone, so the pacing director (sim/pacing.js) has no reason to move it
   card.landsAt = 2;
   card.dueAt = 10;
   const cardPosts = (state) => state.feed.filter((post) => post.tag === 'event');

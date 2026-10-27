@@ -17,6 +17,22 @@ export const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Au
 const ERA_YEAR = { 1: 2023, 2: 2024, 3: 2025, 4: 2026, 5: 2027 };
 const ERA_START_DAY = ERAS.reduce((starts, era, i) => ({ ...starts, [era.id]: i === 0 ? 0 : starts[era.id - 1] + ERAS[i - 1].turns * ROUND_DAYS[era.id - 1] }), {});
 
+// The story day an era opens on (the mark that ends the era before it).
+export const eraStartDay = (era) => ERA_START_DAY[era];
+
+// Seconds of running clock from the start of the run to story day `day`, at speed 1 (ui/clock.js: 90 s per round, so
+// a story day lasts 90 / ROUND_DAYS[era] s). Days past the last era count at its pace.
+export const SECONDS_PER_ROUND = 90;
+export function clockSeconds(day) {
+  let seconds = 0;
+  for (const era of ERAS) {
+    const into = Math.max(0, day - ERA_START_DAY[era.id]);
+    const inEra = era === ERAS.at(-1) ? into : Math.min(into, era.turns * ROUND_DAYS[era.id]);
+    seconds += (inEra * SECONDS_PER_ROUND) / ROUND_DAYS[era.id];
+  }
+  return seconds;
+}
+
 // The real date of a story day: year, month and week of the month (days 29-31 are week 5, so era 5's weekly marks
 // never share a label).
 export function storyDate(day) {

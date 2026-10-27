@@ -112,3 +112,41 @@ test('cash acknowledgement preserves other clock pauses and recovery removes the
     else globalThis.document = previousDocument;
   }
 });
+
+test('with the pacing director, the warning stops the clock only on a pause the sim recorded today', async () => {
+  const { mountCashWarning } = await import('../ui/screens/cashWarning.js');
+  const { createClock } = await import('../ui/clock.js');
+  const previousDocument = globalThis.document;
+  const element = () => ({
+    children: [], dataset: {}, listeners: {}, hidden: false,
+    append(...nodes) { this.children.push(...nodes); },
+    setAttribute() {},
+    addEventListener(type, handler) { this.listeners[type] = handler; },
+    remove() {},
+  });
+  globalThis.document = { createElement: element };
+  try {
+    const stage = element();
+    let subscriber;
+    const game = { state: stateAt(2), subscribe(fn) { subscriber = fn; return () => {}; } };
+    // Moving day: the director folded the warning into the era recap, so the banner shows without a pause.
+    game.state.pacing = { stops: [], lastBeat: 0, cash: { checkpoint: 2, pause: null, folded: { day: game.state.day, level: 'urgent' } } };
+    game.clock = createClock(game, { now: () => 0 });
+    mountCashWarning(game, { stage, onFinance() {}, onBudget() {}, onFunding() {} });
+    const banner = stage.children[0];
+    assert.equal(banner.hidden, false);
+    assert.deepEqual(game.clock.now().reasons, []);
+    // A later day: the director lets it pause.
+    game.state.day += 3;
+    game.state.cash = projectBurn(game.state) * 0.5;
+    game.state.pacing.cash.pause = { day: game.state.day, level: 'critical' };
+    subscriber();
+    assert.deepEqual(game.clock.now().reasons, ['cash-warning']);
+    banner.children[1].children.at(-1).listeners.click();
+    subscriber();
+    assert.deepEqual(game.clock.now().reasons, [], 'the same pause does not stop the clock twice');
+  } finally {
+    if (previousDocument === undefined) delete globalThis.document;
+    else globalThis.document = previousDocument;
+  }
+});

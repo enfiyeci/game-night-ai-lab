@@ -5,6 +5,7 @@ import { ERAS } from '../../sim/data/eras.js';
 import { rank, gapToLeader } from '../../sim/rivals.js';
 import { activeModels } from '../../sim/serving.js';
 import { storyDate } from '../../sim/time.js';
+import { cashWarning } from '../../sim/cashWarning.js';
 import { lead, swapLeadNames } from '../../sim/leads.js';
 import { CONSEQUENCES } from '../data/eventCopy.js';
 import * as COPY from '../data/recapCopy.js';
@@ -252,6 +253,17 @@ function criticFor(role, calls, decisions, ctx, used) {
 }
 
 // The whole page for the era that just ended. `state` is the state when the next era began (the era's end).
+// On moving day the cash warning does not stop the clock on its own (sim/pacing.js): the CFO says it last instead.
+function withCashWarning(state, critics) {
+  const folded = state.pacing?.cash?.folded;
+  const warning = folded?.day === state.day ? cashWarning(state) : null;
+  const line = warning && COPY.CRITIC.cashWarning[warning.level === 'critical' ? 'critical' : 'urgent'];
+  const cfo = critics.find((critic) => critic.role === 'cfo');
+  if (!line || !cfo) return critics;
+  const months = Math.max(1, Math.round(warning.runway));
+  return [...critics.filter((critic) => critic !== cfo), { ...cfo, text: fill(line, { months }), cashWarning: warning.level }];
+}
+
 export function recapModel(state, era, { lab = state.labName || 'Your lab' } = {}) {
   const decisions = (state.decisions ?? []).filter((decision) => decision.era === era);
   const calls = bigCalls(decisions);
@@ -278,11 +290,11 @@ export function recapModel(state, era, { lab = state.labName || 'Your lab' } = {
     headline,
     dek: dek(stories, stats),
     stories: stories.map((story, index) => ({ ...story, head: swapLeadNames(story.head, state), story: swapLeadNames(story.story, state), explain: explainFor(calls[index], state) })),
-    critics: LEAD_ORDER.map((role) => {
+    critics: withCashWarning(state, LEAD_ORDER.map((role) => {
       const critic = criticFor(role, calls, decisions, ctx, used);
       const hired = lead(state, role); // the critic is whoever the player hired for the seat: name and face
       return { ...critic, text: swapLeadNames(critic.text, state), name: hired.first, look: hired.look, title: COPY.LEADS[role].role };
-    }),
+    })),
     verdictWords: COPY.VERDICT,
     hint: COPY.OPEN_HINT,
     next: fill(COPY.NEXT, { next: era + 1 }),

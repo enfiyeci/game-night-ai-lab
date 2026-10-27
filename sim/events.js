@@ -7,13 +7,14 @@ import { scenarioEligible } from './scenarios.js';
 import { warningResponse } from './data/warningResponses.js';
 import { hasLine } from './constitution.js';
 import { EVENT_TIMING, DEFAULT_EVENT_TIMING } from './data/eventTiming.js';
-import { ROUND_DAYS, nextRoundDay, roundMarkDay } from './time.js';
-import { eraById } from './data/eras.js';
+import { ROUND_DAYS, SECONDS_PER_ROUND, nextRoundDay, roundMarkDay } from './time.js';
+import { ERAS, eraById } from './data/eras.js';
 import { sideRng } from './contracts.js';
 import { FEED_KEEP } from './feedLive.js';
 import { MEETINGS } from './data/president.js';
 import { meetingDay } from './president.js';
 import { boardVoteThisRound } from './board.js';
+import { CROWD_WINDOW_S, canLand, noteStop } from './pacing.js';
 import {
   failedPresidentPromises,
   promiseCallCard,
@@ -226,8 +227,10 @@ function isMarkDay(state, day) {
 }
 
 // Board cards keep a story week clear of a meeting: the President's call, or the board meeting the day before a vote mark
-// (pacing fix, 2026-10-14).
+// (pacing fix, 2026-10-14), and at least the pacing director's 30 s window of clock, so a card never makes a third stop
+// beside the meeting and the era change after it.
 const MEETING_CLEAR_DAYS = 7;
+const meetingClearDays = (era) => Math.max(MEETING_CLEAR_DAYS, Math.ceil((CROWD_WINDOW_S * ROUND_DAYS[era]) / SECONDS_PER_ROUND));
 function meetingDays(state) {
   const days = MEETINGS.map(meetingDay);
   if (boardVoteThisRound(state)) days.push(nextRoundDay(state) - 1);
@@ -238,24 +241,27 @@ export function stampNewCards(state) {
   const days = ROUND_DAYS[state.era];
   state.pendingEvents.forEach((card, index) => {
     if (card.landsAt != null) return;
+    delete card.paced; // shown before it had a landing day (sim/pacing.js): the director places its landing too
     const rng = sideRng(state, 9 + index);
     const anchor = byId(card.eventId ?? card.id)?.anchor;
     const latest = Math.max(0, Math.floor(days * 0.8) - 1);
     const meetings = byId(card.id)?.kind === 'board' ? meetingDays(state) : [];
     const clear = Array.from({ length: latest + 1 }, (_, k) => state.day + k)
-      .filter((day) => meetings.every((meeting) => Math.abs(day - meeting) >= MEETING_CLEAR_DAYS));
+      .filter((day) => meetings.every((meeting) => Math.abs(day - meeting) >= meetingClearDays(state.era)));
     card.landsAt = anchor
       ? state.day + Math.floor(days * anchor.at)
       : meetings.length && clear.length ? clear[rng.int(0, clear.length - 1)]
         : state.day + rng.int(0, latest);
     const timing = EVENT_TIMING[card.eventId ?? card.id] ?? DEFAULT_EVENT_TIMING;
     card.dueAt = card.landsAt + Math.min(timing.days, state.era === 5 ? 6 : Infinity);
+    // The latest due day the rules below allow; the pacing director never delays a card past it (deferCrowdedCards).
+    let cap = Infinity;
     // The run ends at era 5's last mark: a card due after it could never fall back, so it is due the day before.
-    if (state.era === 5 && state.turnInEra >= eraById(5).turns - 1) card.dueAt = Math.min(card.dueAt, nextRoundDay(state) - 1);
+    if (state.era === ERAS.at(-1).id && state.turnInEra >= eraById(state.era).turns - 1) cap = nextRoundDay(state) - 1;
     // A board card must resolve before its meeting opens: due by the day before the vote round's mark.
-    if (byId(card.id)?.kind === 'board') {
-      card.dueAt = Math.min(card.dueAt, roundMarkDay(state, eraById(state.era).turns - state.turnInEra) - 1);
-    }
+    if (byId(card.id)?.kind === 'board') cap = Math.min(cap, roundMarkDay(state, eraById(state.era).turns - state.turnInEra) - 1);
+    card.dueAt = Math.min(card.dueAt, cap);
+    if (Number.isFinite(cap)) card.dueCap = cap;
     // The emergency vote must be known the day before its mark, when the meeting opens: a card due on a mark day
     // would resolve inside the mark's own step. One day earlier.
     if (card.id === 'boardRevolt' && isMarkDay(state, card.dueAt)) card.dueAt -= 1;
@@ -264,6 +270,28 @@ export function stampNewCards(state) {
     if (warning.deferred || warning.dueAt != null) continue;
     warning.day = state.day;
     warning.dueAt = nextRoundDay(state);
+  }
+}
+
+// The pacing director (sim/pacing.js) at landing time: a card due to land today on a day the rules block lands a day
+// later, its deadline a day later too, while that keeps it inside its round, under its due cap and, for a board card,
+// clear of its meeting. Anchored story beats and the emergency vote keep their days; a card that cannot move lands as
+// before.
+export function deferCrowdedCards(state) {
+  for (const card of state.pendingEvents) {
+    if (card.paced || card.landsAt !== state.day) continue;
+    const fixed = isAnchorId(card.eventId ?? card.id) || card.id === 'boardRevolt';
+    const clearOfMeetings = byId(card.id)?.kind !== 'board'
+      || meetingDays(state).every((meeting) => Math.abs(card.landsAt + 1 - meeting) >= meetingClearDays(state.era));
+    const movable = !fixed && clearOfMeetings && card.landsAt + 1 < nextRoundDay(state) && card.dueAt + 1 <= (card.dueCap ?? Infinity);
+    if (fixed) noteStop(state, 'card');
+    else if (canLand(state)) noteStop(state, 'card', { movable: true });
+    else if (movable) {
+      card.landsAt += 1;
+      card.dueAt += 1;
+      continue;
+    } else noteStop(state, 'card', { movable: true, forced: true });
+    card.paced = true;
   }
 }
 

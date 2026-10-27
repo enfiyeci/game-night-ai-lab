@@ -3,7 +3,7 @@ import { createRng } from '../../sim/rng.js';
 import { advanceDays, applyActions, endTurn, MAX_MOVES, usesAction } from '../../sim/turn.js';
 import { cardById, cardUnlocked, recipeCost, slotsFor, validateRecipe } from '../../sim/recipe.js';
 import { availableUnits } from '../../sim/training.js';
-import { inDangerZone } from '../../sim/economy.js';
+import { inDangerZone, projectBurn } from '../../sim/economy.js';
 import { boardVoteThisRound } from '../../sim/board.js';
 import { MEETINGS } from '../../sim/data/president.js';
 import { setAutomation } from '../../sim/automation.js';
@@ -294,9 +294,10 @@ function ownLineState(seed) {
   for (let guard = 0; guard < 6 && !state.ending && !state.pendingEvents.some((pending) => pending.id === 'ownLine'); guard += 1) {
     ({ state } = endTurn(state, { ...scriptedActions(state), automation: state.era === 4 ? automation : { checks: automation.checks } }, rng));
   }
-  // Real time: a card lands a few story days after the mark that made it; walk the clock to it.
-  const card = state.pendingEvents.find((pending) => pending.id === 'ownLine');
-  if (card && !state.ending && card.landsAt > state.day) ({ state } = advanceDays(state, card.landsAt - state.day, rng));
+  // Real time: a card lands a few story days after the mark that made it, or later if the pacing director moves it;
+  // walk the clock to it.
+  const landsAt = () => state.pendingEvents.find((pending) => pending.id === 'ownLine')?.landsAt;
+  for (let guard = 0; guard < 10 && !state.ending && landsAt() > state.day; guard += 1) ({ state } = advanceDays(state, landsAt() - state.day, rng));
   return state;
 }
 
@@ -364,6 +365,14 @@ export const SCENARIOS = {
   beforeEra3: (seed) => beforeEra(seed, 3),
   beforeEra4: (seed) => beforeEra(seed, 4),
   beforeEra5: (seed) => beforeEra(seed, 5),
+  // The day before era 2, short of cash, with the cash warning not yet shown: moving day folds it into the era recap
+  // (sim/pacing.js) instead of stopping the clock a second time.
+  eraCashFold: (seed) => {
+    const state = beforeEra(seed, 2);
+    state.cash = Math.min(state.cash, projectBurn(state) * 2);
+    if (state.pacing) state.pacing.cash = { checkpoint: 0, pause: null, folded: null, waitingSince: null };
+    return state;
+  },
   scenarioEvent: (seed) => {
     const state = enableScenarios(start(seed));
     state.models.push({ name: 'Preview model', active: true, activated: true, activeFromTurn: 0,

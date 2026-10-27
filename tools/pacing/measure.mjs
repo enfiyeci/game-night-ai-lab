@@ -92,7 +92,7 @@ function playGame(name, seed) {
         add('eraTransition', { words: eraIntroWords(e.era) });
         if (e.era === 5 && !summitOpensNow) { seen.summit = true; add('summit', { words: 400 }); } // old build: opens with the transition (assumed text, see report)
       }
-      if (e.type === 'summit' && !seen.summit) { seen.summit = true; add('summit', { words: 400 }); } // taken from the menu before it opened by itself
+      if (e.type === 'summit' && !seen.summit) { seen.summit = true; add('summit', { words: 400, byPlayer: true }); } // taken from the menu before it opened by itself
       if (e.type === 'meetingDue') add('president', { words: presidentWords[e.id] ?? 150 });
       // One dialog per story day on the new build (ui/screens/deal.js merges a day's news); one per event on the old.
       if ((['dealBreakCaught', 'playerCaught', 'presidentAngry'].includes(e.type)
@@ -137,10 +137,17 @@ function playGame(name, seed) {
     // New build: the full card only for the run's first trace (state.flags.hazardsMet), later ones under the HUD pill.
     if (hz && !seen.hazard) add(summitOpensNow && state.flags.hazardsMet > 0 ? 'hazardPill' : 'hazard', { words: 135 }); // counted from ui/screens/hazard.js copy
     seen.hazard = hz;
-    const cw = cashWarning(state);
-    const next = cashWarningCheckpoint(seen.cashCheckpoint, cw);
-    seen.cashCheckpoint = next.checkpoint;
-    if (next.pause) add('cashWarning', { level: cw.level, words: 45 });
+    if (state.pacing) {
+      // The pacing director (sim/pacing.js) decides the cash warning's pause; on moving day it folds into the recap.
+      const pause = state.pacing.cash.pause;
+      const key = pause ? `${pause.day}:${pause.level}` : null;
+      if (key && key !== seen.cashPause) { seen.cashPause = key; add('cashWarning', { level: pause.level, words: 45 }); }
+    } else {
+      const cw = cashWarning(state);
+      const next = cashWarningCheckpoint(seen.cashCheckpoint, cw);
+      seen.cashCheckpoint = next.checkpoint;
+      if (next.pause) add('cashWarning', { level: cw.level, words: 45 });
+    }
     const props = JSON.stringify(state.automation?.proposals ?? []);
     if (props !== seen.proposals) {
       if ((state.automation?.proposals ?? []).length && !state.automation.autoApprove) add('aiProposals', { words: 30 });
@@ -302,14 +309,17 @@ function boundary(games, era) {
 // everything on one day sits at that day's clock time.
 // Most clock-stopping prompts in any 30 s of running clock (target: at most 2).
 const CROWD_WINDOW_S = 30;
-function crowd30(g) {
-  const t = g.log.filter((p) => TYPES[p.type].pausing).map((p) => clockSec(p.day)).sort((a, b) => a - b);
+// byPlayer false leaves out a summit the player opened from the menu (a bot does that on era 5's first day): the game
+// did not interrupt for it.
+function crowd30(g, { byPlayer = true, mix = false } = {}) {
+  const ps = g.log.filter((p) => TYPES[p.type].pausing && (byPlayer || !p.byPlayer)).map((p) => ({ t: clockSec(p.day), p })).sort((a, b) => a.t - b.t);
   let best = 0;
-  for (let i = 0, j = 0; j < t.length; j++) {
-    while (t[j] - t[i] >= CROWD_WINDOW_S) i++;
-    best = Math.max(best, j - i + 1);
+  let at = [];
+  for (let i = 0, j = 0; j < ps.length; j++) {
+    while (ps[j].t - ps[i].t >= CROWD_WINDOW_S) i++;
+    if (j - i + 1 > best) { best = j - i + 1; at = ps.slice(i, j + 1).map((x) => `e${x.p.era}:${x.p.type}`); }
   }
-  return best;
+  return mix ? at.join('+') : best;
 }
 // Longest stretch of running clock with neither a decision nor a visible payoff (target: about 90 s), for the whole
 // game or one era. A decision is any logged prompt or one of the player's own moves; a payoff is a release reveal, a
@@ -388,7 +398,10 @@ for (const name of names) {
   res.runs = Object.fromEntries([1, 2, 3, 4, 5].map((era) => { const rs = games.flatMap((g) => g.info.runs.filter((x) => x.era === era && x.end != null)); const d = rs.map((x) => x.end - x.start); return [era, { runs: rs.length, medianDays: pct(d, 0.5), medianSeconds: r1(pct(d, 0.5) * secPerDay(era)) }]; }));
   res.sameDayPausingStacksPerGame = r1(stackDays / games.length);
   res.sameDayStackKinds = Object.fromEntries(Object.entries(stacks).sort((a, b) => b[1] - a[1]).slice(0, 12));
-  res.crowd30s = spread(games.map(crowd30));
+  res.crowd30s = spread(games.map((g) => crowd30(g)));
+  res.crowd30sGameOpened = spread(games.map((g) => crowd30(g, { byPlayer: false })));
+  // What fills each game's most crowded 30 s (the first such window), counted over games.
+  res.crowd30sGameOpenedMix = games.map((g) => crowd30(g, { byPlayer: false, mix: true })).reduce((o, k) => ((o[k] = (o[k] ?? 0) + 1), o), {});
   res.quietSeconds = {
     game: spread(games.map((g) => quietest(g))),
     byEra: Object.fromEntries(ERAS.map((e) => [e.id, spread(games.filter((g) => g.endEra >= e.id).map((g) => quietest(g, e.id)))])),

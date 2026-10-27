@@ -40,20 +40,35 @@ export function mountCashWarning(game, { stage, onFinance, onBudget, onFunding }
   banner.append(words, actions);
   stage.append(banner);
   let checkpoint = 0;
+  let lastPause = null;
   let waiting = false;
   let previousCopy = '';
 
+  // The pacing director (sim/pacing.js) decides when the warning may stop the clock: a pause it recorded today. On
+  // moving day the warning folds into the era recap instead. A state from before the director keeps the old rule.
+  function pausesNow(warning) {
+    const paced = game.state.pacing?.cash;
+    if (!paced) {
+      const next = cashWarningCheckpoint(checkpoint, warning);
+      checkpoint = next.checkpoint;
+      return next.pause;
+    }
+    const key = paced.pause ? `${paced.pause.day}:${paced.pause.level}` : null;
+    const fresh = key !== null && key !== lastPause && paced.pause.day === game.state.day;
+    lastPause = key;
+    return fresh;
+  }
+
   function render() {
     const warning = cashWarning(game.state);
-    const next = cashWarningCheckpoint(checkpoint, warning);
-    checkpoint = next.checkpoint;
+    const pause = pausesNow(warning);
     if (!warning) {
       banner.hidden = true;
       if (waiting) game.clock?.resume(CLOCK_REASON);
       waiting = false;
       return;
     }
-    if (next.pause) {
+    if (pause) {
       waiting = true;
       game.clock?.pause(CLOCK_REASON);
     }
