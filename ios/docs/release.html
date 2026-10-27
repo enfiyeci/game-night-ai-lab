@@ -179,9 +179,9 @@ const DECISIONS = [
     options: [
       ['individual', 'Individual', 'Your legal name shows as the seller. No company or D-U-N-S number needed.', true],
       ['org', 'Organization', 'A company name shows as the seller. Needs a legal entity, a D-U-N-S number, a domain email and a website.'] ] },
-  { id: 'D2', title: 'App name on the store', what: '30 characters at most, with no "iPhone" or "Duo" in it (Apple trademarks). Your provisional pick (2026-10-27) is AI Lab Tycoon, and it is in the build. A research session is checking copyright, trademark and copycat risk against Game Dev Tycoon, and a 2026 Steam game already called AI Lab Tycoon; nothing gets registered under the name until that report is in and you confirm.',
+  { id: 'D2', title: 'App name on the store', what: '30 characters at most, with no "iPhone" or "Duo" in it (Apple trademarks). AI Lab Tycoon is in the build provisionally, but the name research (gn-ip-risk, 2026-10-27) rates it high risk: four other games already use that exact name, and Apple asks for a unique app name. It recommends Model Mogul, then Lab Founder. Pick on the research page (claude.ai/artifact/75MJZjxvpKc5fu3Z8NorGY); I change the build and the bundle ID to match. Keep Game Dev Tycoon out of the name, subtitle and keywords.',
     options: [
-      ['tycoon', 'AI Lab Tycoon', 'Matches the title screen. Check the store for an app with the same name before you commit.', true],
+      ['tycoon', 'AI Lab Tycoon', 'Matches the title screen, but four other games already use this name (high risk).', true],
       ['gamenight', 'Game Night: AI Lab', 'The repo\'s name.'],
       ['own', 'My own name', '', false, 'text'] ] },
   { id: 'D3', title: 'Bundle ID', what: 'The app\'s permanent ID; it can\'t change after the first upload. It is set provisionally to com.enfiyeci.ailabtycoon, with the name; nothing is registered under it yet.',
