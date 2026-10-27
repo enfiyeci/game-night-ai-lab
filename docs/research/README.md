@@ -45,6 +45,9 @@ only through search-result snippets, and those claims carry ⚠️ inline.
    research (2026-09-26): Anthropic's "When AI builds itself" essay and automation index, the
    RSP, OpenAI and Google DeepMind thresholds, share-of-code figures, METR's measured speedups,
    and how other games model a self-accelerating loop. Start with its verified-rows table.
+12. `reward-loops/README.md` — event recurrence, core loops and reward pacing (2026-10-26): today's loops measured on
+   `main`, how Left 4 Dead, RimWorld, Game Dev Tycoon, Reigns, Balatro, Hades and idle games pace rewards, what the
+   dopamine evidence supports, the ethics line, and seven options (O1-O7) with Arda's picker.
 
 ## Notable catches
 

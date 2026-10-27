@@ -1,0 +1,739 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Game Night Reward Loops</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Nunito:wght@400;600;700;800;900&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: one reading column of decision cards on the game's cream paper, each card led by a real game frame with the
+   change drawn into it; a sticky picks bar at the bottom. Tokens are the game's own (ui/styles.css). */
+:root {
+  --cream: #F1E4C8; --paper: #FFFBF1; --ink: #2E2A2B; --teal: #3F9C8F; --coral: #E0613B; --sky: #3F84C6; --wood: #C8864C;
+  --bg: var(--cream); --card: var(--paper); --fg: var(--ink);
+  --muted: color-mix(in oklab, var(--ink) 64%, var(--paper));
+  --line: color-mix(in oklab, var(--ink) 14%, var(--paper));
+  --soft: color-mix(in oklab, var(--wood) 14%, var(--paper));
+  --pick: var(--teal); --pick-soft: color-mix(in oklab, var(--teal) 14%, var(--paper));
+  --hot: var(--coral); --hot-soft: color-mix(in oklab, var(--coral) 13%, var(--paper));
+  --bar: color-mix(in oklab, var(--ink) 86%, var(--wood));
+  --display: "Libre Baskerville", Georgia, serif;
+  --body: "Nunito", "Trebuchet MS", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: color-mix(in oklab, var(--ink) 92%, var(--wood)); --card: color-mix(in oklab, var(--ink) 82%, var(--wood)); --fg: #F6EEDC;
+  --muted: color-mix(in oklab, #F6EEDC 62%, var(--ink)); --line: color-mix(in oklab, #F6EEDC 16%, var(--ink));
+  --soft: color-mix(in oklab, var(--wood) 22%, var(--ink)); --pick-soft: color-mix(in oklab, var(--teal) 30%, var(--ink));
+  --hot-soft: color-mix(in oklab, var(--coral) 26%, var(--ink)); --bar: color-mix(in oklab, var(--ink) 70%, #000); color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: color-mix(in oklab, var(--ink) 92%, var(--wood)); --card: color-mix(in oklab, var(--ink) 82%, var(--wood)); --fg: #F6EEDC;
+  --muted: color-mix(in oklab, #F6EEDC 62%, var(--ink)); --line: color-mix(in oklab, #F6EEDC 16%, var(--ink));
+  --soft: color-mix(in oklab, var(--wood) 22%, var(--ink)); --pick-soft: color-mix(in oklab, var(--teal) 30%, var(--ink));
+  --hot-soft: color-mix(in oklab, var(--coral) 26%, var(--ink)); --bar: color-mix(in oklab, var(--ink) 70%, #000); color-scheme: dark }
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 var(--body); }
+.wrap { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 140px; display: grid; gap: 28px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 700; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(28px, 4.4vw, 46px); line-height: 1.12; }
+h2 { font-size: clamp(22px, 2.8vw, 30px); line-height: 1.2; }
+h3 { font-size: 18px; }
+p { margin: 0; }
+a { color: var(--sky); }
+.kicker { font: 600 12px/1.2 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.lede { font-size: 18px; max-width: 70ch; }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+/* hero */
+.hero { display: grid; gap: 14px; }
+.hero .rec { background: var(--card); border-radius: 10px; padding: 16px 18px; display: grid; gap: 6px; box-shadow: 0 1px 0 var(--line); }
+.hero .rec b { color: var(--hot); }
+
+/* findings */
+.findings { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.finding { background: var(--card); border-radius: 10px; padding: 14px 16px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.finding .num { font: 800 30px/1 var(--body); color: var(--hot); font-variant-numeric: tabular-nums; }
+.finding p { font-size: 14.5px; }
+.finding .src { font: 500 11.5px/1.4 var(--mono); color: var(--muted); }
+
+/* timeline chart */
+.chart { background: var(--card); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; }
+.chart-scroll { overflow-x: auto; }
+.chart svg { display: block; min-width: 680px; width: 100%; height: auto; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--muted); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+
+/* loops ladder */
+.loops { background: var(--card); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; }
+.loops-table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+.loops-table th { text-align: left; font: 600 11.5px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 6px 10px 6px 0; }
+.loops-table td { padding: 9px 10px 9px 0; border-top: 1px solid var(--line); vertical-align: top; }
+.loops-table td:first-child { font-weight: 800; white-space: nowrap; }
+.gap { color: var(--hot); font-weight: 700; }
+.table-scroll { overflow-x: auto; }
+
+/* option cards */
+.group-title { display: flex; align-items: baseline; gap: 12px; margin-top: 8px; }
+.option { background: var(--card); border-radius: 12px; overflow: hidden; display: grid; scroll-margin-top: 16px; }
+.option.is-now { box-shadow: inset 0 0 0 3px var(--pick); }
+.opt-head { padding: 18px 20px 6px; display: grid; gap: 6px; }
+.opt-head .tags { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.tag { font: 600 11.5px/1 var(--mono); padding: 5px 8px; border-radius: 99px; background: var(--soft); color: var(--fg); letter-spacing: .02em; }
+.tag.rec { background: var(--hot); color: #FFFBF1; }
+.tag.risk-high { background: var(--hot-soft); }
+.opt-body { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 18px; padding: 12px 20px 20px; }
+@media (max-width: 860px) { .opt-body { grid-template-columns: 1fr; } }
+.opt-text { display: grid; gap: 12px; align-content: start; font-size: 15px; min-width: 0; }
+.opt-text ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.rows { display: grid; gap: 8px; font-size: 14px; }
+.rows div { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 10px; }
+.rows dt { font: 600 11.5px/1.6 var(--mono); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.rows dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.size { display: inline-flex; gap: 3px; vertical-align: -1px; margin-right: 6px; }
+.size i { width: 14px; height: 9px; border-radius: 2px; background: var(--line); }
+.size i.on { background: var(--fg); }
+.warnflag { color: var(--hot); }
+
+/* the frame with the change drawn in */
+.frame { position: relative; aspect-ratio: 16 / 10; max-width: 100%; container-type: inline-size; overflow: hidden; background: var(--cream); }
+.frame img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top; }
+.frame.crop { aspect-ratio: 1280 / 600; }
+.ov { position: absolute; font-family: var(--body); color: var(--ink); line-height: 1.25; }
+.ov.bubble { background: #FFFBF1; border-radius: 1cqw; padding: .9cqw 1.1cqw; font-size: 1.35cqw; box-shadow: 0 .3cqw 1.2cqw rgba(46,42,43,.28); max-width: 24cqw; }
+.ov.bubble .who { font: 800 .95cqw/1.2 var(--body); text-transform: uppercase; letter-spacing: .06em; color: #8a5a2e; margin-bottom: .3cqw; }
+.ov.bubble::after { content: ""; position: absolute; left: 2cqw; bottom: -.9cqw; border: .5cqw solid transparent; border-top: .6cqw solid #FFFBF1; }
+.ov.btn { display: inline-block; background: var(--coral); color: #FFFBF1; font-weight: 800; border-radius: .6cqw; padding: .45cqw .9cqw; margin-top: .6cqw; font-size: 1.2cqw; }
+.ov.box { background: #FFFBF1; border-radius: .8cqw; box-shadow: 0 .3cqw 1.2cqw rgba(46,42,43,.25); font-size: 1.15cqw; overflow: hidden; }
+.ov.box .bh { background: #C8864C; color: #FFFBF1; font-weight: 800; padding: .5cqw .9cqw; font-size: 1.1cqw; }
+.ov.box .bb { padding: .7cqw .9cqw; display: grid; gap: .5cqw; }
+.ov.box .lab { font: 800 .85cqw/1 var(--body); color: #3F9C8F; letter-spacing: .06em; text-transform: uppercase; }
+.ov.chip { background: #FFFBF1; border-radius: 99px; padding: .4cqw .9cqw; font-size: 1.05cqw; font-weight: 800; box-shadow: 0 .2cqw .8cqw rgba(46,42,43,.22); white-space: nowrap; }
+.ov.new { outline: .35cqw dashed #E0613B; outline-offset: .35cqw; }
+.ov .up { color: #2F7F73; font-weight: 800; } .ov .down { color: #B9472A; font-weight: 800; }
+.ov .verdict { display: inline-block; font: 800 .85cqw/1 var(--body); background: #E3F1EE; color: #2F7F73; border-radius: 99px; padding: .3cqw .6cqw; letter-spacing: .04em; text-transform: uppercase; }
+.ov.panel { background: #FFFBF1; border-radius: 1cqw; box-shadow: 0 .6cqw 2.4cqw rgba(46,42,43,.35); padding: 1.4cqw 1.6cqw; display: grid; gap: .8cqw; }
+.ov.panel h4 { margin: 0; font: 700 1.9cqw/1.15 var(--display); }
+.ov .lb { display: grid; grid-template-columns: 10cqw 1fr 3.4cqw; gap: .6cqw; align-items: center; font-size: 1.1cqw; font-weight: 700; }
+.ov .lb span.b { height: 1.3cqw; border-radius: .3cqw; background: #D9CDB4; }
+.ov .lb span.b.you { background: #E0613B; }
+.ov .lb .v { font-family: var(--mono); text-align: right; }
+.frame-note { font: 500 11.5px/1.4 var(--mono); color: var(--muted); padding: 8px 20px 0; }
+
+/* side column: reference and choices */
+.side { display: grid; gap: 14px; align-content: start; min-width: 0; }
+.ref { background: var(--soft); border-radius: 10px; padding: 12px 14px; display: grid; gap: 8px; }
+.ref svg { width: 100%; height: auto; display: block; }
+.ref .cap { font-size: 13px; }
+.ref .cap a { font-weight: 700; }
+.choose { display: grid; gap: 8px; }
+.choose fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: 6px; }
+.choose legend { font: 600 11.5px/1.6 var(--mono); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); padding: 0; margin-bottom: 4px; }
+.radio { display: flex; gap: 10px; align-items: flex-start; padding: 9px 11px; border-radius: 8px; background: var(--bg); cursor: pointer; font-size: 14.5px; }
+.radio input { margin: 3px 0 0; accent-color: var(--teal); }
+.radio:has(input:checked) { background: var(--pick-soft); box-shadow: inset 0 0 0 2px var(--pick); }
+.radio:has(input:focus-visible) { outline: 2px solid var(--sky); outline-offset: 2px; }
+.radio small { display: block; color: var(--muted); font-size: 12.5px; }
+.radio .r { font: 700 10.5px var(--mono); color: var(--hot); margin-left: 6px; text-transform: uppercase; letter-spacing: .05em; }
+
+.guard { background: var(--card); border-radius: 10px; padding: 16px 18px; display: grid; gap: 8px; }
+.guard ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 15px; }
+
+/* sticky picks bar */
+.bar { position: sticky; bottom: 0; z-index: 5; background: var(--bar); color: #F6EEDC; padding-bottom: env(safe-area-inset-bottom, 0px); }
+.bar-in { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 12px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; }
+.bar .sum { font-size: 14px; min-width: 0; }
+.bar .sum b { color: #F4B49C; }
+.bar .acts { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.bar button { font: 800 14px var(--body); border: 0; border-radius: 8px; padding: 10px 14px; cursor: pointer; }
+.bar .save { background: var(--coral); color: #FFFBF1; }
+.bar .copy { background: #F6EEDC; color: var(--ink); }
+.bar button:focus-visible { outline: 2px solid var(--sky); outline-offset: 2px; }
+.bar .status { font: 500 12px var(--mono); color: #D9CDB4; grid-column: 1 / -1; min-height: 1em; }
+@media (max-width: 640px) { .bar-in { grid-template-columns: 1fr; } .bar .acts { justify-content: flex-start; } }
+.notes { background: var(--card); border-radius: 10px; padding: 16px 18px; display: grid; gap: 8px; }
+.notes textarea { width: 100%; min-height: 90px; font: 15px/1.5 var(--body); color: var(--fg); background: var(--bg); border: 0; border-radius: 8px; padding: 10px 12px; resize: vertical; }
+.notes textarea:focus-visible { outline: 2px solid var(--sky); }
+.copybox { width: 100%; min-height: 160px; font: 13px/1.5 var(--mono); }
+.foot { font-size: 13.5px; color: var(--muted); display: grid; gap: 6px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<main class="wrap">
+  <header class="hero">
+    <span class="kicker">Game Night · reward loops and event cadence · 2026-10-26</span>
+    <h1>The game loses its pulse between releases, then stacks three decisions on one day.</h1>
+    <p class="lede">The gaps are not long in seconds; they look long because a story day lasts one second in eras 1 and 2, so a 50-second gap reads as seven empty weeks, and nothing visible changes during it. I measured the current build with the bots, played a run by hand and read six research tracks on how other games pace rewards and events. Below are seven changes, each drawn into a real game frame. Pick what to build; your picks save to this page.</p>
+    <div class="rec">
+      <span class="kicker">Recommended, already selected below</span>
+      <p><b>Build now:</b> O1 one pacing director (with the quiet backstop), O2 answer feedback, O3 keep the core loop turning, O4 no repeats. <b>Next:</b> O5 a number that only goes up. <b>Design round:</b> O6 the era 5 final race goes into gn-improve's era 4-5 redesign. <b>Small extra:</b> O7 part 1, the end-screen panel.</p>
+    </div>
+  </header>
+
+  <section class="findings" aria-label="What the measurement found">
+    <article class="finding">
+      <span class="num mono">56–140 s</span>
+      <p>Longest stretch of running clock with nothing to answer in era 1 (median 52–56 s across 80 bot games). 84–86% of story weeks are empty.</p>
+      <span class="src">measure.mjs, 40 seeds × 2 bots, main 28cdc52</span>
+    </article>
+    <article class="finding">
+      <span class="num mono">2.6–3.9</span>
+      <p>Days per run where two or more clock-stopping dialogs land together. Era 2's first round alone holds 7–8 prompts.</p>
+      <span class="src">same run · in my hand run: card + cash warning + President on one day</span>
+    </article>
+    <article class="finding">
+      <span class="num mono">~6 min</span>
+      <p>Time from answering a card to the first sign it was right: the era recap's "Paid off" stamp. After the click you get one sentence and silent advisors.</p>
+      <span class="src">hand-played run · ui/logic/events.js:123-134</span>
+    </article>
+    <article class="finding">
+      <span class="num mono">0.3</span>
+      <p>Release reveals per game in era 5 for the careful bot. The finale has almost no core loop: no training run finishes there.</p>
+      <span class="src">measure.mjs reveals and finished runs, era 5</span>
+    </article>
+  </section>
+
+  <section class="chart" aria-label="One real run's first two eras">
+    <span class="kicker">One real bot run, eras 1 and 2 (careful bot, seed 1), 1 story day = 1 s of clock at ×1</span>
+    <h2>Quiet, quiet, then a pile-up</h2>
+    <div class="chart-scroll"><svg id="tl" viewBox="0 0 1000 170" role="img" aria-label="Timeline of prompts in eras 1 and 2 with long gaps and same-day stacks marked"></svg></div>
+    <div class="legend"><span><i style="background:var(--fg)"></i>stops the clock</span><span><i style="background:var(--sky)"></i>asks without stopping</span><span><i style="background:var(--hot)"></i>gap over 40 s (labelled from 50 s), or two or more stops on one day</span></div>
+  </section>
+
+  <section class="loops" aria-label="Today's loops">
+    <span class="kicker">Today's loops, inside out</span>
+    <div class="table-scroll"><table class="loops-table">
+      <thead><tr><th>Loop</th><th>How long</th><th>What pays the player back today</th><th>Gap</th></tr></thead>
+      <tbody>
+        <tr><td>Moment</td><td class="mono">1–10 s</td><td>Training bubbles fly to the Capability badge; "Just now" toasts</td><td class="gap">Badge drops to 0 after each release; toasts are silent</td></tr>
+        <tr><td>Decision</td><td class="mono">~50 s apart</td><td>A card with 2–3 costly choices; advisors argue first</td><td class="gap">One sentence afterwards, no direction, advisors silent</td></tr>
+        <tr><td>Model</td><td class="mono">90–270 s + polish</td><td>The release reveal: benchmark races, leaderboard, four critics (about 85 s, the best moment in the game)</td><td class="gap">Office idles at "No project" afterwards; reactions repeat</td></tr>
+        <tr><td>Era</td><td class="mono">6 min</td><td>Board vote; The Daily Token recap with Paid off / Still costing you stamps; moving day</td><td class="gap">Recap and vote are silent; "what changes" bullets are written but never shown</td></tr>
+        <tr><td>Run</td><td class="mono">30 min clock</td><td>Ending film; 11 endings to collect</td><td class="gap">Era 5 has almost no releases</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section class="guard" aria-label="Guardrails">
+    <span class="kicker">Holds for every option (from the ethics research)</span>
+    <ul>
+      <li>No streaks, daily rewards or penalties for leaving; pause always works.</li>
+      <li>No fake near misses: reveal scores stay deterministic and explainable. Suspense comes from the order of the show, not rigged odds.</li>
+      <li>Every reward on screen traces back to a choice the player made.</li>
+    </ul>
+  </section>
+
+  <div class="group-title"><span class="kicker">Safe</span><h2>Fix the rhythm and the feedback</h2></div>
+
+  <!-- O1 -->
+  <article class="option" id="O1" data-opt="O1">
+    <div class="opt-head">
+      <div class="tags"><span class="tag">O1</span><span class="tag rec">Recommended: build now</span><span class="tag"><span class="size"><i class="on"></i><i class="on"></i><i></i></span>M</span><span class="tag">balance risk: low to medium</span></div>
+      <h2>One pacing director for everything that stops the clock</h2>
+    </div>
+    <div class="frame">
+      <img src="img/era3mid.jpg" alt="The office in era 3 with the HUD at top right">
+      <div class="ov chip new" style="left:79.5%;top:42.5%">⏸ 2 waiting · next in 6 days</div>
+      <div class="ov box new" style="left:1.2%;top:9%;width:27%"><div class="bh">Lined up</div><div class="bb"><div><span class="lab">Next</span> Board: the candor watchdog wants the safety results</div><div><span class="lab">Then</span> The President's call, after the hazard is settled</div><div style="color:#7a6f63">Quiet for 30 s after the reveal, then one at a time</div></div></div>
+      <div class="ov bubble new" style="left:19%;top:33%">
+        <div class="who">Policy and Comms</div>Quiet week. Flock is talking about Qilin's price cut.
+      </div>
+    </div>
+    <p class="frame-note">Real frame: midEra3 at 1440×900. Dashed outlines mark what is new. The bubble is the quiet backstop's non-pausing beat.</p>
+    <div class="opt-body">
+      <div class="opt-text">
+        <p>Today the scenario director, the board, the President, the cash warning, the hazard and the summit each schedule themselves. O1 puts one rule set over all of them:</p>
+        <ul>
+          <li><b>Spacing:</b> at most two clock-stopping dialogs in any 30 s of clock, never two on one story day (target). The rest wait in a "2 waiting" chip and open one at a time.</li>
+          <li><b>Relax window:</b> 30–45 s with no new stop after a cluster or set piece, counted from when the last dialog closes (target).</li>
+          <li><b>Quiet backstop:</b> after about 90 s with no decision and no visible payoff, pull the next card forward or fire a non-pausing beat (an advisor aside, a feed post that pops out of the phone).</li>
+          <li><b>Set-piece days:</b> the cash warning folds into the era recap; the President's call moves to the day after the hazard.</li>
+        </ul>
+        <dl class="rows">
+          <div><dt>Fixes</dt><dd>Era 1 gaps of up to 140 s; era 2's first-round pile; the same-day stacks.</dd></div>
+          <div><dt>Touches</dt><dd class="mono" style="font-size:12.5px">new sim/pacing.js · sim/scenarios.js · sim/president.js · sim/turn.js · ui/logic/cashWarning.js · ui/screens/eraTransition.js · ui/screens/summit.js · ui/hud.js · tools/pacing/measure.mjs</dd></div>
+          <div><dt>Balance</dt><dd>Card effects stay; their days move. The summit and President timing touch the bots' action budget (one moved call swung endings on 2026-10-15), so bots run before and after.</dd></div>
+        </dl>
+      </div>
+      <div class="side">
+        <div class="ref">
+          <svg viewBox="0 0 300 110" role="img" aria-label="Left 4 Dead director cycle: build up, a short peak, fade, then a 30 to 45 second relax">
+            <polyline fill="none" stroke="var(--fg)" stroke-width="2.5" points="10,92 70,40 92,22 104,22 120,62 140,92 230,92 290,40"/>
+            <rect x="140" y="96" width="90" height="6" fill="var(--teal)"/>
+            <text x="10" y="18" font-size="11" fill="var(--muted)" font-family="IBM Plex Mono">intensity</text>
+            <text x="42" y="70" font-size="11" fill="var(--fg)" font-family="Nunito" font-weight="700">build up</text>
+            <text x="88" y="14" font-size="11" fill="var(--fg)" font-family="Nunito" font-weight="700">peak 3–5 s</text>
+            <text x="150" y="86" font-size="11" fill="var(--fg)" font-family="Nunito" font-weight="700">relax 30–45 s</text>
+          </svg>
+          <p class="cap">Borrowed from <b>Left 4 Dead's AI Director</b>: build-up, a 3–5 s peak, fade, a 30–45 s relax; it changes how often things happen, not how big. <a href="https://www.valvesoftware.com/en/publications" target="_blank" rel="noopener">Booth, Valve 2009</a>. Spacing floor and backstop ratio from <b>RimWorld's</b> Cassandra (1.9 days between big threats) and Randy (forced after 13 quiet days, about 1.8× his average gap, <span class="warnflag">⚠️ average from an image the extract could not show</span>). <a href="https://rimworldwiki.com/wiki/AI_Storytellers" target="_blank" rel="noopener">RimWorld wiki</a></p>
+        </div>
+        <div class="choose">
+          <fieldset><legend>Decision</legend>
+            <label class="radio"><input type="radio" name="O1" value="now" checked><span>Build now<span class="r">rec</span></span></label>
+            <label class="radio"><input type="radio" name="O1" value="later"><span>Later</span></label>
+            <label class="radio"><input type="radio" name="O1" value="no"><span>No</span></label>
+          </fieldset>
+          <fieldset><legend>How much</legend>
+            <label class="radio"><input type="radio" name="O1-sub" value="backstop" checked><span>Spacing, relax window and quiet backstop<span class="r">rec</span><small>fixes both the bursts and the empty weeks</small></span></label>
+            <label class="radio"><input type="radio" name="O1-sub" value="spacing"><span>Spacing and relax window only<small>fixes the bursts; quiet stretches stay</small></span></label>
+          </fieldset>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- O2 -->
+  <article class="option" id="O2" data-opt="O2">
+    <div class="opt-head">
+      <div class="tags"><span class="tag">O2</span><span class="tag rec">Recommended: build now</span><span class="tag"><span class="size"><i class="on"></i><i></i><i></i></span>S</span><span class="tag">balance risk: none</span></div>
+      <h2>Answer a card, see what it did</h2>
+    </div>
+    <div class="frame">
+      <img src="img/era3mid.jpg" alt="The office in era 3">
+      <div class="ov box new" style="left:1.2%;top:9%;width:28%"><div class="bh">While you were busy</div><div class="bb"><div><span class="lab">Handled</span> A jailbreak is spreading: you paid to patch and retest.</div><div><span class="up">Misuse risk: down</span> · <span class="up">Public trust: up a little</span> · Cash: −$5M</div><div><span class="verdict">Paid off</span></div></div></div>
+      <div class="ov bubble new" style="left:47%;top:38%">
+        <div class="who">Head of Safety</div>Good call. That closes the hole they were sharing.
+      </div>
+      <div class="ov bubble new" style="left:57%;top:55%;max-width:18cqw">
+        <div class="who">CFO</div>Five million for one prompt. Noted.
+      </div>
+    </div>
+    <p class="frame-note">Real frame: midEra3. Card and advisor lines are example copy; direction words follow the game's no-hidden-numbers rule.</p>
+    <div class="opt-body">
+      <div class="opt-text">
+        <p>When a card is answered:</p>
+        <ul>
+          <li>The advisor who backed the choice nods in a bubble, or the loudest opposer grumbles (the game already stores backers and opposers for every choice).</li>
+          <li>The "While you were busy" line adds direction words: "Public trust: up a little. Cash: −$4M."</li>
+          <li>A small verdict tag, the same one the era recap stamps later, from the existing <span class="mono">verdictOf</span>. The recap then confirms what the player saw.</li>
+        </ul>
+        <dl class="rows">
+          <div><dt>Fixes</dt><dd>"I had no way to know which decision was the right one" (playtester 2).</dd></div>
+          <div><dt>Touches</dt><dd class="mono" style="font-size:12.5px">ui/logic/events.js · ui/screens/events.js · ui/data/eventCopy.js · ui/office.js · ui/logic/recap.js</dd></div>
+          <div><dt>Balance</dt><dd>None; no sim change. New lines are marked OWNER WRITES.</dd></div>
+        </dl>
+      </div>
+      <div class="side">
+        <div class="ref">
+          <svg viewBox="0 0 300 100" role="img" aria-label="Four meters, with the two that moved marked by arrows">
+            <g font-family="Nunito" font-size="11" font-weight="700" fill="var(--fg)">
+              <rect x="20" y="20" width="40" height="60" rx="4" fill="var(--line)"/><rect x="20" y="44" width="40" height="36" rx="4" fill="var(--fg)"/><text x="40" y="96" text-anchor="middle">trust</text><text x="40" y="14" text-anchor="middle" fill="var(--teal)">▲</text>
+              <rect x="90" y="20" width="40" height="60" rx="4" fill="var(--line)"/><rect x="90" y="36" width="40" height="44" rx="4" fill="var(--fg)"/><text x="110" y="96" text-anchor="middle">cash</text><text x="110" y="14" text-anchor="middle" fill="var(--coral)">▼</text>
+              <rect x="160" y="20" width="40" height="60" rx="4" fill="var(--line)"/><rect x="160" y="52" width="40" height="28" rx="4" fill="var(--fg)"/><text x="180" y="96" text-anchor="middle">staff</text>
+              <rect x="230" y="20" width="40" height="60" rx="4" fill="var(--line)"/><rect x="230" y="30" width="40" height="50" rx="4" fill="var(--fg)"/><text x="250" y="96" text-anchor="middle">risk</text>
+            </g>
+          </svg>
+          <p class="cap">Borrowed from <b>Reigns</b> (every swipe shows which of four meters moved) and <b>Slay the Spire</b>, which changed enemy intents to exact numbers because playtesters preferred them. <a href="https://www.gamedeveloper.com/design/game-design-deep-dive-creating-an-adaptive-narrative-in-i-reigns-i-" target="_blank" rel="noopener">Alliot on Reigns</a>. Evidence: informational feedback does not undermine motivation (Deci, Koestner and Ryan 1999, <span class="warnflag">⚠️ about a quarter read</span>).</p>
+        </div>
+        <div class="choose">
+          <fieldset><legend>Decision</legend>
+            <label class="radio"><input type="radio" name="O2" value="now" checked><span>Build now<span class="r">rec</span></span></label>
+            <label class="radio"><input type="radio" name="O2" value="later"><span>Later</span></label>
+            <label class="radio"><input type="radio" name="O2" value="no"><span>No</span></label>
+          </fieldset>
+          <fieldset><legend>How much</legend>
+            <label class="radio"><input type="radio" name="O2-sub" value="all" checked><span>Advisor reaction, direction words and verdict tag<span class="r">rec</span></span></label>
+            <label class="radio"><input type="radio" name="O2-sub" value="advisor"><span>Advisor reaction only<small>most in-world, least explicit</small></span></label>
+          </fieldset>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- O3 -->
+  <article class="option" id="O3" data-opt="O3">
+    <div class="opt-head">
+      <div class="tags"><span class="tag">O3</span><span class="tag rec">Recommended: build now</span><span class="tag"><span class="size"><i class="on"></i><i class="on"></i><i></i></span>M</span><span class="tag">balance risk: low</span></div>
+      <h2>Keep the core loop turning</h2>
+    </div>
+    <div class="frame crop">
+      <img src="img/era3idle.jpg" alt="The office in era 3 with no project running">
+      <div class="ov box new" style="left:1.2%;top:9%;width:27%"><div class="bh">Just now · Jan 2025</div><div class="bb"><div>🪙 <b>Kestrel 4 paid back its training cost.</b></div><div>10M people now use Kestrel 4.</div></div></div>
+      <div class="ov bubble new" style="left:26%;top:22%;max-width:26cqw">
+        <div class="who">Head of Research</div>Kestrel 5 is planned: same recipe, bigger run. Start it?<br><span class="ov btn" style="position:static">Plan Kestrel 5</span>
+      </div>
+    </div>
+    <p class="frame-note">Real frame: era3Idle, cropped above a cash warning. The toast lines and the plan name are example copy.</p>
+    <div class="opt-body">
+      <div class="opt-text">
+        <ul>
+          <li><b>Next run, offered.</b> When the reveal closes, the Head of Research offers the next run with last recipe as the default. If compute is short, the bubble carries the fix the recipe screen already has.</li>
+          <li><b>Milestone beats from data the game already has:</b> go-live day, users at 1M, 10M and 100M, "paid back its training cost" (already computed), taking #1, a rival taking #1 from you. A toast, a short sound and a feed post; none stops the clock.</li>
+        </ul>
+        <dl class="rows">
+          <div><dt>Fixes</dt><dd>The idle office right after the best moment; the compute dead end (playtester 3); fills quiet stretches with earned beats instead of more decisions.</dd></div>
+          <div><dt>Touches</dt><dd class="mono" style="font-size:12.5px">ui/screens/reveal.js · ui/logic/training.js · ui/screens/recipe.js · ui/logic/modelMoney.js · ui/logic/compute.js · ui/screens/company.js · ui/sfx.js · sim/feedLive.js · sim/rivals.js</dd></div>
+          <div><dt>Balance</dt><dd>Low. Milestones are cosmetic; bots already train daily. A playtest shows whether people release more.</dd></div>
+        </dl>
+      </div>
+      <div class="side">
+        <div class="ref">
+          <svg viewBox="0 0 300 104" role="img" aria-label="A milestone log where each line is ten times the last and says how long it took">
+            <g font-family="IBM Plex Mono" font-size="11.5" fill="var(--fg)">
+              <text x="12" y="22">1,000 made · 2 min</text>
+              <text x="12" y="44">10,000 made · 6 min</text>
+              <text x="12" y="66">100,000 made · 15 min</text>
+              <text x="12" y="88" fill="var(--teal)" font-weight="600">1,000,000 made · 31 min</text>
+            </g>
+          </svg>
+          <p class="cap">Borrowed from <b>Universal Paperclips</b>, which logs 15 milestones that step by 10× and says how long each took (its source code, <span class="warnflag">⚠️ partly read</span>), and <b>A Dark Room</b>, which shows the next thing to build before you can afford it. <a href="https://www.decisionproblem.com/paperclips/" target="_blank" rel="noopener">Universal Paperclips</a>. Example times above are illustrative.</p>
+        </div>
+        <div class="choose">
+          <fieldset><legend>Decision</legend>
+            <label class="radio"><input type="radio" name="O3" value="now" checked><span>Build now<span class="r">rec</span></span></label>
+            <label class="radio"><input type="radio" name="O3" value="later"><span>Later</span></label>
+            <label class="radio"><input type="radio" name="O3" value="no"><span>No</span></label>
+          </fieldset>
+          <fieldset><legend>How much</legend>
+            <label class="radio"><input type="radio" name="O3-sub" value="both" checked><span>Next-run offer and milestone beats<span class="r">rec</span></span></label>
+            <label class="radio"><input type="radio" name="O3-sub" value="offer"><span>Next-run offer only</span></label>
+            <label class="radio"><input type="radio" name="O3-sub" value="beats"><span>Milestone beats only</span></label>
+          </fieldset>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- O4 -->
+  <article class="option" id="O4" data-opt="O4">
+    <div class="opt-head">
+      <div class="tags"><span class="tag">O4</span><span class="tag rec">Recommended: build now</span><span class="tag"><span class="size"><i class="on"></i><i></i><i></i></span>S</span><span class="tag">balance risk: none</span></div>
+      <h2>No word-for-word repeats</h2>
+    </div>
+    <div class="frame">
+      <img src="img/reveal.jpg" alt="The release reveal summary with benchmarks, press and reactions">
+      <div class="ov panel new" style="left:66%;top:24%;width:20%;gap:.7cqw;padding:1cqw 1.1cqw">
+        <div style="font:800 .9cqw var(--body);letter-spacing:.06em;text-transform:uppercase;color:#8a5a2e">Reactions · from this model's traits</div>
+        <div style="font-size:1.05cqw"><b>@agentops_ana</b> Kestrel 4 Swift finished my whole expense report. scared and grateful.</div>
+        <div style="font-size:1.05cqw"><b>@cheap_tokens</b> $2.38 per million at that score? the price war just started.</div>
+        <div style="font-size:1.05cqw"><b>@redteam_rae</b> safety evals published up front. rare. reading them tonight.</div>
+      </div>
+    </div>
+    <p class="frame-note">Real frame: the reveal summary. The three posts are example copy keyed to this model's agent focus, price and published evals.</p>
+    <div class="opt-body">
+      <div class="opt-text">
+        <ul>
+          <li>The reveal's five reaction posts come from the model's own traits (the feed's launch reactions already key on channel, price and press) instead of the release count.</li>
+          <li>Any dialog that repeats in a run (training hazard, cash warning, rival launch toast) gets a "recently shown" rule and two or three wordings; a repeat plays a quieter, shorter sound.</li>
+        </ul>
+        <dl class="rows">
+          <div><dt>Fixes</dt><dd>In my run the second release's reactions repeated the first one's almost word for word.</dd></div>
+          <div><dt>Touches</dt><dd class="mono" style="font-size:12.5px">ui/screens/reveal.js · sim/feedLive.js · ui/screens/hazard.js · ui/logic/cashWarning.js · sim/data/feedReactions.js</dd></div>
+          <div><dt>Balance</dt><dd>None.</dd></div>
+        </dl>
+      </div>
+      <div class="side">
+        <div class="ref">
+          <svg viewBox="0 0 300 100" role="img" aria-label="A bag of cards where cards that do not fit, and recently played cards, are set aside before the draw">
+            <g font-family="Nunito" font-size="10.5" font-weight="700">
+              <rect x="14" y="24" width="38" height="52" rx="5" fill="var(--card)" stroke="var(--fg)"/>
+              <rect x="60" y="24" width="38" height="52" rx="5" fill="var(--card)" stroke="var(--fg)"/>
+              <rect x="106" y="24" width="38" height="52" rx="5" fill="var(--card)" stroke="var(--fg)"/>
+              <rect x="170" y="24" width="38" height="52" rx="5" fill="var(--line)" stroke="var(--muted)" stroke-dasharray="3 3"/>
+              <rect x="216" y="24" width="38" height="52" rx="5" fill="var(--line)" stroke="var(--muted)" stroke-dasharray="3 3"/>
+              <text x="79" y="92" text-anchor="middle" fill="var(--fg)">can be drawn</text>
+              <text x="212" y="92" text-anchor="middle" fill="var(--muted)">just played · doesn't fit</text>
+              <text x="79" y="16" text-anchor="middle" fill="var(--teal)">the bag</text>
+            </g>
+          </svg>
+          <p class="cap">Borrowed from <b>Reigns</b>: before every draw it removes cards that do not fit the kingdom and cards just played. <a href="https://www.gamedeveloper.com/design/game-design-deep-dive-creating-an-adaptive-narrative-in-i-reigns-i-" target="_blank" rel="noopener">Alliot, Game Developer</a>. Also Left 4 Dead bans the same boss twice in a row, and Oxygen Not Included plays repeat alerts quieter and shorter (<a href="https://oxygennotincluded.wiki.gg/wiki/Versions/OU-234773" target="_blank" rel="noopener">patch notes</a>).</p>
+        </div>
+        <div class="choose">
+          <fieldset><legend>Decision</legend>
+            <label class="radio"><input type="radio" name="O4" value="now" checked><span>Build now<span class="r">rec</span></span></label>
+            <label class="radio"><input type="radio" name="O4" value="later"><span>Later</span></label>
+            <label class="radio"><input type="radio" name="O4" value="no"><span>No</span></label>
+          </fieldset>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <div class="group-title"><span class="kicker">Medium</span><h2>Make growth and era ends land</h2></div>
+
+  <!-- O5 -->
+  <article class="option" id="O5" data-opt="O5">
+    <div class="opt-head">
+      <div class="tags"><span class="tag">O5</span><span class="tag rec">Recommended: next</span><span class="tag"><span class="size"><i class="on"></i><i class="on"></i><i></i></span>M</span><span class="tag">balance risk: none</span></div>
+      <h2>A number that only goes up, and era ends that land</h2>
+    </div>
+    <div class="frame">
+      <img src="img/recap.jpg" alt="The Daily Token year-in-review page at the end of era 1">
+      <div class="ov panel new" style="left:22%;top:1.5%;width:56%;grid-template-columns:repeat(3,1fr);padding:1cqw 1.4cqw;gap:1.6cqw">
+        <div><div style="font:800 .9cqw var(--body);letter-spacing:.06em;text-transform:uppercase;color:#8a5a2e">New users</div><div style="font:900 2.6cqw/1 var(--body)">949.2K</div></div>
+        <div><div style="font:800 .9cqw var(--body);letter-spacing:.06em;text-transform:uppercase;color:#8a5a2e">Cash left</div><div style="font:900 2.6cqw/1 var(--body)">$103M</div></div>
+        <div><div style="font:800 .9cqw var(--body);letter-spacing:.06em;text-transform:uppercase;color:#8a5a2e">Race</div><div style="font:900 2.6cqw/1 var(--body)">3rd <span style="font-size:1.4cqw;color:#B9472A">3.5 behind</span></div></div>
+      </div>
+      <div class="ov chip new" style="left:1.2%;top:8%;background:#E0613B;color:#FFFBF1">Lab score 46 <span style="opacity:.85">+5 this run</span></div>
+    </div>
+    <p class="frame-note">Real frame: the era 1 recap from the endOfEra1 scenario. The three numbers are this frame's own (949.2K users, $103M, third and 3.5 behind); they count up one by one before the headline. The coral badge is the lab score that no longer resets.</p>
+    <div class="opt-body">
+      <div class="opt-text">
+        <ul>
+          <li><b>Lab score:</b> the Capability badge keeps the lab's best total and shows the current run's gain as a small "+N", so it never drops to 0.</li>
+          <li><b>Recap that counts up</b> the era, one item at a time with a rising tick and one chord.</li>
+          <li><b>Moving day shows what changes:</b> the three bullets already written in <span class="mono">ui/logic/eraIntro.js</span>.</li>
+          <li><b>The board vote gets sound:</b> a tick per director, a low tone for "remove", the result chord.</li>
+        </ul>
+        <dl class="rows">
+          <div><dt>Fixes</dt><dd>Nothing keeps growing; the recap and the vote are silent; written era copy that never shows.</dd></div>
+          <div><dt>Touches</dt><dd class="mono" style="font-size:12.5px">ui/hud.js · ui/logic/training.js · ui/screens/recap.js · ui/logic/recap.js · ui/screens/eraTransition.js · ui/logic/eraIntro.js · ui/screens/boardMeeting.js · ui/sfx.js</dd></div>
+          <div><dt>Balance</dt><dd>None.</dd></div>
+        </dl>
+      </div>
+      <div class="side">
+        <div class="ref">
+          <svg viewBox="0 0 300 100" role="img" aria-label="A score added one card at a time, each step louder">
+            <g font-family="IBM Plex Mono" font-size="12" font-weight="600">
+              <rect x="12" y="30" width="44" height="34" rx="5" fill="var(--sky)"/><text x="34" y="52" text-anchor="middle" fill="#FFFBF1">+30</text>
+              <rect x="64" y="30" width="44" height="34" rx="5" fill="var(--sky)"/><text x="86" y="52" text-anchor="middle" fill="#FFFBF1">+10</text>
+              <rect x="116" y="30" width="44" height="34" rx="5" fill="var(--sky)"/><text x="138" y="52" text-anchor="middle" fill="#FFFBF1">+10</text>
+              <rect x="168" y="30" width="44" height="34" rx="5" fill="var(--coral)"/><text x="190" y="52" text-anchor="middle" fill="#FFFBF1">×4</text>
+              <text x="252" y="52" text-anchor="middle" fill="var(--fg)" font-size="16">200</text>
+              <path d="M 20 82 L 200 74" stroke="var(--teal)" stroke-width="3"/><text x="206" y="80" fill="var(--teal)" font-size="10">pitch rises</text>
+            </g>
+          </svg>
+          <p class="cap">Borrowed from <b>Balatro</b>: cards add points one at a time with rising sound, and the total stays hidden until it resolves (<a href="https://gmtk.substack.com/p/balatros-cursed-design-problem" target="_blank" rel="noopener">Game Maker's Toolkit</a>). Also <b>Game Dev Tycoon</b> v1.6 rebuilt its review screen with star animations, and <b>Two Point Hospital</b> ends each year with an awards night (<span class="warnflag">⚠️ one guide</span>).</p>
+        </div>
+        <div class="choose">
+          <fieldset><legend>Decision</legend>
+            <label class="radio"><input type="radio" name="O5" value="now"><span>Build now</span></label>
+            <label class="radio"><input type="radio" name="O5" value="later" checked><span>Next, after O1–O4<span class="r">rec</span></span></label>
+            <label class="radio"><input type="radio" name="O5" value="no"><span>No</span></label>
+          </fieldset>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <div class="group-title"><span class="kicker">Experimental</span><h2>Reshape the finale, teach with the loop</h2></div>
+
+  <!-- O6 -->
+  <article class="option" id="O6" data-opt="O6">
+    <div class="opt-head">
+      <div class="tags"><span class="tag">O6</span><span class="tag rec">Recommended: design round</span><span class="tag"><span class="size"><i class="on"></i><i class="on"></i><i class="on"></i></span>L</span><span class="tag risk-high">balance risk: high</span></div>
+      <h2>Era 5 as a final race of weekly checkpoints</h2>
+    </div>
+    <div class="frame">
+      <img src="img/era5summit.jpg" alt="The office in era 5">
+      <div class="ov chip new" style="left:79.5%;top:42.5%;background:#2E2A2B;color:#FFFBF1">🏁 Finish in 3 weeks</div>
+      <div class="ov panel new" style="left:21%;top:26%;width:46%">
+        <div style="font:800 .95cqw var(--body);letter-spacing:.06em;text-transform:uppercase;color:#8a5a2e">Week 1 checkpoint · leaderboard</div>
+        <h4>Loopwork pulls level with OpenBrain</h4>
+        <div class="lb"><span>OpenBrain</span><span class="b" style="width:92%"></span><span class="v">112</span></div>
+        <div class="lb"><span>Loopwork</span><span class="b you" style="width:90%"></span><span class="v">110</span></div>
+        <div class="lb"><span>Qilin</span><span class="b" style="width:81%"></span><span class="v">99</span></div>
+        <div class="lb"><span>DeepThink</span><span class="b" style="width:74%"></span><span class="v">90</span></div>
+        <div style="font-size:1.1cqw;color:#5a524c">PitchCrunch: "Two labs, one finish line, no brakes."</div>
+      </div>
+    </div>
+    <p class="frame-note">Real frame: era 5 office. The leaderboard scores and the quip are illustrative, not from a run.</p>
+    <div class="opt-body">
+      <div class="opt-text">
+        <p>Era 5 lasts 28 story days at 12.9 s each, and a training run takes at least a round, so the finale has almost no releases. O6 turns it into four weekly sprints:</p>
+        <ul>
+          <li>Era 5 training ships <b>checkpoints</b>: a one-week run that adds a slice of capability at the week mark.</li>
+          <li>Each week mark plays a <b>10-second reveal</b>: the leaderboard only, every lab's checkpoint moving at once, one line of press.</li>
+          <li>A <b>race clock</b> on the HUD for the whole era.</li>
+          <li>The summit and the President's second call become the era's two scheduled peaks, with quiet weeks between (works with O1).</li>
+        </ul>
+        <dl class="rows">
+          <div><dt>Fixes</dt><dd>0.3 reveals per game in era 5; gives gn-improve's "final race for world dominance" its reward loop.</dd></div>
+          <div><dt>Touches</dt><dd class="mono" style="font-size:12.5px">sim/recipe.js · sim/training.js · sim/rivals.js · sim/turn.js · ui/screens/reveal.js · ui/hud.js · sim/scenarios.js · sim/endings.js · tools/balance.js</dd></div>
+          <div><dt>Balance</dt><dd>High: capability past 100, the misalignment line at 36 and the ending mix all move. Design it inside the era 4-5 round with before-and-after bots.</dd></div>
+        </dl>
+      </div>
+      <div class="side">
+        <div class="ref">
+          <svg viewBox="0 0 300 100" role="img" aria-label="A row of beacons with a red front advancing from the left one step per jump">
+            <rect x="0" y="20" width="96" height="60" fill="var(--hot-soft)"/>
+            <line x1="96" y1="16" x2="96" y2="84" stroke="var(--coral)" stroke-width="3"/>
+            <g fill="var(--fg)"><circle cx="40" cy="50" r="6"/><circle cx="84" cy="36" r="6"/><circle cx="130" cy="58" r="6"/><circle cx="176" cy="40" r="6"/><circle cx="222" cy="60" r="6"/><circle cx="270" cy="46" r="8" fill="var(--teal)"/></g>
+            <polyline fill="none" stroke="var(--fg)" stroke-width="2" points="40,50 84,36 130,58 176,40 222,60 270,46"/>
+            <text x="6" y="14" font-family="Nunito" font-size="11" font-weight="700" fill="var(--coral)">pursuers, +1 per jump</text>
+            <text x="244" y="96" font-family="Nunito" font-size="11" font-weight="700" fill="var(--teal)">exit</text>
+          </svg>
+          <p class="cap">Borrowed from <b>FTL</b>: every jump spends fuel and moves the rebel fleet closer, so the end pressure is always on screen (Ma and Davis via Engadget). <b>Frostpunk</b> schedules its storm as the climax after quiet building (<span class="warnflag">⚠️ one player's recorded run and forum reports</span>).</p>
+        </div>
+        <div class="choose">
+          <fieldset><legend>Decision</legend>
+            <label class="radio"><input type="radio" name="O6" value="design" checked><span>Send to gn-improve's era 4-5 design round<span class="r">rec</span></span></label>
+            <label class="radio"><input type="radio" name="O6" value="now"><span>Build now, on its own</span></label>
+            <label class="radio"><input type="radio" name="O6" value="no"><span>No</span></label>
+          </fieldset>
+          <fieldset><legend>How much</legend>
+            <label class="radio"><input type="radio" name="O6-sub" value="full" checked><span>Checkpoints, weekly reveal and race clock<span class="r">rec</span></span></label>
+            <label class="radio"><input type="radio" name="O6-sub" value="reveal"><span>Weekly leaderboard reveal only<small>training unchanged; lower balance risk</small></span></label>
+          </fieldset>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- O7 -->
+  <article class="option" id="O7" data-opt="O7">
+    <div class="opt-head">
+      <div class="tags"><span class="tag">O7</span><span class="tag rec">Recommended: part 1 with O5</span><span class="tag"><span class="size"><i class="on"></i><i></i><i></i></span>S / M</span><span class="tag">balance risk: none / medium</span></div>
+      <h2>Make the loop part of the lesson</h2>
+    </div>
+    <div class="frame">
+      <img src="img/ending.jpg" alt="The end screen of a run that ended in Left behind">
+      <div class="ov panel new" style="left:14.5%;top:57%;width:38%;padding:1.1cqw 1.3cqw;gap:.6cqw">
+        <div style="font:800 .95cqw var(--body);letter-spacing:.06em;text-transform:uppercase;color:#8a5a2e">How this game kept you playing</div>
+        <div style="font-size:1.12cqw">4 releases with a reveal · 23 cards · 3 era recaps · rival launches every few minutes</div>
+        <div style="font-size:1.12cqw">Not used: streaks, daily rewards, timers that punish leaving.</div>
+        <div style="font-size:1.12cqw;color:#5a524c">AI labs tune their products with the same tools. Which ones did you notice?</div>
+      </div>
+    </div>
+    <p class="frame-note">Real frame: the "Left behind" end screen. The counts are example values; the panel would read them from the run.</p>
+    <div class="opt-body">
+      <div class="opt-text">
+        <ul>
+          <li><b>Part 1, end-screen panel:</b> the reward tools the run used on the player, with counts, and the ones it chose not to use, with one sentence on why labs face the same choice.</li>
+          <li><b>Part 2, an engagement lever on releases:</b> "Tune for engagement" brings more users and revenue now, then costs public trust and raises misuse later.</li>
+        </ul>
+        <dl class="rows">
+          <div><dt>Fixes</dt><dd>Nothing measured; turns the dopamine-loop question into teaching content.</dd></div>
+          <div><dt>Touches</dt><dd class="mono" style="font-size:12.5px">Part 1: ui/screens/end.js · ui/logic/ending.js · sim/state.js. Part 2: sim/release.js · sim/data/launch.js · ui/screens/release.js · sim/data/scenarioEvents.js · sim/feedLive.js</dd></div>
+          <div><dt>Balance</dt><dd>Part 1 none. Part 2 medium (a new money lever). <span class="warnflag">⚠️ No source on AI labs' engagement tuning was reachable</span>; part 2 needs its own research before copy.</dd></div>
+        </dl>
+      </div>
+      <div class="side">
+        <div class="ref">
+          <svg viewBox="0 0 300 100" role="img" aria-label="Two steps: the game rewards a technique, then names it">
+            <g font-family="Nunito" font-size="12" font-weight="800">
+              <rect x="10" y="26" width="118" height="48" rx="8" fill="var(--card)" stroke="var(--fg)"/><text x="69" y="47" text-anchor="middle" fill="var(--fg)">1 · it pays</text><text x="69" y="63" text-anchor="middle" fill="var(--muted)" font-size="10.5" font-weight="700">likes for the trick</text>
+              <path d="M 134 50 L 160 50" stroke="var(--fg)" stroke-width="2.5"/><path d="M 156 44 L 164 50 L 156 56" fill="none" stroke="var(--fg)" stroke-width="2.5"/>
+              <rect x="170" y="26" width="118" height="48" rx="8" fill="var(--pick-soft)" stroke="var(--teal)"/><text x="229" y="47" text-anchor="middle" fill="var(--fg)">2 · it's named</text><text x="229" y="63" text-anchor="middle" fill="var(--muted)" font-size="10.5" font-weight="700">spot it elsewhere</text>
+            </g>
+          </svg>
+          <p class="cap">Borrowed from <b>Harmony Square</b> and <b>Bad News</b>: players earn likes for a manipulation technique, then learn to spot it; Harmony Square's randomized trial found effects of about d 0.3–0.5 (<a href="https://misinforeview.hks.harvard.edu/article/breaking-harmony-square-a-game-that-inoculates-against-political-misinformation/" target="_blank" rel="noopener">HKS Misinformation Review</a>, <span class="warnflag">⚠️ partly read</span>). Zagal, Björk and Lewis (2013) propose disclosure as the cure for dark patterns.</p>
+        </div>
+        <div class="choose">
+          <fieldset><legend>Decision</legend>
+            <label class="radio"><input type="radio" name="O7" value="part1" checked><span>Part 1 only, with O5<span class="r">rec</span></span></label>
+            <label class="radio"><input type="radio" name="O7" value="both"><span>Both parts (part 2 after more research)</span></label>
+            <label class="radio"><input type="radio" name="O7" value="no"><span>No</span></label>
+          </fieldset>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <section class="notes">
+    <label class="kicker" for="notes">Notes for the build (optional)</label>
+    <textarea id="notes" placeholder="Anything to change in an option, a target number, or the order."></textarea>
+  </section>
+
+  <section class="notes" id="copywrap" hidden>
+    <label class="kicker" for="copybox">Your picks as text (select and copy if the button did not work)</label>
+    <textarea id="copybox" class="copybox" readonly></textarea>
+  </section>
+
+  <footer class="foot">
+    <p>Sources and full write-up: <span class="mono">docs/research/reward-loops/</span> on branch <span class="mono">claude/reward-loops-research-bce010</span> (report.md, options.md, notes/). Frames are real 1440×900 captures of main 28cdc52; dashed outlines are the proposed additions. Pictures from the borrowed games are drawn diagrams, not screenshots: embedding real screenshots would need downloading images, which I did not do without your OK.</p>
+    <p>Cadence numbers marked "target" are scaled from the sources to Game Night's 6-minute eras. No source gives a decisions-per-minute rule, so each needs a bot run and a playtest.</p>
+  </footer>
+</main>
+
+<div class="bar" role="region" aria-label="Your picks">
+  <div class="bar-in">
+    <div class="sum" id="sum">Loading your picks…</div>
+    <div class="acts"><button class="copy" id="copy" type="button">Copy as text</button><button class="save" id="save" type="button">Save picks</button></div>
+    <div class="status" id="status" aria-live="polite"></div>
+  </div>
+</div>
+
+<script>
+// ---- timeline chart (real data: careful bot, seed 1, measure.mjs on main 28cdc52, eras 1-2) ----
+(() => {
+  const LOG = [[47,"scenarioCard"],[91,"releaseReady"],[101,"scenarioCard"],[158,"scenarioCard"],[204,"scenarioCard"],[260,"scenarioCard"],[310,"scenarioCard"],[312,"releaseReady"],[364,"eraTransition"],[364,"cashWarning"],[411,"scenarioCard"],[412,"cashWarning"],[422,"warning"],[455,"releaseReady"],[455,"president"],[455,"scenarioCard"],[455,"hazard"],[504,"scenarioCard"],[548,"scenarioCard"],[567,"boardCard"],[588,"scenarioCard"],[602,"warning"],[637,"releaseReady"],[637,"scenarioCard"],[637,"hazardPill"],[670,"boardCard"],[671,"warning"],[686,"scenarioCard"],[727,"boardMeeting"]];
+  const NONPAUSE = new Set(["releaseReady","warning","hazardPill","boardWarning"]);
+  const NAMES = { scenarioCard: "card", releaseReady: "run done", eraTransition: "era change", cashWarning: "cash warning", warning: "warning", president: "President", hazard: "hazard", boardCard: "board card", hazardPill: "hazard pill", boardMeeting: "board vote" };
+  const svg = document.getElementById('tl'); const NS = 'http://www.w3.org/2000/svg';
+  const X0 = 30, X1 = 980, T = 728, x = (d) => X0 + (X1 - X0) * d / T;
+  const mk = (tag, attrs, text) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; svg.append(e); return e; };
+  mk('line', { x1: X0, x2: X1, y1: 110, y2: 110, stroke: 'var(--line)', 'stroke-width': 2 });
+  for (const [d, label] of [[0, 'era 1 starts'], [364, 'era 2'], [728, 'era 3']]) {
+    mk('line', { x1: x(d), x2: x(d), y1: 36, y2: 128, stroke: 'var(--muted)', 'stroke-dasharray': '3 4' });
+    mk('text', { x: x(d) + (d === 728 ? -4 : 4), y: 146, 'font-size': 12, fill: 'var(--muted)', 'font-family': 'IBM Plex Mono', 'text-anchor': d === 728 ? 'end' : 'start' }, label);
+  }
+  for (let s = 0; s <= 720; s += 120) mk('text', { x: x(s), y: 164, 'font-size': 11, fill: 'var(--muted)', 'font-family': 'IBM Plex Mono', 'text-anchor': 'middle' }, `${s / 60} min`);
+  // gaps over 40 s between any two prompts
+  const days = [0, ...new Set(LOG.map((e) => e[0]))].sort((a, b) => a - b);
+  for (let i = 1; i < days.length; i++) if (days[i] - days[i - 1] > 40) {
+    mk('rect', { x: x(days[i - 1]) + 4, y: 104, width: x(days[i]) - x(days[i - 1]) - 8, height: 12, rx: 3, fill: 'var(--hot)', 'fill-opacity': 0.28 });
+    if (days[i] - days[i - 1] >= 50) mk('text', { x: (x(days[i - 1]) + x(days[i])) / 2, y: 98, 'font-size': 11, fill: 'var(--hot)', 'font-family': 'IBM Plex Mono', 'text-anchor': 'middle', 'font-weight': 600 }, `${days[i] - days[i - 1]} s`);
+  }
+  // events, stacked per day
+  const byDay = {}; for (const [d, t] of LOG) (byDay[d] ??= []).push(t);
+  for (const d in byDay) {
+    const list = byDay[d]; const stops = list.filter((t) => !NONPAUSE.has(t)).length;
+    list.forEach((t, j) => mk('circle', { cx: x(+d), cy: 110 - j * 14, r: 5.5, fill: NONPAUSE.has(t) ? 'var(--sky)' : 'var(--fg)' }));
+    if (stops >= 2) {
+      mk('circle', { cx: x(+d), cy: 110 - (list.length - 1) * 7, r: 8 + list.length * 7, fill: 'none', stroke: 'var(--hot)', 'stroke-width': 2 });
+      mk('text', { x: x(+d), y: 110 - list.length * 14 - 12, 'font-size': 11, fill: 'var(--hot)', 'font-family': 'Nunito', 'font-weight': 800, 'text-anchor': 'middle' }, list.map((t) => NAMES[t]).filter((n, i, a) => a.indexOf(n) === i).join(' + '));
+    }
+  }
+})();
+
+// ---- picks: radios -> summary, save to the page db, copy as text ----
+const OPTS = [
+  ['O1', 'One pacing director'], ['O2', 'Answer feedback'], ['O3', 'Keep the core loop turning'], ['O4', 'No repeats'],
+  ['O5', 'A number that only goes up'], ['O6', 'Era 5 final race'], ['O7', 'Loop as the lesson'],
+];
+const LABEL = { now: 'build now', later: 'later', no: 'no', design: 'era 4-5 design round', part1: 'part 1 only', both: 'both parts' };
+const SUBLABEL = { backstop: 'with quiet backstop', spacing: 'spacing only', all: 'reaction + direction + verdict', advisor: 'advisor reaction only', both: 'offer + milestones', offer: 'next-run offer only', beats: 'milestones only', full: 'checkpoints + weekly reveal + race clock', reveal: 'weekly reveal only' };
+const val = (name) => document.querySelector(`input[name="${name}"]:checked`)?.value ?? null;
+function state() {
+  const picks = {}; for (const [id] of OPTS) picks[id] = { decision: val(id), sub: val(`${id}-sub`) };
+  return { picks, notes: document.getElementById('notes').value.trim() };
+}
+function asText(s) {
+  const lines = ['Game Night reward loops: my picks'];
+  for (const [id, name] of OPTS) { const p = s.picks[id]; lines.push(`${id} ${name}: ${LABEL[p.decision] ?? p.decision}${p.sub ? ` (${SUBLABEL[p.sub] ?? p.sub})` : ''}`); }
+  if (s.notes) lines.push(`Notes: ${s.notes}`);
+  return lines.join('\n');
+}
+function render() {
+  const s = state();
+  const now = OPTS.filter(([id]) => s.picks[id].decision === 'now').map(([id]) => id);
+  const later = OPTS.filter(([id]) => ['later', 'design', 'part1', 'both'].includes(s.picks[id].decision)).map(([id]) => id);
+  document.getElementById('sum').innerHTML = `<b>Build now:</b> ${now.join(', ') || 'none'} &nbsp;·&nbsp; <b>Later or design round:</b> ${later.join(', ') || 'none'}`;
+  for (const [id] of OPTS) document.getElementById(id).classList.toggle('is-now', s.picks[id].decision === 'now');
+}
+function apply(saved) {
+  for (const [id] of OPTS) {
+    const p = saved.picks?.[id]; if (!p) continue;
+    for (const [name, v] of [[id, p.decision], [`${id}-sub`, p.sub]]) { if (!v) continue; const el = document.querySelector(`input[name="${name}"][value="${v}"]`); if (el) el.checked = true; }
+  }
+  if (typeof saved.notes === 'string') document.getElementById('notes').value = saved.notes;
+  render();
+}
+document.addEventListener('change', render);
+render();
+
+const status = (t) => { document.getElementById('status').textContent = t; };
+let db = null;
+(async () => {
+  try {
+    db = await window.claude?.use?.('db');
+    if (!db) { status('Saving is not available in this view. Use "Copy as text" and paste your picks back to Claude.'); return; }
+    const snap = await db.doc('picks/current').get();
+    if (snap.exists) { apply(snap.data()); const at = snap.data().savedAt; status(at ? `Loaded the picks saved ${new Date(at).toLocaleString()}.` : 'Loaded your saved picks.'); }
+    else status('The recommended picks are selected. Change any, then press Save picks.');
+  } catch (e) { db = null; status('Saving is not available right now. Use "Copy as text" and paste your picks back to Claude.'); }
+})();
+document.getElementById('save').addEventListener('click', async () => {
+  if (!db) { status('Saving is not available in this view. Use "Copy as text" instead.'); return; }
+  const s = { ...state(), text: asText(state()), savedAt: new Date().toISOString() };
+  status('Saving…');
+  try { await db.doc('picks/current').set(s); status(`Saved ${new Date(s.savedAt).toLocaleTimeString()}. Claude can read these picks now.`); }
+  catch (e) { status(e?.code === 'invalid_argument' ? 'This view cannot save picks. Use "Copy as text" instead.' : 'Could not save. Try again, or use "Copy as text".'); }
+});
+document.getElementById('copy').addEventListener('click', async () => {
+  const text = asText(state()); const box = document.getElementById('copybox');
+  box.value = text; document.getElementById('copywrap').hidden = false;
+  try { await navigator.clipboard.writeText(text); status('Copied. Paste it into the chat.'); }
+  catch { box.focus(); box.select(); status('Select the text in the box above and copy it.'); }
+});
+</script>
