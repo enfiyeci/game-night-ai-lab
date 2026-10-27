@@ -1,6 +1,9 @@
 import { resolveRun } from '../../sim/training.js';
 import { learnConstitution } from '../../sim/constitution.js';
 import { project } from './format.js';
+import { MAX_MOVES } from '../../sim/turn.js';
+import { fitDraftToCompute, makeRoom } from './actions.js';
+import { familyName } from './naming.js';
 
 const CAPABILITY_SOURCES = ['researcher1', 'rack', 'researcher2', 'research'];
 const ALIGNMENT_SOURCES = ['safety', 'research'];
@@ -87,4 +90,20 @@ export function readyNote(state) {
 // The ring on the floor is for the first release only; after one the player knows the way.
 export function floorHint(state) {
   return releaseWaits(state) && state.models.length === 0;
+}
+
+// Whether a run could be started now: the research team free and a team action left this round (ui/menu.js greys out
+// Train otherwise). Cheap, so the offer can check it every story day.
+export const nextRunOpen = (state) => !state.ending && !state.activeRun && !state.pendingModel
+  && !state.round?.teams?.research && (state.round?.moves ?? 0) < MAX_MOVES;
+
+// After a release reveal (reward-loops O3): the next model, offered while a run could start. `short` is true when not
+// even the smallest run fits the free compute, so the offer points at the recipe's own fixes (serve fewer users, rent
+// or sign compute) instead of a ready plan.
+export function nextRunOffer(state) {
+  if (!nextRunOpen(state)) return null;
+  const family = familyName(state);
+  if (!family) return null;
+  const generation = (state.models.at(-1)?.generation ?? 0) + 1;
+  return { name: `${family} ${generation}`, short: makeRoom(state, fitDraftToCompute(state, null)) !== null };
 }

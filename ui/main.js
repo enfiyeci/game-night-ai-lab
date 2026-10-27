@@ -16,6 +16,7 @@ import { mountConstitution, openConstitution } from './screens/constitution.js';
 import { mountRecipe, openRecipe } from './screens/recipe.js';
 import { mountRelease, openRelease } from './screens/release.js';
 import { mountReveal, showReveal } from './screens/reveal.js';
+import { mountNextRun } from './screens/nextRun.js';
 import { mountSound, openSound } from './screens/sound.js';
 import { mountArchive, openArchive } from './screens/archive.js';
 import { music } from './music.js';
@@ -130,10 +131,11 @@ mountRecipe(game, overlay);
 mountConstitution(game, overlay); // the recipe's constitution card opens Safety's draft
 mountNaming(game, overlay); // after the recipe: the first run asks for the model's name
 mountRelease(game, overlay);
+const nextRun = mountNextRun(game, overlay); // the Head of Research offers the next run when a reveal closes
 mountReveal(game, overlay, {
   show(root, reveal) {
     music.duck(true);
-    return showReveal(root, { ...reveal, onClose: () => music.duck(false) });
+    return showReveal(root, { ...reveal, onClose: () => { music.duck(false); nextRun.offer(); } });
   },
 });
 mountSound(game, overlay);

@@ -4,6 +4,7 @@ import { money, months, pct } from '../logic/format.js';
 import { noteText, pointsBar, usedLabel } from '../logic/paperwork.js';
 import { outcomeLine } from '../logic/president.js';
 import { registerMenuHandler } from '../menu.js';
+import { sfx } from '../sfx.js';
 import { openDeals, openQueue } from './compute.js';
 import { openPowerSites } from './sites.js';
 import {
@@ -453,8 +454,14 @@ function summaryRow({ kind, text, name, figure }) {
   return item;
 }
 
+// The lab's earned beats (sim/milestones.js, reward-loops O3) ring when their toast shows; losing #1 sounds a miss.
+const BEATS = ['usersMilestone', 'paidBack', 'tookFirst', 'modelLive'];
+const beatSound = (events) => (events.some((event) => event.type === 'lostFirst') ? 'miss'
+  : events.some((event) => BEATS.includes(event.type)) ? 'pass' : null);
+
 export function mountTurnSummary(overlayRoot, game) {
   let toast = null;
+  let pendingSound = null;
   let removeEscape = null;
   let pendingFrame = null;
   let pendingSummaries = null;
@@ -499,6 +506,8 @@ export function mountTurnSummary(overlayRoot, game) {
       for (const summary of summaries) list.append(summaryRow(summary));
       toast.append(header, list);
       overlayRoot.append(toast);
+      if (pendingSound) sfx[pendingSound]();
+      pendingSound = null;
 
       const onEscape = (event) => {
         if (event.key !== 'Escape') return;
@@ -532,6 +541,7 @@ export function mountTurnSummary(overlayRoot, game) {
       if (event.type === 'meetingOutcome') summaries.push({ kind: 'washington', text: outcomeLine(event, { skipped }), name: 'The President', figure: null });
     }
     if (summaries.length === 0) return;
+    pendingSound = beatSound(events); // replaced with the lines it rings for
     if (pendingFrame !== null) cancelAnimationFrame(pendingFrame);
     pendingFrame = null;
     removeToast();

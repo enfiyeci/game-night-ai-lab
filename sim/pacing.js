@@ -21,7 +21,7 @@ const KEEP_S = 60; // the ledger forgets stops older than this
 
 const DEAL_NEWS = (event) => ['dealBreakCaught', 'playerCaught', 'presidentAngry'].includes(event.type)
   || (event.type === 'dealCollapsed' && event.reason === 'noCoalition');
-const PAYOFFS = ['runComplete', 'release', 'modelLive'];
+const PAYOFFS = ['runComplete', 'release', 'modelLive', 'usersMilestone', 'paidBack', 'tookFirst', 'lostFirst'];
 
 export function ledger(state) {
   state.pacing ??= { stops: [], lastBeat: state.day ?? 0, cash: { checkpoint: 0, pause: null, folded: null, waitingSince: null }, summitNoted: false, hazardShown: false };

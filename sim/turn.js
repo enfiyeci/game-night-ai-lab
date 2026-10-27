@@ -39,6 +39,7 @@ import {
 import { expireMeeting, meetingDay, meetingDue, meetingExpiresNow, openMeeting, runMeeting } from './president.js';
 import { MEETINGS } from './data/president.js';
 import { noteBeat, paceDay, presidentMayCall } from './pacing.js';
+import { milestonesTick } from './milestones.js';
 import { judgeEndingPromises, promiseUpkeep } from './promises.js';
 import { applySplitEffects, computeSlices, makePledge, setComputeSplit, spotCover } from './split.js';
 import { ROUND_DAYS, monthsPerDay } from './time.js';
@@ -325,6 +326,7 @@ export function applyActions(prev, actions = {}, rng, { ignoreTeams = false } = 
     recordAdvisors(state);
     finishEnding(state, events);
   }
+  events.push(...milestonesTick(state)); // a release can take #1 at once (sim/milestones.js)
   // A release that is not live yet gets its "announced" posts now and its launch posts when it goes live (sim/feedLive.js).
   if (events.length) postFeed(mood, state, events, false);
   stampLandings(state);
@@ -608,6 +610,7 @@ export function advanceDays(prev, days, rng, observer = {}) {
       postLandedCards(state);
     }
     openDueMeeting(state, events);
+    events.push(...milestonesTick(state));
     paceDay(state, events.slice(firstEvent));
     const dayEvents = events.slice(firstEvent);
     if (reachesMark || dayEvents.length) postFeed(mood, state, dayEvents, reachesMark);

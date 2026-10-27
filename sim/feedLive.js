@@ -11,6 +11,7 @@ import { eraScale } from './data/compute.js';
 import { SIZE_UNITS } from './recipe.js';
 import { PROMISES } from './data/promises.js';
 import { REACTIONS as R } from './data/feedReactions.js';
+import { MILESTONE_POSTS as M } from './data/milestonePosts.js';
 
 export const FEED_KEEP = 400; // posts kept for scrolling back
 const RECENT = 200; // a text posted this recently is not posted again
@@ -244,6 +245,10 @@ export function reactToEvents(before, state, events, { atMark = false } = {}) {
         else if (event.model) s.add(R.launch.delayed, 2, 'announce', { model: event.model, from: 0, to: 1 });
         break;
       case 'modelLive': launchBurst(state, event.model, s); break;
+      case 'usersMilestone': s.add(M[`users${Math.round(event.users / 1e6)}`], 1, 'company', { from: 0, to: 1 }); break;
+      case 'paidBack': s.add(M.paidBack, 1, 'company', { model: { name: event.name }, from: 0, to: 1 }); break;
+      case 'tookFirst': s.add(M.tookFirst, 1, 'company', { from: 0, to: 0 }); break;
+      case 'lostFirst': s.add(M.lostFirst, 1, 'rival', { rival: event.leader, from: 0, to: 0 }); break;
       case 'rivalRelease': {
         const pool = R.rivals[event.id]?.[event.gain >= 8 ? 'big' : 'small'];
         s.add(pool, 1, 'rival', { from: 0, to: 0 });

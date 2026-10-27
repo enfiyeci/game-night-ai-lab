@@ -705,6 +705,18 @@ export function summaryItems(events, state) {
       add('lab', 'The structure change sparked a fight with staff and the board');
     } else if (event.type === 'eraStart') {
       add('era', `Era ${event.era} begins`, { name: `Era ${event.era}` });
+    } else if (event.type === 'modelLive') { // this and the four after it: earned beats (sim/milestones.js, reward-loops O3)
+      const name = event.model?.name;
+      if (name) add('lab', `${name} is live`, { name }); // OWNER WRITES
+    } else if (event.type === 'usersMilestone') {
+      const figure = `${Math.round(event.users / 1e6)}M`;
+      add('lab', `Your models now have ${figure} users`, { figure }); // OWNER WRITES
+    } else if (event.type === 'paidBack') {
+      add('lab', `${event.name} has paid back what it cost to make`, { name: event.name }); // OWNER WRITES
+    } else if (event.type === 'tookFirst') {
+      add('lab', 'You took #1 on the leaderboard'); // OWNER WRITES
+    } else if (event.type === 'lostFirst') {
+      add('rival', `${event.leader} took #1 from you`, { name: event.leader }); // OWNER WRITES
     } else if (event.type === 'error') {
       add('blocked', `Couldn't do that: ${event.error}`);
     }
