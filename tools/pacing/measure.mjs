@@ -298,6 +298,33 @@ function boundary(games, era) {
   return { games: rows.length, meanPausing: r1(mean(rows.map((r) => r.length))), max: Math.max(...rows.map((r) => r.length)), mix: Object.fromEntries(Object.entries(mix).map(([k, v]) => [k, r1(v / rows.length)])) };
 }
 
+// The two numbers the pacing director is judged by (reward-loops build, step 0, 2026-10-27). Story-day resolution:
+// everything on one day sits at that day's clock time.
+// Most clock-stopping prompts in any 30 s of running clock (target: at most 2).
+const CROWD_WINDOW_S = 30;
+function crowd30(g) {
+  const t = g.log.filter((p) => TYPES[p.type].pausing).map((p) => clockSec(p.day)).sort((a, b) => a - b);
+  let best = 0;
+  for (let i = 0, j = 0; j < t.length; j++) {
+    while (t[j] - t[i] >= CROWD_WINDOW_S) i++;
+    best = Math.max(best, j - i + 1);
+  }
+  return best;
+}
+// Longest stretch of running clock with neither a decision nor a visible payoff (target: about 90 s), for the whole
+// game or one era. A decision is any logged prompt or one of the player's own moves; a payoff is a release reveal, a
+// "Just now" toast or a finished run (logged as releaseReady). Feed posts do not count.
+function quietest(g, era = null) {
+  const from = era == null ? 0 : clockSec(ERA_START[era]);
+  const to = era == null ? clockSec(g.endDay) : Math.min(clockSec(g.endDay), clockSec(ERA_START[era] + ERA_DAYS[era]));
+  const days = [...g.log, ...g.info.playerMoves, ...g.info.reveals, ...g.info.toasts].map((x) => x.day);
+  const t = [from, ...days.map(clockSec).filter((s) => s >= from && s <= to), to].sort((a, b) => a - b);
+  let gap = 0;
+  for (let i = 1; i < t.length; i++) gap = Math.max(gap, t[i] - t[i - 1]);
+  return gap;
+}
+const spread = (xs) => (xs.length ? { median: r1(pct(xs, 0.5)), p90: r1(pct(xs, 0.9)), max: r1(Math.max(...xs)) } : null);
+
 // ---- real-time estimate (ASSUMPTIONS, see report) ----
 // FAST=1 models a skimmer (400 wpm, quick clicks, half-length set pieces); default models a first-time reader.
 const FAST = process.env.FAST === '1';
@@ -361,6 +388,11 @@ for (const name of names) {
   res.runs = Object.fromEntries([1, 2, 3, 4, 5].map((era) => { const rs = games.flatMap((g) => g.info.runs.filter((x) => x.era === era && x.end != null)); const d = rs.map((x) => x.end - x.start); return [era, { runs: rs.length, medianDays: pct(d, 0.5), medianSeconds: r1(pct(d, 0.5) * secPerDay(era)) }]; }));
   res.sameDayPausingStacksPerGame = r1(stackDays / games.length);
   res.sameDayStackKinds = Object.fromEntries(Object.entries(stacks).sort((a, b) => b[1] - a[1]).slice(0, 12));
+  res.crowd30s = spread(games.map(crowd30));
+  res.quietSeconds = {
+    game: spread(games.map((g) => quietest(g))),
+    byEra: Object.fromEntries(ERAS.map((e) => [e.id, spread(games.filter((g) => g.endEra >= e.id).map((g) => quietest(g, e.id)))])),
+  };
   // Card answer windows (dueAt - landsAt) for scenario cards, per era
   res.scenarioWindows = Object.fromEntries([1, 2, 3, 4, 5].map((era) => [era, [...new Set(games.flatMap((g) => g.log.filter((p) => p.era === era && p.type === 'scenarioCard').map((p) => p.window)))].sort((a, b) => a - b)]));
   res.sampleTimeline = games.slice(0, 2).map((g) => ({ seed: g.seed, ending: g.ending, endEra: g.endEra, log: g.log.map((p) => `${p.day}:e${p.era}:${p.type}${p.id ? `(${p.id})` : ''}`) }));
