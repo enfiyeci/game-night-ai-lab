@@ -16,7 +16,7 @@ xcodegen generate
 xcodebuild -project GameNight.xcodeproj -scheme GameNight -sdk iphonesimulator \
   -destination 'platform=iOS Simulator,name=iPhone Duo' -derivedDataPath build/DerivedData build
 xcrun simctl install booted build/DerivedData/Build/Products/Debug-iphonesimulator/GameNight.app
-xcrun simctl launch booted com.example.gamenight.ailab
+xcrun simctl launch booted com.enfiyeci.ailabtycoon
 ```
 
 To bundle the web game from another checkout, add the build setting
@@ -54,6 +54,15 @@ Agreed with lane `gn-phone-redesign` (the note lives in the side-session notes f
   iPhone the bottom of the office was cut off otherwise). Any other viewport is left alone.
 - Orientation (Arda's pick): iPhone and the closed Duo are landscape-only; iPad and the open Duo take
   every orientation.
+
+## Display sizes seen in the simulators
+
+| Display | Points | Notes |
+|---|---|---|
+| iPhone 18 Pro, landscape | 874 × 402 | Dynamic Island on one side |
+| iPhone Duo inner, landscape | 951 × 669 | 669 × 951 upright; the open Duo ignores the orientation lock |
+| iPhone Duo outer (closed), landscape | 678 × 466 | Measured by gn-phone-redesign on 2026-10-27 (2034 × 1398 px at 3x); the page gets a left safe-area inset |
+| iPad Pro 11-inch (M5), landscape | 1210 × 834 | |
 
 ## What the outer display can and cannot show
 

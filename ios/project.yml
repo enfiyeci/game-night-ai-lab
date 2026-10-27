@@ -1,6 +1,6 @@
 name: GameNight
 options:
-  bundleIdPrefix: com.example.gamenight
+  bundleIdPrefix: com.enfiyeci
   deploymentTarget:
     iOS: "18.0"
   createIntermediateGroups: true
@@ -43,8 +43,9 @@ targets:
         LSApplicationCategoryType: public.app-category.simulation-games
     settings:
       base:
-        # Placeholder until Arda picks the bundle ID and team (ios/docs/release.html).
-        PRODUCT_BUNDLE_IDENTIFIER: com.example.gamenight.ailab
+        # Provisional, with the store name AI Lab Tycoon (Arda, 2026-10-27): a name-risk research report
+        # is pending. Both can change until the first upload; nothing is registered under them yet.
+        PRODUCT_BUNDLE_IDENTIFIER: com.enfiyeci.ailabtycoon
         MARKETING_VERSION: "1.0"
         CURRENT_PROJECT_VERSION: "1"
         SWIFT_VERSION: "6.0"
