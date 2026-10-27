@@ -46,6 +46,10 @@ only through search-result snippets, and those claims carry ⚠️ inline.
    RSP, OpenAI and Google DeepMind thresholds, share-of-code figures, METR's measured speedups,
    and how other games model a self-accelerating loop. Start with its verified-rows table.
 
+12. `phone-layout/README.md` — the phone and iPhone Duo redesign (2026-10-26): a screen-by-screen inventory
+   with phone difficulty and priority, device sizes measured in the Xcode 27.1 simulators, and how phone
+   management games lay out orientation, HUD and dense panels (subagent output with its coverage statement).
+
 ## Notable catches
 
 - `ai-lab-mechanics/notes/training_decisions.md` read every source only as a snippet; its
