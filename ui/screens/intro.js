@@ -242,7 +242,7 @@ export function openNaming(game, overlayRoot, { onDone } = {}) {
         input.focus();
         return;
       }
-      game.state.modelFamily = name; // kept on the state, as the lab name is, until the first release records it
+      game.annotate('modelFamily', name); // kept on the state, as the lab name is, until the first release records it
       opened.close();
       onDone?.();
     },

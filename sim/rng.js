@@ -12,6 +12,8 @@ export function createRng(seed) {
     next,
     // A second stream that draws exactly what this one will draw next, for playing ahead on a copy (ui/game.js peekMark).
     fork: () => createRng(a),
+    // The stream's position: createRng(rng.state()) draws exactly what this one draws next (sim/save.js).
+    state: () => a,
     int: (min, max) => min + Math.floor(next() * (max - min + 1)),
     chance: (p) => next() < p,
     pick: (arr) => arr[Math.floor(next() * arr.length)],
