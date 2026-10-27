@@ -3,6 +3,7 @@ import { money, pct, users } from '../logic/format.js';
 import { beatCount, checkLabel, flagshipBefore, leaderboard, oneDecimal, perMillion, priceSheet, salesEstimate } from '../logic/release.js';
 import { sfx } from '../sfx.js';
 import { enterTransition, exitTransition } from '../components/transition.js';
+import { Press } from '../logic/pointer.js';
 
 // Coral stays for the misalignment warning post, so ordinary avatars never look like a warning (mockup avatar set).
 const AVATAR_COLOURS = ['var(--ink)', 'var(--teal)', 'var(--sky)', 'var(--wood)', 'color-mix(in oklab, var(--sky) 55%, var(--ink))'];
@@ -616,7 +617,7 @@ export function showReveal(overlayRoot, { state, model, misalignmentIncident = f
   showHead.append(showHeading, showSide);
   const showBody = el('div', 'rshow-body');
   const showFoot = el('div', 'rshow-foot');
-  const hint = el('div', 'rshow-hint', 'Click to go faster');
+  const hint = el('div', 'rshow-hint', `${Press()} to go faster`);
   const tally = el('div', 'rshow-tally');
   const dots = model.launch.benchmarks.map(() => el('span', 'rshow-dot'));
   tally.append(...dots);

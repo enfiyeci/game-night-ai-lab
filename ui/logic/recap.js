@@ -284,7 +284,7 @@ export function recapModel(state, era, { lab = state.labName || 'Your lab' } = {
       return { ...critic, text: swapLeadNames(critic.text, state), name: hired.first, look: hired.look, title: COPY.LEADS[role].role };
     }),
     verdictWords: COPY.VERDICT,
-    hint: COPY.OPEN_HINT,
+    hint: COPY.OPEN_HINT(),
     next: fill(COPY.NEXT, { next: era + 1 }),
     stats,
     standing,

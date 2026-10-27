@@ -4,6 +4,7 @@ import { workingName } from './naming.js';
 import { MW_PER_UNIT } from '../../sim/data/compute.js';
 import { ROUND_DAYS } from '../../sim/time.js';
 import { ERAS } from '../../sim/data/eras.js';
+import { press } from './pointer.js';
 
 const trimOneDecimal = (value) => value.toFixed(1).replace(/\.0$/, '');
 
@@ -78,7 +79,7 @@ export function project(state) {
     if (model?.polishing) return { name: workingName(state, model.size), status: polishStatus(model), progress: model.polish / 100 };
     return model
       ? { name: 'Training complete', status: 'ready to release', progress: null }
-      : { name: pauseDays ? 'Training paused' : 'No project', status: pauseDays ? `${pauseDays} days remaining` : 'click the floor to get to work', progress: null };
+      : { name: pauseDays ? 'Training paused' : 'No project', status: pauseDays ? `${pauseDays} days remaining` : `${press()} the floor to get to work`, progress: null };
   }
   const name = workingName(state, run.recipe.sliders.size);
   const total = Math.max(1, run.turnsLeft, recipeCost(state, run.recipe).turns);

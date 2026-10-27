@@ -1,3 +1,4 @@
+import { Press } from '../logic/pointer.js';
 // Every word of The Daily Token's era-in-review page (owner pick RC, with RA2's click-to-explain). All of it is
 // stand-in copy for the owner to rewrite; the sim never reads this file. Placeholders in braces are filled in by
 // ui/logic/recap.js: {lab} the lab's name, {cost} the choice's price ("$4M"), {label} a choice's button words,
@@ -14,7 +15,7 @@ export const DATELINE = {
   era: 'Era {era} · {name}',
 };
 export const NEXT = 'Turn the page: era {next} →';
-export const OPEN_HINT = 'Click a story to see what it was about';
+export const OPEN_HINT = () => `${Press()} a story to see what it was about`;
 
 // The headline: rank at the era's end and the distance to the nearest lab ({gap} in capability points).
 export const HEADLINE = {

@@ -1,6 +1,7 @@
 import { resolveRun } from '../../sim/training.js';
 import { learnConstitution } from '../../sim/constitution.js';
 import { project } from './format.js';
+import { press } from './pointer.js';
 
 const CAPABILITY_SOURCES = ['researcher1', 'rack', 'researcher2', 'research'];
 const ALIGNMENT_SOURCES = ['safety', 'research'];
@@ -81,7 +82,7 @@ const releaseWaits = (state) => Boolean(state.pendingModel && !state.pendingMode
 
 // A polishing model has its own Publish button; other waiting models use the floor menu.
 export function readyNote(state) {
-  return releaseWaits(state) && !state.pendingModel.polishing ? 'Ready · click the floor to release' : null;
+  return releaseWaits(state) && !state.pendingModel.polishing ? `Ready · ${press()} the floor to release` : null;
 }
 
 // The ring on the floor is for the first release only; after one the player knows the way.

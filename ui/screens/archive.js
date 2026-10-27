@@ -7,6 +7,7 @@ import { archiveModel } from '../logic/archive.js';
 import { registerMenuHandler } from '../menu.js';
 import { filmHost } from './end.js';
 import { enterTransition, exitTransition } from '../components/transition.js';
+import { press } from '../logic/pointer.js';
 
 const make = (tag, className, text) => {
   const node = document.createElement(tag);
@@ -69,7 +70,7 @@ export function openArchive(game, overlay, { collection }) {
   const title = make('h1', 'dt-title', 'The Daily Token · archive');
   title.id = 'dt-title';
   const words = make('div');
-  words.append(title, make('p', 'dt-sub', model.found ? `${model.printed} · click one to watch its ending again` : model.printed));
+  words.append(title, make('p', 'dt-sub', model.found ? `${model.printed} · ${press()} one to watch its ending again` : model.printed));
   const closeButton = make('button', 'btn dt-close', 'Close');
   closeButton.type = 'button';
   top.append(words, closeButton);

@@ -1,4 +1,5 @@
 import { mountPolish } from './screens/polish.js';
+import { mountPhone, phoneMode } from './phone.js';
 import { mountCashWarning } from './screens/cashWarning.js';
 import { inDangerZone } from '../sim/economy.js';
 import { ENDINGS } from '../sim/endings.js';
@@ -70,6 +71,10 @@ function seedForRun() {
 }
 
 function fitToWindow() {
+  if (phoneMode()) { // a phone lays itself out at full size (ui/phone.js)
+    document.documentElement.style.zoom = '';
+    return;
+  }
   const zoom = Math.min(innerWidth / 1440, innerHeight / 900, 1);
   if (zoom > 0) document.documentElement.style.zoom = `${zoom}`; // a hidden frame reports 0 x 0; wait for a real size
 }
@@ -96,6 +101,7 @@ const overlay = document.querySelector('#overlay');
 mountHud(hud, game);
 game.clock = createClock(game);
 await mountOffice(office, fx, game).catch((error) => console.error(error));
+mountPhone(game); // the phone layout measures the room, so it starts once the office has drawn it
 game.clock.watch(overlay);
 if (params.has('paused')) game.clock.setSpeed(0);
 // The title screen shows on a plain visit; debug links (?scenario=, a #route, ?notitle) go straight into the game.
@@ -103,7 +109,7 @@ const showTitle = titleShows({ search: location.search, hash: location.hash, end
 if (showTitle) game.clock.pause('title');
 game.clock.start();
 // The portrait-phone cover (ui/styles.css, same media query) hides the game, so the story waits behind it.
-const portrait = globalThis.matchMedia?.('(orientation: portrait) and (pointer: coarse)');
+const portrait = globalThis.matchMedia?.('(orientation: portrait) and (pointer: coarse) and (max-width: 599.98px)'); // ui/phone.css: from 600 wide a layout instead
 const holdForPortrait = () => { if (portrait?.matches) game.clock.pause('portrait'); else game.clock.resume('portrait'); };
 portrait?.addEventListener?.('change', holdForPortrait);
 holdForPortrait();

@@ -2,6 +2,7 @@ import { flyBubble } from '../fx.js';
 import { sfx } from '../sfx.js';
 import { BUBBLES_PER_POINT, badgeCounts, bubbleCounts, bubbleSpawns, floorHint, readyNote } from '../logic/training.js';
 import { ROUND_DAYS } from '../../sim/time.js';
+import { Press } from '../logic/pointer.js';
 
 const anchorsByEra = new Map();
 const reducedMotion = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
@@ -112,7 +113,7 @@ export function mountTraining(game, { stage, hud, overlay }) {
       node.style.left = `${x}px`;
       node.style.top = `${y}px`;
       node.setAttribute('aria-hidden', 'true'); // the ready note says the same in words
-      node.innerHTML = '<i class="floor-hint-ring"></i><i class="floor-hint-dot"></i><span class="floor-hint-label">Click the floor for the menu</span>';
+      node.innerHTML = '<i class="floor-hint-ring"></i><i class="floor-hint-dot"></i><span class="floor-hint-label">' + Press() + ' the floor for the menu</span>';
       layer.append(node);
     }).catch((error) => console.error(error));
   }

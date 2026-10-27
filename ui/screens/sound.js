@@ -5,6 +5,7 @@ import { openDialog } from '../components/dialog.js';
 import { registerMenuHandler } from '../menu.js';
 import { music } from '../music.js';
 import { sfx } from '../sfx.js';
+import { press } from '../logic/pointer.js';
 
 // Copied from ui/assets/music/README.md, which records where each line came from.
 const CREDITS = [
@@ -69,7 +70,7 @@ function soundTab() {
   const renderNow = () => {
     const track = music.current;
     text.replaceChildren(make('div', 'sound-kicker', 'Now playing'));
-    if (!track) text.append(make('b', null, 'Music starts with your first click'));
+    if (!track) text.append(make('b', null, `Music starts with your first ${press()}`));
     else if (!music.enabled) text.append(make('b', null, 'Music is off'));
     else text.append(make('b', null, track.title), make('span', 'sound-by', `${track.artist} · ${track.licence}`));
     next.hidden = !track || !music.enabled;

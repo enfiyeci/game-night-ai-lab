@@ -18,6 +18,7 @@ import {
 import { lead as leadIn } from '../../sim/leads.js';
 import { TECHNIQUES, techAvailable } from '../../sim/techniques.js';
 import { roundWord, storyDate } from '../../sim/time.js';
+import { Press } from '../logic/pointer.js';
 
 const INVESTOR_COPY = {
   vc: { chip: 'Board seat', explanation: 'A growth fund joins the board.' },
@@ -386,7 +387,7 @@ export function openEmergency(game, overlayRoot) {
     if (!selected) { error.textContent = 'Choose an unused option.'; return; }
     if (selected === 'acquihire' && !acquihireArmed) {
       acquihireArmed = true;
-      error.textContent = 'Click again to confirm. This ends the run.';
+      error.textContent = `${Press()} again to confirm. This ends the run.`;
       action.textContent = 'Confirm — end the run';
       return;
     }
