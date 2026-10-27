@@ -1,0 +1,183 @@
+/* Compute-deal option mockups: only new elements, drawn with the game's own tokens (ui/styles.css :root).
+   Rival colours follow the queue bars: you coral, OpenBrain ink, DeepThink sky, Lodestar teal, Qilin wood. */
+
+.mk-body { display: grid; gap: 10px; }
+.mk-you { --lab: var(--coral); }
+.mk-openbrain { --lab: color-mix(in oklab, var(--ink) 72%, var(--paper)); }
+.mk-deepthink { --lab: var(--sky); }
+.mk-lodestar { --lab: var(--teal); }
+.mk-qilin { --lab: var(--wood); }
+
+.mk-dot { display: inline-block; width: 9px; height: 9px; flex: none; border-radius: 50%; background: var(--lab); }
+.mk-mono { display: inline-grid; width: 20px; height: 20px; flex: none; place-items: center; border-radius: 50%; color: var(--paper); font-size: 10px; font-weight: 900; background: var(--lab); }
+.mk-muted { color: color-mix(in oklab, var(--ink) 58%, var(--paper)); }
+.mk-k { color: color-mix(in oklab, var(--wood) 60%, var(--ink)); font-size: 10.5px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; }
+.mk-bad { color: color-mix(in oklab, var(--coral) 72%, var(--ink)); }
+.mk-good { color: color-mix(in oklab, var(--teal) 60%, var(--ink)); }
+
+/* Rival strip: who is doing what right now, one row per lab. */
+.mk-rivals { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding: 8px 12px; border-radius: 9px; font-size: 11.5px; font-weight: 700; background: color-mix(in oklab, var(--ink) 5%, var(--paper)); }
+.mk-rivals > b { font-weight: 900; }
+.mk-rivals span { display: inline-flex; align-items: center; gap: 5px; }
+
+/* O1: the compute box as three rows. */
+.mk-free { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 10px; background: color-mix(in oklab, var(--coral) 9%, var(--paper)); box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--coral) 40%, var(--paper)); }
+.mk-free .big { font-size: 22px; font-weight: 900; line-height: 1.1; }
+.mk-free .big b { color: color-mix(in oklab, var(--coral) 80%, var(--ink)); }
+.mk-free .sub { margin-top: 3px; font-size: 12px; font-weight: 700; }
+.mk-btn { display: inline-block; padding: 9px 16px; border: 0; border-radius: 10px; color: var(--paper); font: inherit; font-size: 13.5px; font-weight: 900; background: var(--coral); box-shadow: 0 3px 0 color-mix(in oklab, var(--coral) 60%, var(--ink)); white-space: nowrap; }
+.mk-btn.ghost { color: color-mix(in oklab, var(--wood) 55%, var(--ink)); background: var(--paper); box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--wood) 45%, var(--paper)); }
+.mk-rows { display: grid; gap: 8px; }
+.mk-row { display: grid; grid-template-columns: 82px 1fr 210px; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 9px; background: var(--paper); box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--ink) 12%, transparent); font-size: 12px; }
+.mk-row > b { font-size: 13.5px; font-weight: 900; }
+.mk-row .note { font-weight: 700; line-height: 1.3; }
+.mk-seg { display: flex; overflow: hidden; border-radius: 8px; box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--ink) 16%, transparent); }
+.mk-seg span { flex: 1; padding: 6px 4px; font-size: 11.5px; font-weight: 800; text-align: center; border-left: 1.5px solid color-mix(in oklab, var(--ink) 12%, transparent); }
+.mk-seg span:first-child { border-left: 0; }
+.mk-seg span small { display: block; font-size: 10.5px; font-weight: 700; color: color-mix(in oklab, var(--ink) 55%, var(--paper)); }
+.mk-seg span.on { color: var(--paper); background: var(--wood); }
+.mk-seg span.on small { color: color-mix(in oklab, var(--paper) 80%, var(--wood)); }
+.mk-step { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 900; }
+.mk-step i { display: grid; width: 26px; height: 26px; place-items: center; border-radius: 7px; font-style: normal; background: color-mix(in oklab, var(--wood) 16%, var(--paper)); }
+.mk-train { display: flex; height: 26px; overflow: hidden; border-radius: 7px; font-size: 11px; font-weight: 900; color: var(--paper); }
+.mk-train > span { display: grid; place-items: center; }
+.mk-train .run { background: var(--coral); }
+.mk-train .free { color: color-mix(in oklab, var(--coral) 70%, var(--ink)); background: repeating-linear-gradient(135deg, color-mix(in oklab, var(--coral) 22%, var(--paper)) 0 5px, var(--paper) 5px 9px); box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--coral) 50%, var(--paper)); border-radius: 0 7px 7px 0; }
+.mk-train .need { position: relative; }
+
+/* Office layer for frames drawn outside a dialog. */
+.mk-office { position: absolute; inset: 0; pointer-events: none; }
+.mk-bubble { position: absolute; width: 270px; padding: 10px 13px 11px; border-radius: 12px; color: var(--ink); font-size: 13px; font-weight: 700; line-height: 1.3; background: var(--paper); box-shadow: 0 3px 0 color-mix(in oklab, var(--wood) 45%, var(--paper)), 0 10px 26px color-mix(in oklab, var(--ink) 18%, transparent); }
+.mk-bubble .who { display: block; margin-bottom: 3px; color: color-mix(in oklab, var(--wood) 60%, var(--ink)); font-size: 10.5px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; }
+.mk-bubble::after { content: ""; position: absolute; bottom: -9px; left: 40px; border: 9px solid transparent; border-top-color: var(--paper); border-bottom: 0; }
+
+.ev-chip.mk-rivalchip { color: var(--paper); background: color-mix(in oklab, var(--coral) 88%, var(--ink)); text-decoration: none; }
+
+/* O2: price ladders on the deal board. */
+.company-dialog-deals .deal-cards.mk-ladders { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 18px; }
+.mk-ladder-card { min-height: 0; gap: 8px; }
+.mk-ladder-meta { color: color-mix(in oklab, var(--ink) 58%, var(--paper)); font-size: 11px; font-weight: 700; line-height: 1.3; }
+.mk-ladder { display: flex; flex-direction: column; gap: 3px; }
+.mk-step-row { display: grid; grid-template-columns: 38px 1fr; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 900; }
+.mk-step-row .p { text-align: right; }
+.mk-step-row .bar { display: flex; height: 20px; align-items: center; justify-content: center; border-radius: 5px; font-size: 10.5px; background: var(--paper); box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--ink) 18%, transparent); }
+.mk-step-row.taken .p { color: color-mix(in oklab, var(--ink) 40%, var(--paper)); text-decoration: line-through; }
+.mk-step-row.taken .bar { background: repeating-linear-gradient(135deg, color-mix(in oklab, var(--lab) 30%, var(--paper)) 0 4px, var(--paper) 4px 8px); box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--lab) 55%, var(--paper)); }
+.mk-step-row.taken .mk-mono { width: 16px; height: 16px; font-size: 9px; }
+.mk-step-row.you .bar { color: var(--paper); background: var(--coral); box-shadow: none; }
+.mk-ladder-pick { min-height: 30px; font-size: 12px; font-weight: 700; line-height: 1.3; }
+.mk-ladder-pick b { font-size: 14px; font-weight: 900; }
+.mk-roundend span { display: inline-flex; align-items: center; gap: 5px; }
+
+/* O3: contested cards and the offers-in-play panel. */
+.company-dialog-deals .deal-cards.mk-c-cards { grid-template-columns: 1fr 1fr 1.55fr 1fr; margin-top: 18px; }
+.mk-c-card { min-height: 0; }
+.mk-interest { display: grid; gap: 7px; margin-top: auto; padding-top: 12px; font-size: 11.5px; font-weight: 700; line-height: 1.3; }
+.mk-interest > span { display: flex; align-items: flex-start; gap: 6px; }
+.mk-interest .mk-dot { margin-top: 3px; }
+.mk-offers { display: grid !important; gap: 4px; padding: 8px 10px; border-radius: 8px; background: color-mix(in oklab, var(--ink) 5%, var(--paper)); }
+.mk-offers > span { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+.mk-offers b { margin-left: auto; font-weight: 900; }
+.mk-offers em { font-style: normal; font-weight: 900; }
+.mk-deadline { display: grid !important; gap: 4px; }
+.mk-deadline i { display: block; height: 7px; overflow: hidden; border-radius: 4px; background: color-mix(in oklab, var(--ink) 10%, var(--paper)); }
+.mk-deadline i b { display: block; height: 100%; background: var(--coral); }
+.mk-actions { display: flex !important; flex-wrap: wrap; gap: 6px; }
+.mk-actions .mk-btn { padding: 6px 10px; font-size: 12px; }
+.mk-inplay { display: grid; }
+.mk-ip-row { display: grid; grid-template-columns: 20px 1fr; gap: 9px; padding: 10px 14px; border-top: 1px solid color-mix(in oklab, var(--wood) 30%, transparent); font-size: 12px; line-height: 1.3; }
+.mk-ip-row:first-child { border-top: 0; }
+.mk-ip-row b { display: block; font-size: 13px; font-weight: 900; }
+.mk-ip-row span:not(.mk-mono) { color: color-mix(in oklab, var(--ink) 72%, var(--paper)); font-weight: 600; }
+.mk-ip-you { display: grid; gap: 2px; margin: 4px 10px 10px; padding: 8px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; background: color-mix(in oklab, var(--coral) 12%, var(--paper)); }
+.mk-ip-you b { font-weight: 900; }
+
+/* O4: forecast strip, rival lane, small cards and the terms side panel. */
+.mk-fc-head { display: flex; align-items: baseline; justify-content: space-between; margin-top: 12px; }
+.mk-legend { display: flex; align-items: center; gap: 6px 12px; font-size: 11px; font-weight: 700; }
+.mk-legend i { display: inline-block; width: 12px; height: 10px; margin-right: -6px; border-radius: 2px; vertical-align: -1px; }
+.mk-legend i.cur { background: var(--teal); }
+.mk-legend i.new { background: repeating-linear-gradient(135deg, var(--coral) 0 3px, color-mix(in oklab, var(--coral) 35%, var(--paper)) 3px 6px); }
+.mk-legend i.short { background: repeating-linear-gradient(135deg, color-mix(in oklab, var(--coral) 30%, var(--paper)) 0 3px, var(--paper) 3px 6px); box-shadow: inset 0 0 0 1px var(--coral); }
+.mk-legend i.need { height: 0; border-top: 2.5px dashed var(--ink); border-radius: 0; }
+.mk-forecast { display: block; width: 100%; height: auto; }
+.mk-forecast .mk-grid { stroke: color-mix(in oklab, var(--ink) 12%, transparent); stroke-width: 1; }
+.mk-forecast .mk-axis { fill: color-mix(in oklab, var(--ink) 60%, var(--paper)); font-size: 11px; font-weight: 700; }
+.mk-forecast .mk-anno { fill: color-mix(in oklab, var(--wood) 55%, var(--ink)); font-size: 11px; font-weight: 800; }
+.mk-forecast .mk-bad-fill { fill: color-mix(in oklab, var(--coral) 75%, var(--ink)); }
+.mk-forecast .mk-cur { fill: var(--teal); }
+.mk-forecast .mk-new { fill: color-mix(in oklab, var(--coral) 42%, var(--paper)); stroke: var(--coral); stroke-width: 1.5; }
+.mk-forecast .mk-short { fill: color-mix(in oklab, var(--coral) 14%, var(--paper)); stroke: var(--coral); stroke-width: 1.5; stroke-dasharray: 4 3; }
+.mk-forecast .mk-need { stroke: var(--ink); stroke-width: 2.5; stroke-dasharray: 6 4; }
+.mk-lane-k { display: block; margin: 2px 0 4px 34px; }
+.mk-lane { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px 6px; margin: 0 8px 0 34px; padding: 5px 6px; border-radius: 8px; background: color-mix(in oklab, var(--ink) 5%, var(--paper)); }
+.mk-pin { display: flex; align-items: center; gap: 5px; min-width: 0; padding: 3px 8px 3px 6px; border-radius: 6px; font-size: 11px; font-weight: 800; white-space: nowrap; background: var(--paper); box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--lab) 55%, var(--paper)); }
+.mk-pin em { margin-left: auto; font-style: normal; color: color-mix(in oklab, var(--ink) 55%, var(--paper)); font-weight: 700; }
+.company-dialog-deals .company-card.mk-s-card, .company-dialog-deals .company-card.mk-c-card, .company-dialog-deals .company-card.mk-ladder-card { min-height: 0; }
+.company-dialog-deals .deal-cards.mk-s-cards { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 12px; }
+.mk-s-card { min-height: 0; gap: 5px; padding-bottom: 10px; }
+.mk-s-big { margin-top: 4px; font-size: 22px; font-weight: 900; line-height: 1; }
+.mk-s-big small { font-size: 12px; }
+.mk-s-line { color: color-mix(in oklab, var(--ink) 60%, var(--paper)); font-size: 11.5px; font-weight: 700; }
+.mk-deal-side { display: grid; gap: 9px; padding: 12px 14px 14px; }
+.mk-deal-side .mk-seg span { padding: 7px 4px; }
+.mk-ds-row { display: flex; justify-content: space-between; gap: 8px; font-size: 12.5px; font-weight: 700; }
+.mk-ds-row b { font-weight: 900; text-align: right; }
+.mk-grade { display: grid; gap: 3px; padding: 9px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; line-height: 1.3; background: color-mix(in oklab, var(--wood) 14%, var(--paper)); }
+.mk-lane-k { text-align: left; }
+
+/* O5: announced market changes and supplier health. */
+.mk-fronts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; text-align: left; }
+.mk-fronts > .mk-k { grid-column: 1 / -1; }
+.mk-front { display: grid; gap: 3px; padding: 9px 11px; border-radius: 9px; font-size: 11.5px; font-weight: 700; line-height: 1.3; background: color-mix(in oklab, var(--sky) 10%, var(--paper)); box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--sky) 40%, var(--paper)); }
+.mk-front.bad { background: color-mix(in oklab, var(--coral) 9%, var(--paper)); box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--coral) 40%, var(--paper)); }
+.mk-front b { font-size: 13px; font-weight: 900; }
+.mk-front-when { justify-self: start; padding: 1px 7px; border-radius: 5px; color: var(--paper); font-size: 10.5px; font-weight: 900; background: var(--sky); }
+.mk-front.bad .mk-front-when { background: color-mix(in oklab, var(--coral) 88%, var(--ink)); }
+.company-dialog-deals .deal-cards.mk-w-cards { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 12px; }
+.mk-health { display: inline-block; justify-self: start; align-self: flex-start; margin-top: 12px; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 900; }
+.mk-health.good { color: color-mix(in oklab, var(--teal) 55%, var(--ink)); background: color-mix(in oklab, var(--teal) 15%, var(--paper)); }
+.mk-health.warn { color: color-mix(in oklab, var(--wood) 50%, var(--ink)); background: color-mix(in oklab, var(--wood) 20%, var(--paper)); }
+.mk-health.bad { color: color-mix(in oklab, var(--coral) 60%, var(--ink)); background: color-mix(in oklab, var(--coral) 16%, var(--paper)); }
+.mk-ip-row em { font-style: normal; font-weight: 800; }
+
+/* O6: exchange ticker in the office. */
+.mk-ticker { left: 40px; top: 120px; width: 340px; pointer-events: auto; }
+.mk-tk-body { display: grid; gap: 9px; padding: 12px 14px 14px; }
+.mk-tk-top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; font-size: 12px; font-weight: 700; }
+.mk-tk-price { font-size: 28px; font-weight: 900; line-height: 1; }
+.mk-tk-up { margin-left: auto; color: color-mix(in oklab, var(--coral) 72%, var(--ink)); font-weight: 900; }
+.mk-spark { display: block; width: 100%; height: auto; }
+.mk-spark .a { fill: color-mix(in oklab, var(--coral) 12%, var(--paper)); }
+.mk-spark .l { fill: none; stroke: var(--coral); stroke-width: 2; }
+.mk-spark .s { fill: var(--paper); stroke: var(--ink); stroke-width: 2; }
+.mk-spark .e { fill: var(--coral); }
+.mk-tk-events { display: grid; gap: 4px; font-size: 11.5px; font-weight: 700; }
+.mk-tk-events span { display: flex; align-items: center; gap: 6px; }
+.mk-tick { width: 8px; height: 8px; flex: none; border-radius: 50%; background: var(--paper); box-shadow: inset 0 0 0 2px var(--ink); }
+.mk-tk-row { display: flex; justify-content: space-between; padding-top: 8px; border-top: 1px solid color-mix(in oklab, var(--wood) 30%, transparent); font-size: 12px; font-weight: 700; }
+.mk-tk-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.mk-tk-actions .mk-btn { padding: 6px 10px; font-size: 12px; }
+
+/* O7: stakes and fire sales. */
+.mk-stake { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; margin-top: 14px; padding: 12px 14px; border-radius: 11px; text-align: left; background: var(--paper); box-shadow: 0 0 0 3px color-mix(in oklab, var(--wood) 32%, transparent), inset 0 0 0 1.5px var(--wood); }
+.mk-stake-who { display: flex; align-items: center; gap: 9px; grid-column: 1 / -1; }
+.mk-stake-who b { display: block; font-size: 15px; font-weight: 900; }
+.mk-cf { background: var(--teal); }
+.mk-own { grid-column: 1 / -1; display: grid; gap: 4px; }
+.mk-own-bar { display: flex; height: 26px; overflow: hidden; border-radius: 7px; font-size: 11px; font-weight: 900; }
+.mk-own-bar i { display: grid; place-items: center; font-style: normal; color: var(--paper); background: var(--lab); }
+.mk-own-bar i.mk-you { background: repeating-linear-gradient(135deg, var(--coral) 0 5px, color-mix(in oklab, var(--coral) 70%, var(--paper)) 5px 10px); }
+.mk-own-bar i.mk-founders { color: var(--ink); background: color-mix(in oklab, var(--ink) 8%, var(--paper)); }
+.mk-own-ticks { position: relative; height: 14px; font-size: 10.5px; font-weight: 800; }
+.mk-own-ticks span { position: absolute; top: 0; transform: translateX(-50%); padding-top: 2px; border-left: 2px solid var(--ink); padding-left: 4px; transform: none; }
+.mk-stake-terms { display: grid; gap: 4px; font-size: 12.5px; font-weight: 700; }
+.mk-stake-terms div { display: flex; justify-content: space-between; gap: 8px; }
+.mk-stake-terms b { font-weight: 900; }
+.mk-warn { padding: 9px 11px; border-radius: 8px; font-size: 12px; font-weight: 700; line-height: 1.35; background: color-mix(in oklab, var(--coral) 10%, var(--paper)); box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--coral) 40%, var(--paper)); }
+.mk-warn b { font-weight: 900; }
+.mk-sales { display: grid; gap: 6px; text-align: left; }
+.mk-sale { display: grid; grid-template-columns: 20px 1fr auto; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 9px; font-size: 12px; line-height: 1.3; background: color-mix(in oklab, var(--ink) 5%, var(--paper)); }
+.mk-sale b { display: block; font-size: 13px; font-weight: 900; }
+.mk-sale span:not(.mk-mono):not(.mk-sale-when) { color: color-mix(in oklab, var(--ink) 72%, var(--paper)); font-weight: 600; }
+.mk-sale-when { padding: 2px 8px; border-radius: 6px; color: var(--paper); font-size: 11px; font-weight: 900; background: var(--lab); }

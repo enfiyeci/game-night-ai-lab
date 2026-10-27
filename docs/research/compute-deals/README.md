@@ -27,9 +27,15 @@ you have not.
    play-through. Evidence in `evidence/` (screenshots) and `tools-probes/` (the read-only probe scripts and their
    output; run them with `node tools-probes/<file>.mjs <worktree path> <seeds>`).
 4. **Options:** `options.md`, seven mechanic options (O1 to O7) from safe to experimental, with the recommended
-   combination (O1, O4, O2). The picker page is `picker.html`, published at
+   combination (round 2: O1 → O3 → O4 → O5; round 1 was O1, O4, O2). The picker page is `picker.html`, published at
    https://claude.ai/artifact/L5gX3dw7AZQ4gAGe9jPeoL.
-5. **Build plan:** `build-plan.md`, a draft for the recommended picks, rewritten once Arda's picks are saved.
+5. **Round 2 (same night):** `reports/Tycoon games supplier deals and rivals.md`, research on the closest genre
+   peers (notes in `research_notes/Tycoon games supplier deals and rivals/`, five notes, ⚠️ flags carried). It
+   changed O3 and O7 and the recommendation (see the top of `options.md`). In-game mockups: `mockups/O*.js` draw
+   each option over the real game through `mockups/harness.js` and `tools/cdp-shot.mjs`; the captures are in
+   `mockups/shots/`. Official reference screenshots from Steam store pages are in `mockups/refs/` with their URLs in
+   `mockups/refs/SOURCES.txt`. The picker (`picker.html`, same link) is rebuilt in the game's own look.
+6. **Build plan:** `build-plan.md`, a draft for the recommended picks, rewritten once Arda's picks are saved.
 
 The diagnosis and options were reviewed by a fresh Opus subagent (verdict REVISE; all 21 findings fixed). The
 reviewer's probes are kept as `tools-probes/review-*.mjs`.

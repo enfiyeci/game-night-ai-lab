@@ -1,6 +1,13 @@
 # Compute deal options for Arda
 
-**Date:** 2026-10-26 · **Lane:** `gn-compute-deals` · **Status:** draft for the picker page; nothing built.
+**Date:** 2026-10-26 · **Lane:** `gn-compute-deals` · **Status:** round 2, on the picker page; nothing built.
+
+**Round 2 (2026-10-26 night).** Arda asked for research on the closest genre peers (tycoon and management games) and
+for rival labs to be felt in every option. That research is `reports/Tycoon games supplier deals and rivals.md`. It
+changed the set: **O3 is now "Contested deals"** (replacing the ripening row, which no tycoon supports) and **O7 is
+now "Stakes and fire sales"** (replacing sealed bids, which become a sub-choice of O3). Every option has a
+**Rivals** line. Each option has an in-game mockup in `mockups/shots/` (drawn by `mockups/O*.js` over the real game)
+and an official reference screenshot in `mockups/refs/` (sources in `mockups/refs/SOURCES.txt`).
 
 Read `diagnosis.md` first. Each option below says how it plays minute to minute in real time, what it fixes from the
 diagnosis (numbers refer to its section 5 list), the files it would touch, its size, its risk to balance, and the
@@ -41,6 +48,9 @@ Trading Company's "numbers front and centre" (`videogames_realtime_markets_alloc
 `ui/screens/recipe.js` (`computeHelp`), `sim/split.js` (serving cap as a share), `sim/data/advisorLines.js`, one new
 card in `sim/data/events.js` and `ui/data/eventCopy.js`. **Layout: agree with `gn-phone-redesign`.**
 
+**Rivals.** A "Training right now" line shows each rival's current run beside free compute; the stall card names
+the rival that keeps training while you wait (Scaling Laws' "VS TOP MODEL" view).
+
 **Size.** M. **Balance risk.** Low. Prices do not change. The stall card adds an exit, so era 2 throughput may rise;
 measure with the bots.
 
@@ -70,37 +80,39 @@ about 40% from October 2025 to March 2026 with on-demand sold out (`real_contrac
 `sim/data/compute.js`, `ui/logic/compute.js` (`dealCards`), `ui/screens/compute.js` (a size control on the card).
 **Layout: agree with `gn-phone-redesign`.**
 
+**Rivals.** Rival buys show on the ladder as struck-out steps with the rival's monogram the moment they happen
+(Offworld's price jump), and the quarter-end line says who buys next.
+
 **Size.** L. **Balance risk.** Medium. Rival compute flows through the ladder, which feeds rival model sizes
 (`sim/rivals.js`, owned by `gn-improve`): coordinate.
 
 ---
 
-## O3 · The ripening row (medium)
+## O3 · Contested deals (medium, new in round 2)
 
-**The idea.** Deal cards age. A new card enters dear, gets cheaper every round it waits, and leaves the board when it
-reaches the cheap end. Rivals take the cards they want at the round's end.
+**The idea.** A few big cards each era show how many labs want them and the day a named rival takes them. The player
+signs at the printed price, stalls once for a fixed fee (the date moves once), or lets it go; the rival then takes
+the card and the feed says what it gained. Interest and dates come from the seeded schedule, so nothing is rolled.
+Replaces the ripening row: no tycoon in the round 2 research has offers that get cheaper as they wait.
 
-**How it plays.** Five price slots: 1.3x, 1.15x, 1.0x, 0.9x, 0.8x. Each round unsigned cards slide one slot cheaper and
-a new card enters at 1.3x. A rival's banner shows which card it is eyeing and from which day ("DeepThink signs this
-on day 18"). The player asks, every round: sign now at today's price, or wait one more round and risk losing it?
+**Fixes.** 4 (a reason to act now and rivals to read), 9 (denial becomes a timed choice, not a fight), and the
+end-of-round banner that acts on things the player was not racing for.
 
-**Fixes.** 4 (a reason to act now and something to read), 9 (denial becomes a side effect of grabbing a card early,
-not a separate fight).
+**Rivals.** Directly: a named rival, a count of interested labs and a date on the card, a side panel of every lab's
+interest, and the rival's gain in the feed.
 
-**Grounded in.** Suburbia's real-estate row (one tile leaves each turn and the rest slide; this corrects the earlier
-note's "oldest tile" wording) ⚠️ (rules from RulesPal, an AI-generated rules site, and an UltraBoardGames summary;
-the $10-to-free price scale and "cheaper on the right" are unverified). Through the Ages' card row, where cards drift
-toward an end and are discarded ⚠️ (RulesPal; the text read does not say which positions cost what, so "falls off the
-cheap end" is the note writer's reading). Into the Breach's telegraphed enemy moves, which its developers say make
-losses feel like the player's own fault (`games_auctions_drafting.md`). **Real-world fit is weak:** real contract
-prices rose in 2026 and renewals ran at their original rates (`real_contracts_allocation_financing.md`), so cards
-that get cheaper the longer they wait are a game convention, not a picture of the market.
+**Sub-choice.** How a contest is settled: sign before the date and stall once (recommended); open offers (match or
+raise); or sealed bids once a quarter for the era 3 queue only (the round 1 O7).
 
-**Touches.** `sim/contracts.js` (`refreshOffers`: slots, sliding, leaving), `sim/rivalDeals.js` (`choose`: rivals pick
-by slot), `sim/data/compute.js` (slot prices), `ui/logic/compute.js`, `ui/screens/compute.js` (price track on the
-card). **Layout: agree with `gn-phone-redesign`.**
+**Grounded in.** Football Manager's transfer offer ("2 Interested Clubs", the other side's deadline, Accept, Stall,
+Reject; the official FM26 image was viewed). Rise of Industry's per-region contract auctions with rival bidders and
+the slowdown to speed 1 (⚠️ probable-developer forum replies through a summarising fetch). Mad Games Tycoon 2's
+declined deals going to rival publishers (⚠️ keyword-filtered patch line). See the round 2 report, section N1.
 
-**Size.** M. **Balance risk.** Medium. Average prices fall if players wait; the slot prices are the tuning knob.
+**Touches.** `ui/logic/compute.js` (`dealCards`), `ui/screens/compute.js`, `sim/rivalDeals.js` (dated interest),
+`sim/data/feed.js`. **Layout: agree with `gn-phone-redesign`.**
+
+**Size.** M. **Balance risk.** Medium. The rival schedule must be designed and sized against today's rival takes.
 
 ---
 
@@ -130,6 +142,9 @@ borrowing (`games_contracts_debt_shocks.md`).
 
 **Touches.** `ui/logic/compute.js` (forecast), `ui/screens/compute.js` (strip), `sim/contracts.js` (firm and flexible
 terms), `sim/economy.js` (`projectBurn`), `sim/data/advisorLines.js`. **Layout: agree with `gn-phone-redesign`.**
+
+**Rivals.** The rivals' fleets from the news (signed, rumoured, announced) sit on the same timeline as the forecast
+(Software Inc.'s release calendar, Mad Games Tycoon 2's rival announcements).
 
 **Size.** M. **Balance risk.** Medium. Flexible terms make over-committing safer; price them so the over-committer
 probe still runs out of money in most runs.
@@ -166,6 +181,9 @@ parties with an authorisation that expires in April 2027; drone strikes on Gulf 
 `sim/data/feed.js`, `sim/data/events.js` and `ui/data/eventCopy.js` (string cards), `ui/logic/compute.js`,
 `ui/screens/compute.js`. **Layout: agree with `gn-phone-redesign`.**
 
+**Rivals.** A side panel shows which rival rides which supplier, so a shock hurts some labs and spares others; some
+weather is rival-made (a rival campus coming online raises spot).
+
 **Size.** M. **Balance risk.** Medium. Shocks move many runs at once; size each one against existing effects
 (project memory: check mechanic dynamics before and after).
 
@@ -178,7 +196,7 @@ down, and it drifts back. Spot buying and selling happen any day, with no team a
 for their term, like a future.
 
 **How it plays.** A ticker on the HUD shows the unit price and its trend. Rivals' buys show as spikes ("someone just
-bought 40 units"), without saying who. Idle compute can be sold into the market for cash, which replaces the resale toggle. A
+bought 40 units"), without saying who. Idle compute can be sold into the market at a discount (half price in the mockup), which replaces the resale toggle. A
 shortfall can be covered by buying on the day, at whatever the price is. The question every few days: lock the
 price now with a contract, or ride the market?
 
@@ -194,36 +212,44 @@ pending review for a 9 November start ⚠️ (that page came back truncated) (`r
 (resale), `tools/balance.js` (market policies for every bot), a new HUD element. **Layout: agree with
 `gn-phone-redesign`; rival compute: coordinate with `gn-improve`.**
 
+**Rivals.** Anonymous price spikes ("someone bought 40 units"); the team guesses who.
+
 **Size.** L. **Balance risk.** High. A live price touches every ending; it needs its own balance round.
 
 ---
 
-## O7 · Sealed bids for the bottleneck (experimental)
+## O7 · Stakes and fire sales (experimental, new in round 2)
 
-**The idea.** In the bottleneck eras, Verde releases one tranche per round and every lab bids for it once, in secret.
-The best prepayments are served first. This replaces the era 3 queue.
+**The idea.** The equity card grows into stakes in suppliers, bought in steps that each cost more, giving first call
+on capacity and a share of what rivals pay. One ownership bar per supplier shows who holds what, with a control line
+at 50%. A rival that runs out of money sells its fleet on a dated, announced fire sale with its contents shown.
 
-**How it plays.** One bid per round: an amount of prepayment per unit, set once. Rivals bid by appetite and leave
-tells in the feed ("OpenBrain booked every spare GPU in Iowa"). At the round's end the bids open together, the tranche
-fills from the top, and the losers' prepayment comes back. Big winning bids raise race heat.
+**Fixes.** Late money that, in one traced run, bought mostly idle compute (section 2), and rivals that never fail in ways the market
+feels.
 
-**Fixes.** The always-rationing queue (800 of 800 rounds short) becomes a decision with information to read; 9.
+**Rivals.** As co-owners and threats ("OpenBrain can afford control of CoreFlame"), and as sudden supply on a known
+date when one collapses.
 
-**Grounded in.** Once-around and sealed auctions (Modern Art's hidden
-auction, Ra's once-around), which the note writer judges the fastest forms against bots (its own inference, not a
-source; `games_auctions_drafting.md`, where these rulebooks were read through transcriptions and a
-summarising fetch tool ⚠️); High Society's "passing returns your money" ⚠️ (the publisher PDF could not be opened). Real side:
-prepayment of "above 20%" for smaller labs' 1–3 year deals (SemiAnalysis), and allocation going to those who can
-prepay (`real_contracts_allocation_financing.md`).
+**Grounded in.** Offworld's buyouts and stock prices, Capitalism Lab's 50% hostile takeover, Anno 1800 and Railway
+Empire share stakes (⚠️ community sources only), COLD AISLE's liquidation lots (store text only; its lots are
+"unknown", so Game Night's would show their contents). Round 2 report, section N2.
 
-**Touches.** `sim/queue.js` (replaced), `sim/rivalDeals.js`, `sim/data/compute.js`, `sim/data/feed.js`, the queue
-dialog in `ui/screens/compute.js`, `tools/balance.js`. **Layout: agree with `gn-phone-redesign`.**
+**Touches.** Equity deals in `sim/contracts.js`, supplier ownership, rival cash and late-game rules (`sim/rivals.js`,
+owned by `gn-improve`), the feed.
 
-**Size.** M. **Balance risk.** Medium to high. Rival bidding feeds rival fleets (`gn-improve` owns those rules).
+**Size.** L. **Balance risk.** High. Ownership must pay off early or it reads as dull (the report's warnings).
 
 ---
 
-## Recommended combination
+## Recommended combination (round 2)
+
+**O1 → O3 → O4 → O5.** O1 first (visibility, low risk). O3 second: it is the rivalry Arda asked for, no tycoon in
+the research fills that space, and it builds on the board's existing "rival takes this card" rule. O4 third, with
+rival fleets on its timeline. O5 fourth, which the round 2 report lifted into the recommended set. The report itself
+ranked O2 third; O2 moves below O3 because it changes how rivals gain compute and needs `gn-improve`'s agreement. It
+stays a strong pick if sizing is wanted too. O6 and O7 are the experimental edge.
+
+## Round 1 recommendation (superseded)
 
 **O1 + O4 + O2**, in that order. Revised after the report and the review: the first draft recommended O3 in third
 place.
@@ -237,7 +263,7 @@ place.
    and which fits real 2026 prices (rising). It is the largest of the three and changes how rivals gain compute, so it
    needs `gn-improve`'s agreement (its item A4 changes late-game rival rules).
 
-O3 is the lighter alternative to O2 if the rival coordination is a problem: it adds timing with fewer rule changes,
+Round 1's O3 (the ripening row, now replaced) was the lighter alternative to O2 if the rival coordination is a problem: it adds timing with fewer rule changes,
 but its sources are weaker (AI-generated rule summaries) and real prices move the other way. O5 is the best add-on
-after the three. O6 and O7 are the experimental edge: O6 is the most alive and the most dangerous to balance; O7 is a
-smaller swap for the era 3 queue only.
+after the three. O6 and round 1's O7 (sealed bids, now a sub-choice of O3) were the experimental edge: O6 is the most alive and the
+most dangerous to balance; sealed bids were a smaller swap for the era 3 queue only.

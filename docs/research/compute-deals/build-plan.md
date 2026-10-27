@@ -1,6 +1,6 @@
 # Compute deals: build plan
 
-**Status:** DRAFT for the recommended combination (O1, then O4, then O2; O3 is the lighter alternative to O2). It is rewritten to match Arda's saved picks
+**Status:** ⚠️ written for the round 1 recommendation; round 2 (`options.md`, top) changed O3, O7 and the order, so this plan is rewritten from Arda's round 2 picks before anyone builds. Original status: DRAFT for the recommended combination (O1, then O4, then O2; O3 is the lighter alternative to O2). It is rewritten to match Arda's saved picks
 from the picker (https://claude.ai/artifact/L5gX3dw7AZQ4gAGe9jPeoL) before anyone builds. Options are defined in
 `options.md`; the problems they answer are measured in `diagnosis.md`.
 

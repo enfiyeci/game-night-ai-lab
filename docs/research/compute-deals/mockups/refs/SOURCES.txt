@@ -1,0 +1,7 @@
+startup-company-hosting.jpg steam-app-606800 https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/606800/ss_12d04b8d057121d1ce7214576367925bb2ea32aa.1920x1080.jpg
+startup-company-negotiation.jpg steam-app-606800 https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/606800/ss_8b07098ae4dfbdc86c9caebf44c498bf8b5bf71f.1920x1080.jpg
+offworld-market.jpg steam-app-271240 https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/271240/ss_fdb1d1301e763bd7cdbed153a2e83a2801bbdc67.1920x1080.jpg
+offworld-expansion-stock-prices.jpg steam-app-271240 https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/271240/ss_5aeb9171396080d02276a67b3566400aa08cfd09.1920x1080.jpg
+offworld-price-panel.jpg steam-app-271240 https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/271240/ss_4abb55fcbca515790d0a12e71510b3426ef6d2da.1920x1080.jpg
+mad-games-tycoon-2-announced-platform.jpg steam-app-1342330 https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1342330/ss_cae936ed7a0cef533ce6d471e5289085cce5eb95.1920x1080.jpg
+mad-games-tycoon-2-rival-announcements.jpg steam-app-1342330 https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1342330/ss_870ecb4380328c4b0335486ff887d6c31792d963.1920x1080.jpg
