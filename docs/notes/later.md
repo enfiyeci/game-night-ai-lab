@@ -29,3 +29,25 @@ vote, a warning a month ahead, and pre-meeting events).
 - The sim needs a per-meeting "call used" flag and the backfire rule: compare the director's issue trend (the same
   links the "what moves them" tab draws) and nudge support away when it is going badly.
 - Real time: "between meetings" is the stretch from one meeting's date to the next, not a count of turns.
+
+## Rethink every ending (parked 2026-10-27)
+
+**What it is.** Every ending gets redesigned and rethought in its own long session. Nothing is built for it now.
+
+**The one firm want (owner: "i do want the ending where your consitution demands what kind of future you get when ai
+takes over").** When the AI takes over, the player's constitution decides what kind of future the world gets. A
+constitution that put honesty or human oversight first would give a different world from one that put winning first,
+so the takeover reads as the result of the player's own written rules.
+
+**Why it was parked.** The owner wants to do all endings together in one dedicated session, not piece by piece
+(2026-10-27). The ending clips' "KESTREL" fix waits for that session too (owner: "yeah later, take a note of it").
+
+**Known issue for that session.** The ending clips have "KESTREL" baked into the billboards
+(`tools/endings/blender/skyline.py`, the `VARIANT` billboard blocks around lines 329-343), so they cannot show the
+player's lab name. Fix it when the clips are re-rendered.
+
+**What building it would touch.**
+- The constitution mechanic: `sim/constitution.js` (the era 3 constitution, set in Safety's draft) and its lines, which
+  the takeover ending would read.
+- The takeover endings in `sim/endings.js` (`misalignment`, `quietTakeover`) and the rest of the ending list there.
+- The ending films and their tooling: `tools/endings/` (Blender scenes, plates, sound) and `ui/endings/`.
