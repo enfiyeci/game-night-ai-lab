@@ -1,6 +1,6 @@
 // Injected by the iOS shell at document start, before the game's modules run (ios/App/GameWebView.swift).
 // Never part of the web build. It does three things:
-// 1. Restores localStorage keys the web view lost, from the app's own copy (ios/App/SaveStore.swift).
+// 1. Restores localStorage from the app's own copy (ios/App/SaveStore.swift) wherever the two differ.
 // 2. Mirrors every localStorage write back to that copy.
 // 3. Applies the Duo layout the shell sends: data-native-posture and --native-fold-* on <html>, and a
 //    native-layout event (contract: the gn-ios-shell viewport note, summarized in ios/README.md). The fold
@@ -22,9 +22,11 @@
   let storage = null;
   try { storage = globalThis.localStorage; } catch { /* storage blocked */ }
   if (storage) {
-    // Restore only what is missing: the web view's own value is never older than the app's copy.
+    // The app's copy is the authority: it is written at once, in order, on every change, while WebKit
+    // writes its storage to disk later and can lose the last writes in a crash. (setItem is not patched
+    // yet, so restoring sends nothing back.)
     for (const [key, value] of Object.entries(saved)) {
-      try { if (storage.getItem(key) === null) storage.setItem(key, value); } catch { /* full */ }
+      try { if (storage.getItem(key) !== value) storage.setItem(key, value); } catch { /* full */ }
     }
     const items = {};
     for (let i = 0; i < storage.length; i += 1) {

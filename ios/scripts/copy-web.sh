@@ -9,10 +9,16 @@
 # an iPhone otherwise). The copy leaves any other viewport alone.
 set -eu
 
-REPO="${SRCROOT:?run from Xcode or set SRCROOT to the ios folder}/.."
+# WEB_SOURCE (a build setting, e.g. `xcodebuild … WEB_SOURCE=~/worktrees/game-night-ai-lab-phone`) takes the
+# web game from another checkout; by default it comes from this repo.
+REPO="${WEB_SOURCE:-${SRCROOT:?run from Xcode or set SRCROOT to the ios folder}/..}"
 DEST="${TARGET_BUILD_DIR:?}/${UNLOCALIZED_RESOURCES_FOLDER_PATH:?}/web"
 
-# A release must ship committed web code only: refuse a tree with uncommitted changes to it.
+# A release ships this repo's committed web code only: no other checkout, no uncommitted changes.
+if [ "${CONFIGURATION:-}" = "Release" ] && [ -n "${WEB_SOURCE:-}" ]; then
+  echo "error: WEB_SOURCE is for Debug builds; a Release build bundles this repo's own web game" >&2
+  exit 1
+fi
 if [ "${CONFIGURATION:-}" = "Release" ] && [ -n "$(git -C "$REPO" status --porcelain -- index.html ui sim)" ]; then
   echo "error: index.html, ui/ or sim/ has uncommitted changes; commit or stash them before a Release build" >&2
   exit 1

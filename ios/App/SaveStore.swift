@@ -36,9 +36,9 @@ final class SaveStore {
             items = [:]
         case "snapshot":
             // The page's localStorage right after the restore: adds keys this copy lacks (written
-            // before the shell mirrored them). For keys both hold, this copy wins: it is written at
-            // once on every change, while WebKit writes its storage to disk later, so after a crash
-            // the page's value can be the older one.
+            // before the shell mirrored them). For keys both hold, this copy wins, as it did in the
+            // restore (App/Web/native-shell.js): it is written at once on every change, while WebKit
+            // writes its storage to disk later.
             guard let snapshot = message["items"] as? [String: String] else { return }
             items.merge(snapshot) { mine, _ in mine }
         default:
