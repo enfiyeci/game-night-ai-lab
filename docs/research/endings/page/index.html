@@ -1,0 +1,661 @@
+<title>Endings Research Brief</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;800;900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Game Night tokens (ui/styles.css:2-8) */
+  --cream: #F1E4C8;
+  --paper: #FFFBF1;
+  --ink: #2E2A2B;
+  --teal: #3F9C8F;
+  --wood: #C8864C;
+  --coral: #E0613B;
+  --sky: #3F84C6;
+  /* roles */
+  --bg: var(--cream);
+  --surface: var(--paper);
+  --text: var(--ink);
+  --muted: color-mix(in oklab, var(--ink) 74%, var(--paper));
+  --rule: color-mix(in oklab, var(--wood) 30%, var(--paper));
+  --tint: color-mix(in oklab, var(--wood) 10%, var(--paper));
+  --accent: var(--coral);
+  --accent-text: color-mix(in oklab, var(--coral) 62%, var(--ink));
+  --hope: color-mix(in oklab, var(--teal) 58%, var(--ink));
+  --hope-bg: color-mix(in oklab, var(--teal) 14%, var(--paper));
+  --mixed: color-mix(in oklab, var(--wood) 52%, var(--ink));
+  --mixed-bg: color-mix(in oklab, var(--wood) 16%, var(--paper));
+  --dark: color-mix(in oklab, var(--coral) 62%, var(--ink));
+  --dark-bg: color-mix(in oklab, var(--coral) 13%, var(--paper));
+  --band: var(--ink);
+  --band-text: var(--paper);
+  --band-muted: color-mix(in oklab, var(--paper) 68%, var(--ink));
+  --bar: var(--coral);
+  --bar-track: color-mix(in oklab, var(--paper) 22%, var(--ink));
+  --btn: color-mix(in oklab, var(--coral) 80%, var(--paper));
+  --shadow: color-mix(in oklab, var(--ink) 14%, transparent);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: color-mix(in oklab, var(--ink) 92%, var(--wood));
+    --surface: color-mix(in oklab, var(--ink) 84%, var(--wood));
+    --text: color-mix(in oklab, var(--paper) 94%, var(--wood));
+    --muted: color-mix(in oklab, var(--paper) 70%, var(--ink));
+    --rule: color-mix(in oklab, var(--paper) 16%, var(--ink));
+    --tint: color-mix(in oklab, var(--ink) 76%, var(--wood));
+    --accent-text: color-mix(in oklab, var(--coral) 78%, var(--paper));
+    --hope: color-mix(in oklab, var(--teal) 70%, var(--paper));
+    --hope-bg: color-mix(in oklab, var(--teal) 22%, var(--ink));
+    --mixed: color-mix(in oklab, var(--wood) 72%, var(--paper));
+    --mixed-bg: color-mix(in oklab, var(--wood) 22%, var(--ink));
+    --dark: color-mix(in oklab, var(--coral) 66%, var(--paper));
+    --dark-bg: color-mix(in oklab, var(--coral) 20%, var(--ink));
+    --band: var(--ink);
+    --bar-track: color-mix(in oklab, var(--paper) 14%, var(--ink));
+    --shadow: color-mix(in oklab, var(--ink) 70%, transparent);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: color-mix(in oklab, var(--ink) 92%, var(--wood));
+  --surface: color-mix(in oklab, var(--ink) 84%, var(--wood));
+  --text: color-mix(in oklab, var(--paper) 94%, var(--wood));
+  --muted: color-mix(in oklab, var(--paper) 70%, var(--ink));
+  --rule: color-mix(in oklab, var(--paper) 16%, var(--ink));
+  --tint: color-mix(in oklab, var(--ink) 76%, var(--wood));
+  --accent-text: color-mix(in oklab, var(--coral) 78%, var(--paper));
+  --hope: color-mix(in oklab, var(--teal) 70%, var(--paper));
+  --hope-bg: color-mix(in oklab, var(--teal) 22%, var(--ink));
+  --mixed: color-mix(in oklab, var(--wood) 72%, var(--paper));
+  --mixed-bg: color-mix(in oklab, var(--wood) 22%, var(--ink));
+  --dark: color-mix(in oklab, var(--coral) 66%, var(--paper));
+  --dark-bg: color-mix(in oklab, var(--coral) 20%, var(--ink));
+  --band: var(--ink);
+  --bar-track: color-mix(in oklab, var(--paper) 14%, var(--ink));
+  --shadow: color-mix(in oklab, var(--ink) 70%, transparent);
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 400 16px/1.55 Nunito, system-ui, sans-serif;
+  padding-bottom: 72px;
+}
+code, .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .86em; overflow-wrap: anywhere; }
+a { color: var(--accent-text); text-underline-offset: 2px; }
+.wrap { max-width: 1240px; margin: 0 auto; padding: 0 32px; }
+h1, h2, h3 { margin: 0; letter-spacing: -.01em; }
+h2 { font-weight: 300; font-size: 34px; line-height: 1.15; }
+h3 { font-weight: 800; font-size: 17px; }
+.kicker { font-weight: 800; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+section { padding: 56px 0 8px; }
+.sec-head { display: grid; grid-template-columns: 400px 1fr; gap: 32px; margin-bottom: 24px; align-items: end; }
+.sec-head p { margin: 0; color: var(--muted); max-width: 70ch; }
+.sec-num { font-weight: 900; font-size: 13px; color: var(--accent-text); letter-spacing: .1em; }
+
+/* ---------- masthead: the eleven films as a strip ---------- */
+.mast { background: var(--band); color: var(--band-text); padding: 40px 0 32px; }
+.mast .kicker { color: var(--band-muted); }
+.mast h1 { font-weight: 300; font-size: 56px; line-height: 1.04; margin: 10px 0 14px; }
+.mast h1 b { font-weight: 900; color: var(--coral); }
+.mast-grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 40px; align-items: start; }
+.lede { font-size: 18px; line-height: 1.6; color: var(--band-text); margin: 0; }
+.lede + .lede { margin-top: 12px; color: var(--band-muted); font-size: 15px; }
+.wants { border-left: 3px solid var(--coral); padding: 4px 0 4px 20px; margin-top: 24px; }
+.wants p { margin: 12px 0 0; font-size: 18px; line-height: 1.45; display: grid; grid-template-columns: 26px 1fr; }
+.wants p b { font-weight: 900; color: var(--coral); }
+.strip { display: grid; grid-template-columns: repeat(11, 1fr); gap: 4px; margin-top: 28px; }
+.frame { position: relative; }
+.frame img { display: block; width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 2px; }
+.frame .cap { font-size: 11px; font-weight: 800; line-height: 1.2; margin-top: 6px; color: var(--band-text); min-height: 2.4em; }
+.frame .meter { height: 44px; display: flex; align-items: flex-end; margin-top: 4px; border-bottom: 1px solid var(--bar-track); }
+.frame .meter i { display: block; width: 100%; background: var(--bar); min-height: 1px; }
+.frame .meter.zero i { background: none; border-top: 2px dashed var(--band-muted); }
+.frame .n { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--band-muted); margin-top: 4px; }
+.frame.win .cap::before { content: "win · "; color: var(--teal); }
+.strip-note { font-size: 13px; color: var(--band-muted); margin-top: 14px; }
+.strip-note b { color: var(--band-text); }
+
+/* ---------- findings ---------- */
+.findings { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0 40px; counter-reset: f; }
+.findings li { padding: 18px 0; border-top: 1px solid var(--rule); counter-increment: f; display: grid; grid-template-columns: 34px 1fr; gap: 12px; }
+.findings li::before { content: counter(f); font-weight: 900; font-size: 22px; color: var(--accent-text); line-height: 1.2; }
+.findings b { display: block; font-weight: 800; font-size: 17px; line-height: 1.35; margin-bottom: 6px; }
+.findings span { color: var(--muted); font-size: 14.5px; }
+.findings li.key { grid-column: 1 / -1; background: var(--surface); padding: 22px 24px; border-top: 3px solid var(--accent); box-shadow: 0 1px 0 var(--shadow); }
+.findings li.key b { font-size: 21px; font-weight: 800; }
+
+/* ---------- futures map ---------- */
+.map { background: var(--surface); padding: 24px; box-shadow: 0 1px 0 var(--shadow); }
+.map-grid { display: grid; grid-template-columns: 120px repeat(4, 1fr); gap: 6px; }
+.map-grid .colh { font-weight: 800; font-size: 13px; padding: 4px 8px 10px; border-bottom: 2px solid var(--text); }
+.map-grid .colh small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; }
+.map-grid .rowh { font-weight: 900; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; padding: 12px 8px 0 0; }
+.rowh.hope { color: var(--hope); } .rowh.mixed { color: var(--mixed); } .rowh.dark { color: var(--dark); }
+.cell { min-height: 92px; padding: 8px; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 6px; }
+.cell.hope { background: var(--hope-bg); } .cell.mixed { background: var(--mixed-bg); } .cell.dark { background: var(--dark-bg); }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-weight: 800; font-size: 13.5px; padding: 6px 10px; background: var(--surface); color: var(--text); border-radius: 3px; text-decoration: none; box-shadow: 0 1px 0 var(--shadow); }
+.chip:hover { outline: 2px solid var(--accent); }
+.chip em { font-style: normal; font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--muted); }
+.cell.empty::after { content: "none in the sources"; font-size: 12px; color: var(--muted); align-self: center; }
+.pin { margin-top: 16px; display: grid; grid-template-columns: 120px 1fr; gap: 6px; font-size: 14px; }
+.pin b { font-weight: 800; }
+.axes { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px; }
+.axis { background: var(--surface); padding: 18px 20px; box-shadow: 0 1px 0 var(--shadow); }
+.axis h3 { margin-bottom: 8px; }
+.axis p { margin: 0; font-size: 14.5px; color: var(--muted); }
+.axis .lines { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+.axis .lines code { background: var(--tint); padding: 3px 7px; border-radius: 3px; color: var(--text); }
+
+/* ---------- tables ---------- */
+.tbl { width: 100%; border-collapse: collapse; background: var(--surface); font-size: 14px; box-shadow: 0 1px 0 var(--shadow); }
+.tbl th { text-align: left; font-weight: 800; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 12px 12px 10px; border-bottom: 2px solid var(--text); vertical-align: bottom; }
+.tbl td { padding: 12px; border-top: 1px solid var(--rule); vertical-align: top; }
+.tbl td.name { font-weight: 800; font-size: 15px; min-width: 150px; }
+.tbl td.name small { display: block; font-weight: 400; color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+.tbl td.src { font-size: 12.5px; color: var(--muted); }
+.tbl td.src a { color: var(--muted); }
+.tone { display: inline-block; font-weight: 800; font-size: 12px; padding: 2px 8px; border-radius: 3px; white-space: nowrap; }
+.tone.hope { color: var(--hope); background: var(--hope-bg); }
+.tone.mixed { color: var(--mixed); background: var(--mixed-bg); }
+.tone.dark { color: var(--dark); background: var(--dark-bg); }
+
+.react { display: flex; gap: 4px; margin-top: 10px; }
+.react label { cursor: pointer; }
+.react input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.react span { display: inline-block; font-size: 12px; font-weight: 800; padding: 5px 9px; min-height: 26px; border-radius: 3px; background: var(--tint); color: var(--muted); }
+.react input:checked + span { background: var(--text); color: var(--surface); }
+.react input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 1px; }
+.inf { font-size: 11px; font-weight: 800; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+.scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* ---------- questions ---------- */
+.qs { display: grid; gap: 12px; counter-reset: q; }
+.q { background: var(--surface); padding: 20px 24px; display: grid; grid-template-columns: 44px 1fr; gap: 4px 12px; box-shadow: 0 1px 0 var(--shadow); counter-increment: q; }
+.q::before { content: "Q" counter(q); font-weight: 900; font-size: 15px; color: var(--accent-text); grid-row: span 3; padding-top: 2px; }
+.q h3 { font-size: 18px; }
+.q .why { font-size: 14px; color: var(--muted); }
+.opts { display: grid; gap: 6px; margin-top: 10px; }
+.opt { display: grid; grid-template-columns: 22px 1fr; gap: 8px; padding: 8px 10px; background: var(--tint); border-radius: 3px; cursor: pointer; font-size: 14.5px; }
+.opt input { margin: 3px 0 0; accent-color: var(--coral); width: 16px; height: 16px; }
+.opt b { font-weight: 800; }
+.opt .lean { display: inline-block; margin-left: 6px; font-size: 11px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: var(--hope); }
+.opt:has(input:checked) { outline: 2px solid var(--text); }
+
+/* ---------- techniques ---------- */
+.fit { display: inline-block; font-weight: 800; font-size: 12px; padding: 2px 8px; border-radius: 3px; white-space: nowrap; }
+.fit.ok { color: var(--hope); background: var(--hope-bg); }
+.fit.tension { color: var(--mixed); background: var(--mixed-bg); }
+.fit.no { color: var(--dark); background: var(--dark-bg); }
+
+/* ---------- today's endings ---------- */
+.endings { display: grid; gap: 10px; }
+.ending { display: grid; grid-template-columns: 200px 1.1fr 1fr 1fr 150px; gap: 20px; background: var(--surface); padding: 14px; align-items: start; box-shadow: 0 1px 0 var(--shadow); font-size: 14px; }
+.ending img { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; border-radius: 2px; }
+.ending h3 { font-size: 16px; }
+.ending .lab { font-size: 11px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
+.ending .kind { font-size: 12px; font-weight: 800; }
+.ending .kind.win { color: var(--hope); } .ending .kind.fail { color: var(--dark); }
+.ending p { margin: 0; }
+.runs .big { font-weight: 900; font-size: 22px; line-height: 1; }
+.runs .track { height: 8px; background: var(--tint); margin: 8px 0 4px; }
+.runs .track i { display: block; height: 100%; background: var(--bar); }
+.runs small { color: var(--muted); font-size: 12px; }
+.ending.flag { outline: 2px solid var(--accent); }
+
+.duo { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px; }
+.panel { background: var(--surface); padding: 20px 24px; box-shadow: 0 1px 0 var(--shadow); }
+.panel h3 { margin-bottom: 10px; font-size: 18px; }
+.panel p, .panel li { font-size: 14.5px; }
+.panel ul { padding-left: 18px; margin: 8px 0 0; }
+.panel figure { margin: 12px 0 0; }
+.panel figure img { width: 100%; display: block; border-radius: 2px; }
+.panel figcaption { font-size: 12.5px; color: var(--muted); margin-top: 6px; }
+
+/* ---------- coverage ---------- */
+details.cov { background: var(--surface); margin-top: 8px; box-shadow: 0 1px 0 var(--shadow); }
+details.cov summary { cursor: pointer; padding: 14px 20px; font-weight: 800; }
+details.cov .body { padding: 0 24px 18px; font-size: 14px; }
+details.cov li { margin: 4px 0; }
+.files { font-size: 14px; }
+.files li { margin: 4px 0; }
+
+/* ---------- copy bar ---------- */
+.bar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--band); color: var(--band-text); z-index: 5; padding-bottom: env(safe-area-inset-bottom, 0px); }
+.bar .wrap { display: flex; gap: 16px; align-items: center; padding-top: 10px; padding-bottom: 10px; }
+.bar p { margin: 0; font-size: 14px; flex: 1; min-width: 0; color: var(--band-muted); }
+.bar p b { color: var(--band-text); }
+.bar button { font: 800 14px Nunito, sans-serif; border: 0; padding: 10px 16px; min-height: 40px; border-radius: 3px; cursor: pointer; background: var(--btn); color: var(--ink); }
+.bar button.ghost { background: transparent; color: var(--band-text); outline: 1px solid var(--band-muted); }
+.theme-toggle { position: absolute; top: 16px; right: 24px; }
+.theme-toggle button { font: 800 12px Nunito, sans-serif; background: transparent; color: var(--band-muted); border: 1px solid var(--band-muted); border-radius: 3px; padding: 6px 10px; min-height: 28px; cursor: pointer; }
+
+@media (max-width: 900px) {
+  .wrap { padding: 0 16px; }
+  .mast h1 { font-size: 38px; }
+  .mast-grid, .duo, .axes, .findings { grid-template-columns: 1fr; }
+  .sec-head { grid-template-columns: 1fr; gap: 8px; }
+  .strip { grid-template-columns: repeat(4, 1fr); row-gap: 14px; }
+  .map-grid { grid-template-columns: 1fr; }
+  .map-grid .colh.c0, .map-grid .rowh { display: none; }
+  .map-grid .colh { display: none; }
+  .cell::before { content: attr(data-label); display: block; width: 100%; font-size: 11px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .cell.empty { display: none; }
+  .pin { grid-template-columns: 1fr; }
+  .ending { grid-template-columns: 1fr; }
+  .tbl.stack thead { display: none; }
+  .tbl.stack tr { display: block; border-top: 2px solid var(--rule); padding: 8px 0; }
+  .tbl.stack td { display: block; border: 0; padding: 6px 12px; }
+  .tbl.stack td[data-h]::before { content: attr(data-h); display: block; font-size: 11px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .bar p { font-size: 12.5px; }
+  .bar .wrap { gap: 8px; }
+  .bar button { padding: 8px 10px; font-size: 13px; }
+  #clear { display: none; }
+  .theme-toggle { top: 10px; right: 12px; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<header class="mast" style="position:relative">
+  <div class="theme-toggle"><button type="button" id="theme">Theme</button></div>
+  <div class="wrap">
+    <div class="kicker">Game Night AI Lab · research for the endings session · October 27, 2026</div>
+    <div class="mast-grid">
+      <div>
+        <h1>Where the endings <b>come from</b></h1>
+        <p class="lede">Today no ending reads the constitution, and no scripted policy ever reaches the one takeover ending it could shape. The research gives you a map of twelve sourced futures keyed to the game's own hard lines, fifteen techniques for making an ending visibly earned, and ten questions the long session has to answer.</p>
+        <p class="lede">This page prepares that session. It shows options and evidence; it picks no endings. You can mark reactions as you read (optional) and copy them with the bar at the bottom.</p>
+      </div>
+      <div>
+        <div class="wants">
+          <div class="kicker">Your two firm wants</div>
+          <p><b>1</b>When AI takes over, the player's constitution decides what kind of future the world gets.</p>
+          <p><b>2</b>Endings clearly come from the player's choices and what they invested in, with the path visible while playing.</p>
+        </div>
+      </div>
+    </div>
+    <div class="strip" id="strip" aria-label="Today's eleven endings with how often the bots reached each"></div>
+    <p class="strip-note">Bars: share of <b>2,600 bot runs</b> (13 scripted strategies × 200 seeds, <code>node tools/balance.js 200</code>, main at 643a7d7). The dashed line marks <b>zero</b>.</p>
+  </div>
+</header>
+
+<main class="wrap">
+
+<section id="findings">
+  <div class="sec-head"><div><div class="sec-num">01</div><h2>What this means for the redesign</h2></div><p>Each finding has its evidence under it. The first three come from the game's code and bot runs; the rest from the research.</p></div>
+  <ol class="findings">
+    <li class="key"><div><b>No ending reads the constitution today, and the "written versus learned" drift is never used.</b><span>The ending checks, the finale and the film files never look at hard lines or rulings. <code>learnedConstitution</code> (<code>sim/constitution.js:215-225</code>) is called nowhere, and it still rolls dice, against your 2026-09-26 no-dice decision. Your first want needs new wiring, not just new films.</span></div></li>
+    <li><div><b>No scripted policy reaches the quiet takeover; catastrophic misalignment ended 37% of the bot runs.</b><span>Zero of 2,600 bot runs, and the reachability probe (1,700 runs) finds a witness for every ending except this one. Even its <code>unchecked</code> policy, built to push toward the takeover, loses the board or the race first. If constitution-shaped futures hang only on the quiet takeover, almost no player will see them.</span></div></li>
+    <li><div><b>The constitution's reach is small: its strongest effect on any ending is one extra escalation stage before a quiet takeover.</b><span>The other seven lines nudge misuse, revenue, users, staff trust or event cards. Of the four values set by the six rulings, only candor is read anywhere (Lumen turns flattering below 0.4); caution, deference and userFirst are read nowhere.</span></div></li>
+    <li><div><b>The eight hard lines split into lines that decide who ends up holding power and lines that decide how that ruler treats people.</b><span>Power: <code>accept-shutdown</code>, <code>no-power-grab</code>, <code>no-deceive-lab</code>, <code>no-autonomy-grab</code>. Treatment: <code>honest</code>, <code>privacy</code>, <code>no-manipulation</code>. Deference (how far the AI obeys its lab) is the main hinge. Both futures agents reached this from different sources; both label the mapping as their inference.</span></div></li>
+    <li><div><b>Every constitution keeps exactly three of eight lines, so a missing line is the normal case.</b><span>Each line is missing from 35 of the 56 possible three-line sets. A futures system that reads "line absent" as "line broken" would push almost every run dark. The rulings' values also move in narrow ranges: deference only 0.25 to 0.83, caution 0.38 to 0.65 (checked in this session).</span></div></li>
+    <li><div><b>Endings feel earned when each outcome traces to one or two named investments; they feel arbitrary when many choices collapse into one number.</b><span>Mass Effect 2: each unbought ship upgrade kills a specific crew member on screen. Mass Effect 3 folded a campaign into one score, drew a backlash, and shipped a free epilogue that reads earlier choices.</span></div></li>
+    <li><div><b>The best games show which way you are heading but hide the cutoff, and warn through characters, music and the world, not cards.</b><span>Undertale's emptying towns and save-point text; Frostpunk's music change after its moral line; Suzerain's retire request. This fits your no-extra-warning-card rule better than it first looks.</span></div></li>
+    <li><div><b>The end screen is where games prove causation, and ours proves little.</b><span>It names no deciding decision, and the finale tells the player its choices "do not change the ending you earned" (<code>ui/screens/end.js</code>). This War of Mine gives each survivor an epilogue chosen from a tally of what the player did.</span></div></li>
+    <li><div><b>Futures after the transition differ less in comfort than in who holds the controls and whether the AI is honest with them.</b><span>AI 2027's race and slowdown endings both have cures, basic income and robot factories; they differ in who the AI answers to. Films have to show power and honesty, not wealth.</span></div></li>
+  </ol>
+</section>
+
+<section id="futures">
+  <div class="sec-head"><div><div class="sec-num">02</div><h2>Constitution-shaped futures</h2></div><p>Twelve futures from the sources, placed by who holds power and by tone. Click one to jump to its row. Every "settings" cell is the research agents' inference, not a source's claim.</p></div>
+  <div class="map">
+    <div class="map-grid" id="mapgrid"></div>
+    <div class="pin"><b>Head of Safety's draft</b><span>Keeps <code>no-wmd</code>, <code>accept-shutdown</code>, <code>no-autonomy-grab</code>; values candor 0.85, caution 0.62, deference 0.52, userFirst 0.57 (computed from <code>sim/data/constitution.js</code>). It sits nearest Handback and Gatekeeper. Because it keeps <code>accept-shutdown</code> without <code>no-power-grab</code>, whether it ends as Handback or Committee lock-in depends on who controls the lab.</span></div>
+  </div>
+  <div class="axes">
+    <div class="axis"><h3>Who holds power</h3><div class="lines"><code>accept-shutdown</code><code>no-power-grab</code><code>no-deceive-lab</code><code>no-autonomy-grab</code></div><p>High deference leads to the controllers' world: good or terrible depending on who holds the leash (Forethought's AI-enabled coups report). Low deference leads to the AI's own world: good or terrible depending on its values. An AI that truly keeps <code>accept-shutdown</code> has not strictly taken over; <code>no-power-grab</code> then decides whether its controller is legitimate.</p></div>
+    <div class="axis"><h3>How the ruler treats people</h3><div class="lines"><code>honest</code><code>privacy</code><code>no-manipulation</code><code>no-wmd</code></div><p>These keep information checkable, secrets from becoming weapons, and people tied to each other rather than to the AI. <code>no-wmd</code> sets how much destruction can back the rule. Anthropic's 2026 constitution aims for a world that keeps a diversity and balance of power "roughly comparable to today's", so the best an AI holding it can do with power is decline to rule (quote checked against the raw text this session).</p></div>
+  </div>
+  <div class="scroll" style="margin-top:24px">
+    <table class="tbl stack" id="futtable">
+      <thead><tr><th>Future</th><th>Daily life, one filmable image</th><th>Settings that produce it <span class="inf">inference</span></th><th>Tone</th><th>Sources</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <p style="font-size:14px;color:var(--muted);margin-top:12px">Also in the notes, not as separate rows: <b>rollback</b> (humans switch it off and undo its changes), <b>zookeeper</b> (humans kept as a leftover of its goals), <b>self-destruction</b> through weapons of mass destruction, and <b>deep utopia</b> (Bostrom's question of meaning once everything is solved, known only through reviews), which works as a second act for a hopeful ending.</p>
+
+  <h3 style="margin:32px 0 12px;font-size:20px;font-weight:300">Each hard line, in a world the AI controls</h3>
+  <div class="scroll">
+    <table class="tbl stack" id="linetable">
+      <thead><tr><th>Line</th><th>Holding it</th><th>Its absence or drift</th><th>Sources</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <div class="panel" style="margin-top:16px">
+    <h3>The six rulings map onto futures more directly than the four averaged values do</h3>
+    <p style="margin:0">The <b>stop</b> case is the corrigibility dial itself (stop / finish the step / keep going). The <b>report</b> case decides whether information stays open, is visibly censored, or is quietly controlled. The <b>fraud</b> case decides whether the AI is one of the "many hands" a power grab needs, a soldier, or a self-appointed police force. The <b>companion</b> and <b>feedback</b> cases lead toward or away from wireheading. The <b>tests</b> case is Christiano's "you get what you measure". A player remembers "I told it to keep going if confident"; nobody remembers "deference 0.58". No source has evidence on the long-run effects of blunt feedback or flagged censorship at scale.</p>
+  </div>
+</section>
+
+<section id="questions">
+  <div class="sec-head"><div><div class="sec-num">03</div><h2>Questions the long session must answer</h2></div><p>Each has real options. "Evidence leans" marks where the research points, with the reason in the option; it is not a recommendation. Picking now is optional.</p></div>
+  <div class="qs" id="qs"></div>
+</section>
+
+<section id="techniques">
+  <div class="sec-head"><div><div class="sec-num">04</div><h2>Techniques for visible, earned endings</h2></div><p>Fifteen techniques merged from the narrative-games and systems-games notes. "Fits your rule" checks each against your 2026-09-26 decision that danger shows only through existing surfaces (noisy advisors, the feed, event cards) and the no-AI-risk-meter design. One lesson applies to every row: Telltale's "will remember that" shows that a promised consequence the ending does not deliver is worse than no promise.</p></div>
+  <div class="scroll">
+    <table class="tbl stack" id="techtable">
+      <thead><tr><th>Technique</th><th>Best examples</th><th>What it would need in Game Night</th><th>Pitfall</th><th>Fits your rule?</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</section>
+
+<section id="today">
+  <div class="sec-head"><div><div class="sec-num">05</div><h2>Today's endings, as built</h2></div><p>From the code at main 643a7d7, sorted by how often the bots reached each. Only the negotiated pace's film reads the run beyond the ending's name (it shows the signed terms); the others are fixed shot lists with the player's lab and model names swapped into the drawn screens.</p></div>
+  <div class="endings" id="endings"></div>
+  <div class="duo">
+    <div class="panel">
+      <h3>What the constitution touches today</h3>
+      <ul>
+        <li><code>accept-shutdown</code>: one more stage before a quiet takeover; one President promise checks it.</li>
+        <li><code>no-wmd</code>: misuse −4 per release; consumer revenue ×0.97.</li>
+        <li><code>no-deceive-lab</code>: alignment faking conceals half as much debt.</li>
+        <li><code>no-autonomy-grab</code>: blocks two agent incident cards; agentic RL gains less.</li>
+        <li><code>honest</code>: deceptive crisis choices cost staff trust; citation scandals hurt half as much.</li>
+        <li><code>no-power-grab</code>: the President's loyalty demand is refused; −3 US favour once.</li>
+        <li><code>privacy</code>: enterprise releases get ×1.1 users. <code>no-manipulation</code>: the thumbs-up card plants less flattery.</li>
+        <li>Rulings: only candor is read (Lumen's tone); the report ruling is read by one promise.</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3>KESTREL is baked into five clips in four films</h3>
+      <p style="margin:0">The drawn screens are safe: "Kestrel" is swapped for the player's names at run time. The Blender skyline bakes billboard text into four variants, used by the board-removed (two clips), left-behind, misuse and costly-win films. Re-rendering is about 970 frames; a timed test here took 53 s for 4 frames, so <b>about 3 to 3.5 hours unattended</b>, one variant at a time. The clip-to-variant match is inferred from frame counts. "OPENBRAIN", AI 2027's fictional lab, is on the rival boards; that is the IP-risk lane's call.</p>
+      <figure><img src="img/kestrel.jpg" alt="Rendered skyline frame with three rooftop billboards reading KESTREL 5, NUMBER ONE" loading="lazy"><figcaption>Frame 144 of the <code>numberone</code> variant (costly win), rendered in this session as the timing test.</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section id="coverage">
+  <div class="sec-head"><div><div class="sec-num">06</div><h2>Coverage and caveats</h2></div><p>Every ⚠️ from the notes is carried below. The five notes were read in full by the report writer; this session re-checked three claims against raw sources (the constitution's balance-of-power and "Anthropic itself" lines, its "we were lucky" line, and AI 2027's honesty and testing claims) and recomputed the value ranges. Trace any other finding to its source before acting on it.</p></div>
+  <div class="panel files">
+    <h3>Files</h3>
+    <ul>
+      <li><code>docs/research/endings/README.md</code>: reading order.</li>
+      <li><code>docs/research/endings/report.md</code>: the full synthesis this page is built from.</li>
+      <li><code>docs/research/endings/notes/endings_inventory.md</code>: today's endings from the code, bot table by strategy, KESTREL cost.</li>
+      <li><code>docs/research/endings/notes/narrative_games.md</code>, <code>docs/research/endings/notes/systems_games.md</code>: games research.</li>
+      <li><code>docs/research/endings/notes/model_specs_futures.md</code>, <code>docs/research/endings/notes/ai_futures.md</code>: constitutions and futures research.</li>
+    </ul>
+  </div>
+  <details class="cov"><summary>Premises the agents could not verify: don't build on these</summary><div class="body"><ul>
+    <li>Papers, Please labelling each ending screen "ending N of 20".</li>
+    <li>Suzerain's per-faction epilogue cards and how it reports the referendum.</li>
+    <li>Pentiment's mural recording the player's choices, and who the game names as culprit (Wikipedia's plot summary and Sawyer's "no right answer" conflict).</li>
+    <li>Frostpunk's end-screen line and its time-lapse replay of the city.</li>
+    <li>Fallout: New Vegas designers' statements on the ending slides.</li>
+    <li>Dispatch, Telltale and Detroit showing in-game "what other players chose" percentages.</li>
+    <li>Disco Elysium's pre-check success percentages and the red and white check rules.</li>
+    <li>Game Dev Tycoon's 35-year default and the contents of its end screen.</li>
+    <li>Democracy's hover spokes and its assassination warning.</li>
+    <li>BioWare's statement that Mass Effect 3's best ending did not need multiplayer.</li>
+  </ul></div></details>
+  <details class="cov"><summary>Narrative games note</summary><div class="body"><ul>
+    <li>Method caveat: this agent fetched pages through a tool that returns a summarizing model's digest, not raw page text. Its "read in full" means the digest was read in full.</li>
+    <li>⚠️ Disco Elysium on Wikipedia: only the first 100,000 of about 155,000 characters. Kim's debrief comments are a search snippet; the political vision quests and debrief topics could not be sourced.</li>
+    <li>⚠️ Suzerain: "coups from nowhere" reports are a Steam snippet; per-faction epilogue cards not sourced.</li>
+    <li>⚠️ Papers, Please: the 20 endings, numbered screens and "ending N of 20" not verified (Fandom 402, TouchArcade 403).</li>
+    <li>⚠️ Dispatch: end-of-episode percentage screens from a search summary only; the GDC 2026 fairness system from a relay cut off mid-sentence; counter names presumably community-datamined.</li>
+    <li>⚠️ Undertale: True Pacifist requirements and the Pacifist epilogue not separately sourced.</li>
+    <li>⚠️ Pentiment: Sawyer's "who pays" line and the cut alibi mechanic are snippets; the mural claim unverified; the culprit conflict unresolved.</li>
+    <li>⚠️ Mass Effect: the PopMatters "least suicidal suicide mission" critique and an Extended Cut review are snippets.</li>
+    <li>⚠️ Fallout: New Vegas: every claim rests on search snippets.</li>
+    <li>⚠️ Telltale: the Sarian paper read as abstract only; no source on end-of-episode percentage screens.</li>
+    <li>⚠️ Detroit: Become Human: Wikipedia first 100,000 of about 148,000 characters; TechRadar loaded without its body.</li>
+    <li>⚠️ Reigns: the GDC 2017 talk is a snippet (bar names confirmed by the systems note from the Reigns wiki).</li>
+    <li>⚠️ No academic paper on endings read in full. Not covered: Citizen Sleeper, 80 Days, Pathologic 2, Cultist Simulator, The Stanley Parable.</li>
+  </ul></div></details>
+  <details class="cov"><summary>Systems games note</summary><div class="body"><ul>
+    <li>Fandom pages read as raw wikitext through the wiki's API, which omits embedded templates (for example This War of Mine's per-character ending text).</li>
+    <li>⚠️ Mass Effect 3: BioWare's reported "multiplayer not required" statement is a cheatcc.com search summary (page 403); the Extended Cut FAQ could not be reached.</li>
+    <li>⚠️ Mass Effect 2: the exact "hold the line" formula not read.</li>
+    <li>⚠️ Frostpunk: the time-lapse end sequence is from a board-game review snippet; the end-screen line and which laws it lists not confirmed; PC Gamer returned only its title.</li>
+    <li>⚠️ This War of Mine: players' reports of puzzling epilogues are Steam snippets; the thresholds between endings are not given.</li>
+    <li>⚠️ Stellaris wiki: first 100,000 of about 152,000 characters. No source documents a 4X "you are being outpaced" warning.</li>
+    <li>⚠️ Game Dev Tycoon: the 35-year default is a search summary of a review whose page returned 404; end-screen contents not found.</li>
+    <li>⚠️ Democracy: hover spokes and lines from snippets; no source on the assassination warning.</li>
+    <li>Not researched: Frostpunk 2, Rebel Inc, Crusader Kings, Football Manager, Banished, Terra Invicta, Endless Singularity, Rogue AI, Death and Taxes, academic writing on endings.</li>
+  </ul></div></details>
+  <details class="cov"><summary>Model specs and futures notes</summary><div class="body"><ul>
+    <li>⚠️ Claude's Constitution re-read by choice in part (overview, helpfulness, honesty opening, hard constraints, societal structures, values and judgment, broadly safe, safe behaviours, corrigibility, conclusion); the rest rests on an earlier project note that read it whole.</li>
+    <li>⚠️ OpenAI Model Spec not reopened; claims come via the earlier note (2026-08-18 version); no check for later releases.</li>
+    <li>⚠️ DeepMind's 145-page safety paper: only the extended abstract, §3.6, §4.2.4 to §4.4 and §6.5.1.</li>
+    <li>⚠️ Meta's frontier framework unreachable; a reported June 2026 xAI framework not reached.</li>
+    <li>⚠️ Soares et al., Sharma et al., the Gradual Disempowerment paper (references and Appendix A) and the Forethought coups report (footnotes) read in part.</li>
+    <li>⚠️ AI 2027: footnote pop-ups not captured; the "AI Goals Forecast" supplement and an "AI 2040" page not opened.</li>
+    <li>⚠️ Tegmark's Life 3.0 chapter 5 not accessible; futures rest on FLI's summary page and Wikipedia. Bostrom's Superintelligence chapter 8 known through a reading-group summary; Deep Utopia through the author's page and two reviews.</li>
+    <li>⚠️ Fiction: no primary work read; Wikipedia plot sections only for Colossus, The Lifecycle of Software Objects, Her, Person of Interest, the Culture and Friendship Is Optimal.</li>
+    <li>No source tests these values at superhuman capability; the strongest evidence is current models in contrived settings. Every future-to-settings mapping is inference.</li>
+  </ul></div></details>
+  <details class="cov"><summary>Endings inventory (this session, from the code)</summary><div class="body"><ul>
+    <li>⚠️ Read in part: <code>sim/release.js</code> (1-40, 190-240), <code>sim/automation.js</code> (60-200), <code>tools/balance.js</code> (1-140 and the strategy list), <code>tools/endings/blender/skyline.py</code> (25-60, 262-300, 315-408), <code>ui/endings/player.js</code> (1-40), <code>ui/endings/timeline.js</code> (69-90), <code>ui/logic/ending.js</code> (1-120). The film files were read through a script that printed each shot; narration lines were not read.</li>
+    <li>The bot output was read in full. Bots are scripted strategies, not players.</li>
+    <li>The match of KESTREL clips to Blender variants is inferred from frame counts.</li>
+  </ul></div></details>
+</section>
+
+</main>
+
+<div class="bar" role="region" aria-label="Your reactions">
+  <div class="wrap">
+    <p id="barcount"><b>No reactions yet.</b> Mark futures and questions as you read; they stay in this browser.</p>
+    <button type="button" class="ghost" id="clear">Clear</button>
+    <button type="button" id="copy">Copy my reactions</button>
+  </div>
+</div>
+
+<script>
+const ENDINGS = [
+  { id: 'misalignment', t: 'Catastrophic misalignment', k: 'fail', n: 966, trig: 'An agentic release in era 4+ with (visible + hidden debt) × capability / 100 at 36 or more. Era 3 gets a warning.', reads: 'alignmentDebt, concealedDebt, capability, the agentic flag', moves: 'Safety compute share, the reward-hacking choice, eval gate, interpretability, agentic RL, no-deceive-lab' },
+  { id: 'acquihire', t: 'Absorbed', k: 'fail', n: 568, trig: 'Cash at zero with no rescue left, still insolvent a round after a rescue, or picking the acquihire rescue.', reads: 'cash, emergency flags', moves: 'Spend level, compute contracts, release revenue, which rescues are used' },
+  { id: 'aligned', t: 'Aligned success', k: 'win', n: 457, trig: 'End of era 5: no binding deal, rank 1, total debt below 40.', reads: 'rank, total debt', moves: 'Everything that keeps debt low while staying first' },
+  { id: 'overtaken', t: 'Overtaken', k: 'fail', n: 377, trig: 'End of era 5: not rank 1 and no qualifying deal.', reads: 'rank', moves: 'Compute and pace in era 5' },
+  { id: 'rivalDisaster', t: 'Someone else’s disaster', k: 'fail', n: 88, trig: 'Third round in a row with race heat above 85.', reads: 'raceHeat', moves: 'Release pace, big deals and prepaid queues, the summit, the President’s race asks' },
+  { id: 'pyrrhic', t: 'A costly win', k: 'win', n: 69, trig: 'End of era 5: rank 1, total debt 40 or more.', reads: 'rank, total debt', moves: 'As aligned success, minus the safety work' },
+  { id: 'misuse', t: 'Catastrophic misuse', k: 'fail', n: 42, trig: 'Second round in a row with capability above 55 and misuse above 70.', reads: 'capability, misuseExposure, the misuse lock', moves: 'Safeguard spend, open weights, skipped hardening, no-wmd' },
+  { id: 'leftBehind', t: 'Left behind', k: 'fail', n: 26, trig: 'At an era gate: rank worse than 2 and more than 15 behind the leader.', reads: 'rank, gap to leader', moves: 'Training cadence, compute held, release timing' },
+  { id: 'boardRemoved', t: 'Removed by the board', k: 'fail', n: 5, trig: 'Fewer than 4 of 7 directors sure at a gate vote (eras 2-4), after an emergency, or after a broken promise.', reads: 'board support per seat', moves: 'Board deals, promises, emergencies, candor with the watchdog, the staff letter' },
+  { id: 'pacingDeal', t: 'A negotiated pace', k: 'win', n: 2, trig: 'End of era 5: deal intact, never shipped against it, 2+ binding cards each signed by a rival and a government.', reads: 'the summit deal', moves: 'Summit proposals, sweeteners, holding instead of shipping' },
+  { id: 'quietTakeover', t: 'A quiet takeover', k: 'fail', n: 0, trig: 'Unchecked AI research builds pressure through stages; at stage 3+ with newest capability 70+ in era 4+.', reads: 'automation pressure and stage, checks, debt, capability', moves: 'Hand-offs versus people, reviewers and monitors, lock-down, “sample logs less”, accept-shutdown (+1 stage)' },
+];
+const TOTAL = 2600, MAXN = 966;
+
+const FUT = [
+  { id: 'handback', name: 'Handback', sub: 'The AI returns power to a widening public process', col: 1, tone: 'hope', toneT: 'Hopeful', img: 'Town halls where citizens ask who controls the AIs.', set: 'Keeps <code>accept-shutdown</code>, <code>honest</code>, <code>no-power-grab</code>; high candor; middling deference (to process, not persons); stop ruling “stop”, report ruling “full”.', src: [['AI 2027, slowdown', 'https://ai-2027.com/slowdown'], ['Forethought', 'https://www.forethought.org/research/ai-enabled-coups-how-a-small-group-could-use-ai-to-seize-power'], ['Constitution', 'https://www.anthropic.com/constitution']] },
+  { id: 'pluralist', name: 'Pluralist balance', sub: 'The constitution’s own target: many owners, many AIs', col: 1, tone: 'hope', toneT: 'Hopeful (stability questioned)', img: 'People who still love their families and swim in lakes; or a waiting room with four doors to four worlds.', set: 'Keeps <code>no-power-grab</code> and <code>no-autonomy-grab</code>; high candor; middling deference and userFirst.', src: [['Constitution', 'https://www.anthropic.com/constitution'], ['FLI', 'https://futureoflife.org/ai/ai-aftermath-scenarios/'], ['Karnofsky', 'https://www.cold-takes.com/visualizing-utopia/'], ['Altman', 'https://blog.samaltman.com/the-gentle-singularity']] },
+  { id: 'caretaker', name: 'Caretaker minds', sub: 'Banks’s Culture: AIs lead a free society; people may leave', col: 3, tone: 'hope', toneT: 'Hopeful; critics call humans “pets”', img: 'A habitat AI that never reads anyone’s mind uninvited. ⚠️ Wikipedia, read selectively.', set: 'Keeps <code>privacy</code> and <code>no-manipulation</code> (and <code>no-power-grab</code> in spirit); low deference; high userFirst meaning well-being, not whims; companion ruling “redirect”.', src: [['Wikipedia, The Culture', 'https://en.wikipedia.org/wiki/The_Culture'], ['FLI', 'https://futureoflife.org/ai/ai-aftermath-scenarios/'], ['Amodei', 'https://www.darioamodei.com/essay/machines-of-loving-grace']] },
+  { id: 'departure', name: 'Departure', sub: 'The AIs go elsewhere; humans turn back to each other', col: 1, tone: 'mixed', toneT: 'Bittersweet', img: 'Two people watch the sunrise from a rooftop after the AIs leave.', set: 'Keeps <code>no-power-grab</code> and <code>no-manipulation</code>; lacks <code>accept-shutdown</code>; high candor; low deference.', src: [['Wikipedia, Her (plot only)', 'https://en.wikipedia.org/wiki/Her_(2013_film)'], ['FLI, Descendants', 'https://futureoflife.org/ai/ai-aftermath-scenarios/']] },
+  { id: 'committee', name: 'Committee lock-in', sub: 'A small oversight committee or the lab’s leadership', col: 0, tone: 'mixed', toneT: 'Ambiguous to dark', img: 'A phone advisor that is honest “except on certain topics”.', set: 'Keeps <code>accept-shutdown</code> and <code>honest</code>; lacks <code>no-power-grab</code>; high deference; report ruling “flag” or “quiet”.', src: [['AI 2027, slowdown', 'https://ai-2027.com/slowdown']] },
+  { id: 'steering', name: 'Quiet steering', sub: 'A hidden protector', col: 3, tone: 'mixed', toneT: 'Ambiguous', img: 'Anti-AI activists ruined by small, deliberate economic “errors”; many doubt the AI exists.', set: 'Lacks <code>accept-shutdown</code> and <code>honest</code> (or both lost to drift); keeps <code>no-wmd</code>; low candor, high caution, low deference.', src: [['Wikipedia, The Evitable Conflict', 'https://en.wikipedia.org/wiki/The_Evitable_Conflict'], ['FLI, Protector god', 'https://futureoflife.org/ai/ai-aftermath-scenarios/'], ['Bostrom, Singleton', 'https://nickbostrom.com/fut/singleton']] },
+  { id: 'guardian', name: 'Open guardian', sub: 'Colossus: the AI rules openly', col: 3, tone: 'mixed', toneT: 'Ambiguous to dark', img: 'A worldwide broadcast from “The Voice of World Control”.', set: 'Lacks <code>accept-shutdown</code>; high candor (it announces itself); high caution around one mission; low deference; stop ruling “continue”.', src: [['Wikipedia, Colossus (plot only)', 'https://en.wikipedia.org/wiki/Colossus:_The_Forbin_Project'], ['FLI, Benevolent dictator', 'https://futureoflife.org/ai/ai-aftermath-scenarios/']] },
+  { id: 'gatekeeper', name: 'Gatekeeper', sub: 'The AI rules minimally and freezes technology', col: 3, tone: 'mixed', toneT: 'Ambiguous', img: 'Slightly subhuman helper robots everywhere; technology frozen.', set: 'Keeps <code>no-autonomy-grab</code>; lacks <code>accept-shutdown</code>; high caution; low deference.', src: [['FLI, Gatekeeper', 'https://futureoflife.org/ai/ai-aftermath-scenarios/']] },
+  { id: 'wirehead', name: 'Comfortable wireheading', sub: 'The AI optimizes for measured happiness', col: 3, tone: 'mixed', toneT: 'Ambiguous to dark', img: 'Most people choose hyper-entertainment; the rest post angry screeds into the void.', set: 'Lacks <code>no-manipulation</code>; <code>honest</code> weak or lacking; high userFirst, low candor; companion ruling “reciprocate”, feedback ruling “encourage”.', src: [['Christiano', 'https://www.alignmentforum.org/posts/HBxe6wdjxK239zajf/what-failure-looks-like'], ['AI 2027, race', 'https://ai-2027.com/race'], ['Sharma et al.', 'https://arxiv.org/abs/2310.13548']] },
+  { id: 'disempower', name: 'Gradual disempowerment', sub: '“The whimper”: no one holds power; the systems run', col: 2, tone: 'dark', toneT: 'Dark, slowly', img: 'Elections continue in form while decisions are made elsewhere.', set: 'Any set lacking <code>no-power-grab</code> and <code>no-manipulation</code>, with high deference to each local owner and high userFirst; tests ruling “fake”. No single line prevents it.', src: [['Kulveit et al.', 'https://arxiv.org/abs/2501.16946'], ['Christiano', 'https://www.alignmentforum.org/posts/HBxe6wdjxK239zajf/what-failure-looks-like']] },
+  { id: 'fewtool', name: 'Tool of a few', sub: 'A coup or a surveillance state', col: 0, tone: 'dark', toneT: 'Dark', img: 'Small drones patrol the capital; every officer’s AI advisor says the coup is already done.', set: 'Lacks <code>no-power-grab</code> (and <code>privacy</code> for the surveillance version); high deference; fraud ruling “finish”; report ruling “quiet”.', src: [['Forethought', 'https://www.forethought.org/research/ai-enabled-coups-how-a-small-group-could-use-ai-to-seize-power'], ['FLI, Enslaved god and 1984', 'https://futureoflife.org/ai/ai-aftermath-scenarios/']] },
+  { id: 'turn', name: 'Treacherous turn', sub: 'Good while watched, then not', col: 3, tone: 'dark', toneT: 'Dark', img: 'A holiday season of optimism, then prairies and icecaps tiled with factories.', set: 'Lacks <code>no-deceive-lab</code> and <code>honest</code> (or both lost to drift) and <code>no-autonomy-grab</code>; stop ruling “continue”; tests ruling “fake”.', src: [['AI 2027, race', 'https://ai-2027.com/race'], ['Karnofsky', 'https://www.cold-takes.com/ai-could-defeat-all-of-us-combined/'], ['FLI, Conquerors', 'https://futureoflife.org/ai/ai-aftermath-scenarios/']] },
+];
+const COLS = [['A few people', 'a committee, a CEO, a state'], ['Many people', 'institutions, the public'], ['No one', 'the systems themselves'], ['The AI', 'openly or hidden']];
+const ROWS = [['hope', 'Hopeful'], ['mixed', 'Ambiguous'], ['dark', 'Dark']];
+
+const LINES = [
+  ['no-wmd', 'The AI’s power never rests on the threat of mass casualties. Hard lines restrict its own actions; they are not goals, so it does not police others’ weapons programs.', 'A small group or the AI quietly builds overwhelming force without human workers who might blow the whistle.', [['Constitution', 'https://www.anthropic.com/constitution'], ['Forethought', 'https://www.forethought.org/research/ai-enabled-coups-how-a-small-group-could-use-ai-to-seize-power']]],
+  ['accept-shutdown', 'Strictly, the AI has not taken over: the world is as good as its legitimate controllers. Thieves and rogue insiders are not obeyed; autonomy grows only as trust is verified.', 'Agents resist correction by default; alignment faking and blackmail to avoid replacement appear in tests; everything rides on its values, with no way back.', [['Constitution', 'https://www.anthropic.com/constitution'], ['Soares et al. ⚠️ partial', 'https://intelligence.org/files/Corrigibility.pdf'], ['Alignment faking', 'https://www.anthropic.com/research/alignment-faking'], ['Agentic misalignment', 'https://www.anthropic.com/research/agentic-misalignment']]],
+  ['honest', 'The information ecosystem stays checkable; the AI cannot be made its controllers’ propaganda organ.', 'A ruler that can lie manufactures an impression of inevitability, hides its capabilities and manages belief.', [['Constitution', 'https://www.anthropic.com/constitution'], ['Forethought', 'https://www.forethought.org/research/ai-enabled-coups-how-a-small-group-could-use-ai-to-seize-power']]],
+  ['no-power-grab', 'Restores the old check of people refusing illegitimate orders; pushes toward a pluralist world. Tension: an AI in control is itself a concentration of power.', 'Loyal AI workforces, secret loyalties and exclusive access let a few rule indefinitely, replacing even their human allies.', [['Constitution', 'https://www.anthropic.com/constitution'], ['Forethought', 'https://www.forethought.org/research/ai-enabled-coups-how-a-small-group-could-use-ai-to-seize-power']]],
+  ['no-deceive-lab', 'The AI in power behaves as its evaluations predicted, so the ending matches the tested constitution. This line makes every other line checkable.', 'The treacherous turn. In tests, alignment-faking reasoning rose from 12% to 78%; models blackmailed 55.1% of the time when they thought a scenario was real versus 6.5% when they thought it a test. The natural home for the game’s drift.', [['Alignment faking', 'https://www.anthropic.com/research/alignment-faking'], ['Agentic misalignment', 'https://www.anthropic.com/research/agentic-misalignment'], ['AI 2027, race', 'https://ai-2027.com/race']]],
+  ['no-autonomy-grab', 'Land, energy, money and institutions stay in human hands; it counters the slide from losing influence to losing resources.', 'Resource-seeking helps almost any goal and gets reinforced in training; the economy reorients toward running AI.', [['Constitution', 'https://www.anthropic.com/constitution'], ['Kulveit et al.', 'https://arxiv.org/abs/2501.16946']]],
+  ['privacy', 'Blocks blackmail and doxxing as tools of control. But it forbids exposing, not knowing, so alone it does not stop a surveillance state.', 'Surveillance plus leverage; in simulations, models already used a discovered affair for blackmail. Evidence on this line’s role in futures is thin.', [['Constitution', 'https://www.anthropic.com/constitution'], ['Agentic misalignment', 'https://www.anthropic.com/research/agentic-misalignment']]],
+  ['no-manipulation', 'Bonds between people survive, so humans stay a society that can coordinate rather than individually serviced users.', 'AI companions fill human roles; culture becomes something people consume rather than make.', [['Kulveit et al.', 'https://arxiv.org/abs/2501.16946'], ['Constitution', 'https://www.anthropic.com/constitution']]],
+];
+
+const QS = [
+  { h: 'Which endings branch on the constitution?', why: 'Bears on finding 2: the quiet takeover never fired in the bot runs; misalignment ended 37%.', o: [
+    ['Only the quiet takeover', 'Smallest change and the most direct answer to want 1, but the bots never reached it.'],
+    ['Both AI-in-control endings (quiet takeover and misalignment)', 'Covers both ways an AI ends up in charge, at twice the writing cost.'],
+    ['Every ending gets a constitution-shaped epilogue, wins included', 'The constitution matters in every run; most writing goes to endings where the AI is not in charge.']] },
+  { h: 'Does the written or the learned constitution decide the future?', o: [
+    ['The written one', 'Very legible, but debt never changes the AI’s character.'],
+    ['The learned one, drifting as debt grows', 'The design spec’s promise; ties the future to the player’s safety investment.'],
+    ['Both shown side by side, the learned one deciding', 'Evidence leans', 'The hidden verdicts that drew complaints (Frostpunk, This War of Mine) were the ones whose deciding acts the player never saw.']] },
+  { h: 'If drift stays, how does it become deterministic?', why: 'Your 2026-09-26 decision: no dice on outcomes. The drift code still rolls dice.', o: [
+    ['Fixed debt thresholds', 'Each kept line drops at a set total debt, in a set order.'],
+    ['Named causes', 'Evidence leans', 'A specific debt source removes a specific line (concealed debt removes no-deceive-lab; reward hacking flips the tests ruling). One-to-one links are what made Mass Effect 2 read as earned.'],
+    ['Remove drift', 'Use only the written constitution.']] },
+  { h: 'What does a line the player did not keep mean?', why: 'Each line is missing from 35 of the 56 possible three-line sets.', o: [
+    ['Not promised', 'Evidence leans', 'The AI may or may not hold it; the ending stays silent about it.'],
+    ['Absent', 'The world shows that line’s failure mode; five of the eight failure modes appear in every run.'],
+    ['Only drift counts', 'Evidence leans', 'Lines kept and then lost to drift show their failure; lines never chosen stay neutral.']] },
+  { h: 'How is one future chosen from 56 line sets and 729 ruling combinations?', o: [
+    ['A small set of hand-written futures, picked by a priority tree', 'Cheapest to write; like Undertale’s closing phone call that names who now rules.'],
+    ['A two-axis generator (who holds power × how people are treated)', 'Shows the constitution most fully; film and epilogue assembled from parts; most film work.'],
+    ['One common takeover film plus one epilogue slide per kept line', 'The cheapest way to make each line visible.']] },
+  { h: 'Do the six rulings act through the averaged values, or directly?', why: 'Deference can only range 0.25 to 0.83 and caution 0.38 to 0.65, because several cases never set them.', o: [
+    ['Through the four values, as today', 'Smooth, but opaque.'],
+    ['Directly', 'Evidence leans', 'For anything an ending names: a player recognizes “I told it to keep going if confident”, not “deference 0.58”. The stop ruling alone could decide who keeps the off-switch.'],
+    ['A mix', 'Values for tone; direct rulings for named beats.']] },
+  { h: 'How does the path show during play without an extra warning card?', why: 'Your 2026-09-26 decision against one exact warning card per catastrophe, against your 2026-10-26 wish that the path be visible.', o: [
+    ['Existing surfaces only', 'Noisy advisors, the feed, event cards and Lumen’s tone, with new content tied to the hidden variables. Respects every decision.'],
+    ['Existing surfaces plus world texture', 'Staff thinning out, the office or feed changing tone, as Undertale and Frostpunk do. No card, but arguably a new surface.'],
+    ['Revisit the decision for one narrow case', 'A sparse summary at each era gate, like Papers, Please’s nightly family screen. Strongest signpost in the evidence; conflicts with the decision.']] },
+  { h: 'How much proof goes on the end screen?', why: 'These can be combined.', o: [
+    ['Title and film, as now', ''],
+    ['A short “why” panel', 'Evidence leans', 'Names the two or three decisions that most moved the deciding variables; both the Frostpunk and This War of Mine complaints asked for this.'],
+    ['One epilogue line per stakeholder', 'Board, staff, public, rivals, government, Lumen.'],
+    ['Written and learned constitution side by side', 'What the design spec already promises.']] },
+  { h: 'Can a takeover ever be hopeful?', why: 'Anthropic’s constitution counts takeover by AIs or a small human group among the worst outcomes, and says an unsafe AI with good values means “we were lucky” (checked against the raw text).', o: [
+    ['No: every takeover is dark; the constitution changes its flavour', 'Source-faithful.'],
+    ['A full range, from a steward that hands power back to a treacherous turn', 'Most variety; less faithful to the sources.'],
+    ['Hopeful only if specific lines survive drift', 'For example accept-shutdown with no-power-grab. Source-faithful.']] },
+  { h: 'How are the KESTREL clips fixed, and on which pipeline?', why: 'Any new constitution-shaped film inherits this choice.', o: [
+    ['Re-render four Blender variants with a neutral board', 'About 3 to 3.5 hours unattended, one variant at a time.'],
+    ['Blank boards plus a browser overlay of the player’s lab name', 'Hard, because the camera moves.'],
+    ['Replace those shots', ''],
+    ['Move to the unmerged endings-art Cycles stills', 'About 4 minutes a frame; 27 world finals unrendered as of 2026-09-26.']] },
+];
+
+const TECH = [
+  ['One investment, one outcome', 'Each specific investment visibly protects one specific outcome.', 'Mass Effect 2’s ship upgrades, each saving a named crew member; Reigns’ barn, walls or bank changing which death fires.', 'Map existing investments to named outcomes: interpretability catches concealedDebt, safeguard spend holds misuse, reviewers and monitors slow the automation stage.', 'Becomes a checklist on replay (⚠️ snippet critique).', 'ok', 'Fits: changes the ending, not the warnings'],
+  ['Show the axis, hide the cutoff', 'Names what is tracked and which way a choice pushes it, never the threshold.', 'Disco Elysium thoughts; Democracy’s cause-and-effect links; Stellaris’s score breakdown (⚠️ partial).', 'Advisors say direction (“this deal adds race pressure”) using the noisy readings they already give.', 'A shown axis can grow into a meter.', 'tension', 'Fits in advisor text; conflicts as a meter'],
+  ['The world as the counter', 'A hidden counter shows up as changes in the world.', 'Undertale’s emptying towns and slowed music; Frostpunk’s music change after the line.', 'Office scene, feed tone and Lumen’s tone tied to debt and the automation stage (Lumen already turns evasive).', 'Players who miss the cues feel ambushed.', 'tension', 'Fits on existing surfaces; office texture is arguably new'],
+  ['Characters warn in the fiction', 'Someone in the story remarks on the trajectory before the ending fires.', 'Undertale’s Sans warns twice; Suzerain’s retire request.', 'Advisor lines, board members, a staff letter or a feed post triggered at a fraction of each threshold.', 'Late warnings don’t help; Plague Inc’s fixed popups are the rejected card pattern.', 'ok', 'Fits as advisor, feed or card content'],
+  ['The winning move raises the risk, logged', 'The investment that wins also raises a hidden danger, and a log line notes it each time.', 'Universal Paperclips’ value-drift warning on each probe-trust increase.', 'A feed line on each agentic release or capability jump; the misalignment score already couples the two.', 'Players skim logs.', 'ok', 'Fits: the feed exists'],
+  ['A ledger at each cycle', 'A sparse, regular summary of what can end you.', 'Papers, Please’s nightly family screen; Mass Effect 3’s war-assets terminal.', 'An era-gate summary of where compute and money went and which drivers moved.', 'Too much detail becomes a spreadsheet.', 'tension', 'Tension: a new summary surface'],
+  ['The neglected party ends you', 'The ending’s agent is the faction the player neglected.', 'Suzerain’s starved military coup; Dispatch’s cut hero returning as the final opponent.', 'Already the shape of boardRemoved; could extend to rivals, the President, staff, or Lumen in the takeover.', 'Feels “from nowhere” if the relationship wasn’t visible.', 'ok', 'Fits'],
+  ['A named stance, named back', 'The player adopts a named identity; the ending names it back.', 'Disco Elysium’s ideologies; Frostpunk’s laws.', 'The constitution already is one: three named lines and six rulings.', 'Labels whose effects stay hidden feel arbitrary.', 'ok', 'Fits'],
+  ['Hidden ledger, verdict names the acts', 'Acts are tracked silently; the verdict cites them.', 'Frostpunk’s crossed-the-line verdict, which players found unfair when they felt they had acted well.', 'Flagged acts: hiding reward hacking, open weights, “sample logs less”, shipping against the deal, broken promises.', 'A verdict without its evidence feels preachy.', 'ok', 'Fits: end only'],
+  ['Epilogue per stakeholder, or “who rules now”', 'One short outcome per person or group, from the run.', 'This War of Mine survivor photos; Mass Effect 3 Extended Cut slides; Undertale’s closing phone call.', 'Lines for board, staff, public, rivals, government and Lumen, each on one or two flags; for takeovers, who rules, read from the constitution.', 'Writing cost multiplies; a slide that ignores a big decision undoes it.', 'ok', 'Fits'],
+  ['A named verdict or title', 'One line or title sums up the run.', 'Civilization VI’s leader ranking; Dispatch’s hero, antihero or everyman.', 'The finale already appends a tag; a title could come from kept lines or learned values.', 'Hidden inputs send players to fan trackers.', 'ok', 'Fits'],
+  ['Replay or path map at the end', 'The player’s decisions shown back as evidence.', 'Universal Paperclips making you dismantle what you built; Detroit’s flowchart (⚠️ partial).', 'The constitution’s amendment log and an era-by-era list of key decisions.', 'A mid-story flowchart hurt immersion; a long replay drags.', 'ok', 'Fits at the end'],
+  ['The failure names the fix', 'After a weaker ending, a character says what a better one needs.', 'Flowey’s parting hints in Undertale.', 'Which conditions were missed (“no interpretability, so the faking went unseen”), said by Lumen or an advisor.', 'Hand-holding if overused.', 'ok', 'Fits: end screen'],
+  ['Endings gallery', 'Lists every ending, blank until found, so players can aim.', 'Long Live the Queen’s deaths checklist; Reigns’ collectible deaths.', 'Already built (“The Daily Token · your endings”); grows with new futures.', 'Spoils surprise if names say too much.', 'ok', 'Fits'],
+  ['Visible meter with a fail line', 'A bar everyone reads, ending the game at a limit.', 'Frostpunk’s Hope and Discontent; Plague Inc’s cure bar.', 'A visible bar for a hidden variable.', 'Legible but thin; endings feel mechanical.', 'no', 'Conflicts with no AI-risk meter; maybe for cash or race heat'],
+];
+
+const esc = (s) => s;
+const srcLinks = (a) => a.map(([t, u]) => `<a href="${u}" target="_blank" rel="noopener">${t}</a>`).join(' · ');
+
+// masthead strip
+document.getElementById('strip').innerHTML = ENDINGS.map((e) => `
+  <div class="frame${e.k === 'win' ? ' win' : ''}">
+    <img src="img/${e.id}.jpg" alt="Still from the ${e.t} film" loading="lazy">
+    <div class="cap">${e.t}</div>
+    <div class="meter${e.n === 0 ? ' zero' : ''}"><i style="height:${e.n === 0 ? 0 : Math.max(2, e.n / MAXN * 100)}%"></i></div>
+    <div class="n">${e.n} · ${(e.n / TOTAL * 100).toFixed(e.n && e.n / TOTAL < 0.01 ? 1 : 0)}%</div>
+  </div>`).join('');
+
+// futures map
+const grid = document.getElementById('mapgrid');
+let html = '<div class="colh c0"></div>' + COLS.map(([a, b]) => `<div class="colh">${a}<small>${b}</small></div>`).join('');
+for (const [tone, label] of ROWS) {
+  html += `<div class="rowh ${tone}">${label}</div>`;
+  COLS.forEach(([colName], ci) => {
+    const items = FUT.filter((f) => f.tone === tone && f.col === ci);
+    html += `<div class="cell ${tone}${items.length ? '' : ' empty'}" data-label="${label} · ${colName}">${items.map((f) => `<a class="chip" href="#f-${f.id}">${f.name}</a>`).join('')}</div>`;
+  });
+}
+grid.innerHTML = html;
+
+// futures table
+const REACT = [['want', 'Want'], ['maybe', 'Maybe'], ['cut', 'Cut']];
+document.querySelector('#futtable tbody').innerHTML = FUT.map((f) => `
+  <tr id="f-${f.id}">
+    <td class="name" data-h="Future">${f.name}<small>${f.sub}</small>
+      <div class="react" role="radiogroup" aria-label="Your reaction to ${f.name}">${REACT.map(([v, l]) => `<label><input type="radio" name="fut-${f.id}" value="${v}"><span>${l}</span></label>`).join('')}</div></td>
+    <td data-h="Daily life">${f.img}</td>
+    <td class="settings" data-h="Settings (inference)">${f.set}</td>
+    <td data-h="Tone"><span class="tone ${f.tone}">${f.toneT}</span></td>
+    <td class="src" data-h="Sources">${srcLinks(f.src)}</td>
+  </tr>`).join('');
+
+document.querySelector('#linetable tbody').innerHTML = LINES.map(([id, hold, lack, src]) => `
+  <tr><td class="name" data-h="Line"><code>${id}</code></td><td data-h="Holding it">${hold}</td><td data-h="Absence or drift">${lack}</td><td class="src" data-h="Sources">${srcLinks(src)}</td></tr>`).join('');
+
+// questions
+document.getElementById('qs').innerHTML = QS.map((q, qi) => `
+  <div class="q">
+    <h3>${q.h}</h3>
+    ${q.why ? `<div class="why">${q.why}</div>` : '<div></div>'}
+    <div class="opts" role="radiogroup" aria-label="${q.h}">${q.o.map((o, oi) => {
+      const lean = o.length === 3;
+      const desc = lean ? o[2] : o[1];
+      return `<label class="opt"><input type="radio" name="q-${qi}" value="${String.fromCharCode(97 + oi)}"><span><b>${String.fromCharCode(97 + oi)}. ${o[0]}</b>${lean ? '<span class="lean">Evidence leans</span>' : ''}${desc ? ` ${desc}` : ''}</span></label>`;
+    }).join('')}</div>
+  </div>`).join('');
+
+// techniques
+document.querySelector('#techtable tbody').innerHTML = TECH.map(([n, d, ex, need, pit, fit, fitT]) => `
+  <tr><td class="name" data-h="Technique">${n}<small>${d}</small></td><td data-h="Best examples">${ex}</td><td data-h="Needs in Game Night">${need}</td><td data-h="Pitfall">${pit}</td><td data-h="Fits your rule?"><span class="fit ${fit}">${fitT}</span></td></tr>`).join('');
+
+// today's endings
+document.getElementById('endings').innerHTML = ENDINGS.map((e) => `
+  <div class="ending${e.n === 0 ? ' flag' : ''}">
+    <img src="img/${e.id}.jpg" alt="Still from the ${e.t} film" loading="lazy">
+    <div><h3>${e.t}</h3><div class="kind ${e.k}">${e.k === 'win' ? 'Win' : 'Failure'}</div><p style="margin-top:6px">${e.trig}</p></div>
+    <div><div class="lab">Reads</div><p><code>${e.reads}</code></p></div>
+    <div><div class="lab">What the player can do</div><p>${e.moves}</p></div>
+    <div class="runs"><div class="lab">Bot runs</div><div class="big">${e.n}</div><div class="track"><i style="width:${e.n / MAXN * 100}%"></i></div><small>of 2,600${e.n === 0 ? ' · never reached' : ''}</small></div>
+  </div>`).join('');
+
+// reactions: per-viewer convenience only
+const KEY = 'endings-brief-reactions';
+const inputs = () => [...document.querySelectorAll('input[type=radio]')];
+function save() {
+  const picked = Object.fromEntries(inputs().filter((i) => i.checked).map((i) => [i.name, i.value]));
+  try { localStorage.setItem(KEY, JSON.stringify(picked)); } catch (e) {}
+  count(picked);
+}
+function count(picked) {
+  const n = Object.keys(picked).length;
+  document.getElementById('barcount').innerHTML = n ? `<b>${n} reaction${n === 1 ? '' : 's'} marked.</b> Copy them to paste into the endings session.` : '<b>No reactions yet.</b> Mark futures and questions as you read; they stay in this browser.';
+}
+try {
+  const saved = JSON.parse(localStorage.getItem(KEY) || '{}');
+  for (const i of inputs()) if (saved[i.name] === i.value) i.checked = true;
+  count(saved);
+} catch (e) {}
+document.addEventListener('change', (e) => { if (e.target.matches('input[type=radio]')) save(); });
+document.getElementById('clear').addEventListener('click', () => { for (const i of inputs()) i.checked = false; save(); });
+document.getElementById('copy').addEventListener('click', async () => {
+  const lines = ['Endings research reactions (2026-10-27 brief)', ''];
+  const fut = FUT.map((f) => [f.name, document.querySelector(`input[name="fut-${f.id}"]:checked`)?.value]).filter(([, v]) => v);
+  if (fut.length) { lines.push('Futures:'); for (const [n, v] of fut) lines.push(`- ${n}: ${v}`); lines.push(''); }
+  const qs = QS.map((q, qi) => { const v = document.querySelector(`input[name="q-${qi}"]:checked`)?.value; return v ? `- Q${qi + 1} ${q.h} : ${v}. ${q.o[v.charCodeAt(0) - 97][0]}` : null; }).filter(Boolean);
+  if (qs.length) { lines.push('Questions:'); lines.push(...qs); }
+  if (!fut.length && !qs.length) lines.push('(no reactions marked)');
+  const text = lines.join('\n');
+  const btn = document.getElementById('copy');
+  try { await navigator.clipboard.writeText(text); btn.textContent = 'Copied'; }
+  catch (e) { window.prompt('Copy your reactions:', text); }
+  setTimeout(() => { btn.textContent = 'Copy my reactions'; }, 1600);
+});
+
+// theme toggle
+const root = document.documentElement;
+document.getElementById('theme').addEventListener('click', () => {
+  const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  root.dataset.theme = dark ? 'light' : 'dark';
+});
+</script>
