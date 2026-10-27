@@ -179,14 +179,15 @@ const DECISIONS = [
     options: [
       ['individual', 'Individual', 'Your legal name shows as the seller. No company or D-U-N-S number needed.', true],
       ['org', 'Organization', 'A company name shows as the seller. Needs a legal entity, a D-U-N-S number, a domain email and a website.'] ] },
-  { id: 'D2', title: 'App name on the store', what: '30 characters at most, with no "iPhone" or "Duo" in it (Apple trademarks). AI Lab Tycoon is in the build provisionally, but the name research (gn-ip-risk, 2026-10-27) rates it high risk: four other games already use that exact name, and Apple asks for a unique app name. It recommends Model Mogul, then Lab Founder. Pick on the research page (claude.ai/artifact/75MJZjxvpKc5fu3Z8NorGY); I change the build and the bundle ID to match. Keep Game Dev Tycoon out of the name, subtitle and keywords.',
+  { id: 'D2', title: 'App name on the store', what: '30 characters at most, with no "iPhone" or "Duo" in it (Apple trademarks). Your working name is Model Mogul (2026-10-27), and the build uses it. The final name is decided later, followed by a trademark clearance search, before any App Store record exists. The name research (gn-ip-risk, claude.ai/artifact/75MJZjxvpKc5fu3Z8NorGY) rated AI Lab Tycoon high risk, because four other games already use that exact name, and recommended Model Mogul, then Lab Founder. Keep Game Dev Tycoon out of the name, subtitle and keywords. The in-game title still says AI Lab Tycoon until the name is final.',
     options: [
-      ['tycoon', 'AI Lab Tycoon', 'Matches the title screen, but four other games already use this name (high risk).', true],
+      ['mogul', 'Model Mogul', 'Working name, in the build now. The research\'s first choice; a trademark clearance search comes before launch.', true],
+      ['tycoon', 'AI Lab Tycoon', 'Matches the title screen, but four other games already use this name (high risk).'],
       ['gamenight', 'Game Night: AI Lab', 'The repo\'s name.'],
       ['own', 'My own name', '', false, 'text'] ] },
-  { id: 'D3', title: 'Bundle ID', what: 'The app\'s permanent ID; it can\'t change after the first upload. It is set provisionally to com.enfiyeci.ailabtycoon, with the name; nothing is registered under it yet.',
+  { id: 'D3', title: 'Bundle ID', what: 'The app\'s permanent ID; it can\'t change after the first upload. It is set to com.enfiyeci.modelmogul with the working name (2026-10-27). Nothing is registered under it yet, so it can still follow the final name.',
     options: [
-      ['handle', 'com.enfiyeci.ailabtycoon', 'Your GitHub handle, reversed-domain style. You don\'t need to own a domain for it.', true],
+      ['handle', 'com.enfiyeci.modelmogul', 'Your GitHub handle, reversed-domain style. You don\'t need to own a domain for it.', true],
       ['own', 'My own', '', false, 'text'] ] },
   { id: 'D4', title: 'Price', what: 'The shell has no purchases built in. A paid app or an in-app unlock needs Apple\'s Paid Apps Agreement, tax forms and a bank account first.',
     options: [
@@ -241,7 +242,8 @@ const CHECKLIST = [
   ['done', 'No network: a content rule blocks every http and https load.'],
   ['later', 'The game\'s fonts, which fall back to system fonts offline today: gn-phone-redesign is bundling them into ui/fonts, and the app picks them up.'],
   ['arda', 'Enrol in the Apple Developer Program (D1).'],
-  ['arda', 'Pick the bundle ID and name (D2, D3); I put them in ios/project.yml.'],
+  ['done', 'Working name and bundle ID in ios/project.yml: Model Mogul, com.enfiyeci.modelmogul (D2, D3).'],
+  ['arda', 'Final store name decided, then a trademark clearance search on it (you arrange it). Until then, no App Store record and no upload: the first upload makes the bundle ID permanent.'],
   ['arda', 'Sign in to Xcode with your Apple Account and choose your team for automatic signing.'],
   ['arda', 'Create the app in App Store Connect: name, bundle ID, SKU, primary language, category Games › Simulation.'],
   ['arda', 'App Privacy: "Data Not Collected". Privacy policy and support URLs (D11).'],

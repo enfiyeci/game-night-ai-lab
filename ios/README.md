@@ -16,7 +16,7 @@ xcodegen generate
 xcodebuild -project GameNight.xcodeproj -scheme GameNight -sdk iphonesimulator \
   -destination 'platform=iOS Simulator,name=iPhone Duo' -derivedDataPath build/DerivedData build
 xcrun simctl install booted build/DerivedData/Build/Products/Debug-iphonesimulator/GameNight.app
-xcrun simctl launch booted com.enfiyeci.ailabtycoon
+xcrun simctl launch booted com.enfiyeci.modelmogul
 ```
 
 To bundle the web game from another checkout, add the build setting
