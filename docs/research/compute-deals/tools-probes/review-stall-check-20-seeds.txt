@@ -1,0 +1,9 @@
+balanced planning-state by era: {"1":{"noFit":0,"idle":0.65},"2":{"noFit":0.75,"idle":0.12},"3":{"noFit":0.25,"idle":0.22},"4":{"noFit":0,"idle":0.55},"5":{"noFit":0,"idle":0.31}}
+  era2 planning states with no fit: 60; of those a 1-round CoreFlame/Azuria card on the board would fit a Small run: 40; era-2 startRun moves: 0; era-2 days no fit 7132/7280
+  first era-3 round: 20 rounds, online 0 on 514/600 days; whole round at 0: 2
+careful planning-state by era: {"1":{"noFit":0,"idle":0.42},"2":{"noFit":0,"idle":0.29},"3":{"noFit":0,"idle":0.36},"4":{"noFit":0,"idle":0.22},"5":{"noFit":0.49,"idle":0.32}}
+  era2 planning states with no fit: 0; of those a 1-round CoreFlame/Azuria card on the board would fit a Small run: 0; era-2 startRun moves: 40; era-2 days no fit 0/7280
+  first era-3 round: 20 rounds, online 0 on 513/600 days; whole round at 0: 2
+speed planning-state by era: {"1":{"noFit":0.25,"idle":0.5},"2":{"noFit":0.68,"idle":0.17},"3":{"noFit":0.23,"idle":0.36},"4":{"noFit":0,"idle":0.61}}
+  era2 planning states with no fit: 54; of those a 1-round CoreFlame/Azuria card on the board would fit a Small run: 54; era-2 startRun moves: 4; era-2 days no fit 5785/7280
+  first era-3 round: 20 rounds, online 0 on 0/600 days; whole round at 0: 0

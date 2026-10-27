@@ -1,0 +1,106 @@
+{
+ "balanced": {
+  "1": {
+   "rounds": 200,
+   "idleBillShare": 0.52,
+   "medianRunwayMonths": 9.2,
+   "servingShareOfOnline": 0.16,
+   "boardCardsNamedByRivals": 0.38
+  },
+  "2": {
+   "rounds": 200,
+   "idleBillShare": 0.04,
+   "medianRunwayMonths": 7.6,
+   "servingShareOfOnline": 0.62,
+   "boardCardsNamedByRivals": 0.2
+  },
+  "3": {
+   "rounds": 200,
+   "idleBillShare": 0.41,
+   "medianRunwayMonths": 9.5,
+   "servingShareOfOnline": 0.23,
+   "boardCardsNamedByRivals": 0.25
+  },
+  "4": {
+   "rounds": 188,
+   "idleBillShare": 0.48,
+   "medianRunwayMonths": 5.3,
+   "servingShareOfOnline": 0.06,
+   "boardCardsNamedByRivals": 0.13
+  },
+  "5": {
+   "rounds": 113,
+   "idleBillShare": 0.31,
+   "medianRunwayMonths": 5.6,
+   "servingShareOfOnline": 0.01,
+   "boardCardsNamedByRivals": 0
+  }
+ },
+ "careful": {
+  "1": {
+   "rounds": 200,
+   "idleBillShare": 0.34,
+   "medianRunwayMonths": 12.4,
+   "servingShareOfOnline": 0.29,
+   "boardCardsNamedByRivals": 0.38
+  },
+  "2": {
+   "rounds": 200,
+   "idleBillShare": 0.15,
+   "medianRunwayMonths": 27.7,
+   "servingShareOfOnline": 0.24,
+   "boardCardsNamedByRivals": 0.15
+  },
+  "3": {
+   "rounds": 200,
+   "idleBillShare": 0.43,
+   "medianRunwayMonths": 25.7,
+   "servingShareOfOnline": 0.03,
+   "boardCardsNamedByRivals": 0.25
+  },
+  "4": {
+   "rounds": 200,
+   "idleBillShare": 0.27,
+   "medianRunwayMonths": 10.7,
+   "servingShareOfOnline": 0.04,
+   "boardCardsNamedByRivals": 0.13
+  },
+  "5": {
+   "rounds": 200,
+   "idleBillShare": 0.29,
+   "medianRunwayMonths": 12.6,
+   "servingShareOfOnline": 0.01,
+   "boardCardsNamedByRivals": 0
+  }
+ },
+ "speed": {
+  "1": {
+   "rounds": 200,
+   "idleBillShare": 0.4,
+   "medianRunwayMonths": 13.8,
+   "servingShareOfOnline": 0.4,
+   "boardCardsNamedByRivals": 0.31
+  },
+  "2": {
+   "rounds": 200,
+   "idleBillShare": 0.09,
+   "medianRunwayMonths": 57.6,
+   "servingShareOfOnline": 0.82,
+   "boardCardsNamedByRivals": 0.2
+  },
+  "3": {
+   "rounds": 200,
+   "idleBillShare": 0.61,
+   "medianRunwayMonths": 7.6,
+   "servingShareOfOnline": 0.13,
+   "boardCardsNamedByRivals": 0.2
+  },
+  "4": {
+   "rounds": 88,
+   "idleBillShare": 0.56,
+   "medianRunwayMonths": 5.1,
+   "servingShareOfOnline": 0.03,
+   "boardCardsNamedByRivals": 0.27
+  }
+ }
+}

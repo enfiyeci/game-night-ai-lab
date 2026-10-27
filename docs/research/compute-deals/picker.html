@@ -1,0 +1,421 @@
+<meta charset="utf-8">
+<title>Compute Deal Picker</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: same picker template as the Game Night Build Picker. Findings strip on top, option cards with a small rule
+   sketch on the left, sticky "your combination" panel on the right; one column on phones. */
+:root {
+  --paper: #F5F5F2; --surface: #FFFFFE; --ink: #18181B; --muted: #5F5F66; --line: #E2E2DD; --accent: #1F5F4A;
+  --accent-soft: #E3EFEA; --warn: #8A5A00; --bad: #B4261C;
+  --sans: "IBM Plex Sans", -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --u: 8px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #141416; --surface: #1C1C1F; --ink: #ECECEE; --muted: #A1A1AA; --line: #2E2E33; --accent: #72C2A2;
+  --accent-soft: #1F2E28; --warn: #E0B25A; --bad: #F08A80; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --paper: #141416; --surface: #1C1C1F; --ink: #ECECEE; --muted: #A1A1AA; --line: #2E2E33; --accent: #72C2A2;
+  --accent-soft: #1F2E28; --warn: #E0B25A; --bad: #F08A80; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); }
+.wrap { max-width: 1320px; margin: 0 auto; padding-block: calc(var(--u) * 5) calc(var(--u) * 8);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.kicker { font: 500 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font-size: clamp(26px, 3.4vw, 36px); line-height: 1.15; margin: calc(var(--u) * 1.5) 0 calc(var(--u) * 2); text-wrap: balance; font-weight: 700; max-width: 28ch; }
+.lede { max-width: 74ch; margin: 0 0 calc(var(--u) * 1.5); }
+.lede.muted { color: var(--muted); font-size: 14px; }
+code { font: 12.5px var(--mono); overflow-wrap: anywhere; }
+
+/* Findings: what is wrong today, each with its measured number. */
+.finds { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: calc(var(--u) * 1.5); margin-top: calc(var(--u) * 3); }
+@media (max-width: 1000px) { .finds { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .finds { grid-template-columns: minmax(0, 1fr); } }
+.find { background: var(--surface); border-radius: 6px; padding: calc(var(--u) * 2); box-shadow: inset 0 0 0 1px var(--line); min-width: 0; }
+.find .n { font: 600 28px/1.1 var(--mono); color: var(--bad); font-variant-numeric: tabular-nums; }
+.find .n small { font-size: 14px; color: var(--muted); font-weight: 500; }
+.find h3 { font-size: 15px; margin: 6px 0 4px; }
+.find p { margin: 0; font-size: 13.5px; color: var(--muted); }
+.idle { display: flex; align-items: stretch; gap: 6px; height: 56px; margin: 8px 0 4px; }
+.idle span { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 2px; font: 500 10.5px var(--mono); color: var(--muted); }
+.idle i { display: block; width: 100%; background: var(--bad); border-radius: 1px; opacity: .85; }
+
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: calc(var(--u) * 4); margin-top: calc(var(--u) * 5); align-items: start; }
+@media (max-width: 940px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.legend { display: flex; flex-wrap: wrap; gap: calc(var(--u) * 1) calc(var(--u) * 3); font-size: 13px; color: var(--muted); margin-top: calc(var(--u) * 2); }
+.legend span { display: inline-flex; gap: 8px; align-items: center; }
+.group { margin-bottom: calc(var(--u) * 5); }
+.group h2 { font-size: 13px; font-family: var(--mono); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; margin: 0 0 calc(var(--u) * .5); color: var(--accent); }
+.group .gnote { color: var(--muted); font-size: 14px; margin: 0 0 calc(var(--u) * 2); max-width: 75ch; }
+.item { background: var(--surface); border-radius: 6px; padding: calc(var(--u) * 2.5); margin-bottom: calc(var(--u) * 1.5);
+  display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: calc(var(--u) * 1.5); box-shadow: inset 0 0 0 1px var(--line); }
+.item.on { box-shadow: inset 0 0 0 2px var(--accent); }
+.item input[type=checkbox] { width: 20px; height: 20px; margin: 3px 0 0; accent-color: var(--accent); cursor: pointer; }
+.head { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: baseline; }
+.head label { font-weight: 600; font-size: 17px; cursor: pointer; }
+.ord { font: 600 12px/1 var(--mono); color: var(--paper); background: var(--accent); border-radius: 3px; padding: 4px 6px; }
+.rec { font: 500 11px/1 var(--mono); letter-spacing: .05em; text-transform: uppercase; color: var(--accent); }
+.tier { font: 500 11px/1 var(--mono); letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.size { display: inline-flex; align-items: center; gap: 6px; font: 500 12px/1 var(--mono); color: var(--muted); margin-left: auto; }
+.bars { display: inline-flex; gap: 2px; }
+.bars i { width: 6px; height: 12px; background: var(--line); border-radius: 1px; }
+.bars i.f { background: var(--ink); }
+.top { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: calc(var(--u) * 2); margin-top: calc(var(--u) * 1); align-items: start; }
+@media (max-width: 700px) { .top { grid-template-columns: minmax(0, 1fr); } }
+.top p { margin: 0 0 8px; max-width: 72ch; }
+.sketch { background: var(--paper); border-radius: 4px; padding: 10px; }
+.sketch svg { display: block; width: 100%; height: auto; max-width: 100%; }
+.sketch figcaption { font: 500 11px/1.3 var(--mono); color: var(--muted); margin-top: 6px; }
+.play { margin: calc(var(--u) * 1) 0 0; padding-left: 12px; border-left: 2px solid var(--accent); max-width: 74ch; }
+.play b { display: block; font: 500 11px/1.8 var(--mono); text-transform: uppercase; letter-spacing: .05em; color: var(--accent); }
+dl { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 6px 12px; margin: calc(var(--u) * 1.5) 0 0; font-size: 13.5px; }
+dt { font: 500 11px/1.9 var(--mono); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.risk-low { color: var(--accent); font-weight: 600; } .risk-med { color: var(--warn); font-weight: 600; } .risk-high { color: var(--bad); font-weight: 600; }
+.subs { margin-top: calc(var(--u) * 1.5); padding: calc(var(--u) * 1.5); background: var(--paper); border-radius: 4px; font-size: 14px; }
+.subs .q { font-weight: 600; margin-bottom: 6px; }
+.subs label { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 8px; padding: 4px 0; cursor: pointer; }
+.subs input { accent-color: var(--accent); margin-top: 4px; }
+.flag { color: var(--warn); }
+
+aside { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); background: var(--surface); border-radius: 6px; padding: calc(var(--u) * 2.5); box-shadow: inset 0 0 0 1px var(--line); }
+@media (max-width: 940px) { aside { position: static; } }
+aside h3 { margin: 0 0 4px; font-size: 16px; }
+aside .count { font: 500 12px var(--mono); color: var(--muted); }
+ol.order { list-style: none; padding: 0; margin: calc(var(--u) * 2) 0; counter-reset: n; }
+ol.order li { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+ol.order li::before { counter-increment: n; content: counter(n); font: 600 12px var(--mono); color: var(--accent); }
+ol.order li.empty::before { content: none; }
+.mv { display: flex; gap: 2px; }
+.mv button { font: 13px var(--mono); width: 28px; height: 26px; border: 0; border-radius: 3px; background: var(--paper); color: var(--ink); cursor: pointer; }
+.mv button:disabled { opacity: .3; cursor: default; }
+.empty { color: var(--muted); font-size: 14px; padding: 8px 0; grid-template-columns: 1fr !important; }
+textarea { width: 100%; min-height: 72px; font: 14px/1.4 var(--sans); padding: 8px; border-radius: 4px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); resize: vertical; }
+.btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: calc(var(--u) * 1.5); }
+.btn { font: 600 14px var(--sans); padding: 9px 14px; border-radius: 4px; border: 0; cursor: pointer; background: var(--paper); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line); }
+.btn.primary { background: var(--accent); color: var(--paper); box-shadow: none; }
+.status { font-size: 13px; color: var(--muted); margin-top: 8px; min-height: 1.4em; }
+button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+#copytext { width: 100%; min-height: 140px; margin-top: 8px; font: 12px var(--mono); }
+.aside-note { font-size: 13px; color: var(--muted); margin-top: calc(var(--u) * 2); }
+.out { margin-top: calc(var(--u) * 2); font-size: 14px; color: var(--muted); max-width: 84ch; }
+.out h2 { font: 600 13px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ink); }
+.out li { margin-bottom: 6px; }
+/* sketch strokes and fills, from the tokens */
+.s-ink { stroke: var(--ink); fill: none; } .s-mut { stroke: var(--muted); fill: none; }
+.f-acc { fill: var(--accent); } .f-soft { fill: var(--accent-soft); } .f-bad { fill: var(--bad); } .f-line { fill: var(--line); } .f-surf { fill: var(--surface); }
+.t { font: 500 9px var(--mono); fill: var(--muted); } .t-ink { font: 600 10px var(--mono); fill: var(--ink); } .t-acc { font: 600 10px var(--mono); fill: var(--accent); } .t-bad { font: 600 9px var(--mono); fill: var(--bad); }
+</style>
+
+<div class="wrap">
+  <div class="kicker">Game Night AI Lab · lane gn-compute-deals · 2026-10-26</div>
+  <h1>Pick how compute deals should play</h1>
+  <p class="lede">I measured today's deals with the bots and one play-through, then researched how real labs get compute and how games turn buying, contracts and markets into play. Below are seven ways to change the deals, from safe to experimental. My recommended three are ticked and numbered in the order I would build them. Tick, untick or reorder, answer the small questions inside the cards, then press <b>Save my picks</b>.</p>
+  <p class="lede muted">Nothing is built yet. The research, the diagnosis and these options are in <code>docs/research/compute-deals/</code> on branch <code>claude/compute-deals-research-d2d2da</code>. Every option is measured with the 200-seed bot run before and after it is built. Screen layout belongs to the phone-redesign lane and late-game rival rules to the gn-improve lane, so options that touch those are agreed with them first.</p>
+
+  <section class="finds" aria-label="What is wrong with compute deals today">
+    <article class="find">
+      <div class="n">7,132<small> of 7,280 days</small></div>
+      <h3>Era 2 stalls, silently</h3>
+      <p>For the balanced bot, no training run fits the free compute on almost every era 2 day: users take about 84% of it. A one-round card that would end the stall was often on the board, and nothing says so. The same shape as the playtester's "basically got stuck".</p>
+    </article>
+    <article class="find">
+      <div class="n">0<small> units online</small></div>
+      <h3>Era 3 starts empty</h3>
+      <p>The early contracts all end at the era change. The balanced and careful bots have nothing online at the first era 3 round on 50 of 50 seeds, for most of that round, and pay spot prices for users. Nothing warns of it.</p>
+    </article>
+    <article class="find">
+      <div class="n">5 → 69<small> of 200 overtaken</small></div>
+      <h3>One quiet lever</h3>
+      <p>Skip the $50M grid reservation in era 2 and the balanced bot is overtaken 69 times in 200 runs instead of 5. Nothing in era 2 says this choice matters that much.</p>
+    </article>
+    <article class="find">
+      <div class="idle" aria-label="Share of the compute bill paying for idle units, balanced bot, by era">
+        <span><i style="height:39%"></i>39%</span><span><i style="height:4%"></i>4%</span><span><i style="height:31%"></i>31%</span><span><i style="height:34%"></i>34%</span><span><i style="height:19%"></i>19%</span>
+      </div>
+      <h3>A quarter to a third of the bill sits idle</h3>
+      <p>Share of the compute bill paying for unused units, eras 1 to 5, averaged over every day. Deals come in fixed lumps, and CoreFlame is the obvious card (signed 276 times in 100 runs).</p>
+    </article>
+  </section>
+
+  <div class="legend">
+    <span><span class="bars"><i class="f"></i><i></i><i></i></span> Small: a few files, one sitting</span>
+    <span><span class="bars"><i class="f"></i><i class="f"></i><i></i></span> Medium: a mockup plus a balance round</span>
+    <span><span class="bars"><i class="f"></i><i class="f"></i><i class="f"></i></span> Large: a design round, a mockup, a balance round and new bot policies</span>
+  </div>
+
+  <div class="grid">
+    <main id="list"></main>
+    <aside aria-label="Your combination">
+      <h3>Your combination</h3>
+      <div class="count" id="count"></div>
+      <ol class="order" id="order"></ol>
+      <label for="note" class="kicker">Notes for me</label>
+      <textarea id="note" placeholder="Anything to change in an option, or a mix of two"></textarea>
+      <div class="btns">
+        <button class="btn primary" id="save" type="button">Save my picks</button>
+        <button class="btn" id="copy" type="button">Copy as text</button>
+        <button class="btn" id="reset" type="button">Back to my recommendation</button>
+      </div>
+      <div class="status" id="status" role="status"></div>
+      <textarea id="copytext" hidden readonly aria-label="Your picks as text"></textarea>
+      <p class="aside-note">If saving does not work in your view, press Copy as text and paste it into the chat.</p>
+    </aside>
+  </div>
+
+  <section class="out">
+    <h2>What I am sure of, and what I am not</h2>
+    <ul>
+      <li>The measurements come from the existing bots on <code>origin/main</code> 28cdc52. The bots follow fixed deal rules, and a fresh review showed that part of the era 2 stall and of the grid result comes from those rules; the diagnosis now says which. The era 2 stall and the era 3 cliff were seen with bots, not by a human; my own play-through covered era 1 only.</li>
+      <li>After the research report and the review I changed the third recommendation from O3 (the ripening row) to O2 (the price ladder). O3 stays as the lighter alternative.</li>
+      <li class="flag">⚠️ Several game rules behind the options were read through RulesPal, an AI-generated rules site, or through transcriptions (Brass, Pandemic, 1830, High Society). The fetch tool also returned model-written extractions of pages, not raw text. Each note in the research folder flags these on the claim. I would check the rules I build on against the publisher rulebooks before building.</li>
+      <li class="flag">⚠️ Some real-world facts rest on search snippets only, for example Anthropic's SpaceX contract terms (O4) and Frostpunk's storm warnings (O5).</li>
+      <li>The September research had GPU prices falling. Newer data (SemiAnalysis, April 2026) shows one-year H100 contract prices up about 40% from October 2025 to March 2026. O2 builds on the newer reading.</li>
+    </ul>
+  </section>
+</div>
+
+<script>
+const SKETCH = {
+  O1: `<svg viewBox="0 0 220 96" role="img" aria-label="Three rows with steppers and a free-for-training line">
+    <text x="4" y="12" class="t-acc">FREE 12 · MEDIUM RUN NEEDS 15</text>
+    <rect x="4" y="22" width="212" height="18" rx="2" class="f-surf"/><text x="10" y="34" class="t-ink">Users</text><text x="66" y="34" class="t">75% · −4k users a month</text>
+    <rect x="4" y="44" width="212" height="18" rx="2" class="f-surf"/><text x="10" y="56" class="t-ink">Safety</text><text x="66" y="56" class="t">10%   − +</text>
+    <rect x="4" y="66" width="212" height="18" rx="2" class="f-surf"/><text x="10" y="78" class="t-ink">Training</text><text x="66" y="78" class="t">what is left</text>
+    <rect x="144" y="68" width="72" height="14" rx="2" class="f-acc"/><text x="150" y="78" class="t" style="fill:var(--paper)">Get compute</text></svg>`,
+  O2: `<svg viewBox="0 0 220 96" role="img" aria-label="A price ladder: each block of units costs more">
+    <text x="4" y="12" class="t-ink">Azuria · drag a size</text>
+    <rect x="4" y="66" width="40" height="14" class="f-acc"/><rect x="48" y="56" width="40" height="24" class="f-acc"/><rect x="92" y="44" width="40" height="36" class="f-soft"/><rect x="136" y="30" width="40" height="50" class="f-soft"/><rect x="180" y="18" width="36" height="62" class="f-line"/>
+    <text x="10" y="92" class="t">1.0x</text><text x="54" y="92" class="t">1.2x</text><text x="98" y="92" class="t">1.5x</text><text x="142" y="92" class="t">1.9x</text><text x="184" y="92" class="t">2.4x</text>
+    <line x1="90" y1="16" x2="90" y2="82" class="s-ink" stroke-width="1.5"/><text x="94" y="24" class="t-acc">20 units</text></svg>`,
+  O3: `<svg viewBox="0 0 220 96" role="img" aria-label="Five price slots; cards slide one slot cheaper each round">
+    <text x="4" y="12" class="t-ink">cards enter dear, then ripen</text>
+    <g><rect x="4" y="24" width="38" height="44" rx="2" class="f-surf"/><rect x="47" y="24" width="38" height="44" rx="2" class="f-surf"/><rect x="90" y="24" width="38" height="44" rx="2" class="f-soft"/><rect x="133" y="24" width="38" height="44" rx="2" class="f-surf"/><rect x="176" y="24" width="38" height="44" rx="2" class="f-surf"/></g>
+    <text x="10" y="50" class="t">1.3x</text><text x="52" y="50" class="t">1.15x</text><text x="97" y="50" class="t">1.0x</text><text x="140" y="50" class="t">0.9x</text><text x="183" y="50" class="t">0.8x</text>
+    <text x="92" y="64" class="t-bad">DeepThink d18</text>
+    <path d="M10 82 H206" class="s-mut"/><path d="M200 78 l6 4 -6 4" class="s-mut"/><text x="70" y="94" class="t">one slot cheaper each round</text></svg>`,
+  O4: `<svg viewBox="0 0 220 96" role="img" aria-label="Committed compute as steps against the forecast need line">
+    <text x="4" y="12" class="t-ink">next six rounds</text>
+    <path d="M10 70 H50 V50 H110 V50 H130 V78 H170 V40 H214" class="s-ink" stroke-width="2"/>
+    <path d="M10 64 C60 60 100 54 214 30" class="s-mut" stroke-dasharray="4 3" stroke-width="2"/>
+    <rect x="130" y="56" width="40" height="22" class="f-bad" opacity=".25"/><text x="132" y="90" class="t-bad">cliff: stall</text>
+    <rect x="50" y="50" width="60" height="9" class="f-soft"/><text x="52" y="46" class="t">idle, paid</text>
+    <text x="100" y="12" class="t">— committed   --- need</text></svg>`,
+  O5: `<svg viewBox="0 0 220 96" role="img" aria-label="A strip of announced market changes with countdowns">
+    <text x="4" y="12" class="t-ink">announced, with countdowns</text>
+    <rect x="4" y="22" width="212" height="20" rx="2" class="f-surf"/><text x="10" y="35" class="t-bad">in 2</text><text x="40" y="35" class="t">HBM sold out: chip orders slip</text>
+    <rect x="4" y="46" width="212" height="20" rx="2" class="f-surf"/><text x="10" y="59" class="t-bad">in 3</text><text x="40" y="59" class="t">new chips ship: old ones −40%</text>
+    <rect x="4" y="70" width="212" height="20" rx="2" class="f-surf"/><text x="10" y="83" class="t-bad">now</text><text x="40" y="83" class="t">CoreFlame health ●●○</text></svg>`,
+  O6: `<svg viewBox="0 0 220 96" role="img" aria-label="A live price ticker with spikes when someone buys">
+    <text x="4" y="12" class="t-ink">unit price, live</text><text x="150" y="12" class="t-acc">1.42x ▲</text>
+    <path d="M6 70 L30 66 L50 68 L62 40 L74 58 L100 60 L130 62 L142 34 L156 52 L186 54 L214 48" class="s-ink" stroke-width="1.8"/>
+    <text x="52" y="32" class="t-bad">someone bought 40</text>
+    <rect x="6" y="80" width="62" height="12" rx="2" class="f-acc"/><text x="12" y="89" class="t" style="fill:var(--paper)">buy today</text>
+    <rect x="74" y="80" width="62" height="12" rx="2" class="f-line"/><text x="80" y="89" class="t">sell idle</text>
+    <rect x="142" y="80" width="72" height="12" rx="2" class="f-line"/><text x="148" y="89" class="t">lock price</text></svg>`,
+  O7: `<svg viewBox="0 0 220 96" role="img" aria-label="Sealed envelopes opened together; the tranche fills from the highest bid">
+    <text x="4" y="12" class="t-ink">one sealed bid per round</text>
+    <g><rect x="6" y="24" width="44" height="30" rx="2" class="f-surf"/><path d="M6 24 l22 16 22 -16" class="s-mut"/><text x="12" y="66" class="t">you</text>
+    <rect x="58" y="24" width="44" height="30" rx="2" class="f-surf"/><path d="M58 24 l22 16 22 -16" class="s-mut"/><text x="60" y="66" class="t">OpenBrain</text>
+    <rect x="110" y="24" width="44" height="30" rx="2" class="f-surf"/><path d="M110 24 l22 16 22 -16" class="s-mut"/><text x="112" y="76" class="t">DeepThink</text></g>
+    <rect x="164" y="20" width="50" height="40" class="f-soft"/><rect x="164" y="40" width="50" height="20" class="f-acc"/><text x="164" y="74" class="t">fills from</text><text x="164" y="84" class="t">the top</text></svg>`,
+};
+
+const ITEMS = [
+  { group: 'Safe', gnote: 'Fixes what confuses and blocks players without changing prices or rivals.' },
+  { id: 'O1', title: 'Free compute you can always see', size: 2, risk: ['low', 'Low. Prices do not change. The stall card adds a way out, so era 2 may get faster; measured with the bots.'],
+    idea: 'Replace the two-handle compute bar with plain rows and one headline number, and give every compute screen a way out.',
+    play: 'The budget dialog\'s compute box shows three rows: Users (serve everyone, 75% or 50%, each with its cost printed, such as "about 4,000 users leave a month" or "$18M a month of spot"), Safety (5% steps) and Training (what is left). Above them one line: "Free for training: 12 units. A Medium run needs 15." The Compute screen (which already shows a "Free for training" segment) and the training dialog carry the same line and a Get compute button that opens the deal board. When no run fits for a whole round, a card offers three priced ways out: sign the one-round card on the board now, serve fewer users, or rent spot for this run. One round before contracts end together, the CFO warns: "All our cloud capacity ends in March."',
+    fixes: 'The confusing bar, the hard-to-find way to the deal board, the silent era 2 stall (shown with its ways out) and the unwarned era 3 cliff. Answers the shape of playtest item 8.',
+    source: 'Factorio\'s power satisfaction bar and proportional slowdown; Oxygen Not Included\'s priority rework after its developers called it "hard to understand"; Victoria 3 Dev Diary #74 (say why something is blocked); player complaints about the Cities: Skylines and Game Dev Tycoon sliders; Offworld Trading Company\'s numbers "front and center".',
+    files: 'ui/screens/budget.js, ui/logic/compute.js, ui/screens/computeInfo.js, ui/screens/recipe.js (computeHelp), sim/split.js, sim/data/advisorLines.js, one new card in sim/data/events.js and ui/data/eventCopy.js. Layout agreed with the phone-redesign lane.',
+    subs: [
+      { key: 'O1users', q: 'How the player sets serving', options: [
+        ['steps', 'Three steps (everyone, 75%, 50%), each with its price printed.', true],
+        ['slider', 'One slider for users only, with the price under it as you drag.'] ] },
+      { key: 'O1stall', q: 'When no run fits for a whole round', options: [
+        ['card', 'A card with three priced ways out.', true],
+        ['line', 'Only the help line in the training dialog, made bigger.'] ] } ] },
+
+  { group: 'Medium', gnote: 'Give the deal board real choices: when to buy, how much, and what you are betting on.' },
+  { id: 'O4', title: 'Forecast and commit', size: 2, risk: ['med', 'Medium. Flexible terms make over-buying safer; priced so the over-committer probe still runs out of money in most runs.'],
+    idea: 'Put the player\'s own forecast on the deal board. Every contract is a bet on that line. This is the tension real labs face most.',
+    play: 'The deal board\'s right panel becomes a strip for the next six rounds: committed compute as steps, the lab\'s need (users growing, the next run\'s size) as a line, and the gaps shaded. Below the line is a stall or spot at 4x; above it is idle compute you pay for. Each card shows how it would change the strip before you sign. The era 2 grid reservation shows the power it brings in era 4 as a step. At each era\'s end the CFO grades the forecast: "we paid for 40% idle compute this era".',
+    fixes: 'The idle share of the bill becomes a number the player steers. The era 3 cliff shows as a cliff before it happens. The grid reservation reads as a bet with a visible payoff.',
+    source: 'Real: the Abilene expansion cut and Microsoft\'s 2 GW walk-back were driven by the buyers\' changing forecasts; Anthropic\'s SpaceX deal pairs a big monthly headline with a 90-day exit (⚠️ search snippets only). Games: Brass loans, where a commitment taxes every later turn (⚠️ rules via RulesPal); Offworld Trading Company\'s visible bond ratings, which replaced a permanent stock-price penalty so players could see what borrowing costs.',
+    files: 'ui/logic/compute.js (forecast), ui/screens/compute.js (the strip), sim/contracts.js (firm and flexible terms), sim/economy.js (projectBurn), sim/data/advisorLines.js. Layout agreed with the phone-redesign lane.',
+    subs: [ { key: 'O4terms', q: 'Contract terms', options: [
+      ['dial', 'Add one dial per contract: firm (cheapest, you always pay) or flexible (dearer, walk away with a round\'s notice).', true],
+      ['strip', 'Forecast strip only; contracts stay as they are.'] ] } ] },
+  { id: 'O2', title: 'Size your own deal on a price ladder', size: 3, risk: ['med', 'Medium. Rival compute flows through the ladders, which feeds rival model sizes (rules owned by gn-improve).'],
+    idea: 'Suppliers stop offering fixed lumps. Each supplier card has a ladder: the first units are cheap and each further block costs more. Rivals buy from the same ladders, and each round the ladder refills from the expensive end.',
+    play: 'On the deal board the player drags a size on a supplier card and watches the price per unit climb ("first 10 units 1.0x, next 10 1.2x, next 10 1.5x"). Rivals\' buys at the round\'s end take the cheap steps first, so a supplier everyone wants costs more next round. Buying just what the next run needs is cheap; buying a year ahead costs more per unit but saves the next scramble.',
+    fixes: 'Sizing becomes a choice, so over-buying and under-buying both cost something. Prices follow demand, so the board differs from run to run.',
+    source: 'Power Grid\'s resource market, confirmed from the official rulebook (⚠️ read in part): buyers take the cheapest space, and the market refills a fixed amount from the most expensive empty space, so heavy buying pushes prices up. Offworld Trading Company\'s one shared price that every trade moves. The research report ranks this mechanic second of nine. Real: H100 one-year contract prices up about 40% from October 2025 to March 2026, with on-demand sold out (SemiAnalysis).',
+    files: 'sim/contracts.js (generateOffers, signOffer), sim/rivalDeals.js (rivals buy units, not cards), sim/data/compute.js, ui/logic/compute.js (dealCards), ui/screens/compute.js. Layout agreed with the phone-redesign lane; rival compute agreed with gn-improve.',
+    subs: [ { key: 'O2who', q: 'Who moves the price', options: [
+      ['all', 'Everyone: your buys and the rivals\' buys both climb the ladder.', true],
+      ['you', 'Only the rivals; your own buys never raise your next price.'] ] } ] },
+
+  { id: 'O3', title: 'The ripening row', size: 2, risk: ['med', 'Medium. If players wait, average prices fall; the five slot prices are the tuning knob.'],
+    idea: 'The lighter alternative to O2. Deal cards age. A new card enters dear, gets cheaper every round it waits, and leaves at the cheap end. Rivals take the cards they want at the round\'s end.',
+    play: 'Five price slots: 1.3x, 1.15x, 1.0x, 0.9x and 0.8x. Each round unsigned cards slide one slot cheaper and a new card enters at 1.3x. A rival\'s banner shows which card it is eyeing and from which day ("DeepThink signs this on day 18"). Every round the player asks: sign now at today\'s price, or wait and risk losing it?',
+    fixes: 'Gives every round a reason to act and something to read. Denial stops being a separate fight: you deny a rival by grabbing a card early because you wanted it.',
+    source: 'Suburbia\'s tile row, where one tile leaves each turn and the rest slide (corrects the September note\'s "oldest tile"), and Through the Ages\' card row, where cards drift to an end and are discarded (⚠️ both from RulesPal, an AI-generated rules site; the price scale and which end is cheap are unverified). Into the Breach, whose developers show every enemy move so losses feel like the player\'s own fault. Real-world fit is weak: real contract prices rose in 2026, so cards that get cheaper with time are a game convention.',
+    files: 'sim/contracts.js (refreshOffers), sim/rivalDeals.js (choose), sim/data/compute.js (slot prices), ui/logic/compute.js, ui/screens/compute.js. Layout agreed with the phone-redesign lane.',
+    subs: [ { key: 'O3intent', q: 'What the rival banner shows', options: [
+      ['day', 'The card and the day the rival signs it.', true],
+      ['card', 'Only which card the rival wants, as today.'] ] } ] },
+  { id: 'O5', title: 'Supplier weather', size: 2, risk: ['med', 'Medium. A shock moves many runs at once; each is sized against existing effects before and after.'],
+    idea: 'The market changes on a schedule the player sees coming, and strings stop being footnotes: they come due as cards.',
+    play: 'A strip on the deal board lists the next announced changes with a countdown: "HBM sold out from April: chip orders slip two rounds", "New chips ship in three rounds: older chips drop 40%", "CoreFlame\'s biggest customer missed a payment". Each supplier card carries a health mark. The Gulf campus shows its licence expiry and a regional-risk mark. Letters of intent show the headline and the "usually delivers" range. The player times signings around the strip. Shocks come from a seeded schedule announced in advance, so there is no surprise roll (keeps your "no dice" rule).',
+    fixes: 'Strings that rarely bite, a board with nothing to read, and no reason to time a deal.',
+    source: 'Games: Pandemic\'s epidemic cards spaced one per pile (⚠️ rules via RulesPal); Frostpunk\'s announced storms (⚠️ search snippets only); 1830\'s train phases, where buying the first train of a new type starts a phase and some phases remove older trains (⚠️ RulesPal); Soren Johnson turning Offworld\'s 50% pirate roll, which "felt streaky", into a fixed half-steal. Real: neocloud stress in October 2026 (CoreWeave bonds near 14.8%, rated B+); Rubin\'s 2026 share cut from 29% to 22%; the UAE licence for named firms expiring around April 2027; drone strikes on Gulf data centers in March 2026.',
+    files: 'sim/contracts.js, sim/data/compute.js, a new seeded schedule in sim/data/computeWeather.js, sim/data/feed.js, sim/data/events.js and ui/data/eventCopy.js, ui/logic/compute.js, ui/screens/compute.js. Layout agreed with the phone-redesign lane.',
+    subs: [ { key: 'O5kinds', q: 'Which kinds of weather', check: true, options: [
+      ['shortage', 'Shortages (memory, wafers, power): orders slip.', true],
+      ['generation', 'New chip generations: older chips lose value.', true],
+      ['health', 'Supplier health marks, with string cards when a supplier wobbles.', true],
+      ['gulf', 'The Gulf licence clock and regional war risk.', true] ] } ] },
+  { group: 'Experimental', gnote: 'The edge. Both change how compute feels minute to minute, and both carry the most balance risk.' },
+  { id: 'O6', title: 'The compute exchange', size: 3, risk: ['high', 'High. A live price touches every ending; it needs its own balance round and market policies for every bot.'],
+    idea: 'One live price per unit of compute, moving every day. Every buy pushes it up, every sell pushes it down, and it drifts back. Spot buying and selling happen any day without a team action. Contracts lock today\'s price for their term, like a futures contract (a promise to buy later at a price fixed now).',
+    play: 'A ticker on the HUD shows the unit price and its trend. Rivals\' buys show as spikes ("someone just bought 40 units"), without saying who. Idle compute can be sold into the market for cash, which replaces the resale toggle. A shortfall can be covered by buying that day at whatever the price is. Every few days the question is: lock the price now with a contract, or ride the market?',
+    fixes: 'Idle compute gets a use (sell it), every day has a reason to look at compute, and rivals become readable through the price.',
+    source: 'Offworld Trading Company: one game-wide price per resource that every trade moves, shown front and center; a price spike tells everyone that someone bought, but not who. Real: CME and Silicon Data\'s H100 and B200 rental-index futures, announced for October 2026 (⚠️ search synthesis) and shown as pending review on 21 October (⚠️ truncated page).',
+    files: 'A new sim/market.js, sim/contracts.js, sim/rivalDeals.js, the day loop in sim/turn.js, sim/split.js (resale), tools/balance.js (market policies), a new HUD element. Layout agreed with the phone-redesign lane; rival compute agreed with gn-improve.' },
+  { id: 'O7', title: 'Sealed bids for the bottleneck', size: 2, risk: ['high', 'Medium to high. Rival bids feed rival fleets (rules owned by gn-improve).'],
+    idea: 'In the bottleneck eras, Verde releases one tranche (a delivery batch) per round and every lab bids for it once, in secret. The best prepayments are served first. This replaces the era 3 queue.',
+    play: 'One bid per round: a prepayment per unit, set once. Rivals bid by appetite and leave tells in the feed ("OpenBrain booked every spare GPU in Iowa"). At the round\'s end the bids open together, the tranche fills from the top, and losing bids get their prepayment back. Big winning bids raise race heat.',
+    fixes: 'The era 3 queue, which leaves a lab short in 800 of 800 rounds, becomes a decision with something to read.',
+    source: 'Sealed and once-around auctions (Modern Art\'s hidden auction, Ra\'s once-around; ⚠️ rules read through transcriptions), which the research judges the fastest forms against bots (its own inference); High Society, where passing returns your money (⚠️ the publisher PDF could not be opened). Real: smaller labs prepaying "above 20%" on 1–3 year deals (SemiAnalysis).',
+    files: 'sim/queue.js (replaced), sim/rivalDeals.js, sim/data/compute.js, sim/data/feed.js, the queue dialog in ui/screens/compute.js, tools/balance.js. Layout agreed with the phone-redesign lane; rival compute agreed with gn-improve.' },
+];
+const RECOMMENDED = ['O1', 'O4', 'O2'];
+const DEFAULT_SUBS = { O1users: 'steps', O1stall: 'card', O4terms: 'dial', O3intent: 'day', O5kinds: ['shortage', 'generation', 'health', 'gulf'], O2who: 'all' };
+const byId = Object.fromEntries(ITEMS.filter((i) => i.id).map((i) => [i.id, i]));
+const SUBTEXT = {};
+for (const it of ITEMS) for (const s of it.subs ?? []) SUBTEXT[s.key] = { q: s.q, check: s.check, item: it.id, opts: Object.fromEntries(s.options.map(([v, t]) => [v, t])) };
+
+let state = { order: [...RECOMMENDED], subs: structuredClone(DEFAULT_SUBS), note: '' };
+const $ = (s) => document.querySelector(s);
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+function bars(n) { const b = el('span', 'bars'); for (let i = 1; i <= 3; i++) b.append(el('i', i <= n ? 'f' : '')); return b; }
+const SIZE = ['', 'Small', 'Medium', 'Large'];
+
+function renderList() {
+  const list = $('#list'); list.textContent = '';
+  let sec = null;
+  for (const it of ITEMS) {
+    if (it.group) { sec = el('section', 'group'); sec.append(el('h2', '', it.group), el('p', 'gnote', it.gnote)); list.append(sec); continue; }
+    const on = state.order.includes(it.id);
+    const card = el('article', 'item' + (on ? ' on' : ''));
+    const box = el('input'); box.type = 'checkbox'; box.id = 'pick-' + it.id; box.checked = on;
+    box.addEventListener('change', () => toggle(it.id, box.checked));
+    const body = el('div'); body.style.minWidth = '0';
+    const head = el('div', 'head');
+    if (on) head.append(el('span', 'ord', String(state.order.indexOf(it.id) + 1)));
+    const lab = el('label', '', `${it.id} · ${it.title}`); lab.htmlFor = box.id; head.append(lab);
+    if (RECOMMENDED.includes(it.id)) head.append(el('span', 'rec', 'Recommended'));
+    const sz = el('span', 'size'); sz.append(bars(it.size), SIZE[it.size]); head.append(sz);
+    const top = el('div', 'top');
+    const left = el('div'); left.style.minWidth = '0';
+    left.append(el('p', '', it.idea));
+    const play = el('div', 'play'); play.append(el('b', '', 'How it plays'), document.createTextNode(it.play)); left.append(play);
+    const fig = el('figure', 'sketch'); fig.style.margin = '0'; fig.innerHTML = SKETCH[it.id]; fig.append(el('figcaption', '', 'Rough sketch of the rule, not the screen design'));
+    top.append(left, fig);
+    body.append(head, top);
+    const dl = el('dl');
+    for (const [k, v] of [['Fixes', it.fixes], ['Grounded in', it.source], ['Touches', it.files]]) { dl.append(el('dt', '', k)); dl.append(el('dd', '', v)); }
+    dl.append(el('dt', '', 'Balance risk')); const r = el('dd'); r.append(el('span', 'risk-' + it.risk[0], it.risk[1])); dl.append(r);
+    body.append(dl);
+    for (const s of it.subs ?? []) {
+      const box2 = el('div', 'subs'); box2.append(el('div', 'q', s.q));
+      for (const [val, text, rec] of s.options) {
+        const l = el('label'); const inp = el('input'); inp.id = `sub-${s.key}-${val}`;
+        if (s.check) {
+          inp.type = 'checkbox'; inp.checked = (state.subs[s.key] || []).includes(val);
+          inp.addEventListener('change', () => { const cur = new Set(state.subs[s.key] || []); inp.checked ? cur.add(val) : cur.delete(val); state.subs[s.key] = [...cur]; dirty(); });
+        } else {
+          inp.type = 'radio'; inp.name = 'sub-' + s.key; inp.checked = state.subs[s.key] === val;
+          inp.addEventListener('change', () => { state.subs[s.key] = val; dirty(); });
+        }
+        l.append(inp, el('span', '', text + (rec && !s.check ? ' (recommended)' : ''))); box2.append(l);
+      }
+      body.append(box2);
+    }
+    card.append(box, body); sec.append(card);
+  }
+}
+
+function renderOrder() {
+  const ol = $('#order'); ol.textContent = '';
+  $('#count').textContent = `${state.order.length} of ${ITEMS.filter((i) => i.id).length} options picked, in build order`;
+  if (!state.order.length) { ol.append(el('li', 'empty', 'Nothing picked yet. Tick an option on the left.')); return; }
+  state.order.forEach((id, i) => {
+    const li = el('li'); li.append(el('span', '', `${id} · ${byId[id].title}`));
+    const mv = el('div', 'mv');
+    const up = el('button', '', '↑'); up.type = 'button'; up.disabled = i === 0; up.setAttribute('aria-label', `Move ${id} up`);
+    const dn = el('button', '', '↓'); dn.type = 'button'; dn.disabled = i === state.order.length - 1; dn.setAttribute('aria-label', `Move ${id} down`);
+    up.addEventListener('click', () => move(i, -1)); dn.addEventListener('click', () => move(i, 1));
+    mv.append(up, dn); li.append(mv); ol.append(li);
+  });
+}
+function render() { renderList(); renderOrder(); $('#note').value = state.note; }
+function dirty() { $('#status').textContent = 'Changed, not saved yet.'; }
+function toggle(id, on) {
+  if (on && !state.order.includes(id)) state.order.push(id);
+  else if (!on) state.order = state.order.filter((x) => x !== id);
+  render(); dirty();
+}
+function move(i, d) { const o = state.order; [o[i], o[i + d]] = [o[i + d], o[i]]; render(); dirty(); }
+
+function asText() {
+  const lines = ['Compute deal picks (lane gn-compute-deals):'];
+  state.order.forEach((id, i) => lines.push(`${i + 1}- ${id} ${byId[id].title}`));
+  if (!state.order.length) lines.push('(none picked)');
+  for (const [key, s] of Object.entries(SUBTEXT)) {
+    if (!state.order.includes(s.item)) continue;
+    const v = state.subs[key];
+    const ans = s.check ? ((v || []).map((x) => s.opts[x]).join(' / ') || 'none') : s.opts[v];
+    lines.push(`${s.item} ${s.q}: ${ans}`);
+  }
+  if (state.note.trim()) lines.push('Notes: ' + state.note.trim());
+  return lines.join('\n');
+}
+
+let db = null;
+const DOC = 'picks/current';
+async function save() {
+  state.note = $('#note').value;
+  if (!db) { $('#status').textContent = 'Saving is not available in this view. Use Copy as text instead.'; return; }
+  try {
+    await db.doc(DOC).set({ order: state.order, subs: state.subs, note: state.note, text: asText(), savedAt: new Date().toISOString() });
+    $('#status').textContent = 'Saved. Tell me in the chat that you are done.';
+  } catch (e) { $('#status').textContent = 'Could not save (' + (e?.code || 'error') + '). Use Copy as text instead.'; }
+}
+$('#save').addEventListener('click', save);
+$('#note').addEventListener('input', () => { state.note = $('#note').value; dirty(); });
+$('#reset').addEventListener('click', () => { state = { order: [...RECOMMENDED], subs: structuredClone(DEFAULT_SUBS), note: state.note }; render(); dirty(); });
+$('#copy').addEventListener('click', async () => {
+  state.note = $('#note').value; const t = asText(); const ta = $('#copytext'); ta.value = t; ta.hidden = false;
+  try { await navigator.clipboard.writeText(t); $('#status').textContent = 'Copied. Paste it into the chat.'; }
+  catch { ta.select(); $('#status').textContent = 'Select the text below and copy it.'; }
+});
+
+render();
+(async () => {
+  try {
+    db = await window.claude?.use?.('db');
+    if (!db) return;
+    const snap = await db.doc(DOC).get();
+    const d = snap.exists ? snap.data() : null;
+    if (d && Array.isArray(d.order)) {
+      state = { order: d.order.filter((id) => byId[id]), subs: { ...structuredClone(DEFAULT_SUBS), ...(d.subs || {}) }, note: d.note || '' };
+      render(); $('#status').textContent = 'Loaded your saved picks from ' + new Date(d.savedAt).toLocaleString() + '.';
+    }
+  } catch { /* the page works without the store */ }
+})();
+</script>

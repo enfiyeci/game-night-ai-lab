@@ -1,0 +1,352 @@
+{
+ "balanced": {
+  "runs": 100,
+  "endings": {
+   "\"misalignment\"": 66,
+   "\"aligned\"": 27,
+   "\"pyrrhic\"": 4,
+   "\"overtaken\"": 3
+  },
+  "perEra": {
+   "1": {
+    "rounds": 400,
+    "avgOnline": 25.1,
+    "idleShare": 0.52,
+    "roundsNoRunFits": 0,
+    "roundsIdleButNoRun": 0.25,
+    "roundsRunPaused": 0,
+    "dealsPerRound": 0.69,
+    "offersOnBoard": 4,
+    "rank1Share": 0.12
+   },
+   "2": {
+    "rounds": 400,
+    "avgOnline": 18.8,
+    "idleShare": 0.04,
+    "roundsNoRunFits": 1,
+    "roundsIdleButNoRun": 0,
+    "roundsRunPaused": 0,
+    "dealsPerRound": 0.5,
+    "offersOnBoard": 5,
+    "rank1Share": 1
+   },
+   "3": {
+    "rounds": 400,
+    "avgOnline": 145.8,
+    "idleShare": 0.41,
+    "roundsNoRunFits": 0,
+    "roundsIdleButNoRun": 0.5,
+    "roundsRunPaused": 0,
+    "dealsPerRound": 0.41,
+    "offersOnBoard": 4,
+    "rank1Share": 0.5
+   },
+   "4": {
+    "rounds": 374,
+    "avgOnline": 479.9,
+    "idleShare": 0.48,
+    "roundsNoRunFits": 0,
+    "roundsIdleButNoRun": 0.3,
+    "roundsRunPaused": 0.02,
+    "dealsPerRound": 0.63,
+    "offersOnBoard": 6,
+    "rank1Share": 0.64
+   },
+   "5": {
+    "rounds": 232,
+    "avgOnline": 635.6,
+    "idleShare": 0.31,
+    "roundsNoRunFits": 0,
+    "roundsIdleButNoRun": 0.31,
+    "roundsRunPaused": 0,
+    "dealsPerRound": 0,
+    "offersOnBoard": 2,
+    "rank1Share": 0.81
+   }
+  },
+  "signsBySupplier": {
+   "coreflame": 276,
+   "grid": 100,
+   "verde": 274,
+   "queueOrder": 100,
+   "azuria": 83,
+   "loi": 43
+  },
+  "signsByEra": {},
+  "offersSeen": 0,
+  "rivalTakes": 1700,
+  "denials": 176,
+  "contractActions": 0
+ },
+ "speed": {
+  "runs": 100,
+  "endings": {
+   "\"misalignment\"": 81,
+   "\"misuse\"": 19
+  },
+  "perEra": {
+   "1": {
+    "rounds": 400,
+    "avgOnline": 26.5,
+    "idleShare": 0.4,
+    "roundsNoRunFits": 0.25,
+    "roundsIdleButNoRun": 0.25,
+    "roundsRunPaused": 0,
+    "dealsPerRound": 0.25,
+    "offersOnBoard": 4,
+    "rank1Share": 0.25
+   },
+   "2": {
+    "rounds": 400,
+    "avgOnline": 40.5,
+    "idleShare": 0.08,
+    "roundsNoRunFits": 0.79,
+    "roundsIdleButNoRun": 0.1,
+    "roundsRunPaused": 0,
+    "dealsPerRound": 0.25,
+    "offersOnBoard": 5,
+    "rank1Share": 0.6
+   },
+   "3": {
+    "rounds": 400,
+    "avgOnline": 195.5,
+    "idleShare": 0.61,
+    "roundsNoRunFits": 0,
+    "roundsIdleButNoRun": 0.5,
+    "roundsRunPaused": 0,
+    "dealsPerRound": 0.25,
+    "offersOnBoard": 4.8,
+    "rank1Share": 0.4
+   },
+   "4": {
+    "rounds": 181,
+    "avgOnline": 201,
+    "idleShare": 0.57,
+    "roundsNoRunFits": 0,
+    "roundsIdleButNoRun": 0.45,
+    "roundsRunPaused": 0,
+    "dealsPerRound": 0.73,
+    "offersOnBoard": 6.2,
+    "rank1Share": 0.55
+   }
+  },
+  "signsBySupplier": {
+   "verde": 233,
+   "queueOrder": 100,
+   "buildSite": 100
+  },
+  "signsByEra": {},
+  "offersSeen": 0,
+  "rivalTakes": 1600,
+  "denials": 100,
+  "contractActions": 0
+ },
+ "safety": {
+  "runs": 100,
+  "endings": {
+   "\"acquihire\"": 98,
+   "\"leftBehind\"": 2
+  },
+  "perEra": {
+   "1": {
+    "rounds": 400,
+    "avgOnline": 17.5,
+    "idleShare": 0.5,
+    "roundsNoRunFits": 0,
+    "roundsIdleButNoRun": 0.25,
+    "roundsRunPaused": 0,
+    "dealsPerRound": 0.25,
+    "offersOnBoard": 4,
+    "rank1Share": 0.05
+   },
+   "2": {
+    "rounds": 400,
+    "avgOnline": 47,
+    "idleShare": 0.58,
+    "roundsNoRunFits": 0,
+    "roundsIdleButNoRun": 0.25,
+    "roundsRunPaused": 0,
+    "dealsPerRound": 0.24,
+    "offersOnBoard": 5,
+    "rank1Share": 0
+   },
+   "3": {
+    "rounds": 8,
+    "avgOnline": 160,
+    "idleShare": 0.51,
+    "roundsNoRunFits": 0,
+    "roundsIdleButNoRun": 0.25,
+    "roundsRunPaused": 0,
+    "dealsPerRound": 0.75,
+    "offersOnBoard": 4,
+    "rank1Share": 0
+   }
+  },
+  "signsBySupplier": {
+   "azuria": 204
+  },
+  "signsByEra": {},
+  "offersSeen": 0,
+  "rivalTakes": 808,
+  "denials": 0,
+  "contractActions": 0
+ },
+ "careful": {
+  "runs": 100,
+  "endings": {
+   "\"aligned\"": 96,
+   "\"rivalDisaster\"": 4
+  },
+  "perEra": {
+   "1": {
+    "rounds": 400,
+    "avgOnline": 27.8,
+    "idleShare": 0.34,
+    "roundsNoRunFits": 0,
+    "roundsIdleButNoRun": 0.25,
+    "roundsRunPaused": 0.13,
+    "dealsPerRound": 0.75,
+    "offersOnBoard": 4,
+    "rank1Share": 0.54
+   },
+   "2": {
+    "rounds": 400,
+    "avgOnline": 21.9,
+    "idleShare": 0.15,
+    "roundsNoRunFits": 0,
+    "roundsIdleButNoRun": 0.25,
+    "roundsRunPaused": 0,
+    "dealsPerRound": 0.5,
+    "offersOnBoard": 5,
+    "rank1Share": 1
+   },
+   "3": {
+    "rounds": 400,
+    "avgOnline": 126,
+    "idleShare": 0.43,
+    "roundsNoRunFits": 0,
+    "roundsIdleButNoRun": 0.26,
+    "roundsRunPaused": 0,
+    "dealsPerRound": 0.25,
+    "offersOnBoard": 4,
+    "rank1Share": 1
+   },
+   "4": {
+    "rounds": 400,
+    "avgOnline": 388.5,
+    "idleShare": 0.27,
+    "roundsNoRunFits": 0.01,
+    "roundsIdleButNoRun": 0.21,
+    "roundsRunPaused": 0,
+    "dealsPerRound": 0.46,
+    "offersOnBoard": 6,
+    "rank1Share": 1
+   },
+   "5": {
+    "rounds": 400,
+    "avgOnline": 476,
+    "idleShare": 0.29,
+    "roundsNoRunFits": 0.79,
+    "roundsIdleButNoRun": 0.16,
+    "roundsRunPaused": 0,
+    "dealsPerRound": 0,
+    "offersOnBoard": 2,
+    "rank1Share": 1
+   }
+  },
+  "signsBySupplier": {
+   "coreflame": 300,
+   "grid": 100,
+   "verde": 200,
+   "queueOrder": 100,
+   "loi": 82
+  },
+  "signsByEra": {},
+  "offersSeen": 0,
+  "rivalTakes": 1600,
+  "denials": 200,
+  "contractActions": 0
+ },
+ "random": {
+  "runs": 100,
+  "endings": {
+   "\"acquihire\"": 89,
+   "\"misalignment\"": 4,
+   "\"boardRemoved\"": 2,
+   "\"rivalDisaster\"": 2,
+   "\"misuse\"": 2,
+   "\"leftBehind\"": 1
+  },
+  "perEra": {
+   "1": {
+    "rounds": 400,
+    "avgOnline": 31,
+    "idleShare": 0.47,
+    "roundsNoRunFits": 0.04,
+    "roundsIdleButNoRun": 0.4,
+    "roundsRunPaused": 0,
+    "dealsPerRound": 0.94,
+    "offersOnBoard": 4,
+    "rank1Share": 0.4
+   },
+   "2": {
+    "rounds": 249,
+    "avgOnline": 103.1,
+    "idleShare": 0.53,
+    "roundsNoRunFits": 0.02,
+    "roundsIdleButNoRun": 0.54,
+    "roundsRunPaused": 0,
+    "dealsPerRound": 0.5,
+    "offersOnBoard": 5,
+    "rank1Share": 0.53
+   },
+   "3": {
+    "rounds": 60,
+    "avgOnline": 269.1,
+    "idleShare": 0.49,
+    "roundsNoRunFits": 0,
+    "roundsIdleButNoRun": 0.33,
+    "roundsRunPaused": 0,
+    "dealsPerRound": 0.75,
+    "offersOnBoard": 4.5,
+    "rank1Share": 0.67
+   },
+   "4": {
+    "rounds": 43,
+    "avgOnline": 472.7,
+    "idleShare": 0.57,
+    "roundsNoRunFits": 0,
+    "roundsIdleButNoRun": 0.4,
+    "roundsRunPaused": 0,
+    "dealsPerRound": 0.88,
+    "offersOnBoard": 6.8,
+    "rank1Share": 0.74
+   },
+   "5": {
+    "rounds": 15,
+    "avgOnline": 1068.5,
+    "idleShare": 0.48,
+    "roundsNoRunFits": 0,
+    "roundsIdleButNoRun": 0.4,
+    "roundsRunPaused": 0,
+    "dealsPerRound": 0.73,
+    "offersOnBoard": 2,
+    "rank1Share": 0.8
+   }
+  },
+  "signsBySupplier": {
+   "spot": 179,
+   "verde": 111,
+   "azuria": 148,
+   "coreflame": 91,
+   "azuriaEquity": 30,
+   "queueOrder": 15,
+   "buildSite": 22
+  },
+  "signsByEra": {},
+  "offersSeen": 0,
+  "rivalTakes": 850,
+  "denials": 138,
+  "contractActions": 0
+ }
+}

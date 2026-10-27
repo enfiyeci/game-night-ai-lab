@@ -1,0 +1,689 @@
+{
+  "speed": {
+    "endings": {
+      "misalignment": 161,
+      "misuse": 39
+    },
+    "meanEra": 4,
+    "diedInEra3or4": 200,
+    "perEra": {
+      "1": {
+        "computeShare": 0.5017611679920738,
+        "computeBills": 39.70035568000004,
+        "arr": 614.5442741735968,
+        "turns": 800
+      },
+      "2": {
+        "computeShare": 0.5885000360011763,
+        "computeBills": 76.97915880000002,
+        "arr": 986.1311849009269,
+        "turns": 800
+      },
+      "3": {
+        "computeShare": 0.7831888981553994,
+        "computeBills": 227.72350000000003,
+        "arr": 1855.3312036408909,
+        "turns": 800
+      },
+      "4": {
+        "computeShare": 0.7693971057446565,
+        "computeBills": 254.40499999999932,
+        "arr": 0,
+        "turns": 200
+      }
+    },
+    "queueShortTurns": 800,
+    "queueTurns": 800,
+    "cashEndingsByEra": {},
+    "leftBehindByEra": {},
+    "roundsAtFirst": 0.437522636725824,
+    "rivalDealsPerRun": 16,
+    "polishDaysPerRelease": 0,
+    "meanPolishAtRelease": 0,
+    "fixesPerRelease": 0,
+    "meanPressAvg": 4.954033214709371,
+    "rejectedActions": 0,
+    "meanRankAtEra4End": null
+  },
+  "safety": {
+    "endings": {
+      "acquihire": 193,
+      "leftBehind": 4,
+      "pacingDeal": 2,
+      "overtaken": 1
+    },
+    "meanEra": 2.065,
+    "diedInEra3or4": 4,
+    "perEra": {
+      "1": {
+        "computeShare": 0.4067147676038206,
+        "computeBills": 36.5,
+        "arr": 304.29000000000235,
+        "turns": 800
+      },
+      "2": {
+        "computeShare": 0.6011459492498059,
+        "computeBills": 125.13295000000033,
+        "arr": 462.3858287314552,
+        "turns": 800
+      },
+      "3": {
+        "computeShare": 0.6922062893803007,
+        "computeBills": 477.21142857142866,
+        "arr": 1113.0435251919992,
+        "turns": 28
+      },
+      "4": {
+        "computeShare": 0.9193813593676411,
+        "computeBills": 1467.3000000000002,
+        "arr": 1476.9562500000004,
+        "turns": 12
+      },
+      "5": {
+        "computeShare": 0.9292436469581705,
+        "computeBills": 2009.3500000000001,
+        "arr": 2765.14142497875,
+        "turns": 12
+      }
+    },
+    "queueShortTurns": 28,
+    "queueTurns": 28,
+    "cashEndingsByEra": {
+      "2": 193
+    },
+    "leftBehindByEra": {
+      "3": 4
+    },
+    "roundsAtFirst": 0.029055690072639227,
+    "rivalDealsPerRun": 8.195,
+    "polishDaysPerRelease": 90.36619718309859,
+    "meanPolishAtRelease": 93.11959859884367,
+    "fixesPerRelease": 0.028169014084507043,
+    "meanPressAvg": 8.332159624413146,
+    "rejectedActions": 0,
+    "meanRankAtEra4End": 2
+  },
+  "balanced": {
+    "endings": {
+      "misalignment": 138,
+      "aligned": 49,
+      "pyrrhic": 8,
+      "overtaken": 5
+    },
+    "meanEra": 4.76,
+    "diedInEra3or4": 48,
+    "perEra": {
+      "1": {
+        "computeShare": 0.5134090636727057,
+        "computeBills": 38.77030000000007,
+        "arr": 445.5834623999976,
+        "turns": 800
+      },
+      "2": {
+        "computeShare": 0.5978361525049551,
+        "computeBills": 139.11307385599977,
+        "arr": 998.712981794226,
+        "turns": 800
+      },
+      "3": {
+        "computeShare": 0.6550249468193527,
+        "computeBills": 214.32736516080035,
+        "arr": 1833.190764811415,
+        "turns": 800
+      },
+      "4": {
+        "computeShare": 0.824127062183638,
+        "computeBills": 912.3019180790949,
+        "arr": 2655.643832057414,
+        "turns": 708
+      },
+      "5": {
+        "computeShare": 0.9068748407701901,
+        "computeBills": 1577.4330175438595,
+        "arr": 2957.236406413992,
+        "turns": 380
+      }
+    },
+    "queueShortTurns": 800,
+    "queueTurns": 800,
+    "cashEndingsByEra": {},
+    "leftBehindByEra": {},
+    "roundsAtFirst": 0.599834528405957,
+    "rivalDealsPerRun": 17,
+    "polishDaysPerRelease": 32.81520591341077,
+    "meanPolishAtRelease": 68.54812045921841,
+    "fixesPerRelease": 0.5776135163674763,
+    "meanPressAvg": 8.710137275607181,
+    "rejectedActions": 0,
+    "meanRankAtEra4End": 1.0192307692307692
+  },
+  "careful": {
+    "endings": {
+      "aligned": 193,
+      "rivalDisaster": 7
+    },
+    "meanEra": 5,
+    "diedInEra3or4": 0,
+    "perEra": {
+      "1": {
+        "computeShare": 0.5353059970890315,
+        "computeBills": 43.15467999999991,
+        "arr": 491.34488831999374,
+        "turns": 800
+      },
+      "2": {
+        "computeShare": 0.4045302760556527,
+        "computeBills": 49.400857484799936,
+        "arr": 908.7267303737696,
+        "turns": 800
+      },
+      "3": {
+        "computeShare": 0.6154803402089507,
+        "computeBills": 154.50449999999933,
+        "arr": 1858.3029507288518,
+        "turns": 800
+      },
+      "4": {
+        "computeShare": 0.7705259582277375,
+        "computeBills": 522.4293333333312,
+        "arr": 2365.761933002869,
+        "turns": 800
+      },
+      "5": {
+        "computeShare": 0.8465620788046876,
+        "computeBills": 856.8423333333317,
+        "arr": 2493.8596297028703,
+        "turns": 800
+      }
+    },
+    "queueShortTurns": 800,
+    "queueTurns": 800,
+    "cashEndingsByEra": {},
+    "leftBehindByEra": {},
+    "roundsAtFirst": 0.906,
+    "rivalDealsPerRun": 16,
+    "polishDaysPerRelease": 2.516411378555799,
+    "meanPolishAtRelease": 15.785775054704592,
+    "fixesPerRelease": 0.25437636761487964,
+    "meanPressAvg": 7.844365426695842,
+    "rejectedActions": 0,
+    "meanRankAtEra4End": 1
+  },
+  "carefulNoGrid": {
+    "endings": {
+      "overtaken": 200
+    },
+    "meanEra": 5,
+    "diedInEra3or4": 0,
+    "perEra": {
+      "1": {
+        "computeShare": 0.5353059970890315,
+        "computeBills": 43.15467999999991,
+        "arr": 491.34488831999374,
+        "turns": 800
+      },
+      "2": {
+        "computeShare": 0.4576525048043684,
+        "computeBills": 71.21004000000019,
+        "arr": 916.0551680279995,
+        "turns": 800
+      },
+      "3": {
+        "computeShare": 0.6154803402089507,
+        "computeBills": 154.50449999999933,
+        "arr": 1873.2892619706652,
+        "turns": 800
+      },
+      "4": {
+        "computeShare": 0.5484294111870266,
+        "computeBills": 156.36600000000087,
+        "arr": 2384.84065518231,
+        "turns": 800
+      },
+      "5": {
+        "computeShare": 0.5054401582591485,
+        "computeBills": 156.36600000000087,
+        "arr": 2484.5425920061502,
+        "turns": 800
+      }
+    },
+    "queueShortTurns": 800,
+    "queueTurns": 800,
+    "cashEndingsByEra": {},
+    "leftBehindByEra": {},
+    "roundsAtFirst": 0.856,
+    "rivalDealsPerRun": 16,
+    "polishDaysPerRelease": 2.375,
+    "meanPolishAtRelease": 16.807999999999996,
+    "fixesPerRelease": 0.25,
+    "meanPressAvg": 8.09109375,
+    "rejectedActions": 0,
+    "meanRankAtEra4End": 1
+  },
+  "random": {
+    "endings": {
+      "acquihire": 175,
+      "misalignment": 10,
+      "boardRemoved": 5,
+      "rivalDisaster": 4,
+      "misuse": 3,
+      "leftBehind": 3
+    },
+    "meanEra": 2.11,
+    "diedInEra3or4": 21,
+    "perEra": {
+      "1": {
+        "computeShare": 0.5741087915201376,
+        "computeBills": 64.72768745,
+        "arr": 276.07837385808557,
+        "turns": 800
+      },
+      "2": {
+        "computeShare": 1.052514042108873,
+        "computeBills": 226.2967751713684,
+        "arr": 718.9902886853365,
+        "turns": 475
+      },
+      "3": {
+        "computeShare": 2.35200070786907,
+        "computeBills": 643.7134296874998,
+        "arr": 1116.151724647303,
+        "turns": 128
+      },
+      "4": {
+        "computeShare": 2.5876284720874194,
+        "computeBills": 1201.9584399999997,
+        "arr": 1984.2188736219166,
+        "turns": 75
+      },
+      "5": {
+        "computeShare": 1.4215850028152386,
+        "computeBills": 4905.67315,
+        "arr": 2887.43570801595,
+        "turns": 20
+      }
+    },
+    "queueShortTurns": 128,
+    "queueTurns": 128,
+    "cashEndingsByEra": {
+      "1": 46,
+      "2": 122,
+      "4": 6,
+      "5": 1
+    },
+    "leftBehindByEra": {
+      "3": 3
+    },
+    "roundsAtFirst": 0.4907161803713528,
+    "rivalDealsPerRun": 8.505,
+    "polishDaysPerRelease": 8,
+    "meanPolishAtRelease": 10.507951484203609,
+    "fixesPerRelease": 0.06716417910447761,
+    "meanPressAvg": 7.365049751243781,
+    "rejectedActions": 0,
+    "meanRankAtEra4End": 1.1875
+  },
+  "overCommitter": {
+    "endings": {
+      "acquihire": 200
+    },
+    "meanEra": 2,
+    "diedInEra3or4": 0,
+    "perEra": {
+      "1": {
+        "computeShare": 0.5516757190306418,
+        "computeBills": 54.60034999999989,
+        "arr": 438.88040294400076,
+        "turns": 800
+      },
+      "2": {
+        "computeShare": 0.8558210725842097,
+        "computeBills": 240.05894680851074,
+        "arr": 776.2029811557583,
+        "turns": 752
+      }
+    },
+    "queueShortTurns": 0,
+    "queueTurns": 0,
+    "cashEndingsByEra": {
+      "2": 200
+    },
+    "leftBehindByEra": {},
+    "roundsAtFirst": 0.23067010309278352,
+    "rivalDealsPerRun": 10,
+    "polishDaysPerRelease": 91,
+    "meanPolishAtRelease": 93.12805232639982,
+    "fixesPerRelease": 0,
+    "meanPressAvg": 8.760217983651225,
+    "rejectedActions": 0,
+    "meanRankAtEra4End": null
+  },
+  "handToMouth": {
+    "endings": {
+      "overtaken": 77,
+      "rivalDisaster": 71,
+      "aligned": 21,
+      "misalignment": 31
+    },
+    "meanEra": 5,
+    "diedInEra3or4": 0,
+    "perEra": {
+      "1": {
+        "computeShare": 0.5864475863253666,
+        "computeBills": 51.91760000000024,
+        "arr": 445.5834623999976,
+        "turns": 800
+      },
+      "2": {
+        "computeShare": 0.6519590579625725,
+        "computeBills": 154.13219999999967,
+        "arr": 839.9816825989072,
+        "turns": 800
+      },
+      "3": {
+        "computeShare": 0.7962052506594236,
+        "computeBills": 434.35729999999916,
+        "arr": 1720.0371737113921,
+        "turns": 800
+      },
+      "4": {
+        "computeShare": 0.8443843210576947,
+        "computeBills": 1326.6966856184001,
+        "arr": 2304.613342427894,
+        "turns": 800
+      },
+      "5": {
+        "computeShare": 0.9599477019216137,
+        "computeBills": 3977.756657963447,
+        "arr": 2581.731219628698,
+        "turns": 766
+      }
+    },
+    "queueShortTurns": 800,
+    "queueTurns": 800,
+    "cashEndingsByEra": {},
+    "leftBehindByEra": {},
+    "roundsAtFirst": 0.5994495871903928,
+    "rivalDealsPerRun": 14.97,
+    "polishDaysPerRelease": 67.24311490978158,
+    "meanPolishAtRelease": 91.48329776384183,
+    "fixesPerRelease": 0.4301994301994302,
+    "meanPressAvg": 8.845204178537513,
+    "rejectedActions": 0,
+    "meanRankAtEra4End": 1.365
+  },
+  "balancedNoGrid": {
+    "endings": {
+      "misalignment": 75,
+      "overtaken": 69,
+      "pyrrhic": 13,
+      "aligned": 37,
+      "rivalDisaster": 6
+    },
+    "meanEra": 4.905,
+    "diedInEra3or4": 19,
+    "perEra": {
+      "1": {
+        "computeShare": 0.5134090636727057,
+        "computeBills": 38.77030000000007,
+        "arr": 445.5834623999976,
+        "turns": 800
+      },
+      "2": {
+        "computeShare": 0.581725595417291,
+        "computeBills": 116.20421935999981,
+        "arr": 1006.7671188960062,
+        "turns": 800
+      },
+      "3": {
+        "computeShare": 0.6725366368356361,
+        "computeBills": 264.14027999999905,
+        "arr": 1902.7562302514002,
+        "turns": 800
+      },
+      "4": {
+        "computeShare": 0.7785823511108474,
+        "computeBills": 606.7928167539278,
+        "arr": 2689.6869896090493,
+        "turns": 764
+      },
+      "5": {
+        "computeShare": 0.7830190953895736,
+        "computeBills": 786.9041448763243,
+        "arr": 2904.524191764732,
+        "turns": 566
+      }
+    },
+    "queueShortTurns": 800,
+    "queueTurns": 800,
+    "cashEndingsByEra": {},
+    "leftBehindByEra": {},
+    "roundsAtFirst": 0.5910643889618923,
+    "rivalDealsPerRun": 17,
+    "polishDaysPerRelease": 34.24295010845987,
+    "meanPolishAtRelease": 68.38601703566144,
+    "fixesPerRelease": 0.5661605206073753,
+    "meanPressAvg": 8.734273318872017,
+    "rejectedActions": 0,
+    "meanRankAtEra4End": 1
+  },
+  "balancedLowSafety": {
+    "endings": {
+      "misalignment": 182,
+      "aligned": 12,
+      "overtaken": 2,
+      "pyrrhic": 4
+    },
+    "meanEra": 4.485,
+    "diedInEra3or4": 103,
+    "perEra": {
+      "1": {
+        "computeShare": 0.5134090636727057,
+        "computeBills": 38.77030000000007,
+        "arr": 445.5834623999976,
+        "turns": 800
+      },
+      "2": {
+        "computeShare": 0.5838339178505835,
+        "computeBills": 132.89931385600002,
+        "arr": 998.712981794226,
+        "turns": 800
+      },
+      "3": {
+        "computeShare": 0.6599451227581439,
+        "computeBills": 223.58586000000057,
+        "arr": 1833.190764811415,
+        "turns": 800
+      },
+      "4": {
+        "computeShare": 0.8170960161706478,
+        "computeBills": 765.0414170771749,
+        "arr": 2620.880432612682,
+        "turns": 609
+      },
+      "5": {
+        "computeShare": 0.9075293348882089,
+        "computeBills": 1550.5730133333336,
+        "arr": 2887.5959025072616,
+        "turns": 200
+      }
+    },
+    "queueShortTurns": 800,
+    "queueTurns": 800,
+    "cashEndingsByEra": {},
+    "leftBehindByEra": {},
+    "roundsAtFirst": 0.5830138602182248,
+    "rivalDealsPerRun": 17,
+    "polishDaysPerRelease": 34.42569832402235,
+    "meanPolishAtRelease": 67.93082910891603,
+    "fixesPerRelease": 0.553072625698324,
+    "meanPressAvg": 8.716480446927374,
+    "rejectedActions": 0,
+    "meanRankAtEra4End": 1
+  },
+  "balancedHighSafety": {
+    "endings": {
+      "misalignment": 108,
+      "aligned": 64,
+      "pyrrhic": 25,
+      "overtaken": 3
+    },
+    "meanEra": 4.855,
+    "diedInEra3or4": 29,
+    "perEra": {
+      "1": {
+        "computeShare": 0.5134090636727057,
+        "computeBills": 38.77030000000007,
+        "arr": 445.5834623999976,
+        "turns": 800
+      },
+      "2": {
+        "computeShare": 0.6034007738772528,
+        "computeBills": 141.8870738560005,
+        "arr": 998.712981794226,
+        "turns": 800
+      },
+      "3": {
+        "computeShare": 0.6609211418153927,
+        "computeBills": 226.33650000000063,
+        "arr": 1833.190764811415,
+        "turns": 800
+      },
+      "4": {
+        "computeShare": 0.8593088779977173,
+        "computeBills": 1013.0247511230897,
+        "arr": 2672.338212092532,
+        "turns": 742
+      },
+      "5": {
+        "computeShare": 0.9101005979839308,
+        "computeBills": 1603.3134546722483,
+        "arr": 2962.0557802962126,
+        "turns": 478
+      }
+    },
+    "queueShortTurns": 800,
+    "queueTurns": 800,
+    "cashEndingsByEra": {},
+    "leftBehindByEra": {},
+    "roundsAtFirst": 0.5944206008583691,
+    "rivalDealsPerRun": 17,
+    "polishDaysPerRelease": 32.324380165289256,
+    "meanPolishAtRelease": 68.87761424925604,
+    "fixesPerRelease": 0.5867768595041323,
+    "meanPressAvg": 8.708161157024794,
+    "rejectedActions": 0,
+    "meanRankAtEra4End": 1
+  },
+  "balancedPush": {
+    "endings": {
+      "misalignment": 137,
+      "aligned": 48,
+      "pyrrhic": 10,
+      "overtaken": 5
+    },
+    "meanEra": 4.76,
+    "diedInEra3or4": 48,
+    "perEra": {
+      "1": {
+        "computeShare": 0.5134090636727057,
+        "computeBills": 38.77030000000007,
+        "arr": 445.5834623999976,
+        "turns": 800
+      },
+      "2": {
+        "computeShare": 0.5978361525049551,
+        "computeBills": 139.11307385599977,
+        "arr": 998.712981794226,
+        "turns": 800
+      },
+      "3": {
+        "computeShare": 0.6642401328112907,
+        "computeBills": 214.32736516080035,
+        "arr": 1833.190764811415,
+        "turns": 800
+      },
+      "4": {
+        "computeShare": 0.8330840437753068,
+        "computeBills": 901.9458163841796,
+        "arr": 2655.643832057414,
+        "turns": 708
+      },
+      "5": {
+        "computeShare": 0.8898713898253628,
+        "computeBills": 1498.040114583333,
+        "arr": 2946.8705019521844,
+        "turns": 384
+      }
+    },
+    "queueShortTurns": 800,
+    "queueTurns": 800,
+    "cashEndingsByEra": {},
+    "leftBehindByEra": {},
+    "roundsAtFirst": 0.6084320749517773,
+    "rivalDealsPerRun": 17,
+    "polishDaysPerRelease": 32.89724576271186,
+    "meanPolishAtRelease": 68.49082139118627,
+    "fixesPerRelease": 0.576271186440678,
+    "meanPressAvg": 8.697828389830509,
+    "rejectedActions": 0,
+    "meanRankAtEra4End": 1.0192307692307692
+  },
+  "denier": {
+    "endings": {
+      "misalignment": 124,
+      "aligned": 33,
+      "pyrrhic": 9,
+      "leftBehind": 19,
+      "overtaken": 15
+    },
+    "meanEra": 4.57,
+    "diedInEra3or4": 67,
+    "perEra": {
+      "1": {
+        "computeShare": 0.4539204317343307,
+        "computeBills": 35.076500000000074,
+        "arr": 445.5834623999976,
+        "turns": 800
+      },
+      "2": {
+        "computeShare": 0.5254398492241261,
+        "computeBills": 87.49779284,
+        "arr": 969.3405497298658,
+        "turns": 800
+      },
+      "3": {
+        "computeShare": 0.7615737447518657,
+        "computeBills": 346.3123697720003,
+        "arr": 1723.4978250549245,
+        "turns": 800
+      },
+      "4": {
+        "computeShare": 0.8547883787120142,
+        "computeBills": 1210.8417061611394,
+        "arr": 2568.9575658039394,
+        "turns": 633
+      },
+      "5": {
+        "computeShare": 0.9183230126308236,
+        "computeBills": 1752.8326706114383,
+        "arr": 2820.6276734576095,
+        "turns": 338
+      }
+    },
+    "queueShortTurns": 800,
+    "queueTurns": 800,
+    "cashEndingsByEra": {},
+    "leftBehindByEra": {
+      "3": 19
+    },
+    "roundsAtFirst": 0.4317596566523605,
+    "rivalDealsPerRun": 15.715,
+    "polishDaysPerRelease": 33.97502837684449,
+    "meanPolishAtRelease": 67.62667769316667,
+    "fixesPerRelease": 0.5448354143019296,
+    "meanPressAvg": 8.686152099886492,
+    "rejectedActions": 0,
+    "meanRankAtEra4End": 1
+  }
+}

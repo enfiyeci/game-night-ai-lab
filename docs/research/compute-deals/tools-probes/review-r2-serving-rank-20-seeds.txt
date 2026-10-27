@@ -1,0 +1,2 @@
+balanced era2 daily serving share 0.84 rank1 at era-2 marks 62/80 {"e1:coreflame":58,"e2:grid":20,"e2:verde":20,"e3:azuria":13,"e4:verde":34,"e4:loi":8,"e4:azuria":5}
+careful era2 daily serving share 0.35 rank1 at era-2 marks 80/80 {"e1:coreflame":60,"e2:grid":20,"e2:verde":20,"e4:verde":20,"e4:loi":13}

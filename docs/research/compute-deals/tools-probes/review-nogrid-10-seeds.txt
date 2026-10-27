@@ -1,0 +1,2 @@
+careful {"aligned":10} era4 avg online 301 avg unpowered 5 avg rank 1.00 {"e1:coreflame":30,"e2:grid":10,"e2:verde":10,"e3:queueOrder":10,"e4:verde":10,"e4:loi":6}
+carefulNoGrid {"overtaken":10} era4 avg online 126 avg unpowered 0 avg rank 1.00 {"e1:coreflame":30,"e2:verde":10,"e3:queueOrder":10}
