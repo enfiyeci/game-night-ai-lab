@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createInitialState } from '../sim/state.js';
 import { scoreLaunch, evalGaming, testFor, testScore, retiredTests } from '../sim/launch.js';
-import { BENCHMARKS, TEST_WIDTH } from '../sim/data/launch.js';
+import { BENCHMARKS, TEST_WIDTH, bare } from '../sim/data/launch.js';
 import { safetySpend } from '../sim/economy.js';
 import { eraScale } from '../sim/data/compute.js';
 
@@ -221,7 +221,7 @@ const at = (era) => { const s = createInitialState(); s.era = era; return s; };
 const row = (r, id) => r.benchmarks.find((x) => x.id === id);
 const reasoning = { capability: 60, spec: { reasoningCapable: true }, flags: [] };
 
-test('every era has exactly one test per row, and most tests run more than one era', () => {
+test('every era has exactly one test per row, and the early tests run more than one era', () => {
   for (const b of BENCHMARKS) {
     for (let era = 1; era <= 5; era += 1) assert.equal(b.tests.filter((t) => era >= t.from && era <= t.to).length, 1, `${b.id} era ${era}`);
   }
@@ -282,8 +282,16 @@ test('at an era change, the tests that retire are listed with their replacements
   assert.deepEqual(retiredTests(1), []);
   assert.deepEqual(retiredTests(2).map((t) => t.id), ['patchwork', 'horizon', 'gauntlet']);
   assert.deepEqual(retiredTests(3).map((t) => t.id), ['doctorate', 'finalexam', 'gauntlet']);
+  assert.deepEqual(retiredTests(4).map((t) => t.id), ['patchwork', 'doctorate', 'horizon', 'finalexam']);
   assert.equal(retiredTests(5).length, 5);
   const [first] = retiredTests(2);
   assert.equal(first.from, 'Hello Function (coding)');
   assert.equal(first.to, 'Patchwork (coding)');
+});
+
+// The feed post names both tests without their row tag ("(coding)"), so a successor must not differ only in a tag.
+test('every retiring test and its successor read as different names in the feed post', () => {
+  for (let era = 2; era <= 5; era += 1) {
+    for (const t of retiredTests(era)) assert.notEqual(bare(t.from), bare(t.to), `era ${era}: ${t.from} -> ${t.to}`);
+  }
 });
