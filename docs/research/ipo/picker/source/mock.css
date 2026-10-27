@@ -1,0 +1,89 @@
+/* IPO direction mockups drawn over the running game. Game tokens only (--cream --paper --ink --teal --wood --coral --sky). */
+.mk-hide { display: none !important; }
+
+/* Pricing night header over the term-sheet fan */
+.mk-price-head { position: absolute; left: 50%; top: 88px; transform: translateX(-50%); z-index: 40; width: 760px; text-align: center;
+  background: var(--paper); border-radius: 14px; padding: 12px 22px 14px; box-shadow: 0 3px 0 color-mix(in oklab, var(--wood) 55%, var(--ink)), 0 12px 28px color-mix(in oklab, var(--ink) 18%, transparent); border: 2px solid var(--wood); }
+.mk-price-head .k { font-size: 12px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; color: var(--wood); }
+.mk-price-head h2 { margin: 2px 0 4px; font-size: 30px; font-weight: 300; }
+.mk-book { display: grid; grid-template-columns: 150px 1fr 56px; gap: 4px 10px; align-items: center; font-size: 13px; font-weight: 700; text-align: left; margin: 8px auto 0; width: 600px; }
+.mk-book i { display: block; height: 10px; border-radius: 5px; background: var(--teal); }
+.mk-book i.hot { background: var(--coral); }
+.mk-book span.n { text-align: right; font-weight: 900; }
+.mk-price-head .sub { font-size: 13.5px; font-weight: 600; color: color-mix(in oklab, var(--ink) 70%, var(--paper)); margin-top: 6px; }
+
+/* IPO / ticker chip, cloned from .bd-count so it inherits its look */
+.mk-chip b { font-weight: 900; }
+.mk-chip .dn { color: var(--coral); font-weight: 900; }
+.mk-chip .up { color: var(--teal); font-weight: 900; }
+
+/* Earnings call (dark call card in the meeting's palette) */
+.mk-call-layer { position: absolute; inset: 0; z-index: 60; display: grid; place-items: center start; padding-left: 150px; background: color-mix(in oklab, var(--ink) 22%, transparent); }
+.mk-call { width: 780px; border-radius: 22px; padding: 26px 30px 24px; color: var(--paper);
+  background: color-mix(in oklab, color-mix(in oklab, var(--ink) 82%, var(--wood)) 96%, transparent); box-shadow: 0 24px 60px color-mix(in oklab, var(--ink) 50%, transparent); }
+.mk-call .k { font-size: 12.5px; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; color: color-mix(in oklab, var(--paper) 62%, var(--ink)); }
+.mk-call h2 { margin: 4px 0 2px; font-size: 34px; font-weight: 300; }
+.mk-faces { display: flex; gap: 6px; margin: 12px 0 14px; flex-wrap: wrap; }
+.mk-faces span { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: 11.5px; font-weight: 900; color: var(--paper); background: color-mix(in oklab, var(--sky) 55%, var(--ink)); }
+.mk-faces span:nth-child(3n) { background: color-mix(in oklab, var(--teal) 60%, var(--ink)); }
+.mk-faces span:nth-child(4n) { background: color-mix(in oklab, var(--wood) 70%, var(--ink)); }
+.mk-faces em { font-style: normal; font-size: 13px; font-weight: 800; align-self: center; margin-left: 6px; color: color-mix(in oklab, var(--paper) 70%, var(--ink)); }
+.mk-score { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.mk-score div { border-radius: 12px; padding: 10px 14px; background: color-mix(in oklab, var(--paper) 9%, transparent); }
+.mk-score small { display: block; font-size: 11.5px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: color-mix(in oklab, var(--paper) 60%, var(--ink)); }
+.mk-score b { font-size: 24px; font-weight: 800; }
+.mk-score .miss b { color: color-mix(in oklab, var(--coral) 80%, var(--paper)); }
+.mk-q { margin-top: 16px; border-radius: 14px; padding: 14px 16px; background: var(--paper); color: var(--ink); }
+.mk-q .who { font-size: 12.5px; font-weight: 900; color: color-mix(in oklab, var(--ink) 60%, var(--paper)); }
+.mk-q .says { font-size: 17px; font-weight: 700; margin: 3px 0 10px; line-height: 1.35; }
+.mk-ans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.mk-ans button { text-align: left; font: inherit; color: var(--ink); background: var(--paper); border: 2.5px solid color-mix(in oklab, var(--ink) 12%, transparent); border-radius: 12px; padding: 9px 12px; }
+.mk-ans b { display: block; font-size: 14px; font-weight: 900; line-height: 1.25; }
+.mk-ans span { display: block; font-size: 12.5px; font-weight: 700; margin-top: 4px; color: color-mix(in oklab, var(--ink) 66%, var(--paper)); }
+.mk-tape { margin-top: 12px; display: flex; justify-content: space-between; font-size: 13px; font-weight: 800; color: color-mix(in oklab, var(--paper) 72%, var(--ink)); }
+.mk-tape .dn { color: color-mix(in oklab, var(--coral) 80%, var(--paper)); }
+
+/* Shared dialog insides (window, share register) */
+.mk-dlg .dialog-body { text-align: left; }
+.mk-two { display: grid; grid-template-columns: 1fr 300px; gap: 22px; align-items: start; }
+.mk-cal { position: relative; margin: 6px 0 4px; }
+.mk-months { display: grid; grid-template-columns: repeat(6, 1fr); font-size: 12px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: color-mix(in oklab, var(--ink) 55%, var(--paper)); border-bottom: 2px solid color-mix(in oklab, var(--wood) 40%, var(--paper)); padding-bottom: 4px; }
+.mk-lanes { display: grid; gap: 8px; margin-top: 10px; }
+.mk-lane { display: grid; grid-template-columns: 96px 1fr; align-items: center; gap: 8px; font-size: 13px; font-weight: 800; }
+.mk-track { position: relative; height: 30px; border-radius: 8px; background: color-mix(in oklab, var(--cream) 55%, var(--paper)); }
+.mk-ev { position: absolute; top: 3px; height: 24px; border-radius: 7px; padding: 3px 8px; font-size: 12px; font-weight: 800; white-space: nowrap; color: var(--paper); background: color-mix(in oklab, var(--ink) 70%, var(--paper)); }
+.mk-ev.good { background: var(--teal); }
+.mk-ev.bad { background: var(--coral); }
+.mk-ev.ghost { background: transparent; color: var(--ink); border: 2px dashed color-mix(in oklab, var(--ink) 35%, transparent); padding-top: 1px; }
+.mk-ev.you { background: var(--wood); }
+.mk-now { position: absolute; top: -6px; bottom: -6px; width: 2px; background: var(--coral); }
+.mk-now::after { content: "Now"; position: absolute; top: -16px; left: -12px; font-size: 11px; font-weight: 900; color: var(--coral); }
+.mk-mood { margin-top: 14px; display: grid; grid-template-columns: 96px 1fr; gap: 8px; align-items: center; font-size: 13px; font-weight: 800; }
+.mk-mood .bar { position: relative; height: 12px; border-radius: 6px; background: linear-gradient(90deg, color-mix(in oklab, var(--sky) 45%, var(--paper)), color-mix(in oklab, var(--coral) 55%, var(--paper))); }
+.mk-mood .bar i { position: absolute; top: -5px; width: 4px; height: 22px; border-radius: 2px; background: var(--ink); }
+.mk-mood .lbl { display: flex; justify-content: space-between; font-size: 11.5px; font-weight: 800; color: color-mix(in oklab, var(--ink) 55%, var(--paper)); grid-column: 2; }
+.mk-side { background: color-mix(in oklab, var(--cream) 45%, var(--paper)); border-radius: 12px; padding: 12px 14px; font-size: 13.5px; font-weight: 600; line-height: 1.4; }
+.mk-side .who { font-size: 11.5px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: var(--wood); margin-bottom: 4px; }
+.mk-acts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 16px; }
+.mk-acts button { text-align: left; font: inherit; color: var(--ink); background: var(--paper); border: 2.5px solid color-mix(in oklab, var(--ink) 12%, transparent); border-radius: 12px; padding: 9px 12px; }
+.mk-acts b { display: block; font-size: 14.5px; font-weight: 900; }
+.mk-acts span { display: block; font-size: 12.5px; font-weight: 700; margin-top: 3px; color: color-mix(in oklab, var(--ink) 66%, var(--paper)); }
+
+/* Share register */
+.mk-blocks { display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; margin: 8px 0 6px; }
+.mk-blk { height: 86px; border-radius: 10px; padding: 7px 7px; font-size: 11.5px; font-weight: 900; line-height: 1.15; color: var(--paper); display: flex; flex-direction: column; justify-content: space-between; position: relative; }
+.mk-blk small { font-size: 10.5px; font-weight: 800; opacity: .9; }
+.mk-blk.you { background: var(--teal); }
+.mk-blk.staff { background: color-mix(in oklab, var(--teal) 60%, var(--paper)); color: var(--ink); }
+.mk-blk.inv { background: color-mix(in oklab, var(--wood) 85%, var(--ink)); }
+.mk-blk.pub { background: color-mix(in oklab, var(--sky) 70%, var(--paper)); color: var(--ink); }
+.mk-blk.riv { background: var(--coral); }
+.mk-blk .lock { position: absolute; right: 6px; top: 6px; font-size: 13px; }
+.mk-line { position: relative; height: 26px; margin-top: 2px; }
+.mk-line .seg { position: absolute; top: 8px; height: 6px; border-radius: 3px; }
+.mk-line .lab { position: absolute; top: 12px; font-size: 12px; font-weight: 900; }
+.mk-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; font-weight: 800; margin-top: 8px; }
+.mk-legend span::before { content: ""; display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; background: var(--c); }
+
+.mk-dlg .dlg { left: 190px !important; width: 1060px !important; min-height: 0 !important; }
+.mk-blk .lock { top: auto; bottom: 7px; right: 7px; }

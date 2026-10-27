@@ -146,5 +146,6 @@ game's labs stay fictional.
   a model-written digest of the page, not its raw text.
 - **Access:** www.sec.gov refuses scripted downloads without a contact email in the request header; per the research
   rules no email was supplied, so filings were read through EDGAR's full-text search index and a browser tab.
+- The direction picker (2026-10-27) is in `picker/` (published at https://claude.ai/artifact/Em9bCTwGkcimHCfgEBTnoE).
 - Downloaded source text (SEC forms, Ritter's statistics PDF) stayed in the session scratchpad and is not committed;
   every source is linked from the notes.
