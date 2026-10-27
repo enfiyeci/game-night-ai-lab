@@ -45,6 +45,10 @@ only through search-result snippets, and those claims carry ⚠️ inline.
    research (2026-09-26): Anthropic's "When AI builds itself" essay and automation index, the
    RSP, OpenAI and Google DeepMind thresholds, share-of-code figures, METR's measured speedups,
    and how other games model a self-accelerating loop. Start with its verified-rows table.
+12. `late-game/README.md` — bigger eras 4 and 5 ending in a fight for world dominance, and more
+   model releases (2026-10-27): how strategy games keep a late game escalating, the 2027-2030
+   race scenarios, what "dominance" can mean, and real and tycoon release cadence. Subagent
+   notes read mostly through a summarizing fetch tool; partial reads flagged ⚠️ inline.
 
 ## Notable catches
 

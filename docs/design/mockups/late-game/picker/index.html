@@ -1,0 +1,308 @@
+<title>Late Game Picker</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;600;700;800;900&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: the game's own cream floor and paper panels; one wood-framed panel per option, picks in coral. */
+:root {
+  --floor: #F1E4C8; --paper: #FFFBF1; --ink: #2E2A2B; --wood: #C8864C; --coral: #E0613B; --teal: #3F9C8F; --sky: #3F84C6;
+  --soft: color-mix(in oklab, var(--ink) 60%, var(--paper));
+  --line: color-mix(in oklab, var(--wood) 30%, transparent);
+  --band: color-mix(in oklab, var(--wood) 22%, var(--paper));
+  --display: "Nunito", "Trebuchet MS", sans-serif; --mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --floor: #1E1916; --paper: #2A231F; --ink: #F2E7D6; --wood: #D59B66; --coral: #EE7A55; --teal: #5DB5A8; --sky: #6FA6DC; color-scheme: dark; } }
+:root[data-theme="dark"] { --floor: #1E1916; --paper: #2A231F; --ink: #F2E7D6; --wood: #D59B66; --coral: #EE7A55; --teal: #5DB5A8; --sky: #6FA6DC; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--floor); color: var(--ink); font-family: var(--display); font-size: 15px; line-height: 1.45; }
+.wrap { max-width: 1320px; margin: 0 auto; padding-block: 28px 120px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 28px; }
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+h1 { font-weight: 300; font-size: clamp(32px, 4.4vw, 52px); line-height: 1.02; }
+h2 { font-weight: 300; font-size: clamp(26px, 3vw, 36px); line-height: 1.05; }
+h3 { font-weight: 900; font-size: 20px; line-height: 1.15; }
+.kick { font-size: 12px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: color-mix(in oklab, var(--wood) 62%, var(--ink)); }
+p { margin: 0; max-width: 68ch; }
+.mono { font-family: var(--mono); font-size: 12.5px; overflow-wrap: anywhere; }
+.soft { color: var(--soft); }
+a { color: color-mix(in oklab, var(--sky) 80%, var(--ink)); }
+
+/* Header: the answer first, today's game beside it. */
+.top { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+.top .lead { display: grid; gap: 14px; }
+.rec { display: grid; gap: 6px; padding: 16px 18px; border-radius: 14px; background: var(--paper); box-shadow: inset 4px 0 0 var(--coral), 0 3px 0 color-mix(in oklab, var(--wood) 40%, transparent); }
+.rec b { font-weight: 900; }
+.finds { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.finds li { display: grid; grid-template-columns: 22px 1fr; gap: 8px; font-weight: 600; }
+.finds li::before { content: ""; width: 10px; height: 10px; margin-top: 6px; border-radius: 50%; background: var(--wood); }
+figure { margin: 0; display: grid; gap: 6px; min-width: 0; }
+figcaption { font-size: 12.5px; font-weight: 700; color: var(--soft); }
+.shot { display: block; width: 100%; height: auto; border-radius: 10px; cursor: zoom-in; box-shadow: 0 0 0 1.5px var(--line); background: var(--paper); }
+.facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.fact { padding: 10px 12px; border-radius: 10px; background: var(--paper); font-size: 12.5px; font-weight: 700; }
+.fact b { display: block; font-size: 20px; font-weight: 900; font-variant-numeric: tabular-nums; }
+
+/* Pick groups and option panels. */
+.group { display: grid; gap: 14px; }
+.group > header { display: grid; gap: 4px; }
+.opts { display: grid; gap: 16px; }
+.opt { display: grid; gap: 14px; padding: 18px; border-radius: 16px; background: var(--paper); box-shadow: 0 0 0 2px color-mix(in oklab, var(--wood) 55%, transparent), 0 4px 0 color-mix(in oklab, var(--wood) 45%, transparent); }
+.opt.on { box-shadow: 0 0 0 3px var(--coral), 0 4px 0 color-mix(in oklab, var(--coral) 55%, transparent); }
+.opt-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px 16px; }
+.opt-head .t { display: grid; gap: 2px; }
+.tag { display: inline-block; padding: 2px 9px; border-radius: 6px; font-size: 11.5px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; background: var(--band); color: color-mix(in oklab, var(--wood) 55%, var(--ink)); }
+.tag.rec { color: var(--paper); background: var(--coral); box-shadow: none; padding: 2px 9px; display: inline-block; }
+.pick { display: inline-flex; align-items: center; gap: 9px; min-height: 44px; padding: 8px 16px; border-radius: 12px; font: inherit; font-weight: 900; font-size: 14.5px; cursor: pointer; color: color-mix(in oklab, var(--wood) 55%, var(--ink)); background: var(--floor); border: 0; box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--wood) 50%, transparent); }
+.pick:focus-visible, .shot:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+.pick .box { width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 0 0 2px currentColor; }
+.pick.multi .box { border-radius: 5px; }
+.opt.on .pick { color: var(--paper); background: var(--coral); box-shadow: 0 3px 0 color-mix(in oklab, var(--coral) 60%, var(--ink)); }
+.opt.on .pick .box { box-shadow: inset 0 0 0 5px var(--paper); }
+.body { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.shots { display: grid; gap: 10px; }
+.shots .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.phones { display: grid; grid-template-columns: 874fr 951fr 678fr; gap: 8px; align-items: end; }
+.phones figcaption { font-size: 11.5px; }
+.spec { display: grid; gap: 0; margin: 0; }
+.spec div { display: grid; grid-template-columns: 112px 1fr; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 13.5px; }
+.spec div:first-child { border-top: 0; padding-top: 0; }
+.spec dt { font-weight: 900; font-size: 12px; letter-spacing: .03em; text-transform: uppercase; color: color-mix(in oklab, var(--wood) 60%, var(--ink)); padding-top: 2px; }
+.spec dd { margin: 0; font-weight: 600; min-width: 0; }
+.spec dd b { font-weight: 900; }
+.weak { padding: 10px 12px; border-radius: 10px; font-size: 13.5px; font-weight: 700; background: color-mix(in oklab, var(--coral) 9%, var(--paper)); }
+.ref { display: grid; grid-template-columns: 150px 1fr; gap: 12px; align-items: center; padding: 10px; border-radius: 10px; background: var(--floor); }
+.ref img { width: 150px; height: auto; border-radius: 6px; cursor: zoom-in; }
+.ref p { font-size: 12.5px; font-weight: 700; }
+
+/* Calendar strips (pick 3): each era as a bar on one 2023-2029 axis. */
+.cal { display: grid; gap: 6px; padding: 12px; border-radius: 10px; background: var(--floor); }
+.cal .row { display: grid; grid-template-columns: 70px 1fr; gap: 10px; align-items: center; font-size: 12px; font-weight: 800; }
+.cal .lane { position: relative; height: 24px; border-radius: 6px; background: color-mix(in oklab, var(--ink) 5%, transparent); }
+.cal .era { position: absolute; top: 0; bottom: 0; display: grid; place-items: center; overflow: hidden; border-radius: 6px; font-size: 11px; font-weight: 900; white-space: nowrap; color: var(--paper); background: color-mix(in oklab, var(--wood) 75%, var(--ink)); }
+.cal .era.new { background: var(--coral); }
+.cal .era.grow { background: color-mix(in oklab, var(--coral) 70%, var(--wood)); }
+.cal .axis { display: flex; justify-content: space-between; margin-left: 80px; font-size: 11px; font-weight: 800; color: var(--soft); }
+
+.notes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.notes section { display: grid; gap: 8px; padding: 16px 18px; border-radius: 14px; background: var(--paper); }
+.notes ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 13.5px; font-weight: 600; }
+
+/* Sticky picks bar. */
+.bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; padding-block: 10px calc(10px + env(safe-area-inset-bottom, 0px)); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); background: color-mix(in oklab, var(--paper) 94%, transparent); box-shadow: 0 -2px 0 var(--line), 0 -10px 24px color-mix(in oklab, var(--ink) 10%, transparent); }
+.bar .in { max-width: 1320px; margin: 0 auto; display: flex; gap: 12px; align-items: center; justify-content: space-between; }
+.bar .sum { min-width: 0; font-size: 13.5px; font-weight: 800; }
+.bar .sum .long { color: var(--ink); }
+.copy { flex: none; min-height: 44px; padding: 8px 18px; border: 0; border-radius: 12px; font: inherit; font-weight: 900; color: var(--paper); background: var(--coral); box-shadow: 0 3px 0 color-mix(in oklab, var(--coral) 60%, var(--ink)); cursor: pointer; }
+textarea#picks-text { width: 100%; min-height: 70px; font-family: var(--mono); font-size: 12px; }
+
+dialog.lb { max-width: min(1440px, 96vw); padding: 0; border: 0; border-radius: 12px; background: var(--paper); }
+dialog.lb::backdrop { background: color-mix(in oklab, var(--ink) 55%, transparent); }
+dialog.lb img { display: block; max-width: 100%; max-height: 90vh; }
+dialog.lb p { padding: 8px 12px; font-size: 13px; font-weight: 700; }
+
+@media (min-width: 901px) { .bar .sum .short { display: none; } }
+@media (max-width: 900px) {
+  .top, .body, .notes { grid-template-columns: 1fr; }
+  .fact b { font-size: 16px; }
+  .bar .sum .long { display: none; }
+  .phones { grid-template-columns: 1fr 1fr; }
+  .spec div { grid-template-columns: 96px 1fr; }
+  .ref { grid-template-columns: 110px 1fr; } .ref img { width: 110px; }
+  .bar .in { flex-wrap: wrap; }
+}
+@media (max-width: 520px) { .shots .pair { grid-template-columns: 1fr; } .phones { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: no-preference) { .opt { transition: box-shadow 160ms ease; } }
+</style>
+
+<div class="wrap">
+  <div class="top">
+    <div class="lead">
+      <div class="kick">Game Night · late game · lane gn-late-game · 27 October 2026</div>
+      <h1>Bigger eras 4 and 5, and a fight for the world</h1>
+      <div class="rec">
+        <span class="kick">Recommended, preselected below</span>
+        <span><b>B · Four fronts</b> with a new <b>era 6</b>, <b>checkpoints every round</b> plus a <b>lineup</b> of live models, and an <b>early finish</b> once the result is settled.</span>
+        <span class="soft" style="font-weight:700">It turns the last three eras into one race you watch move on four fronts, ships a model every 90 seconds of clock, and ends at one scheduled climax.</span>
+      </div>
+      <ul class="finds">
+        <li><span><b>The calendar is too short.</b> Era 5 is four weeks of January 2027. Every published race (AI 2027, Situational Awareness) is decided between February 2027 and 2028.</span></li>
+        <li><span><b>Few era 5 releases is realistic for four weeks</b>, so more releases need a longer finale or a smaller release unit (a checkpoint), as AI 2027's own labs move to.</span></li>
+        <li><span><b>Late games drag when the leader's choices stop mattering.</b> The games that escalate show one race to one dated climax, let your lead wake the opposition, keep choices per round flat, and stop when it is decided.</span></li>
+      </ul>
+      <p class="soft" style="font-size:13px;font-weight:700">Research: <span class="mono">docs/research/late-game/reports/Late game escalation and dominance.md</span> on branch <span class="mono">design/late-game</span>. Every number in the mockups is illustrative, not from the sim.</p>
+    </div>
+    <figure>
+      <img class="shot" src="img/today-era5.jpg" alt="Today's era 5 office, January 2027, week 1" tabindex="0">
+      <figcaption>Today: era 5 opens on January 2027, week 1, and lasts four weeks (main, seed 4).</figcaption>
+      <div class="facts">
+        <div class="fact"><b>4 weeks</b>era 5's whole calendar</div>
+        <div class="fact"><b>0.3–1</b>releases per game in era 5</div>
+        <div class="fact"><b>400 → 450</b>frontier compute, era 4 to 5</div>
+      </div>
+    </figure>
+  </div>
+
+  <section class="group" id="structure">
+    <header><span class="kick">Pick 1 of 4 · one</span><h2>The late game's structure</h2>
+      <p class="soft" style="font-weight:700">Era length, the new system, the finale's shape and how many releases. Each direction names what it borrows and its weak point.</p></header>
+    <div class="opts" data-group="structure" data-mode="one"></div>
+  </section>
+
+  <section class="group" id="releases">
+    <header><span class="kick">Pick 2 of 4 · any</span><h2>More model releases</h2>
+      <p class="soft" style="font-weight:700">These mix with any structure. Each direction above names its default.</p></header>
+    <div class="opts" data-group="releases" data-mode="many"></div>
+  </section>
+
+  <section class="group" id="calendar">
+    <header><span class="kick">Pick 3 of 4 · one</span><h2>Where the finale lives</h2>
+      <p class="soft" style="font-weight:700">Either works with any structure. No code may assume five eras either way.</p></header>
+    <div class="opts" data-group="calendar" data-mode="one"></div>
+  </section>
+
+  <section class="group" id="extras">
+    <header><span class="kick">Pick 4 of 4 · any</span><h2>Two rules for the end</h2></header>
+    <div class="opts" data-group="extras" data-mode="many"></div>
+  </section>
+
+  <div class="notes">
+    <section><h3>What these mockups are</h3><ul>
+      <li>Drawn into the real game (main 643a7d7, era 5 scenario, seed 4) by injecting markup, captured headless at 1440 × 900; phone frames on the phone lane's build 8209268 at iPhone 874 × 402, Duo open 951 × 669 and Duo closed 678 × 466.</li>
+      <li>Today's look. New dialogs use the release reveal's frame, which the IP fix C3 will put on every dialog; the H1 model card (top left) is not drawn yet, so that corner stays free.</li>
+      <li>Era 6 has no office art yet; its frames reuse the era 5 room.</li>
+      <li>Numbers, names of new models and advisor lines are stand-ins for the build.</li>
+    </ul></section>
+    <section><h3>Not decided here</h3><ul>
+      <li>Endings: redesigned in their own session. The late game only hands over signals: lead in months, each front's band, the stance at a decisive lead, the state's last demand, the deal's state, hidden debt.</li>
+      <li>Compute deals at frontier scale: lane gn-compute-deals. The IPO arc: lane gn-ipo. Dated event cards for late 2026 and 2027: lane gn-events-plausible.</li>
+      <li>Balance: every direction moves capability past 100, the misalignment line and the ending mix, so each needs before-and-after bot runs.</li>
+    </ul></section>
+  </div>
+</div>
+
+<div class="bar"><div class="in">
+  <div class="sum" id="sum"></div>
+  <button class="copy" id="copy" type="button">Copy my picks</button>
+</div></div>
+<dialog class="lb" id="lb"><img alt=""><p></p></dialog>
+
+<script>
+const IMG = (f) => `img/${f}.jpg`;
+const STRUCTURE = [
+  { id: 'A', tag: 'Safe', name: 'One race, one vote', line: 'Longer eras, your lead in months on the HUD, and a dated vote as the climax.',
+    shots: [['A-office', 'Era 5, July 2027: your lead in months, and world attention filling toward the vote'], ['A-vote', 'October 2027: the Oversight Committee votes (ten seats, three motions)']],
+    phone: 'ph-A-office',
+    spec: [['Eras', 'Five. Era 4 grows to <b>6 monthly rounds</b> (Jan–Jun 2026); era 5 grows to <b>8 rounds</b> covering Jan–Oct 2027.'],
+      ['Clock', 'About <b>39 min</b> of running clock, from 30.'],
+      ['New system', 'A <b>lead in months</b> readout built on the compute race\'s standing rule, and a <b>world attention</b> bar: at 25% rivals copy your recipe, at 50% hearings start, at 75% the state demands access.'],
+      ['Finale', 'One scheduled climax, dated from day one: the Oversight Committee vote in October 2027 (race on, slow down and pool, or hand it to the state). Attention sets how strong the committee is.'],
+      ['Releases', '<b>Point releases plus tiers</b> by default: era 4 about 3–4, era 5 about 4–5.'],
+      ['Size', 'Medium. Balance risk medium.']],
+    weak: 'Weak point: one track can feel like a progress bar, and "the fight for the world" is only the lead, not separate fronts.',
+    ref: ['ref-plague-world', 'Plague Inc: Evolved: the world screen and the cure bar that fills as you succeed, with pop-ups at 25/50/75/95%.', 'https://store.steampowered.com/app/246620/'] },
+  { id: 'B', tag: 'Medium', rec: true, name: 'Four fronts', line: 'A new era 6 where the world board shows who leads on compute, economy, governments and security.',
+    shots: [['B-board', 'Era 6, checkpoint 3 of 6: four fronts, you against the lab that leads each one'], ['R2-checkpoint', 'Every round mark: a short reveal of every lab\'s checkpoint']],
+    phone: 'ph-B-board',
+    spec: [['Eras', 'Six. Era 4 grows to <b>6 monthly rounds</b>; era 5 is <b>6 rounds of 2027</b> with a checkpoint each; <b>era 6 "The world stage"</b> is 6 rounds from late 2027 into 2028.'],
+      ['Clock', 'About <b>45 min</b>; the early finish can cut 3–6 min.'],
+      ['New system', 'The <b>world board</b>: four fronts, each a tug track (Behind, Even, Superior, Overwhelming) with its own backlash: probes, sabotage, state demands. Live models are posted to fronts. Alignment stays hidden.'],
+      ['Finale', 'Era 6 ends in "the decisive month" at checkpoint 6, with one scheduled peak in the middle (a state\'s move). It replaces the summit\'s weekly tests and shrinks the deal board, so choices per round stay flat.'],
+      ['Releases', '<b>Checkpoints plus a lineup</b> by default: era 4 about 3, era 5 six checkpoints and one flagship, era 6 about 3–4.'],
+      ['Size', 'Large: several days plus a balance pass. Balance risk high.']],
+    weak: 'Weak point: the most new screen (a board and a lineup). Frostpunk 2 shows what too many systems at once does, so the board is capped at four bands and replaces older systems instead of stacking on them.',
+    ref: ['ref-terra-earth', 'Terra Invicta: control of nations shown on the Earth view; the late game drags once the war is basically won, which the early finish answers.', 'https://store.steampowered.com/app/1176470/'] },
+  { id: 'C', tag: 'Experimental', name: 'The Project', line: 'At the end of era 4 the President offers a national project; the finale climbs a shared escalation ladder.',
+    shots: [['C-offer', 'End of era 4: join the Project, stay independent, or lead a consortium'], ['C-office', 'Era 5 inside the Project, April 2027: the world\'s escalation ladder at rung 2']],
+    phone: 'ph-C-offer',
+    spec: [['Eras', 'Five. Era 4 grows to <b>6 monthly rounds</b>; era 5 grows to <b>8 rounds</b> of 2027.'],
+      ['Clock', 'About <b>39 min</b>.'],
+      ['New system', 'The state\'s demands as a ladder (partner, contract terms, priority orders, supply-chain label, the weights). Its biggest rung is the <b>Project offer</b>. Then a <b>shared escalation ladder</b>: spying, covert sabotage, open cyberattack, a strike on a site, open war. A decisive lead pushes the East up a rung at each checkpoint.'],
+      ['Finale', 'Inside the Project, its board votes on the last model. Independent or in a consortium, the decisive round. Whoever takes the ladder to rung 5 loses the run.'],
+      ['Releases', 'Joined: the state sets a quota (a model every two rounds, you pick the tier). Otherwise point releases. Era 5 about 5.'],
+      ['Size', 'Large. Balance risk high: three branches are three games to tune.']],
+    weak: 'Weak point: three branches triple the tuning, and the President carries the era (his lines are yours to write). Rung 5 ending the run touches the endings session\'s ground.',
+    ref: ['ref-frostpunk-laws', 'Frostpunk: the law tree where each law is "a little bit more than the previous one" (its designers\' creeping normality). Twilight Struggle\'s DEFCON track is the ladder\'s other parent.', 'https://store.steampowered.com/app/323190/'] },
+];
+const RELEASES = [
+  { id: 'R1', tag: 'Safe', name: 'Point releases and tiers', line: 'After a flagship, one-round updates (Kestrel 6.1) and a cheaper tier one round later, each with a 10-second reveal.',
+    shots: [['R1-update', 'A point release: leaderboard only, one press line, about 10 seconds']],
+    spec: [['How often', 'About one release a round once a flagship is out.'], ['Rule', 'Two releases of one family inside a round split the launch buzz (Mad Games Tycoon 2\'s spacing).'], ['Borrowed from', 'The labs\' 2026 cadence: half-step versions, the big tier first and smaller tiers weeks later.'], ['Size', 'Small to medium.']],
+    weak: 'Weak point: updates still need a run to finish, so in a short era they bunch at the end.' },
+  { id: 'R2', tag: 'Medium', rec: true, name: 'A checkpoint every round', line: 'From era 5 a run never ends: each round mark ships a checkpoint, and every lab\'s checkpoint shows at once.',
+    shots: [['R2-checkpoint', 'The checkpoint reveal: every lab moves at once, one press line']],
+    spec: [['How often', 'Every round mark (each 90 s of clock). The full 85-second reveal stays for a new generation.'], ['Rule', 'The leaderboard move is the verdict, which also fixes critics who score 9 or 10 on everything.'], ['Borrowed from', 'AI 2027\'s continuous training and the reward-loops option O6.'], ['Size', 'Large; the bots must learn to ship checkpoints.']],
+    weak: 'Weak point: capability past 100 and the misalignment line move most here; it needs the before-and-after bot runs first.' },
+  { id: 'R3', tag: 'Medium', rec: true, name: 'A lineup of live models', line: 'Four named slots: flagship, fast tier, government edition, internal researcher. Retire a model or route its users to a newer one.',
+    shots: [['R3-lineup', 'Your lineup: four slots, what each model earns and where it works']],
+    phone: 'ph-R3-lineup',
+    spec: [['How often', 'Not a cadence on its own: it makes several releases live at once worth having.'], ['Rule', 'A slot frees when you retire a model or route its users to a newer one (Google routes old models to new ones).'], ['Borrowed from', 'Anthropic\'s 15 live models; Mad Games Tycoon 2\'s editions and decay.'], ['Size', 'Medium.']],
+    weak: 'Weak point: one more screen; serving and pricing of old slots should run on their own so it stays a glance.',
+    ref: ['ref-mgt2-editions', 'Mad Games Tycoon 2: one game sold as several editions at different prices.', 'https://store.steampowered.com/app/1342330/'] },
+];
+const CAL = [
+  { id: 'F1', tag: 'Safe', name: 'A bigger era 5', line: 'Era 5 covers 2027 in rounds of about a month, ending on the October climax.', bars: [[4, 2026, 2026.5], [5, 2027, 2027.85, 'grow']], weak: 'Weak point: era 5\'s "Self-improvement and pacing" theme has to carry automation, exposure and the showdown in one era.' },
+  { id: 'F2', tag: 'Medium', rec: true, name: 'A new era 6', line: 'Era 5 stays the intelligence explosion of early 2027; era 6 "The world stage" runs from late 2027 into 2028.', bars: [[4, 2026, 2026.5], [5, 2027, 2027.5], [6, 2027.6, 2028.6, 'new']], weak: 'Weak point: a new office, era intro, recap and event pool, and every "era 5" check in the code must read the last era from the data.' },
+];
+const EXTRAS = [
+  { id: 'X1', tag: 'Safe', rec: true, name: 'Early finish', line: 'Overwhelming on 3 fronts (or twice the runner-up\'s lead) at two checkpoints in a row jumps straight to the climax.', weak: 'From Old World\'s double victory: nobody presses End Turn fifty more times. Some runs end before 30 minutes.' },
+  { id: 'X2', tag: 'Safe', rec: true, name: 'A decisive lead opens a stance', line: 'Crossing a 3-month lead asks once: press the advantage, share it, or hand it to the state. Only the stance is recorded; the endings session decides what it means.', weak: 'From the decisive-strategic-advantage literature: a lead you could use, not a flag you plant.' },
+];
+
+const picks = { structure: new Set(['B']), releases: new Set(['R2', 'R3']), calendar: new Set(['F2']), extras: new Set(['X1', 'X2']) };
+const lb = document.getElementById('lb');
+const shot = ([f, cap]) => `<figure><img class="shot" src="${IMG(f)}" alt="${cap}" loading="lazy" tabindex="0"><figcaption>${cap}</figcaption></figure>`;
+const phones = (f) => `<div class="phones">${[['iphone', 'iPhone'], ['duo-open', 'iPhone Duo open'], ['duo-closed', 'Duo closed']].map(([d, n]) => `<figure><img class="shot" src="${IMG(`${f}-${d}`)}" alt="${n}" loading="lazy" tabindex="0"><figcaption>${n}</figcaption></figure>`).join('')}</div>`;
+const cal = (bars) => `<div class="cal">${bars.map(([era, a, b, k]) => `<div class="row"><span>Era ${era}</span><span class="lane"><span class="era ${k ?? ''}" style="left:${((a - 2026) / 3) * 100}%;width:${((b - a) / 3) * 100}%">${era === 6 ? 'The world stage' : era === 5 ? '2027' : '2026'}</span></span></div>`).join('')}<div class="axis"><span>2026</span><span>2027</span><span>2028</span><span>2029</span></div></div>`;
+
+function render(group, items) {
+  const host = document.querySelector(`[data-group="${group}"]`);
+  const many = host.dataset.mode === 'many';
+  host.innerHTML = items.map((o) => `<article class="opt" data-id="${o.id}">
+    <div class="opt-head"><div class="t"><span><span class="tag">${o.tag}</span> ${o.rec ? '<span class="tag rec">Recommended</span>' : ''}</span><h3>${o.id} · ${o.name}</h3><p class="soft" style="font-weight:700">${o.line}</p></div>
+      <button class="pick${many ? ' multi' : ''}" type="button" id="pick-${o.id}" aria-pressed="false"><span class="box"></span>${many ? 'Include' : 'Pick'} ${o.id}</button></div>
+    ${o.shots ? `<div class="body"><div class="shots">${o.shots.length > 1 ? `${shot(o.shots[0])}<div class="pair">${shot(o.shots[1])}<div></div></div>` : shot(o.shots[0])}${o.phone ? phones(o.phone) : ''}</div>
+      <div style="display:grid;gap:12px;min-width:0">${o.spec ? `<dl class="spec">${o.spec.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>` : ''}
+      <div class="weak">${o.weak}</div>
+      ${o.ref ? `<div class="ref"><img src="${IMG(o.ref[0])}" alt="${o.ref[1]}" loading="lazy" tabindex="0"><p>${o.ref[1]} <a href="${o.ref[2]}" target="_blank" rel="noopener">Steam page</a></p></div>` : ''}</div></div>`
+      : `<div class="body"><div>${o.bars ? cal(o.bars) : ''}</div><div class="weak">${o.weak}</div></div>`}
+  </article>`).join('');
+  host.addEventListener('click', (e) => {
+    const b = e.target.closest('.pick');
+    if (!b) return;
+    const id = b.closest('.opt').dataset.id;
+    const set = picks[group];
+    if (many) { set.has(id) ? set.delete(id) : set.add(id); } else { set.clear(); set.add(id); }
+    sync();
+  });
+}
+render('structure', STRUCTURE); render('releases', RELEASES); render('calendar', CAL); render('extras', EXTRAS);
+// The pair row's second slot shows the phone frames' first figure size; keep the grid even.
+document.querySelectorAll('.pair > div:empty').forEach((n) => n.remove());
+document.querySelectorAll('.pair').forEach((p) => { if (p.children.length === 1) p.style.gridTemplateColumns = '1fr'; });
+
+const name = (all, id) => all.find((o) => o.id === id)?.name;
+function text() {
+  const list = (g, all) => [...picks[g]].sort().map((id) => `${id} ${name(all, id)}`).join(', ') || 'none';
+  return `Late game picks: structure ${list('structure', STRUCTURE)}; releases ${list('releases', RELEASES)}; calendar ${list('calendar', CAL)}; rules ${list('extras', EXTRAS)}.`;
+}
+function sync() {
+  for (const [g, set] of Object.entries(picks)) document.querySelectorAll(`[data-group="${g}"] .opt`).forEach((o) => {
+    const on = set.has(o.dataset.id); o.classList.toggle('on', on); o.querySelector('.pick').setAttribute('aria-pressed', String(on));
+  });
+  const code = Object.values(picks).map((set) => [...set].sort().join('+') || '–').join(' · ');
+  document.getElementById('sum').innerHTML = `<span class="long">${text()} Copy and paste into the chat.</span><b class="short">Your picks: ${code}</b>`;
+  try { localStorage.setItem('late-game-picks', JSON.stringify(Object.fromEntries(Object.entries(picks).map(([k, v]) => [k, [...v]])))); } catch {}
+}
+try { const saved = JSON.parse(localStorage.getItem('late-game-picks') ?? 'null'); if (saved) for (const [k, v] of Object.entries(saved)) if (picks[k]) picks[k] = new Set(v); } catch {}
+sync();
+
+document.getElementById('copy').addEventListener('click', async (e) => {
+  const t = text();
+  try { await navigator.clipboard.writeText(t); e.target.textContent = 'Copied'; }
+  catch { const s = document.getElementById('sum'); const r = document.createRange(); r.selectNodeContents(s); getSelection().removeAllRanges(); getSelection().addRange(r); e.target.textContent = 'Selected: copy it'; }
+  setTimeout(() => { e.target.textContent = 'Copy my picks'; }, 1800);
+});
+const open = (img) => { lb.querySelector('img').src = img.src; lb.querySelector('p').textContent = img.alt; lb.showModal(); };
+document.addEventListener('click', (e) => { const img = e.target.closest('img.shot, .ref img'); if (img) open(img); else if (e.target === lb || e.target.closest('#lb')) lb.close(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.matches?.('img.shot, .ref img')) open(e.target); });
+</script>
