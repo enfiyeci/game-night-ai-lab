@@ -22,6 +22,8 @@ if (native) {
       eraName: ERAS[state.era - 1]?.name ?? '',
       training: { name: run.name, status: run.status, progress: run.progress },
       over: Boolean(state.ending),
+      // A run is under way once the title screen has gone (ui/screens/title.js) and until the ending.
+      inRun: !document.documentElement.classList.contains('title-night') && !state.ending,
     };
   };
 

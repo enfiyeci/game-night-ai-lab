@@ -24,6 +24,7 @@ struct RootView: View {
             GameWebView(model: model)
                 .ignoresSafeArea()
                 .reportsDuoLayout(to: model)
+                .accessibilityHidden(model.glanceShowing)
             if model.glanceShowing, let glance = model.glance {
                 GlanceView(glance: glance) { model.glanceShowing = false }
                     .transition(.opacity)
@@ -38,9 +39,13 @@ struct RootView: View {
             model.setBackground(phase != .active)
         }
         .onChange(of: model.posture) { old, new in
-            // Closing the Duo offers the glance; opening it again goes straight back to the game.
-            if new == .closed, old != .closed, model.glance?.over == false { model.glanceShowing = true }
+            // Closing the Duo mid-run offers the glance; opening it again goes straight back to the game.
+            if new == .closed, old != .closed, model.glance?.inRun == true { model.glanceShowing = true }
             if new != .closed { model.glanceShowing = false }
+        }
+        .onChange(of: model.glance?.inRun) { _, inRun in
+            // The run ended (the ending film starts) or went back to the title: show the game.
+            if inRun != true { model.glanceShowing = false }
         }
         #if DEBUG
         .task { await playDebugPostures() }
@@ -48,7 +53,7 @@ struct RootView: View {
     }
 
     #if DEBUG
-    /// Debug builds only: `-debugPostures closed@20,open@35` sets those postures that many seconds
+    /// Debug builds only: `-debugPostures closed@25,open@45` sets those postures that many seconds
     /// after launch, for testing the glance and the page's posture events where no hinge can be moved.
     private func playDebugPostures() async {
         let arguments = ProcessInfo.processInfo.arguments

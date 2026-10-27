@@ -13,7 +13,7 @@ struct GameWebView: UIViewRepresentable {
         configuration.websiteDataStore = .default()
         configuration.allowsInlineMediaPlayback = true // the ending films play in the page, not full screen
         configuration.mediaTypesRequiringUserActionForPlayback = [] // the game itself waits for the first tap
-        configuration.ignoresViewportScaleLimits = false // the page's maximum-scale=1 turns pinch zoom off
+        configuration.ignoresViewportScaleLimits = false // the default, kept explicit: the page's maximum-scale=1 turns pinch zoom off
         let webFolder = Bundle.main.url(forResource: "web", withExtension: nil)!
         configuration.setURLSchemeHandler(BundleSchemeHandler(root: webFolder), forURLScheme: BundleSchemeHandler.scheme)
 
@@ -125,7 +125,7 @@ struct GameWebView: UIViewRepresentable {
         init(coordinator: Coordinator) { self.coordinator = coordinator }
 
         func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
-            MainActor.assumeIsolated { coordinator?.receive(message) }
+            coordinator?.receive(message)
         }
     }
 }

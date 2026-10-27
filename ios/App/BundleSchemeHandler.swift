@@ -12,13 +12,17 @@ final class BundleSchemeHandler: NSObject, WKURLSchemeHandler {
     private let root: URL
 
     init(root: URL) {
-        self.root = root.standardizedFileURL
+        self.root = root.standardizedFileURL.resolvingSymlinksInPath()
     }
 
     func webView(_ webView: WKWebView, start task: any WKURLSchemeTask) {
-        guard let url = task.request.url, let file = fileURL(for: url),
-              let data = try? Data(contentsOf: file, options: .mappedIfSafe) else {
-            task.didFailWithError(URLError(.fileDoesNotExist))
+        guard let url = task.request.url else {
+            task.didFailWithError(URLError(.badURL))
+            return
+        }
+        guard let file = fileURL(for: url), let data = try? Data(contentsOf: file, options: .mappedIfSafe) else {
+            task.didReceive(HTTPURLResponse(url: url, statusCode: 404, httpVersion: "HTTP/1.1", headerFields: ["Content-Length": "0"])!)
+            task.didFinish()
             return
         }
         let mime = UTType(filenameExtension: file.pathExtension)?.preferredMIMEType ?? "application/octet-stream"
@@ -43,11 +47,12 @@ final class BundleSchemeHandler: NSObject, WKURLSchemeHandler {
 
     func webView(_ webView: WKWebView, stop task: any WKURLSchemeTask) {}
 
-    /// The file inside the web folder for a request, or nil for anything outside it.
-    private func fileURL(for url: URL) -> URL? {
-        guard url.host == "app" else { return nil }
+    /// The file inside the web folder for a request, or nil for anything outside it (symbolic links
+    /// are followed before the check).
+    func fileURL(for url: URL) -> URL? {
+        guard url.scheme == Self.scheme, url.host == "app" else { return nil }
         let path = url.path.isEmpty || url.path == "/" ? "/index.html" : url.path
-        let file = root.appendingPathComponent(String(path.dropFirst())).standardizedFileURL
+        let file = root.appendingPathComponent(String(path.dropFirst())).standardizedFileURL.resolvingSymlinksInPath()
         guard file.path.hasPrefix(root.path + "/") else { return nil }
         return file
     }
@@ -66,7 +71,12 @@ final class BundleSchemeHandler: NSObject, WKURLSchemeHandler {
         } else {
             guard let first = Int(parts[0]), first < length else { return nil }
             start = first
-            end = parts[1].isEmpty ? length - 1 : min(Int(parts[1]) ?? length - 1, length - 1)
+            if parts[1].isEmpty {
+                end = length - 1
+            } else {
+                guard let last = Int(parts[1]) else { return nil }
+                end = min(last, length - 1)
+            }
         }
         guard start <= end else { return nil }
         return start..<(end + 1)

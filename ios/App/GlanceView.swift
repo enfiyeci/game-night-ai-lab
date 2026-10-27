@@ -124,5 +124,5 @@ private struct ProgressBar: View {
 
 extension Glance {
     static let sample = Glance(labName: "Tinker Labs", cash: "$1.2B", era: 3, eraName: "Reasoning and agents",
-                               training: .init(name: "Tinker-4", status: "training run · midtraining", progress: 0.46), over: false)
+                               training: .init(name: "Tinker-4", status: "training run · midtraining", progress: 0.46), over: false, inRun: true)
 }

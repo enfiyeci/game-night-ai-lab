@@ -8,7 +8,6 @@ import Foundation
 final class SaveStore {
     private(set) var items: [String: String]
     private let file: URL
-    private var pendingWrite: Task<Void, Never>?
 
     init(file: URL = SaveStore.defaultFile) {
         self.file = file
@@ -36,30 +35,18 @@ final class SaveStore {
         case "clear":
             items = [:]
         case "snapshot":
-            // The page's whole localStorage right after the restore, so it is the newest value of
-            // every key it holds. Keys only this copy holds (a restore that failed) stay.
+            // The page's localStorage right after the restore: adds keys this copy lacks (written
+            // before the shell mirrored them). For keys both hold, this copy wins: it is written at
+            // once on every change, while WebKit writes its storage to disk later, so after a crash
+            // the page's value can be the older one.
             guard let snapshot = message["items"] as? [String: String] else { return }
-            items.merge(snapshot) { _, page in page }
+            items.merge(snapshot) { mine, _ in mine }
         default:
             return
         }
-        scheduleWrite()
-    }
-
-    /// Writes now; the app calls this when it goes to the background.
-    func flush() {
-        pendingWrite?.cancel()
-        pendingWrite = nil
+        // Written at once: the saves are a few short strings and change rarely, and a delayed write
+        // could be lost if iOS suspends the app first.
         write()
-    }
-
-    private func scheduleWrite() {
-        pendingWrite?.cancel()
-        pendingWrite = Task { [weak self] in
-            try? await Task.sleep(for: .milliseconds(400))
-            guard !Task.isCancelled else { return }
-            self?.write()
-        }
     }
 
     private func write() {

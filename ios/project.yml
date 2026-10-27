@@ -29,8 +29,9 @@ targets:
           UIColorName: LaunchBackground
         UIStatusBarHidden: true
         UIViewControllerBasedStatusBarAppearance: true
+        # iPhone and the closed Duo are landscape-only (Arda's pick, 2026-10-26); the open Duo
+        # ignores the lock and gets a stacked layout from the phone redesign.
         UISupportedInterfaceOrientations:
-          - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
         UISupportedInterfaceOrientations~ipad:

@@ -20,6 +20,7 @@ struct Glance: Decodable, Equatable {
     var eraName: String
     var training: Training
     var over: Bool
+    var inRun: Bool
 }
 
 /// How the iPhone Duo is posed. `.none` on every other iPhone and on iPad.
@@ -27,7 +28,8 @@ enum Posture: String, Equatable, Sendable {
     case none, closed, open, partial
 }
 
-/// The crease of a half-folded Duo, in the web view's points (which are the page's CSS pixels).
+/// The crease of a half-folded Duo, in the web view's points. These are the page's CSS pixels before any
+/// `zoom` the page sets on its root (ui/main.js fitToWindow scales them by that zoom).
 struct Fold: Equatable, Sendable {
     var frame: CGRect
 }
@@ -57,7 +59,6 @@ final class ShellModel {
         guard background != inBackground else { return }
         inBackground = background
         shellLog.info("background: \(background)")
-        if background { saves.flush() }
         webView?.setAllMediaPlaybackSuspended(background)
         run("""
         if (globalThis.__gameNightShell) globalThis.__gameNightShell.background = \(background);

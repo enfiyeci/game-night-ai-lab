@@ -3,12 +3,17 @@
 // 1. Restores localStorage keys the web view lost, from the app's own copy (ios/App/SaveStore.swift).
 // 2. Mirrors every localStorage write back to that copy.
 // 3. Applies the Duo layout the shell sends: data-native-posture and --native-fold-* on <html>, and a
-//    native-layout event (contract: the gn-ios-shell viewport note, summarized in ios/README.md).
+//    native-layout event (contract: the gn-ios-shell viewport note, summarized in ios/README.md). The fold
+//    values are CSS pixels before any zoom the page puts on <html>.
 (() => {
   const saved = /*SAVED_ITEMS*/{};
   const post = (message) => {
     try { webkit.messageHandlers.gameNightStorage.postMessage(message); } catch { /* not in the app */ }
   };
+
+  // WebKit picks the audio session for the page's own <audio> and <video> (the music and the ending films);
+  // ambient lets the player's own audio keep playing and follows the silent switch, like the app's session.
+  if (navigator.audioSession) navigator.audioSession.type = 'ambient';
 
   const root = document.documentElement;
   root.dataset.native = 'ios';
@@ -43,17 +48,6 @@
       if (this === storage) post({ type: 'clear' });
     };
   }
-
-  // Until the phone redesign sets its own viewport, index.html asks for a 1440-pixel-wide layout, and a
-  // phone then reports a window too tall for ui/main.js's fit-to-window zoom (the bottom of the office is
-  // cut off on an iPhone). The device width gives the page its real window, as a browser of that size
-  // would. Any other viewport is left alone.
-  new MutationObserver((changes, observer) => {
-    const meta = document.querySelector('meta[name="viewport"]');
-    if (!meta) return;
-    observer.disconnect();
-    if (meta.content.replace(/\s/g, '') === 'width=1440') meta.content = 'width=device-width, initial-scale=1, maximum-scale=1';
-  }).observe(document, { childList: true, subtree: true });
 
   // A game should not show text loupes or link previews on long presses, or zoom on a double tap.
   const style = document.createElement('style');

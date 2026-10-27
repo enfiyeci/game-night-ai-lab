@@ -26,7 +26,42 @@ struct ByteRangeTests {
         #expect(BundleSchemeHandler.byteRange("bytes=5-2", length: 100) == nil)
         #expect(BundleSchemeHandler.byteRange("bytes=0-1,5-6", length: 100) == nil)
         #expect(BundleSchemeHandler.byteRange("items=0-1", length: 100) == nil)
+        #expect(BundleSchemeHandler.byteRange("bytes=0-abc", length: 100) == nil)
         #expect(BundleSchemeHandler.byteRange("bytes=0-", length: 0) == nil)
+    }
+}
+
+@MainActor
+struct SchemePathTests {
+    private let root = FileManager.default.temporaryDirectory.appending(path: "web-\(UUID().uuidString)")
+
+    private func handler() throws -> BundleSchemeHandler {
+        try FileManager.default.createDirectory(at: root.appending(path: "ui"), withIntermediateDirectories: true)
+        try Data("x".utf8).write(to: root.appending(path: "ui/a.js"))
+        return BundleSchemeHandler(root: root)
+    }
+
+    @Test func servesFilesInsideTheWebFolder() throws {
+        let h = try handler()
+        #expect(h.fileURL(for: URL(string: "gamenight://app/ui/a.js")!)?.lastPathComponent == "a.js")
+        #expect(h.fileURL(for: URL(string: "gamenight://app/")!)?.lastPathComponent == "index.html")
+    }
+
+    @Test func refusesPathsOutsideItAndOtherHosts() throws {
+        let h = try handler()
+        #expect(h.fileURL(for: URL(string: "gamenight://app/../secret.txt")!) == nil)
+        #expect(h.fileURL(for: URL(string: "gamenight://app/ui/../../secret.txt")!) == nil)
+        #expect(h.fileURL(for: URL(string: "gamenight://other/ui/a.js")!) == nil)
+        #expect(h.fileURL(for: URL(string: "https://app/ui/a.js")!) == nil)
+    }
+
+    @Test func refusesASymbolicLinkThatLeavesTheFolder() throws {
+        let h = try handler()
+        let outside = FileManager.default.temporaryDirectory.appending(path: "outside-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: outside, withIntermediateDirectories: true)
+        try Data("secret".utf8).write(to: outside.appending(path: "secret.txt"))
+        try FileManager.default.createSymbolicLink(at: root.appending(path: "ui/out"), withDestinationURL: outside)
+        #expect(h.fileURL(for: URL(string: "gamenight://app/ui/out/secret.txt")!) == nil)
     }
 }
 
@@ -42,16 +77,15 @@ struct SaveStoreTests {
         store.apply(["type": "set", "key": "ai-lab-run-counter", "value": "3"])
         store.apply(["type": "set", "key": "flock-theme", "value": "dark"])
         store.apply(["type": "remove", "key": "flock-theme"])
-        store.flush()
         #expect(SaveStore(file: file).items == ["ai-lab-run-counter": "3"])
     }
 
-    @Test func snapshotTakesThePageValuesAndKeepsKeysOnlyTheCopyHas() {
+    @Test func snapshotAddsMissingKeysAndKeepsTheCopysValues() {
         let store = SaveStore(file: temporaryFile())
-        store.apply(["type": "set", "key": "a", "value": "old"])
+        store.apply(["type": "set", "key": "a", "value": "newer"])
         store.apply(["type": "set", "key": "kept", "value": "1"])
-        store.apply(["type": "snapshot", "items": ["a": "new", "b": "2"]])
-        #expect(store.items == ["a": "new", "b": "2", "kept": "1"])
+        store.apply(["type": "snapshot", "items": ["a": "older", "b": "2"]])
+        #expect(store.items == ["a": "newer", "b": "2", "kept": "1"])
     }
 
     @Test func clearEmptiesTheCopy() {
