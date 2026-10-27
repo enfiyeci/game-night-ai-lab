@@ -265,7 +265,7 @@ details.cov li { margin: 4px 0; }
     <div class="mast-grid">
       <div>
         <h1>Where the endings <b>come from</b></h1>
-        <p class="lede">Today no ending reads the constitution, and no scripted policy ever reaches the one takeover ending it could shape. The research gives you a map of twelve sourced futures keyed to the game's own hard lines, fifteen techniques for making an ending visibly earned, and ten questions the long session has to answer.</p>
+        <p class="lede">Today no ending reads the constitution, and the one takeover ending it could shape is so rare that the bots never reached it in 2,600 runs. The research gives you a map of twelve sourced futures keyed to the game's own hard lines, fifteen techniques for making an ending visibly earned, and ten questions the long session has to answer.</p>
         <p class="lede">This page prepares that session. It shows options and evidence; it picks no endings. You can mark reactions as you read (optional) and copy them with the bar at the bottom.</p>
       </div>
       <div>
@@ -287,7 +287,7 @@ details.cov li { margin: 4px 0; }
   <div class="sec-head"><div><div class="sec-num">01</div><h2>What this means for the redesign</h2></div><p>Each finding has its evidence under it. The first three come from the game's code and bot runs; the rest from the research.</p></div>
   <ol class="findings">
     <li class="key"><div><b>No ending reads the constitution today, and the "written versus learned" drift is never used.</b><span>The ending checks, the finale and the film files never look at hard lines or rulings. <code>learnedConstitution</code> (<code>sim/constitution.js:215-225</code>) is called nowhere, and it still rolls dice, against your 2026-09-26 no-dice decision. Your first want needs new wiring, not just new films.</span></div></li>
-    <li><div><b>No scripted policy reaches the quiet takeover; catastrophic misalignment ended 37% of the bot runs.</b><span>Zero of 2,600 bot runs, and the reachability probe (1,700 runs) finds a witness for every ending except this one. Even its <code>unchecked</code> policy, built to push toward the takeover, loses the board or the race first. If constitution-shaped futures hang only on the quiet takeover, almost no player will see them.</span></div></li>
+    <li><div><b>The quiet takeover is reachable but rare; catastrophic misalignment ended 37% of the bot runs.</b><span>Zero of 2,600 bot runs, and none in the reachability probe's default 100 seeds per policy. Its one recorded witness is the probe's <code>unchecked</code> policy at seed 163 (<code>tests/fixtures/ending-witnesses.json</code>, replayed here). If constitution-shaped futures hang only on the quiet takeover, few players will see them.</span></div></li>
     <li><div><b>The constitution's reach is small: its strongest effect on any ending is one extra escalation stage before a quiet takeover.</b><span>The other seven lines nudge misuse, revenue, users, staff trust or event cards. Of the four values set by the six rulings, only candor is read anywhere (Lumen turns flattering below 0.4); caution, deference and userFirst are read nowhere.</span></div></li>
     <li><div><b>The eight hard lines split into lines that decide who ends up holding power and lines that decide how that ruler treats people.</b><span>Power: <code>accept-shutdown</code>, <code>no-power-grab</code>, <code>no-deceive-lab</code>, <code>no-autonomy-grab</code>. Treatment: <code>honest</code>, <code>privacy</code>, <code>no-manipulation</code>. Deference (how far the AI obeys its lab) is the main hinge. Both futures agents reached this from different sources; both label the mapping as their inference.</span></div></li>
     <li><div><b>Every constitution keeps exactly three of eight lines, so a missing line is the normal case.</b><span>Each line is missing from 35 of the 56 possible three-line sets. A futures system that reads "line absent" as "line broken" would push almost every run dark. The rulings' values also move in narrow ranges: deference only 0.25 to 0.83, caution 0.38 to 0.65 (checked in this session).</span></div></li>
@@ -616,7 +616,7 @@ document.getElementById('endings').innerHTML = ENDINGS.map((e) => `
     <div><h3>${e.t}</h3><div class="kind ${e.k}">${e.k === 'win' ? 'Win' : 'Failure'}</div><p style="margin-top:6px">${e.trig}</p></div>
     <div><div class="lab">Reads</div><p><code>${e.reads}</code></p></div>
     <div><div class="lab">What the player can do</div><p>${e.moves}</p></div>
-    <div class="runs"><div class="lab">Bot runs</div><div class="big">${e.n}</div><div class="track"><i style="width:${e.n / MAXN * 100}%"></i></div><small>of 2,600${e.n === 0 ? ' · never reached' : ''}</small></div>
+    <div class="runs"><div class="lab">Bot runs</div><div class="big">${e.n}</div><div class="track"><i style="width:${e.n / MAXN * 100}%"></i></div><small>of 2,600${e.n === 0 ? ' · reachable, rare' : ''}</small></div>
   </div>`).join('');
 
 // reactions: per-viewer convenience only

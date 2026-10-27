@@ -24,8 +24,8 @@ narrative-games agent read pages through a summarizing fetch tool, not raw text.
 ## Notable catches
 
 - No ending reads the constitution, and `learnedConstitution` (the written-versus-learned drift) is never called.
-- The quiet takeover never fired in 2,600 bot runs, and `tools/ending-reachability.js` finds no policy that reaches
-  it (every other ending has a witness); misalignment ended 37% of the bot runs.
+- The quiet takeover is reachable but rare: 0 of 2,600 bot runs and none in the reachability probe's default 100
+  seeds; its one recorded witness is the `unchecked` policy at seed 163. Misalignment ended 37% of the bot runs.
 - Every constitution keeps exactly three of eight lines, so "line missing" is the normal case (35 of 56 sets per
   line), and the averaged values move in narrow ranges (deference 0.25 to 0.83).
 - Checked against raw sources in this session: the constitution's "diversity and balance of power roughly comparable

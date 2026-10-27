@@ -12,8 +12,8 @@ How to read it: section 1 gives the findings, section 2 the open questions, sect
 2. **The constitution's present reach is small: its strongest effect on any ending is that `accept-shutdown` adds one escalation stage before a quiet takeover, and three of the four values are read nowhere.**
    Evidence: the other seven lines only nudge misuse, revenue, user counts, staff trust or event cards. `candor` is read once, to make Lumen "flattering" below 0.4 (`sim/lumen.js:21`), and `caution`, `deference` and `userFirst` are never read (inventory, section 3).
 
-2b. **The quiet takeover, the takeover ending the constitution most naturally shapes, never happened in 2,600 bot runs, and no policy in the reachability probe reaches it, while catastrophic misalignment ended 37% of the bot runs.**
-   Evidence: `node tools/balance.js 200` and `node tools/ending-reachability.js` (1,700 runs; `missing: ["quietTakeover"]`), both 2026-10-27 (section 5 and inventory section 4). Even the probe's `unchecked` policy, built to push toward it, ends in board removal or left behind first. If constitution-shaped futures hang only on the quiet takeover, few players will ever see them; misalignment is where an AI ends up in control in practice. This bears on question 1.
+2b. **The quiet takeover, the takeover ending the constitution most naturally shapes, is reachable but rare: it never happened in 2,600 bot runs, while catastrophic misalignment ended 37% of them.**
+   Evidence: `node tools/balance.js 200` (2026-10-27). The reachability probe finds no quiet takeover in its default 100 seeds per policy; the one recorded witness is its `unchecked` policy at seed 163 (`tests/fixtures/ending-witnesses.json`, replayed in this session). See section 5 and inventory section 4. If constitution-shaped futures hang only on the quiet takeover, few players will ever see them; misalignment is where an AI ends up in control in practice. This bears on question 1.
 
 3. **The research splits the eight lines along two axes: `accept-shutdown`, `no-power-grab`, `no-deceive-lab` and `no-autonomy-grab` decide who ends up holding power; `honest`, `privacy` and `no-manipulation` decide how the ruler treats people; and deference is the hinge between "the controllers' world" and "the AI's own world".**
    Evidence: model_specs_futures.md section 6 and ai_futures.md Q3, both built on the AI-enabled coups report ([Forethought](https://www.forethought.org/research/ai-enabled-coups-how-a-small-group-could-use-ai-to-seize-power)), AI 2027's two endings ([race](https://ai-2027.com/race), [slowdown](https://ai-2027.com/slowdown)) and the constitution's corrigibility section ([Claude's Constitution](https://www.anthropic.com/constitution)). Both agents label the mapping as their own inference.
@@ -178,9 +178,9 @@ strategy in endings_inventory.md section 4).
 
 The quiet takeover never fired: the bots that hand the most work to AI die of misalignment in era 4 first. The
 reachability probe (`node tools/ending-reachability.js`, 17 policies × 100 seeds) finds a replayable run for every
-other ending and none for the quiet takeover; its `unchecked` policy, built to push toward it, ends in board removal
-(75) or left behind (25). Scripted policies are not players, so this does not prove the ending impossible, but in
-practice it is not in the game at main 643a7d7.
+other ending and none for the quiet takeover in those seeds; its `unchecked` policy, built to push toward it, ends in
+board removal (75) or left behind (25) there. The recorded witness reaches it at seed 163 under that policy
+(`tests/fixtures/ending-witnesses.json`, replayed in this session). So it is reachable, but rare for scripted play.
 
 **The constitution's current reach.** No ending reads the constitution's content, and the takeover film is the same for every constitution. The lines act only indirectly. `accept-shutdown` adds one escalation stage before a quiet takeover and is checked by one President promise. `no-wmd` lowers misuse by 4 per release and multiplies consumer revenue by 0.97. `no-deceive-lab` halves the debt that alignment faking conceals. `no-autonomy-grab` blocks two agent incident cards and weakens agentic RL. `honest` makes deceptive crisis choices cost staff trust and halves the damage of citation scandals. `no-power-grab` refuses the President's loyalty demand automatically and costs 3 US favour once. `privacy` gives enterprise releases 1.1 times the users. `no-manipulation` makes the thumbs-up reward card plant less flattery. The rulings feed the four values, of which only `candor` is read (Lumen turns flattering below 0.4); the "report" ruling is also read by one President promise. The `learnedConstitution` drift is never called, and it uses dice.
 

@@ -117,17 +117,18 @@ What the numbers mean for the redesign:
   dice" decision: the ending already follows the style of play, and the redesign's job is to make that link visible.
 
 **Reachability check** (`node tools/ending-reachability.js`, default 100 seeds per policy, 17 policies = 1,700
-runs, 28.5 minutes; output read in full): every ending has a replayable witness run **except the quiet takeover**
-(`missing: ["quietTakeover"]`, no rejected runs). Witnesses: misalignment and misuse from `speed`, absorbed and left
-behind from `safety`, aligned, costly win and overtaken from `balanced`, rival disaster from `careful`, board removal
-from `random`, negotiated pace from `diplomat`. The probe's `unchecked` policy is built to push toward the takeover
-(no safety compute, alignment share 0.3, no releases from era 4, warnings ignored, reviewers and monitors at zero),
-and it ends in board removal 75 times and left behind 25 times of 100: the lab loses its board or the race before
-the automation story reaches its last stage at capability 70 in era 4. `tests/ending-reachability.test.js` checks
-that witnesses replay; it does not check that every ending has one, so this gap is not caught by the test suite.
-So at main 643a7d7, **no scripted policy reaches the quiet takeover**. This does not prove a human cannot, but it is
-the strongest evidence here that the one takeover ending the constitution already touches is, in practice, not in
-the game. Diagnosing why is game work for a later lane, not this research.
+runs, 28.5 minutes; output read in full): within its first 100 seeds every ending has a replayable witness run
+**except the quiet takeover** (`missing: ["quietTakeover"]`, no rejected runs). The probe's `unchecked` policy is
+built to push toward the takeover (no safety compute, alignment share 0.3, no releases from era 4, warnings
+ignored, reviewers and monitors at zero); in seeds 1 to 100 it ends in board removal 75 times and left behind 25
+times.
+**But the quiet takeover is reachable.** `tests/fixtures/ending-witnesses.json` (re-recorded in 39669f5) holds a
+witness for it: the `unchecked` policy at seed 163, ending in era 5 after 19 turns. Replayed in this session with
+`replayEnding`, it ends in `quietTakeover` with no errors, and `tests/ending-reachability.test.js` replays all
+eleven witnesses (correction from `gn-improve`, 2026-10-27; this note first said no policy reaches it, because only
+lines 1-40 of that test file had been read). So the takeover is **reachable but rare**: 0 of 2,600 balance runs,
+none in the probe's default 100 seeds per policy, and found by the policy built for it only past seed 100. For the
+redesign, the point stands that few players will see a constitution-shaped future that hangs only on this ending.
 
 ## 5. KESTREL in the Blender clips, and the re-render cost
 
