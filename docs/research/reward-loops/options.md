@@ -217,6 +217,20 @@ build-up, peak and relax cycle gives the shape of each week.
 needs before-and-after bot runs sized to match existing effects (project memory: check mechanic dynamics) and should
 be designed inside `gn-improve`'s era 4-5 round, not built alone.
 
+**Finale scope (Arda, 2026-10-26).** The finale will grow: either a bigger era 5 or a new era 6, a fight over
+dominance of the world. O6 is therefore the loop pattern for that finale, not a fixed era-5 rule:
+
+- The weekly checkpoint and short leaderboard reveal become the finale's repeating beat, however many weeks it has.
+  A longer finale needs several build-up and peak cycles (Left 4 Dead's shape, repeated) with one scheduled climax at
+  the very end (Frostpunk's storm), not one long sprint.
+- The race clock shows the distance to the end of the whole finale, so the end stays visible from its first day.
+- The rivals' checkpoints carry the dominance fight: every weekly reveal shows who is pulling ahead, which is where
+  "fight over the world" becomes something the player watches move.
+- Decide the finale's story-day length before tuning: today era 5's day is 12.9 s of clock. O1's targets are in
+  seconds of running clock, so they hold whatever the finale's calendar becomes.
+- Nothing in O1-O5 should assume five eras. Code that keys on `era === 5` or on the era count (`sim/data/eras.js`)
+  must read the last era from the data, so an era 6 inherits the director, the feedback and the recap count-up.
+
 ## O7. Make the loop part of the lesson (experimental)
 
 **What it is.** Two parts, either or both:
@@ -251,6 +265,10 @@ needs its own sourcing before copy is written.
 
 **O1 (with the quiet backstop) + O2 (all three parts) + O3 + O4 now, in that build order; O5 next; O6 inside
 `gn-improve`'s era 4-5 design round; O7 part 1 with O5, part 2 not now.**
+
+**Arda's pick (2026-10-26, in chat):** the recommended combination, with the note that the finale will become a bigger
+era 5 or a new era 6 fight over world dominance (see "Finale scope" under O6). The picker's saved-picks store was
+empty, so this pick is recorded from the chat, not from the page.
 
 Why: O1 fixes both halves of the playtester's complaint (bursts and dead weeks) at the source. O2 and O4 are small
 and fix feedback and repetition with no balance risk. O3 fills the quiet stretches with earned beats rather than more
