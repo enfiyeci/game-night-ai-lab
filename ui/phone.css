@@ -283,3 +283,243 @@ html.phone.pn-legacy #overlay > :is(.ev-briefing, .bd-say, .ev-phone-button, .ra
 /* The board's countdown chip sits under the HUD column. */
 html.phone #stage > .bd-count { transform: none; top: calc(var(--ins-t) + 150px) !important; right: calc(1440px - var(--vw) + var(--ins-r) + 8px); min-height: 32px; font-size: 12px; }
 html.phone.pn-open #stage > .bd-count { display: none; }
+
+/* ---------- The training run builder (ui/screens/recipe.js; owner sign-off 2026-10-27, R1-R12 with R9 changed) ----------
+   Both halves, nothing behind: the dialog's own nodes stay where recipe.js put them. The centre panel becomes a
+   two-column flex box the size of the window: the left half holds what you set (title, stages, the size-and-length row,
+   the sliders); the right half holds the briefing, the team row, your picks and "Choose techniques", the compute bar
+   and the buttons. The wrappers in between show their children directly (display: contents), `order` sorts them into
+   the halves, and an empty item 100% tall (::after) breaks the column. On the opened Duo (pn-roomy) the chips and the
+   briefing stay on the left and the technique list fills the right half above the bar. Phone-only controls come from
+   ui/phoneRecipe.js; the three sheets (size and length, team, techniques) cover the right half. */
+.pn-close, .pn-setup, .pn-setup-head, .pn-setup-done, .pn-team, .pn-picks, .pn-choose, .pn-sheet-back, .pn-done { display: none; }
+
+html.phone #overlay > .recipe-dialog { transform: none; width: var(--vw); height: var(--vh); }
+html.phone #overlay > .recipe-dialog > .dialog-veil { background: var(--paper); }
+/* A screen not yet redesigned opening over the builder (the constitution document from a card) is a scaled picture with
+   margins: the builder hides under it rather than showing and taking taps around it. Matched in CSS, not through
+   pn-legacy, so it is in force the moment focus moves (pn-legacy follows a timer); a dialog still leaving before the
+   builder (the naming card on a new game's first run) comes earlier in the overlay and does not count. */
+html.phone #overlay > .recipe-dialog:has(~ :is(.dialog-layer, .ev-phone)) { visibility: hidden; }
+html.phone #overlay > .recipe-dialog {
+  --pn-l: calc(var(--split-x) - var(--ins-l) - 16px - 12px); /* left column width */
+  --pn-g: calc(var(--pnl-x) - var(--split-x) + 24px);        /* the gap, across the Duo's crease when it has one */
+  --pn-r: calc(var(--vw) - var(--pnl-x) - 12px - var(--ins-r) - 16px); /* right column width */
+  --pn-wood: color-mix(in oklab, var(--wood) 72%, var(--ink));
+  --pn-mute: color-mix(in oklab, var(--ink) 62%, var(--paper));
+  --pn-soft: color-mix(in oklab, var(--ink) 6%, var(--paper));
+}
+html.phone #overlay > .recipe-dialog .dialog-centre {
+  top: 0; left: 0; width: var(--vw); height: var(--vh); min-height: 0;
+  display: flex; flex-flow: column wrap; align-content: flex-start; gap: 6px 0;
+  padding: calc(var(--ins-t) + 10px) calc(var(--ins-r) + 16px) calc(var(--ins-b) + 8px) calc(var(--ins-l) + 16px);
+  border: 0; border-radius: 0; box-shadow: none; background: transparent; overflow: hidden; text-align: left;
+}
+html.phone #overlay > .recipe-dialog .dialog-centre::after { content: ""; order: 50; flex: 0 0 100%; width: var(--pn-g); }
+html.phone #overlay > .recipe-dialog :is(.dialog-body, .recipe-body, .recipe-centre) { display: contents; }
+html.phone #overlay > .recipe-dialog :is(.subt, .rule) { display: none; }
+
+/* Left half */
+html.phone #overlay > .recipe-dialog :where(h1, .recipe-stepper, .pn-setup, .recipe-focus) { width: var(--pn-l); }
+html.phone #overlay > .recipe-dialog .pn-close {
+  position: absolute; top: calc(var(--ins-t) + 10px); left: calc(var(--ins-l) + 16px); display: grid; width: 44px; height: 44px;
+  place-items: center; padding: 0; border: 0; border-radius: 12px; background: color-mix(in oklab, var(--ink) 7%, var(--paper)); cursor: pointer;
+}
+html.phone .pn-close svg { stroke: var(--ink); stroke-width: 2.4; stroke-linecap: round; }
+html.phone #overlay > .recipe-dialog h1 { order: 1; padding-left: 54px; font-size: 21px; font-weight: 300; line-height: 1.15; white-space: nowrap; }
+html.phone #overlay > .recipe-dialog .recipe-stepper { order: 2; min-height: 0; margin: -8px 0 2px; padding-left: 54px; justify-content: flex-start; gap: 5px; font-size: 12px; }
+html.phone #overlay > .recipe-dialog .recipe-stepper > * + *::before { margin-right: 5px; }
+html.phone #overlay > .recipe-dialog .pn-setup {
+  order: 3; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; padding: 0 12px;
+  border: 2px solid transparent; border-radius: 10px; background: color-mix(in oklab, var(--ink) 7%, var(--paper));
+  font: inherit; font-size: 15px; font-weight: 900; color: var(--ink); text-align: left; cursor: pointer;
+}
+html.phone #overlay > .recipe-dialog.pn-sheet-setup .pn-setup { border-color: var(--coral); background: color-mix(in oklab, var(--coral) 14%, var(--paper)); }
+html.phone .pn-chev { color: var(--wood); font-size: 20px; font-weight: 900; line-height: 1; }
+html.phone #overlay > .recipe-dialog .recipe-choices { order: 52; }
+html.phone #overlay > .recipe-dialog .recipe-centre > .recipe-compute-line { order: 53; font-size: 12px; line-height: 1.3; }
+html.phone #overlay > .recipe-dialog .recipe-slider-note { order: 54; font-size: 12px; }
+html.phone #overlay > .recipe-dialog .recipe-focus { order: 6; gap: 4px; margin: 0; }
+html.phone #overlay > .recipe-dialog .recipe-focus-sliders { gap: 0; justify-content: space-around; }
+html.phone #overlay > .recipe-dialog .recipe-focus-sliders .vslider { width: 33%; }
+/* The track is 28 points wide; a finger landing beside it still moves it. */
+html.phone #overlay > .recipe-dialog .recipe-focus-sliders .vslider-track::before { content: ""; position: absolute; inset: -6px -10px; }
+html.phone.pn-roomy #overlay > .recipe-dialog .tech-socket-remove { position: relative; }
+html.phone.pn-roomy #overlay > .recipe-dialog .tech-socket-remove::after { content: ""; position: absolute; inset: -11px 0 -11px -22px; } /* the panel clips its right edge */
+html.phone #overlay > .recipe-dialog .recipe-focus-sliders .vslider-label { margin-top: 8px; font-size: 13px; line-height: 1.2; }
+/* Slider travel: what the left half has left (R9 folds size and length into one row, so stage 1 keeps about 120 points). */
+html.phone #overlay > .recipe-dialog .recipe-focus-sliders .vslider-track { height: clamp(90px, calc(var(--vh) - var(--ins-t) - var(--ins-b) - 230px), 210px); }
+html.phone #overlay > .recipe-dialog .recipe-centre-pre .recipe-focus-sliders .vslider-track { height: clamp(80px, calc(var(--vh) - var(--ins-t) - var(--ins-b) - 282px), 160px); }
+html.phone #overlay > .recipe-dialog :is(.recipe-allocation-label, .recipe-cost-label) { margin: 2px 0 0; font-size: 12px; }
+html.phone #overlay > .recipe-dialog .recipe-allocation-bar { height: 24px; }
+html.phone #overlay > .recipe-dialog .recipe-allocation-bar span { padding: 0 7px; font-size: 12px; }
+html.phone #overlay > .recipe-dialog .recipe-reaction { min-height: 26px; gap: 7px; margin: 0; font-size: 13px; }
+
+/* Right half */
+html.phone #overlay > .recipe-dialog :where(.recipe-brief, .pn-team, .pn-picks, .pn-choose, .recipe-footer-slot, .recipe-error, .recipe-error + div, .dialog-actions, .pn-setup-head, .recipe-choices, .recipe-centre > .recipe-compute-line, .recipe-slider-note) { width: var(--pn-r); }
+html.phone #overlay > .recipe-dialog .recipe-brief { order: 51; align-items: flex-start; gap: 10px; margin: 0; padding: 8px 10px; cursor: pointer; }
+html.phone #overlay > .recipe-dialog .recipe-brief .portrait { width: 34px; height: 34px; }
+html.phone #overlay > .recipe-dialog .recipe-brief b { font-size: 12px; }
+html.phone #overlay > .recipe-dialog .recipe-brief p { font-size: 13px; line-height: 1.36; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+html.phone #overlay > .recipe-dialog .recipe-brief[role="button"]::after { content: "›"; content: "›" / ""; align-self: center; margin-left: auto; color: var(--wood); font-size: 20px; font-weight: 900; }
+html.phone #overlay > .recipe-dialog .recipe-brief:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+html.phone #overlay > .recipe-dialog :is(.pn-team, .pn-choose) {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; padding: 0 12px;
+  border: 0; border-radius: 10px; font: inherit; font-size: 13px; font-weight: 800; color: var(--ink); text-align: left; cursor: pointer;
+}
+html.phone #overlay > .recipe-dialog .pn-team { order: 52; background: var(--pn-soft); }
+html.phone .pn-team-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html.phone .pn-team-text em { font-style: normal; color: color-mix(in oklab, var(--coral) 78%, var(--ink)); }
+html.phone #overlay > .recipe-dialog .pn-picks { order: 53; display: grid; gap: 4px; }
+html.phone #overlay > .recipe-dialog .pn-picks:empty { display: none; }
+html.phone .pn-pick { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 8px; align-items: center; min-height: 28px; font-size: 13px; font-weight: 900; }
+html.phone .pn-pick-number { display: grid; width: 24px; height: 28px; place-items: center; border-radius: 6px; color: var(--paper); background: var(--ink); font-size: 15px; }
+html.phone .pn-pick-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html.phone .pn-pick-price { color: var(--pn-mute); font-size: 12px; font-weight: 800; white-space: nowrap; }
+html.phone #overlay > .recipe-dialog .pn-choose { order: 54; justify-content: center; font-size: 15px; font-weight: 900; color: var(--pn-wood); background: transparent; box-shadow: inset 0 0 0 2px color-mix(in oklab, var(--wood) 55%, var(--paper)); }
+html.phone .pn-choose-count { color: var(--pn-mute); font-size: 13px; font-weight: 800; }
+html.phone #overlay > .recipe-dialog .recipe-footer-slot { order: 55; margin-top: auto; }
+html.phone #overlay > .recipe-dialog .recipe-cost { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 3px 10px; margin: 0; padding: 4px 0 0; border-bottom: 0; }
+html.phone #overlay > .recipe-dialog .recipe-compute { display: contents; }
+html.phone #overlay > .recipe-dialog .recipe-cost-label { display: none; flex-basis: 100%; }
+html.phone #overlay > .recipe-dialog .recipe-compute-track-wrap { flex: 0 0 80%; margin-right: 20%; } /* room for the stripes of a run that does not fit */
+html.phone #overlay > .recipe-dialog .recipe-compute-overflow { max-width: 25%; } /* 80% + a quarter of it fills the row */
+html.phone #overlay > .recipe-dialog .recipe-cost .recipe-compute-line { margin: 0; font-size: 12px; white-space: nowrap; }
+html.phone #overlay > .recipe-dialog .recipe-compute-line + .recipe-compute-line { flex-basis: 100%; white-space: normal; }
+html.phone #overlay > .recipe-dialog .recipe-cost-facts { display: flex; gap: 0; min-width: 0; font-size: 12px; white-space: nowrap; }
+html.phone #overlay > .recipe-dialog .recipe-cost-facts span + span::before { content: " · "; white-space: pre; }
+html.phone #overlay > .recipe-dialog .recipe-error { order: 56; min-height: 0; margin: 0; font-size: 13px; }
+html.phone #overlay > .recipe-dialog .recipe-error:empty { display: none; }
+html.phone #overlay > .recipe-dialog .recipe-error + div { order: 57; }
+html.phone #overlay > .recipe-dialog .recipe-error + div:empty { display: none; }
+html.phone #overlay > .recipe-dialog .recipe-help { justify-content: flex-start; gap: 0 14px; margin: 0; padding: 6px 10px; border-radius: 8px; background: color-mix(in oklab, var(--coral) 9%, var(--paper)); }
+html.phone #overlay > .recipe-dialog .recipe-help-text { font-size: 13px; }
+html.phone #overlay > .recipe-dialog .recipe-help .release-link { display: inline-flex; align-items: center; min-height: 44px; font-size: 13px; }
+html.phone #overlay > .recipe-dialog .recipe-help .recipe-compute-line { font-size: 12px; }
+html.phone #overlay > .recipe-dialog:has(.recipe-help) .recipe-cost .recipe-compute-line { display: none; } /* R12: the help line speaks */
+html.phone #overlay > .recipe-dialog .dialog-actions { order: 58; justify-content: flex-end; gap: 6px; }
+html.phone #overlay > .recipe-dialog .dialog-actions :is(.dialog-back, .dialog-ok) { position: static; margin: 0; min-height: 44px; }
+html.phone #overlay > .recipe-dialog .dialog-back { padding: 0 14px; font-size: 15px; }
+html.phone #overlay > .recipe-dialog .dialog-ok { width: auto; min-width: 150px; padding: 0 18px; }
+/* When the right half runs long, it gives way in steps until the buttons fit (ui/phoneRecipe.js fitRight). */
+html.phone #overlay > .recipe-dialog .pn-tight-1 .recipe-brief p { -webkit-line-clamp: 2; }
+html.phone #overlay > .recipe-dialog .pn-tight-2 .recipe-brief p { -webkit-line-clamp: 1; }
+html.phone #overlay > .recipe-dialog .pn-tight-3 .pn-picks { display: none; }
+html.phone #overlay > .recipe-dialog .pn-tight-4 .recipe-brief { display: none; }
+
+/* The Geneva deal's "run past the cap" box sits above the buttons. */
+html.phone #overlay > .recipe-dialog > .dl-cap-panel {
+  z-index: 1; left: auto; top: auto; right: calc(var(--ins-r) + 16px); bottom: calc(var(--ins-b) + 8px + 44px + 8px); width: var(--pn-r);
+  background: var(--paper);
+  border: 0; border-radius: 10px; box-shadow: none;
+}
+html.phone #overlay > .recipe-dialog > .dl-cap-panel .hd { display: none; }
+html.phone.pn-tall #overlay > .recipe-dialog > .dl-cap-panel { left: calc(var(--ins-l) + 16px); bottom: calc(var(--ins-b) + 8px); width: auto; z-index: 3; box-shadow: 0 -8px 16px var(--paper); }
+html.phone #overlay > .recipe-dialog:has(> .dl-cap-panel) .dialog-actions { margin-top: calc(var(--pn-cap-h, 64px) + 8px); }
+html.phone.pn-tall #overlay > .recipe-dialog:has(> .dl-cap-panel) .dialog-centre { padding-bottom: calc(var(--ins-b) + 8px + var(--pn-cap-h, 64px) + 8px); }
+html.phone.pn-tall #overlay > .recipe-dialog:has(> .dl-cap-panel) .dialog-actions { margin-top: 0; }
+html.phone #overlay > .recipe-dialog > .dl-cap-panel .dl-cap { min-height: 44px; padding: 7px 10px; }
+html.phone #overlay > .recipe-dialog > .dl-cap-panel .dl-cap small { font-size: 12px; }
+
+/* Side panels: hidden until their sheet opens over the right half (except the technique list on the opened Duo). */
+html.phone #overlay > .recipe-dialog :is(.dialog-left, .dialog-right) { display: none; }
+html.phone #overlay > .recipe-dialog :is(.dialog-left, .dialog-right) > .hd { display: none; }
+html.phone #overlay > .recipe-dialog.pn-sheet-team .dialog-left,
+html.phone #overlay > .recipe-dialog.pn-sheet-list .dialog-right {
+  z-index: 2; display: flex; flex-direction: column; top: 0; left: var(--pnl-x); right: auto; width: calc(var(--vw) - var(--pnl-x)); height: var(--vh); max-height: none;
+  padding: calc(var(--ins-t) + 6px) calc(var(--ins-r) + 16px) calc(var(--ins-b) + 8px) 12px;
+  border: 0; border-radius: 18px 0 0 18px; background: var(--paper);
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--ink) 6%, transparent), -8px 0 30px color-mix(in oklab, var(--ink) 16%, transparent);
+}
+html.phone #overlay > .recipe-dialog .pn-sheet-back {
+  display: flex; align-items: center; justify-content: space-between; gap: 6px; flex: none; min-height: 44px; padding: 0 2px; border: 0;
+  background: none; font: inherit; font-size: 15px; font-weight: 900; color: var(--pn-wood); cursor: pointer;
+}
+html.phone .pn-sheet-back::before { content: "‹"; margin-right: 2px; font-size: 22px; line-height: 1; }
+html.phone #overlay > .recipe-dialog .pn-sheet-back { justify-content: flex-start; }
+html.phone .pn-list-count { margin-left: auto; color: var(--pn-mute); font-size: 13px; font-weight: 800; }
+html.phone #overlay > .recipe-dialog .dialog-side-content { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+html.phone #overlay > .recipe-dialog .budget-team-row { padding: 9px 2px; }
+html.phone #overlay > .recipe-dialog .budget-team-name { font-size: 15px; }
+html.phone #overlay > .recipe-dialog :is(.budget-team-mood, .budget-team-line) { font-size: 13px; }
+
+/* The technique list (sheet on small screens): the open slots' count is in the back row, so the sockets give way to
+   the list, with "All picks used" above it and "This stage adds" beside Done below it. */
+html.phone #overlay > .recipe-dialog .dialog-right .dialog-side-content { display: flex; flex-direction: column; overflow: hidden; }
+html.phone #overlay > .recipe-dialog .dialog-right .dialog-side-content > div { display: flex; flex: 1; min-height: 0; }
+html.phone #overlay > .recipe-dialog .tech-panel { flex: 1; min-height: 0; max-height: none; }
+html.phone #overlay > .recipe-dialog .tech-list { flex: 1; min-height: 0; overflow-y: auto; }
+html.phone #overlay > .recipe-dialog .tech-group-head { padding: 10px 4px 4px; font-size: 12px; }
+html.phone #overlay > .recipe-dialog .tech-default { padding-left: 30px; font-size: 12px; }
+html.phone #overlay > .recipe-dialog .tech-row { align-items: center; min-height: 44px; padding: 4px 4px 4px 6px; font-size: 13px; }
+html.phone #overlay > .recipe-dialog .tech-cost { max-width: 120px; font-size: 12px; }
+html.phone #overlay > .recipe-dialog :is(.tech-why, .tech-row .release-ship) { font-size: 12px; }
+html.phone #overlay > .recipe-dialog .tech-row.picked { border-left-color: var(--coral); background: color-mix(in oklab, var(--coral) 10%, var(--paper)); }
+html.phone #overlay > .recipe-dialog .tech-sockets { padding: 0 0 8px; }
+html.phone:not(.pn-roomy) #overlay > .recipe-dialog .tech-sockets { display: contents; }
+html.phone:not(.pn-roomy) #overlay > .recipe-dialog :is(.tech-socket) { display: none; }
+html.phone:not(.pn-roomy) #overlay > .recipe-dialog .tech-full { order: -1; margin: 0 0 6px; font-size: 12px; }
+html.phone:not(.pn-roomy) #overlay > .recipe-dialog .tech-total { order: 2; flex-direction: column; gap: 0; margin: 0; padding: 8px 120px 0 0; font-size: 12px; }
+html.phone:not(.pn-roomy) #overlay > .recipe-dialog .tech-total b { text-align: left; font-size: 13px; }
+html.phone #overlay > .recipe-dialog.pn-sheet-list .pn-done {
+  position: absolute; right: calc(var(--ins-r) + 16px); bottom: calc(var(--ins-b) + 8px); display: grid; min-width: 110px; min-height: 44px;
+  place-items: center; padding: 0 16px; border: 0; border-radius: 10px; color: var(--paper); font: inherit; font-size: 16px; font-weight: 900;
+  background: var(--coral); box-shadow: 0 3px 0 color-mix(in oklab, var(--coral) 60%, var(--ink)); cursor: pointer;
+}
+
+/* Size and length (R9): on small screens the chips open over the right half from the summary row, with Done. */
+html.phone:not(.pn-roomy) #overlay > .recipe-dialog:not(.pn-sheet-setup) :is(.recipe-choices, .recipe-centre > .recipe-compute-line, .recipe-slider-note) { display: none; }
+html.phone:not(.pn-roomy) #overlay > .recipe-dialog.recipe-dialog-stage-1 .pn-setup { display: flex; }
+html.phone #overlay > .recipe-dialog.pn-sheet-setup .dialog-centre :is(.recipe-brief, .pn-team, .pn-picks, .pn-choose, .recipe-footer-slot, .recipe-error, .recipe-error + div, .dialog-actions) { display: none; }
+/* The briefing in full (R5): it keeps the top of the right half, the rest gives way to Done. */
+html.phone #overlay > .recipe-dialog.pn-sheet-brief .dialog-centre :is(.pn-team, .pn-picks, .pn-choose, .recipe-footer-slot, .recipe-error, .recipe-error + div, .dialog-actions) { display: none; }
+html.phone #overlay > .recipe-dialog.pn-sheet-brief .recipe-brief p { -webkit-line-clamp: unset; display: block; }
+html.phone #overlay > .recipe-dialog.pn-sheet-brief .recipe-brief::after { content: none; }
+html.phone #overlay > .recipe-dialog.pn-sheet-brief .recipe-brief { cursor: default; }
+html.phone #overlay > .recipe-dialog.pn-sheet-brief .dl-cap-panel,
+html.phone #overlay > .recipe-dialog:is(.pn-sheet-team, .pn-sheet-list) > .dl-cap-panel { display: none; }
+html.phone #overlay > .recipe-dialog.pn-sheet-setup .pn-setup-head { order: 51; display: block; padding: 6px 0 2px; font-size: 13px; font-weight: 800; color: var(--pn-mute); }
+html.phone #overlay > .recipe-dialog:is(.pn-sheet-setup, .pn-sheet-brief) .pn-setup-done {
+  order: 59; display: grid; align-self: flex-end; width: auto; min-width: 110px; min-height: 44px; margin-top: auto; margin-left: calc(var(--pn-r) - 110px);
+  place-items: center; border: 0; border-radius: 10px; color: var(--paper); font: inherit; font-size: 16px; font-weight: 900; background: var(--coral);
+  box-shadow: 0 3px 0 color-mix(in oklab, var(--coral) 60%, var(--ink)); cursor: pointer;
+}
+html.phone #overlay > .recipe-dialog.pn-sheet-setup .dl-cap-panel { display: none; }
+/* R3: labels above the chips; every chip at least 44 points tall. */
+html.phone #overlay > .recipe-dialog .recipe-choices { gap: 10px; }
+html.phone #overlay > .recipe-dialog .recipe-choice-row { grid-template-columns: 1fr; gap: 4px; }
+html.phone #overlay > .recipe-dialog .recipe-choice-label { font-size: 13px; }
+html.phone #overlay > .recipe-dialog .recipe-chips { gap: 5px; }
+html.phone #overlay > .recipe-dialog .recipe-chip { min-width: 0; min-height: 48px; align-content: center; padding: 3px 4px; font-size: 13px; line-height: 1.15; }
+html.phone #overlay > .recipe-dialog .recipe-chip small { font-size: 12px; }
+
+/* The opened Duo: the chips and the briefing stay on the left, the technique list fills the right half above the bar. */
+html.phone.pn-roomy #overlay > .recipe-dialog .recipe-brief { order: 3; width: var(--pn-l); cursor: default; }
+html.phone.pn-roomy #overlay > .recipe-dialog .recipe-brief p { -webkit-line-clamp: unset; display: block; }
+html.phone.pn-roomy #overlay > .recipe-dialog .recipe-brief::after { content: none; }
+html.phone.pn-roomy #overlay > .recipe-dialog :is(.recipe-choices, .recipe-centre > .recipe-compute-line, .recipe-slider-note) { width: var(--pn-l); }
+html.phone.pn-roomy #overlay > .recipe-dialog .recipe-choices { order: 4; }
+html.phone.pn-roomy #overlay > .recipe-dialog .recipe-centre > .recipe-compute-line { order: 5; }
+html.phone.pn-roomy #overlay > .recipe-dialog .recipe-slider-note { order: 5; }
+html.phone.pn-roomy #overlay > .recipe-dialog .recipe-centre-pre .recipe-focus-sliders .vslider-track { height: clamp(80px, calc(var(--vh) - var(--ins-t) - var(--ins-b) - 540px), 120px); }
+html.phone.pn-roomy #overlay > .recipe-dialog .recipe-focus-sliders .vslider-track { height: clamp(90px, calc(var(--vh) - var(--ins-t) - var(--ins-b) - 330px), 240px); }
+html.phone.pn-roomy #overlay > .recipe-dialog :is(.pn-picks, .pn-choose) { display: none; }
+html.phone.pn-roomy #overlay > .recipe-dialog .pn-team { margin-top: auto; }
+html.phone.pn-roomy #overlay > .recipe-dialog .recipe-footer-slot { margin-top: 0; }
+html.phone.pn-roomy #overlay > .recipe-dialog .recipe-cost-label { display: block; }
+html.phone.pn-roomy #overlay > .recipe-dialog:not(.pn-sheet-list) .dialog-right {
+  display: flex; flex-direction: column; top: calc(var(--ins-t) + 10px); left: calc(var(--pnl-x) + 12px); right: auto; bottom: var(--pn-side-bottom, 200px);
+  width: var(--pn-r); height: auto; max-height: none; border: 0; border-radius: 0; box-shadow: none; background: transparent;
+}
+html.phone.pn-roomy #overlay > .recipe-dialog:not(.pn-sheet-list) .dialog-right .pn-sheet-back { display: none; }
+html.phone.pn-roomy #overlay > .recipe-dialog .tech-sockets { border-bottom-width: 2px; }
+
+/* Held upright (the opened Duo turned, an iPad in phone mode): one column, the halves stacked; sheets take the window. */
+html.phone.pn-tall #overlay > .recipe-dialog .dialog-centre { flex-wrap: nowrap; overflow-y: auto; }
+html.phone.pn-tall #overlay > .recipe-dialog .dialog-centre::after { display: none; }
+html.phone.pn-tall #overlay > .recipe-dialog :where(h1, .recipe-stepper, .pn-setup, .recipe-focus, .recipe-brief, .pn-team, .pn-picks, .pn-choose, .recipe-footer-slot, .recipe-error, .recipe-error + div, .dialog-actions, .pn-setup-head, .recipe-choices, .recipe-centre > .recipe-compute-line, .recipe-slider-note) { width: auto; }
+html.phone.pn-tall #overlay > .recipe-dialog .recipe-footer-slot { margin-top: 8px; }
+html.phone.pn-tall #overlay > .recipe-dialog.pn-sheet-team .dialog-left,
+html.phone.pn-tall #overlay > .recipe-dialog.pn-sheet-list .dialog-right { left: 0; width: var(--vw); border-radius: 0; padding-left: calc(var(--ins-l) + 16px); }
+html.phone.pn-tall #overlay > .recipe-dialog.pn-sheet-setup .dialog-centre .recipe-focus { display: none; }
+html.phone.pn-tall #overlay > .recipe-dialog.pn-sheet-setup .pn-setup-done { margin-left: auto; }

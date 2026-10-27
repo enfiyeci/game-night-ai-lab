@@ -96,7 +96,9 @@ export function dialog({ title, subtitle, left, right, body, okLabel = 'OK', bac
 
 const focusable = (root) => [...root.querySelectorAll(
   'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-)].filter((element) => !element.closest('[hidden]'));
+)].filter((element) => !element.closest('[hidden]')
+  // laid out at all: a control a stylesheet hides (a phone-only button on desktop, a closed sheet) cannot take focus
+  && (typeof element.getClientRects !== 'function' || element.getClientRects().length > 0));
 
 export function closeDialog(target) {
   const layers = target?.classList?.contains('dialog-layer')

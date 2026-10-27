@@ -13,6 +13,8 @@
 // When nothing waits the office fills the screen; a panel opening moves it to the left half (to the top half when the
 // window is taller than wide, as on the opened Duo held upright). On the opened Duo the halves meet at the hinge.
 
+import { decorateRecipe, undecorateRecipe } from './phoneRecipe.js';
+
 const params = new URLSearchParams(location.search);
 const FORCED = params.get('layout'); // debug: ?layout=phone or ?layout=desktop
 // debug: ?insets=l,t,r,b in points stands in for a phone's safe area in a desktop browser (iPhone sideways: 62,0,62,21)
@@ -24,6 +26,9 @@ export const PANELS = '.event-layer > .ev-card, .menu-layer > .ctx';
 // not yet redesigned, shown as the scaled desktop picture.
 const ROOM_LAYERS = '.event-layer, .menu-layer, .ev-briefing, .bd-say, .ev-phone-button, .polish-layer, .ready-note, .floor-hint, .dl-bubbles, .racks-panel, .racks-safety';
 const NOTICE = '#stage > .cash-warning.pn-expanded:not([hidden])'; // the cash notice, opened from its chip
+// Dialogs redesigned for phones: they take the whole window in window points (ui/phone.css), not the scaled picture.
+const BUILDERS = '.dialog-layer.recipe-dialog';
+const ROOMY = 560; // a window at least this tall inside its safe area (the opened Duo) shows a builder's side panel in full
 const FALLBACK_ROOM = { x: 170, y: 80, width: 1100, height: 815 }; // era 3's room, measured 2026-10-26
 const HUD_STRIP = 56; // the top strip's height when the office has the whole width
 const HUD_HALF = 104; // two rows when the office has half the width
@@ -79,7 +84,7 @@ const px = (value) => `${Math.round(value * 100) / 100}px`;
 function legacyOpen() {
   for (const node of document.querySelector('#overlay')?.children ?? []) {
     // A layer that lets taps through (the tour's last stop, which asks for a tap on the floor) does not count.
-    if (node.hidden || node.matches(ROOM_LAYERS) || getComputedStyle(node).pointerEvents === 'none') continue;
+    if (node.hidden || node.matches(ROOM_LAYERS) || node.matches(BUILDERS) || getComputedStyle(node).pointerEvents === 'none') continue;
     if (node.matches('.dialog-layer, .ev-phone') || (node.offsetWidth >= 1440 && node.offsetHeight >= 900)) return true;
   }
   return false;
@@ -95,7 +100,10 @@ export function mountPhone(game) {
   function layout() {
     on = phoneMode();
     root.classList.toggle('phone', on);
-    if (!on) return;
+    if (!on) {
+      for (const node of overlay?.children ?? []) if (node.matches(BUILDERS)) undecorateRecipe(node);
+      return;
+    }
     const W = innerWidth;
     const H = innerHeight;
     if (!W || !H) return;
@@ -108,6 +116,7 @@ export function mountPhone(game) {
     root.classList.toggle('pn-card', card);
     root.classList.toggle('pn-tall', !wide);
     root.classList.toggle('pn-legacy', legacy);
+    root.classList.toggle('pn-roomy', wide && H - ins.t - ins.b >= ROOMY);
 
     // The halves meet at the window's middle, or at the crease of a half-folded Duo: the office ends where the crease
     // starts and the decision half begins where it ends, so nothing sits on the fold.
@@ -353,6 +362,8 @@ export function mountPhone(game) {
       keepBubblesIn();
       for (const card of overlay.querySelectorAll('.event-layer > .ev-card')) copySays(card);
       for (const submenu of overlay.querySelectorAll('.menu-layer > .ctx.submenu')) addBack(submenu);
+      const roomy = root.classList.contains('pn-roomy');
+      for (const layer of overlay.children) if (layer.matches(BUILDERS)) decorateRecipe(layer, { roomy });
     }, 0);
   };
   // Only what can move the layout: overlay children coming and going (a panel inside a layer included) and a direct

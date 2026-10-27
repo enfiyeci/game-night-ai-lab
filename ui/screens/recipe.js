@@ -186,12 +186,15 @@ function focusBlock(stage, currentDraft, onChange, state) {
   let lastReaction = null;
   const render = () => {
     const current = shares();
+    // The bar is about 610px wide in the desktop dialog and narrower on a phone (ui/phone.css); once it is on screen its
+    // real width and type size count. About 6.5px a character at 11px bold.
+    const width = bar.clientWidth || 610;
+    const perCharacter = (Number.parseFloat(globalThis.getComputedStyle?.(segments[0]).fontSize) || 11) * 0.59;
     segments.forEach((segment, index) => {
       segment.style.flex = `${Math.max(current[index], 0.01)} 1 0%`;
-      // About 6.5px a character at 11px bold across a bar about 610px wide.
-      const room = (current[index] / 100) * 610 - 16;
+      const room = (current[index] / 100) * width - 16;
       const full = `${FOCUS[stage][index].name} ${current[index]}%`;
-      segment.textContent = full.length * 6.5 <= room ? full : room >= 26 ? `${current[index]}%` : '';
+      segment.textContent = full.length * perCharacter <= room ? full : room >= 26 ? `${current[index]}%` : '';
     });
     bar.setAttribute('aria-label', FOCUS[stage].map((slider, index) => `${slider.name} ${current[index]} percent`).join(', '));
     const said = reactionFor(stage, values());
@@ -232,6 +235,8 @@ function focusBlock(stage, currentDraft, onChange, state) {
   });
   render();
   root.append(sliders, label, bar, reaction);
+  // Labels are fitted again once the bar has a size, and whenever it changes (a phone turning, a tablet switching layout).
+  if (globalThis.ResizeObserver) new ResizeObserver(() => render()).observe(bar);
   return root;
 }
 
