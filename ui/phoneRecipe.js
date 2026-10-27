@@ -166,11 +166,20 @@ function wireBrief(layer, brief, active) {
   }
 }
 
+// Focus that sat on a control the layout just hid (a sheet closing as a Duo unfolds) goes back to the dialog.
+function keepFocus(layer) {
+  const active = document.activeElement;
+  if (active && layer.contains(active) && active.getClientRects().length > 0) return;
+  if (active && active !== document.body && !layer.contains(active)) return;
+  layer.querySelector('.dialog-centre')?.focus({ preventScroll: true });
+}
+
 // Called by ui/phone.js when the layout leaves phone mode (a tablet turning): the briefing is text again, sheets close.
 export function undecorateRecipe(layer) {
   if (!layer.dataset.pnBuilt) return;
   setSheet(layer, null);
   wireBrief(layer, layer.querySelector('.recipe-brief'), false);
+  keepFocus(layer);
 }
 
 // Words that follow the dialog: called on every overlay change, so it writes only what differs.
@@ -178,7 +187,10 @@ export function decorateRecipe(layer, { roomy = false } = {}) {
   if (!layer.dataset.pnBuilt) build(layer);
   wireBrief(layer, layer.querySelector('.recipe-brief'), !roomy);
   // Sheets belong to small screens: a Duo unfolding shows all of it at once.
-  if (roomy && SHEETS.some((name) => name !== 'pn-sheet-team' && layer.classList.contains(name))) setSheet(layer, null);
+  if (roomy && SHEETS.some((name) => name !== 'pn-sheet-team' && layer.classList.contains(name))) {
+    setSheet(layer, null);
+    keepFocus(layer);
+  }
 
   const chosen = [...layer.querySelectorAll('.recipe-choice-row')]
     .map((row) => row.querySelector('.recipe-chip[aria-pressed="true"] span')?.textContent ?? '');

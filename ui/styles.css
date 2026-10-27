@@ -4359,6 +4359,7 @@ html.title-waking #hud { transition: opacity .5s ease .6s; }
 @keyframes intro-pulse { 50% { transform: scale(1.12); opacity: .7; } }
 @media (prefers-reduced-motion: reduce) { .intro-ring { animation: none; } }
 .intro-layer .ev-bubble { pointer-events: none; }
+.intro-room { position: absolute; left: 0; top: 0; width: 1440px; height: 900px; pointer-events: none; } /* what points at the office; phone.css fits it to the room */
 .intro-say .ev-say { font-size: 15px; }
 .intro-layer .ev-bubble.intro-up::after { top: -8px; bottom: auto; transform: rotate(225deg); }
 .intro-bar { left: 50%; bottom: 26px; transform: translateX(-50%); display: flex; align-items: center; gap: 18px; padding: 10px 12px 10px 20px; white-space: nowrap; }

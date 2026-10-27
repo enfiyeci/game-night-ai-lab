@@ -28,6 +28,8 @@ const ROOM_LAYERS = '.event-layer, .menu-layer, .ev-briefing, .bd-say, .ev-phone
 const NOTICE = '#stage > .cash-warning.pn-expanded:not([hidden])'; // the cash notice, opened from its chip
 // Dialogs redesigned for phones: they take the whole window in window points (ui/phone.css), not the scaled picture.
 const BUILDERS = '.dialog-layer.recipe-dialog';
+// Overlay layers laid out for phones in ui/phone.css, so not shown as the scaled desktop picture.
+const NATIVE = `${BUILDERS}, .intro-layer`;
 const ROOMY = 560; // a window at least this tall inside its safe area (the opened Duo) shows a builder's side panel in full
 const FALLBACK_ROOM = { x: 170, y: 80, width: 1100, height: 815 }; // era 3's room, measured 2026-10-26
 const HUD_STRIP = 56; // the top strip's height when the office has the whole width
@@ -84,7 +86,7 @@ const px = (value) => `${Math.round(value * 100) / 100}px`;
 function legacyOpen() {
   for (const node of document.querySelector('#overlay')?.children ?? []) {
     // A layer that lets taps through (the tour's last stop, which asks for a tap on the floor) does not count.
-    if (node.hidden || node.matches(ROOM_LAYERS) || node.matches(BUILDERS) || getComputedStyle(node).pointerEvents === 'none') continue;
+    if (node.hidden || node.matches(ROOM_LAYERS) || node.matches(NATIVE) || getComputedStyle(node).pointerEvents === 'none') continue;
     if (node.matches('.dialog-layer, .ev-phone') || (node.offsetWidth >= 1440 && node.offsetHeight >= 900)) return true;
   }
   return false;
@@ -101,7 +103,14 @@ export function mountPhone(game) {
     on = phoneMode();
     root.classList.toggle('phone', on);
     if (!on) {
+      // A tablet turning to the desktop layout: nothing phone-only may stay behind.
       for (const node of overlay?.children ?? []) if (node.matches(BUILDERS)) undecorateRecipe(node);
+      for (const name of ['pn-open', 'pn-card', 'pn-tall', 'pn-legacy', 'pn-roomy']) if (root.classList.contains(name)) root.classList.remove(name);
+      const notice = document.querySelector('#stage > .cash-warning');
+      if (notice) {
+        notice.classList.remove('pn-expanded');
+        for (const name of ['role', 'tabindex', 'aria-expanded']) notice.removeAttribute(name);
+      }
       return;
     }
     const W = innerWidth;
@@ -111,7 +120,8 @@ export function mountPhone(game) {
     const wide = W >= H;
     const card = Boolean(overlay?.querySelector(PANELS));
     const legacy = legacyOpen();
-    const open = card || (!legacy && Boolean(document.querySelector(NOTICE))); // a legacy screen hides the notice
+    const tour = Boolean(overlay?.querySelector(':scope > .intro-layer')); // the tour's words take the decision half
+    const open = card || tour || (!legacy && Boolean(document.querySelector(NOTICE))); // a legacy screen hides the notice
     root.classList.toggle('pn-open', open);
     root.classList.toggle('pn-card', card);
     root.classList.toggle('pn-tall', !wide);
@@ -147,11 +157,18 @@ export function mountPhone(game) {
     // Speech bubbles and small buttons drawn in the room keep a readable size whatever the room's scale.
     set('--world-read', Math.min(1 / k, 3.2).toFixed(4));
     set('--legacy', `translate(${px((W - 1440 * lk) / 2)}, ${px((H - 900 * lk) / 2)}) scale(${lk.toFixed(5)})`);
+    // The tour's screen previews: the desktop picture fitted into the office's place, beside the explanation.
+    const tk = Math.max(0.05, Math.min(area.w / 1440, area.h / 900));
+    set('--tour-preview', `translate(${px(area.x + (area.w - 1440 * tk) / 2)}, ${px(area.y + (area.h - 900 * tk) / 2)}) scale(${tk.toFixed(5)})`);
     for (const [name, value] of Object.entries(ins)) set(`--ins-${name}`, px(value));
     set('--vw', px(W));
     set('--vh', px(H));
     for (const [name, value] of Object.entries(panel)) set(`--pnl-${name}`, px(value));
     set('--split-x', px(wide ? officeEndX : W));
+    // Builders split at the middle of the safe area (the closed Duo's camera takes its left edge), or at the crease.
+    const middle = (ins.l + W - ins.r) / 2;
+    set('--pn-mid-l', px(vertical ? officeEndX : middle));
+    set('--pn-mid-r', px(vertical ? panelX : middle));
     set('--split-y', px(open && !wide ? officeEndY : H));
   }
 
@@ -216,6 +233,10 @@ export function mountPhone(game) {
     };
     notice.addEventListener('click', (event) => {
       if (!on) return;
+      if (overlay.querySelector(PANELS)) { // the decision half is taken: the chip waits (ui/phone.css dims it)
+        event.stopPropagation();
+        return;
+      }
       if (!notice.classList.contains('pn-expanded')) {
         event.stopPropagation();
         open();
@@ -226,6 +247,7 @@ export function mountPhone(game) {
     }, true);
     notice.addEventListener('keydown', (event) => {
       if (!on || notice.classList.contains('pn-expanded') || (event.key !== 'Enter' && event.key !== ' ')) return;
+      if (overlay.querySelector(PANELS)) return; // the decision half is taken
       event.preventDefault();
       open();
     });
@@ -366,6 +388,12 @@ export function mountPhone(game) {
       for (const layer of overlay.children) if (layer.matches(BUILDERS)) decorateRecipe(layer, { roomy });
     }, 0);
   };
+  // A browser with no touch screen never turns phone mode on (only ?layout=phone forces it): it keeps none of the
+  // watchers below, so desktop and itch.io do no phone work at all.
+  if (!FORCED && !(globalThis.matchMedia?.('(any-pointer: coarse)').matches ?? false)) {
+    layout();
+    return { layout, isOn: () => on };
+  }
   // Only what can move the layout: overlay children coming and going (a panel inside a layer included) and a direct
   // child's own position or visibility. Daily redraws deep inside layers (bubbles, tweens) are skipped.
   new MutationObserver((records) => {
@@ -380,6 +408,18 @@ export function mountPhone(game) {
   addEventListener('resize', remeasure);
   addEventListener('orientationchange', remeasure);
   addEventListener('native-layout', remeasure);
+  // The safe area can arrive after the first layout (the iOS app sets it once its web view is placed) without any
+  // resize: a probe sized by it reports the change.
+  if (globalThis.ResizeObserver) {
+    const probe = document.createElement('div');
+    probe.setAttribute('aria-hidden', 'true');
+    probe.style.cssText = 'position:fixed;left:0;top:0;visibility:hidden;pointer-events:none;'
+      + 'width:calc(env(safe-area-inset-left,0px) + env(safe-area-inset-right,0px) + 1px);'
+      + 'height:calc(env(safe-area-inset-top,0px) + env(safe-area-inset-bottom,0px) + 1px)';
+    document.body.append(probe);
+    let first = true;
+    new ResizeObserver(() => { if (first) first = false; else remeasure(); }).observe(probe);
+  }
   // A bubble measured mid-slide is measured again once the room has settled.
   office?.addEventListener('transitionend', (event) => { if (event.target === office) relayout(); });
   layout();

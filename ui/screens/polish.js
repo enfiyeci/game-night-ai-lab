@@ -26,11 +26,12 @@ export function mountPolish(game, { stage, hud, overlay }) {
   const polishing = () => Boolean(game.state.pendingModel?.polishing) && !game.state.ending;
   const busy = () => Boolean(overlay.querySelector('.dialog-layer, .event-layer, .ev-phone, .screenwall-layer, .intro-layer, .title-layer'));
 
-  // Stage coordinates (1440 × 900) of an element's centre, as the training bubbles use.
-  function centre(node) {
-    const s = stage.getBoundingClientRect();
+  // An element's centre in a 1440 × 900 layer's own coordinates, as the training bubbles use: measured against that
+  // layer, which carries the desktop zoom and, on a phone, the room's fit (ui/phone.css).
+  function centre(node, into) {
+    const s = into.getBoundingClientRect();
     const r = node.getBoundingClientRect();
-    const k = s.width / 1440;
+    const k = s.width / 1440 || 1;
     return [(r.left + r.width / 2 - s.left) / k, (r.top + r.height / 2 - s.top) / k];
   }
 
@@ -42,7 +43,7 @@ export function mountPolish(game, { stage, hud, overlay }) {
       flawsOpen = false;
       return;
     }
-    const [x, y] = centre(badge);
+    const [x, y] = centre(badge, layer);
     const card = el('<section class="polish-flaws" aria-label="Flaws"><div class="polish-flaws-head">Flaws · top one gets fixed next</div></section>');
     card.style.left = `${x - 70}px`;
     card.style.top = `${y + 42}px`;
@@ -181,7 +182,7 @@ export function mountPolish(game, { stage, hud, overlay }) {
       if (!target || !head) return;
       const delay = index * 380;
       setTimeout(() => sfx.pop(-5, 0.04), delay);
-      flyBubble(flights, fix ? 'flaw' : 'polish', [head[0], head[1] - 6], centre(target), { delay, duration: 1100, label: fix ? '✓' : `+${Math.round(event.gain)}` })
+      flyBubble(flights, fix ? 'flaw' : 'polish', [head[0], head[1] - 6], centre(target, flights), { delay, duration: 1100, label: fix ? '✓' : `+${Math.round(event.gain)}` })
         .then(() => sfx.tick(fix ? 2 : 5, { base: fix ? 392 : 523.25, gain: 0.06 }));
     });
   }

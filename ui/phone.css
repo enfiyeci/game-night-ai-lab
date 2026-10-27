@@ -22,7 +22,7 @@ html.phone #hud { width: var(--vw); height: var(--vh); }
 /* Screens not yet redesigned show as the whole desktop picture scaled to fit, as before; each child turns about the
    frame's corner (--ox, --oy from ui/phone.js). Room-coordinate layers follow the room instead. */
 html.phone #overlay > *,
-html.phone #stage > :not(#office, #fx, #hud, #overlay, #training-fx, #polish-fx, .cash-warning, .bd-count) {
+html.phone #stage > :not(#office, #fx, #hud, #overlay, #training-fx, #polish-fx, .cash-warning, .bd-count, .bd-quiet-slot) {
   transform-origin: var(--ox, 0) var(--oy, 0);
   transform: var(--legacy);
 }
@@ -85,6 +85,12 @@ html.phone .hud {
 html.phone .ctr { width: auto; }
 html.phone .badge { width: 40px; height: 40px; font-size: 16px; }
 html.phone .hud-flaw .badge { width: 44px; height: 44px; }
+/* The polish flaws badge follows the alignment badge in the strip (desktop places it from the window's middle). */
+html.phone .hud-flaw { top: calc(var(--ins-t) + 4px); left: calc(var(--ins-l) + 60px + 40px + 6px + 230px + 6px + 40px + 8px); }
+html.phone.pn-open .hud-flaw { left: calc(var(--split-x) - 104px); }
+html.phone.pn-open:has(.hud-flaw:not([hidden])) .pill { width: calc(var(--split-x) - var(--ins-l) - 16px - 80px - 12px - 50px - 52px); }
+html.phone .polish-flaws { transform: scale(var(--world-read)); transform-origin: 70px 0; }
+html.phone .polish-flaws-head, html.phone .polish-flaw .q { font-size: 12px; }
 html.phone .ali .badge { border-width: 4px; }
 html.phone .pill { width: 230px; padding: 4px 10px 5px; border-radius: 12px; }
 html.phone .pill .t { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -283,6 +289,27 @@ html.phone.pn-legacy #overlay > :is(.ev-briefing, .bd-say, .ev-phone-button, .ra
 /* The board's countdown chip sits under the HUD column. */
 html.phone #stage > .bd-count { transform: none; top: calc(var(--ins-t) + 150px) !important; right: calc(1440px - var(--vw) + var(--ins-r) + 8px); min-height: 32px; font-size: 12px; }
 html.phone.pn-open #stage > .bd-count { display: none; }
+/* Under it, the Geneva deal pill and the board's quiet slot: both sat on the desktop HUD's right edge. */
+html.phone #overlay > .dl-pill { transform: none; top: calc(var(--ins-t) + 188px); right: calc(1440px - var(--vw) + var(--ins-r) + 8px); min-height: 44px; font-size: 13px; }
+html.phone #stage > .bd-quiet-slot { /* board.js sets its top inline from the desktop HUD; the phone HUD is laid out apart */
+  transform: none; top: calc(var(--ins-t) + 236px) !important; right: calc(1440px - var(--vw) + var(--ins-r) + 8px);
+  max-height: calc(var(--vh) - var(--ins-t) - var(--ins-b) - 244px); overflow-y: auto;
+}
+html.phone.pn-open :is(#overlay > .dl-pill, #stage > .bd-quiet-slot) { display: none; }
+/* Beside a screen not yet redesigned they would show undimmed over its veil: they wait. */
+html.phone.pn-legacy :is(#overlay > .turn-summary, #overlay > .dl-pill, #stage > .bd-quiet-slot) { visibility: hidden; }
+/* The turn summary ("Just now") sits at the office's bottom left, above the cash chip, where the advisors' bubbles over
+   their desks do not reach; at phone type sizes. */
+html.phone #overlay > .turn-summary {
+  transform: none; top: auto; bottom: calc(900px - var(--vh) + var(--ins-b) + 60px); left: calc(var(--ins-l) + 8px);
+  width: min(360px, calc(var(--vw) - var(--ins-l) - var(--ins-r) - 16px - 190px)); font-size: 13px;
+}
+html.phone.pn-open #overlay > .turn-summary { width: min(360px, calc(var(--split-x) - var(--ins-l) - 16px)); }
+html.phone.pn-tall.pn-open #overlay > .turn-summary { width: min(360px, calc(var(--vw) - var(--ins-l) - var(--ins-r) - 16px)); }
+html.phone .turn-summary .turn-summary-header { font-size: 12px; }
+html.phone .turn-summary .turn-summary-header button { width: 44px; height: 44px; margin: -8px -6px -8px auto; }
+/* The cash chip waits while a card or the menu has the decision half; the notice cannot open there then. */
+html.phone:has(#overlay :is(.event-layer > .ev-card, .menu-layer > .ctx)) #stage > .cash-warning:not(.pn-expanded) { opacity: .8; } /* taps are swallowed in ui/phone.js */
 
 /* ---------- The training run builder (ui/screens/recipe.js; owner sign-off 2026-10-27, R1-R12 with R9 changed) ----------
    Both halves, nothing behind: the dialog's own nodes stay where recipe.js put them. The centre panel becomes a
@@ -302,9 +329,9 @@ html.phone #overlay > .recipe-dialog > .dialog-veil { background: var(--paper); 
    builder (the naming card on a new game's first run) comes earlier in the overlay and does not count. */
 html.phone #overlay > .recipe-dialog:has(~ :is(.dialog-layer, .ev-phone)) { visibility: hidden; }
 html.phone #overlay > .recipe-dialog {
-  --pn-l: calc(var(--split-x) - var(--ins-l) - 16px - 12px); /* left column width */
-  --pn-g: calc(var(--pnl-x) - var(--split-x) + 24px);        /* the gap, across the Duo's crease when it has one */
-  --pn-r: calc(var(--vw) - var(--pnl-x) - 12px - var(--ins-r) - 16px); /* right column width */
+  --pn-l: calc(var(--pn-mid-l) - var(--ins-l) - 16px - 12px); /* left column width */
+  --pn-g: calc(var(--pn-mid-r) - var(--pn-mid-l) + 24px);        /* the gap, across the Duo's crease when it has one */
+  --pn-r: calc(var(--vw) - var(--pn-mid-r) - 12px - var(--ins-r) - 16px); /* right column width */
   --pn-wood: color-mix(in oklab, var(--wood) 72%, var(--ink));
   --pn-mute: color-mix(in oklab, var(--ink) 62%, var(--paper));
   --pn-soft: color-mix(in oklab, var(--ink) 6%, var(--paper));
@@ -426,7 +453,7 @@ html.phone #overlay > .recipe-dialog :is(.dialog-left, .dialog-right) { display:
 html.phone #overlay > .recipe-dialog :is(.dialog-left, .dialog-right) > .hd { display: none; }
 html.phone #overlay > .recipe-dialog.pn-sheet-team .dialog-left,
 html.phone #overlay > .recipe-dialog.pn-sheet-list .dialog-right {
-  z-index: 2; display: flex; flex-direction: column; top: 0; left: var(--pnl-x); right: auto; width: calc(var(--vw) - var(--pnl-x)); height: var(--vh); max-height: none;
+  z-index: 2; display: flex; flex-direction: column; top: 0; left: var(--pn-mid-r); right: auto; width: calc(var(--vw) - var(--pn-mid-r)); height: var(--vh); max-height: none;
   padding: calc(var(--ins-t) + 6px) calc(var(--ins-r) + 16px) calc(var(--ins-b) + 8px) 12px;
   border: 0; border-radius: 18px 0 0 18px; background: var(--paper);
   box-shadow: 0 0 0 1px color-mix(in oklab, var(--ink) 6%, transparent), -8px 0 30px color-mix(in oklab, var(--ink) 16%, transparent);
@@ -508,7 +535,7 @@ html.phone.pn-roomy #overlay > .recipe-dialog .pn-team { margin-top: auto; }
 html.phone.pn-roomy #overlay > .recipe-dialog .recipe-footer-slot { margin-top: 0; }
 html.phone.pn-roomy #overlay > .recipe-dialog .recipe-cost-label { display: block; }
 html.phone.pn-roomy #overlay > .recipe-dialog:not(.pn-sheet-list) .dialog-right {
-  display: flex; flex-direction: column; top: calc(var(--ins-t) + 10px); left: calc(var(--pnl-x) + 12px); right: auto; bottom: var(--pn-side-bottom, 200px);
+  display: flex; flex-direction: column; top: calc(var(--ins-t) + 10px); left: calc(var(--pn-mid-r) + 12px); right: auto; bottom: var(--pn-side-bottom, 200px);
   width: var(--pn-r); height: auto; max-height: none; border: 0; border-radius: 0; box-shadow: none; background: transparent;
 }
 html.phone.pn-roomy #overlay > .recipe-dialog:not(.pn-sheet-list) .dialog-right .pn-sheet-back { display: none; }
@@ -523,3 +550,46 @@ html.phone.pn-tall #overlay > .recipe-dialog.pn-sheet-team .dialog-left,
 html.phone.pn-tall #overlay > .recipe-dialog.pn-sheet-list .dialog-right { left: 0; width: var(--vw); border-radius: 0; padding-left: calc(var(--ins-l) + 16px); }
 html.phone.pn-tall #overlay > .recipe-dialog.pn-sheet-setup .dialog-centre .recipe-focus { display: none; }
 html.phone.pn-tall #overlay > .recipe-dialog.pn-sheet-setup .pn-setup-done { margin-left: auto; }
+
+/* A narrow left half (the closed Duo, whose camera takes its left edge): the stage names start under the close button,
+   and the summary row steps down a size so its two choices fit on one line. */
+@media (max-width: 720px) {
+  html.phone #overlay > .recipe-dialog .recipe-stepper { padding-left: 0; margin-top: 12px; } /* below the close button */
+  html.phone #overlay > .recipe-dialog .pn-setup { font-size: 14px; }
+  html.phone #overlay > .recipe-dialog h1 { font-size: 20px; }
+}
+
+/* ---------- The first-minute tour (ui/screens/intro.js) ----------
+   The tour layer takes the window in window points; what points at the office (the spotlight, the floor ring, the
+   advisor's bubble) sits in .intro-room, which follows the room's fit; the HUD outlines are measured in window points
+   (intro.js stageBox); a screen preview is the desktop picture fitted beside its explanation. */
+html.phone #overlay > .intro-layer { transform: none; width: var(--vw); height: var(--vh); }
+html.phone .intro-room { transform-origin: 0 0; transform: var(--world); }
+html.phone .intro-hole { box-shadow: 0 0 0 4000px color-mix(in oklab, var(--ink) 46%, transparent); }
+/* The advisor's words and a screen step's explanation take the decision half, like an event card; the bar sits at its foot. */
+html.phone .intro-layer > :is(.ev-bubble.intro-say, .intro-explanation) {
+  left: var(--pnl-x) !important; top: var(--pnl-y) !important; right: auto; bottom: auto; width: var(--pnl-w) !important; max-width: none;
+  height: var(--pnl-h); max-height: none; margin: 0; overflow-y: auto; transform: none;
+  padding: calc(var(--ins-t) + 16px) calc(var(--ins-r) + 18px) calc(var(--ins-b) + 76px) 18px;
+  border: 0; border-radius: 18px 0 0 18px; background: var(--paper); text-align: left;
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--ink) 6%, transparent), -8px 0 30px color-mix(in oklab, var(--ink) 16%, transparent);
+}
+html.phone.pn-tall .intro-layer > :is(.ev-bubble.intro-say, .intro-explanation) { border-radius: 20px 20px 0 0; padding-left: calc(var(--ins-l) + 18px); }
+html.phone .intro-layer > .ev-bubble.intro-say::after { display: none; }
+html.phone .intro-layer > .ev-bubble.intro-say b { font-size: 12px; }
+html.phone .intro-layer > .ev-bubble.intro-say .ev-say { font-size: 15px; line-height: 1.45; }
+html.phone .intro-layer .ev-bubble.intro-up { left: calc(var(--ins-l) + 8px) !important; max-width: calc(var(--split-x) - var(--ins-l) - 16px); }
+html.phone .intro-layer .ev-bubble.intro-up::after { display: none; }
+html.phone .intro-bar {
+  left: auto; right: calc(var(--vw) - var(--pnl-x) - var(--pnl-w) + var(--ins-r) + 16px); transform: none;
+  bottom: calc(var(--vh) - var(--pnl-y) - var(--pnl-h) + var(--ins-b) + 10px);
+  max-width: calc(var(--pnl-w) - var(--ins-r) - 32px); gap: 8px; padding: 0 6px 0 12px; min-height: 52px;
+}
+html.phone .intro-bar-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 13px; }
+html.phone .intro-dots { display: none; }
+html.phone .intro-bar :is(.intro-back, .intro-skip, .intro-next) { min-height: 44px; font-size: 13px; }
+html.phone .intro-bar .intro-next { min-width: 96px; font-size: 15px; }
+html.phone .intro-preview { left: 0; top: 0; transform: var(--tour-preview); }
+html.phone .intro-explanation h2 { font-size: 21px; font-weight: 400; margin-bottom: 8px; }
+html.phone .intro-explanation p { font-size: 15px; line-height: 1.4; }
+html.phone .intro-explanation small { font-size: 13px; }

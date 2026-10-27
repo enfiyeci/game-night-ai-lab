@@ -29,16 +29,19 @@ export function mountIntro(game, { stage, overlay, storage }) {
   const background = [...stage.children].filter((node) => node !== overlay);
   const inertBefore = new Map();
 
-  // A HUD element's box in stage coordinates (the page may be zoomed to fit the window).
+  // A HUD element's box in the tour layer's own coordinates: measured against the layer, so the outline lands on the
+  // control whether the page is zoomed to fit the window (desktop) or the layer takes the window unscaled (a phone,
+  // ui/phone.css, where the HUD lives in window points).
   function stageBox(selector) {
     const node = stage.querySelector(selector);
-    if (!node) return null;
-    const stageRect = stage.getBoundingClientRect();
-    const scale = stageRect.width / 1440;
+    if (!node || !layer) return null;
+    const box = layer.getBoundingClientRect();
+    const scale = box.width / (layer.offsetWidth || 1440) || 1;
     const rect = node.getBoundingClientRect();
+    if (!rect.width && !rect.height) return null; // laid out without a box of its own (display: contents on a phone)
     return {
-      x: (rect.left - stageRect.left) / scale,
-      y: (rect.top - stageRect.top) / scale,
+      x: (rect.left - box.left) / scale,
+      y: (rect.top - box.top) / scale,
       w: rect.width / scale,
       h: rect.height / scale,
     };
@@ -89,11 +92,15 @@ export function mountIntro(game, { stage, overlay, storage }) {
     for (const node of background) node.inert = last ? inertBefore.get(node) : true;
     layer.classList.toggle('intro-open', last); // the last stop lets clicks through to the floor
     const head = anchors.heads[step.who];
+    // What points at the office (the spotlight, the floor ring, the advisor's bubble) sits in its own 1440 x 900 layer,
+    // which follows the room's fit on a phone; the HUD outlines and the bar sit on the tour layer itself.
+    const room = el('<div class="intro-room"></div>');
+    layer.append(room);
     if (!last && !step.screen) {
       const hole = el('<div class="intro-hole" aria-hidden="true"></div>');
       hole.style.left = `${head[0] - 95}px`;
       hole.style.top = `${head[1] + 52 - 95}px`;
-      layer.append(hole);
+      room.append(hole);
     }
     if (step.point === 'badges') {
       const cap = stageBox('.hud .ctr.cap');
@@ -110,8 +117,8 @@ export function mountIntro(game, { stage, overlay, storage }) {
       const ring = el('<div class="intro-ring" aria-hidden="true"></div>');
       ring.style.left = `${x - 45}px`;
       ring.style.top = `${y - 75}px`;
-      layer.append(ring);
-      const clock = stageBox('#hud .clock');
+      room.append(ring);
+      const clock = stageBox('#hud .clock') ?? stageBox('#hud .clock .date'); // a phone lays the clock's parts out apart
       if (clock) {
         const note = bubbleAt(layer, [clock.x + clock.w - 70, clock.y + clock.h + 18], { label: 'Clock', say: CLOCK_NOTE, width: 280, tail: 238, dy: 0 });
         note.classList.add('intro-up');
@@ -128,7 +135,12 @@ export function mountIntro(game, { stage, overlay, storage }) {
       explanation.querySelector('p').textContent = step.say;
       explanation.querySelector('small').textContent = step.path;
       layer.append(explanation);
-    } else bubbleAt(layer, head, { label: ADVISOR_TITLE[step.who], say: step.say, width: 300, tail: 30, dy: -34 }).classList.add('intro-say');
+    } else {
+      // On a phone the advisor's words take the decision half, as an event card does (ui/phone.css), and the office
+      // moves to the other half with the spotlight on the advisor; on desktop they are a bubble over the advisor's head.
+      const host = document.documentElement.classList.contains('phone') ? layer : room;
+      bubbleAt(host, head, { label: ADVISOR_TITLE[step.who], say: step.say, width: 300, tail: 30, dy: -34 }).classList.add('intro-say');
+    }
 
     const bar = el(`<section class="gp intro-bar" aria-label="Tour of the office">
       <span class="intro-bar-title"></span><span class="intro-dots" aria-hidden="true"></span>

@@ -54,13 +54,15 @@ export function mountTraining(game, { stage, hud, overlay }) {
     if (current.alignment.textContent !== `${counts.alignment}`) current.alignment.textContent = `${counts.alignment}`;
   }
 
+  // An element's centre in the bubbles' layer (1440 x 900): measured against that layer, which carries the desktop zoom
+  // and, on a phone, the room's fit (ui/phone.css), so the bubbles land on the badge either way.
   function centre(element) {
-    const stageRect = stage.getBoundingClientRect();
+    const box = layer.getBoundingClientRect();
     const rect = element.getBoundingClientRect();
-    const scale = stageRect.width / 1440;
+    const scale = box.width / 1440 || 1;
     return [
-      (rect.left + rect.width / 2 - stageRect.left) / scale,
-      (rect.top + rect.height / 2 - stageRect.top) / scale,
+      (rect.left + rect.width / 2 - box.left) / scale,
+      (rect.top + rect.height / 2 - box.top) / scale,
     ];
   }
 
