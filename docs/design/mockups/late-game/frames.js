@@ -4,6 +4,8 @@
 // phone-redesign build with ?layout=phone&insets=... Every number on these frames is illustrative, not from the sim.
 // Research only: nothing here is loaded by the game.
 
+import { mapSvg, legend, REGIONS, LABS } from './map.js';
+
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const base = new URL('.', import.meta.url).href;
 
@@ -53,6 +55,12 @@ function dialog({ kick, title, side = '', body, foot, cls = '' }) {
 function officeLayer(html) {
   const host = document.documentElement.classList.contains('phone') ? document.body : document.querySelector('#overlay');
   host.insertAdjacentHTML('beforeend', html);
+}
+
+// The map replaces the room under the HUD: it goes into the stage just before the HUD, and the desk phone hides.
+function mapLayer(html) {
+  document.querySelectorAll('.ev-phone-button').forEach((n) => { n.style.display = 'none'; });
+  document.querySelector('#hud').insertAdjacentHTML('beforebegin', html);
 }
 
 const say = (who, mood, line) => `<div class="mk-say"><b><span>${who}</span><span class="compute-mood ${mood.toLowerCase()}">${mood}</span></b><q>${line}</q></div>`;
@@ -357,6 +365,66 @@ FRAMES['ph-C-offer'] = async () => {
       <div class="mk-opt"><b>Stay independent</b>Your schedule; the "supply chain risk" label and its lawsuits.</div>
       <div class="mk-opt"><b>Lead a consortium</b>Shared testers with the West; the only path that binds Qilin. Slowest.</div>
     </div></div>`;
+  document.querySelector('#overlay').append(layer);
+};
+
+
+// ---------- The world map (owner pick 2026-10-27: B's world board drawn as a contested map, like Plague Inc.) ----------
+
+const shares = (id) => `<div class="mk-shares">${REGIONS[id].shares.map(([l, p]) => `<div><span>${LABS[l].name}</span><span class="bar"><i style="width:${p}%;background:${LABS[l].color}"></i></span><b>${p}%</b></div>`).join('')}</div>`;
+const regionCard = (id) => `<div class="mk-regioncard">
+    <span class="mk-k">Contested · Brussels wants outside testers</span><h3>${REGIONS[id].name}</h3>
+    ${shares(id)}
+    <span class="mk-muted">OpenBrain launched here this round. Past 50% for anyone, the AI Office opens a probe.</span>
+    <div class="mk-moves">
+      <span><b>Launch Kestrel 6 Mini here</b>About +6% next checkpoint · a team action</span>
+      <span><b>Accept Brussels' testers</b>Government backing; your next run waits a round</span>
+      <span><b>Build a site in Spain</b>Compute in 2 rounds · $1.2B</span>
+    </div></div>`;
+const mapBar = () => `<div class="mk-mapbar">
+    <div class="me"><span class="mk-k">Era 6 · checkpoint 3 of 6</span><b>You lead 2 of 9 regions</b><span class="mk-muted">Lead: 1.8 months over OpenBrain</span></div>
+    <div class="mid">${legend()}
+      <div class="mk-fill"><span>World attention</span><span class="bar"><i style="width:58%"></i><em style="left:25%"></em><em style="left:50%"></em><em style="left:75%"></em></span><span>58%</span></div></div>
+    <div class="glob"><div><span>Compute</span><span class="mk-chip ok">Superior · 41% of the frontier</span></div><div><span>Security</span><span class="mk-chip warn">Behind · stops criminals, not states</span></div></div>
+  </div>`;
+
+FRAMES['M1-map'] = async () => {
+  quiet();
+  setHud({ eraName: 'The world stage', era: 6, date: 'Nov 2027', week: 'Checkpoint 3 of 6' });
+  mapLayer(`<div class="mk-mapview withcard"><div class="stage">${mapSvg({ selected: 'eu' })}</div>
+    <div class="mk-cpnote"><span class="mk-k">Checkpoint 3 · what moved</span>You took 4% of Europe and 3% of South Asia (ringed). Qilin's open model spread into Africa. The decisive month comes at checkpoint 6.</div>
+    ${regionCard('eu')}${mapBar()}</div>`);
+};
+
+FRAMES['M2-map'] = async () => {
+  quiet();
+  setHud({ eraName: 'The world stage', era: 6, date: 'Nov 2027', week: 'Checkpoint 3 of 6' });
+  const list = Object.entries(REGIONS).map(([id, r]) => `<div class="${id === 'eu' ? 'on' : ''}"><span>${r.name}</span><span class="stack">${r.shares.map(([l, p]) => `<i style="width:${p}%;background:${LABS[l].color}"></i>`).join('')}</span></div>`).join('');
+  const layer = dialog({
+    kick: 'Era 6 · The world stage · checkpoint 3 of 6', title: 'The world board', cls: 'wide',
+    side: '<div class="mk-pill">You lead 2 of 9 regions · 1.8 months ahead</div>',
+    body: `<div class="reveal-cols" style="--cols: 1fr 270px"><div class="reveal-col"><div class="sec">Who runs the world's AI, region by region</div>${mapSvg({ selected: 'eu' })}${legend()}</div>
+      <div class="reveal-col"><div class="sec">Regions</div><div class="mk-regionlist">${list}</div>
+      <div class="sec" style="margin-top:10px">Europe</div>${say('Policy and Comms', 'Uneasy', 'OpenBrain launched in Europe this round. Brussels wants testers from whoever it backs.')}</div></div>`,
+    foot: '<span class="note">Tap a region to launch a model there, make a government deal or build a site. Regions move at each checkpoint.</span><span class="acts"><span class="mk-btn ghost">Launch in Europe</span><span class="mk-btn">Close</span></span>',
+  });
+  return layer;
+};
+
+FRAMES['ph-M1-map'] = async () => {
+  quiet();
+  setHud({ eraName: 'The world stage', era: 6, date: 'Nov 2027', week: 'Check 3 of 6' });
+  mapLayer(`<div class="mk-mapview"><div class="stage">${mapSvg({ selected: null })}</div>${mapBar()}</div>`);
+};
+
+FRAMES['ph-M1-region'] = async () => {
+  quiet();
+  setHud({ eraName: 'The world stage', era: 6, date: 'Nov 2027', week: 'Check 3 of 6' });
+  mapLayer(`<div class="mk-mapview split"><div class="stage">${mapSvg({ selected: 'eu', view: '360 20 360 250' })}</div>${mapBar()}</div>`);
+  // The region card rides in an event layer, so the phone layout gives it the decision half and moves the HUD.
+  const layer = document.createElement('div');
+  layer.className = 'event-layer';
+  layer.innerHTML = `<div class="ev-card mk-evcard">${regionCard('eu').replace('class="mk-regioncard"', 'class="mk-regioncard inline"')}</div>`;
   document.querySelector('#overlay').append(layer);
 };
 

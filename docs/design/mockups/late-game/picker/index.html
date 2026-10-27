@@ -120,9 +120,9 @@ dialog.lb p { padding: 8px 12px; font-size: 13px; font-weight: 700; }
       <div class="kick">Game Night · late game · lane gn-late-game · 27 October 2026</div>
       <h1>Bigger eras 4 and 5, and a fight for the world</h1>
       <div class="rec">
-        <span class="kick">Recommended, preselected below</span>
+        <span class="kick">Your pick, 27 October: the recommendation, with the world board as a map</span>
         <span><b>B · Four fronts</b> with a new <b>era 6</b>, <b>checkpoints every round</b> plus a <b>lineup</b> of live models, and an <b>early finish</b> once the result is settled.</span>
-        <span class="soft" style="font-weight:700">It turns the last three eras into one race you watch move on four fronts, ships a model every 90 seconds of clock, and ends at one scheduled climax.</span>
+        <span class="soft" style="font-weight:700">You asked for the world board to be a real world map where labs fight over control, like Plague Inc. One question is left: the map below, full screen (preselected) or inside the dialog.</span>
       </div>
       <ul class="finds">
         <li><span><b>The calendar is too short.</b> Era 5 is four weeks of January 2027. Every published race (AI 2027, Situational Awareness) is decided between February 2027 and 2028.</span></li>
@@ -146,6 +146,12 @@ dialog.lb p { padding: 8px 12px; font-size: 13px; font-weight: 700; }
     <header><span class="kick">Pick 1 of 4 · one</span><h2>The late game's structure</h2>
       <p class="soft" style="font-weight:700">Era length, the new system, the finale's shape and how many releases. Each direction names what it borrows and its weak point.</p></header>
     <div class="opts" data-group="structure" data-mode="one"></div>
+  </section>
+
+  <section class="group" id="map">
+    <header><span class="kick">New · pick one</span><h2>The world board as a map</h2>
+      <p class="soft" style="font-weight:700">Nine regions, each shared out between the labs. Your models, government deals and sites push your colour into a region; rivals push back. At each checkpoint the map moves and the changed hexes ring. Compute and security stay world-wide, on the bar; alignment stays hidden.</p></header>
+    <div class="opts" data-group="map" data-mode="one"></div>
   </section>
 
   <section class="group" id="releases">
@@ -201,11 +207,11 @@ const STRUCTURE = [
     weak: 'Weak point: one track can feel like a progress bar, and "the fight for the world" is only the lead, not separate fronts.',
     ref: ['ref-plague-world', 'Plague Inc: Evolved: the world screen and the cure bar that fills as you succeed, with pop-ups at 25/50/75/95%.', 'https://store.steampowered.com/app/246620/'] },
   { id: 'B', tag: 'Medium', rec: true, name: 'Four fronts', line: 'A new era 6 where the world board shows who leads on compute, economy, governments and security.',
-    shots: [['B-board', 'Era 6, checkpoint 3 of 6: four fronts, you against the lab that leads each one'], ['R2-checkpoint', 'Every round mark: a short reveal of every lab\'s checkpoint']],
-    phone: 'ph-B-board',
+    shots: [['M1-map', 'Era 6, checkpoint 3: the world board as a map (your change); see the map choice below'], ['B-board', 'Before your change: the four fronts as tug tracks']],
+    phone: 'ph-M1-map',
     spec: [['Eras', 'Six. Era 4 grows to <b>6 monthly rounds</b>; era 5 is <b>6 rounds of 2027</b> with a checkpoint each; <b>era 6 "The world stage"</b> is 6 rounds from late 2027 into 2028.'],
       ['Clock', 'About <b>45 min</b>; the early finish can cut 3–6 min.'],
-      ['New system', 'The <b>world board</b>: four fronts, each a tug track (Behind, Even, Superior, Overwhelming) with its own backlash: probes, sabotage, state demands. Live models are posted to fronts. Alignment stays hidden.'],
+      ['New system', 'The <b>world board</b> as a <b>map</b>: nine regions shared out between the labs, each with its own backlash (probes, sabotage, state demands). Compute and security stay world-wide bands. Live models are launched into regions. Alignment stays hidden.'],
       ['Finale', 'Era 6 ends in "the decisive month" at checkpoint 6, with one scheduled peak in the middle (a state\'s move). It replaces the summit\'s weekly tests and shrinks the deal board, so choices per round stay flat.'],
       ['Releases', '<b>Checkpoints plus a lineup</b> by default: era 4 about 3, era 5 six checkpoints and one flagship, era 6 about 3–4.'],
       ['Size', 'Large: several days plus a balance pass. Balance risk high.']],
@@ -222,6 +228,18 @@ const STRUCTURE = [
       ['Size', 'Large. Balance risk high: three branches are three games to tune.']],
     weak: 'Weak point: three branches triple the tuning, and the President carries the era (his lines are yours to write). Rung 5 ending the run touches the endings session\'s ground.',
     ref: ['ref-frostpunk-laws', 'Frostpunk: the law tree where each law is "a little bit more than the previous one" (its designers\' creeping normality). Twilight Struggle\'s DEFCON track is the ladder\'s other parent.', 'https://store.steampowered.com/app/323190/'] },
+];
+const MAP = [
+  { id: 'M1', tag: 'Medium', rec: true, name: 'The map takes the screen', line: 'Like Plague Inc.: the office gives way to the world under the HUD, a bar along the bottom, a card for the region you tap.',
+    shots: [['M1-map', 'Era 6, checkpoint 3: Europe tapped; arcs are launches this round, rings are hexes that changed hands']],
+    phone: 'ph-M1-map', phone2: 'ph-M1-region',
+    spec: [['Opens', 'From a wall screen in the office or the HUD, and by itself at each checkpoint so the map "follows" the run.'], ['Region card', 'Shares, what moved it, and three moves: launch a model there, a government deal, a site.'], ['Bar', 'Regions you lead, lead in months, world attention (Plague\'s cure bar), compute and security bands.'], ['Phone', 'The map fills the screen; a tapped region zooms on the office half and its card takes the decision half.']],
+    weak: 'Weak point: a second main view beside the office, so the office is seen less in eras 5 and 6; regions are this lane\'s grouping, and their names need a check for the store.',
+    ref: ['ref-plague-world', 'Plague Inc: Evolved: the world screen where the infection spreads region by region, with the cure bar along the bottom.', 'https://store.steampowered.com/app/246620/'] },
+  { id: 'M2', tag: 'Safe', name: 'The map inside the world board', line: 'The same map in the release reveal\'s dialog frame, with a region list beside it; the office stays behind.',
+    shots: [['M2-map', 'The world board dialog: the map, a region list with share bars, an advisor line']],
+    spec: [['Opens', 'As a dialog, like every other screen.'], ['Phone', 'A builder on both halves: map left, region list and card right.'], ['Size', 'Smaller build than M1.']],
+    weak: 'Weak point: the map is smaller and reads less like a world you are fighting over; it looks like one more panel.' },
 ];
 const RELEASES = [
   { id: 'R1', tag: 'Safe', name: 'Point releases and tiers', line: 'After a flagship, one-round updates (Kestrel 6.1) and a cheaper tier one round later, each with a 10-second reveal.',
@@ -248,7 +266,7 @@ const EXTRAS = [
   { id: 'X2', tag: 'Safe', rec: true, name: 'A decisive lead opens a stance', line: 'Crossing a 3-month lead asks once: press the advantage, share it, or hand it to the state. Only the stance is recorded; the endings session decides what it means.', weak: 'From the decisive-strategic-advantage literature: a lead you could use, not a flag you plant.' },
 ];
 
-const picks = { structure: new Set(['B']), releases: new Set(['R2', 'R3']), calendar: new Set(['F2']), extras: new Set(['X1', 'X2']) };
+const picks = { structure: new Set(['B']), map: new Set(['M1']), releases: new Set(['R2', 'R3']), calendar: new Set(['F2']), extras: new Set(['X1', 'X2']) };
 const lb = document.getElementById('lb');
 const shot = ([f, cap]) => `<figure><img class="shot" src="${IMG(f)}" alt="${cap}" loading="lazy" tabindex="0"><figcaption>${cap}</figcaption></figure>`;
 const phones = (f) => `<div class="phones">${[['iphone', 'iPhone'], ['duo-open', 'iPhone Duo open'], ['duo-closed', 'Duo closed']].map(([d, n]) => `<figure><img class="shot" src="${IMG(`${f}-${d}`)}" alt="${n}" loading="lazy" tabindex="0"><figcaption>${n}</figcaption></figure>`).join('')}</div>`;
@@ -260,7 +278,7 @@ function render(group, items) {
   host.innerHTML = items.map((o) => `<article class="opt" data-id="${o.id}">
     <div class="opt-head"><div class="t"><span><span class="tag">${o.tag}</span> ${o.rec ? '<span class="tag rec">Recommended</span>' : ''}</span><h3>${o.id} · ${o.name}</h3><p class="soft" style="font-weight:700">${o.line}</p></div>
       <button class="pick${many ? ' multi' : ''}" type="button" id="pick-${o.id}" aria-pressed="false"><span class="box"></span>${many ? 'Include' : 'Pick'} ${o.id}</button></div>
-    ${o.shots ? `<div class="body"><div class="shots">${o.shots.length > 1 ? `${shot(o.shots[0])}<div class="pair">${shot(o.shots[1])}<div></div></div>` : shot(o.shots[0])}${o.phone ? phones(o.phone) : ''}</div>
+    ${o.shots ? `<div class="body"><div class="shots">${o.shots.length > 1 ? `${shot(o.shots[0])}<div class="pair">${shot(o.shots[1])}<div></div></div>` : shot(o.shots[0])}${o.phone ? phones(o.phone) : ''}${o.phone2 ? phones(o.phone2) : ''}</div>
       <div style="display:grid;gap:12px;min-width:0">${o.spec ? `<dl class="spec">${o.spec.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>` : ''}
       <div class="weak">${o.weak}</div>
       ${o.ref ? `<div class="ref"><img src="${IMG(o.ref[0])}" alt="${o.ref[1]}" loading="lazy" tabindex="0"><p>${o.ref[1]} <a href="${o.ref[2]}" target="_blank" rel="noopener">Steam page</a></p></div>` : ''}</div></div>`
@@ -275,7 +293,7 @@ function render(group, items) {
     sync();
   });
 }
-render('structure', STRUCTURE); render('releases', RELEASES); render('calendar', CAL); render('extras', EXTRAS);
+render('structure', STRUCTURE); render('map', MAP); render('releases', RELEASES); render('calendar', CAL); render('extras', EXTRAS);
 // The pair row's second slot shows the phone frames' first figure size; keep the grid even.
 document.querySelectorAll('.pair > div:empty').forEach((n) => n.remove());
 document.querySelectorAll('.pair').forEach((p) => { if (p.children.length === 1) p.style.gridTemplateColumns = '1fr'; });
@@ -283,7 +301,7 @@ document.querySelectorAll('.pair').forEach((p) => { if (p.children.length === 1)
 const name = (all, id) => all.find((o) => o.id === id)?.name;
 function text() {
   const list = (g, all) => [...picks[g]].sort().map((id) => `${id} ${name(all, id)}`).join(', ') || 'none';
-  return `Late game picks: structure ${list('structure', STRUCTURE)}; releases ${list('releases', RELEASES)}; calendar ${list('calendar', CAL)}; rules ${list('extras', EXTRAS)}.`;
+  return `Late game picks: structure ${list('structure', STRUCTURE)}; map ${list('map', MAP)}; releases ${list('releases', RELEASES)}; calendar ${list('calendar', CAL)}; rules ${list('extras', EXTRAS)}.`;
 }
 function sync() {
   for (const [g, set] of Object.entries(picks)) document.querySelectorAll(`[data-group="${g}"] .opt`).forEach((o) => {
@@ -291,9 +309,9 @@ function sync() {
   });
   const code = Object.values(picks).map((set) => [...set].sort().join('+') || '–').join(' · ');
   document.getElementById('sum').innerHTML = `<span class="long">${text()} Copy and paste into the chat.</span><b class="short">Your picks: ${code}</b>`;
-  try { localStorage.setItem('late-game-picks', JSON.stringify(Object.fromEntries(Object.entries(picks).map(([k, v]) => [k, [...v]])))); } catch {}
+  try { localStorage.setItem('late-game-picks-2', JSON.stringify(Object.fromEntries(Object.entries(picks).map(([k, v]) => [k, [...v]])))); } catch {}
 }
-try { const saved = JSON.parse(localStorage.getItem('late-game-picks') ?? 'null'); if (saved) for (const [k, v] of Object.entries(saved)) if (picks[k]) picks[k] = new Set(v); } catch {}
+try { const saved = JSON.parse(localStorage.getItem('late-game-picks-2') ?? 'null'); if (saved) for (const [k, v] of Object.entries(saved)) if (picks[k]) picks[k] = new Set(v); } catch {}
 sync();
 
 document.getElementById('copy').addEventListener('click', async (e) => {

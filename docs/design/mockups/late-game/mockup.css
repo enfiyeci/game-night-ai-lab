@@ -203,3 +203,69 @@ html.phone .mk-toast { top: auto; bottom: calc(var(--ins-b, 0px) + 8px); right: 
   .mk-ph .mk-tug { height: 34px; }
   .mk-ph .mk-tug .lane { top: 14px; }
 }
+
+/* ---------- The world map (owner pick 2026-10-27: B's world board as a contested map, like Plague Inc.) ---------- */
+.mk-mapview { position: absolute; inset: 0; z-index: 4; background: radial-gradient(ellipse 80% 75% at 50% 48%, var(--paper) 0%, color-mix(in oklab, var(--cream) 55%, var(--paper)) 55%, var(--cream) 100%); }
+.mk-map { display: block; width: 100%; height: auto; }
+.mk-map .cells polygon { stroke: none; }
+.mk-map .cells polygon.sel { stroke: var(--ink); stroke-width: .8; }
+.mk-map .ring { fill: none; stroke: var(--coral); stroke-width: 1.6; }
+.mk-map .arc { fill: none; stroke-width: 2; stroke-dasharray: 5 4; }
+.mk-map .pin { stroke: var(--paper); stroke-width: 1.5; }
+.mk-map .lbl text { font: 900 10.5px "Nunito", sans-serif; fill: var(--ink); }
+.mk-map .lbl text.backs { font-weight: 800; font-size: 9.5px; fill: color-mix(in oklab, var(--wood) 60%, var(--ink)); }
+.mk-map .lbl .plate { fill: color-mix(in oklab, var(--paper) 88%, transparent); stroke: color-mix(in oklab, var(--wood) 40%, transparent); stroke-width: 1; }
+.mk-map .lbl.hot .plate { stroke: var(--coral); stroke-width: 1.5; }
+.mk-map .lbl.on .plate { stroke: var(--ink); stroke-width: 2; }
+.mk-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 11.5px; font-weight: 800; }
+.mk-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.mk-legend i { width: 11px; height: 11px; border-radius: 3px; }
+
+/* M1: the map takes the screen; a Plague-style bar along the bottom and a region card on the right. */
+.mk-mapview .stage { position: absolute; left: 30px; right: 30px; top: 92px; }
+.mk-mapview.withcard .stage { top: 84px; }
+#stage > .mk-mapview { z-index: 3; }
+.mk-mapbar { position: absolute; left: 30px; right: 30px; bottom: 20px; display: grid; grid-template-columns: 250px 1fr 300px; gap: 18px; align-items: center; padding: 12px 16px; border-radius: 14px; background: var(--paper); box-shadow: 0 3px 0 color-mix(in oklab, var(--wood) 45%, var(--paper)), 0 10px 26px color-mix(in oklab, var(--ink) 14%, transparent); }
+.mk-mapbar .me { display: grid; gap: 2px; font-size: 12.5px; font-weight: 800; }
+.mk-mapbar .me b { font-size: 17px; font-weight: 900; }
+.mk-mapbar .mid { display: grid; gap: 7px; min-width: 0; }
+.mk-mapbar .glob { display: grid; gap: 5px; font-size: 12px; font-weight: 800; }
+.mk-mapbar .glob div { display: flex; justify-content: space-between; gap: 8px; }
+.mk-regioncard { position: absolute; left: 30px; top: 398px; width: 300px; display: grid; gap: 8px; padding: 13px 15px; border-radius: 14px; font-size: 12.5px; font-weight: 700; line-height: 1.3; background: var(--paper); box-shadow: 0 3px 0 color-mix(in oklab, var(--wood) 45%, var(--paper)), 0 10px 26px color-mix(in oklab, var(--ink) 14%, transparent); }
+.mk-regioncard h3 { margin: 0; font-size: 19px; font-weight: 900; }
+.mk-shares { display: grid; gap: 4px; }
+.mk-shares div { display: grid; grid-template-columns: 82px 1fr 34px; gap: 8px; align-items: center; font-size: 12px; font-weight: 800; }
+.mk-shares .bar { height: 9px; border-radius: 4px; background: color-mix(in oklab, var(--ink) 6%, transparent); overflow: hidden; }
+.mk-shares .bar i { display: block; height: 100%; }
+.mk-shares b { text-align: right; }
+.mk-moves { display: grid; gap: 6px; }
+.mk-moves span { display: grid; gap: 1px; padding: 7px 10px; border-radius: 9px; background: color-mix(in oklab, var(--ink) 4%, var(--paper)); box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--wood) 35%, transparent); }
+.mk-moves span b { font-size: 13px; font-weight: 900; }
+.mk-cpnote { position: absolute; left: 820px; top: 520px; width: 250px; padding: 10px 13px 11px; border-radius: 12px; font-size: 12.5px; font-weight: 700; line-height: 1.3; background: var(--paper); box-shadow: inset 4px 0 0 var(--coral), 0 3px 0 color-mix(in oklab, var(--wood) 45%, var(--paper)), 0 10px 26px color-mix(in oklab, var(--ink) 14%, transparent); }
+.mk-cpnote .mk-k { display: block; margin-bottom: 3px; }
+
+/* M2: the map inside the world board dialog. */
+.mk-layer .reveal.wide { left: 100px; width: 1240px; top: 86px; }
+.mk-regionlist { display: grid; gap: 5px; }
+.mk-regionlist div { display: grid; grid-template-columns: 1fr 120px; gap: 8px; align-items: center; padding: 5px 8px; border-radius: 8px; font-size: 12px; font-weight: 800; background: var(--paper); }
+.mk-regionlist div.on { box-shadow: inset 0 0 0 2px var(--ink); }
+.mk-regionlist .stack { display: flex; height: 9px; border-radius: 4px; overflow: hidden; }
+
+/* Phone: the map fills the screen; the region card and the bar take the decision half when a region is tapped. */
+html.phone #stage > .mk-mapview { position: fixed; inset: 0; z-index: 3; transform: none !important; } /* outranks the legacy scale on #stage children */
+html.phone .mk-mapview .stage { left: calc(var(--ins-l, 0px) + 8px); right: calc(var(--ins-r, 0px) + 8px); top: 64px; }
+html.phone .mk-mapview.split .stage { right: auto; width: calc(var(--split-x, 50vw) - var(--ins-l, 0px) - 16px); top: calc(var(--ins-t, 0px) + 108px); bottom: 86px; }
+html.phone .mk-mapview.split .stage .mk-map { width: 100%; height: 100%; }
+html.phone .mk-mapbar { left: calc(var(--ins-l, 0px) + 8px); right: calc(var(--ins-r, 0px) + 8px); bottom: calc(var(--ins-b, 0px) + 6px); grid-template-columns: auto 1fr; gap: 12px; padding: 8px 12px; }
+html.phone .mk-mapbar .glob { display: none; }
+html.phone .mk-mapview.split .mk-mapbar { right: auto; width: calc(var(--split-x, 50vw) - var(--ins-l, 0px) - 16px); grid-template-columns: 1fr; }
+html.phone .mk-mapview.split .mk-mapbar .mid { display: none; }
+html.phone .mk-regioncard { position: fixed; top: 0; bottom: 0; right: 0; left: var(--split-x, 50vw); width: auto; padding: 12px calc(var(--ins-r, 0px) + 12px) calc(var(--ins-b, 0px) + 10px) 12px; border-radius: 0; font-size: 13px; box-shadow: -1.5px 0 0 color-mix(in oklab, var(--wood) 30%, transparent); align-content: start; overflow: hidden; }
+html.phone .mk-regioncard .mk-moves span { min-height: 44px; }
+html.phone .mk-cpnote { display: none; }
+html.phone .mk-legend { font-size: 12px; }
+html.phone .mk-mapview .mk-map .lbl text { font-size: 12px; }
+
+/* The region card inside a phone event card: the card itself is the frame. */
+.mk-regioncard.inline { position: static; width: auto; padding: 0; box-shadow: none; background: none; }
+html.phone .mk-regioncard.inline { position: static; padding: 0; box-shadow: none; }
