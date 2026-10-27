@@ -46,6 +46,14 @@ so the takeover reads as the result of the player's own written rules.
 (`tools/endings/blender/skyline.py`, the `VARIANT` billboard blocks around lines 329-343), so they cannot show the
 player's lab name. Fix it when the clips are re-rendered.
 
+**Research for the redesign.** `docs/research/endings/` (2026-10-27, lane gn-endings-research; start with its
+`README.md`, then `report.md`; branch `research/endings`, commit d6d6038, not on main yet): what today's endings read,
+twelve constitution-shaped futures keyed to the hard lines, fifteen techniques for visibly earned endings, ten
+questions for the session, and the KESTREL re-render cost (about 3 to 3.5 hours). Two of its findings touch the core
+game: no ending reads the constitution today, and `learnedConstitution` (`sim/constitution.js`) is never called; and
+the quiet takeover is rare for the bots (0 of 2,600 balance runs; `tools/ending-reachability.js` finds it only past
+its default 100 seeds, at seed 163 of the "unchecked" policy, which `tests/fixtures/ending-witnesses.json` records).
+
 **What building it would touch.**
 - The constitution mechanic: `sim/constitution.js` (the era 3 constitution, set in Safety's draft) and its lines, which
   the takeover ending would read.
