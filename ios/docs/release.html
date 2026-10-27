@@ -127,14 +127,14 @@ td.n { font: 13px var(--mono); font-variant-numeric: tabular-nums; white-space: 
 
     <section>
       <h2>Screenshots</h2>
-      <p class="gnote">More than half of each set must show the game in use. The Duo set is what earns the "optimized for iPhone Duo" badge on the product page; Apple makes Duo screenshots required in April 2027. Best taken after the phone redesign lands, so the shots show the final layouts.</p>
+      <p class="gnote">More than half of each set must show the game in use. The Duo set is what earns the "optimized for iPhone Duo" badge on the product page, and from April 2027 Apple requires it for any app built with the iOS 27.1 SDK, which this one is. No image may have transparency. Best taken after the phone redesign lands, so the shots show the final layouts. Sizes checked today against Apple's screenshot specifications page (⚠️ I read its required-sizes, iPhone Duo, iPhone and iPad 13-inch sections, not the whole page).</p>
       <div class="table-wrap"><table>
         <thead><tr><th>Set</th><th>Pixels (portrait / landscape)</th><th>Needed</th></tr></thead>
         <tbody>
           <tr><td>iPhone, Dynamic Island, medium display</td><td class="n">1206 × 2622 or 1179 × 2556 / 2622 × 1206 or 2556 × 1179</td><td>Yes, at least one</td></tr>
-          <tr><td>iPhone Duo, inner display</td><td class="n">2007 × 2853 / 2853 × 2007</td><td>For the badge</td></tr>
-          <tr><td>iPhone Duo, outer display</td><td class="n">1398 × 2034 / 2034 × 1398</td><td>For the badge</td></tr>
-          <tr><td>iPad, 13-inch</td><td class="n flag">⚠️ 2064 × 2752 (my recollection, not checked against Apple's page)</td><td>Only if the app ships for iPad</td></tr>
+          <tr><td>iPhone Duo, inner display</td><td class="n">2007 × 2853 / 2853 × 2007</td><td>For the badge; required from April 2027</td></tr>
+          <tr><td>iPhone Duo, outer display</td><td class="n">1398 × 2034 / 2034 × 1398</td><td>For the badge; required from April 2027</td></tr>
+          <tr><td>iPad, 13-inch</td><td class="n">2064 × 2752 or 2048 × 2732 / 2752 × 2064 or 2732 × 2048</td><td>Yes, if the app ships for iPad</td></tr>
         </tbody>
       </table></div>
       <p class="gnote" style="margin-top:12px">The simulator writes the Duo inner size as-is: <code>xcrun simctl io &lt;Duo&gt; screenshot</code> gave 2853 × 2007 today. The outer display needs the Duo closed in Device Hub.</p>
