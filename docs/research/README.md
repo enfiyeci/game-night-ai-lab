@@ -45,6 +45,9 @@ only through search-result snippets, and those claims carry ⚠️ inline.
    research (2026-09-26): Anthropic's "When AI builds itself" essay and automation index, the
    RSP, OpenAI and Google DeepMind thresholds, share-of-code figures, METR's measured speedups,
    and how other games model a self-accelerating loop. Start with its verified-rows table.
+12. `ip-risk/README.md` — copyright, trademark and App Store risk next to Game Dev Tycoon, and
+   whether "AI Lab Tycoon" is a safe store name (2026-10-27). Start with `ip-risk/report.html`;
+   case law, App Store rules and trademark checks are in `ip-risk/raw/`. Research, not legal advice.
 
 ## Notable catches
 
