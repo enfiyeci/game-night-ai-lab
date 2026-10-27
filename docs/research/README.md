@@ -45,6 +45,9 @@ only through search-result snippets, and those claims carry ⚠️ inline.
    research (2026-09-26): Anthropic's "When AI builds itself" essay and automation index, the
    RSP, OpenAI and Google DeepMind thresholds, share-of-code figures, METR's measured speedups,
    and how other games model a self-accelerating loop. Start with its verified-rows table.
+12. `ipo/README.md`: how AI labs and big tech actually go public (2026-10-27): the IPO stage by stage with EDGAR
+   timelines (including Anthropic's S-1 of 2026-10-26), lab governance structures once listed, life after listing,
+   and how games model public markets. Subagent notes with ⚠️ inline; start with its README.
 
 ## Notable catches
 
