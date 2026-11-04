@@ -80,12 +80,42 @@ struct SaveStoreTests {
         #expect(SaveStore(file: file).items == ["ai-lab-run-counter": "3"])
     }
 
-    @Test func snapshotAddsMissingKeysAndKeepsTheCopysValues() {
+    @Test func withoutACopyTheFirstSnapshotIsTaken() {
         let store = SaveStore(file: temporaryFile())
-        store.apply(["type": "set", "key": "a", "value": "newer"])
-        store.apply(["type": "set", "key": "kept", "value": "1"])
-        store.apply(["type": "snapshot", "items": ["a": "older", "b": "2"]])
-        #expect(store.items == ["a": "newer", "b": "2", "kept": "1"])
+        #expect(store.restoreJSON == "null")
+        store.apply(["type": "snapshot", "items": ["a": "1", "b": "2"]])
+        #expect(store.items == ["a": "1", "b": "2"])
+    }
+
+    @Test func onceTheCopyExistsASnapshotAddsNothing() {
+        let file = temporaryFile()
+        let first = SaveStore(file: file)
+        first.apply(["type": "set", "key": "a", "value": "newer"])
+        first.apply(["type": "snapshot", "items": ["a": "older", "b": "2"]])
+        #expect(first.items == ["a": "newer"])
+        let relaunched = SaveStore(file: file)
+        relaunched.apply(["type": "snapshot", "items": ["a": "older", "c": "3"]])
+        #expect(relaunched.items == ["a": "newer"])
+    }
+
+    @Test func aRemovedKeyStaysRemovedWhenThePageStillHasIt() {
+        // The page removed the run save, the app recorded it, and the app was killed before WebKit wrote
+        // the removal to disk: the next page load still holds the key.
+        let file = temporaryFile()
+        let store = SaveStore(file: file)
+        store.apply(["type": "set", "key": "ai-lab-run-save", "value": "{}"])
+        store.apply(["type": "remove", "key": "ai-lab-run-save"])
+        let relaunched = SaveStore(file: file)
+        #expect(relaunched.restoreJSON == "{}")
+        relaunched.apply(["type": "snapshot", "items": ["ai-lab-run-save": "{}"]])
+        #expect(relaunched.items.isEmpty)
+    }
+
+    @Test func theShellScriptHasThePlaceholderOnce() throws {
+        let url = try #require(Bundle.main.url(forResource: "native-shell", withExtension: "js"))
+        let source = try String(contentsOf: url, encoding: .utf8)
+        #expect(source.components(separatedBy: GameWebView.Coordinator.savedItemsPlaceholder).count == 2)
+        #expect(GameWebView.Coordinator.jsStringLiteral("{\"a\":\"1\"}") == "\"{\\\"a\\\":\\\"1\\\"}\"")
     }
 
     @Test func clearEmptiesTheCopy() {

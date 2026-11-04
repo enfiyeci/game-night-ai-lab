@@ -1,12 +1,12 @@
 // Injected by the iOS shell at document start, before the game's modules run (ios/App/GameWebView.swift).
 // Never part of the web build. It does three things:
-// 1. Restores localStorage from the app's own copy (ios/App/SaveStore.swift) wherever the two differ.
+// 1. Makes localStorage match the app's own copy (ios/App/SaveStore.swift), once the app has one.
 // 2. Mirrors every localStorage write back to that copy.
 // 3. Applies the Duo layout the shell sends: data-native-posture and --native-fold-* on <html>, and a
 //    native-layout event (contract: the gn-ios-shell viewport note, summarized in ios/README.md). The fold
 //    values are CSS pixels before any zoom the page puts on <html>.
 (() => {
-  const saved = /*SAVED_ITEMS*/{};
+  const saved = JSON.parse(/*SAVED_ITEMS*/'null'); // a JSON string, so every key name survives, __proto__ too
   const post = (message) => {
     try { webkit.messageHandlers.gameNightStorage.postMessage(message); } catch { /* not in the app */ }
   };
@@ -23,10 +23,18 @@
   try { storage = globalThis.localStorage; } catch { /* storage blocked */ }
   if (storage) {
     // The app's copy is the authority: it is written at once, in order, on every change, while WebKit
-    // writes its storage to disk later and can lose the last writes in a crash. (setItem is not patched
-    // yet, so restoring sends nothing back.)
-    for (const [key, value] of Object.entries(saved)) {
-      try { if (storage.getItem(key) !== value) storage.setItem(key, value); } catch { /* full */ }
+    // writes its storage to disk later and can lose the last writes in a crash, removals included. So
+    // keys the copy lacks are removed too. (setItem and removeItem are not patched yet, so restoring
+    // sends nothing back.) Without a copy (null) the page keeps what it has and the app takes it.
+    if (saved) {
+      // The keys are listed first: removing one can reorder storage.key(i).
+      const keys = Array.from({ length: storage.length }, (_, i) => storage.key(i));
+      for (const key of keys) {
+        try { if (key !== null && !Object.hasOwn(saved, key)) storage.removeItem(key); } catch { /* keep going */ }
+      }
+      for (const [key, value] of Object.entries(saved)) {
+        try { if (storage.getItem(key) !== value) storage.setItem(key, value); } catch { /* full */ }
+      }
     }
     const items = {};
     for (let i = 0; i < storage.length; i += 1) {

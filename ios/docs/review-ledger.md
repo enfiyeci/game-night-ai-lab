@@ -29,3 +29,20 @@ Tier 2 review (global CLAUDE.md), by a fresh Opus subagent (Game Night reviews r
 |---|---|---|
 | 1 | Page and app disagreed on which value is newer (round 1 #4 moved, not fixed) | Fixed: the app's copy is the authority on both ends; the page restores any value that differs. Tested on a spare simulator: app copy 10, page 2, next launch counted 11. |
 | 2 | Uncommitted `WEB_SOURCE` override could ship another branch's web code | Fixed: Release builds refuse `WEB_SOURCE`. |
+
+## Removed keys come back after a kill, 2026-11-04 (tier 2, fresh Opus subagent)
+
+Reported by gn-save-resume and reproduced on the iPhone 18 Pro Max simulator: a key removed from the app's copy came back after one relaunch. Fix: once the app has a copy, it decides both ways (the restore removes page keys the copy lacks; the snapshot is taken only without a copy).
+
+Round 1: REVISE. Round 2: APPROVED.
+
+| # | Finding | Outcome |
+|---|---|---|
+| 1 | The JS half of the fix and the placeholder splice had no test (important) | Fixed: `tests/ios-native-shell.test.js` runs the script in `vm`; a Swift test checks the bundled script has the placeholder once. |
+| 2 | Removing keys while walking `storage.key(i)` can skip keys | Fixed: keys listed first, each removal in try/catch. |
+| 3 | A key named `__proto__` was lost through the object-literal splice | Fixed: the copy is spliced as a JS string and parsed with `JSON.parse`. |
+| 4 | Keys written around the mirror are now removed at the next load | Fixed: README states the rule (only `setItem`, `removeItem`, `clear`, main frame). |
+| R2-1 | Test lacks U+2028 | No change: the node test's value `'a b'` has it. |
+| R2-2, R2-3 | `JSON.parse` outside try; fake storage keeps order | Won't fix: `JSONSerialization` output always parses; the fix no longer depends on order. |
+
+Checked: web suite 1327/1327, iOS unit tests 15/15, the reproduction stayed removed in two runs, and a real run killed mid-way still offered Continue. ⚠️ Not checked at run level: killing right after New game (the attempt was inconclusive).

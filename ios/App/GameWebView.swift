@@ -74,11 +74,17 @@ struct GameWebView: UIViewRepresentable {
         func installShellScript(on controller: WKUserContentController) {
             let template = Bundle.main.url(forResource: "native-shell", withExtension: "js")
                 .flatMap { try? String(contentsOf: $0, encoding: .utf8) } ?? ""
-            let json = (try? JSONSerialization.data(withJSONObject: model.saves.items))
-                .flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
             controller.removeAllUserScripts()
-            let source = template.replacingOccurrences(of: "/*SAVED_ITEMS*/{}", with: json)
+            let source = template.replacingOccurrences(of: Self.savedItemsPlaceholder, with: Self.jsStringLiteral(model.saves.restoreJSON))
             controller.addUserScript(WKUserScript(source: source, injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        }
+
+        /// Where the restore JSON goes in App/Web/native-shell.js, as a JavaScript string.
+        static let savedItemsPlaceholder = "/*SAVED_ITEMS*/'null'"
+
+        static func jsStringLiteral(_ text: String) -> String {
+            (try? JSONSerialization.data(withJSONObject: text, options: .fragmentsAllowed))
+                .flatMap { String(data: $0, encoding: .utf8) } ?? "'null'"
         }
 
         func receive(_ message: WKScriptMessage) {
@@ -111,8 +117,8 @@ struct GameWebView: UIViewRepresentable {
             model.sendLayout()
         }
 
-        /// iOS can end the page's process while the app is in the background. The run in progress is
-        /// lost then (the game has no mid-run save); reloading brings the title screen back with the saves.
+        /// iOS can end the page's process while the app is in the background. Reloading brings the title
+        /// screen back with the saves, including the run save the game wrote when it went to the background.
         func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
             webView.load(URLRequest(url: BundleSchemeHandler.startURL))
         }

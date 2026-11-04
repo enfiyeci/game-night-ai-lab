@@ -7,6 +7,10 @@ import Foundation
 @MainActor
 final class SaveStore {
     private(set) var items: [String: String]
+    /// Whether this copy is the record: read from the file at launch, or taken from the page since. Once it
+    /// is, it decides in both directions, so a key the page removed stays removed even when WebKit had not
+    /// written the removal to disk before the app ended.
+    private(set) var hasCopy: Bool
     private let file: URL
 
     init(file: URL = SaveStore.defaultFile) {
@@ -14,9 +18,19 @@ final class SaveStore {
         if let data = try? Data(contentsOf: file),
            let saved = try? JSONDecoder().decode([String: String].self, from: data) {
             items = saved
+            hasCopy = true
         } else {
             items = [:]
+            hasCopy = false
         }
+    }
+
+    /// What the document-start script restores (App/Web/native-shell.js): the copy as a JSON object, or
+    /// null while there is no copy yet, so the page keeps what it has.
+    var restoreJSON: String {
+        guard hasCopy else { return "null" }
+        return (try? JSONSerialization.data(withJSONObject: items))
+            .flatMap { String(data: $0, encoding: .utf8) } ?? "null"
     }
 
     nonisolated static var defaultFile: URL {
@@ -35,15 +49,16 @@ final class SaveStore {
         case "clear":
             items = [:]
         case "snapshot":
-            // The page's localStorage right after the restore: adds keys this copy lacks (written
-            // before the shell mirrored them). For keys both hold, this copy wins, as it did in the
-            // restore (App/Web/native-shell.js): it is written at once on every change, while WebKit
-            // writes its storage to disk later.
-            guard let snapshot = message["items"] as? [String: String] else { return }
-            items.merge(snapshot) { mine, _ in mine }
+            // The page's localStorage right after the restore. It is taken only while there is no copy
+            // (the first launch, or a missing or unreadable file). Otherwise the restore already made the
+            // page match this copy, which is written at once on every change, while WebKit writes its
+            // storage to disk later.
+            guard !hasCopy, let snapshot = message["items"] as? [String: String] else { return }
+            items = snapshot
         default:
             return
         }
+        hasCopy = true
         // Written at once: the saves are a few short strings and change rarely, and a delayed write
         // could be lost if iOS suspends the app first.
         write()
