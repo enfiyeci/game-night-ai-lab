@@ -53,6 +53,7 @@ import { mountIntro, mountNaming } from './screens/intro.js';
 import { isFreshStart, tourSeen } from './logic/intro.js';
 import { openSetup } from './screens/setup.js';
 import { LEADS, hireLead } from '../sim/leads.js';
+import { clearRun, continueNote, createAutosave, loadRun, savesAllowed } from './logic/save.js';
 
 const params = new URLSearchParams(location.search);
 
@@ -77,12 +78,33 @@ function fitToWindow() {
 fitToWindow();
 addEventListener('resize', fitToWindow);
 
-const seed = seedForRun();
+// A run in progress is saved on plain visits (ui/logic/save.js); the title's Continue reloads with ?continue to pick it up.
+const saving = savesAllowed({ search: location.search, hash: location.hash });
+const saved = saving ? loadRun(browserStorage()) : { ok: false };
+const resuming = saved.ok && params.has('continue');
+if (params.has('continue') && !resuming) history.replaceState(null, '', location.pathname); // nothing left to continue
+const restartFresh = (error) => {
+  console.error('the saved run could not be continued', error);
+  clearRun(browserStorage());
+  location.replace(location.pathname);
+};
+
+const seed = resuming ? saved.run.checkpoint.state.seed : seedForRun();
 const scenarioName = params.get('scenario') ?? 'start';
 const buildScenario = SCENARIOS[scenarioName] ?? SCENARIOS.start;
-const initialState = buildScenario(seed);
-const game = createGame({ seed, state: initialState, history: scenarioHistory(initialState), eventMode: scenarioName === 'start' || scenarioName === 'scenarioEvent' ? 'scenarios' : 'legacy' });
-if (cleanLabName(params.get('lab'))) game.state.labName = cleanLabName(params.get('lab')); // same cap as the title screen
+let game;
+if (resuming) {
+  try {
+    game = createGame({ checkpoint: saved.run.checkpoint });
+  } catch (error) {
+    restartFresh(error);
+    throw error;
+  }
+} else {
+  const initialState = buildScenario(seed);
+  game = createGame({ seed, state: initialState, history: scenarioHistory(initialState), eventMode: scenarioName === 'start' || scenarioName === 'scenarioEvent' ? 'scenarios' : 'legacy' });
+}
+if (!resuming && cleanLabName(params.get('lab'))) game.state.labName = cleanLabName(params.get('lab')); // same cap as the title screen
 if (location.hash === '#board-warning') delete game.state.flags.boardQuiet; // debug still: the warning without going quiet
 // Debug: ?leads=dev,hana hires those leads as the setup would; add ?notitle (or a ?scenario=) to skip the setup itself.
 for (const id of (params.get('leads') ?? '').split(',')) if (LEADS[id]) hireLead(game.state, LEADS[id].seat, id);
@@ -99,7 +121,7 @@ await mountOffice(office, fx, game).catch((error) => console.error(error));
 game.clock.watch(overlay);
 if (params.has('paused')) game.clock.setSpeed(0);
 // The title screen shows on a plain visit; debug links (?scenario=, a #route, ?notitle) go straight into the game.
-const showTitle = titleShows({ search: location.search, hash: location.hash, ending: game.state.ending });
+const showTitle = !resuming && titleShows({ search: location.search, hash: location.hash, ending: game.state.ending });
 if (showTitle) game.clock.pause('title');
 game.clock.start();
 // The portrait-phone cover (ui/styles.css, same media query) hides the game, so the story waits behind it.
@@ -116,10 +138,18 @@ if (showTitle) {
     collection,
     music,
     openSound,
+    resume: saved.ok ? { note: continueNote(saved.run) } : null,
+    onContinue: () => location.assign(`${location.pathname}?continue`),
     onStart: () => {
+      clearRun(browserStorage()); // a new run replaces the saved one
       // Hire the four leads and sign the first year's money before the clock starts (owner pick SB); the guided
       // intro waits for the paperwork to leave (ui/screens/intro.js).
-      openSetup(game, overlay, { onDone: () => document.dispatchEvent(new CustomEvent('ai-lab:start')) });
+      openSetup(game, overlay, {
+        onDone: () => {
+          if (saving) startAutosave();
+          document.dispatchEvent(new CustomEvent('ai-lab:start'));
+        },
+      });
       game.clock.resume('title');
     },
   });
@@ -172,7 +202,7 @@ const board = mountBoard(game, { overlay, stage });
 
 // The first-minute tour (owner pick B): on a fresh run it starts once nothing else holds the stage. #tour replays it.
 const intro = mountIntro(game, { stage, overlay, storage: browserStorage() });
-if (isFreshStart(game.state, { scenario: scenarioName, hash: location.hash }) && !tourSeen(browserStorage())) intro.start();
+if (!resuming && isFreshStart(game.state, { scenario: scenarioName, hash: location.hash }) && !tourSeen(browserStorage())) intro.start();
 addEventListener('hashchange', () => { if (location.hash === '#tour' && !game.state.ending) intro.start(); });
 if (location.hash === '#tour' && !game.state.ending) intro.start();
 registerMenuHandler('howto', () => { if (!game.state.ending) intro.start(); }); // Game › How to play (owner pick 3B)
@@ -389,3 +419,51 @@ const meetingRoute = () => {
 };
 meetingRoute();
 addEventListener('hashchange', meetingRoute);
+
+// Autosave (F1): a moment after each update, and at once when the page or the app goes to the background (the iOS
+// bridge pauses the clock with the 'native' reason). A save taken while something is open keeps the inputs since the
+// last quiet moment, so a resumed run replays them and the card, era page or reveal that was open opens again.
+const AMBIENT_HOLDS = new Set(['hidden', 'native', 'portrait']);
+const OPEN_LAYERS = '.dialog-layer, .event-layer, .ev-phone, .screenwall-layer, .menu-layer, .intro-layer, .title-layer';
+// Some screens open a frame after the update or the closing that calls for them (the President's call, deal news held
+// behind a card), so the run is quiet only once a frame has passed since the last update or clock tick (the clock
+// ticks when a dialog, card or set piece opens or closes); the checkpoint is taken then (noteQuiet).
+let unsettled = 0;
+const unsettle = () => {
+  unsettled += 1;
+  requestAnimationFrame(() => setTimeout(() => {
+    unsettled -= 1;
+    if (unsettled === 0) autosave?.noteQuiet();
+  }, 0));
+};
+game.subscribe(unsettle);
+let autosave = null;
+function startAutosave({ checkpoint = null } = {}) {
+  if (location.hash) return; // a debug route typed on the title page: this run is not the player's
+  autosave ??= createAutosave({
+    game,
+    storage: browserStorage(),
+    checkpoint,
+    isQuiet: () => unsettled === 0 && game.clock.now().reasons.every((reason) => AMBIENT_HOLDS.has(reason)) && !overlay.querySelector(OPEN_LAYERS),
+  });
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden) autosave?.save(); });
+addEventListener('pagehide', () => autosave?.save());
+let nativeHold = false;
+game.clock.on('tick', ({ reasons }) => {
+  const held = reasons.includes('native');
+  if (held && !nativeHold) autosave?.save();
+  nativeHold = held;
+  unsettle();
+});
+// A debug route typed into a running game changes it in ways a player cannot: the player's save stops here.
+addEventListener('hashchange', () => { if (location.hash) autosave?.stop(); });
+if (resuming) {
+  try {
+    game.clock.setSpeed(saved.run.speed);
+    game.replay(saved.run.inputs);
+    startAutosave({ checkpoint: saved.run.checkpoint });
+  } catch (error) {
+    restartFresh(error);
+  }
+}

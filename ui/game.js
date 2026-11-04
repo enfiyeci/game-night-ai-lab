@@ -23,22 +23,32 @@ const initialQueue = (budget) => ({
 });
 
 // history: finance records of turns played before this game object existed (debug scenarios pass their own).
-export function createGame({ seed = 1, state, history = [], eventMode = state?.eventMode ?? (state ? 'legacy' : 'scenarios') } = {}) {
-  let currentState = structuredClone(state ?? createInitialState({ seed }));
+// checkpoint: a game.checkpoint() from a saved run (ui/logic/save.js); the game carries on from exactly there.
+export function createGame({ seed = 1, state, history = [], checkpoint = null, eventMode = (checkpoint?.state ?? state)?.eventMode ?? (state || checkpoint ? 'legacy' : 'scenarios') } = {}) {
+  const saved = checkpoint && structuredClone(checkpoint);
+  let currentState = saved?.state ?? structuredClone(state ?? createInitialState({ seed }));
   if (eventMode === 'scenarios') enableScenarios(currentState);
-  const rng = createRng(seed);
+  const rng = createRng(saved ? saved.rng : seed);
   let actions = initialQueue(currentState.budget);
   const subscribers = new Set();
-  const rivalReleases = [];
-  const financeHistory = structuredClone(history);
-  let financePlan = null; // the finance planner's goals and rounds, kept between openings; a plan, never a move
+  const rivalReleases = saved?.rivalReleases ?? [];
+  const financeHistory = saved?.financeHistory ?? structuredClone(history);
+  let financePlan = saved?.financePlan ?? null; // the finance planner's goals and rounds, kept between openings; a plan, never a move
   // The finance history gains a row at each round mark: the round's start state, its end state and every event in it
   // (instant actions included, so a raise counts in the round it was made).
-  let roundStartState = currentState;
-  let roundEvents = [];
+  let roundStartState = saved?.roundStartState ?? currentState;
+  let roundEvents = saved?.roundEvents ?? [];
   let debugActionEvents = [];
   let debugActionErrors = [];
-  let lastAlignShare = currentState.activeRun?.recipe.sliders.alignShare;
+  let lastAlignShare = saved ? saved.lastAlignShare : currentState.activeRun?.recipe.sliders.alignShare;
+  // Every input since the last checkpoint, so a save taken while a screen is open can replay up to now and the
+  // screens that opened on the way open again (ui/logic/save.js).
+  let inputs = [];
+  const logDay = () => {
+    const last = inputs.at(-1);
+    if (last?.kind === 'days') last.n += 1;
+    else inputs.push({ kind: 'days', n: 1 });
+  };
 
   // Remembers the alignment share of the latest run, which the trained model does not keep (for the HUD badge).
   const publish = (update, queued) => {
@@ -84,6 +94,7 @@ export function createGame({ seed = 1, state, history = [], eventMode = state?.e
     clock: null,
     flush() {
       const queued = actions;
+      inputs.push({ kind: 'actions', actions: structuredClone(queued) });
       const update = applyActions(currentState, queued, rng);
       actions = initialQueue(update.state.budget);
       const result = publish(update, queued);
@@ -150,6 +161,7 @@ export function createGame({ seed = 1, state, history = [], eventMode = state?.e
       const events = [];
       const errors = [];
       for (let day = 0; day < n; day += 1) {
+        logDay();
         const result = publish(runDays(currentState, 1, rng));
         events.push(...result.events);
         errors.push(...result.errors);
@@ -159,6 +171,7 @@ export function createGame({ seed = 1, state, history = [], eventMode = state?.e
     },
     endTurn() { // debug and tests only; players never skip
       const queued = actions;
+      inputs.push({ kind: 'turn', actions: structuredClone(queued) });
       const update = runTurn(currentState, queued, rng);
       actions = initialQueue(update.state.budget);
       const result = publish(update, queued);
@@ -167,6 +180,39 @@ export function createGame({ seed = 1, state, history = [], eventMode = state?.e
       debugActionEvents = [];
       debugActionErrors = [];
       return { ok: errors.length === 0, error: errors[0], events, errors };
+    },
+    // A copy of everything a resumed game needs, taken between updates; the input log starts afresh from here.
+    checkpoint() {
+      inputs = [];
+      return structuredClone({
+        state: currentState, rng: rng.state(), financeHistory, financePlan, roundStartState, roundEvents, rivalReleases, lastAlignShare,
+      });
+    },
+    get inputs() {
+      return structuredClone(inputs);
+    },
+    // A field the UI keeps on the state outside the sim (the model family typed before the first run), logged so a
+    // resumed game has it too. Subscribers are not told, as they were not when screens set it directly.
+    annotate(key, value) {
+      inputs.push({ kind: 'note', key, value: structuredClone(value) });
+      currentState = { ...currentState, [key]: structuredClone(value) };
+    },
+    // Plays a saved input log again from the checkpoint this game was made from, telling subscribers as it goes.
+    replay(log) {
+      for (const input of structuredClone(log)) {
+        if (input.kind === 'days') {
+          for (let day = 0; day < input.n && !currentState.ending; day += 1) {
+            logDay();
+            publish(runDays(currentState, 1, rng));
+          }
+        } else if (input.kind === 'note') {
+          game.annotate(input.key, input.value);
+        } else {
+          actions = input.actions;
+          if (input.kind === 'turn') game.endTurn();
+          else game.flush();
+        }
+      }
     },
     subscribe(fn) {
       subscribers.add(fn);

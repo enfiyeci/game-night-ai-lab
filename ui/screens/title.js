@@ -67,8 +67,8 @@ function letter(name, value) {
   if (width > room) name.style.fontSize = `${Math.floor(58 * (room / width))}px`;
 }
 
-// The main menu: the endings wall and the title panel under it.
-function buildWall(collection) {
+// The main menu: the endings wall and the title panel under it. resume: { note } when a run in progress is saved.
+function buildWall(collection, resume) {
   const model = wallModel(collection?.entries() ?? []);
   const scene = make('div', 'title-wall');
   const grid = make('div', 'title-wall-grid');
@@ -106,9 +106,15 @@ function buildWall(collection) {
   credits.type = 'button';
   links.append(credits);
   actions.append(play, links);
+  // Continue picks the saved run up where it stopped (ui/logic/save.js); New game stays under it.
+  const resumeButton = resume ? make('button', 'btn title-new title-continue', 'Continue') : null;
+  if (resumeButton) {
+    resumeButton.type = 'button';
+    actions.prepend(resumeButton, make('small', 'title-continue-note', resume.note));
+  }
   panel.append(words, actions);
   scene.append(grid, panel);
-  return { scene, play, credits };
+  return { scene, play, credits, resume: resumeButton };
 }
 
 // The naming scene: the board over the dark office and the name field under it.
@@ -138,7 +144,7 @@ function buildNaming(game) {
   return { scene, input, start, back, refresh };
 }
 
-export function mountTitle(game, { stage, overlay, collection, music, openSound = () => null, onStart = () => {} }) {
+export function mountTitle(game, { stage, overlay, collection, music, openSound = () => null, onStart = () => {}, resume = null, onContinue = () => {} }) {
   const root = document.documentElement;
   const reduced = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   const sky = make('div', 'title-sky');
@@ -163,7 +169,8 @@ export function mountTitle(game, { stage, overlay, collection, music, openSound 
   layer.setAttribute('role', 'dialog');
   layer.setAttribute('aria-modal', 'true');
   layer.setAttribute('aria-label', 'AI Lab Tycoon');
-  const wall = buildWall(collection);
+  const wall = buildWall(collection, resume);
+  wall.resume?.addEventListener('click', () => onContinue());
   const naming = buildNaming(game);
   naming.scene.inert = true;
   layer.append(naming.scene, wall.scene);
@@ -193,7 +200,7 @@ export function mountTitle(game, { stage, overlay, collection, music, openSound 
     layer.classList.replace('on-naming', 'on-wall');
     wall.scene.inert = false;
     naming.scene.inert = true;
-    wall.play.focus({ preventScroll: true });
+    (wall.resume ?? wall.play).focus({ preventScroll: true });
   };
   wall.play.addEventListener('click', toNaming);
   naming.back.addEventListener('click', toWall);
@@ -224,6 +231,6 @@ export function mountTitle(game, { stage, overlay, collection, music, openSound 
   naming.input.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') begin();
   });
-  wall.play.focus({ preventScroll: true });
+  (wall.resume ?? wall.play).focus({ preventScroll: true });
   return { begin, toNaming, layer };
 }

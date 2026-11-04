@@ -43,3 +43,38 @@ test('every ending has a still for the wall', async () => {
   const { existsSync } = await import('node:fs');
   for (const id of Object.keys(ENDINGS)) assert.ok(existsSync(new URL(`../ui/assets/endings/stills/${id}.jpg`, import.meta.url)), id);
 });
+
+async function titleWall(options) {
+  const { installFakeDom } = await import('./helpers/fakeDom.js');
+  const { mountTitle } = await import('../ui/screens/title.js');
+  const doc = installFakeDom();
+  doc.createElementNS = (_, tag) => doc.createElement(tag);
+  doc.documentElement = doc.createElement('html');
+  globalThis.MutationObserver ??= class { observe() {} disconnect() {} };
+  const stage = doc.createElement('div');
+  const overlay = doc.createElement('div');
+  doc.body.append(stage, overlay);
+  const game = { state: { labName: null } };
+  mountTitle(game, { stage, overlay, collection: { entries: () => [] }, ...options });
+  return { doc, overlay };
+}
+
+test('with a saved run the wall offers Continue first, with the run named under it', async () => {
+  let continued = 0;
+  const { doc, overlay } = await titleWall({ resume: { note: 'Northlight · Era 3 · Mar 2025' }, onContinue: () => { continued += 1; } });
+  const actions = overlay.querySelector('.title-actions');
+  const button = overlay.querySelector('.title-continue');
+  assert.equal(actions.childNodes[0], button);
+  assert.equal(button.textContent, 'Continue');
+  assert.equal(overlay.querySelector('.title-continue-note').textContent, 'Northlight · Era 3 · Mar 2025');
+  assert.equal(doc.activeElement, button);
+  button.click();
+  assert.equal(continued, 1);
+  assert.ok(overlay.querySelector('.title-new:not(.title-continue)'), 'New game stays');
+});
+
+test('without a saved run there is no Continue', async () => {
+  const { overlay } = await titleWall({});
+  assert.equal(overlay.querySelector('.title-continue'), null);
+  assert.equal(overlay.querySelector('.title-continue-note'), null);
+});

@@ -247,7 +247,9 @@ export function mountBoardMeeting(game, { overlay, stage }) {
       if (!closed && !root.contains(document.activeElement)) (root.querySelector('.dialog-ok, button:not([disabled])') ?? root).focus();
     }) : null;
     watcher?.observe(overlay, { childList: true });
-    session = { root, close, preview };
+    // crossed: this meeting moved the game past its mark (crossMark). A resumed game replays the days a meeting crossed
+    // (ui/game.js replay), so a reopened meeting can see its mark pass without it: the vote was held, and it closes.
+    session = { root, close, preview, turn: state.turn, crossed: false };
     overlay.append(root);
     stage?.classList.add('mt-dim');
     game.clock?.pause(CLOCK_REASON);
@@ -654,6 +656,7 @@ export function mountBoardMeeting(game, { overlay, stage }) {
     // The meeting crosses the round mark itself (the clock is held by the meeting, and a one-day advance is the call the
     // clock would make).
     function crossMark() {
+      session.crossed = true;
       const before = structuredClone(game.state);
       const days = Math.max(1, nextRoundDay(before) - before.day);
       for (let day = 0; day < days && !game.state.ending && game.state.turn === before.turn; day += 1) game.advanceDays(1);
@@ -850,7 +853,10 @@ export function mountBoardMeeting(game, { overlay, stage }) {
       game.clock?.resume(CLOCK_REASON);
     }
   };
-  game.subscribe(({ state }) => maybeOpen(state));
+  game.subscribe(({ state }) => {
+    if (session && !session.preview && !session.crossed && state.turn !== session.turn) session.close();
+    maybeOpen(state);
+  });
   maybeOpen(game.state);
 
   // Preview steps (debug routes): ring (Call the vote plays a vote held on a copy), room, vote, last, result, letter,
