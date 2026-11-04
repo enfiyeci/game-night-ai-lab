@@ -1,0 +1,295 @@
+<meta charset="utf-8">
+<title>Game Night IPO Screens</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* Round 2: answer-first header with the one assumption to confirm, a storyboard strip by era, then one row per screen
+   (pictures left, plan right, keep/change/cut top right), shared questions, sticky copy bar. Game tokens (ui/styles.css). */
+:root {
+  --floor: #F1E4C8; --paper: #FFFBF1; --ink: #2E2A2B; --ink-soft: #6B6264; --rule: #E3D3B2;
+  --wood: #C8864C; --wood-ink: #9A5F2C; --wood-soft: #F3E1CC; --coral: #E0613B; --coral-ink: #B8431F; --coral-soft: #F9DDD2;
+  --teal: #3F9C8F; --teal-ink: #2B7268; --teal-soft: #D7EDE9; --sky: #3F84C6; --sky-soft: #D9E7F5; --sky-ink: #2F659B;
+  --shadow: rgba(46, 42, 43, 0.10); --scrim: rgba(30, 26, 23, 0.86); --on-ink: #FFFBF1;
+  --display: "Nunito", "Trebuchet MS", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --floor: #1E1A17; --paper: #2A2420; --ink: #F3EADB; --ink-soft: #B9AC9A; --rule: #463B32;
+    --wood: #D99A62; --wood-ink: #E5B485; --wood-soft: #3D2F23; --coral: #EE7550; --coral-ink: #F59B7E; --coral-soft: #4A2A20;
+    --teal: #55B3A5; --teal-ink: #7FCBBF; --teal-soft: #1F3A36; --sky: #6FA6DB; --sky-soft: #1F3043; --sky-ink: #9CC2EA;
+    --shadow: rgba(0, 0, 0, 0.35); --on-ink: #1E1A17; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --floor: #1E1A17; --paper: #2A2420; --ink: #F3EADB; --ink-soft: #B9AC9A; --rule: #463B32;
+  --wood: #D99A62; --wood-ink: #E5B485; --wood-soft: #3D2F23; --coral: #EE7550; --coral-ink: #F59B7E; --coral-soft: #4A2A20;
+  --teal: #55B3A5; --teal-ink: #7FCBBF; --teal-soft: #1F3A36; --sky: #6FA6DB; --sky-soft: #1F3043; --sky-ink: #9CC2EA;
+  --shadow: rgba(0, 0, 0, 0.35); --on-ink: #1E1A17; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-padding-top: 16px; }
+body { margin: 0; background: var(--floor); color: var(--ink); font: 400 16px/1.55 var(--display); }
+a { color: var(--coral-ink); text-underline-offset: 2px; }
+.wrap { max-width: 1320px; margin: 0 auto; padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px)); padding-block: 0 150px; }
+@media (max-width: 640px) { .wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); } }
+h1, h2, h3 { margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+p { margin: 0 0 10px; }
+.kicker { font: 800 12px/1.2 var(--display); letter-spacing: .08em; text-transform: uppercase; color: var(--wood-ink); }
+.soft { color: var(--ink-soft); }
+
+header.top { padding-block: 40px 8px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 40px; align-items: end; }
+header.top h1 { font-weight: 300; font-size: clamp(32px, 4.4vw, 50px); line-height: 1.06; margin: 12px 0 14px; }
+header.top h1 b { font-weight: 800; }
+.lede { font-size: 18px; max-width: 62ch; }
+.recs { background: var(--paper); border-radius: 12px; padding: 18px 20px; box-shadow: 0 1px 0 var(--rule); }
+.recs h3 { font-size: 13px; font-weight: 900; letter-spacing: .07em; text-transform: uppercase; color: var(--wood-ink); margin-bottom: 8px; }
+.recs ol { margin: 0; padding-left: 20px; font-size: 15px; }
+.recs li { margin-bottom: 6px; }
+@media (max-width: 900px) { header.top { grid-template-columns: 1fr; gap: 18px; } }
+
+.assume { margin-top: 22px; display: grid; grid-template-columns: auto 1fr; gap: 6px 18px; align-items: start; background: var(--coral-soft); border-radius: 12px; padding: 16px 18px; }
+.assume h3 { font-size: 13px; font-weight: 900; letter-spacing: .07em; text-transform: uppercase; color: var(--coral-ink); grid-row: span 2; padding-top: 3px; }
+.assume p { margin: 0; font-size: 15.5px; }
+.assume .opts { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+.assume label, .q label { display: grid; grid-template-columns: 22px 1fr; gap: 6px; font-size: 14.5px; cursor: pointer; }
+.assume input, .q input { accent-color: var(--coral); width: 16px; height: 16px; margin: 4px 0 0; }
+@media (max-width: 640px) { .assume { grid-template-columns: 1fr; } .assume h3 { grid-row: auto; } }
+
+section.block { margin-top: 48px; }
+.b-head h2 { font-weight: 300; font-size: 34px; line-height: 1.1; margin: 8px 0 10px; }
+.b-head p { max-width: 80ch; }
+
+/* storyboard strip */
+.strip { display: grid; grid-template-columns: 2fr 4fr 6fr 2fr; gap: 10px; margin-top: 14px; }
+.era { background: var(--paper); border-radius: 12px; padding: 10px; box-shadow: 0 1px 0 var(--rule); min-width: 0; }
+.era .eh { font-size: 12px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); margin: 0 2px 8px; }
+.thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }
+.thumbs a { display: block; text-decoration: none; color: var(--ink); min-width: 0; }
+.thumbs img { width: 100%; display: block; border-radius: 6px; aspect-ratio: 16 / 10; object-fit: cover; }
+.thumbs span { display: block; font-size: 12.5px; font-weight: 700; line-height: 1.25; margin-top: 4px; }
+.thumbs b { font-weight: 900; color: var(--coral-ink); }
+@media (max-width: 1100px) { .strip { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 560px) { .strip { grid-template-columns: 1fr; } }
+
+/* one row per screen */
+.scr { margin-top: 28px; background: var(--paper); border: 3px solid var(--wood); border-radius: 16px; box-shadow: 0 4px 0 color-mix(in oklab, var(--wood) 55%, var(--ink)), 0 14px 30px var(--shadow); overflow: hidden; }
+.scr:has(input[value="cut"]:checked) { border-color: var(--rule); box-shadow: none; opacity: .62; }
+.scr:has(input[value="change"]:checked) { border-color: var(--sky); }
+.s-top { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; padding: 12px 20px; background: var(--wood-soft); }
+.num { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; background: var(--coral); color: var(--on-ink); font-weight: 900; font-size: 17px; }
+.s-top h2 { font-size: 23px; font-weight: 800; line-height: 1.15; }
+.when { font-size: 13.5px; font-weight: 800; color: var(--teal-ink); }
+.kcc { display: flex; border-radius: 9px; overflow: hidden; box-shadow: inset 0 0 0 2px var(--rule); background: var(--paper); }
+.kcc label { cursor: pointer; }
+.kcc input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.kcc span { display: block; padding: 7px 14px; font-size: 14px; font-weight: 900; color: var(--ink-soft); }
+.kcc label + label span { box-shadow: -2px 0 0 var(--rule); }
+.kcc input:checked + span { background: var(--ink); color: var(--paper); }
+.kcc input[value="cut"]:checked + span { background: var(--coral); color: var(--on-ink); }
+.kcc input[value="change"]:checked + span { background: var(--sky); color: var(--on-ink); }
+.kcc input:focus-visible + span { outline: 3px solid var(--sky); outline-offset: -3px; }
+@media (max-width: 640px) { .s-top { grid-template-columns: auto 1fr; } .kcc { grid-column: 1 / -1; justify-self: start; } }
+.s-body { display: grid; grid-template-columns: 1.55fr 1fr; gap: 24px; padding: 16px 20px 18px; }
+.s-body > * { min-width: 0; }
+@media (max-width: 980px) { .s-body { grid-template-columns: 1fr; } }
+.shots { display: grid; gap: 14px; align-content: start; }
+.shots figure { margin: 0; }
+.shots img { width: 100%; display: block; border-radius: 8px; cursor: zoom-in; box-shadow: 0 1px 0 var(--rule); }
+.vhead { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; cursor: pointer; font-size: 15px; }
+.vhead input { accent-color: var(--coral); width: 18px; height: 18px; margin: 0; }
+.tag { font: 900 10.5px/1 var(--display); letter-spacing: .06em; text-transform: uppercase; padding: 5px 7px; border-radius: 5px; white-space: nowrap; }
+.tag.rec { background: var(--coral); color: var(--on-ink); }
+.tag.safe { background: var(--teal-soft); color: var(--teal-ink); }
+.tag.exp { background: var(--sky-soft); color: var(--sky-ink); }
+.plan dl { display: grid; grid-template-columns: 92px 1fr; gap: 9px 12px; margin: 0; font-size: 14.5px; }
+.plan dt { font-weight: 900; font-size: 11.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-soft); padding-top: 3px; }
+.plan dd { margin: 0; }
+.plan dd.dec { font-weight: 800; }
+@media (max-width: 420px) { .plan dl { grid-template-columns: 1fr; gap: 2px; } .plan dd { margin-bottom: 8px; } }
+.ref { margin: 14px 0 0; display: grid; grid-template-columns: 150px 1fr; gap: 12px; align-items: center; background: var(--floor); border-radius: 10px; padding: 10px; }
+.ref img { width: 100%; display: block; border-radius: 6px; }
+.ref figcaption { font-size: 13px; color: var(--ink-soft); }
+.ref figcaption b { color: var(--ink); }
+@media (max-width: 520px) { .ref { grid-template-columns: 1fr; } }
+.noref { margin: 14px 0 0; font-size: 13px; color: var(--ink-soft); }
+.chg { margin-top: 14px; width: 100%; font: 400 14.5px var(--display); color: var(--ink); background: var(--paper); border: 1.5px solid var(--rule); border-radius: 8px; padding: 9px 11px; }
+
+.qs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 14px; }
+.q { background: var(--paper); border-radius: 12px; padding: 16px; box-shadow: 0 1px 0 var(--rule); min-width: 0; border: 0; margin: 0; }
+.q h3 { font-size: 16px; font-weight: 900; margin-bottom: 4px; line-height: 1.3; }
+.q p { font-size: 13.5px; color: var(--ink-soft); }
+.q label { margin-top: 8px; }
+.rtag { font: 900 9.5px/1 var(--display); letter-spacing: .06em; text-transform: uppercase; background: var(--coral); color: var(--on-ink); padding: 3px 5px; border-radius: 4px; margin-left: 4px; vertical-align: 1px; }
+@media (max-width: 900px) { .qs { grid-template-columns: 1fr; } }
+
+textarea { width: 100%; min-height: 80px; font: 400 15px var(--display); color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; padding: 10px; }
+:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+.bar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--ink); color: var(--paper); padding-block: 12px calc(12px + env(safe-area-inset-bottom, 0px)); padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px)); display: flex; gap: 16px; align-items: center; justify-content: space-between; z-index: 5; }
+.bar .sum { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.bar button { font: 800 15px var(--display); background: var(--coral); color: var(--on-ink); border: 0; border-radius: 8px; padding: 10px 18px; cursor: pointer; white-space: nowrap; }
+@media (max-width: 640px) { .bar .sum { display: none; } .bar { justify-content: center; } }
+#copied { position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%); background: var(--teal); color: var(--on-ink); font-weight: 800; padding: 8px 14px; border-radius: 8px; z-index: 6; }
+#fallback { width: 100%; min-height: 120px; margin-top: 10px; font-size: 13px; }
+dialog.lb { border: 0; padding: 0; background: transparent; max-width: 96vw; max-height: 94vh; }
+dialog.lb::backdrop { background: var(--scrim); }
+dialog.lb img { display: block; max-width: 96vw; max-height: 88vh; border-radius: 8px; }
+dialog.lb p { color: var(--floor); font-size: 14px; margin: 8px 0 0; text-align: center; }
+footer { margin-top: 48px; font-size: 13.5px; color: var(--ink-soft); max-width: 90ch; }
+footer p { margin-bottom: 8px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } html { scroll-behavior: auto; } }
+</style>
+
+<div class="wrap">
+<form id="picker" autocomplete="off">
+
+<header class="top">
+  <div>
+    <div class="kicker">Game Night AI Lab · lane gn-ipo · round 2 · November 4, 2026</div>
+    <h1>The IPO as its own part of the game: <b>14 screens, one road</b></h1>
+    <p class="lede">You said round 1 showed too few new screens. Here the IPO is a whole subsystem, the way the board got its own screen, countdown, cards and meeting. Each picture is the running game with the new screen drawn over it. Mark each screen keep, change or cut.</p>
+    <p class="soft" style="font-size:14px">Design only: no game code changed. Numbers are examples, not tuned. Click any picture to see it full size.</p>
+  </div>
+  <div class="recs">
+    <h3>My recommendation</h3>
+    <ol>
+      <li><b>Keep all 14</b>, with the game-screen hub (1A) and the full-screen listing day (10A).</li>
+      <li>If the arc runs long in play, cut <b>7 (quiet period)</b> and <b>13 (lockup)</b> first: both fold back into event cards.</li>
+      <li>Every new screen follows the release reveal’s frame (kicker line, left-aligned title) and carries the same small road in its corner, so the subsystem reads as one thing.</li>
+    </ol>
+  </div>
+</header>
+
+<div class="assume">
+  <h3>One assumption</h3>
+  <p>I merged round 1’s four directions into one subsystem: A’s road is the spine, with B’s earnings calls (12), C’s listing window (6) and D’s ten-block register (3, 11) as screens inside it.</p>
+  <div class="opts">
+    <label><input type="radio" name="merge" value="one subsystem" checked><span>Yes, one subsystem<span class="rtag">Rec</span></span></label>
+    <label><input type="radio" name="merge" value="still separate directions"><span>No, still choose between whole directions</span></label>
+  </div>
+</div>
+
+<section class="block" id="board">
+  <div class="b-head">
+    <div class="kicker">The storyboard</div>
+    <h2>Where each screen sits in a run</h2>
+    <p>Eras are about six minutes of play each. The road starts late in era 2, lists early in era 4, and keeps going in era 5 (and in an era 6, if the finale grows one).</p>
+  </div>
+  <div class="strip"><!--STRIP--></div>
+</section>
+
+<!--SCREENS-->
+
+<section class="block" id="shared">
+  <div class="b-head">
+    <div class="kicker">Still open from round 1</div>
+    <h2>Three choices that hold for the whole subsystem</h2>
+  </div>
+  <div class="qs">
+    <fieldset class="q">
+      <h3>Is going public optional?</h3>
+      <p>Screen 6 already lets you pause. This says whether you can skip the road entirely.</p>
+      <label><input type="radio" name="q1" value="optional" checked><span>Optional: a run can stay private all game, and the advisors argue about it<span class="rtag">Rec</span></span></label>
+      <label><input type="radio" name="q1" value="always"><span>Every run lists by era 4, so every player sees the arc</span></label>
+    </fieldset>
+    <fieldset class="q">
+      <h3>What is the worst the market can do?</h3>
+      <p>Without redesigning endings (that lane is separate).</p>
+      <label><input type="radio" name="q2" value="board-acquihire" checked><span>Activists can win a board removal vote, and a buyer can take an unlocked lab (the acquihire ending)<span class="rtag">Rec</span></span></label>
+      <label><input type="radio" name="q2" value="board-only"><span>Board pressure only; no takeovers</span></label>
+      <label><input type="radio" name="q2" value="new-ending"><span>A new “taken over” ending, handed to the endings lane</span></label>
+    </fieldset>
+    <fieldset class="q">
+      <h3>Where does the share price show?</h3>
+      <p>Only after listing. Screen 11 is the full view either way.</p>
+      <label><input type="radio" name="q3" value="chip" checked><span>A chip under the board countdown, as in the pictures<span class="rtag">Rec</span></span></label>
+      <label><input type="radio" name="q3" value="money"><span>Only on the stock screen</span></label>
+    </fieldset>
+  </div>
+  <div style="margin-top:20px">
+    <label for="notes" class="kicker">Anything else (a missing stage, a screen to merge, a different order)</label>
+    <textarea id="notes" name="notes" placeholder="For example: merge 4 and 5, or add a takeover-bid screen"></textarea>
+  </div>
+</section>
+
+</form>
+
+<footer>
+  <p><b>How the pictures were made.</b> The game at the seed-4 era 3 scenario with new markup drawn over it by <span style="font-family:ui-monospace,monospace">docs/research/ipo/picker/source/mock2.js</span> (no game code changed). The HUD date, era and cash are moved to each screen’s point on the road. Faces use the game’s own portrait drawing. Reference pictures are official store screenshots, credited and linked.</p>
+  <p><b>Sources.</b> Every real-world fact (the 74 to 107 days, staged lockups, the rule against adding super-votes after listing) comes from the research notes in <span style="font-family:ui-monospace,monospace">docs/research/ipo/</span> on branch <span style="font-family:ui-monospace,monospace">design/ipo</span>; partial reads are marked ⚠️ there. Round 1 of this page (four directions, five mockups, the research facts) is replaced here; it is kept in git at commit b04c9f2 and in this page’s version history.</p>
+  <p><b>Disclosure.</b> The research and this page were written by Claude, which Anthropic makes, and Anthropic’s own filing is one of the sources. The game’s labs, banks and funds are fictional.</p>
+</footer>
+</div>
+
+<div class="bar" role="region" aria-label="Your picks">
+  <div class="sum" id="sum">All 14 kept</div>
+  <button type="button" id="copy">Copy my picks</button>
+</div>
+<div id="copied" hidden>Copied. Paste it in the chat.</div>
+<dialog class="lb" id="lb"><img alt=""><p></p></dialog>
+
+<script>
+(() => {
+  const form = document.getElementById('picker');
+  const sum = document.getElementById('sum');
+  const KEY = 'gn-ipo-picks-v2';
+  const ids = [...form.querySelectorAll('.scr')].map((s) => s.id.slice(1));
+  const val = (n) => form.querySelector(`[name="${n}"]:checked`)?.value;
+  const title = (i) => document.querySelector(`#s${i} h2`).textContent;
+  function text() {
+    const lines = [`IPO round 2: ${val('merge')}`];
+    for (const i of ids) {
+      const k = val(`k${i}`);
+      const v = val(`v${i}`);
+      const c = form.querySelector(`[name="c${i}"]`).value.trim();
+      lines.push(`${i}. ${title(i)}: ${k}${v ? `, variant ${v}` : ''}${c ? ` (${c})` : ''}`);
+    }
+    lines.push(`Optional IPO: ${val('q1')}`, `Worst market move: ${val('q2')}`, `Share price shown: ${val('q3')}`);
+    const notes = form.notes.value.trim();
+    if (notes) lines.push(`Notes: ${notes}`);
+    return lines.join('\n');
+  }
+  function update() {
+    const k = ids.map((i) => val(`k${i}`));
+    const cut = ids.filter((i) => val(`k${i}`) === 'cut');
+    const chg = ids.filter((i) => val(`k${i}`) === 'change');
+    sum.textContent = `${k.filter((x) => x === 'keep').length} kept` + (chg.length ? ` · change ${chg.join(', ')}` : '') + (cut.length ? ` · cut ${cut.join(', ')}` : '') + ` · hub ${val('v1')} · listing day ${val('v10')} · ${val('merge')}`;
+    try { localStorage.setItem(KEY, JSON.stringify(Object.fromEntries(new FormData(form)))); } catch (e) {}
+  }
+  try {
+    const saved = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if (saved) for (const [k, v] of Object.entries(saved)) {
+      const el = form.querySelector(`[name="${k}"][value="${CSS.escape(v)}"]`) || form.querySelector(`[name="${k}"]`);
+      if (!el) continue;
+      if (el.type === 'radio') el.checked = true; else el.value = v;
+    }
+  } catch (e) {}
+  form.addEventListener('input', update);
+  form.addEventListener('change', update);
+  update();
+  document.getElementById('copy').addEventListener('click', async () => {
+    const t = text();
+    const note = document.getElementById('copied');
+    try {
+      await navigator.clipboard.writeText(t);
+      note.hidden = false; setTimeout(() => { note.hidden = true; }, 1800);
+    } catch (e) {
+      let ta = document.getElementById('fallback');
+      if (!ta) { ta = document.createElement('textarea'); ta.id = 'fallback'; document.querySelector('#shared').append(ta); }
+      ta.value = t; ta.focus(); ta.select();
+    }
+  });
+  const lb = document.getElementById('lb');
+  document.querySelectorAll('.shots img').forEach((img) => {
+    img.addEventListener('click', (e) => {
+      e.preventDefault();
+      lb.querySelector('img').src = img.src;
+      lb.querySelector('img').alt = img.alt;
+      lb.querySelector('p').textContent = img.closest('.scr')?.querySelector('h2')?.textContent || '';
+      lb.showModal();
+    });
+  });
+  lb.addEventListener('click', () => lb.close());
+})();
+</script>

@@ -1,17 +1,18 @@
-<title>Game Night IPO Directions</title>
+<meta charset="utf-8">
+<title>Game Night IPO Screens</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800;900&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-/* Layout: answer-first header, an era map comparing the four arcs, then one wood-framed section per direction
-   (mockups left, plan right), shared questions, sticky copy bar. Tokens are the game's own (ui/styles.css). */
+/* Round 2: answer-first header with the one assumption to confirm, a storyboard strip by era, then one row per screen
+   (pictures left, plan right, keep/change/cut top right), shared questions, sticky copy bar. Game tokens (ui/styles.css). */
 :root {
   --floor: #F1E4C8; --paper: #FFFBF1; --ink: #2E2A2B; --ink-soft: #6B6264; --rule: #E3D3B2;
   --wood: #C8864C; --wood-ink: #9A5F2C; --wood-soft: #F3E1CC; --coral: #E0613B; --coral-ink: #B8431F; --coral-soft: #F9DDD2;
   --teal: #3F9C8F; --teal-ink: #2B7268; --teal-soft: #D7EDE9; --sky: #3F84C6; --sky-soft: #D9E7F5; --sky-ink: #2F659B;
   --shadow: rgba(46, 42, 43, 0.10); --scrim: rgba(30, 26, 23, 0.86); --on-ink: #FFFBF1;
-  --display: "Nunito", "Trebuchet MS", sans-serif; --mono: "IBM Plex Mono", ui-monospace, monospace;
+  --display: "Nunito", "Trebuchet MS", sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -28,18 +29,17 @@
   --shadow: rgba(0, 0, 0, 0.35); --on-ink: #1E1A17; color-scheme: dark;
 }
 * { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; }
+html { -webkit-text-size-adjust: 100%; scroll-padding-top: 16px; }
 body { margin: 0; background: var(--floor); color: var(--ink); font: 400 16px/1.55 var(--display); }
 a { color: var(--coral-ink); text-underline-offset: 2px; }
-.wrap { max-width: 1260px; margin: 0 auto; padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px)); padding-block: 0 150px; }
+.wrap { max-width: 1320px; margin: 0 auto; padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px)); padding-block: 0 150px; }
 @media (max-width: 640px) { .wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); } }
-h1, h2, h3, h4 { margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+h1, h2, h3 { margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
 p { margin: 0 0 10px; }
 .kicker { font: 800 12px/1.2 var(--display); letter-spacing: .08em; text-transform: uppercase; color: var(--wood-ink); }
-.mono { font-family: var(--mono); font-size: 13px; }
 .soft { color: var(--ink-soft); }
 
-header.top { padding-block: 40px 8px; display: grid; grid-template-columns: 1.25fr 1fr; gap: 40px; align-items: end; }
+header.top { padding-block: 40px 8px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 40px; align-items: end; }
 header.top h1 { font-weight: 300; font-size: clamp(32px, 4.4vw, 50px); line-height: 1.06; margin: 12px 0 14px; }
 header.top h1 b { font-weight: 800; }
 .lede { font-size: 18px; max-width: 62ch; }
@@ -49,100 +49,79 @@ header.top h1 b { font-weight: 800; }
 .recs li { margin-bottom: 6px; }
 @media (max-width: 900px) { header.top { grid-template-columns: 1fr; gap: 18px; } }
 
-section.block { margin-top: 56px; }
+.assume { margin-top: 22px; display: grid; grid-template-columns: auto 1fr; gap: 6px 18px; align-items: start; background: var(--coral-soft); border-radius: 12px; padding: 16px 18px; }
+.assume h3 { font-size: 13px; font-weight: 900; letter-spacing: .07em; text-transform: uppercase; color: var(--coral-ink); grid-row: span 2; padding-top: 3px; }
+.assume p { margin: 0; font-size: 15.5px; }
+.assume .opts { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+.assume label, .q label { display: grid; grid-template-columns: 22px 1fr; gap: 6px; font-size: 14.5px; cursor: pointer; }
+.assume input, .q input { accent-color: var(--coral); width: 16px; height: 16px; margin: 4px 0 0; }
+@media (max-width: 640px) { .assume { grid-template-columns: 1fr; } .assume h3 { grid-row: auto; } }
+
+section.block { margin-top: 48px; }
 .b-head h2 { font-weight: 300; font-size: 34px; line-height: 1.1; margin: 8px 0 10px; }
-.b-head p { max-width: 74ch; }
+.b-head p { max-width: 80ch; }
 
-.facts-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 14px; }
-.fact { background: var(--paper); border-radius: 12px; padding: 14px 16px; box-shadow: 0 1px 0 var(--rule); font-size: 14.5px; min-width: 0; }
-.fact b.big { display: block; font-size: 26px; font-weight: 800; line-height: 1.1; margin-bottom: 4px; font-variant-numeric: tabular-nums; }
-.fact .src { display: block; margin-top: 6px; font-size: 12.5px; color: var(--ink-soft); }
-@media (max-width: 900px) { .facts-grid { grid-template-columns: 1fr; } }
+/* storyboard strip */
+.strip { display: grid; grid-template-columns: 2fr 4fr 6fr 2fr; gap: 10px; margin-top: 14px; }
+.era { background: var(--paper); border-radius: 12px; padding: 10px; box-shadow: 0 1px 0 var(--rule); min-width: 0; }
+.era .eh { font-size: 12px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); margin: 0 2px 8px; }
+.thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }
+.thumbs a { display: block; text-decoration: none; color: var(--ink); min-width: 0; }
+.thumbs img { width: 100%; display: block; border-radius: 6px; aspect-ratio: 16 / 10; object-fit: cover; }
+.thumbs span { display: block; font-size: 12.5px; font-weight: 700; line-height: 1.25; margin-top: 4px; }
+.thumbs b { font-weight: 900; color: var(--coral-ink); }
+@media (max-width: 1100px) { .strip { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 560px) { .strip { grid-template-columns: 1fr; } }
 
-.today { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 14px; }
-.today figure { margin: 0; background: var(--paper); border-radius: 12px; padding: 10px; box-shadow: 0 1px 0 var(--rule); }
-.today img, .shots img, .ref img { width: 100%; display: block; border-radius: 7px; cursor: zoom-in; }
-figcaption { font-size: 13.5px; margin-top: 8px; color: var(--ink-soft); }
-figcaption b { color: var(--ink); }
-@media (max-width: 760px) { .today { grid-template-columns: 1fr; } }
-
-/* Era map */
-.map { margin-top: 16px; background: var(--paper); border-radius: 12px; padding: 16px 18px 18px; box-shadow: 0 1px 0 var(--rule); overflow-x: auto; }
-.map-inner { min-width: 860px; display: grid; grid-template-columns: 170px repeat(5, 1fr); gap: 8px 0; align-items: center; }
-.map .era { font-size: 12px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-soft); padding: 0 8px 6px; border-left: 2px solid var(--rule); line-height: 1.25; }
-.map .era small { display: block; font-weight: 700; letter-spacing: 0; text-transform: none; font-size: 12px; }
-.map .row-name { font-weight: 900; font-size: 14.5px; line-height: 1.2; padding-right: 10px; }
-.map .row-name small { display: block; font-weight: 700; font-size: 12px; color: var(--ink-soft); }
-.map .lane { grid-column: 2 / -1; position: relative; height: 34px; background: repeating-linear-gradient(90deg, transparent 0 calc(20% - 2px), var(--rule) calc(20% - 2px) 20%); border-radius: 6px; }
-.seg { position: absolute; top: 4px; height: 26px; border-radius: 6px; font-size: 12px; font-weight: 800; line-height: 26px; padding: 0 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.seg.prep { background: var(--wood-soft); color: var(--wood-ink); }
-.seg.sec { background: var(--sky-soft); color: var(--sky-ink); }
-.seg.list { background: var(--coral); color: var(--on-ink); }
-.seg.pub { background: var(--teal-soft); color: var(--teal-ink); }
-.seg.fight { background: var(--coral-soft); color: var(--coral-ink); }
-.map-key { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 12px; font-size: 13px; font-weight: 700; }
-.map-key span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; background: var(--c); }
-
-/* Direction sections */
-.dir { margin-top: 40px; background: var(--paper); border: 3px solid var(--wood); border-radius: 16px; box-shadow: 0 4px 0 color-mix(in oklab, var(--wood) 55%, var(--ink)), 0 14px 30px var(--shadow); overflow: hidden; }
-.dir:has(> .d-top input:checked) { border-color: var(--coral); box-shadow: 0 4px 0 color-mix(in oklab, var(--coral) 55%, var(--ink)), 0 14px 30px var(--shadow); }
-.d-top { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; padding: 16px 22px; background: var(--wood-soft); cursor: pointer; }
-.d-top input { width: 22px; height: 22px; accent-color: var(--coral); margin: 0; }
-.d-top h2 { font-size: 26px; font-weight: 800; line-height: 1.15; }
-.d-top h2 .letter { font-weight: 300; color: var(--wood-ink); margin-right: 6px; }
-.d-top .one { font-size: 15px; color: var(--ink-soft); margin-top: 2px; }
-.tags { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
-.tag { font: 900 10.5px/1 var(--display); letter-spacing: .06em; text-transform: uppercase; padding: 6px 8px; border-radius: 5px; white-space: nowrap; }
-.tag.safe { background: var(--teal-soft); color: var(--teal-ink); }
-.tag.med { background: var(--paper); color: var(--wood-ink); }
-.tag.exp { background: var(--sky-soft); color: var(--sky-ink); }
-.tag.rec { background: var(--coral); color: var(--on-ink); }
-.tag.size { background: var(--paper); color: var(--ink); }
-.d-body { display: grid; grid-template-columns: 1.15fr 1fr; gap: 26px; padding: 20px 22px 22px; }
-.d-body > * { min-width: 0; }
-@media (max-width: 980px) { .d-body { grid-template-columns: 1fr; } .d-top { grid-template-columns: auto 1fr; } .tags { grid-column: 1 / -1; justify-content: flex-start; } }
+/* one row per screen */
+.scr { margin-top: 28px; background: var(--paper); border: 3px solid var(--wood); border-radius: 16px; box-shadow: 0 4px 0 color-mix(in oklab, var(--wood) 55%, var(--ink)), 0 14px 30px var(--shadow); overflow: hidden; }
+.scr:has(input[value="cut"]:checked) { border-color: var(--rule); box-shadow: none; opacity: .62; }
+.scr:has(input[value="change"]:checked) { border-color: var(--sky); }
+.s-top { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; padding: 12px 20px; background: var(--wood-soft); }
+.num { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; background: var(--coral); color: var(--on-ink); font-weight: 900; font-size: 17px; }
+.s-top h2 { font-size: 23px; font-weight: 800; line-height: 1.15; }
+.when { font-size: 13.5px; font-weight: 800; color: var(--teal-ink); }
+.kcc { display: flex; border-radius: 9px; overflow: hidden; box-shadow: inset 0 0 0 2px var(--rule); background: var(--paper); }
+.kcc label { cursor: pointer; }
+.kcc input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.kcc span { display: block; padding: 7px 14px; font-size: 14px; font-weight: 900; color: var(--ink-soft); }
+.kcc label + label span { box-shadow: -2px 0 0 var(--rule); }
+.kcc input:checked + span { background: var(--ink); color: var(--paper); }
+.kcc input[value="cut"]:checked + span { background: var(--coral); color: var(--on-ink); }
+.kcc input[value="change"]:checked + span { background: var(--sky); color: var(--on-ink); }
+.kcc input:focus-visible + span { outline: 3px solid var(--sky); outline-offset: -3px; }
+@media (max-width: 640px) { .s-top { grid-template-columns: auto 1fr; } .kcc { grid-column: 1 / -1; justify-self: start; } }
+.s-body { display: grid; grid-template-columns: 1.55fr 1fr; gap: 24px; padding: 16px 20px 18px; }
+.s-body > * { min-width: 0; }
+@media (max-width: 980px) { .s-body { grid-template-columns: 1fr; } }
 .shots { display: grid; gap: 14px; align-content: start; }
 .shots figure { margin: 0; }
-.ref { margin: 0; display: grid; grid-template-columns: 170px 1fr; gap: 12px; align-items: center; background: var(--floor); border-radius: 10px; padding: 10px; }
-.ref figcaption { margin: 0; font-size: 13px; }
+.shots img { width: 100%; display: block; border-radius: 8px; cursor: zoom-in; box-shadow: 0 1px 0 var(--rule); }
+.vhead { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; cursor: pointer; font-size: 15px; }
+.vhead input { accent-color: var(--coral); width: 18px; height: 18px; margin: 0; }
+.tag { font: 900 10.5px/1 var(--display); letter-spacing: .06em; text-transform: uppercase; padding: 5px 7px; border-radius: 5px; white-space: nowrap; }
+.tag.rec { background: var(--coral); color: var(--on-ink); }
+.tag.safe { background: var(--teal-soft); color: var(--teal-ink); }
+.tag.exp { background: var(--sky-soft); color: var(--sky-ink); }
+.plan dl { display: grid; grid-template-columns: 92px 1fr; gap: 9px 12px; margin: 0; font-size: 14.5px; }
+.plan dt { font-weight: 900; font-size: 11.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-soft); padding-top: 3px; }
+.plan dd { margin: 0; }
+.plan dd.dec { font-weight: 800; }
+@media (max-width: 420px) { .plan dl { grid-template-columns: 1fr; gap: 2px; } .plan dd { margin-bottom: 8px; } }
+.ref { margin: 14px 0 0; display: grid; grid-template-columns: 150px 1fr; gap: 12px; align-items: center; background: var(--floor); border-radius: 10px; padding: 10px; }
+.ref img { width: 100%; display: block; border-radius: 6px; }
+.ref figcaption { font-size: 13px; color: var(--ink-soft); }
+.ref figcaption b { color: var(--ink); }
 @media (max-width: 520px) { .ref { grid-template-columns: 1fr; } }
-.realroad { background: var(--floor); border-radius: 10px; padding: 12px 14px; }
-.realroad h4 { font-size: 13px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; color: var(--wood-ink); }
-.road { position: relative; height: 54px; margin: 26px 4px 2px; }
-.road::before { content: ""; position: absolute; left: 0; right: 0; top: 14px; height: 3px; background: var(--rule); border-radius: 2px; }
-.road i { position: absolute; top: 8px; width: 15px; height: 15px; border-radius: 50%; background: var(--sky); transform: translateX(-50%); border: 2px solid var(--paper); }
-.road i.pub { background: var(--coral); width: 19px; height: 19px; top: 6px; }
-.road span { position: absolute; top: 28px; transform: translateX(-50%); font-size: 11.5px; font-weight: 800; white-space: nowrap; color: var(--ink-soft); }
-.road span.end { transform: translateX(-100%); top: -16px; color: var(--coral-ink); }
-.road span.start { transform: none; }
-.realroad p { font-size: 13px; margin: 6px 0 0; color: var(--ink-soft); }
-
-.plan h3 { font-size: 13px; font-weight: 900; letter-spacing: .07em; text-transform: uppercase; color: var(--wood-ink); margin: 18px 0 8px; }
-.plan h3:first-child { margin-top: 0; }
-.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
-.steps li { display: grid; grid-template-columns: 112px 1fr; gap: 10px; font-size: 14.5px; }
-.steps .when { font-size: 12px; font-weight: 900; color: var(--teal-ink); line-height: 1.3; padding-top: 2px; }
-.steps b { font-weight: 800; }
-@media (max-width: 520px) { .steps li { grid-template-columns: 1fr; gap: 2px; } }
-dl.ties { display: grid; grid-template-columns: 92px 1fr; gap: 6px 12px; margin: 0; font-size: 14px; }
-dl.ties dt { font-weight: 900; font-size: 11.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-soft); padding-top: 2px; }
-dl.ties dd { margin: 0; }
-dl.ties dd.riv { background: var(--coral-soft); border-radius: 6px; padding: 4px 8px; margin-left: -8px; }
-ul.wrong { margin: 0; padding-left: 18px; font-size: 14px; }
-ul.wrong li { margin-bottom: 3px; }
-.endnote { font-size: 14px; background: var(--teal-soft); border-radius: 8px; padding: 10px 12px; }
-.sub { margin-top: 14px; border-top: 2px dashed var(--rule); padding-top: 12px; }
-.sub h4 { font-size: 14px; font-weight: 900; margin-bottom: 6px; }
-.sub label { display: grid; grid-template-columns: 22px 1fr; gap: 6px; font-size: 14px; margin-bottom: 6px; cursor: pointer; }
-.sub input { accent-color: var(--coral); width: 16px; height: 16px; margin: 3px 0 0; }
+.noref { margin: 14px 0 0; font-size: 13px; color: var(--ink-soft); }
+.chg { margin-top: 14px; width: 100%; font: 400 14.5px var(--display); color: var(--ink); background: var(--paper); border: 1.5px solid var(--rule); border-radius: 8px; padding: 9px 11px; }
 
 .qs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 14px; }
-.q { background: var(--paper); border-radius: 12px; padding: 16px; box-shadow: 0 1px 0 var(--rule); min-width: 0; }
+.q { background: var(--paper); border-radius: 12px; padding: 16px; box-shadow: 0 1px 0 var(--rule); min-width: 0; border: 0; margin: 0; }
 .q h3 { font-size: 16px; font-weight: 900; margin-bottom: 4px; line-height: 1.3; }
 .q p { font-size: 13.5px; color: var(--ink-soft); }
-.q label { display: grid; grid-template-columns: 22px 1fr; gap: 6px; font-size: 14px; margin-top: 8px; cursor: pointer; }
-.q input { accent-color: var(--coral); width: 16px; height: 16px; margin: 3px 0 0; }
-.q .rtag { font: 900 9.5px/1 var(--display); letter-spacing: .06em; text-transform: uppercase; background: var(--coral); color: var(--on-ink); padding: 3px 5px; border-radius: 4px; margin-left: 4px; vertical-align: 1px; }
+.q label { margin-top: 8px; }
+.rtag { font: 900 9.5px/1 var(--display); letter-spacing: .06em; text-transform: uppercase; background: var(--coral); color: var(--on-ink); padding: 3px 5px; border-radius: 4px; margin-left: 4px; vertical-align: 1px; }
 @media (max-width: 900px) { .qs { grid-template-columns: 1fr; } }
 
 textarea { width: 100%; min-height: 80px; font: 400 15px var(--display); color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; padding: 10px; }
@@ -152,317 +131,351 @@ textarea { width: 100%; min-height: 80px; font: 400 15px var(--display); color: 
 .bar button { font: 800 15px var(--display); background: var(--coral); color: var(--on-ink); border: 0; border-radius: 8px; padding: 10px 18px; cursor: pointer; white-space: nowrap; }
 @media (max-width: 640px) { .bar .sum { display: none; } .bar { justify-content: center; } }
 #copied { position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%); background: var(--teal); color: var(--on-ink); font-weight: 800; padding: 8px 14px; border-radius: 8px; z-index: 6; }
-#fallback { width: 100%; min-height: 120px; margin-top: 10px; font-family: var(--mono); font-size: 13px; }
+#fallback { width: 100%; min-height: 120px; margin-top: 10px; font-size: 13px; }
 dialog.lb { border: 0; padding: 0; background: transparent; max-width: 96vw; max-height: 94vh; }
 dialog.lb::backdrop { background: var(--scrim); }
 dialog.lb img { display: block; max-width: 96vw; max-height: 88vh; border-radius: 8px; }
 dialog.lb p { color: var(--floor); font-size: 14px; margin: 8px 0 0; text-align: center; }
 footer { margin-top: 48px; font-size: 13.5px; color: var(--ink-soft); max-width: 90ch; }
 footer p { margin-bottom: 8px; }
-@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } html { scroll-behavior: auto; } }
 </style>
 
 <div class="wrap">
+<form id="picker" autocomplete="off">
 
 <header class="top">
   <div>
-    <div class="kicker">Game Night AI Lab · lane gn-ipo · October 27, 2026</div>
-    <h1>Going public, <b>as a long road</b> instead of one card. Pick a direction.</h1>
-    <p class="lede">Today the IPO is one choice on one event card that adds $50M. The research says a real IPO takes months, is mostly hidden until the end, prices in one tense night, and then puts the lab on trial every quarter. Below are four ways to put that in the game. Each picture is the running game with the new screen drawn over it.</p>
-    <p class="soft" style="font-size:14px">Design only: no game code changed. Numbers in the pictures are examples, not tuned. Click any picture to see it full size.</p>
+    <div class="kicker">Game Night AI Lab · lane gn-ipo · round 2 · November 4, 2026</div>
+    <h1>The IPO as its own part of the game: <b>14 screens, one road</b></h1>
+    <p class="lede">You said round 1 showed too few new screens. Here the IPO is a whole subsystem, the way the board got its own screen, countdown, cards and meeting. Each picture is the running game with the new screen drawn over it. Mark each screen keep, change or cut.</p>
+    <p class="soft" style="font-size:14px">Design only: no game code changed. Numbers are examples, not tuned. Click any picture to see it full size.</p>
   </div>
   <div class="recs">
     <h3>My recommendation</h3>
     <ol>
-      <li><b>A, the road to the bell</b>: every real stage becomes a beat, from hiring banks in era 2 to quarterly calls in era 5. It reuses screens players already know.</li>
-      <li>Add <b>C's listing window</b> as a layer inside A, so rival labs race you for the same investors.</li>
-      <li>Going public stays <b>optional</b>: a run can stay private, and the advisors argue about it.</li>
-      <li>The market's worst move uses <b>existing endings</b>: an activist wins a board vote, or a buyer takes an unlocked lab (the acquihire ending). No new endings here.</li>
+      <li><b>Keep all 14</b>, with the game-screen hub (1A) and the full-screen listing day (10A).</li>
+      <li>If the arc runs long in play, cut <b>7 (quiet period)</b> and <b>13 (lockup)</b> first: both fold back into event cards.</li>
+      <li>Every new screen follows the release reveal’s frame (kicker line, left-aligned title) and carries the same small road in its corner, so the subsystem reads as one thing.</li>
     </ol>
   </div>
 </header>
 
-<form id="picker" autocomplete="off">
+<div class="assume">
+  <h3>One assumption</h3>
+  <p>I merged round 1’s four directions into one subsystem: A’s road is the spine, with B’s earnings calls (12), C’s listing window (6) and D’s ten-block register (3, 11) as screens inside it.</p>
+  <div class="opts">
+    <label><input type="radio" name="merge" value="one subsystem" checked><span>Yes, one subsystem<span class="rtag">Rec</span></span></label>
+    <label><input type="radio" name="merge" value="still separate directions"><span>No, still choose between whole directions</span></label>
+  </div>
+</div>
 
-<section class="block" id="found">
+<section class="block" id="board">
   <div class="b-head">
-    <div class="kicker">What the research found</div>
-    <h2>Real IPOs are slow, then sudden, then never over</h2>
-    <p>From four research notes now in the repo at <span class="mono">docs/research/ipo/</span>. Real companies and labs appear here as evidence; the game keeps its fictional labs.</p>
+    <div class="kicker">The storyboard</div>
+    <h2>Where each screen sits in a run</h2>
+    <p>Eras are about six minutes of play each. The road starts late in era 2, lists early in era 4, and keeps going in era 5 (and in an era 6, if the finale grows one).</p>
   </div>
-  <div class="facts-grid">
-    <div class="fact"><b class="big">74 to 107 days</b>From the first confidential draft to the first trade for SpaceX, CoreWeave and Figma. Reddit took about 27 months; Cerebras withdrew and refiled after a national-security review of its Abu Dhabi investor.<span class="src">SEC EDGAR filing lists</span></div>
-    <div class="fact"><b class="big">5 rounds of SEC letters</b>Anthropic filed in confidence on June 1, 2026, sent five amended drafts, and filed in public on October 26. Real letters ask: name your biggest customer, prove your marketing claim, disclose what went wrong.<span class="src">EDGAR, checked directly; CoreWeave's first letter</span></div>
-    <div class="fact"><b class="big">19% average first-day gain</b>Across 9,345 US IPOs from 1980 to 2025; 1 in 6 closed day one below the offer price. CoreWeave cut its price and closed flat; Figma sold at $33 and closed at $115.<span class="src">Jay Ritter's IPO statistics</span></div>
-    <div class="fact"><b class="big">Locks go in before listing</b>Exchange rules stop a listed company from adding super-votes later. Anthropic's filing gives a trust 4 of 7 board seats and a founders' share 50.1% of votes; it says this makes bids and activists unlikely.<span class="src">Nasdaq Rule 5640; Anthropic S-1 (read in excerpts)</span></div>
-    <div class="fact"><b class="big">−25% in a day</b>Meta's drop when it warned its metaverse losses would grow. Microsoft and Meta each fell about 10% on AI spending news in 2026. Raising long-term spending costs stock the same day.<span class="src">Company releases and news</span></div>
-    <div class="fact"><b class="big">"Ill-advised"</b>OpenAI filed in confidence, then its CEO said in September 2026 that listing now would be ill-advised, citing safety. In 2023 he said public investors would find some decisions "very strange".<span class="src">News reports</span></div>
-  </div>
+  <div class="strip"><div class="era"><div class="eh">Era 2 · 2024</div><div class="thumbs"><a href="#s2"><img src="img/r2/S2.jpg" alt="" loading="lazy"><span><b>2</b> Three banks want to take you public</span></a><a href="#s3"><img src="img/r2/S3.jpg" alt="" loading="lazy"><span><b>3</b> Who controls the lab after it lists</span></a></div></div><div class="era"><div class="eh">Era 3 · Jan–Apr 2025</div><div class="thumbs"><a href="#s1"><img src="img/r2/H1a.jpg" alt="" loading="lazy"><span><b>1</b> The road to the bell</span></a><a href="#s4"><img src="img/r2/S4.jpg" alt="" loading="lazy"><span><b>4</b> The S-1, draft 3</span></a><a href="#s5"><img src="img/r2/S5.jpg" alt="" loading="lazy"><span><b>5</b> Letters from the SEC</span></a><a href="#s6"><img src="img/r2/S6.jpg" alt="" loading="lazy"><span><b>6</b> Who is going public, and when</span></a></div></div><div class="era"><div class="eh">Era 4 · Jan–Apr 2026</div><div class="thumbs"><a href="#s7"><img src="img/r2/S7.jpg" alt="" loading="lazy"><span><b>7</b> The quiet period</span></a><a href="#s8"><img src="img/r2/S8.jpg" alt="" loading="lazy"><span><b>8</b> The roadshow</span></a><a href="#s9"><img src="img/r2/S9.jpg" alt="" loading="lazy"><span><b>9</b> Set the price</span></a><a href="#s10"><img src="img/r2/S10a.jpg" alt="" loading="lazy"><span><b>10</b> Listing day</span></a><a href="#s11"><img src="img/r2/S11.jpg" alt="" loading="lazy"><span><b>11</b> Your stock</span></a><a href="#s12"><img src="img/r2/S12.jpg" alt="" loading="lazy"><span><b>12</b> The earnings call</span></a></div></div><div class="era"><div class="eh">Era 5 · Jan 2027</div><div class="thumbs"><a href="#s13"><img src="img/r2/S13.jpg" alt="" loading="lazy"><span><b>13</b> The lockup ends</span></a><a href="#s14"><img src="img/r2/S14.jpg" alt="" loading="lazy"><span><b>14</b> The market attacks</span></a></div></div></div>
 </section>
 
-<section class="block" id="today">
-  <div class="b-head">
-    <div class="kicker">Today in the game</div>
-    <h2>One choice on one card</h2>
-  </div>
-  <div class="today">
-    <figure><img src="img/today-card.jpg" alt="Today's event card: the appeals court reinstates the blacklist; the third choice is 'Ignore defence work, chase the IPO'." loading="lazy"><figcaption><b>The only IPO in the game:</b> the third choice on an era 4 card. It adds $50M and nothing else.</figcaption></figure>
-    <figure><img src="img/today-raise.jpg" alt="Today's funding round screen: three term sheets from a growth fund, a cloud partner and a sovereign fund." loading="lazy"><figcaption><b>Funding rounds today:</b> one term sheet per era from three investors. Direction A's pricing night reuses this look.</figcaption></figure>
-  </div>
-</section>
 
-<section class="block" id="map">
-  <div class="b-head">
-    <div class="kicker">Where each arc sits</div>
-    <h2>Four arcs across the five eras</h2>
-    <p>Each era is about six minutes of play. The years are the game's own calendar.</p>
-  </div>
-  <div class="map" role="img" aria-label="Timeline of the four directions across eras one to five">
-    <div class="map-inner">
-      <div></div>
-      <div class="era">Era 1<small>2023, quarters</small></div>
-      <div class="era">Era 2<small>2024, quarters</small></div>
-      <div class="era">Era 3<small>Jan–Apr 2025, months</small></div>
-      <div class="era">Era 4<small>Jan–Apr 2026, months</small></div>
-      <div class="era">Era 5<small>Jan 2027, weeks</small></div>
-
-      <div class="row-name">A · Road to the bell<small>about 18 of 30 min</small></div>
-      <div class="lane"><span class="seg prep" style="left:28%;width:12%">Get ready</span><span class="seg sec" style="left:40%;width:19%">SEC letters</span><span class="seg list" style="left:59%;width:7%">List</span><span class="seg pub" style="left:66%;width:34%">Earnings calls, lockup, activists</span></div>
-
-      <div class="row-name">B · Judged every quarter<small>about 20 of 30 min</small></div>
-      <div class="lane"><span class="seg list" style="left:34%;width:6%">List</span><span class="seg pub" style="left:40%;width:60%">An earnings call every quarter of story time</span></div>
-
-      <div class="row-name">C · The listing window<small>about 12 of 30 min</small></div>
-      <div class="lane"><span class="seg prep" style="left:40%;width:20%">The window: rivals file too</span><span class="seg list" style="left:60%;width:6%">List</span><span class="seg pub" style="left:66%;width:34%">Light public life</span></div>
-
-      <div class="row-name">D · The share register<small>the whole run</small></div>
-      <div class="lane"><span class="seg prep" style="left:0;width:44%">Every raise hands out a block</span><span class="seg list" style="left:44%;width:6%">List</span><span class="seg fight" style="left:50%;width:50%">Buyers collect your blocks</span></div>
-    </div>
-    <div class="map-key"><span style="--c:var(--wood-soft)">Preparing</span><span style="--c:var(--sky-soft)">SEC review</span><span style="--c:var(--coral)">Listing</span><span style="--c:var(--teal-soft)">Public life</span><span style="--c:var(--coral-soft)">Control fight</span></div>
-  </div>
-</section>
-
-<!-- A -->
-<section class="dir" id="dir-a">
-  <label class="d-top">
-    <input type="radio" name="dir" value="A" checked>
-    <div><h2><span class="letter">A</span>The road to the bell</h2><div class="one">Every real stage becomes a beat: get ready, file in confidence, answer the SEC, go quiet, price, then answer to the market each quarter.</div></div>
-    <div class="tags"><span class="tag rec">Recommended</span><span class="tag safe">Safe</span><span class="tag size">Size L</span></div>
-  </label>
-  <div class="d-body">
-    <div class="shots">
-      <figure><img src="img/A1.jpg" alt="An SEC comment letter as an event card, asking about an agent incident, with advisors arguing and an IPO progress chip on the right." loading="lazy"><figcaption><b>An SEC letter arrives as an event card</b>, drawn from the lab's own record. Here the hidden incident from era 3 comes back. The chip on the right tracks the road.</figcaption></figure>
-      <figure><img src="img/A2.jpg" alt="Pricing night: an order book summary above three price sheets, below the range, at the top, and above the range." loading="lazy"><figcaption><b>Pricing night</b> on the term sheets players already know. Price low and the first day pops; price high and it can break.</figcaption></figure>
-      <div class="realroad">
-        <h4>The real road it copies</h4>
-        <div class="road" aria-label="Anthropic's filings on EDGAR in 2026">
-          <i style="left:0%"></i><span class="start" style="left:0%">Draft Jun 1</span>
-          <i style="left:28.6%"></i><span style="left:28.6%">Jul 13</span>
-          <i style="left:47.1%"></i><span style="left:47.1%">Aug 10</span>
-          <i style="left:63.6%"></i><span style="left:63.6%">Sep 4</span>
-          <i style="left:81.4%"></i>
-          <i style="left:86.4%"></i><span style="left:84%">Oct 1, 9</span>
-          <i class="pub" style="left:100%"></i><span class="end" style="left:100%">Public S-1 Oct 26</span>
-        </div>
-        <p>Anthropic, PBC on SEC EDGAR, 2026: a confidential draft, five amended drafts, then the public filing. The roadshow can start 15 days later. No game surveyed stages this part; it is open ground.</p>
-      </div>
-    </div>
+<section class="scr" id="s1">
+  <div class="s-top"><span class="num">1</span><div><h2>The road to the bell</h2><div class="when">Oct 2024 to listing · Eras 2–4</div></div>
+    <div class="kcc" role="radiogroup" aria-label="Keep, change or cut screen 1">
+      <label><input type="radio" name="k1" value="keep" checked><span>Keep</span></label>
+      <label><input type="radio" name="k1" value="change"><span>Change</span></label>
+      <label><input type="radio" name="k1" value="cut"><span>Cut</span></label></div></div>
+  <div class="s-body"><div class="shots"><figure><label class="vhead"><input type="radio" name="v1" value="A" checked><b>A · A game screen</b><span class="tag rec">Recommended · safe</span></label><img src="img/r2/H1a.jpg" alt="The road to the bell as a game screen: ten stations, rival labs on the same road, and what the market will ask about." loading="lazy"></figure><figure><label class="vhead"><input type="radio" name="v1" value="B" ><b>B · The office whiteboard</b><span class="tag exp">Experimental</span></label><img src="img/r2/H1b.jpg" alt="The same road hand-written on the office whiteboard, with sticky notes and rival magnets." loading="lazy"></figure></div>
     <div class="plan">
-      <h3>How it plays</h3>
-      <ol class="steps">
-        <li><span class="when">Era 2, late</span><span><b>Get ready</b> (a CFO move). Pick banks: two big banks price higher but want a clean story; a cheaper bank also lends to Lodestar. Pick the lock now or never: none, a founders' share, a benefit trust, or a nonprofit parent.</span></li>
-        <li><span class="when">Era 3</span><span><b>File in confidence.</b> SEC letters arrive about once a month as event cards, drawn from what the lab did: its biggest customer, a hype claim the press repeated, its compute commitments, an incident it buried, a sovereign investor (which can stall review for months). Each is a candor choice.</span></li>
-        <li><span class="when">Era 3 to 4</span><span><b>Go public and go quiet.</b> The filing turns public; the long jump between eras stands in for the last months of review. For about three weeks Comms cannot hype, and a launch risks a "gun-jumping" card.</span></li>
-        <li><span class="when">Era 4, start</span><span><b>Roadshow and pricing night.</b> Three investor meetings, answered with the President meeting's answer styles, build the order book. Pick a price sheet. Day one plays like a model reveal: the first trade prints around noon, then the close.</span></li>
-        <li><span class="when">Eras 4 and 5</span><span><b>Public life.</b> A ticker under the HUD. An earnings call each quarter of story time; guidance works like a board deal. The lockup ends after the second call, staff can sell, rivals poach. An incident starts a four-day disclosure clock.</span></li>
-      </ol>
-      <h3>Ties into</h3>
-      <dl class="ties">
-        <dt>Board</dt><dd>At listing the growth investor's seat becomes "public shareholders", judged on the share price. An activist can take a money seat. The trust lock shields the four oversight seats.</dd>
-        <dt>Cash</dt><dd>The biggest raise of the run, replacing that era's funding round. The bank fee shrinks as the deal grows.</dd>
-        <dt>Compute</dt><dd>Proceeds pay for multi-year deals. The SEC asks about commitments; a big new contract in the quiet weeks forces an amended filing.</dd>
-        <dt>Safety</dt><dd>What you disclose about hidden debt becomes a risk factor. A buried problem that surfaces later becomes a shareholder lawsuit. Guidance makes a higher safety share cost stock.</dd>
-        <dt>Rivals</dt><dd class="riv">Rival labs file and list on their own schedules; a rival's flop or incident drags every AI stock; rivals poach your staff when the lockup ends.</dd>
+      <dl>
+        <dt>Opens</dt><dd>A new IPO button beside Money, with a dot when something waits, and a chip under the board countdown.</dd>
+        <dt>What it is</dt><dd>The hub. Every stage of the road with its date, the rival labs on the same road, investor mood, and the items from your own record that the SEC, investors and short sellers will ask about.</dd>
+        <dt>You decide</dt><dd class="dec">Nothing on its own: it is the map. Each station opens that stage’s screen.</dd>
+        <dt>Ties into</dt><dd>Rivals’ positions on the road; your incident log, customers, compute bills and Comms claims.</dd>
       </dl>
-      <h3>What can go wrong</h3>
-      <ul class="wrong">
-        <li>Review drags: sovereign money or one dominant customer stalls it for months.</li>
-        <li>A leak or a hype post in the quiet weeks.</li>
-        <li>A weak order book forces a lower price; day one breaks below the offer.</li>
-        <li>The second earnings call misses just as the lockup ends.</li>
-        <li>A short seller's report exposes hidden alignment debt; a lawsuit follows the drop.</li>
-      </ul>
-      <h3>Feeds the endings</h3>
-      <p class="endnote">No new endings. Activist seats can win a removal vote (the existing board ending). A lab listed without a lock can be bought (routes to acquihire, per question 2). A finale tag such as "listed, still independent". The end-of-run reveal gains one row: what you told the market next to what was true.</p>
-      <div class="sub">
-        <h4>Sub-choices for A</h4>
-        <label><input type="checkbox" name="a-window" checked><span>Add C's listing window as a layer: rivals file and list on their own schedules <span class="soft">(recommended)</span></span></label>
-        <label><input type="checkbox" name="a-styles" checked><span>Roadshow meetings reuse the President meeting's answer styles <span class="soft">(recommended; off means a simple order-book screen)</span></span></label>
-      </div>
-    </div>
-  </div>
+      
+      <input class="chg" type="text" name="c1" placeholder="What to change (optional)">
+    </div></div>
 </section>
-
-<!-- B -->
-<section class="dir" id="dir-b">
-  <label class="d-top">
-    <input type="radio" name="dir" value="B">
-    <div><h2><span class="letter">B</span>Listed early, judged every quarter</h2><div class="one">The listing is one short set piece at the end of era 2. The arc is public life: an earnings call every quarter where safety spending meets the stock price.</div></div>
-    <div class="tags"><span class="tag med">Medium</span><span class="tag size">Size M</span></div>
-  </label>
-  <div class="d-body">
-    <div class="shots">
-      <figure><img src="img/B1.jpg" alt="An earnings call card: guidance, the street's expectation and results, an analyst asking about safety compute, three answers, and the after-hours stock chip." loading="lazy"><figcaption><b>The earnings call</b> as a recurring video-call set piece, styled like the board meeting. The analyst's question is where safety spending meets the stock price.</figcaption></figure>
-      <figure class="ref"><img src="img/ref-rt2.jpg" alt="Railroad Tycoon II Platinum, official Steam screenshot." loading="lazy"><figcaption><b>Borrowed from Railroad Tycoon II</b> (PopTop, 1998): investors judge the chairman on a five-year stock return and can fire him. <a href="https://store.steampowered.com/app/7620/" target="_blank" rel="noopener">Steam page</a></figcaption></figure>
-    </div>
+<section class="scr" id="s2">
+  <div class="s-top"><span class="num">2</span><div><h2>Three banks want to take you public</h2><div class="when">Oct 2024 · Era 2</div></div>
+    <div class="kcc" role="radiogroup" aria-label="Keep, change or cut screen 2">
+      <label><input type="radio" name="k2" value="keep" checked><span>Keep</span></label>
+      <label><input type="radio" name="k2" value="change"><span>Change</span></label>
+      <label><input type="radio" name="k2" value="cut"><span>Cut</span></label></div></div>
+  <div class="s-body"><div class="shots"><figure><img src="img/r2/S2.jpg" alt="Three pitch books from three banks, each with a valuation, a fee, a promise and a catch." loading="lazy"></figure></div>
     <div class="plan">
-      <h3>How it plays</h3>
-      <ol class="steps">
-        <li><span class="when">Era 2, end</span><span><b>The listing set piece</b>, offered beside the funding round: pick the lock, pick a price sheet, watch day one. About a minute. No SEC review or roadshow on screen.</span></li>
-        <li><span class="when">Eras 3 to 5</span><span><b>An earnings call every quarter of story time</b>: about once per era in eras 3 and 4, once more in era 5. Set guidance, results land, analysts ask about safety spend and rivals, the stock moves after hours.</span></li>
-        <li><span class="when">Between calls</span><span><b>The market acts.</b> Activists, short sellers, takeover bids, the lockup ending and the four-day disclosure clock, the same events as A's public life.</span></li>
-      </ol>
-      <h3>Ties into</h3>
-      <dl class="ties">
-        <dt>Board</dt><dd>The public-shareholders seat reads every call. Missed guidance counts like a broken board deal.</dd>
-        <dt>Cash</dt><dd>One big raise early, then follow-on offerings that dilute and drop the price.</dd>
-        <dt>Compute</dt><dd>Analysts punish a bigger compute plan the same day, as markets did to Meta and Microsoft.</dd>
-        <dt>Safety</dt><dd>The core lesson: every call asks you to defend the safety share. A promise to cut it comes due at the next call.</dd>
-        <dt>Rivals</dt><dd class="riv">Rival labs' results move your stock. A rival's incident sinks the whole sector for a quarter.</dd>
+      <dl>
+        <dt>Opens</dt><dd>The first station on the road, once you choose to get ready.</dd>
+        <dt>What it is</dt><dd>Three pitch books. Each bank values you differently, charges a different fee, and comes with a catch: one wants a softer story, two are tied to Lodestar.</dd>
+        <dt>You decide</dt><dd class="dec">Pick two lead banks.</dd>
+        <dt>Ties into</dt><dd>The valuation range on pricing night; which S-1 lines the banks push on; a rival link that leaks into your book.</dd>
       </dl>
-      <h3>What can go wrong</h3>
-      <ul class="wrong">
-        <li>Guide too high and miss; guide too low and the board calls you timid.</li>
-        <li>A promise to "return safety compute to growth" comes due.</li>
-        <li>Activists, short reports and bids, as in A.</li>
-      </ul>
-      <h3>Feeds the endings</h3>
-      <p class="endnote">Same as A: board removal through activist seats, acquihire through a bid on an unlocked lab, a finale tag, a reveal row. The trade-off: the stretch before listing, where most of the realism lives, stays off screen.</p>
-    </div>
-  </div>
+      <p class="noref">None of the games surveyed stages this step; it is open ground.</p>
+      <input class="chg" type="text" name="c2" placeholder="What to change (optional)">
+    </div></div>
 </section>
-
-<!-- C -->
-<section class="dir" id="dir-c">
-  <label class="d-top">
-    <input type="radio" name="dir" value="C">
-    <div><h2><span class="letter">C</span>The listing window</h2><div class="one">Going public is a race. Rival labs file and list on their own schedules, investor mood rises and shuts, and you choose when to go, or not to go at all.</div></div>
-    <div class="tags"><span class="tag med">Medium</span><span class="tag exp">Rivalry first</span><span class="tag size">Size M</span></div>
-  </label>
-  <div class="d-body">
-    <div class="shots">
-      <figure><img src="img/C1.jpg" alt="The listing window dialog: rival labs' IPO events across six months, an investor mood bar, three choices, and the CFO and Head of Safety commenting." loading="lazy"><figcaption><b>The listing window</b>: each rival's own IPO track, an investor-mood read, and three choices. A rival's flop shuts the window for everyone.</figcaption></figure>
-      <figure class="ref"><img src="img/ref-scaling-laws.jpg" alt="Scaling Laws, screenshot from its itch.io page." loading="lazy"><figcaption><b>Borrowed from Scaling Laws</b> (HCK Labs), the only AI-lab game found with a real funding model: valuation follows a market-mood cycle, so raising in a hot market keeps more of the lab. <a href="https://hcklab.itch.io/scaling-laws" target="_blank" rel="noopener">itch.io page</a></figcaption></figure>
-    </div>
+<section class="scr" id="s3">
+  <div class="s-top"><span class="num">3</span><div><h2>Who controls the lab after it lists</h2><div class="when">Dec 2024 · Era 2</div></div>
+    <div class="kcc" role="radiogroup" aria-label="Keep, change or cut screen 3">
+      <label><input type="radio" name="k3" value="keep" checked><span>Keep</span></label>
+      <label><input type="radio" name="k3" value="change"><span>Change</span></label>
+      <label><input type="radio" name="k3" value="cut"><span>Cut</span></label></div></div>
+  <div class="s-body"><div class="shots"><figure><img src="img/r2/S3.jpg" alt="Four charter locks side by side, each with a ten-block vote register, what it stops and what it costs." loading="lazy"></figure></div>
     <div class="plan">
-      <h3>How it plays</h3>
-      <ol class="steps">
-        <li><span class="when">Era 3</span><span><b>The window opens.</b> A screen shows each rival lab's IPO track and an investor-mood read from Comms and the feed. Mood rises after a rival's big first day and shuts after a flop or an industry incident.</span></li>
-        <li><span class="when">Eras 3 and 4</span><span><b>File, wait, withdraw and refile, or stay private</b> with a sovereign or cloud mega-round and its strings. You can also delay in public for safety: public trust and the safety chair up, the financier down.</span></li>
-        <li><span class="when">Listing</span><span><b>First out gets the index funds.</b> A later lab splits the room and gets a smaller book.</span></li>
-        <li><span class="when">After</span><span><b>Light public life:</b> a ticker and one results beat per era in the feed and the board, no call set piece.</span></li>
-      </ol>
-      <h3>Ties into</h3>
-      <dl class="ties">
-        <dt>Rivals</dt><dd class="riv">The core of it: four rival IPO tracks, each moving the mood for all. Your own incident can shut the window on every lab.</dd>
-        <dt>Board</dt><dd>The financier pushes to go now; the safety chair backs a delay; the sovereign fund wants to stay private.</dd>
-        <dt>Cash</dt><dd>Timing changes the raise a lot: the same lab raises far more in a hot market.</dd>
-        <dt>Safety</dt><dd>Delaying for safety is a real, public choice with a price, as it was for OpenAI in 2026.</dd>
-        <dt>Compute</dt><dd>Staying private means equity-for-compute deals and their strings (already in the game).</dd>
+      <dl>
+        <dt>Opens</dt><dd>The second station. Must be done before the S-1 draft.</dd>
+        <dt>What it is</dt><dd>The charter. Four locks, each shown as the ten-block register of who votes: no lock, a founders’ share, a benefit trust, a nonprofit parent.</dd>
+        <dt>You decide</dt><dd class="dec">Pick the lock, now or never: exchange rules stop new super-votes after listing.</dd>
+        <dt>Ties into</dt><dd>Board seats; which attacks can work later (a takeover routes to the acquihire ending, activist seats to the board removal vote); the price.</dd>
       </dl>
-      <h3>What can go wrong</h3>
-      <ul class="wrong">
-        <li>A rival lists first and takes the index funds.</li>
-        <li>You wait, and a rival's flop shuts the window for months.</li>
-        <li>Your own incident shuts it for everyone, and the feed blames you.</li>
-      </ul>
-      <h3>Feeds the endings</h3>
-      <p class="endnote">Mostly through the finale tag ("first lab to list", "never went public"). Thinner after listing than A or B, by design.</p>
-    </div>
-  </div>
+      <p class="noref">None of the games surveyed stages this step; it is open ground.</p>
+      <input class="chg" type="text" name="c3" placeholder="What to change (optional)">
+    </div></div>
 </section>
-
-<!-- D -->
-<section class="dir" id="dir-d">
-  <label class="d-top">
-    <input type="radio" name="dir" value="D">
-    <div><h2><span class="letter">D</span>The share register</h2><div class="one">The lab is ten visible blocks of shares. Every raise hands one out; after listing, rivals and buyers collect them. Six against you and the lab is theirs.</div></div>
-    <div class="tags"><span class="tag exp">Experimental</span><span class="tag size">Size L+</span></div>
-  </label>
-  <div class="d-body">
-    <div class="shots">
-      <figure><img src="img/D1.jpg" alt="Who owns the lab: ten share blocks held by founders, staff, three investors, the public and a rival lab, with three defence choices." loading="lazy"><figcaption><b>Who owns the lab</b>: ten blocks, each with a holder who has a voice. A rival bought one public block this month.</figcaption></figure>
-      <figure class="ref"><img src="img/ref-offworld.jpg" alt="Offworld Trading Company price panel, official Steam screenshot." loading="lazy"><figcaption><b>Borrowed from Offworld Trading Company</b> (Mohawk Games): your own shares work like hit points that rivals buy to knock you out. Its designer made buyouts slow and readable after players hated surprise losses. <a href="https://store.steampowered.com/app/271240/" target="_blank" rel="noopener">Steam page</a></figcaption></figure>
-    </div>
+<section class="scr" id="s4">
+  <div class="s-top"><span class="num">4</span><div><h2>The S-1, draft 3</h2><div class="when">Jan 2025 · Era 3</div></div>
+    <div class="kcc" role="radiogroup" aria-label="Keep, change or cut screen 4">
+      <label><input type="radio" name="k4" value="keep" checked><span>Keep</span></label>
+      <label><input type="radio" name="k4" value="change"><span>Change</span></label>
+      <label><input type="radio" name="k4" value="cut"><span>Cut</span></label></div></div>
+  <div class="s-body"><div class="shots"><figure><img src="img/r2/S4.jpg" alt="The S-1 draft as a document: five risk-factor lines with three-way choices, use of proceeds, margin comments and two meters." loading="lazy"></figure></div>
     <div class="plan">
-      <h3>How it plays</h3>
-      <ol class="steps">
-        <li><span class="when">Eras 1 and 2</span><span><b>Every raise hands out a block</b>: funding rounds and equity-for-compute deals each cost one. The holders are the board's money seats.</span></li>
-        <li><span class="when">Era 3</span><span><b>The IPO floats three or four blocks.</b> Locks: a founders' share (two blocks nobody can buy) or the trust (oversight seats nobody can replace).</span></li>
-        <li><span class="when">Eras 4 and 5</span><span><b>Buyers collect blocks</b>, one at a time and in plain view: a rival lab, a tech giant, an activist. Defend with buybacks, a friendly buyer, or a high share price.</span></li>
-      </ol>
-      <h3>Ties into</h3>
-      <dl class="ties">
-        <dt>Board</dt><dd>The board becomes the register: holders are seats. A deep rework of today's seven directors.</dd>
-        <dt>Cash</dt><dd>Buybacks spend money that compute and safety need.</dd>
-        <dt>Rivals</dt><dd class="riv">Rivals become buyers. A cloud partner sells its block to the highest bidder.</dd>
-        <dt>Safety</dt><dd>A poor safety record lowers the price, which makes the lab cheaper to buy.</dd>
+      <dl>
+        <dt>Opens</dt><dd>The third station; also reopens whenever an SEC letter asks for an amendment.</dd>
+        <dt>What it is</dt><dd>A document you write line by line, like the Model Spec screen. Each risk factor from your own record gets a choice: as it happened, as a risk, or left out. Advisors and bankers comment in the margin.</dd>
+        <dt>You decide</dt><dd class="dec">What to disclose, and what the money is for.</dd>
+        <dt>Ties into</dt><dd>Hidden alignment debt and incidents. Whatever stays hidden feeds the SEC letters, the roadshow, the short seller and the end-of-run reveal row (what you told the market next to what was true).</dd>
       </dl>
-      <h3>What can go wrong</h3>
-      <ul class="wrong">
-        <li>Raise too often early and own too little to defend.</li>
-        <li>Buybacks starve the safety team.</li>
-        <li>Share-price exploits: Railroads!, OpenTTD and Software Inc. all had to patch money loops.</li>
-      </ul>
-      <h3>Feeds the endings</h3>
-      <p class="endnote">A takeover routes to the acquihire ending, or to a new ending that the endings lane would have to design.</p>
-    </div>
-  </div>
+      <p class="noref">None of the games surveyed stages this step; it is open ground.</p>
+      <input class="chg" type="text" name="c4" placeholder="What to change (optional)">
+    </div></div>
+</section>
+<section class="scr" id="s5">
+  <div class="s-top"><span class="num">5</span><div><h2>Letters from the SEC</h2><div class="when">Feb–Mar 2025 · Era 3</div></div>
+    <div class="kcc" role="radiogroup" aria-label="Keep, change or cut screen 5">
+      <label><input type="radio" name="k5" value="keep" checked><span>Keep</span></label>
+      <label><input type="radio" name="k5" value="change"><span>Change</span></label>
+      <label><input type="radio" name="k5" value="cut"><span>Cut</span></label></div></div>
+  <div class="s-body"><div class="shots"><figure><img src="img/r2/S5.jpg" alt="An inbox of SEC letters, one comment open with three replies, and a review clock against rivals." loading="lazy"></figure></div>
+    <div class="plan">
+      <dl>
+        <dt>Opens</dt><dd>Letters arrive about once a month; the IPO chip counts the reply deadline.</dd>
+        <dt>What it is</dt><dd>An inbox of comment letters. Each comment quotes your draft and is written from what your lab actually did. A review clock compares your pace with rival labs.</dd>
+        <dt>You decide</dt><dd class="dec">Answer each open comment.</dd>
+        <dt>Ties into</dt><dd>Your incident log, customers, Comms claims and investors. A sovereign investor can stall review for months.</dd>
+      </dl>
+      <p class="noref">None of the games surveyed stages this step; it is open ground.</p>
+      <input class="chg" type="text" name="c5" placeholder="What to change (optional)">
+    </div></div>
+</section>
+<section class="scr" id="s6">
+  <div class="s-top"><span class="num">6</span><div><h2>Who is going public, and when</h2><div class="when">Apr 2025 · End of era 3</div></div>
+    <div class="kcc" role="radiogroup" aria-label="Keep, change or cut screen 6">
+      <label><input type="radio" name="k6" value="keep" checked><span>Keep</span></label>
+      <label><input type="radio" name="k6" value="change"><span>Change</span></label>
+      <label><input type="radio" name="k6" value="cut"><span>Cut</span></label></div></div>
+  <div class="s-body"><div class="shots"><figure><img src="img/r2/S6.jpg" alt="A departures board of rival AI listings with a mood gauge and three choices." loading="lazy"></figure></div>
+    <div class="plan">
+      <dl>
+        <dt>Opens</dt><dd>Opens when the SEC clears your draft; the rival board also lives on the hub.</dd>
+        <dt>What it is</dt><dd>The listing window as an airport departures board: every rival lab’s listing, its status and its first day, plus an investor-mood dial.</dd>
+        <dt>You decide</dt><dd class="dec">Go now, wait for a rival’s debut, or pause the IPO and stay private.</dd>
+        <dt>Ties into</dt><dd>Rival labs list on their own schedules. A big first day heats the window; a flop or an incident shuts it for everyone.</dd>
+      </dl>
+      <figure class="ref"><img src="img/ref-scaling-laws.jpg" alt="Reference screenshot" loading="lazy"><figcaption><b>Borrowed from Scaling Laws</b> (HCK Labs): valuation follows a market-mood cycle. <a href="https://hcklab.itch.io/scaling-laws" target="_blank" rel="noopener">itch.io page</a></figcaption></figure>
+      <input class="chg" type="text" name="c6" placeholder="What to change (optional)">
+    </div></div>
+</section>
+<section class="scr" id="s7">
+  <div class="s-top"><span class="num">7</span><div><h2>The quiet period</h2><div class="when">Jan 2026 · Era 4</div></div>
+    <div class="kcc" role="radiogroup" aria-label="Keep, change or cut screen 7">
+      <label><input type="radio" name="k7" value="keep" checked><span>Keep</span></label>
+      <label><input type="radio" name="k7" value="change"><span>Change</span></label>
+      <label><input type="radio" name="k7" value="cut"><span>Cut</span></label></div></div>
+  <div class="s-body"><div class="shots"><figure><img src="img/r2/S7.jpg" alt="The office in the quiet period: blue edge, countdown banner, taped-up Comms desk and a temptation card." loading="lazy"></figure></div>
+    <div class="plan">
+      <dl>
+        <dt>Opens</dt><dd>Starts by itself when the filing goes public; the office itself changes.</dd>
+        <dt>What it is</dt><dd>The office goes quiet: a blue edge around the room, a countdown banner, the Comms desk taped up, and launch or hype buttons marked with their risk. Good news arrives as a temptation card.</dd>
+        <dt>You decide</dt><dd class="dec">Stay quiet, post anyway, or put it in an amended filing.</dd>
+        <dt>Ties into</dt><dd>A hype post or a launch can delay pricing (a “gun-jumping” review).</dd>
+      </dl>
+      <p class="noref">None of the games surveyed stages this step; it is open ground.</p>
+      <input class="chg" type="text" name="c7" placeholder="What to change (optional)">
+    </div></div>
+</section>
+<section class="scr" id="s8">
+  <div class="s-top"><span class="num">8</span><div><h2>The roadshow</h2><div class="when">Jan 2026 · Era 4</div></div>
+    <div class="kcc" role="radiogroup" aria-label="Keep, change or cut screen 8">
+      <label><input type="radio" name="k8" value="keep" checked><span>Keep</span></label>
+      <label><input type="radio" name="k8" value="change"><span>Change</span></label>
+      <label><input type="radio" name="k8" value="cut"><span>Cut</span></label></div></div>
+  <div class="s-body"><div class="shots"><figure><img src="img/r2/S8.jpg" alt="The roadshow: a route of eight cities, a San Francisco fund’s question, three answers and the book so far." loading="lazy"></figure></div>
+    <div class="plan">
+      <dl>
+        <dt>Opens</dt><dd>Eight days, one city a day, after the quiet period starts.</dd>
+        <dt>What it is</dt><dd>A route of eight cities. Each stop is one investor meeting with one question drawn from your record, answered in the President meeting’s answer styles. The order book builds beside it.</dd>
+        <dt>You decide</dt><dd class="dec">Answer each investor.</dd>
+        <dt>Ties into</dt><dd>The book by investor type; Qilin roadshows in the same week; your answers are quoted back on the first earnings call.</dd>
+      </dl>
+      <p class="noref">None of the games surveyed stages this step; it is open ground.</p>
+      <input class="chg" type="text" name="c8" placeholder="What to change (optional)">
+    </div></div>
+</section>
+<section class="scr" id="s9">
+  <div class="s-top"><span class="num">9</span><div><h2>Set the price</h2><div class="when">Feb 9, 2026 · Era 4</div></div>
+    <div class="kcc" role="radiogroup" aria-label="Keep, change or cut screen 9">
+      <label><input type="radio" name="k9" value="keep" checked><span>Keep</span></label>
+      <label><input type="radio" name="k9" value="change"><span>Change</span></label>
+      <label><input type="radio" name="k9" value="cut"><span>Cut</span></label></div></div>
+  <div class="s-body"><div class="shots"><figure><img src="img/r2/S9.jpg" alt="Pricing night: bankers’ faces, a demand curve with the range and a $44 pin, and four outcome tiles." loading="lazy"></figure></div>
+    <div class="plan">
+      <dl>
+        <dt>Opens</dt><dd>The night before listing, in the board meeting’s dark call-room look.</dd>
+        <dt>What it is</dt><dd>Pricing night. The bankers and your advisors each pin a price on the demand curve. Drag the price and see the raise, the expected first day, the chance it breaks below the offer, and the money left on the table.</dd>
+        <dt>You decide</dt><dd class="dec">The offer price.</dd>
+        <dt>Ties into</dt><dd>Cash for the rest of the run; how the first day goes; the mood for every lab still on the road.</dd>
+      </dl>
+      <p class="noref">None of the games surveyed stages this step; it is open ground.</p>
+      <input class="chg" type="text" name="c9" placeholder="What to change (optional)">
+    </div></div>
+</section>
+<section class="scr" id="s10">
+  <div class="s-top"><span class="num">10</span><div><h2>Listing day</h2><div class="when">Feb 10, 2026 · Era 4</div></div>
+    <div class="kcc" role="radiogroup" aria-label="Keep, change or cut screen 10">
+      <label><input type="radio" name="k10" value="keep" checked><span>Keep</span></label>
+      <label><input type="radio" name="k10" value="change"><span>Change</span></label>
+      <label><input type="radio" name="k10" value="cut"><span>Cut</span></label></div></div>
+  <div class="s-body"><div class="shots"><figure><label class="vhead"><input type="radio" name="v10" value="A" checked><b>A · Full-screen hero</b><span class="tag rec">Recommended · loud</span></label><img src="img/r2/S10a.jpg" alt="Listing day as a full-screen hero: giant LAB ticker, $58.40, the day’s chart and four moments." loading="lazy"></figure><figure><label class="vhead"><input type="radio" name="v10" value="B" ><b>B · In the office</b><span class="tag safe">Safe</span></label><img src="img/r2/S10b.jpg" alt="Listing day in the office: a ticker tape along the bottom, staff bubbles and a first-print card." loading="lazy"></figure></div>
+    <div class="plan">
+      <dl>
+        <dt>Opens</dt><dd>Plays by itself the morning after pricing night.</dd>
+        <dt>What it is</dt><dd>The bell, the opening auction, the first print around noon, and the close. Little to decide; this is the run’s hero moment.</dd>
+        <dt>You decide</dt><dd class="dec">Watch, or go back to work.</dd>
+        <dt>Ties into</dt><dd>The close sets the investor mood for rivals; the feed and staff react.</dd>
+      </dl>
+      <p class="noref">None of the games surveyed stages this step; it is open ground.</p>
+      <input class="chg" type="text" name="c10" placeholder="What to change (optional)">
+    </div></div>
+</section>
+<section class="scr" id="s11">
+  <div class="s-top"><span class="num">11</span><div><h2>Your stock</h2><div class="when">From listing on · Eras 4–5</div></div>
+    <div class="kcc" role="radiogroup" aria-label="Keep, change or cut screen 11">
+      <label><input type="radio" name="k11" value="keep" checked><span>Keep</span></label>
+      <label><input type="radio" name="k11" value="change"><span>Change</span></label>
+      <label><input type="radio" name="k11" value="cut"><span>Cut</span></label></div></div>
+  <div class="s-body"><div class="shots"><figure><img src="img/r2/S11.jpg" alt="The stock screen: price chart since listing with markers, a ten-block ownership register, analysts and short interest." loading="lazy"></figure></div>
+    <div class="plan">
+      <dl>
+        <dt>Opens</dt><dd>A new screen beside Money once you are listed, plus the price chip under the board countdown.</dd>
+        <dt>What it is</dt><dd>The price since listing with event markers, who owns the lab as ten blocks, analyst ratings and short interest.</dd>
+        <dt>You decide</dt><dd class="dec">Nothing directly: you move the price only through results, guidance and disclosure, so there is no buyback loop to exploit.</dd>
+        <dt>Ties into</dt><dd>Holders are the board’s money seats; an activist’s block shows here first; rival incidents move your price.</dd>
+      </dl>
+      <figure class="ref"><img src="img/ref-offworld.jpg" alt="Reference screenshot" loading="lazy"><figcaption><b>Borrowed from Offworld Trading Company</b> (Mohawk Games): your own shares as hit points rivals buy, made slow and readable. <a href="https://store.steampowered.com/app/271240/" target="_blank" rel="noopener">Steam page</a></figcaption></figure>
+      <input class="chg" type="text" name="c11" placeholder="What to change (optional)">
+    </div></div>
+</section>
+<section class="scr" id="s12">
+  <div class="s-top"><span class="num">12</span><div><h2>The earnings call</h2><div class="when">Each quarter of story time · Eras 4–5</div></div>
+    <div class="kcc" role="radiogroup" aria-label="Keep, change or cut screen 12">
+      <label><input type="radio" name="k12" value="keep" checked><span>Keep</span></label>
+      <label><input type="radio" name="k12" value="change"><span>Change</span></label>
+      <label><input type="radio" name="k12" value="cut"><span>Cut</span></label></div></div>
+  <div class="s-body"><div class="shots"><figure><img src="img/r2/S12.jpg" alt="The earnings call: guidance, street and result tiles, an analyst’s question with three answers, after-hours price and the queue." loading="lazy"></figure></div>
+    <div class="plan">
+      <dl>
+        <dt>Opens</dt><dd>A video call like the board meeting, once each quarter of story time.</dd>
+        <dt>What it is</dt><dd>Guidance against the street against the result, then the analysts’ queue. Each question checks something you promised on the roadshow or the last call. After-hours price moves live.</dd>
+        <dt>You decide</dt><dd class="dec">Answer each question; set the next quarter’s guidance.</dd>
+        <dt>Ties into</dt><dd>Guidance works like a board deal: a promise with a date. The safety share meets the stock price here.</dd>
+      </dl>
+      <figure class="ref"><img src="img/ref-rt2.jpg" alt="Reference screenshot" loading="lazy"><figcaption><b>Borrowed from Railroad Tycoon II</b> (PopTop): investors judge the chairman on the stock and can fire him. <a href="https://store.steampowered.com/app/7620/" target="_blank" rel="noopener">Steam page</a></figcaption></figure>
+      <input class="chg" type="text" name="c12" placeholder="What to change (optional)">
+    </div></div>
+</section>
+<section class="scr" id="s13">
+  <div class="s-top"><span class="num">13</span><div><h2>The lockup ends</h2><div class="when">Jan 2027 · Era 5</div></div>
+    <div class="kcc" role="radiogroup" aria-label="Keep, change or cut screen 13">
+      <label><input type="radio" name="k13" value="keep" checked><span>Keep</span></label>
+      <label><input type="radio" name="k13" value="change"><span>Change</span></label>
+      <label><input type="radio" name="k13" value="cut"><span>Cut</span></label></div></div>
+  <div class="s-body"><div class="shots"><figure><img src="img/r2/S13.jpg" alt="Lockup screen: six people cards with what they can sell and who is poaching them, three choices and the unlock schedule." loading="lazy"></figure></div>
+    <div class="plan">
+      <dl>
+        <dt>Opens</dt><dd>Nine days before staff may sell, on the IPO chip and as a screen.</dd>
+        <dt>What it is</dt><dd>Your people and what each can sell, who plans to sell, and which rival labs are poaching them; what unlocks when.</dd>
+        <dt>You decide</dt><dd class="dec">Refresh grants, stagger the release, or let it run.</dd>
+        <dt>Ties into</dt><dd>Rivals time offers to this day; selling moves the stock; leavers slow Research.</dd>
+      </dl>
+      
+      <input class="chg" type="text" name="c13" placeholder="What to change (optional)">
+    </div></div>
+</section>
+<section class="scr" id="s14">
+  <div class="s-top"><span class="num">14</span><div><h2>The market attacks</h2><div class="when">Jan 2027 · Era 5</div></div>
+    <div class="kcc" role="radiogroup" aria-label="Keep, change or cut screen 14">
+      <label><input type="radio" name="k14" value="keep" checked><span>Keep</span></label>
+      <label><input type="radio" name="k14" value="change"><span>Change</span></label>
+      <label><input type="radio" name="k14" value="cut"><span>Cut</span></label></div></div>
+  <div class="s-body"><div class="shots"><figure><img src="img/r2/S14.jpg" alt="A short seller’s report on LAB with exhibits from the lab’s own record, beside three responses and an activist note." loading="lazy"></figure></div>
+    <div class="plan">
+      <dl>
+        <dt>Opens</dt><dd>A short seller’s report lands at 7 am; an activist’s stake appears on the stock screen.</dd>
+        <dt>What it is</dt><dd>The short report as a web page built from your own hidden debt and S-1 wording, beside your responses. The activist’s demand for seats opens as a board vote in the existing meeting.</dd>
+        <dt>You decide</dt><dd class="dec">Respond before the open.</dd>
+        <dt>Ties into</dt><dd>Hidden alignment debt; your S-1 lines; the board meeting and its removal vote. No new endings.</dd>
+      </dl>
+      
+      <input class="chg" type="text" name="c14" placeholder="What to change (optional)">
+    </div></div>
 </section>
 
 <section class="block" id="shared">
   <div class="b-head">
-    <div class="kicker">Shared questions</div>
-    <h2>Three choices that hold for any direction</h2>
+    <div class="kicker">Still open from round 1</div>
+    <h2>Three choices that hold for the whole subsystem</h2>
   </div>
   <div class="qs">
-    <fieldset class="q" style="border:0">
+    <fieldset class="q">
       <h3>Is going public optional?</h3>
-      <p>Real labs disagree: one filed and paused, one filed and went ahead.</p>
+      <p>Screen 6 already lets you pause. This says whether you can skip the road entirely.</p>
       <label><input type="radio" name="q1" value="optional" checked><span>Optional: a run can stay private all game, and the advisors argue about it<span class="rtag">Rec</span></span></label>
       <label><input type="radio" name="q1" value="always"><span>Every run lists by era 4, so every player sees the arc</span></label>
     </fieldset>
-    <fieldset class="q" style="border:0">
+    <fieldset class="q">
       <h3>What is the worst the market can do?</h3>
-      <p>Without redesigning endings.</p>
+      <p>Without redesigning endings (that lane is separate).</p>
       <label><input type="radio" name="q2" value="board-acquihire" checked><span>Activists can win a board removal vote, and a buyer can take an unlocked lab (the acquihire ending)<span class="rtag">Rec</span></span></label>
       <label><input type="radio" name="q2" value="board-only"><span>Board pressure only; no takeovers</span></label>
-      <label><input type="radio" name="q2" value="new-ending"><span>A new "taken over" ending, handed to the endings lane</span></label>
+      <label><input type="radio" name="q2" value="new-ending"><span>A new “taken over” ending, handed to the endings lane</span></label>
     </fieldset>
-    <fieldset class="q" style="border:0">
+    <fieldset class="q">
       <h3>Where does the share price show?</h3>
-      <p>Only after listing.</p>
+      <p>Only after listing. Screen 11 is the full view either way.</p>
       <label><input type="radio" name="q3" value="chip" checked><span>A chip under the board countdown, as in the pictures<span class="rtag">Rec</span></span></label>
-      <label><input type="radio" name="q3" value="money"><span>Only on the Money screen</span></label>
+      <label><input type="radio" name="q3" value="money"><span>Only on the stock screen</span></label>
     </fieldset>
   </div>
   <div style="margin-top:20px">
-    <label for="notes" class="kicker">Anything else (mix directions, change a stage, cut something)</label>
-    <textarea id="notes" name="notes" placeholder="For example: A, but list in era 3 instead of era 4"></textarea>
+    <label for="notes" class="kicker">Anything else (a missing stage, a screen to merge, a different order)</label>
+    <textarea id="notes" name="notes" placeholder="For example: merge 4 and 5, or add a takeover-bid screen"></textarea>
   </div>
 </section>
 
 </form>
 
 <footer>
-  <p><b>How the pictures were made.</b> Each is the game at the seed-4 era 3 scenario with new markup drawn over it by a mock script (no game code changed). Reference pictures are official store screenshots, credited and linked. The real filing timeline comes from SEC EDGAR, read on October 27, 2026.</p>
-  <p><b>Sources.</b> Research notes and their coverage statements: <span class="mono">docs/research/ipo/README.md</span> and <span class="mono">docs/research/ipo/notes/</span> on branch <span class="mono">design/ipo</span>. Claims read only in part are marked ⚠️ there; first-day prices are news reports.</p>
-  <p><b>Disclosure.</b> The research and this page were written by Claude, which Anthropic makes, and Anthropic's own filing is one of the sources. It is reported, not judged.</p>
+  <p><b>How the pictures were made.</b> The game at the seed-4 era 3 scenario with new markup drawn over it by <span style="font-family:ui-monospace,monospace">docs/research/ipo/picker/source/mock2.js</span> (no game code changed). The HUD date, era and cash are moved to each screen’s point on the road. Faces use the game’s own portrait drawing. Reference pictures are official store screenshots, credited and linked.</p>
+  <p><b>Sources.</b> Every real-world fact (the 74 to 107 days, staged lockups, the rule against adding super-votes after listing) comes from the research notes in <span style="font-family:ui-monospace,monospace">docs/research/ipo/</span> on branch <span style="font-family:ui-monospace,monospace">design/ipo</span>; partial reads are marked ⚠️ there. Round 1 of this page (four directions, five mockups, the research facts) is replaced here; it is kept in git at commit b04c9f2 and in this page’s version history.</p>
+  <p><b>Disclosure.</b> The research and this page were written by Claude, which Anthropic makes, and Anthropic’s own filing is one of the sources. The game’s labs, banks and funds are fictional.</p>
 </footer>
 </div>
 
 <div class="bar" role="region" aria-label="Your picks">
-  <div class="sum" id="sum">Direction A</div>
+  <div class="sum" id="sum">All 14 kept</div>
   <button type="button" id="copy">Copy my picks</button>
 </div>
 <div id="copied" hidden>Copied. Paste it in the chat.</div>
@@ -472,14 +485,17 @@ footer p { margin-bottom: 8px; }
 (() => {
   const form = document.getElementById('picker');
   const sum = document.getElementById('sum');
-  const names = { A: 'A, the road to the bell', B: 'B, judged every quarter', C: 'C, the listing window', D: 'D, the share register' };
-  const KEY = 'gn-ipo-picks-v1';
+  const KEY = 'gn-ipo-picks-v2';
+  const ids = [...form.querySelectorAll('.scr')].map((s) => s.id.slice(1));
   const val = (n) => form.querySelector(`[name="${n}"]:checked`)?.value;
+  const title = (i) => document.querySelector(`#s${i} h2`).textContent;
   function text() {
-    const d = val('dir');
-    const lines = [`IPO direction: ${names[d]}`];
-    if (d === 'A') {
-      lines.push(`A sub-choices: listing window layer ${form.querySelector('[name="a-window"]').checked ? 'yes' : 'no'}; roadshow uses President answer styles ${form.querySelector('[name="a-styles"]').checked ? 'yes' : 'no'}`);
+    const lines = [`IPO round 2: ${val('merge')}`];
+    for (const i of ids) {
+      const k = val(`k${i}`);
+      const v = val(`v${i}`);
+      const c = form.querySelector(`[name="c${i}"]`).value.trim();
+      lines.push(`${i}. ${title(i)}: ${k}${v ? `, variant ${v}` : ''}${c ? ` (${c})` : ''}`);
     }
     lines.push(`Optional IPO: ${val('q1')}`, `Worst market move: ${val('q2')}`, `Share price shown: ${val('q3')}`);
     const notes = form.notes.value.trim();
@@ -487,20 +503,18 @@ footer p { margin-bottom: 8px; }
     return lines.join('\n');
   }
   function update() {
-    sum.textContent = text().replace(/\n/g, ' · ');
+    const k = ids.map((i) => val(`k${i}`));
+    const cut = ids.filter((i) => val(`k${i}`) === 'cut');
+    const chg = ids.filter((i) => val(`k${i}`) === 'change');
+    sum.textContent = `${k.filter((x) => x === 'keep').length} kept` + (chg.length ? ` · change ${chg.join(', ')}` : '') + (cut.length ? ` · cut ${cut.join(', ')}` : '') + ` · hub ${val('v1')} · listing day ${val('v10')} · ${val('merge')}`;
     try { localStorage.setItem(KEY, JSON.stringify(Object.fromEntries(new FormData(form)))); } catch (e) {}
   }
   try {
     const saved = JSON.parse(localStorage.getItem(KEY) || 'null');
-    if (saved) {
-      for (const [k, v] of Object.entries(saved)) {
-        const el = form.querySelector(`[name="${k}"][value="${v}"]`) || form.querySelector(`[name="${k}"]`);
-        if (!el) continue;
-        if (el.type === 'radio') el.checked = true;
-        else if (el.type === 'checkbox') el.checked = true;
-        else el.value = v;
-      }
-      for (const cb of form.querySelectorAll('input[type=checkbox]')) if (!(cb.name in saved)) cb.checked = false;
+    if (saved) for (const [k, v] of Object.entries(saved)) {
+      const el = form.querySelector(`[name="${k}"][value="${CSS.escape(v)}"]`) || form.querySelector(`[name="${k}"]`);
+      if (!el) continue;
+      if (el.type === 'radio') el.checked = true; else el.value = v;
     }
   } catch (e) {}
   form.addEventListener('input', update);
@@ -519,12 +533,12 @@ footer p { margin-bottom: 8px; }
     }
   });
   const lb = document.getElementById('lb');
-  document.querySelectorAll('.today img, .shots img').forEach((img) => {
+  document.querySelectorAll('.shots img').forEach((img) => {
     img.addEventListener('click', (e) => {
       e.preventDefault();
       lb.querySelector('img').src = img.src;
       lb.querySelector('img').alt = img.alt;
-      lb.querySelector('p').textContent = img.closest('figure')?.querySelector('figcaption')?.textContent || '';
+      lb.querySelector('p').textContent = img.closest('.scr')?.querySelector('h2')?.textContent || '';
       lb.showModal();
     });
   });
