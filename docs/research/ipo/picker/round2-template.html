@@ -57,12 +57,19 @@ header.top h1 b { font-weight: 800; }
 .assume input, .q input { accent-color: var(--coral); width: 16px; height: 16px; margin: 4px 0 0; }
 @media (max-width: 640px) { .assume { grid-template-columns: 1fr; } .assume h3 { grid-row: auto; } }
 
+.asks { margin-top: 14px; background: var(--paper); border-radius: 12px; padding: 16px 18px; box-shadow: 0 1px 0 var(--rule); }
+.asks h3 { font-size: 13px; font-weight: 900; letter-spacing: .07em; text-transform: uppercase; color: var(--wood-ink); margin-bottom: 4px; }
+.asks > p { font-size: 14px; margin-bottom: 10px; }
+.ask-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.ask-grid div { background: var(--floor); border-radius: 10px; padding: 10px 12px; font-size: 14px; min-width: 0; }
+.ask-grid b { display: block; font-weight: 900; margin-bottom: 3px; }
+@media (max-width: 900px) { .ask-grid { grid-template-columns: 1fr; } }
 section.block { margin-top: 48px; }
 .b-head h2 { font-weight: 300; font-size: 34px; line-height: 1.1; margin: 8px 0 10px; }
 .b-head p { max-width: 80ch; }
 
 /* storyboard strip */
-.strip { display: grid; grid-template-columns: 2fr 4fr 6fr 2fr; gap: 10px; margin-top: 14px; }
+.strip { display: grid; grid-template-columns: 2fr 5fr 6fr 2fr; gap: 10px; margin-top: 14px; }
 .era { background: var(--paper); border-radius: 12px; padding: 10px; box-shadow: 0 1px 0 var(--rule); min-width: 0; }
 .era .eh { font-size: 12px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); margin: 0 2px 8px; }
 .thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }
@@ -147,15 +154,15 @@ footer p { margin-bottom: 8px; }
 <header class="top">
   <div>
     <div class="kicker">Game Night AI Lab · lane gn-ipo · round 2 · November 4, 2026</div>
-    <h1>The IPO as its own part of the game: <b>14 screens, one road</b></h1>
+    <h1>The IPO as its own part of the game: <b>15 screens, one road</b></h1>
     <p class="lede">You said round 1 showed too few new screens. Here the IPO is a whole subsystem, the way the board got its own screen, countdown, cards and meeting. Each picture is the running game with the new screen drawn over it. Mark each screen keep, change or cut.</p>
     <p class="soft" style="font-size:14px">Design only: no game code changed. Numbers are examples, not tuned. Click any picture to see it full size.</p>
   </div>
   <div class="recs">
     <h3>My recommendation</h3>
     <ol>
-      <li><b>Keep all 14</b>, with the game-screen hub (1A) and the full-screen listing day (10A).</li>
-      <li>If the arc runs long in play, cut <b>7 (quiet period)</b> and <b>13 (lockup)</b> first: both fold back into event cards.</li>
+      <li><b>Keep all 15</b>, with the game-screen hub (1A) and the full-screen listing day (11A).</li>
+      <li>If the arc runs long in play, cut <b>8 (quiet period)</b> and <b>14 (lockup)</b> first: both fold back into event cards.</li>
       <li>Every new screen follows the release reveal’s frame (kicker line, left-aligned title) and carries the same small road in its corner, so the subsystem reads as one thing.</li>
     </ol>
   </div>
@@ -163,12 +170,23 @@ footer p { margin-bottom: 8px; }
 
 <div class="assume">
   <h3>One assumption</h3>
-  <p>I merged round 1’s four directions into one subsystem: A’s road is the spine, with B’s earnings calls (12), C’s listing window (6) and D’s ten-block register (3, 11) as screens inside it.</p>
+  <p>I merged round 1’s four directions into one subsystem: A’s road is the spine, with B’s earnings calls (13), C’s listing window (7) and D’s ten-block register (3, 12) as screens inside it.</p>
   <div class="opts">
     <label><input type="radio" name="merge" value="one subsystem" checked><span>Yes, one subsystem<span class="rtag">Rec</span></span></label>
     <label><input type="radio" name="merge" value="still separate directions"><span>No, still choose between whole directions</span></label>
   </div>
 </div>
+
+
+<section class="asks">
+  <h3>Your three asks, and where they are</h3>
+  <p class="soft">From your message of November 4: “some level of rush or concern before ipo to get more valuation + how the company culture is affected + being in race with the other companioes to pass their ipo evulation”. Screen 6 is new for them, and screen 7 now shows every rival’s valuation.</p>
+  <div class="ask-grid">
+    <div><b>Rush before listing, to raise the valuation</b><span><a href="#s6">6 The push</a>: the banks’ target, a 26-day countdown and four levers. Also <a href="#s8">8</a> (good news you cannot post) and <a href="#s10">10</a> (pricing night).</span></div>
+    <div><b>The cost to the company’s culture</b><span><a href="#s6">6 The push</a>: morale, what staff say, the Model Spec line under strain. Also <a href="#s8">8</a> (the office goes quiet) and <a href="#s14">14</a> (who sells, who leaves for rivals).</span></div>
+    <div><b>A race to beat the rivals’ IPO valuations</b><span><a href="#s7">7 The listing window</a>: a “valued” column and the number to beat. Also <a href="#s6">6</a> (the valuation to beat), <a href="#s1">1</a> (rivals on the same road) and <a href="#s10">10</a> (Lodestar’s price).</span></div>
+  </div>
+</section>
 
 <section class="block" id="board">
   <div class="b-head">
@@ -189,7 +207,7 @@ footer p { margin-bottom: 8px; }
   <div class="qs">
     <fieldset class="q">
       <h3>Is going public optional?</h3>
-      <p>Screen 6 already lets you pause. This says whether you can skip the road entirely.</p>
+      <p>Screen 7 already lets you pause. This says whether you can skip the road entirely.</p>
       <label><input type="radio" name="q1" value="optional" checked><span>Optional: a run can stay private all game, and the advisors argue about it<span class="rtag">Rec</span></span></label>
       <label><input type="radio" name="q1" value="always"><span>Every run lists by era 4, so every player sees the arc</span></label>
     </fieldset>
@@ -202,7 +220,7 @@ footer p { margin-bottom: 8px; }
     </fieldset>
     <fieldset class="q">
       <h3>Where does the share price show?</h3>
-      <p>Only after listing. Screen 11 is the full view either way.</p>
+      <p>Only after listing. Screen 12 is the full view either way.</p>
       <label><input type="radio" name="q3" value="chip" checked><span>A chip under the board countdown, as in the pictures<span class="rtag">Rec</span></span></label>
       <label><input type="radio" name="q3" value="money"><span>Only on the stock screen</span></label>
     </fieldset>
@@ -223,7 +241,7 @@ footer p { margin-bottom: 8px; }
 </div>
 
 <div class="bar" role="region" aria-label="Your picks">
-  <div class="sum" id="sum">All 14 kept</div>
+  <div class="sum" id="sum">All 15 kept</div>
   <button type="button" id="copy">Copy my picks</button>
 </div>
 <div id="copied" hidden>Copied. Paste it in the chat.</div>
@@ -254,7 +272,7 @@ footer p { margin-bottom: 8px; }
     const k = ids.map((i) => val(`k${i}`));
     const cut = ids.filter((i) => val(`k${i}`) === 'cut');
     const chg = ids.filter((i) => val(`k${i}`) === 'change');
-    sum.textContent = `${k.filter((x) => x === 'keep').length} kept` + (chg.length ? ` · change ${chg.join(', ')}` : '') + (cut.length ? ` · cut ${cut.join(', ')}` : '') + ` · hub ${val('v1')} · listing day ${val('v10')} · ${val('merge')}`;
+    sum.textContent = `${k.filter((x) => x === 'keep').length} kept` + (chg.length ? ` · change ${chg.join(', ')}` : '') + (cut.length ? ` · cut ${cut.join(', ')}` : '') + ` · hub ${val('v1')} · listing day ${val('v11')} · ${val('merge')}`;
     try { localStorage.setItem(KEY, JSON.stringify(Object.fromEntries(new FormData(form)))); } catch (e) {}
   }
   try {

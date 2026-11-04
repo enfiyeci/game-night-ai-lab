@@ -435,3 +435,44 @@ body {
 .sr-side { position: absolute; z-index: 31; left: 840px; top: 96px; width: 290px; display: grid; gap: 12px; }
 .sr-side .gp { position: relative; padding: 14px 16px; }
 .sr-side h3 { margin: 0 0 8px; font-size: 12px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: color-mix(in oklab, var(--wood) 60%, var(--ink)); }
+
+/* ---------- 6 the valuation push (rush, culture cost, the race) ---------- */
+.vp-grid { display: grid; grid-template-columns: 1fr 268px; gap: 16px; align-items: start; }
+.vp-top { display: grid; grid-template-columns: 1fr 132px; gap: 14px; align-items: center; }
+.league { display: grid; gap: 6px; }
+.lg { display: grid; grid-template-columns: 96px 1fr 120px; gap: 10px; align-items: center; font-size: 13px; font-weight: 800; }
+.lg .tr { position: relative; height: 20px; border-radius: 6px; background: color-mix(in oklab, var(--wood) 12%, var(--paper)); }
+.lg .tr i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 6px; background: color-mix(in oklab, var(--sky) 55%, var(--paper)); }
+.lg .tr i.you { background: var(--coral); }
+.lg .tr i.ghost { background: repeating-linear-gradient(135deg, color-mix(in oklab, var(--coral) 45%, var(--paper)) 0 4px, var(--paper) 4px 8px); }
+.lg .tr u { position: absolute; top: -4px; bottom: -4px; width: 3px; margin-left: -1.5px; border-radius: 2px; background: var(--ink); }
+.lg .v { font-size: 12.5px; font-weight: 800; color: var(--ip-soft); text-align: right; line-height: 1.2; }
+.lg .v b { color: var(--ink); font-size: 14px; }
+.cd { width: 132px; height: 132px; border-radius: 50%; display: grid; place-items: center; text-align: center; background: conic-gradient(var(--coral) 0 72%, color-mix(in oklab, var(--coral) 14%, var(--paper)) 72% 100%); }
+.cd div { width: 104px; height: 104px; border-radius: 50%; background: var(--paper); display: grid; place-content: center; }
+.cd b { font-size: 38px; font-weight: 900; line-height: .9; color: var(--ip-coralink); }
+.cd small { font-size: 11px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; color: var(--ip-soft); line-height: 1.15; }
+.levers { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.lev { display: grid; grid-template-columns: 22px 1fr; gap: 8px; align-items: start; background: var(--paper); border-radius: 11px; padding: 9px 11px; border: 2.5px solid color-mix(in oklab, var(--ink) 10%, transparent); }
+.lev.on { border-color: var(--coral); }
+.lev i { width: 20px; height: 20px; border-radius: 5px; margin-top: 1px; box-shadow: inset 0 0 0 2px color-mix(in oklab, var(--ink) 28%, transparent); display: grid; place-items: center; font-style: normal; font-size: 13px; font-weight: 900; color: var(--paper); }
+.lev.on i { background: var(--coral); box-shadow: none; }
+.lev b { display: block; font-size: 14px; font-weight: 900; line-height: 1.2; }
+.lev .fx { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+.vp-total { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; font-size: 13.5px; font-weight: 800; color: var(--ip-soft); }
+.vp-total b { font-size: 26px; font-weight: 300; color: var(--ink); }
+.vp-total b strong { font-weight: 900; }
+.cul .mor { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; margin: 4px 0 2px; }
+.cul .mor i { height: 14px; border-radius: 3px; background: var(--teal); }
+.cul .mor i.lost { background: color-mix(in oklab, var(--coral) 70%, var(--paper)); }
+.cul .mor i.off { background: color-mix(in oklab, var(--ink) 10%, var(--paper)); }
+.cul .lab { display: flex; justify-content: space-between; font-size: 12px; font-weight: 800; color: var(--ip-soft); }
+.over { margin-top: 10px; display: grid; gap: 6px; }
+.over div { font-size: 12.5px; font-weight: 700; line-height: 1.32; padding: 6px 9px; border-radius: 8px; background: var(--ip-well); }
+.over div b { display: block; font-size: 10.5px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: var(--ip-woodink); }
+.strain { margin-top: 22px; position: relative; font-family: "Libre Baskerville", Georgia, serif; font-size: 12.5px; line-height: 1.45; padding: 9px 10px; border-radius: 8px; background: var(--paper); box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--ink) 14%, transparent); }
+.strain em { position: absolute; right: 8px; top: -19px; transform: rotate(-8deg); font-family: Nunito, sans-serif; font-style: normal; font-size: 11px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: var(--ip-coralink); border: 2px solid var(--coral); border-radius: 5px; padding: 2px 6px; background: color-mix(in oklab, var(--paper) 85%, transparent); }
+.dep-goal { display: flex; justify-content: space-between; gap: 10px; margin-top: 10px; padding-top: 9px; border-top: 1px dashed color-mix(in oklab, var(--paper) 25%, transparent); font-family: Nunito, sans-serif; font-size: 13px; font-weight: 800; color: color-mix(in oklab, var(--paper) 75%, var(--ink)); }
+.dep-goal b { color: color-mix(in oklab, var(--coral) 75%, var(--paper)); }
+.dep7 .dep-row { grid-template-columns: 156px 84px 172px 90px 80px 1fr; gap: 5px; }
+.dep7.dep-grid { grid-template-columns: 1fr 248px; }

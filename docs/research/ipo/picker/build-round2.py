@@ -39,32 +39,38 @@ SCREENS = [
      'Answer each open comment.',
      'Your incident log, customers, Comms claims and investors. A sovereign investor can stall review for months.',
      None, [('', 'S5', '', '', 'An inbox of SEC letters, one comment open with three replies, and a review clock against rivals.')]),
-    ('6', 'Who is going public, and when', 'Apr 2025', 'End of era 3',
+    ('6', 'Get the number up before the window closes', 'Apr 2025', 'End of era 3',
+     'When the banks name their target, about a month before the public filing, with a countdown chip.',
+     'The push. Your valuation against the rival labs’ IPO valuations and the banks’ target, a countdown to the filing, four levers that raise the number, and a culture panel: morale, what staff say, the Model Spec line under strain.',
+     'Which levers to pull, or list as you are.',
+     'Every lever leaves a mark that later screens read: a skipped eval run feeds the short report, crunch feeds the lockup departures, a cut safety share feeds the trust seats and the earnings call.',
+     None, [('', 'S6p', '', '', 'The valuation push: rival valuations to beat, a 26-day countdown, four levers with gains and costs, and a culture panel with morale and staff quotes.')]),
+    ('7', 'Who is going public, and when', 'Apr 2025', 'End of era 3',
      'Opens when the SEC clears your draft; the rival board also lives on the hub.',
      'The listing window as an airport departures board: every rival lab’s listing, its status and its first day, plus an investor-mood dial.',
      'Go now, wait for a rival’s debut, or pause the IPO and stay private.',
      'Rival labs list on their own schedules. A big first day heats the window; a flop or an incident shuts it for everyone.',
      ('ref-scaling-laws', '<b>Borrowed from Scaling Laws</b> (HCK Labs): valuation follows a market-mood cycle. <a href="https://hcklab.itch.io/scaling-laws" target="_blank" rel="noopener">itch.io page</a>'),
      [('', 'S6', '', '', 'A departures board of rival AI listings with a mood gauge and three choices.')]),
-    ('7', 'The quiet period', 'Jan 2026', 'Era 4',
+    ('8', 'The quiet period', 'Jan 2026', 'Era 4',
      'Starts by itself when the filing goes public; the office itself changes.',
      'The office goes quiet: a blue edge around the room, a countdown banner, the Comms desk taped up, and launch or hype buttons marked with their risk. Good news arrives as a temptation card.',
      'Stay quiet, post anyway, or put it in an amended filing.',
      'A hype post or a launch can delay pricing (a “gun-jumping” review).',
      None, [('', 'S7', '', '', 'The office in the quiet period: blue edge, countdown banner, taped-up Comms desk and a temptation card.')]),
-    ('8', 'The roadshow', 'Jan 2026', 'Era 4',
+    ('9', 'The roadshow', 'Jan 2026', 'Era 4',
      'Eight days, one city a day, after the quiet period starts.',
      'A route of eight cities. Each stop is one investor meeting with one question drawn from your record, answered in the President meeting’s answer styles. The order book builds beside it.',
      'Answer each investor.',
      'The book by investor type; Qilin roadshows in the same week; your answers are quoted back on the first earnings call.',
      None, [('', 'S8', '', '', 'The roadshow: a route of eight cities, a San Francisco fund’s question, three answers and the book so far.')]),
-    ('9', 'Set the price', 'Feb 9, 2026', 'Era 4',
+    ('10', 'Set the price', 'Feb 9, 2026', 'Era 4',
      'The night before listing, in the board meeting’s dark call-room look.',
      'Pricing night. The bankers and your advisors each pin a price on the demand curve. Drag the price and see the raise, the expected first day, the chance it breaks below the offer, and the money left on the table.',
      'The offer price.',
      'Cash for the rest of the run; how the first day goes; the mood for every lab still on the road.',
      None, [('', 'S9', '', '', 'Pricing night: bankers’ faces, a demand curve with the range and a $44 pin, and four outcome tiles.')]),
-    ('10', 'Listing day', 'Feb 10, 2026', 'Era 4',
+    ('11', 'Listing day', 'Feb 10, 2026', 'Era 4',
      'Plays by itself the morning after pricing night.',
      'The bell, the opening auction, the first print around noon, and the close. Little to decide; this is the run’s hero moment.',
      'Watch, or go back to work.',
@@ -72,27 +78,27 @@ SCREENS = [
      None,
      [('A', 'S10a', 'A · Full-screen hero', 'Recommended · loud', 'Listing day as a full-screen hero: giant LAB ticker, $58.40, the day’s chart and four moments.'),
       ('B', 'S10b', 'B · In the office', 'Safe', 'Listing day in the office: a ticker tape along the bottom, staff bubbles and a first-print card.')]),
-    ('11', 'Your stock', 'From listing on', 'Eras 4–5',
+    ('12', 'Your stock', 'From listing on', 'Eras 4–5',
      'A new screen beside Money once you are listed, plus the price chip under the board countdown.',
      'The price since listing with event markers, who owns the lab as ten blocks, analyst ratings and short interest.',
      'Nothing directly: you move the price only through results, guidance and disclosure, so there is no buyback loop to exploit.',
      'Holders are the board’s money seats; an activist’s block shows here first; rival incidents move your price.',
      ('ref-offworld', '<b>Borrowed from Offworld Trading Company</b> (Mohawk Games): your own shares as hit points rivals buy, made slow and readable. <a href="https://store.steampowered.com/app/271240/" target="_blank" rel="noopener">Steam page</a>'),
      [('', 'S11', '', '', 'The stock screen: price chart since listing with markers, a ten-block ownership register, analysts and short interest.')]),
-    ('12', 'The earnings call', 'Each quarter of story time', 'Eras 4–5',
+    ('13', 'The earnings call', 'Each quarter of story time', 'Eras 4–5',
      'A video call like the board meeting, once each quarter of story time.',
      'Guidance against the street against the result, then the analysts’ queue. Each question checks something you promised on the roadshow or the last call. After-hours price moves live.',
      'Answer each question; set the next quarter’s guidance.',
      'Guidance works like a board deal: a promise with a date. The safety share meets the stock price here.',
      ('ref-rt2', '<b>Borrowed from Railroad Tycoon II</b> (PopTop): investors judge the chairman on the stock and can fire him. <a href="https://store.steampowered.com/app/7620/" target="_blank" rel="noopener">Steam page</a>'),
      [('', 'S12', '', '', 'The earnings call: guidance, street and result tiles, an analyst’s question with three answers, after-hours price and the queue.')]),
-    ('13', 'The lockup ends', 'Jan 2027', 'Era 5',
+    ('14', 'The lockup ends', 'Jan 2027', 'Era 5',
      'Nine days before staff may sell, on the IPO chip and as a screen.',
      'Your people and what each can sell, who plans to sell, and which rival labs are poaching them; what unlocks when.',
      'Refresh grants, stagger the release, or let it run.',
      'Rivals time offers to this day; selling moves the stock; leavers slow Research.',
      None, [('', 'S13', '', '', 'Lockup screen: six people cards with what they can sell and who is poaching them, three choices and the unlock schedule.')]),
-    ('14', 'The market attacks', 'Jan 2027', 'Era 5',
+    ('15', 'The market attacks', 'Jan 2027', 'Era 5',
      'A short seller’s report lands at 7 am; an activist’s stake appears on the stock screen.',
      'The short report as a web page built from your own hidden debt and S-1 wording, beside your responses. The activist’s demand for seats opens as a board vote in the existing meeting.',
      'Respond before the open.',
@@ -100,7 +106,7 @@ SCREENS = [
      None, [('', 'S14', '', '', 'A short seller’s report on LAB with exhibits from the lab’s own record, beside three responses and an activist note.')]),
 ]
 
-STRIP = [('Era 2 · 2024', ['2', '3']), ('Era 3 · Jan–Apr 2025', ['1', '4', '5', '6']), ('Era 4 · Jan–Apr 2026', ['7', '8', '9', '10', '11', '12']), ('Era 5 · Jan 2027', ['13', '14'])]
+STRIP = [('Era 2 · 2024', ['2', '3']), ('Era 3 · Jan–Apr 2025', ['1', '4', '5', '6', '7']), ('Era 4 · Jan–Apr 2026', ['8', '9', '10', '11', '12', '13']), ('Era 5 · Jan 2027', ['14', '15'])]
 THUMB = {s[0]: s[9][0][1] for s in SCREENS}
 NAME = {s[0]: s[1] for s in SCREENS}
 e = html.escape
@@ -115,7 +121,7 @@ def section(s):
             head = f'<label class="vhead"><input type="radio" name="v{sid}" value="{val}" {"checked" if i == 0 else ""}><b>{e(label)}</b><span class="tag {tagcls}">{e(tag)}</span></label>'
         imgs.append(f'<figure>{head}<img src="img/r2/{img}.jpg" alt="{e(alt)}" loading="lazy"></figure>')
     refhtml = (f'<figure class="ref"><img src="img/{ref[0]}.jpg" alt="Reference screenshot" loading="lazy"><figcaption>{ref[1]}</figcaption></figure>'
-               if ref else '<p class="noref">None of the games surveyed stages this step; it is open ground.</p>' if 2 <= int(sid) <= 10 else '')
+               if ref else '<p class="noref">None of the games surveyed stages this step; it is open ground.</p>' if 2 <= int(sid) <= 11 else '')
     return f'''
 <section class="scr" id="s{sid}">
   <div class="s-top"><span class="num">{sid}</span><div><h2>{e(title)}</h2><div class="when">{e(when)} · {e(era)}</div></div>

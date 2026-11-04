@@ -320,7 +320,7 @@ const MOCKS = {
     ipoButton();
     chip('<b>IPO</b> · cleared · pick a date');
     const flap = (t, cls = '', sm = false) => `<span class="flap ${cls} ${sm ? 'sm' : ''}">${[...t].map((ch) => `<i>${ch === ' ' ? '&nbsp;' : ch}</i>`).join('')}</span>`;
-    const row = (a, b, c, cc, d, e, ec, you) => `<div class="dep-row ${you ? 'you' : ''}">${flap(a, you ? 'you' : '')}${flap(b, '', true)}${flap(c, cc, true)}${flap(d, '', true)}${flap(e, ec, true)}</div>`;
+    const row = (a, b, c, cc, d, v, vc, e, ec, you) => `<div class="dep-row ${you ? 'you' : ''}">${flap(a, you ? 'you' : '')}${flap(b, '', true)}${flap(c, cc, true)}${flap(d, '', true)}${flap(v, vc, true)}${flap(e, ec, true)}</div>`;
     const R = 92; const cx = 130; const cy = 112;
     const arc = (a0, a1, color) => { const p = (a) => [cx + R * Math.cos(Math.PI * (1 - a)), cy - R * Math.sin(Math.PI * (1 - a))]; const [x0, y0] = p(a0); const [x1, y1] = p(a1); return `<path d="M${x0} ${y0} A${R} ${R} 0 0 1 ${x1} ${y1}" stroke="${color}" stroke-width="18" fill="none"/>`; };
     const needle = 0.8; const nx = cx + (R - 6) * Math.cos(Math.PI * (1 - needle)); const ny = cy - (R - 6) * Math.sin(Math.PI * (1 - needle));
@@ -328,17 +328,18 @@ const MOCKS = {
       kick: 'The listing window · April 2025 · the SEC has cleared your draft',
       title: 'Who is going public, and when',
       n: 5,
-      body: `<div class="dep-grid"><div style="display:grid;gap:14px">
+      body: `<div class="dep-grid dep7"><div style="display:grid;gap:14px">
         <div class="dep"><div class="ttl"><span>AI listings · this half</span><span>updated 07:00</span></div>
-          <div class="dep-row dhd"><span>LAB</span><span>MARKET</span><span>STATUS</span><span>DATE</span><span>DAY ONE</span></div>
-          ${row('LODESTAR', 'NYSE', 'LISTED', 'good', 'JAN 14', '+68%', 'good')}
-          ${row('QILIN', 'HKEX', 'ROADSHOW', 'amber', 'APR 22', '', '')}
-          ${row('OPENBRAIN', 'NASDAQ', 'SEC REVIEW', '', 'MAY?', '', '')}
-          ${row('DEEPTHINK', 'NASDAQ', 'WITHDRAWN', 'bad', '', '', '')}
-          ${row('YOU', 'NASDAQ', 'CLEARED', 'good', '?', '', '', true)}
+          <div class="dep-row dhd"><span>LAB</span><span>MARKET</span><span>STATUS</span><span>DATE</span><span>VALUED</span><span>DAY 1</span></div>
+          ${row('LODESTAR', 'NYSE', 'LISTED', 'good', 'JAN 14', '$160B', '', '+68%', 'good')}
+          ${row('QILIN', 'HKEX', 'ROADSHOW', 'amber', 'APR 22', '~$95B', '', '', '')}
+          ${row('OPENBRAIN', 'NASDAQ', 'SEC REVIEW', '', 'MAY?', '$190B', 'amber', '', '')}
+          ${row('DEEPTHINK', 'NASDAQ', 'WITHDRAWN', 'bad', '', '', '', '', '')}
+          ${row('YOU', 'NASDAQ', 'CLEARED', 'good', '?', '$146B', 'bad', '', '', true)}
+          <div class="dep-goal"><span>To beat: <b>Lodestar at $160B</b>, before OpenBrain lists near $190B</span><span>you: $14B short</span></div>
         </div>
         <div class="ip-acts three">
-          <button class="ip-act on"><b>Go public now</b><span>Flip the filing at the start of era 4; first out gets the index funds</span><div class="fx"><span class="chip up">CFO ✓</span><span class="chip nt">quiet period starts</span></div></button>
+          <button class="ip-act on"><b>Go public now</b><span>Flip the filing at the start of era 4, before OpenBrain takes the index funds</span><div class="fx"><span class="chip up">CFO ✓</span><span class="chip nt">quiet period starts</span></div></button>
           <button class="ip-act"><b>Wait for Qilin’s debut</b><span>A good first day heats the window. A flop shuts it for everyone.</span><div class="fx"><span class="chip nt">a gamble</span></div></button>
           <button class="ip-act"><b>Pause the IPO</b><span>Stay private, take the sovereign round and its strings. You can come back.</span><div class="fx"><span class="chip up">Safety ✓</span><span class="chip dn">Growth investor</span></div></button>
         </div></div>
@@ -348,9 +349,52 @@ const MOCKS = {
               <line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}" stroke="var(--ink)" stroke-width="4" stroke-linecap="round"/><circle cx="${cx}" cy="${cy}" r="7" fill="var(--ink)"/>
               <text x="${cx - R - 2}" y="${cy + 12}" font-size="11" font-weight="800" fill="currentColor" text-anchor="middle">Shut</text><text x="${cx + R + 2}" y="${cy + 12}" font-size="11" font-weight="800" fill="currentColor" text-anchor="middle">Hot</text></svg>
             <div class="cap"><b>Hot</b>Lodestar’s first day did this. One bad first day, or one AI incident, turns it.</div></div>
-          <div class="ip-well">${say('margot', 'CFO · Margot Hale', 'If OpenBrain lists first, we split the room. Go.', 'happy')}${say('tomas', 'Head of Safety · Tomas Lind', 'Lodestar listed in January and stopped publishing evals in February. Ask what we would stop.', 'worried')}</div>
+          <div class="ip-well">${say('margot', 'CFO · Margot Hale', 'If OpenBrain lists first at $190B, we are the cheap one forever. Go.', 'happy')}${say('tomas', 'Head of Safety · Tomas Lind', 'Lodestar listed in January and stopped publishing evals in February. Ask what we would stop.', 'worried')}</div>
         </div></div>`,
       foot: '<span class="note">The board shows every rival lab’s own road. Their first days, flops and incidents move the mood for all of you.</span><button class="btn" type="button">Decide</button>',
+    });
+  },
+
+
+  // 6 (new). The valuation push: the banks' number, the rivals' valuations to beat, and what the push does to the lab.
+  async S6p() {
+    hideTips();
+    hudAt({ date: 'Apr 2025', week: 'Week 1', era: 3, cash: '$2.6B' });
+    ipoButton();
+    chip('<b>IPO</b> · push · 26 days to the filing');
+    const lg = (name, w, cls, val, mark) => `<div class="lg"><span>${name}</span><div class="tr"><i class="${cls}" style="width:${w}%"></i>${mark ? `<u style="left:${mark}%"></u>` : ''}</div><span class="v">${val}</span></div>`;
+    const lev = (on, t, s, fx) => `<div class="lev ${on ? 'on' : ''}"><i>${on ? '✓' : ''}</i><div><b>${t}</b><span style="font-size:12.5px;font-weight:700;color:var(--ip-soft)">${s}</span><div class="fx">${fx}</div></div></div>`;
+    panel({
+      kick: 'The push · April 2025 · before the filing goes public',
+      title: 'Get the number up before the window closes',
+      n: 5,
+      body: `<div class="vp-grid"><div style="display:grid;gap:12px">
+          <div class="ip-card vp-top"><div><h3>The valuation to beat</h3><div class="league">
+            ${lg('OpenBrain', 95, '', '<b>~$190B</b> expected', 0)}
+            ${lg('Lodestar', 80, '', '<b>$160B</b> listed Jan', 0)}
+            ${lg('<b>You</b>', 64, 'you', '<b>$128B</b> → $146B', 0)}
+            ${lg('Qilin', 48, '', '<b>~$95B</b> Hong Kong', 0)}
+          </div><div style="font-size:12.5px;font-weight:700;color:var(--ip-soft);margin-top:8px">Harrow &amp; Vance: “List under Lodestar and the feed writes ‘the also-ran lab’. We need $160B by the public filing.”</div></div>
+            <div class="cd"><div><b>26</b><small>days to<br>the filing</small></div></div></div>
+          <div><h3>What the banks say would move it</h3><div class="levers">
+            ${lev(true, 'Ship Kestrel 4 a month early', 'Benchmarks in the S-1 before the filing.', '<span class="chip up">+$12B</span><span class="chip dn">skips the full eval run</span>')}
+            ${lev(true, 'Six-day weeks to the filing', 'Push the agents product out for the roadshow.', '<span class="chip up">+$6B</span><span class="chip dn">morale −2</span><span class="chip dn">3 may quit</span>')}
+            ${lev(false, 'Cut safety compute to 20%', 'Margins look better on the roadshow.', '<span class="chip up">+$9B</span><span class="chip dn">trust seats object</span><span class="chip dn">Model Spec line</span>')}
+            ${lev(false, 'Sign the defence contract', 'Revenue the bankers can count.', '<span class="chip up">+$11B</span><span class="chip dn">Policy staff petition</span>')}
+          </div></div>
+          <div class="vp-total">With these two:<b><strong>$146B</strong></b>still $14B under Lodestar. Add one more lever, or list as the smaller lab.</div>
+        </div>
+        <div class="ip-card cul"><h3>The culture</h3>
+          <div class="lab"><span>Morale</span><span>was 9, now 7</span></div>
+          <div class="mor">${'<i></i>'.repeat(7)}${'<i class="lost"></i>'.repeat(2)}<i class="off"></i></div>
+          <div class="over">
+            <div><b>Overheard · research pod</b>“Are we a lab or a stock with a lab in it?”</div>
+            <div><b>Safety team</b>Two of five skipped standup to rerun the evals the early ship will skip.</div>
+            <div><b>Recruiting</b>Lodestar’s recruiter messaged six of your people this week.</div>
+          </div>
+          <div class="strain">“We slow down when an eval fails, whatever the calendar says.”<br><span style="font-family:Nunito,sans-serif;font-size:11px;font-weight:800;color:var(--ip-soft)">Your Model Spec, line 4</span><em>Under strain</em></div>
+        </div></div>`,
+      foot: '<span class="note">The push is optional: every lever raises the number and leaves a mark on the office that later screens remember.</span><span class="ip-link">List as we are</span><button class="btn" type="button">Push</button>',
     });
   },
 

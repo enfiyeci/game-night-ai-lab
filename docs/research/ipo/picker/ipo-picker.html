@@ -57,12 +57,19 @@ header.top h1 b { font-weight: 800; }
 .assume input, .q input { accent-color: var(--coral); width: 16px; height: 16px; margin: 4px 0 0; }
 @media (max-width: 640px) { .assume { grid-template-columns: 1fr; } .assume h3 { grid-row: auto; } }
 
+.asks { margin-top: 14px; background: var(--paper); border-radius: 12px; padding: 16px 18px; box-shadow: 0 1px 0 var(--rule); }
+.asks h3 { font-size: 13px; font-weight: 900; letter-spacing: .07em; text-transform: uppercase; color: var(--wood-ink); margin-bottom: 4px; }
+.asks > p { font-size: 14px; margin-bottom: 10px; }
+.ask-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.ask-grid div { background: var(--floor); border-radius: 10px; padding: 10px 12px; font-size: 14px; min-width: 0; }
+.ask-grid b { display: block; font-weight: 900; margin-bottom: 3px; }
+@media (max-width: 900px) { .ask-grid { grid-template-columns: 1fr; } }
 section.block { margin-top: 48px; }
 .b-head h2 { font-weight: 300; font-size: 34px; line-height: 1.1; margin: 8px 0 10px; }
 .b-head p { max-width: 80ch; }
 
 /* storyboard strip */
-.strip { display: grid; grid-template-columns: 2fr 4fr 6fr 2fr; gap: 10px; margin-top: 14px; }
+.strip { display: grid; grid-template-columns: 2fr 5fr 6fr 2fr; gap: 10px; margin-top: 14px; }
 .era { background: var(--paper); border-radius: 12px; padding: 10px; box-shadow: 0 1px 0 var(--rule); min-width: 0; }
 .era .eh { font-size: 12px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); margin: 0 2px 8px; }
 .thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }
@@ -147,15 +154,15 @@ footer p { margin-bottom: 8px; }
 <header class="top">
   <div>
     <div class="kicker">Game Night AI Lab · lane gn-ipo · round 2 · November 4, 2026</div>
-    <h1>The IPO as its own part of the game: <b>14 screens, one road</b></h1>
+    <h1>The IPO as its own part of the game: <b>15 screens, one road</b></h1>
     <p class="lede">You said round 1 showed too few new screens. Here the IPO is a whole subsystem, the way the board got its own screen, countdown, cards and meeting. Each picture is the running game with the new screen drawn over it. Mark each screen keep, change or cut.</p>
     <p class="soft" style="font-size:14px">Design only: no game code changed. Numbers are examples, not tuned. Click any picture to see it full size.</p>
   </div>
   <div class="recs">
     <h3>My recommendation</h3>
     <ol>
-      <li><b>Keep all 14</b>, with the game-screen hub (1A) and the full-screen listing day (10A).</li>
-      <li>If the arc runs long in play, cut <b>7 (quiet period)</b> and <b>13 (lockup)</b> first: both fold back into event cards.</li>
+      <li><b>Keep all 15</b>, with the game-screen hub (1A) and the full-screen listing day (11A).</li>
+      <li>If the arc runs long in play, cut <b>8 (quiet period)</b> and <b>14 (lockup)</b> first: both fold back into event cards.</li>
       <li>Every new screen follows the release reveal’s frame (kicker line, left-aligned title) and carries the same small road in its corner, so the subsystem reads as one thing.</li>
     </ol>
   </div>
@@ -163,12 +170,23 @@ footer p { margin-bottom: 8px; }
 
 <div class="assume">
   <h3>One assumption</h3>
-  <p>I merged round 1’s four directions into one subsystem: A’s road is the spine, with B’s earnings calls (12), C’s listing window (6) and D’s ten-block register (3, 11) as screens inside it.</p>
+  <p>I merged round 1’s four directions into one subsystem: A’s road is the spine, with B’s earnings calls (13), C’s listing window (7) and D’s ten-block register (3, 12) as screens inside it.</p>
   <div class="opts">
     <label><input type="radio" name="merge" value="one subsystem" checked><span>Yes, one subsystem<span class="rtag">Rec</span></span></label>
     <label><input type="radio" name="merge" value="still separate directions"><span>No, still choose between whole directions</span></label>
   </div>
 </div>
+
+
+<section class="asks">
+  <h3>Your three asks, and where they are</h3>
+  <p class="soft">From your message of November 4: “some level of rush or concern before ipo to get more valuation + how the company culture is affected + being in race with the other companioes to pass their ipo evulation”. Screen 6 is new for them, and screen 7 now shows every rival’s valuation.</p>
+  <div class="ask-grid">
+    <div><b>Rush before listing, to raise the valuation</b><span><a href="#s6">6 The push</a>: the banks’ target, a 26-day countdown and four levers. Also <a href="#s8">8</a> (good news you cannot post) and <a href="#s10">10</a> (pricing night).</span></div>
+    <div><b>The cost to the company’s culture</b><span><a href="#s6">6 The push</a>: morale, what staff say, the Model Spec line under strain. Also <a href="#s8">8</a> (the office goes quiet) and <a href="#s14">14</a> (who sells, who leaves for rivals).</span></div>
+    <div><b>A race to beat the rivals’ IPO valuations</b><span><a href="#s7">7 The listing window</a>: a “valued” column and the number to beat. Also <a href="#s6">6</a> (the valuation to beat), <a href="#s1">1</a> (rivals on the same road) and <a href="#s10">10</a> (Lodestar’s price).</span></div>
+  </div>
+</section>
 
 <section class="block" id="board">
   <div class="b-head">
@@ -176,7 +194,7 @@ footer p { margin-bottom: 8px; }
     <h2>Where each screen sits in a run</h2>
     <p>Eras are about six minutes of play each. The road starts late in era 2, lists early in era 4, and keeps going in era 5 (and in an era 6, if the finale grows one).</p>
   </div>
-  <div class="strip"><div class="era"><div class="eh">Era 2 · 2024</div><div class="thumbs"><a href="#s2"><img src="img/r2/S2.jpg" alt="" loading="lazy"><span><b>2</b> Three banks want to take you public</span></a><a href="#s3"><img src="img/r2/S3.jpg" alt="" loading="lazy"><span><b>3</b> Who controls the lab after it lists</span></a></div></div><div class="era"><div class="eh">Era 3 · Jan–Apr 2025</div><div class="thumbs"><a href="#s1"><img src="img/r2/H1a.jpg" alt="" loading="lazy"><span><b>1</b> The road to the bell</span></a><a href="#s4"><img src="img/r2/S4.jpg" alt="" loading="lazy"><span><b>4</b> The S-1, draft 3</span></a><a href="#s5"><img src="img/r2/S5.jpg" alt="" loading="lazy"><span><b>5</b> Letters from the SEC</span></a><a href="#s6"><img src="img/r2/S6.jpg" alt="" loading="lazy"><span><b>6</b> Who is going public, and when</span></a></div></div><div class="era"><div class="eh">Era 4 · Jan–Apr 2026</div><div class="thumbs"><a href="#s7"><img src="img/r2/S7.jpg" alt="" loading="lazy"><span><b>7</b> The quiet period</span></a><a href="#s8"><img src="img/r2/S8.jpg" alt="" loading="lazy"><span><b>8</b> The roadshow</span></a><a href="#s9"><img src="img/r2/S9.jpg" alt="" loading="lazy"><span><b>9</b> Set the price</span></a><a href="#s10"><img src="img/r2/S10a.jpg" alt="" loading="lazy"><span><b>10</b> Listing day</span></a><a href="#s11"><img src="img/r2/S11.jpg" alt="" loading="lazy"><span><b>11</b> Your stock</span></a><a href="#s12"><img src="img/r2/S12.jpg" alt="" loading="lazy"><span><b>12</b> The earnings call</span></a></div></div><div class="era"><div class="eh">Era 5 · Jan 2027</div><div class="thumbs"><a href="#s13"><img src="img/r2/S13.jpg" alt="" loading="lazy"><span><b>13</b> The lockup ends</span></a><a href="#s14"><img src="img/r2/S14.jpg" alt="" loading="lazy"><span><b>14</b> The market attacks</span></a></div></div></div>
+  <div class="strip"><div class="era"><div class="eh">Era 2 · 2024</div><div class="thumbs"><a href="#s2"><img src="img/r2/S2.jpg" alt="" loading="lazy"><span><b>2</b> Three banks want to take you public</span></a><a href="#s3"><img src="img/r2/S3.jpg" alt="" loading="lazy"><span><b>3</b> Who controls the lab after it lists</span></a></div></div><div class="era"><div class="eh">Era 3 · Jan–Apr 2025</div><div class="thumbs"><a href="#s1"><img src="img/r2/H1a.jpg" alt="" loading="lazy"><span><b>1</b> The road to the bell</span></a><a href="#s4"><img src="img/r2/S4.jpg" alt="" loading="lazy"><span><b>4</b> The S-1, draft 3</span></a><a href="#s5"><img src="img/r2/S5.jpg" alt="" loading="lazy"><span><b>5</b> Letters from the SEC</span></a><a href="#s6"><img src="img/r2/S6p.jpg" alt="" loading="lazy"><span><b>6</b> Get the number up before the window closes</span></a><a href="#s7"><img src="img/r2/S6.jpg" alt="" loading="lazy"><span><b>7</b> Who is going public, and when</span></a></div></div><div class="era"><div class="eh">Era 4 · Jan–Apr 2026</div><div class="thumbs"><a href="#s8"><img src="img/r2/S7.jpg" alt="" loading="lazy"><span><b>8</b> The quiet period</span></a><a href="#s9"><img src="img/r2/S8.jpg" alt="" loading="lazy"><span><b>9</b> The roadshow</span></a><a href="#s10"><img src="img/r2/S9.jpg" alt="" loading="lazy"><span><b>10</b> Set the price</span></a><a href="#s11"><img src="img/r2/S10a.jpg" alt="" loading="lazy"><span><b>11</b> Listing day</span></a><a href="#s12"><img src="img/r2/S11.jpg" alt="" loading="lazy"><span><b>12</b> Your stock</span></a><a href="#s13"><img src="img/r2/S12.jpg" alt="" loading="lazy"><span><b>13</b> The earnings call</span></a></div></div><div class="era"><div class="eh">Era 5 · Jan 2027</div><div class="thumbs"><a href="#s14"><img src="img/r2/S13.jpg" alt="" loading="lazy"><span><b>14</b> The lockup ends</span></a><a href="#s15"><img src="img/r2/S14.jpg" alt="" loading="lazy"><span><b>15</b> The market attacks</span></a></div></div></div>
 </section>
 
 
@@ -271,11 +289,29 @@ footer p { margin-bottom: 8px; }
     </div></div>
 </section>
 <section class="scr" id="s6">
-  <div class="s-top"><span class="num">6</span><div><h2>Who is going public, and when</h2><div class="when">Apr 2025 · End of era 3</div></div>
+  <div class="s-top"><span class="num">6</span><div><h2>Get the number up before the window closes</h2><div class="when">Apr 2025 · End of era 3</div></div>
     <div class="kcc" role="radiogroup" aria-label="Keep, change or cut screen 6">
       <label><input type="radio" name="k6" value="keep" checked><span>Keep</span></label>
       <label><input type="radio" name="k6" value="change"><span>Change</span></label>
       <label><input type="radio" name="k6" value="cut"><span>Cut</span></label></div></div>
+  <div class="s-body"><div class="shots"><figure><img src="img/r2/S6p.jpg" alt="The valuation push: rival valuations to beat, a 26-day countdown, four levers with gains and costs, and a culture panel with morale and staff quotes." loading="lazy"></figure></div>
+    <div class="plan">
+      <dl>
+        <dt>Opens</dt><dd>When the banks name their target, about a month before the public filing, with a countdown chip.</dd>
+        <dt>What it is</dt><dd>The push. Your valuation against the rival labs’ IPO valuations and the banks’ target, a countdown to the filing, four levers that raise the number, and a culture panel: morale, what staff say, the Model Spec line under strain.</dd>
+        <dt>You decide</dt><dd class="dec">Which levers to pull, or list as you are.</dd>
+        <dt>Ties into</dt><dd>Every lever leaves a mark that later screens read: a skipped eval run feeds the short report, crunch feeds the lockup departures, a cut safety share feeds the trust seats and the earnings call.</dd>
+      </dl>
+      <p class="noref">None of the games surveyed stages this step; it is open ground.</p>
+      <input class="chg" type="text" name="c6" placeholder="What to change (optional)">
+    </div></div>
+</section>
+<section class="scr" id="s7">
+  <div class="s-top"><span class="num">7</span><div><h2>Who is going public, and when</h2><div class="when">Apr 2025 · End of era 3</div></div>
+    <div class="kcc" role="radiogroup" aria-label="Keep, change or cut screen 7">
+      <label><input type="radio" name="k7" value="keep" checked><span>Keep</span></label>
+      <label><input type="radio" name="k7" value="change"><span>Change</span></label>
+      <label><input type="radio" name="k7" value="cut"><span>Cut</span></label></div></div>
   <div class="s-body"><div class="shots"><figure><img src="img/r2/S6.jpg" alt="A departures board of rival AI listings with a mood gauge and three choices." loading="lazy"></figure></div>
     <div class="plan">
       <dl>
@@ -285,15 +321,15 @@ footer p { margin-bottom: 8px; }
         <dt>Ties into</dt><dd>Rival labs list on their own schedules. A big first day heats the window; a flop or an incident shuts it for everyone.</dd>
       </dl>
       <figure class="ref"><img src="img/ref-scaling-laws.jpg" alt="Reference screenshot" loading="lazy"><figcaption><b>Borrowed from Scaling Laws</b> (HCK Labs): valuation follows a market-mood cycle. <a href="https://hcklab.itch.io/scaling-laws" target="_blank" rel="noopener">itch.io page</a></figcaption></figure>
-      <input class="chg" type="text" name="c6" placeholder="What to change (optional)">
+      <input class="chg" type="text" name="c7" placeholder="What to change (optional)">
     </div></div>
 </section>
-<section class="scr" id="s7">
-  <div class="s-top"><span class="num">7</span><div><h2>The quiet period</h2><div class="when">Jan 2026 · Era 4</div></div>
-    <div class="kcc" role="radiogroup" aria-label="Keep, change or cut screen 7">
-      <label><input type="radio" name="k7" value="keep" checked><span>Keep</span></label>
-      <label><input type="radio" name="k7" value="change"><span>Change</span></label>
-      <label><input type="radio" name="k7" value="cut"><span>Cut</span></label></div></div>
+<section class="scr" id="s8">
+  <div class="s-top"><span class="num">8</span><div><h2>The quiet period</h2><div class="when">Jan 2026 · Era 4</div></div>
+    <div class="kcc" role="radiogroup" aria-label="Keep, change or cut screen 8">
+      <label><input type="radio" name="k8" value="keep" checked><span>Keep</span></label>
+      <label><input type="radio" name="k8" value="change"><span>Change</span></label>
+      <label><input type="radio" name="k8" value="cut"><span>Cut</span></label></div></div>
   <div class="s-body"><div class="shots"><figure><img src="img/r2/S7.jpg" alt="The office in the quiet period: blue edge, countdown banner, taped-up Comms desk and a temptation card." loading="lazy"></figure></div>
     <div class="plan">
       <dl>
@@ -303,15 +339,15 @@ footer p { margin-bottom: 8px; }
         <dt>Ties into</dt><dd>A hype post or a launch can delay pricing (a “gun-jumping” review).</dd>
       </dl>
       <p class="noref">None of the games surveyed stages this step; it is open ground.</p>
-      <input class="chg" type="text" name="c7" placeholder="What to change (optional)">
+      <input class="chg" type="text" name="c8" placeholder="What to change (optional)">
     </div></div>
 </section>
-<section class="scr" id="s8">
-  <div class="s-top"><span class="num">8</span><div><h2>The roadshow</h2><div class="when">Jan 2026 · Era 4</div></div>
-    <div class="kcc" role="radiogroup" aria-label="Keep, change or cut screen 8">
-      <label><input type="radio" name="k8" value="keep" checked><span>Keep</span></label>
-      <label><input type="radio" name="k8" value="change"><span>Change</span></label>
-      <label><input type="radio" name="k8" value="cut"><span>Cut</span></label></div></div>
+<section class="scr" id="s9">
+  <div class="s-top"><span class="num">9</span><div><h2>The roadshow</h2><div class="when">Jan 2026 · Era 4</div></div>
+    <div class="kcc" role="radiogroup" aria-label="Keep, change or cut screen 9">
+      <label><input type="radio" name="k9" value="keep" checked><span>Keep</span></label>
+      <label><input type="radio" name="k9" value="change"><span>Change</span></label>
+      <label><input type="radio" name="k9" value="cut"><span>Cut</span></label></div></div>
   <div class="s-body"><div class="shots"><figure><img src="img/r2/S8.jpg" alt="The roadshow: a route of eight cities, a San Francisco fund’s question, three answers and the book so far." loading="lazy"></figure></div>
     <div class="plan">
       <dl>
@@ -321,15 +357,15 @@ footer p { margin-bottom: 8px; }
         <dt>Ties into</dt><dd>The book by investor type; Qilin roadshows in the same week; your answers are quoted back on the first earnings call.</dd>
       </dl>
       <p class="noref">None of the games surveyed stages this step; it is open ground.</p>
-      <input class="chg" type="text" name="c8" placeholder="What to change (optional)">
+      <input class="chg" type="text" name="c9" placeholder="What to change (optional)">
     </div></div>
 </section>
-<section class="scr" id="s9">
-  <div class="s-top"><span class="num">9</span><div><h2>Set the price</h2><div class="when">Feb 9, 2026 · Era 4</div></div>
-    <div class="kcc" role="radiogroup" aria-label="Keep, change or cut screen 9">
-      <label><input type="radio" name="k9" value="keep" checked><span>Keep</span></label>
-      <label><input type="radio" name="k9" value="change"><span>Change</span></label>
-      <label><input type="radio" name="k9" value="cut"><span>Cut</span></label></div></div>
+<section class="scr" id="s10">
+  <div class="s-top"><span class="num">10</span><div><h2>Set the price</h2><div class="when">Feb 9, 2026 · Era 4</div></div>
+    <div class="kcc" role="radiogroup" aria-label="Keep, change or cut screen 10">
+      <label><input type="radio" name="k10" value="keep" checked><span>Keep</span></label>
+      <label><input type="radio" name="k10" value="change"><span>Change</span></label>
+      <label><input type="radio" name="k10" value="cut"><span>Cut</span></label></div></div>
   <div class="s-body"><div class="shots"><figure><img src="img/r2/S9.jpg" alt="Pricing night: bankers’ faces, a demand curve with the range and a $44 pin, and four outcome tiles." loading="lazy"></figure></div>
     <div class="plan">
       <dl>
@@ -339,16 +375,16 @@ footer p { margin-bottom: 8px; }
         <dt>Ties into</dt><dd>Cash for the rest of the run; how the first day goes; the mood for every lab still on the road.</dd>
       </dl>
       <p class="noref">None of the games surveyed stages this step; it is open ground.</p>
-      <input class="chg" type="text" name="c9" placeholder="What to change (optional)">
+      <input class="chg" type="text" name="c10" placeholder="What to change (optional)">
     </div></div>
 </section>
-<section class="scr" id="s10">
-  <div class="s-top"><span class="num">10</span><div><h2>Listing day</h2><div class="when">Feb 10, 2026 · Era 4</div></div>
-    <div class="kcc" role="radiogroup" aria-label="Keep, change or cut screen 10">
-      <label><input type="radio" name="k10" value="keep" checked><span>Keep</span></label>
-      <label><input type="radio" name="k10" value="change"><span>Change</span></label>
-      <label><input type="radio" name="k10" value="cut"><span>Cut</span></label></div></div>
-  <div class="s-body"><div class="shots"><figure><label class="vhead"><input type="radio" name="v10" value="A" checked><b>A · Full-screen hero</b><span class="tag rec">Recommended · loud</span></label><img src="img/r2/S10a.jpg" alt="Listing day as a full-screen hero: giant LAB ticker, $58.40, the day’s chart and four moments." loading="lazy"></figure><figure><label class="vhead"><input type="radio" name="v10" value="B" ><b>B · In the office</b><span class="tag safe">Safe</span></label><img src="img/r2/S10b.jpg" alt="Listing day in the office: a ticker tape along the bottom, staff bubbles and a first-print card." loading="lazy"></figure></div>
+<section class="scr" id="s11">
+  <div class="s-top"><span class="num">11</span><div><h2>Listing day</h2><div class="when">Feb 10, 2026 · Era 4</div></div>
+    <div class="kcc" role="radiogroup" aria-label="Keep, change or cut screen 11">
+      <label><input type="radio" name="k11" value="keep" checked><span>Keep</span></label>
+      <label><input type="radio" name="k11" value="change"><span>Change</span></label>
+      <label><input type="radio" name="k11" value="cut"><span>Cut</span></label></div></div>
+  <div class="s-body"><div class="shots"><figure><label class="vhead"><input type="radio" name="v11" value="A" checked><b>A · Full-screen hero</b><span class="tag rec">Recommended · loud</span></label><img src="img/r2/S10a.jpg" alt="Listing day as a full-screen hero: giant LAB ticker, $58.40, the day’s chart and four moments." loading="lazy"></figure><figure><label class="vhead"><input type="radio" name="v11" value="B" ><b>B · In the office</b><span class="tag safe">Safe</span></label><img src="img/r2/S10b.jpg" alt="Listing day in the office: a ticker tape along the bottom, staff bubbles and a first-print card." loading="lazy"></figure></div>
     <div class="plan">
       <dl>
         <dt>Opens</dt><dd>Plays by itself the morning after pricing night.</dd>
@@ -357,15 +393,15 @@ footer p { margin-bottom: 8px; }
         <dt>Ties into</dt><dd>The close sets the investor mood for rivals; the feed and staff react.</dd>
       </dl>
       <p class="noref">None of the games surveyed stages this step; it is open ground.</p>
-      <input class="chg" type="text" name="c10" placeholder="What to change (optional)">
+      <input class="chg" type="text" name="c11" placeholder="What to change (optional)">
     </div></div>
 </section>
-<section class="scr" id="s11">
-  <div class="s-top"><span class="num">11</span><div><h2>Your stock</h2><div class="when">From listing on · Eras 4–5</div></div>
-    <div class="kcc" role="radiogroup" aria-label="Keep, change or cut screen 11">
-      <label><input type="radio" name="k11" value="keep" checked><span>Keep</span></label>
-      <label><input type="radio" name="k11" value="change"><span>Change</span></label>
-      <label><input type="radio" name="k11" value="cut"><span>Cut</span></label></div></div>
+<section class="scr" id="s12">
+  <div class="s-top"><span class="num">12</span><div><h2>Your stock</h2><div class="when">From listing on · Eras 4–5</div></div>
+    <div class="kcc" role="radiogroup" aria-label="Keep, change or cut screen 12">
+      <label><input type="radio" name="k12" value="keep" checked><span>Keep</span></label>
+      <label><input type="radio" name="k12" value="change"><span>Change</span></label>
+      <label><input type="radio" name="k12" value="cut"><span>Cut</span></label></div></div>
   <div class="s-body"><div class="shots"><figure><img src="img/r2/S11.jpg" alt="The stock screen: price chart since listing with markers, a ten-block ownership register, analysts and short interest." loading="lazy"></figure></div>
     <div class="plan">
       <dl>
@@ -375,15 +411,15 @@ footer p { margin-bottom: 8px; }
         <dt>Ties into</dt><dd>Holders are the board’s money seats; an activist’s block shows here first; rival incidents move your price.</dd>
       </dl>
       <figure class="ref"><img src="img/ref-offworld.jpg" alt="Reference screenshot" loading="lazy"><figcaption><b>Borrowed from Offworld Trading Company</b> (Mohawk Games): your own shares as hit points rivals buy, made slow and readable. <a href="https://store.steampowered.com/app/271240/" target="_blank" rel="noopener">Steam page</a></figcaption></figure>
-      <input class="chg" type="text" name="c11" placeholder="What to change (optional)">
+      <input class="chg" type="text" name="c12" placeholder="What to change (optional)">
     </div></div>
 </section>
-<section class="scr" id="s12">
-  <div class="s-top"><span class="num">12</span><div><h2>The earnings call</h2><div class="when">Each quarter of story time · Eras 4–5</div></div>
-    <div class="kcc" role="radiogroup" aria-label="Keep, change or cut screen 12">
-      <label><input type="radio" name="k12" value="keep" checked><span>Keep</span></label>
-      <label><input type="radio" name="k12" value="change"><span>Change</span></label>
-      <label><input type="radio" name="k12" value="cut"><span>Cut</span></label></div></div>
+<section class="scr" id="s13">
+  <div class="s-top"><span class="num">13</span><div><h2>The earnings call</h2><div class="when">Each quarter of story time · Eras 4–5</div></div>
+    <div class="kcc" role="radiogroup" aria-label="Keep, change or cut screen 13">
+      <label><input type="radio" name="k13" value="keep" checked><span>Keep</span></label>
+      <label><input type="radio" name="k13" value="change"><span>Change</span></label>
+      <label><input type="radio" name="k13" value="cut"><span>Cut</span></label></div></div>
   <div class="s-body"><div class="shots"><figure><img src="img/r2/S12.jpg" alt="The earnings call: guidance, street and result tiles, an analyst’s question with three answers, after-hours price and the queue." loading="lazy"></figure></div>
     <div class="plan">
       <dl>
@@ -393,15 +429,15 @@ footer p { margin-bottom: 8px; }
         <dt>Ties into</dt><dd>Guidance works like a board deal: a promise with a date. The safety share meets the stock price here.</dd>
       </dl>
       <figure class="ref"><img src="img/ref-rt2.jpg" alt="Reference screenshot" loading="lazy"><figcaption><b>Borrowed from Railroad Tycoon II</b> (PopTop): investors judge the chairman on the stock and can fire him. <a href="https://store.steampowered.com/app/7620/" target="_blank" rel="noopener">Steam page</a></figcaption></figure>
-      <input class="chg" type="text" name="c12" placeholder="What to change (optional)">
+      <input class="chg" type="text" name="c13" placeholder="What to change (optional)">
     </div></div>
 </section>
-<section class="scr" id="s13">
-  <div class="s-top"><span class="num">13</span><div><h2>The lockup ends</h2><div class="when">Jan 2027 · Era 5</div></div>
-    <div class="kcc" role="radiogroup" aria-label="Keep, change or cut screen 13">
-      <label><input type="radio" name="k13" value="keep" checked><span>Keep</span></label>
-      <label><input type="radio" name="k13" value="change"><span>Change</span></label>
-      <label><input type="radio" name="k13" value="cut"><span>Cut</span></label></div></div>
+<section class="scr" id="s14">
+  <div class="s-top"><span class="num">14</span><div><h2>The lockup ends</h2><div class="when">Jan 2027 · Era 5</div></div>
+    <div class="kcc" role="radiogroup" aria-label="Keep, change or cut screen 14">
+      <label><input type="radio" name="k14" value="keep" checked><span>Keep</span></label>
+      <label><input type="radio" name="k14" value="change"><span>Change</span></label>
+      <label><input type="radio" name="k14" value="cut"><span>Cut</span></label></div></div>
   <div class="s-body"><div class="shots"><figure><img src="img/r2/S13.jpg" alt="Lockup screen: six people cards with what they can sell and who is poaching them, three choices and the unlock schedule." loading="lazy"></figure></div>
     <div class="plan">
       <dl>
@@ -411,15 +447,15 @@ footer p { margin-bottom: 8px; }
         <dt>Ties into</dt><dd>Rivals time offers to this day; selling moves the stock; leavers slow Research.</dd>
       </dl>
       
-      <input class="chg" type="text" name="c13" placeholder="What to change (optional)">
+      <input class="chg" type="text" name="c14" placeholder="What to change (optional)">
     </div></div>
 </section>
-<section class="scr" id="s14">
-  <div class="s-top"><span class="num">14</span><div><h2>The market attacks</h2><div class="when">Jan 2027 · Era 5</div></div>
-    <div class="kcc" role="radiogroup" aria-label="Keep, change or cut screen 14">
-      <label><input type="radio" name="k14" value="keep" checked><span>Keep</span></label>
-      <label><input type="radio" name="k14" value="change"><span>Change</span></label>
-      <label><input type="radio" name="k14" value="cut"><span>Cut</span></label></div></div>
+<section class="scr" id="s15">
+  <div class="s-top"><span class="num">15</span><div><h2>The market attacks</h2><div class="when">Jan 2027 · Era 5</div></div>
+    <div class="kcc" role="radiogroup" aria-label="Keep, change or cut screen 15">
+      <label><input type="radio" name="k15" value="keep" checked><span>Keep</span></label>
+      <label><input type="radio" name="k15" value="change"><span>Change</span></label>
+      <label><input type="radio" name="k15" value="cut"><span>Cut</span></label></div></div>
   <div class="s-body"><div class="shots"><figure><img src="img/r2/S14.jpg" alt="A short seller’s report on LAB with exhibits from the lab’s own record, beside three responses and an activist note." loading="lazy"></figure></div>
     <div class="plan">
       <dl>
@@ -429,7 +465,7 @@ footer p { margin-bottom: 8px; }
         <dt>Ties into</dt><dd>Hidden alignment debt; your S-1 lines; the board meeting and its removal vote. No new endings.</dd>
       </dl>
       
-      <input class="chg" type="text" name="c14" placeholder="What to change (optional)">
+      <input class="chg" type="text" name="c15" placeholder="What to change (optional)">
     </div></div>
 </section>
 
@@ -441,7 +477,7 @@ footer p { margin-bottom: 8px; }
   <div class="qs">
     <fieldset class="q">
       <h3>Is going public optional?</h3>
-      <p>Screen 6 already lets you pause. This says whether you can skip the road entirely.</p>
+      <p>Screen 7 already lets you pause. This says whether you can skip the road entirely.</p>
       <label><input type="radio" name="q1" value="optional" checked><span>Optional: a run can stay private all game, and the advisors argue about it<span class="rtag">Rec</span></span></label>
       <label><input type="radio" name="q1" value="always"><span>Every run lists by era 4, so every player sees the arc</span></label>
     </fieldset>
@@ -454,7 +490,7 @@ footer p { margin-bottom: 8px; }
     </fieldset>
     <fieldset class="q">
       <h3>Where does the share price show?</h3>
-      <p>Only after listing. Screen 11 is the full view either way.</p>
+      <p>Only after listing. Screen 12 is the full view either way.</p>
       <label><input type="radio" name="q3" value="chip" checked><span>A chip under the board countdown, as in the pictures<span class="rtag">Rec</span></span></label>
       <label><input type="radio" name="q3" value="money"><span>Only on the stock screen</span></label>
     </fieldset>
@@ -475,7 +511,7 @@ footer p { margin-bottom: 8px; }
 </div>
 
 <div class="bar" role="region" aria-label="Your picks">
-  <div class="sum" id="sum">All 14 kept</div>
+  <div class="sum" id="sum">All 15 kept</div>
   <button type="button" id="copy">Copy my picks</button>
 </div>
 <div id="copied" hidden>Copied. Paste it in the chat.</div>
@@ -506,7 +542,7 @@ footer p { margin-bottom: 8px; }
     const k = ids.map((i) => val(`k${i}`));
     const cut = ids.filter((i) => val(`k${i}`) === 'cut');
     const chg = ids.filter((i) => val(`k${i}`) === 'change');
-    sum.textContent = `${k.filter((x) => x === 'keep').length} kept` + (chg.length ? ` · change ${chg.join(', ')}` : '') + (cut.length ? ` · cut ${cut.join(', ')}` : '') + ` · hub ${val('v1')} · listing day ${val('v10')} · ${val('merge')}`;
+    sum.textContent = `${k.filter((x) => x === 'keep').length} kept` + (chg.length ? ` · change ${chg.join(', ')}` : '') + (cut.length ? ` · cut ${cut.join(', ')}` : '') + ` · hub ${val('v1')} · listing day ${val('v11')} · ${val('merge')}`;
     try { localStorage.setItem(KEY, JSON.stringify(Object.fromEntries(new FormData(form)))); } catch (e) {}
   }
   try {

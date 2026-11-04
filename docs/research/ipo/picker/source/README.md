@@ -17,7 +17,7 @@ Laws from its itch.io page. The published page is https://claude.ai/artifact/Em9
 
 ## Round 2 (2026-11-04): the IPO as a full subsystem
 
-`mock2.js` and `mock2.css` draw 14 dedicated screens (16 frames: the hub and listing day have two variants) with the
-same harness; run `apply('<name>')` from `/mock/mock2.js` for `H1a H1b S2 … S14` on plain `midEra3`. Each frame moves the
+`mock2.js` and `mock2.css` draw 15 dedicated screens (17 frames: the hub and listing day have two variants; S6p is the valuation push added for Arda's November 4 asks) with the
+same harness; run `apply('<name>')` from `/mock/mock2.js` for `H1a H1b S2 … S6 S6p S7 … S14` on plain `midEra3`. Each frame moves the
 HUD date, era and cash to its point on the road. The page is built by `../build-round2.py` from `../round2-template.html`
 into `../ipo-picker.html`; images are in `../img/r2/`. Published as version 2 of the same artifact URL.
